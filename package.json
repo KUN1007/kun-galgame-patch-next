@@ -3,9 +3,25 @@
   "scripts": {
     "dev": "next dev --turbo",
     "build": "next build",
-    "start": "next start"
+    "start": "next start",
+    "lint": "pnpm lint",
+    "prisma:push": "npx prisma db push",
+    "prisma:generate": "npx prisma generate"
   },
+  "browserslist": [
+    "> 1%",
+    "not ie 11",
+    "not op_mini all"
+  ],
   "dependencies": {
+    "eslint": "^9.13.0",
+    "eslint-config-next": "^14.2.15",
+    "eslint-config-prettier": "^9.1.0",
+    "eslint-import-resolver-typescript": "^3.6.3",
+    "eslint-plugin-import": "^2.31.0",
+    "eslint-plugin-prettier": "^5.2.1",
+    "eslint-plugin-react": "^7.37.1",
+    "eslint-plugin-tailwindcss": "^3.17.5",
     "next": "latest",
     "react": "^18.2.0",
     "react-dom": "^18.2.0"
