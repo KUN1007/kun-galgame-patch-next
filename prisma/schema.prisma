@@ -1,0 +1,313 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+enum Role {
+  USER
+  PUBLISHER
+  ADMIN
+  SU
+}
+
+enum Language {
+  EN_US
+  JA_JP
+  ZH_CN
+  ZH_TW
+  OTHER
+}
+
+enum MessageType {
+  LIKE
+  FAVORITE
+  COMMENT
+  EXPIRED
+  REQUEST
+  MERGE
+  DECLINE
+  MENTION
+  ADMIN
+}
+
+model User {
+  id              Int    @id @default(autoincrement())
+  name            String @unique @db.VarChar(17)
+  email           String @unique @db.VarChar(1007)
+  password        String @db.VarChar(1007)
+  ip              String @default("") @db.VarChar(233)
+  avatar          String @default("") @db.VarChar(233)
+  role            Role   @default(USER)
+  status          Int    @default(0)
+  registerTime    Int    @default(0)
+  moemoepoint     Int    @default(0)
+  bio             String @default("") @db.VarChar(107)
+  like            Int    @default(0)
+  dailyImageCount Int    @default(0)
+  dailyCheckIn    Int    @default(0)
+
+  patch           Patch[] @relation("UserPatch")
+  patchLike       Patch[] @relation("UserPatchLike")
+  patchFavorite   Patch[] @relation("UserPatchFavorite")
+  patchContribute Patch[] @relation("UserPatchContribute")
+
+  patchComment        PatchComment[]        @relation("UserPatchComment")
+  patchCommentLike    PatchComment[]        @relation("UserPatchCommentLike")
+  patchCommentMention PatchCommentMention[] @relation("UserPatchCommentMention")
+  patchResource       PatchResource[]       @relation("UserPatchResource")
+  patchResourceLike   PatchResource[]       @relation("UserPatchResourceLike")
+  patchHistory        PatchHistory[]        @relation("UserPatchHistory")
+  patchPullRequest    PatchPullRequest[]    @relation("UserPatchPullResuest")
+  sendMessage         UserMessage[]         @relation("SendMessage")
+  receiveMessage      UserMessage[]         @relation("ReceiveMessage")
+
+  created DateTime @default(now())
+  updated DateTime @updatedAt
+}
+
+model Patch {
+  id           Int      @id @default(autoincrement())
+  vndbId       String   @unique @db.VarChar(107)
+  banner       String   @db.VarChar(1007)
+  introduction String   @default("") @db.VarChar(100007)
+  status       Int      @default(0)
+  view         Int      @default(0)
+  type         String[]
+  alias        String[]
+  language     Language @default(OTHER)
+
+  userId Int
+  User   User @relation("UserPatch", fields: [userId], references: [id])
+
+  likeBy       User[] @relation("UserPatchLike")
+  favoriteBy   User[] @relation("UserPatchFavorite")
+  contributeBy User[] @relation("UserPatchContribute")
+
+  resource PatchResource[]    @relation("PatchResource")
+  comment  PatchComment[]     @relation("PatchComment")
+  history  PatchHistory[]     @relation("PatchHistory")
+  pr       PatchPullRequest[] @relation("PatchPullRequest")
+
+  platform PatchPlatformRelation[] @relation("PatchPlatformRelation")
+  engine   PatchEngineRelation[]   @relation("PatchEngineRelation")
+  tag      PatchTagRelation[]      @relation("PatchTagRelation")
+  company  PatchCompanyRelation[]  @relation("PatchCompanyRelation")
+
+  created DateTime @default(now())
+  updated DateTime @updatedAt
+}
+
+model PatchPlatform {
+  id   Int    @id @default(autoincrement())
+  name String @db.VarChar(107)
+
+  patchRelation PatchPlatformRelation[]
+
+  created DateTime @default(now())
+  updated DateTime @updatedAt
+}
+
+model PatchPlatformRelation {
+  id Int @id @default(autoincrement())
+
+  patchId    Int
+  patch      Patch         @relation("PatchPlatformRelation", fields: [patchId], references: [id])
+  platformId Int
+  platform   PatchPlatform @relation(fields: [platformId], references: [id])
+
+  created DateTime @default(now())
+  updated DateTime @updatedAt
+
+  @@unique([patchId, platformId])
+}
+
+model PatchEngine {
+  id   Int    @id @default(autoincrement())
+  name String @db.VarChar(107)
+
+  patchRelation PatchEngineRelation[]
+
+  created DateTime @default(now())
+  updated DateTime @updatedAt
+}
+
+model PatchEngineRelation {
+  id Int @id @default(autoincrement())
+
+  patchId  Int
+  patch    Patch       @relation("PatchEngineRelation", fields: [patchId], references: [id])
+  engineId Int
+  engine   PatchEngine @relation(fields: [engineId], references: [id])
+
+  created DateTime @default(now())
+  updated DateTime @updatedAt
+
+  @@unique([patchId, engineId])
+}
+
+model PatchTag {
+  id           Int    @id @default(autoincrement())
+  name         String @db.VarChar(107)
+  introduction String @db.VarChar(10007)
+
+  patchRelation PatchTagRelation[]
+
+  created DateTime @default(now())
+  updated DateTime @updatedAt
+}
+
+model PatchTagRelation {
+  id Int @id @default(autoincrement())
+
+  patchId Int
+  patch   Patch    @relation("PatchTagRelation", fields: [patchId], references: [id])
+  tagId   Int
+  tag     PatchTag @relation(fields: [tagId], references: [id])
+
+  created DateTime @default(now())
+  updated DateTime @updatedAt
+
+  @@unique([patchId, tagId])
+}
+
+model PatchCompany {
+  id              Int      @id @default(autoincrement())
+  name            String   @db.VarChar(107)
+  officialWebsite String[]
+  parentBrand     String[]
+  primaryLanguage String   @db.VarChar(107)
+  alias           String[]
+
+  patchRelations PatchCompanyRelation[]
+
+  created DateTime @default(now())
+  updated DateTime @updatedAt
+}
+
+model PatchCompanyRelation {
+  id Int @id @default(autoincrement())
+
+  patchId   Int
+  patch     Patch        @relation("PatchCompanyRelation", fields: [patchId], references: [id])
+  companyId Int
+  company   PatchCompany @relation(fields: [companyId], references: [id])
+
+  created DateTime @default(now())
+  updated DateTime @updatedAt
+
+  @@unique([patchId, companyId])
+}
+
+model PatchResource {
+  id       Int      @id @default(autoincrement())
+  size     String   @default("") @db.VarChar(107)
+  code     String   @default("") @db.VarChar(1007)
+  password String   @default("") @db.VarChar(1007)
+  note     String   @default("") @db.VarChar(1007)
+  type     String[]
+  link     String[]
+  language String[]
+  platform String[]
+  like     Int[]
+  time     Int      @default(0)
+  status   Int      @default(0)
+
+  userId  Int
+  user    User   @relation("UserPatchResource", fields: [userId], references: [id])
+  patchId Int
+  patch   Patch  @relation("PatchResource", fields: [patchId], references: [id], onDelete: Cascade, onUpdate: NoAction)
+  likeBy  User[] @relation("UserPatchResourceLike")
+
+  created DateTime @default(now())
+  updated DateTime @updatedAt
+}
+
+model PatchHistory {
+  phid    Int    @id @default(autoincrement())
+  action  String @default("")
+  type    String @default("")
+  content String @default("") @db.VarChar(1007)
+
+  userId  Int
+  user    User  @relation("UserPatchHistory", fields: [userId], references: [id])
+  patchId Int
+  patch   Patch @relation("PatchHistory", fields: [patchId], references: [id], onDelete: Cascade, onUpdate: NoAction)
+
+  created DateTime @default(now())
+  updated DateTime @updatedAt
+}
+
+model PatchPullRequest {
+  id            Int    @id @default(autoincrement())
+  status        Int    @default(0)
+  index         Int    @default(0)
+  completedTime Int    @default(0)
+  content       String @default("") @db.VarChar(1007)
+  note          String @default("") @db.VarChar(1007)
+
+  userId  Int
+  User    User  @relation("UserPatchPullResuest", fields: [userId], references: [id])
+  patchId Int
+  patch   Patch @relation("PatchPullRequest", fields: [patchId], references: [id])
+
+  created DateTime @default(now())
+  updated DateTime @updatedAt
+}
+
+model PatchComment {
+  pcid    Int    @id @default(autoincrement())
+  pid     Int
+  content String @default("") @db.VarChar(10007)
+  likes   Int[]
+
+  replies  PatchComment[] @relation("CommentReplies")
+  parentId Int?
+  parent   PatchComment?  @relation("CommentReplies", fields: [parentId], references: [pcid])
+  userId   Int
+  user     User           @relation("UserPatchComment", fields: [userId], references: [id])
+  patchId  Int
+  patch    Patch          @relation("PatchComment", fields: [patchId], references: [id], onDelete: Cascade, onUpdate: NoAction)
+
+  likeBy         User[]                @relation("UserPatchCommentLike")
+  mentionedUsers PatchCommentMention[]
+
+  created DateTime @default(now())
+  updated DateTime @updatedAt
+}
+
+model PatchCommentMention {
+  id Int @id @default(autoincrement())
+
+  userId    Int
+  user      User         @relation("UserPatchCommentMention", fields: [userId], references: [id])
+  commentId Int
+  comment   PatchComment @relation(fields: [commentId], references: [pcid])
+
+  created DateTime @default(now())
+  updated DateTime @updatedAt
+
+  @@unique([commentId, userId])
+}
+
+model UserMessage {
+  id      Int         @id @default(autoincrement())
+  type    MessageType
+  content String      @db.VarChar(10007)
+  status  Int         @default(0)
+
+  senderId    Int
+  sender      User @relation("SendMessage", fields: [senderId], references: [id])
+  recipientId Int
+  recipient   User @relation("ReceiveMessage", fields: [recipientId], references: [id])
+
+  patchId         Int @default(0)
+  patchResourceId Int @default(0)
+  commentId       Int @default(0)
+
+  created DateTime @default(now())
+  updated DateTime @updatedAt
+}
