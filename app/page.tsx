@@ -1,3 +1,9 @@
+import { Button } from '@nextui-org/button'
+
 export default function Page() {
-  return <h1>Hello, Next.js!</h1>
+  return (
+    <div>
+      <Button>Click me</Button>
+    </div>
+  )
 }
