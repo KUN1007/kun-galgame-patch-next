@@ -14,6 +14,14 @@
     "not op_mini all"
   ],
   "dependencies": {
+    "next": "^14.2.15",
+    "react": "^18.3.1",
+    "react-dom": "^18.3.1"
+  },
+  "devDependencies": {
+    "@types/node": "22.7.7",
+    "@types/react": "18.3.11",
+    "@types/react-dom": "18.3.1",
     "eslint": "^9.13.0",
     "eslint-config-next": "^14.2.15",
     "eslint-config-prettier": "^9.1.0",
@@ -22,14 +30,20 @@
     "eslint-plugin-prettier": "^5.2.1",
     "eslint-plugin-react": "^7.37.1",
     "eslint-plugin-tailwindcss": "^3.17.5",
-    "next": "latest",
-    "react": "^18.2.0",
-    "react-dom": "^18.2.0"
-  },
-  "devDependencies": {
-    "@types/node": "20.8.10",
-    "@types/react": "18.2.33",
-    "@types/react-dom": "18.2.14",
-    "typescript": "^5.2.2"
+    "postcss": "^8.4.47",
+    "postcss-html": "^1.7.0",
+    "postcss-import": "^16.1.0",
+    "postcss-scss": "^4.0.9",
+    "prettier": "^3.3.3",
+    "pretty-quick": "^4.0.0",
+    "prisma": "^5.21.1",
+    "stylelint": "^16.10.0",
+    "stylelint-config-html": "^1.1.0",
+    "stylelint-config-prettier": "^9.0.5",
+    "stylelint-config-recommended": "^14.0.1",
+    "stylelint-config-standard": "^36.0.1",
+    "stylelint-order": "^6.0.4",
+    "tailwindcss": "^3.4.14",
+    "typescript": "^5.6.3"
   }
 }

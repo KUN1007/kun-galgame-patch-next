@@ -1,3 +1,9 @@
 {
-  "cSpell.words": ["classname", "quicky", "tailwindcss", "turbopack"]
+  "cSpell.words": [
+    "classname",
+    "quicky",
+    "stylelint",
+    "tailwindcss",
+    "turbopack"
+  ]
 }
