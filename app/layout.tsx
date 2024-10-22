@@ -1,5 +1,6 @@
-import '~/styles/index.css'
+import { Toaster } from 'react-hot-toast'
 import { Providers } from './providers'
+import '~/styles/index.css'
 
 export default function RootLayout({
   children
@@ -10,6 +11,7 @@ export default function RootLayout({
     <html lang="zh-CN" suppressHydrationWarning>
       <body>
         <Providers>{children}</Providers>
+        <Toaster />
       </body>
     </html>
   )

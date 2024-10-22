@@ -5,8 +5,8 @@
     "build": "next build",
     "start": "next start",
     "lint": "pnpm lint",
-    "prisma:push": "npx prisma db push",
-    "prisma:generate": "npx prisma generate"
+    "prisma:push": "pnpx prisma db push",
+    "prisma:generate": "pnpx prisma generate"
   },
   "browserslist": [
     "> 1%",
@@ -14,21 +14,36 @@
     "not op_mini all"
   ],
   "dependencies": {
+    "@hookform/resolvers": "^3.9.0",
     "@nextui-org/react": "^2.4.8",
+    "@node-rs/argon2": "^2.0.0",
     "@prisma/client": "^5.21.1",
+    "@tanstack/react-query": "^5.59.15",
+    "@trpc/client": "11.0.0-rc.593",
+    "@trpc/next": "11.0.0-rc.593",
+    "@trpc/react-query": "11.0.0-rc.593",
+    "@trpc/server": "11.0.0-rc.593",
+    "clsx": "^2.1.1",
     "framer-motion": "^11.11.9",
-    "next": "^14.2.15",
+    "jsonwebtoken": "^9.0.2",
+    "next": "15.0.1-canary.1",
     "next-themes": "^0.3.0",
     "react": "^18.3.1",
-    "react-dom": "^18.3.1"
+    "react-dom": "^18.3.1",
+    "react-hook-form": "^7.53.1",
+    "react-hot-toast": "^2.4.1",
+    "superjson": "^2.2.1",
+    "tailwind-merge": "^2.5.4",
+    "zod": "^3.23.8"
   },
   "devDependencies": {
-    "@types/node": "22.7.7",
+    "@types/jsonwebtoken": "^9.0.7",
+    "@types/node": "22.7.8",
     "@types/react": "18.3.11",
     "@types/react-dom": "18.3.1",
     "autoprefixer": "^10.4.20",
     "eslint": "^9.13.0",
-    "eslint-config-next": "^14.2.15",
+    "eslint-config-next": "^15.0.0",
     "eslint-config-prettier": "^9.1.0",
     "eslint-import-resolver-typescript": "^3.6.3",
     "eslint-plugin-import": "^2.31.0",
