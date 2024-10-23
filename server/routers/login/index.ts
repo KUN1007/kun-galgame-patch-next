@@ -1,6 +1,5 @@
 import { cookies } from 'next/headers'
 import { router, publicProcedure } from '~/lib/trpc'
-import { z } from 'zod'
 import { verify, hash } from '@node-rs/argon2'
 import { generateToken } from '~/server/utils/jwt'
 import { TRPCError } from '@trpc/server'
@@ -17,7 +16,8 @@ export const loginRouter = router({
     })
     if (!user) {
       throw new TRPCError({
-        code: 'FORBIDDEN'
+        code: 'NOT_FOUND',
+        message: '用户未找到'
       })
     }
 

@@ -9,7 +9,7 @@ const { z } = require('zod')
 /*eslint sort-keys: "error"*/
 const envSchema = z.object({
   KUN_DATABASE_URL: z.string().url(),
-  KUN_APP_ADDRESS: z.string(),
+  KUN_PATCH_ADDRESS: z.string(),
   JWT_ISS: z.string(),
   JWT_AUD: z.string(),
   JWT_SECRET: z.string(),
