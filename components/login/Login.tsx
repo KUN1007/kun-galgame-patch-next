@@ -6,11 +6,7 @@ import { zodResolver } from '@hookform/resolvers/zod'
 import { z } from 'zod'
 import { Input, Button, Divider, Link } from '@nextui-org/react'
 import { api } from '~/lib/trpc-client'
-
-const loginSchema = z.object({
-  name: z.string().email().or(z.string().min(1).max(17)),
-  password: z.string().min(6)
-})
+import { loginSchema } from '~/validations/login'
 
 type LoginFormData = z.infer<typeof loginSchema>
 
@@ -34,7 +30,7 @@ export const LoginForm: React.FC = () => {
       <Controller
         name="name"
         control={control}
-        render={({ field, fieldState: { error } }) => (
+        render={({ field, formState: { errors } }) => (
           <Input
             {...field}
             isRequired
@@ -42,7 +38,8 @@ export const LoginForm: React.FC = () => {
             type="text"
             variant="bordered"
             autoComplete="username"
-            errorMessage={error?.message}
+            isInvalid={!!errors.name}
+            errorMessage={errors.name?.message}
             className="mb-4"
           />
         )}
@@ -50,15 +47,16 @@ export const LoginForm: React.FC = () => {
       <Controller
         name="password"
         control={control}
-        render={({ field, fieldState: { error } }) => (
+        render={({ field, formState: { errors } }) => (
           <Input
             {...field}
             isRequired
             label="密码"
             type="password"
             variant="bordered"
+            isInvalid={!!errors.password}
             autoComplete="current-password"
-            errorMessage={error?.message}
+            errorMessage={errors.password?.message}
             className="mb-4"
           />
         )}
