@@ -1,7 +1,7 @@
 {
   "private": true,
   "scripts": {
-    "dev": "next dev --turbo",
+    "dev": "next dev --turbo --hostname=127.0.0.1 --port=2333",
     "build": "next build",
     "start": "next start",
     "lint": "pnpm lint",

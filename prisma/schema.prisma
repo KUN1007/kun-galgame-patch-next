@@ -165,6 +165,7 @@ model patch {
   introduction String   @default("") @db.VarChar(100007)
   status       Int      @default(0)
   view         Int      @default(0)
+  sell_time    Int      @default(0)
   type         String[]
   alias        String[]
   language     Language @default(OTHER)

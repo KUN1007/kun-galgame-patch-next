@@ -8,8 +8,8 @@ import { Input, Button } from '@nextui-org/react'
 import { api } from '~/lib/trpc-client'
 
 const loginSchema = z.object({
-  email: z.string().email(),
-  password: z.string().min(6)
+  name: z.string().email().or(z.string().min(1).max(17)),
+  password: z.string().min(6).default('')
 })
 
 type LoginFormData = z.infer<typeof loginSchema>
@@ -26,13 +26,14 @@ export const LoginForm: React.FC = () => {
   return (
     <form onSubmit={handleSubmit(onSubmit)}>
       <Controller
-        name="email"
+        name="name"
         control={control}
         render={({ field, fieldState: { error } }) => (
           <Input
             {...field}
-            label="Email"
-            type="email"
+            label="用户名或邮箱"
+            type="text"
+            autoComplete="username"
             errorMessage={error?.message}
           />
         )}
@@ -43,8 +44,9 @@ export const LoginForm: React.FC = () => {
         render={({ field, fieldState: { error } }) => (
           <Input
             {...field}
-            label="Password"
+            label="密码"
             type="password"
+            autoComplete="current-password"
             errorMessage={error?.message}
           />
         )}

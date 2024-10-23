@@ -8,21 +8,25 @@ import { Input, Button } from '@nextui-org/react'
 import { api } from '~/lib/trpc-client'
 
 const registerSchema = z.object({
-  name: z.string().min(1).max(17),
-  email: z.string().email(),
-  password: z.string().min(6).max(107)
+  name: z.string().min(1).max(17).default(''),
+  email: z.string().email().default(''),
+  password: z.string().min(6).max(107).default('')
 })
 
 type RegisterFormData = z.infer<typeof registerSchema>
 
 export const RegisterForm: React.FC = () => {
   const { control, handleSubmit } = useForm<RegisterFormData>({
-    resolver: zodResolver(registerSchema)
+    resolver: zodResolver(registerSchema),
+    defaultValues: {
+      name: '',
+      email: '',
+      password: ''
+    }
   })
 
   const onSubmit = async (data: RegisterFormData) => {
     await api.login.register.mutate(data)
-    // await api.auth.register.revalidate()
   }
 
   return (
@@ -35,6 +39,7 @@ export const RegisterForm: React.FC = () => {
             {...field}
             label="Name"
             type="name"
+            autoComplete="username"
             errorMessage={error?.message}
           />
         )}
@@ -47,6 +52,7 @@ export const RegisterForm: React.FC = () => {
             {...field}
             label="Email"
             type="email"
+            autoComplete="email"
             errorMessage={error?.message}
           />
         )}
@@ -59,6 +65,7 @@ export const RegisterForm: React.FC = () => {
             {...field}
             label="Password"
             type="password"
+            autoComplete="current-password"
             errorMessage={error?.message}
           />
         )}

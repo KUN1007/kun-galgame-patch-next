@@ -13,7 +13,7 @@ import type { AppRouter } from '~/server/routers/_app'
 function getBaseUrl() {
   if (typeof window !== 'undefined') return ''
   // if (process.env.VERCEL_URL) return `https://${process.env.VERCEL_URL}`
-  return 'http://localhost:3000'
+  return process.env.KUN_APP_ADDRESS
 }
 
 export function getUrl() {
