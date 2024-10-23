@@ -5,7 +5,7 @@ import { useForm, Controller } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { z } from 'zod'
 import { Input, Button, Divider, Link } from '@nextui-org/react'
-import { api } from '~/lib/trpc-client'
+import { api } from '~/trpc/react'
 
 const loginSchema = z.object({
   name: z.string().email().or(z.string().min(1).max(17)),
@@ -15,6 +15,8 @@ const loginSchema = z.object({
 type LoginFormData = z.infer<typeof loginSchema>
 
 export const LoginForm: React.FC = () => {
+  const utils = api.useUtils()
+
   const { control, handleSubmit } = useForm<LoginFormData>({
     resolver: zodResolver(loginSchema),
     defaultValues: {
@@ -23,14 +25,18 @@ export const LoginForm: React.FC = () => {
     }
   })
 
-  const onSubmit = async (data: LoginFormData) => {
-    // TODO:
-    const res = await api.login.login.mutate(data)
-    console.log(res)
-  }
+  const login = api.login.login.useMutation({
+    onSuccess: async () => {
+      // TODO:
+      await utils.login.invalidate()
+    }
+  })
 
   return (
-    <form onSubmit={handleSubmit(onSubmit)} className="w-72">
+    <form
+      onSubmit={handleSubmit((data) => login.mutate(data))}
+      className="w-72"
+    >
       <Controller
         name="name"
         control={control}

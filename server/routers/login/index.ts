@@ -1,10 +1,9 @@
-import { router, publicProcedure } from '~/lib/trpc'
+import { createTRPCRouter, publicProcedure } from '~/server/routers/trpc'
 import { z } from 'zod'
 import { verify, hash } from '@node-rs/argon2'
-import prisma from '~/prisma/index'
 import { generateToken } from '~/server/utils/jwt'
 
-export const loginRouter = router({
+export const loginRouter = createTRPCRouter({
   login: publicProcedure
     .input(
       z.object({
@@ -12,10 +11,10 @@ export const loginRouter = router({
         password: z.string()
       })
     )
-    .mutation(async ({ input }) => {
+    .mutation(async ({ ctx, input }) => {
       const { name, password } = input
 
-      const user = await prisma.user.findFirst({
+      const user = await ctx.prisma.user.findFirst({
         where: {
           OR: [{ email: name }, { name }]
         }
@@ -42,11 +41,11 @@ export const loginRouter = router({
         password: z.string().min(6).max(107)
       })
     )
-    .mutation(async ({ input }) => {
+    .mutation(async ({ ctx, input }) => {
       const { name, email, password } = input
       const hashedPassword = await hash(password)
 
-      const user = await prisma.user.create({
+      const user = await ctx.prisma.user.create({
         data: {
           name,
           email,

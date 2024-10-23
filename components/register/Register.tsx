@@ -5,7 +5,7 @@ import { useForm, Controller } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { z } from 'zod'
 import { Input, Button, Divider, Link, Checkbox } from '@nextui-org/react'
-import { api } from '~/lib/trpc-client'
+import { api } from '~/trpc/react'
 
 const registerSchema = z.object({
   name: z.string().min(1).max(17),
@@ -16,6 +16,8 @@ const registerSchema = z.object({
 type RegisterFormData = z.infer<typeof registerSchema>
 
 export const RegisterForm: React.FC = () => {
+  const utils = api.useUtils()
+
   const { control, handleSubmit } = useForm<RegisterFormData>({
     resolver: zodResolver(registerSchema),
     defaultValues: {
@@ -25,13 +27,16 @@ export const RegisterForm: React.FC = () => {
     }
   })
 
-  const onSubmit = async (data: RegisterFormData) => {
-    await api.login.register.mutate(data)
-  }
+  const register = api.login.register.useMutation({
+    onSuccess: async () => {
+      // TODO:
+      await utils.login.invalidate()
+    }
+  })
 
   return (
     <form
-      onSubmit={handleSubmit(onSubmit)}
+      onSubmit={handleSubmit((data) => register.mutate(data))}
       className="flex flex-col items-center justify-center w-72"
     >
       <Controller
