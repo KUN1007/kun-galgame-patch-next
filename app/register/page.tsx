@@ -8,14 +8,14 @@ import { Input, Button } from '@nextui-org/react'
 import { api } from '~/lib/trpc-client'
 
 const registerSchema = z.object({
-  name: z.string().min(1).max(17).default(''),
-  email: z.string().email().default(''),
-  password: z.string().min(6).max(107).default('')
+  name: z.string().min(1).max(17),
+  email: z.string().email(),
+  password: z.string().min(6).max(107)
 })
 
 type RegisterFormData = z.infer<typeof registerSchema>
 
-export const RegisterForm: React.FC = () => {
+const Register: React.FC = () => {
   const { control, handleSubmit } = useForm<RegisterFormData>({
     resolver: zodResolver(registerSchema),
     defaultValues: {
@@ -76,3 +76,5 @@ export const RegisterForm: React.FC = () => {
     </form>
   )
 }
+
+export default Register

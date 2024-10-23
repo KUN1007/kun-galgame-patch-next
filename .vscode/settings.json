@@ -13,6 +13,7 @@
     "tailwindcss",
     "tanstack",
     "trpc",
-    "turbopack"
+    "turbopack",
+    "webp"
   ]
 }

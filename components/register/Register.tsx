@@ -7,20 +7,26 @@ import { z } from 'zod'
 import { Input, Button } from '@nextui-org/react'
 import { api } from '~/lib/trpc-client'
 
-const loginSchema = z.object({
-  name: z.string().email().or(z.string().min(1).max(17)),
-  password: z.string().min(6).default('')
+const registerSchema = z.object({
+  name: z.string().min(1).max(17),
+  email: z.string().email(),
+  password: z.string().min(6).max(107)
 })
 
-type LoginFormData = z.infer<typeof loginSchema>
+type RegisterFormData = z.infer<typeof registerSchema>
 
-export const LoginForm: React.FC = () => {
-  const { control, handleSubmit } = useForm<LoginFormData>({
-    resolver: zodResolver(loginSchema)
+export const RegisterForm: React.FC = () => {
+  const { control, handleSubmit } = useForm<RegisterFormData>({
+    resolver: zodResolver(registerSchema),
+    defaultValues: {
+      name: '',
+      email: '',
+      password: ''
+    }
   })
 
-  const onSubmit = async (data: LoginFormData) => {
-    await api.login.login.mutate(data)
+  const onSubmit = async (data: RegisterFormData) => {
+    await api.login.register.mutate(data)
   }
 
   return (
@@ -31,9 +37,22 @@ export const LoginForm: React.FC = () => {
         render={({ field, fieldState: { error } }) => (
           <Input
             {...field}
-            label="用户名或邮箱"
-            type="text"
+            label="Name"
+            type="name"
             autoComplete="username"
+            errorMessage={error?.message}
+          />
+        )}
+      />
+      <Controller
+        name="email"
+        control={control}
+        render={({ field, fieldState: { error } }) => (
+          <Input
+            {...field}
+            label="Email"
+            type="email"
+            autoComplete="email"
             errorMessage={error?.message}
           />
         )}
@@ -44,7 +63,7 @@ export const LoginForm: React.FC = () => {
         render={({ field, fieldState: { error } }) => (
           <Input
             {...field}
-            label="密码"
+            label="Password"
             type="password"
             autoComplete="current-password"
             errorMessage={error?.message}
@@ -52,7 +71,7 @@ export const LoginForm: React.FC = () => {
         )}
       />
       <Button type="submit" color="primary">
-        Login
+        Register
       </Button>
     </form>
   )

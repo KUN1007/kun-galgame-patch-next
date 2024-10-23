@@ -10,8 +10,10 @@ export default function RootLayout({
   return (
     <html lang="zh-CN" suppressHydrationWarning>
       <body>
-        <Providers>{children}</Providers>
-        <Toaster />
+        <div className="flex flex-col items-center justify-center min-h-screen bg-gray-50">
+          <Providers>{children}</Providers>
+          <Toaster />
+        </div>
       </body>
     </html>
   )

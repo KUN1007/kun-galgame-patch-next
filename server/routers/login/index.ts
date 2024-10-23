@@ -24,14 +24,14 @@ export const loginRouter = router({
         return '用户未找到'
       }
 
-      const isPasswordValid = await verify(password, user.password)
+      const isPasswordValid = await verify(user.password, password)
       if (!isPasswordValid) {
         return '用户密码错误'
       }
 
       const token = generateToken(user.id, user.name, '30d')
 
-      return { token }
+      return token
     }),
 
   register: publicProcedure
@@ -56,6 +56,6 @@ export const loginRouter = router({
 
       const token = generateToken(user.id, name, '30d')
 
-      return { token }
+      return token
     })
 })
