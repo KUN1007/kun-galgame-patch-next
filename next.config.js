@@ -1,6 +1,6 @@
 // @ts-check
 /* eslint-disable @typescript-eslint/no-var-requires */
-const { env } = require('./server/env')
+const { env } = require('./validations/dotenv-check')
 
 /**
  * Don't be scared of the generics here.

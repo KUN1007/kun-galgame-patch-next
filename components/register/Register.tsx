@@ -6,12 +6,7 @@ import { zodResolver } from '@hookform/resolvers/zod'
 import { z } from 'zod'
 import { Input, Button, Divider, Link, Checkbox } from '@nextui-org/react'
 import { api } from '~/lib/trpc-client'
-
-const registerSchema = z.object({
-  name: z.string().min(1).max(17),
-  email: z.string().email(),
-  password: z.string().min(6).max(107)
-})
+import { registerSchema } from '~/validations/login'
 
 type RegisterFormData = z.infer<typeof registerSchema>
 

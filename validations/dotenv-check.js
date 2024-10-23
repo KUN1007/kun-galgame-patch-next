@@ -9,6 +9,10 @@ const { z } = require('zod')
 /*eslint sort-keys: "error"*/
 const envSchema = z.object({
   KUN_DATABASE_URL: z.string().url(),
+  KUN_APP_ADDRESS: z.string(),
+  JWT_ISS: z.string(),
+  JWT_AUD: z.string(),
+  JWT_SECRET: z.string(),
   NODE_ENV: z.enum(['development', 'test', 'production'])
 })
 
@@ -20,4 +24,5 @@ if (!env.success) {
       JSON.stringify(env.error.format(), null, 4)
   )
 }
+
 module.exports.env = env.data

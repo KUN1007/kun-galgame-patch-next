@@ -4,7 +4,7 @@ import { z } from 'zod'
 import { verify, hash } from '@node-rs/argon2'
 import { generateToken } from '~/server/utils/jwt'
 import { TRPCError } from '@trpc/server'
-import { loginSchema } from '~/validations/login'
+import { loginSchema, registerSchema } from '~/validations/login'
 
 export const loginRouter = router({
   login: publicProcedure.input(loginSchema).mutation(async ({ ctx, input }) => {
@@ -38,13 +38,7 @@ export const loginRouter = router({
   }),
 
   register: publicProcedure
-    .input(
-      z.object({
-        name: z.string().min(1).max(17),
-        email: z.string().email(),
-        password: z.string().min(6).max(107)
-      })
-    )
+    .input(registerSchema)
     .mutation(async ({ ctx, input }) => {
       const { name, email, password } = input
       const hashedPassword = await hash(password)
