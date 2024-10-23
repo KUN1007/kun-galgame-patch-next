@@ -64,7 +64,7 @@ export const LoginForm: React.FC = () => {
         )}
       />
       <Button type="submit" color="primary" className="w-full">
-        Login
+        登录
       </Button>
 
       <div className="flex items-center justify-center overflow-hidden w-72">

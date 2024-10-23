@@ -4,7 +4,7 @@ import React from 'react'
 import { useForm, Controller } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { z } from 'zod'
-import { Input, Button } from '@nextui-org/react'
+import { Input, Button, Divider, Link, Checkbox } from '@nextui-org/react'
 import { api } from '~/lib/trpc-client'
 
 const registerSchema = z.object({
@@ -30,17 +30,23 @@ export const RegisterForm: React.FC = () => {
   }
 
   return (
-    <form onSubmit={handleSubmit(onSubmit)}>
+    <form
+      onSubmit={handleSubmit(onSubmit)}
+      className="flex flex-col items-center justify-center w-72"
+    >
       <Controller
         name="name"
         control={control}
         render={({ field, fieldState: { error } }) => (
           <Input
             {...field}
-            label="Name"
+            isRequired
+            label="用户名"
             type="name"
+            variant="bordered"
             autoComplete="username"
             errorMessage={error?.message}
+            className="mb-4"
           />
         )}
       />
@@ -50,10 +56,13 @@ export const RegisterForm: React.FC = () => {
         render={({ field, fieldState: { error } }) => (
           <Input
             {...field}
-            label="Email"
+            isRequired
+            label="邮箱"
             type="email"
+            variant="bordered"
             autoComplete="email"
             errorMessage={error?.message}
+            className="mb-4"
           />
         )}
       />
@@ -63,16 +72,40 @@ export const RegisterForm: React.FC = () => {
         render={({ field, fieldState: { error } }) => (
           <Input
             {...field}
-            label="Password"
+            isRequired
+            label="密码"
             type="password"
+            variant="bordered"
             autoComplete="current-password"
             errorMessage={error?.message}
+            className="mb-4"
           />
         )}
       />
-      <Button type="submit" color="primary">
-        Register
+
+      <Checkbox className="mb-2">
+        <span>我同意</span>
+        <Link>鲲 Galgame 补丁用户协议</Link>
+      </Checkbox>
+
+      <Button type="submit" color="primary" className="w-full">
+        注册
       </Button>
+
+      <div className="flex items-center justify-center overflow-hidden w-72">
+        <Divider className="my-8" />
+        <span className="mx-4">或</span>
+        <Divider className="my-8" />
+      </div>
+
+      <Button color="primary" variant="bordered" className="w-full mb-4">
+        忘记密码
+      </Button>
+
+      <div className="flex items-center">
+        <span className="mr-2">已经有账号了?</span>
+        <Link href="/login">登录账号</Link>
+      </div>
     </form>
   )
 }
