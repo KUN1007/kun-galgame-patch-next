@@ -7,11 +7,15 @@ import { z } from 'zod'
 import { Input, Button, Divider, Link } from '@nextui-org/react'
 import { api } from '~/lib/trpc-client'
 import { loginSchema } from '~/validations/login'
+import { useUserStore } from '~/store/userStore'
+import { useErrorHandler } from '~/hooks/useErrorHandler'
 
 type LoginFormData = z.infer<typeof loginSchema>
 
 export const LoginForm: React.FC = () => {
-  const { control, handleSubmit } = useForm<LoginFormData>({
+  const userStore = useUserStore()
+
+  const { control, handleSubmit, reset } = useForm<LoginFormData>({
     resolver: zodResolver(loginSchema),
     defaultValues: {
       name: '',
@@ -20,9 +24,11 @@ export const LoginForm: React.FC = () => {
   })
 
   const onSubmit = async (data: LoginFormData) => {
-    // TODO:
     const res = await api.login.login.mutate(data)
-    console.log(res)
+    useErrorHandler(res, (value) => {
+      userStore.login(value)
+      reset()
+    })
   }
 
   return (

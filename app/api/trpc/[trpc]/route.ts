@@ -11,10 +11,7 @@ const handler = (req: NextRequest) =>
     endpoint: '/api/trpc',
     req,
     router: appRouter,
-    createContext,
-    onError: ({ path, error }) => {
-      console.error('Error:', error)
-    }
+    createContext
   })
 
 export { handler as GET, handler as POST }
