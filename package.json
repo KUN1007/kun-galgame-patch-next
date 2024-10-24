@@ -15,6 +15,7 @@
   ],
   "dependencies": {
     "@hookform/resolvers": "^3.9.0",
+    "@js-temporal/polyfill": "^0.4.4",
     "@nextui-org/react": "^2.4.8",
     "@node-rs/argon2": "^2.0.0",
     "@prisma/client": "^5.21.1",
@@ -36,9 +37,11 @@
     "react-hot-toast": "^2.4.1",
     "superjson": "^2.2.1",
     "tailwind-merge": "^2.5.4",
-    "zod": "^3.23.8"
+    "zod": "^3.23.8",
+    "zustand": "^5.0.0"
   },
   "devDependencies": {
+    "@tanstack/react-query-devtools": "^5.59.16",
     "@types/jsonwebtoken": "^9.0.7",
     "@types/node": "22.7.8",
     "@types/react": "18.3.11",

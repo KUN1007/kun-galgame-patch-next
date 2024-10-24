@@ -1,5 +1,5 @@
-import { router } from '~/lib/trpc'
-import { loginRouter } from './login/index'
+import { router } from './trpc'
+import { loginRouter } from '~/server/routers/login/index'
 
 export const appRouter = router({
   login: loginRouter

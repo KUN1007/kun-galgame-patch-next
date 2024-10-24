@@ -1,9 +1,10 @@
 import { cookies } from 'next/headers'
-import { router, publicProcedure, privateProcedure } from '~/lib/trpc'
+import { router, publicProcedure } from '~/lib/trpc'
 import { verify, hash } from '@node-rs/argon2'
 import { generateKunToken } from '~/server/utils/jwt'
 import { TRPCError } from '@trpc/server'
 import { loginSchema, registerSchema } from '~/validations/login'
+import type { UserStore } from '~/store/userStore'
 
 export const loginRouter = router({
   login: publicProcedure.input(loginSchema).mutation(async ({ ctx, input }) => {
@@ -23,7 +24,10 @@ export const loginRouter = router({
 
     const isPasswordValid = await verify(user.password, password)
     if (!isPasswordValid) {
-      return '用户密码错误'
+      throw new TRPCError({
+        code: 'NOT_FOUND',
+        message: '用户密码错误'
+      })
     }
 
     const token = await generateKunToken(user.id, user.name, '30d')
@@ -34,7 +38,15 @@ export const loginRouter = router({
       maxAge: 30 * 24 * 60 * 60 * 1000
     })
 
-    return token
+    const responseData: UserStore = {
+      uid: user.id,
+      name: user.name,
+      email: user.email,
+      avatar: user.avatar,
+      moemoepoint: user.moemoepoint
+    }
+
+    return responseData
   }),
 
   register: publicProcedure
@@ -59,6 +71,14 @@ export const loginRouter = router({
         maxAge: 30 * 24 * 60 * 60 * 1000
       })
 
-      return token
+      const responseData: UserStore = {
+        uid: user.id,
+        name: user.name,
+        email: user.email,
+        avatar: user.avatar,
+        moemoepoint: user.moemoepoint
+      }
+
+      return responseData
     })
 })

@@ -14,7 +14,7 @@ export const KunTopBar = () => {
     <Navbar>
       <NavbarBrand>
         <img src="/favicon.webp" alt="鲲 Galgame 补丁" width={50} height={50} />
-        <p className="ml-2 font-bold text-inherit">ACME</p>
+        <p className="ml-2 font-bold text-inherit">Patch</p>
       </NavbarBrand>
       <NavbarContent className="hidden gap-4 sm:flex" justify="center">
         <NavbarItem>

@@ -5,7 +5,7 @@ import { useForm, Controller } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { z } from 'zod'
 import { Input, Button, Divider, Link, Checkbox } from '@nextui-org/react'
-import { api } from '~/lib/trpc-client'
+import { api } from '~/trpc/trpc-client'
 import { registerSchema } from '~/validations/login'
 
 type RegisterFormData = z.infer<typeof registerSchema>

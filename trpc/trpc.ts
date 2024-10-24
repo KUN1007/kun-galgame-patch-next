@@ -1,12 +1,12 @@
 import { initTRPC, TRPCError } from '@trpc/server'
-import superjson from 'superjson'
+import { transformer } from './shared'
 import { ZodError } from 'zod'
-import { createContext } from '~/server/context'
+import { createContext } from './context'
 import { verifyKunToken } from '~/server/utils/jwt'
 import { parseCookies } from '~/utils/cookies'
 
 const t = initTRPC.context<typeof createContext>().create({
-  transformer: superjson,
+  transformer,
   errorFormatter({ shape, error }) {
     return {
       ...shape,
@@ -39,5 +39,6 @@ const authMiddleware = middleware(async ({ ctx, next }) => {
 })
 
 export const router = t.router
+export const createCallerFactory = t.createCallerFactory
 export const publicProcedure = t.procedure
 export const privateProcedure = t.procedure.use(authMiddleware)

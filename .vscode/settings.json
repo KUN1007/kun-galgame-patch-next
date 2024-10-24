@@ -4,6 +4,7 @@
     "clsx",
     "Galgame",
     "hookform",
+    "moemoepoint",
     "nextui",
     "optimizelegibility",
     "pnpx",
@@ -16,6 +17,7 @@
     "trpc",
     "turbopack",
     "unstorage",
-    "webp"
+    "webp",
+    "zustand"
   ]
 }
