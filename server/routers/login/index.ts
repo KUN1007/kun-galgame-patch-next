@@ -1,7 +1,7 @@
 import { cookies } from 'next/headers'
-import { router, publicProcedure } from '~/lib/trpc'
+import { router, publicProcedure, privateProcedure } from '~/lib/trpc'
 import { verify, hash } from '@node-rs/argon2'
-import { generateToken } from '~/server/utils/jwt'
+import { generateKunToken } from '~/server/utils/jwt'
 import { TRPCError } from '@trpc/server'
 import { loginSchema, registerSchema } from '~/validations/login'
 
@@ -26,7 +26,7 @@ export const loginRouter = router({
       return '用户密码错误'
     }
 
-    const token = generateToken(user.id, user.name, '30d')
+    const token = await generateKunToken(user.id, user.name, '30d')
     const cookie = await cookies()
     cookie.set('kun-galgame-patch-moe-token', token, {
       httpOnly: true,
@@ -51,7 +51,7 @@ export const loginRouter = router({
         }
       })
 
-      const token = generateToken(user.id, name, '30d')
+      const token = await generateKunToken(user.id, name, '30d')
       const cookie = await cookies()
       cookie.set('kun-galgame-patch-moe-token', token, {
         httpOnly: true,

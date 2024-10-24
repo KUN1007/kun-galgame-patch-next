@@ -25,6 +25,7 @@
     "@trpc/server": "11.0.0-rc.593",
     "clsx": "^2.1.1",
     "framer-motion": "^11.11.9",
+    "ioredis": "^5.4.1",
     "jsonwebtoken": "^9.0.2",
     "next": "15.0.1-canary.1",
     "next-nprogress-bar": "^2.3.14",

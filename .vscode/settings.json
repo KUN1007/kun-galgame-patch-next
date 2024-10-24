@@ -8,12 +8,14 @@
     "optimizelegibility",
     "pnpx",
     "quicky",
+    "setex",
     "stylelint",
     "superjson",
     "tailwindcss",
     "tanstack",
     "trpc",
     "turbopack",
+    "unstorage",
     "webp"
   ]
 }

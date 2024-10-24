@@ -80,7 +80,7 @@ export const RegisterForm: React.FC = () => {
 
       <Checkbox className="mb-2">
         <span>我同意</span>
-        <Link>鲲 Galgame 补丁用户协议</Link>
+        <Link className="ml-1">鲲 Galgame 补丁用户协议</Link>
       </Checkbox>
 
       <Button type="submit" color="primary" className="w-full">
