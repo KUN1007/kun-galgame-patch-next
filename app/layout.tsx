@@ -1,7 +1,9 @@
 import { Toaster } from 'react-hot-toast'
 import { Providers } from './providers'
 import { KunTopBar } from '~/components/kun/TopBar'
+import '@milkdown/crepe/theme/common/style.css'
 import '~/styles/index.css'
+import '~/styles/crepe.css'
 
 export default function RootLayout({
   children
