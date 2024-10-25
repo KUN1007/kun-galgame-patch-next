@@ -22,7 +22,7 @@ export const registerSchema = z.object({
   }),
   email: z
     .string({ message: '用户名应为字符' })
-    .email({ message: '请输入合法的邮箱格式, 用户名则应为 1~17 位任意字符' })
+    .email({ message: '请输入合法的邮箱格式' })
     .or(
       z.string().regex(kunUsernameRegex, {
         message: '非法的用户名，用户名为 1~17 位任意字符'

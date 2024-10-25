@@ -32,7 +32,7 @@ export const RegisterForm: React.FC = () => {
       <Controller
         name="name"
         control={control}
-        render={({ field, fieldState: { error } }) => (
+        render={({ field, formState: { errors } }) => (
           <Input
             {...field}
             isRequired
@@ -40,7 +40,8 @@ export const RegisterForm: React.FC = () => {
             type="name"
             variant="bordered"
             autoComplete="username"
-            errorMessage={error?.message}
+            isInvalid={!!errors.name}
+            errorMessage={errors.name?.message}
             className="mb-4"
           />
         )}
@@ -48,7 +49,7 @@ export const RegisterForm: React.FC = () => {
       <Controller
         name="email"
         control={control}
-        render={({ field, fieldState: { error } }) => (
+        render={({ field, formState: { errors } }) => (
           <Input
             {...field}
             isRequired
@@ -56,7 +57,8 @@ export const RegisterForm: React.FC = () => {
             type="email"
             variant="bordered"
             autoComplete="email"
-            errorMessage={error?.message}
+            isInvalid={!!errors.email}
+            errorMessage={errors.email?.message}
             className="mb-4"
           />
         )}
@@ -64,7 +66,7 @@ export const RegisterForm: React.FC = () => {
       <Controller
         name="password"
         control={control}
-        render={({ field, fieldState: { error } }) => (
+        render={({ field, formState: { errors } }) => (
           <Input
             {...field}
             isRequired
@@ -72,7 +74,8 @@ export const RegisterForm: React.FC = () => {
             type="password"
             variant="bordered"
             autoComplete="current-password"
-            errorMessage={error?.message}
+            isInvalid={!!errors.password}
+            errorMessage={errors.password?.message}
             className="mb-4"
           />
         )}
