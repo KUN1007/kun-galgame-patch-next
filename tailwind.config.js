@@ -13,6 +13,9 @@ const config = {
     extend: {}
   },
   darkMode: 'class',
+  future: {
+    hoverOnlyWhenSupported: true
+  },
   plugins: [nextui()]
 }
 
