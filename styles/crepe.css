@@ -1,3 +1,11 @@
+div[data-milkdown-root='true'] {
+  @apply h-full;
+}
+
+.milkdown {
+  @apply h-full;
+}
+
 .milkdown milkdown-slash-menu .tab-group {
   @apply !pb-3;
 }
@@ -14,6 +22,10 @@
 
 .crepe .milkdown {
   display: flow-root;
+
+  ::-webkit-scrollbar {
+    width: 0;
+  }
 }
 
 div:not(.expanded) .crepe .milkdown .ProseMirror {
@@ -347,7 +359,7 @@ div:not(.expanded) .crepe .milkdown .ProseMirror {
   height: 100%;
   flex: 1;
 
-  --crepe-color-background: #fdfcff;
+  --crepe-color-background: #fff;
   --crepe-color-on-background: #1b1c1d;
   --crepe-color-surface: #f8f9ff;
   --crepe-color-surface-low: #f2f3fa;

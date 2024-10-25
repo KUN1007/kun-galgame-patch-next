@@ -22,7 +22,9 @@ const CrepeEditor: FC<MilkdownProps> = ({ onChange }) => {
   const setCrepeAPI = useStore((state) => state.setCrepeAPI)
 
   useLayoutEffect(() => {
-    if (!divRef.current || loading.current) return
+    if (!divRef.current || loading.current || crepeRef.current) {
+      return
+    }
 
     loading.current = true
     const crepe = new Crepe({
@@ -99,7 +101,7 @@ const CrepeEditor: FC<MilkdownProps> = ({ onChange }) => {
     }
   }, [content, onChange, setCrepeAPI, toast])
 
-  return <div className="flex flex-col flex-1 h-full crepe" ref={divRef} />
+  return <div className="flex flex-col w-full h-full crepe" ref={divRef} />
 }
 
 export default CrepeEditor
