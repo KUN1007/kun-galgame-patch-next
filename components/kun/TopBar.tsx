@@ -23,7 +23,7 @@ export const KunTopBar = () => {
           </Link>
         </NavbarItem>
         <NavbarItem isActive>
-          <Link href="#" aria-current="page">
+          <Link href="/edit" aria-current="page">
             发布补丁
           </Link>
         </NavbarItem>

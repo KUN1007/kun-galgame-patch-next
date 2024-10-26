@@ -1,5 +1,7 @@
 {
   "cSpell.words": [
+    "atrule",
+    "automd",
     "classname",
     "clsx",
     "CMAPI",
@@ -7,6 +9,9 @@
     "commonmark",
     "Galgame",
     "hookform",
+    "katex",
+    "kungalgame",
+    "lucide",
     "moemoepoint",
     "nextui",
     "nord",
@@ -22,6 +27,7 @@
     "trpc",
     "turbopack",
     "unstorage",
+    "vndb",
     "webp",
     "zustand"
   ]

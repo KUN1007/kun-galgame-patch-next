@@ -1,5 +1,3 @@
-'use client'
-
 import React from 'react'
 import { useForm, Controller } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
@@ -25,10 +23,7 @@ export const RegisterForm: React.FC = () => {
   }
 
   return (
-    <form
-      onSubmit={handleSubmit(onSubmit)}
-      className="flex flex-col items-center justify-center w-72"
-    >
+    <form onSubmit={handleSubmit(onSubmit)} className="flex flex-col w-72">
       <Controller
         name="name"
         control={control}
