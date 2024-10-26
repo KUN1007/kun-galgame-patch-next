@@ -11,6 +11,7 @@
     "hookform",
     "katex",
     "kungalgame",
+    "localforage",
     "lucide",
     "moemoepoint",
     "nextui",
@@ -30,5 +31,6 @@
     "vndb",
     "webp",
     "zustand"
-  ]
+  ],
+  "editor.guides.bracketPairs": "active"
 }

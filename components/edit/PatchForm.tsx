@@ -1,119 +1,132 @@
-import React, { useState } from 'react'
+import React, { useState, useEffect } from 'react'
 import {
   Button,
   Card,
   CardBody,
   CardHeader,
   Input,
-  Textarea,
   Chip,
   Link
 } from '@nextui-org/react'
+import localforage from 'localforage'
 import { Upload, Plus } from 'lucide-react'
+import { useEditorStore } from '~/store/editorStore'
+import { useEditStore } from '~/store/editStore'
 import { cn } from '~/utils/cn'
 import { Editor } from '~/components/edit/MilkdownEditor'
+import toast from 'react-hot-toast'
+import { api } from '~/lib/trpc-client'
+import { useErrorHandler } from '~/hooks/useErrorHandler'
+import { patchSchema } from '~/validations/edit'
+import type { PatchFormData } from '~/store/editStore'
 
-interface PatchFormData {
-  banner: File | null
-  name: string
-  vndb_id: string
+type PatchFormRequestData = PatchFormData & {
+  banner: Blob | null
   introduction: string
-  alias: string[]
 }
 
 export const PatchSubmissionForm = () => {
-  const [formData, setFormData] = useState<PatchFormData>({
-    banner: null,
-    name: '',
-    vndb_id: '',
-    introduction: '',
-    alias: []
-  })
-  const [previewUrl, setPreviewUrl] = useState<string>('')
+  const { markdown } = useEditorStore()
+  const { data, setData, resetData } = useEditStore()
+  const [banner, setBanner] = useState<Blob | null>(null)
   const [newAlias, setNewAlias] = useState<string>('')
   const [isDragging, setIsDragging] = useState(false)
+  const [previewUrl, setPreviewUrl] = useState<string>('')
+  const [errors, setErrors] = useState<
+    Partial<Record<keyof PatchFormRequestData, string>>
+  >({})
 
-  const handleBannerChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+  useEffect(() => {
+    const fetchData = async () => {
+      const localeBannerBlob: Blob | null =
+        await localforage.getItem('kun-patch-banner')
+      setBanner(localeBannerBlob)
+      if (localeBannerBlob) {
+        setPreviewUrl(URL.createObjectURL(localeBannerBlob))
+      }
+    }
+    fetchData()
+  }, [])
+
+  const handleBannerChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0]
     if (file) {
-      setFormData({ ...formData, banner: file })
+      await localforage.setItem('kun-patch-banner', file)
+      setBanner(file)
       setPreviewUrl(URL.createObjectURL(file))
     }
   }
 
-  const handleDrop = (e: React.DragEvent) => {
+  const removeBanner = async () => {
+    await localforage.removeItem('kun-patch-banner')
+    setBanner(null)
+    setPreviewUrl('')
+  }
+
+  const handleDrop = async (e: React.DragEvent) => {
     e.preventDefault()
     setIsDragging(false)
     const file = e.dataTransfer.files[0]
     if (file && file.type.startsWith('image/')) {
-      setFormData({ ...formData, banner: file })
+      await localforage.setItem('kun-patch-banner', file)
+      setBanner(file)
       setPreviewUrl(URL.createObjectURL(file))
     }
   }
 
-  const handleDragOver = (e: React.DragEvent) => {
-    e.preventDefault()
-    setIsDragging(true)
-  }
-
-  const handleDragLeave = () => {
-    setIsDragging(false)
-  }
-
   const addAlias = () => {
-    if (newAlias.trim() && !formData.alias.includes(newAlias.trim())) {
-      setFormData({
-        ...formData,
-        alias: [...formData.alias, newAlias.trim()]
-      })
+    const alias = newAlias.trim().toLowerCase()
+    if (data.alias.includes(alias)) {
+      toast.error('请不要使用重复的别名')
+      return
+    }
+    if (newAlias.trim()) {
+      setData({ ...data, alias: [...data.alias, alias] })
       setNewAlias('')
     }
   }
 
   const removeAlias = (index: number) => {
-    setFormData({
-      ...formData,
-      alias: formData.alias.filter((_, i) => i !== index)
+    setData({
+      ...data,
+      alias: data.alias.filter((_, i) => i !== index)
     })
   }
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
 
-    const formDataToSend = new FormData()
-    if (formData.banner) {
-      formDataToSend.append('banner', formData.banner)
-    }
-    formDataToSend.append('name', formData.name)
-    formDataToSend.append('vndb_id', formData.vndb_id)
-    formDataToSend.append('introduction', formData.introduction)
-    formDataToSend.append('alias', JSON.stringify(formData.alias))
-
-    try {
-      // Replace with your actual API endpoint
-      const response = await fetch('/api/submit-patch', {
-        method: 'POST',
-        body: formDataToSend
+    const result = patchSchema.safeParse({
+      ...data,
+      banner,
+      introduction: markdown
+    })
+    if (!result.success) {
+      const newErrors: Partial<Record<keyof PatchFormRequestData, string>> = {}
+      result.error.errors.forEach((err) => {
+        if (err.path.length) {
+          newErrors[err.path[0] as keyof PatchFormRequestData] = err.message
+          toast.error(err.message)
+        }
       })
-
-      if (response.ok) {
-        alert('补丁信息提交成功！')
-        // Reset form
-        setFormData({
-          banner: null,
-          name: '',
-          vndb_id: '',
-          introduction: '',
-          alias: []
-        })
-        setPreviewUrl('')
-      } else {
-        throw new Error('提交失败')
-      }
-    } catch (error) {
-      alert('提交失败，请重试')
-      console.error('Error:', error)
+      setErrors(newErrors)
+      return
+    } else {
+      setErrors({})
     }
+
+    const formDataToSend = new FormData()
+    formDataToSend.append('banner', banner!)
+    formDataToSend.append('name', data.name)
+    formDataToSend.append('vndbId', data.vndbId)
+    formDataToSend.append('introduction', markdown)
+    formDataToSend.append('alias', JSON.stringify(data.alias))
+
+    // const res = await api.login.login.mutate(data)
+    // useErrorHandler(res, (value) => {
+    //   resetData()
+    //   setPreviewUrl('')
+    // })
   }
 
   return (
@@ -129,33 +142,35 @@ export const PatchSubmissionForm = () => {
         </CardHeader>
         <CardBody className="gap-4 mt-2">
           <p className="text-sm font-bold">预览图片</p>
-          {/* Banner Upload */}
+          {errors.banner && (
+            <p className="text-xs text-red-500">{errors.banner}</p>
+          )}
           <div
             className={cn(
               'border-2 border-dashed rounded-lg p-4 text-center transition-colors  mb-4',
               isDragging ? 'border-primary bg-primary/10' : 'border-gray-300',
-              previewUrl ? 'h-[300px]' : 'h-[200px]'
+              previewUrl ? 'h-full' : 'h-[200px]'
             )}
             onDrop={handleDrop}
-            onDragOver={handleDragOver}
-            onDragLeave={handleDragLeave}
+            onDragOver={(event) => {
+              event.preventDefault()
+              setIsDragging(true)
+            }}
+            onDragLeave={() => setIsDragging(false)}
           >
             {previewUrl ? (
               <div className="relative h-full">
                 <img
                   src={previewUrl}
                   alt="Banner preview"
-                  className="object-contain w-full h-full"
+                  className="object-contain w-full h-full max-h-[512px]"
                 />
                 <Button
                   color="danger"
-                  variant="flat"
+                  variant="bordered"
                   size="sm"
                   className="absolute top-2 right-2"
-                  onClick={() => {
-                    setPreviewUrl('')
-                    setFormData({ ...formData, banner: null })
-                  }}
+                  onClick={removeBanner}
                 >
                   移除
                 </Button>
@@ -168,7 +183,7 @@ export const PatchSubmissionForm = () => {
                   <Button color="primary" variant="flat" as="span">
                     选择文件
                   </Button>
-                  <input
+                  <Input
                     type="file"
                     className="hidden"
                     accept="image/*"
@@ -179,20 +194,19 @@ export const PatchSubmissionForm = () => {
             )}
           </div>
 
-          {/* Name Input */}
           <Input
             isRequired
+            className="mb-4"
             variant="underlined"
             labelPlacement="outside"
             label="游戏名称"
             placeholder="输入游戏名称, 这会作为游戏的标题"
-            value={formData.name}
-            onChange={(e) => setFormData({ ...formData, name: e.target.value })}
-            required
-            className="mb-4"
+            value={data.name}
+            onChange={(e) => setData({ ...data, name: e.target.value })}
+            isInvalid={!!errors.name}
+            errorMessage={errors.name}
           />
 
-          {/* VNDB ID Input */}
           <div className="flex flex-col w-full gap-2 mb-4">
             <Input
               isRequired
@@ -200,14 +214,13 @@ export const PatchSubmissionForm = () => {
               labelPlacement="outside"
               label="VNDB ID"
               placeholder="请输入 VNDB ID, 例如 v19658"
-              value={formData.vndb_id}
-              onChange={(e) =>
-                setFormData({ ...formData, vndb_id: e.target.value })
-              }
-              required
+              value={data.vndbId}
+              onChange={(e) => setData({ ...data, vndbId: e.target.value })}
+              isInvalid={!!errors.vndbId}
+              errorMessage={errors.vndbId}
             />
             <p className="text-sm ">
-              VNDB ID 需要 VNDB 官网 (vndb.org)
+              提示: VNDB ID 需要 VNDB 官网 (vndb.org)
               获取，当进入对应游戏的页面，游戏页面的 URL (形如
               https://vndb.org/v19658) 中的 v19658 就是 VNDB ID
             </p>
@@ -224,11 +237,12 @@ export const PatchSubmissionForm = () => {
             </div>
           </div>
 
-          {/* Introduction Textarea */}
           <p className="text-sm font-bold">游戏介绍</p>
+          {errors.introduction && (
+            <p className="text-xs text-red-500">{errors.introduction}</p>
+          )}
           <Editor />
 
-          {/* Alias Input */}
           <div className="space-y-2">
             <div className="flex gap-2">
               <Input
@@ -238,6 +252,11 @@ export const PatchSubmissionForm = () => {
                 value={newAlias}
                 onChange={(e) => setNewAlias(e.target.value)}
                 className="flex-1"
+                isInvalid={!!errors.alias}
+                errorMessage={errors.alias}
+                onKeyDown={(event) => {
+                  if (event.key === 'Enter') addAlias()
+                }}
               />
               <Button
                 color="primary"
@@ -249,7 +268,7 @@ export const PatchSubmissionForm = () => {
               </Button>
             </div>
             <div className="flex flex-wrap gap-2 mt-2">
-              {formData.alias.map((alias, index) => (
+              {data.alias.map((alias, index) => (
                 <Chip
                   key={index}
                   onClose={() => removeAlias(index)}

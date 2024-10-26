@@ -8,7 +8,7 @@ import { Selection } from '@milkdown/kit/prose/state'
 import { getMarkdown } from '@milkdown/kit/utils'
 import { throttle } from '~/utils/throttle'
 import { FC, MutableRefObject, useLayoutEffect, useRef } from 'react'
-import { useStore } from './atom'
+import { useEditorStore } from '~/store/editorStore'
 
 interface MilkdownProps {
   onChange: (markdown: string) => void
@@ -18,8 +18,8 @@ const CrepeEditor: FC<MilkdownProps> = ({ onChange }) => {
   const crepeRef = useRef<Crepe>(null)
   const divRef = useRef<HTMLDivElement>(null)
   const loading = useRef(false)
-  const content = useStore((state) => state.markdown)
-  const setCrepeAPI = useStore((state) => state.setCrepeAPI)
+  const content = useEditorStore((state) => state.markdown)
+  const setCrepeAPI = useEditorStore((state) => state.setCrepeAPI)
 
   useLayoutEffect(() => {
     if (!divRef.current || loading.current || crepeRef.current) {
@@ -101,7 +101,13 @@ const CrepeEditor: FC<MilkdownProps> = ({ onChange }) => {
     }
   }, [content, onChange, setCrepeAPI, toast])
 
-  return <div className="flex flex-col w-full h-full crepe" ref={divRef} />
+  return (
+    <div
+      onClick={(e) => e.preventDefault()}
+      className="flex flex-col w-full h-full crepe"
+      ref={divRef}
+    />
+  )
 }
 
 export default CrepeEditor

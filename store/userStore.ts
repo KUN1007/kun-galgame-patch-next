@@ -1,5 +1,6 @@
 import { create } from 'zustand'
 import { persist, createJSONStorage } from 'zustand/middleware'
+
 export interface UserStore {
   uid: number
   name: string
@@ -7,11 +8,13 @@ export interface UserStore {
   avatar: string
   moemoepoint: number
 }
+
 interface UserState {
   user: UserStore | null
   login: (user: UserStore) => void
   logout: () => void
 }
+
 const initialUserStore: UserStore = {
   uid: 0,
   name: '',
@@ -19,6 +22,7 @@ const initialUserStore: UserStore = {
   avatar: '',
   moemoepoint: 0
 }
+
 export const useUserStore = create<UserState>()(
   persist(
     (set) => ({
