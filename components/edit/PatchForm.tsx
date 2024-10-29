@@ -18,12 +18,7 @@ import toast from 'react-hot-toast'
 import { api } from '~/lib/trpc-client'
 import { useErrorHandler } from '~/hooks/useErrorHandler'
 import { patchSchema } from '~/validations/edit'
-import type { PatchFormData } from '~/store/editStore'
-
-type PatchFormRequestData = PatchFormData & {
-  banner: Blob | null
-  introduction: string
-}
+import type { PatchFormRequestData } from '~/store/editStore'
 
 export const PatchSubmissionForm = () => {
   const { markdown } = useEditorStore()
@@ -122,7 +117,7 @@ export const PatchSubmissionForm = () => {
     formDataToSend.append('introduction', markdown)
     formDataToSend.append('alias', JSON.stringify(data.alias))
 
-    // const res = await api.login.login.mutate(data)
+    const res = await api.edit.edit.mutate(formDataToSend)
     // useErrorHandler(res, (value) => {
     //   resetData()
     //   setPreviewUrl('')

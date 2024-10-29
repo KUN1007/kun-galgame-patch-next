@@ -1,7 +1,12 @@
 'use client'
 
 import superjson from 'superjson'
-import { loggerLink } from '@trpc/client'
+import {
+  loggerLink,
+  splitLink,
+  httpBatchLink,
+  isNonJsonSerializable
+} from '@trpc/client'
 import { observable } from '@trpc/server/observable'
 import { experimental_createTRPCNextAppDirClient } from '@trpc/next/app-dir/client'
 import { experimental_nextHttpLink } from '@trpc/next/app-dir/links/nextHttp'
@@ -40,14 +45,27 @@ export const api = experimental_createTRPCNextAppDirClient<AppRouter>({
           enabled: (op) => true
         }),
         errorHandlerLink,
-        experimental_nextHttpLink({
-          transformer: superjson,
-          url: `${getBaseUrl()}/api/trpc`,
-          headers() {
-            return {
-              'x-trpc-source': 'client'
+        splitLink({
+          condition: (op) => isNonJsonSerializable(op.input),
+          true: experimental_nextHttpLink({
+            // @ts-ignore
+            transformer: false,
+            url: `${getBaseUrl()}/api/trpc`,
+            headers() {
+              return {
+                'x-trpc-source': 'client'
+              }
             }
-          }
+          }),
+          false: httpBatchLink({
+            transformer: superjson,
+            url: `${getBaseUrl()}/api/trpc`,
+            headers() {
+              return {
+                'x-trpc-source': 'client'
+              }
+            }
+          })
         })
       ]
     }

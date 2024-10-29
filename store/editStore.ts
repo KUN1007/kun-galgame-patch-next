@@ -7,6 +7,11 @@ export interface PatchFormData {
   alias: string[]
 }
 
+export interface PatchFormRequestData extends PatchFormData {
+  banner: Blob | null
+  introduction: string
+}
+
 interface StoreState {
   data: PatchFormData
   setData: (data: PatchFormData) => void

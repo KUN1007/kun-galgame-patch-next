@@ -23,6 +23,7 @@
     "@trpc/next": "11.0.0-rc.593",
     "@trpc/react-query": "11.0.0-rc.593",
     "@trpc/server": "11.0.0-rc.593",
+    "aws-sdk": "^2.1691.0",
     "clsx": "^2.1.1",
     "framer-motion": "^11.11.9",
     "ioredis": "^5.4.1",
@@ -39,9 +40,11 @@
     "react-hot-toast": "^2.4.1",
     "react-spinners": "^0.14.1",
     "refractor": "^4.8.1",
+    "sharp": "^0.33.5",
     "superjson": "^2.2.1",
     "tailwind-merge": "^2.5.4",
     "zod": "^3.23.8",
+    "zod-form-data": "^2.0.2",
     "zustand": "^5.0.0"
   },
   "devDependencies": {
