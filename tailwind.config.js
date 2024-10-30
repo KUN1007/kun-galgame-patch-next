@@ -1,5 +1,6 @@
 // tailwind.config.js
 import { nextui } from '@nextui-org/react'
+import typography from '@tailwindcss/typography'
 
 /** @type {import('tailwindcss').Config} */
 const config = {
@@ -16,7 +17,7 @@ const config = {
   future: {
     hoverOnlyWhenSupported: true
   },
-  plugins: [nextui()]
+  plugins: [nextui(), typography]
 }
 
 export default config
