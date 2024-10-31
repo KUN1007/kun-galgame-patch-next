@@ -162,7 +162,7 @@ model patch {
   id           Int      @id @default(autoincrement())
   name         String   @db.VarChar(1007)
   vndb_id      String   @unique @db.VarChar(107)
-  banner       String   @db.VarChar(1007)
+  banner       String   @default("") @db.VarChar(1007)
   introduction String   @default("") @db.VarChar(100007)
   status       Int      @default(0)
   view         Int      @default(0)

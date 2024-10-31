@@ -18,10 +18,11 @@ import toast from 'react-hot-toast'
 import { api } from '~/lib/trpc-client'
 import { useErrorHandler } from '~/hooks/useErrorHandler'
 import { patchSchema } from '~/validations/edit'
+import { resizeImage } from './resizeImage'
 import type { PatchFormRequestData } from '~/store/editStore'
 
 export const PatchSubmissionForm = () => {
-  const { markdown } = useEditorStore()
+  const { markdown, setMarkdown } = useEditorStore()
   const { data, setData, resetData } = useEditStore()
   const [banner, setBanner] = useState<Blob | null>(null)
   const [newAlias, setNewAlias] = useState<string>('')
@@ -43,13 +44,20 @@ export const PatchSubmissionForm = () => {
     fetchData()
   }, [])
 
-  const handleBannerChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0]
-    if (file) {
-      await localforage.setItem('kun-patch-banner', file)
-      setBanner(file)
-      setPreviewUrl(URL.createObjectURL(file))
+  const setBannerFile = async (file: File | undefined) => {
+    if (!file) {
+      toast.error('未检测到图片文件输入')
+      return
     }
+    if (!file.type.startsWith('image/')) {
+      toast.error('您输入的文件不是图片格式')
+      return
+    }
+
+    const miniImage = await resizeImage(file, 1920, 1080)
+    await localforage.setItem('kun-patch-banner', miniImage)
+    setBanner(miniImage)
+    setPreviewUrl(URL.createObjectURL(miniImage))
   }
 
   const removeBanner = async () => {
@@ -62,11 +70,7 @@ export const PatchSubmissionForm = () => {
     e.preventDefault()
     setIsDragging(false)
     const file = e.dataTransfer.files[0]
-    if (file && file.type.startsWith('image/')) {
-      await localforage.setItem('kun-patch-banner', file)
-      setBanner(file)
-      setPreviewUrl(URL.createObjectURL(file))
-    }
+    await setBannerFile(file)
   }
 
   const addAlias = () => {
@@ -118,10 +122,12 @@ export const PatchSubmissionForm = () => {
     formDataToSend.append('alias', JSON.stringify(data.alias))
 
     const res = await api.edit.edit.mutate(formDataToSend)
-    // useErrorHandler(res, (value) => {
-    //   resetData()
-    //   setPreviewUrl('')
-    // })
+    useErrorHandler(res, async () => {
+      resetData()
+      setMarkdown('')
+      setPreviewUrl('')
+      await localforage.removeItem('kun-patch-banner')
+    })
   }
 
   return (
@@ -182,7 +188,9 @@ export const PatchSubmissionForm = () => {
                     type="file"
                     className="hidden"
                     accept="image/*"
-                    onChange={handleBannerChange}
+                    onChange={async (event) => {
+                      await setBannerFile(event.target.files?.[0])
+                    }}
                   />
                 </label>
               </div>
