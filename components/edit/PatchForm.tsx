@@ -20,6 +20,7 @@ import { useErrorHandler } from '~/hooks/useErrorHandler'
 import { patchSchema } from '~/validations/edit'
 import { resizeImage } from './resizeImage'
 import type { PatchFormRequestData } from '~/store/editStore'
+import type { VNDBResponse } from './VNDB'
 
 export const PatchSubmissionForm = () => {
   const { markdown, setMarkdown } = useEditorStore()
@@ -130,6 +131,58 @@ export const PatchSubmissionForm = () => {
     })
   }
 
+  const handleCheckDuplicate = async () => {
+    const regex = new RegExp(/^v\d{1,6}$/)
+    if (!regex.test(data.vndbId)) {
+      toast.error('您输入的 VNDB ID 格式无效')
+      return
+    }
+
+    const res = await api.edit.duplicate.mutate({ vndbId: data.vndbId })
+    if (res) {
+      toast.error(res)
+      return
+    } else {
+      toast.success('检测完成, 该游戏并未重复!')
+    }
+
+    toast.promise(
+      (async () => {
+        const vndbResponse = await fetch(`https://api.vndb.org/kana/vn`, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json'
+          },
+          body: JSON.stringify({
+            filters: ['id', '=', data.vndbId],
+            fields: 'title, titles.title, aliases'
+          })
+        })
+
+        if (!vndbResponse.ok) {
+          throw new Error('Failed to fetch data')
+        }
+
+        const vndbData: VNDBResponse = await vndbResponse.json()
+        const allTitles = vndbData.results.flatMap((vn) => {
+          const titlesArray = [
+            vn.title,
+            ...vn.titles.map((t) => t.title),
+            ...vn.aliases
+          ]
+          return titlesArray
+        })
+
+        setData({ ...data, alias: allTitles })
+      })(),
+      {
+        loading: '正在从 VNDB 获取数据',
+        success: '获取数据成功! 已为您自动添加游戏别名!',
+        error: '从 VNDB 获取数据错误'
+      }
+    )
+  }
+
   return (
     <form onSubmit={handleSubmit} className="flex-1 w-full p-4 mx-auto">
       <Card className="w-full">
@@ -142,7 +195,48 @@ export const PatchSubmissionForm = () => {
           </div>
         </CardHeader>
         <CardBody className="gap-4 mt-2">
-          <p className="text-sm font-bold">预览图片</p>
+          <div className="flex flex-col w-full gap-2 mb-4">
+            <Input
+              isRequired
+              variant="underlined"
+              labelPlacement="outside"
+              label="VNDB ID"
+              placeholder="请输入 VNDB ID, 例如 v19658"
+              value={data.vndbId}
+              onChange={(e) => setData({ ...data, vndbId: e.target.value })}
+              isInvalid={!!errors.vndbId}
+              errorMessage={errors.vndbId}
+            />
+            <p className="text-sm ">
+              提示: VNDB ID 需要 VNDB 官网 (vndb.org)
+              获取，当进入对应游戏的页面，游戏页面的 URL (形如
+              https://vndb.org/v19658) 中的 v19658 就是 VNDB ID
+            </p>
+            <div className="flex items-center text-sm">
+              {data.vndbId && (
+                <Button
+                  className="mr-4"
+                  color="primary"
+                  size="sm"
+                  onClick={handleCheckDuplicate}
+                >
+                  检查重复
+                </Button>
+              )}
+
+              <p>VNDB 官网为</p>
+              <Link
+                href="http://vndb.org"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="ml-2"
+              >
+                vndb.org
+              </Link>
+            </div>
+          </div>
+
+          <p className="text-sm">预览图片 (必须, 宽度大于高度为好)</p>
           {errors.banner && (
             <p className="text-xs text-red-500">{errors.banner}</p>
           )}
@@ -210,37 +304,7 @@ export const PatchSubmissionForm = () => {
             errorMessage={errors.name}
           />
 
-          <div className="flex flex-col w-full gap-2 mb-4">
-            <Input
-              isRequired
-              variant="underlined"
-              labelPlacement="outside"
-              label="VNDB ID"
-              placeholder="请输入 VNDB ID, 例如 v19658"
-              value={data.vndbId}
-              onChange={(e) => setData({ ...data, vndbId: e.target.value })}
-              isInvalid={!!errors.vndbId}
-              errorMessage={errors.vndbId}
-            />
-            <p className="text-sm ">
-              提示: VNDB ID 需要 VNDB 官网 (vndb.org)
-              获取，当进入对应游戏的页面，游戏页面的 URL (形如
-              https://vndb.org/v19658) 中的 v19658 就是 VNDB ID
-            </p>
-            <div className="flex items-center text-sm">
-              <p>VNDB 官网为</p>
-              <Link
-                href="http://vndb.org"
-                target="_blank"
-                rel="noopener noreferrer"
-                className="ml-2"
-              >
-                vndb.org
-              </Link>
-            </div>
-          </div>
-
-          <p className="text-sm font-bold">游戏介绍</p>
+          <p className="text-sm">游戏介绍 (必须, 十个字符以上)</p>
           {errors.introduction && (
             <p className="text-xs text-red-500">{errors.introduction}</p>
           )}

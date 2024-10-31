@@ -101,13 +101,7 @@ const CrepeEditor: FC<MilkdownProps> = ({ onChange }) => {
     }
   }, [content, onChange, setCrepeAPI, toast])
 
-  return (
-    <div
-      onClick={(e) => e.preventDefault()}
-      className="flex flex-col w-full h-full crepe"
-      ref={divRef}
-    />
-  )
+  return <div className="flex flex-col w-full h-full crepe" ref={divRef} />
 }
 
 export default CrepeEditor

@@ -48,3 +48,7 @@ export const patchSchema = zfd.formData({
     )
     .optional()
 })
+
+export const duplicateSchema = z.object({
+  vndbId: z.string().regex(/^v\d{1,6}$/, { message: 'VNDB ID 格式无效' })
+})

@@ -1,6 +1,6 @@
 import sharp from 'sharp'
 import { router, privateProcedure } from '~/lib/trpc'
-import { patchSchema } from '~/validations/edit'
+import { patchSchema, duplicateSchema } from '~/validations/edit'
 import { uploadObject } from '~/server/utils/uploadImage'
 import { checkBufferSize } from '~/server/utils/checkBufferSize'
 
@@ -89,6 +89,13 @@ export const editRouter = router({
   }),
 
   duplicate: privateProcedure
-    .input(patchSchema)
-    .mutation(async ({ ctx, input }) => {})
+    .input(duplicateSchema)
+    .mutation(async ({ ctx, input }) => {
+      const patch = await ctx.prisma.patch.findFirst({
+        where: { vndb_id: input.vndbId }
+      })
+      if (patch) {
+        return 'VNDB ID 重复, 本游戏已经被发布过了'
+      }
+    })
 })
