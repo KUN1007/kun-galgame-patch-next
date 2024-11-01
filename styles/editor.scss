@@ -1,4 +1,6 @@
 .milkdown {
+  max-width: 60rem;
+
   * {
     &:focus {
       outline: none;
@@ -10,7 +12,7 @@
     padding-top: 16px;
     margin-bottom: 24px;
     margin-top: 48px;
-    border-top: 1px solid var(--kungalgame-trans-blue-2);
+    border-top: 1px solid #e4e4e7;
   }
 
   h3,
@@ -49,19 +51,17 @@
         Liberation Mono,
         monospace;
       margin: 0 4px;
-      background-color: var(--kungalgame-trans-blue-1);
+      background-color: #e4e4e7;
       padding: 2px 4px;
       border-radius: 8px;
     }
   }
 
   blockquote {
-    margin: 17px 0;
-    padding: 17px;
-    border-left: 5px solid var(--kungalgame-blue-5);
-    border-radius: 10px;
-    background-color: var(--kungalgame-trans-blue-0);
-    color: var(--kungalgame-font-color-3);
+    margin: 8px 0;
+    padding: 4px 12px;
+    border-left: 5px solid #e4e4e7;
+    color: #71717a;
     line-height: 2rem;
 
     p {
@@ -71,9 +71,9 @@
 
   pre {
     margin: 17px 0;
-    border-radius: 5px;
+    border-radius: 10px;
     padding: 17px;
-    background-color: var(--kungalgame-trans-white-5);
+    background-color: #f4f4f5;
     position: relative;
     box-shadow: var(--shadow);
     overflow-x: auto;
@@ -99,20 +99,20 @@
       }
 
       .code-line.inserted {
-        color: var(--kungalgame-white-5);
-        background-color: var(--kungalgame-green-4);
+        color: #fff;
+        background-color: #17c964;
       }
 
       .code-line.deleted {
-        color: var(--kungalgame-white-5);
-        background-color: var(--kungalgame-red-5);
+        color: #fff;
+        background-color: #f31260;
       }
 
       .highlight-line {
         margin-left: -16px;
         margin-right: -16px;
-        background-color: var(--kungalgame-trans-blue-1);
-        border-left: 4px solid var(--kungalgame-blue-5);
+        background-color: #99c7fb;
+        border-left: 4px solid #006fee;
       }
 
       .line-number::before {
@@ -121,7 +121,7 @@
         text-align: right;
         margin-right: 16px;
         margin-left: -8px;
-        color: var(--kungalgame-gray-4);
+        color: #71717a;
         content: attr(line);
       }
     }
@@ -130,32 +130,25 @@
   a {
     cursor: pointer;
     font-weight: bold;
-    color: var(--kungalgame-blue-5);
+    color: #006fee;
     text-decoration: underline;
     text-underline-offset: 3px;
     word-break: break-word;
   }
 
   table {
-    border: 1px solid var(--kungalgame-blue-5);
-    border-radius: 5px;
-    white-space: nowrap;
-  }
+    white-space: pre-wrap;
+    margin: 8px 0;
 
-  th,
-  td {
-    border: 1px solid var(--kungalgame-blue-5);
-    padding: 3px;
-    text-align: left;
-  }
+    th,
+    td {
+      border: 1px solid #e4e4e7;
+      padding: 4px 16px;
+    }
 
-  tr:nth-child(even) {
-    background-color: var(--kungalgame-trans-blue-1);
-  }
-
-  .tableWrapper {
-    color: var(--kungalgame-font-color-3);
-    position: relative;
-    overflow-x: auto;
+    tr:nth-child(even) {
+      background-color: #f4f4f5;
+      overflow-y: scroll;
+    }
   }
 }
