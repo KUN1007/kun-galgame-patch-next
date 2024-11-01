@@ -18,7 +18,7 @@ import toast from 'react-hot-toast'
 import { api } from '~/lib/trpc-client'
 import { useErrorHandler } from '~/hooks/useErrorHandler'
 import { patchSchema } from '~/validations/edit'
-import { resizeImage } from './resizeImage'
+import { resizeImage } from '~/utils/resizeImage'
 import type { PatchFormRequestData } from '~/store/editStore'
 import type { VNDBResponse } from './VNDB'
 

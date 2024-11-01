@@ -1,6 +1,7 @@
 import { Decoration } from '@milkdown/prose/view'
 import { api } from '~/lib/trpc-client'
 import toast from 'react-hot-toast'
+import { resizeImage } from '~/utils/resizeImage'
 import type { Uploader } from '@milkdown/plugin-upload'
 import type { Node } from '@milkdown/prose/model'
 
@@ -24,7 +25,8 @@ export const kunUploader: Uploader = async (files, schema) => {
   const nodes: Node[] = await Promise.all(
     images.map(async (image) => {
       const formData = new FormData()
-      formData.append('image', image)
+      const miniImage = await resizeImage(image, 1920, 1080)
+      formData.append('image', miniImage)
 
       const res = await api.edit.image.mutate(formData)
       if (typeof res === 'string') {

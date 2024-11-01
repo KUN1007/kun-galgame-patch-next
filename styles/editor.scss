@@ -2,6 +2,8 @@
   max-width: 60rem;
 
   * {
+    white-space: pre-wrap;
+
     &:focus {
       outline: none;
     }

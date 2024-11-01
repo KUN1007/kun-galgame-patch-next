@@ -97,7 +97,7 @@ const KunEditor = ({ valueMarkdown, saveMarkdown }: Props) => {
   )
 
   return (
-    <>
+    <div onClick={(e) => e.stopPropagation()}>
       <KunMilkdownPluginsMenu editorInfo={editor} />
       <Milkdown />
       {editor.loading && (
@@ -105,7 +105,7 @@ const KunEditor = ({ valueMarkdown, saveMarkdown }: Props) => {
           <span className="text-2xl animate-spin">Loading...</span>
         </div>
       )}
-    </>
+    </div>
   )
 }
 

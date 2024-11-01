@@ -36,6 +36,7 @@ import {
 } from '@milkdown/preset-commonmark'
 import { toggleStrikethroughCommand } from '@milkdown/preset-gfm'
 import toast from 'react-hot-toast'
+import { resizeImage } from '~/utils/resizeImage'
 import { api } from '~/lib/trpc-client'
 import type { UseEditorReturn } from '@milkdown/react'
 
@@ -59,7 +60,8 @@ export const KunMilkdownPluginsMenu = ({
     if (!file) return
 
     const formData = new FormData()
-    formData.append('image', file)
+    const miniImage = await resizeImage(file, 1920, 1080)
+    formData.append('image', miniImage)
 
     toast.promise(
       (async () => {
