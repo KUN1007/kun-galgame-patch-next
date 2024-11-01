@@ -31,5 +31,8 @@ module.exports = getConfig({
   /** We run typechecking as a separate task in CI */
   typescript: {
     ignoreBuildErrors: true
+  },
+  sassOptions: {
+    silenceDeprecations: ['legacy-js-api']
   }
 })

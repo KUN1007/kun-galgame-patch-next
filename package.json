@@ -15,6 +15,7 @@
   ],
   "dependencies": {
     "@hookform/resolvers": "^3.9.0",
+    "@milkdown/plugin-automd": "^7.5.0",
     "@nextui-org/react": "^2.4.8",
     "@node-rs/argon2": "^2.0.0",
     "@prisma/client": "^5.21.1",
@@ -97,6 +98,7 @@
     "prettier": "^3.3.3",
     "pretty-quick": "^4.0.0",
     "prisma": "^5.21.1",
+    "sass": "^1.80.5",
     "stylelint": "^16.10.0",
     "stylelint-config-html": "^1.1.0",
     "stylelint-config-prettier": "^9.0.5",

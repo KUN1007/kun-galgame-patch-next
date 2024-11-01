@@ -1,5 +1,4 @@
-@import './reset.css';
-@import './tailwind.css';
+@use './tailwind.scss';
 
 [data-overlay-container='true'] {
   height: 100%;

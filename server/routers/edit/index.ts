@@ -1,35 +1,6 @@
-import sharp from 'sharp'
 import { router, privateProcedure } from '~/lib/trpc'
-import { patchSchema, duplicateSchema } from '~/validations/edit'
-import { uploadObject } from '~/server/utils/uploadImage'
-import { checkBufferSize } from '~/server/utils/checkBufferSize'
-
-export const uploadPatchBanner = async (image: ArrayBuffer, id: number) => {
-  const banner = await sharp(image)
-    .resize(1920, 1080, {
-      fit: 'inside',
-      withoutEnlargement: true
-    })
-    .avif({ quality: 50 })
-    .toBuffer()
-  const miniBanner = await sharp(image)
-    .resize(460, 259, {
-      fit: 'inside',
-      withoutEnlargement: true
-    })
-    .avif({ quality: 50 })
-    .toBuffer()
-
-  if (!checkBufferSize(miniBanner, 1.007)) {
-    return '图片体积过大'
-  }
-
-  const bucketName = `kun-galgame-patch/patch/${id}/banner`
-  const res1 = await uploadObject(banner, 'banner.avif', bucketName)
-  const res2 = await uploadObject(miniBanner, 'banner-mini.avif', bucketName)
-
-  return !!(res1 && res2)
-}
+import { patchSchema, duplicateSchema, imageSchema } from '~/validations/edit'
+import { uploadPatchBanner, uploadIntroductionImage } from './_upload'
 
 export const editRouter = router({
   edit: privateProcedure.input(patchSchema).mutation(async ({ ctx, input }) => {
@@ -97,5 +68,27 @@ export const editRouter = router({
       if (patch) {
         return 'VNDB ID 重复, 本游戏已经被发布过了'
       }
+    }),
+
+  image: privateProcedure
+    .input(imageSchema)
+    .mutation(async ({ ctx, input }) => {
+      const newFileName = `${ctx.uid}-${Date.now()}`
+
+      const bannerArrayBuffer = await input.image.arrayBuffer()
+      const res = await uploadIntroductionImage(
+        newFileName,
+        bannerArrayBuffer,
+        ctx.uid
+      )
+      if (!res) {
+        return '上传图片错误, 未知错误'
+      }
+      if (typeof res === 'string') {
+        return res
+      }
+
+      const imageLink = `${process.env.KUN_VISUAL_NOVEL_IMAGE_BED_URL}/kun-galgame-patch/user_${ctx.uid}/patch/introduction/${newFileName}.avif`
+      return { imageLink }
     })
 })
