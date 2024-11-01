@@ -23,7 +23,7 @@ export const editRouter = router({
       return res
     }
 
-    const imageLink = `${process.env.KUN_VISUAL_NOVEL_IMAGE_BED_URL}/kun-galgame-patch/patch/${newId}/banner/banner.webp`
+    const imageLink = `${process.env.KUN_VISUAL_NOVEL_IMAGE_BED_URL}/patch/${newId}/banner/banner.webp`
 
     return await ctx.prisma.$transaction(async (prisma) => {
       const patch = await prisma.patch.create({
@@ -88,7 +88,7 @@ export const editRouter = router({
         return res
       }
 
-      const imageLink = `${process.env.KUN_VISUAL_NOVEL_IMAGE_BED_URL}/kun-galgame-patch/user_${ctx.uid}/patch/introduction/${newFileName}.avif`
+      const imageLink = `${process.env.KUN_VISUAL_NOVEL_IMAGE_BED_URL}/user_${ctx.uid}/patch/introduction/${newFileName}.avif`
       return { imageLink }
     })
 })

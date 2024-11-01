@@ -12,11 +12,12 @@ export interface Patch {
   type: string[]
   alias: string[]
   language: Language
-  created: string
-  updated: string
+  created: Date
+  updated: Date
   user: {
     id: number
     name: string
+    avatar: string
   }
   _count?: {
     like_by: number

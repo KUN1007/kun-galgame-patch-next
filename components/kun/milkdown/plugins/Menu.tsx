@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useState, useRef } from 'react'
 import {
   Popover,
   PopoverTrigger,
@@ -35,6 +35,8 @@ import {
   toggleLinkCommand
 } from '@milkdown/preset-commonmark'
 import { toggleStrikethroughCommand } from '@milkdown/preset-gfm'
+import toast from 'react-hot-toast'
+import { api } from '~/lib/trpc-client'
 import type { UseEditorReturn } from '@milkdown/react'
 
 export const KunMilkdownPluginsMenu = ({
@@ -43,6 +45,7 @@ export const KunMilkdownPluginsMenu = ({
   editorInfo: UseEditorReturn
 }) => {
   const [link, setLink] = useState('')
+  const uploadImageInputRef = useRef<HTMLInputElement | null>(null)
 
   const { get } = editorInfo
   const call = <T,>(command: CmdKey<T>, payload?: T) => {
@@ -58,23 +61,30 @@ export const KunMilkdownPluginsMenu = ({
     const formData = new FormData()
     formData.append('image', file)
 
-    const result = await fetch('/api/image/topic', {
-      method: 'POST',
-      body: formData
-    }).then((res) => res.json())
+    toast.promise(
+      (async () => {
+        const res = await api.edit.image.mutate(formData)
+        if (typeof res === 'string') {
+          toast.error(res)
+          return
+        }
 
-    if (result) {
-      const imageName = `${Date.now()}-${file.name.replace(/[^a-zA-Z0-9 ]/g, '')}`
-      call(insertImageCommand.key, {
-        src: result,
-        title: imageName,
-        alt: imageName
-      })
-    }
+        call(insertImageCommand.key, {
+          src: res.imageLink,
+          title: file.name,
+          alt: file.name
+        })
+      })(),
+      {
+        loading: '正在上传图片...',
+        success: '上传图片成功',
+        error: '上传图片错误'
+      }
+    )
   }
 
   return (
-    <div className="sticky top-0 z-50 flex flex-wrap bg-opacity-80 backdrop-blur-md">
+    <div className="sticky top-0 flex flex-wrap bg-opacity-80 backdrop-blur-md">
       <Button
         isIconOnly
         variant="light"
@@ -181,9 +191,14 @@ export const KunMilkdownPluginsMenu = ({
       >
         <Code className="w-6 h-6" />
       </Button>
-      <Button isIconOnly variant="light">
+      <Button
+        isIconOnly
+        variant="light"
+        onClick={() => uploadImageInputRef.current?.click()}
+      >
         <ImagePlus className="w-6 h-6" />
         <input
+          ref={uploadImageInputRef}
           type="file"
           accept=".jpg, .jpeg, .png, .webp"
           className="hidden"

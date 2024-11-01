@@ -1,5 +1,6 @@
 import { z } from 'zod'
 import { router, publicProcedure } from '~/lib/trpc'
+import type { Language, Patch } from '~/types/api/patch'
 
 export const patchRouter = router({
   patch: publicProcedure
@@ -31,7 +32,12 @@ export const patchRouter = router({
         return '未找到对应补丁'
       }
 
-      return {
+      await ctx.prisma.patch.update({
+        where: { id: patch.id },
+        data: { view: { increment: 1 } }
+      })
+
+      const response: Patch = {
         id: patch.id,
         name: patch.name,
         vndb_id: patch.vndb_id,
@@ -42,7 +48,7 @@ export const patchRouter = router({
         sell_time: patch.sell_time,
         type: patch.type,
         alias: patch.alias,
-        language: patch.language,
+        language: patch.language as Language,
         created: patch.created,
         updated: patch.updated,
         user: {
@@ -52,5 +58,7 @@ export const patchRouter = router({
         },
         _count: patch._count
       }
+
+      return response
     })
 })

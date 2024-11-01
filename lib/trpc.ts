@@ -1,12 +1,10 @@
 import { initTRPC, TRPCError } from '@trpc/server'
-import superjson from 'superjson'
 import { ZodError } from 'zod'
 import { createContext } from '~/server/context'
 import { verifyKunToken } from '~/server/utils/jwt'
 import { parseCookies } from '~/utils/cookies'
 
 const t = initTRPC.context<typeof createContext>().create({
-  transformer: superjson,
   errorFormatter({ shape, error }) {
     return {
       ...shape,

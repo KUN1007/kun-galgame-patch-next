@@ -40,7 +40,7 @@ export const uploadIntroductionImage = async (
       fit: 'inside',
       withoutEnlargement: true
     })
-    .avif({ quality: 50 })
+    .avif({ quality: 30 })
     .toBuffer()
 
   if (!checkBufferSize(minImage, 1.007)) {

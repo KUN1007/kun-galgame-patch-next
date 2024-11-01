@@ -62,7 +62,13 @@ const mockPatch = {
   updated: '2024-03-21T00:00:00Z'
 } as const
 
-export default function Home() {
+export default async function Home({
+  params
+}: {
+  params: Promise<{ slug: string }>
+}) {
+  const slug = (await params).slug
+
   return (
     <div className="container py-8 mx-auto space-y-8">
       <PatchHeader patch={mockPatch} />

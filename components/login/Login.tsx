@@ -1,7 +1,7 @@
+import { z } from 'zod'
 import React from 'react'
 import { useForm, Controller } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
-import { z } from 'zod'
 import { Input, Button, Divider, Link } from '@nextui-org/react'
 import { api } from '~/lib/trpc-client'
 import { loginSchema } from '~/validations/login'

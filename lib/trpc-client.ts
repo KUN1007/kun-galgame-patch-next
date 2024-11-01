@@ -48,8 +48,6 @@ export const api = experimental_createTRPCNextAppDirClient<AppRouter>({
         splitLink({
           condition: (op) => isNonJsonSerializable(op.input),
           true: experimental_nextHttpLink({
-            // @ts-ignore
-            transformer: false,
             url: `${getBaseUrl()}/api/trpc`,
             headers() {
               return {
@@ -58,7 +56,6 @@ export const api = experimental_createTRPCNextAppDirClient<AppRouter>({
             }
           }),
           false: httpBatchLink({
-            transformer: superjson,
             url: `${getBaseUrl()}/api/trpc`,
             headers() {
               return {

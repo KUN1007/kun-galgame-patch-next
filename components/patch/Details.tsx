@@ -10,11 +10,11 @@ import {
   Tabs,
   Tab
 } from '@nextui-org/react'
-import { type Patch } from './patch'
 import { Calendar, Clock, Link } from 'lucide-react'
 import { PatchResources } from './Resource'
 import { PatchComments } from './Comments'
 import { PatchHistory } from './History'
+import type { Patch } from '~/types/api/patch'
 
 interface PatchDetailsProps {
   patch: Patch

@@ -9,8 +9,7 @@ import {
   CardBody
 } from '@nextui-org/react'
 import { Eye, Heart, MessageSquare, Share2, Star, User } from 'lucide-react'
-import Image from 'next/image'
-import { type Patch } from './patch'
+import type { Patch } from '~/types/api/patch'
 
 interface PatchHeaderProps {
   patch: Patch
