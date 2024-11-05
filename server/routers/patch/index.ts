@@ -76,10 +76,10 @@ export const patchRouter = router({
         patchId: z.number()
       })
     )
-    .query(async ({ input }) => {
+    .query(async ({ ctx, input }) => {
       const { patchId } = input
 
-      const data = await prisma.patch_resource.findMany({
+      const data = await ctx.prisma.patch_resource.findMany({
         where: { patch_id: patchId },
         include: {
           user: true,
@@ -128,10 +128,10 @@ export const patchRouter = router({
         patchId: z.number()
       })
     )
-    .query(async ({ input }) => {
+    .query(async ({ ctx, input }) => {
       const { patchId } = input
 
-      const data = await prisma.patch_comment.findMany({
+      const data = await ctx.prisma.patch_comment.findMany({
         where: { patch_id: patchId },
         include: {
           user: true,
@@ -172,10 +172,10 @@ export const patchRouter = router({
         patchId: z.number()
       })
     )
-    .query(async ({ input }) => {
+    .query(async ({ ctx, input }) => {
       const { patchId } = input
 
-      const data = await prisma.patch_history.findMany({
+      const data = await ctx.prisma.patch_history.findMany({
         where: { patch_id: patchId },
         include: {
           user: true
@@ -189,8 +189,8 @@ export const patchRouter = router({
         content: history.content,
         userId: history.user_id,
         patchId: history.patch_id,
-        created: String(histories.created),
-        updated: String(histories.updated),
+        created: String(history.created),
+        updated: String(history.updated),
         user: {
           id: history.user.id,
           name: history.user.name,
