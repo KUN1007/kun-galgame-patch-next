@@ -1,19 +1,29 @@
 'use client'
 
+import { useState, useEffect } from 'react'
 import { Card, CardBody, Chip } from '@nextui-org/react'
-import { type patch_history } from '@prisma/client'
 import { formatDistanceToNow } from '~/utils/formatDistanceToNow'
 import { Activity } from 'lucide-react'
+import { api } from '~/lib/trpc-client'
+import type { PatchHistory } from '~/types/api/patch'
 
-interface PatchHistoryProps {
-  history: patch_history[]
-}
+export const History = ({ id }: { id: number }) => {
+  const [histories, setHistories] = useState<PatchHistory[]>([])
 
-export function PatchHistory({ history }: PatchHistoryProps) {
+  useEffect(() => {
+    const fetchPatchHistories = async () => {
+      const res = await api.patch.getPatchHistories.query({
+        patchId: Number(id)
+      })
+      setHistories(res)
+    }
+    fetchPatchHistories()
+  }, [])
+
   return (
     <div className="space-y-4">
-      {history.map((entry) => (
-        <Card key={entry.phid}>
+      {histories.map((entry) => (
+        <Card key={entry.id}>
           <CardBody className="p-6">
             <div className="flex items-start gap-4">
               <div className="mt-1">

@@ -1,6 +1,5 @@
-'use client'
-
 import {
+  Avatar,
   Chip,
   Divider,
   Button,
@@ -15,7 +14,7 @@ interface PatchHeaderProps {
   patch: Patch
 }
 
-export function PatchHeader({ patch }: PatchHeaderProps) {
+export const PatchHeader = ({ patch }: PatchHeaderProps) => {
   return (
     <Card className="border-none shadow-none">
       <CardHeader className="relative h-[312px] p-0">
@@ -57,7 +56,11 @@ export function PatchHeader({ patch }: PatchHeaderProps) {
 
         <div className="flex gap-6 text-sm text-muted-foreground">
           <div className="flex items-center gap-1">
-            <User className="w-4 h-4" />
+            <Avatar
+              showFallback
+              name={patch.user.name.charAt(0).toUpperCase()}
+              src={patch.user.avatar}
+            />
             <span>{patch.user.name}</span>
           </div>
           <div className="flex items-center gap-1">

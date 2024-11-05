@@ -7,6 +7,7 @@
     "CMAPI",
     "codemirror",
     "commonmark",
+    "dompurify",
     "Galgame",
     "hookform",
     "katex",

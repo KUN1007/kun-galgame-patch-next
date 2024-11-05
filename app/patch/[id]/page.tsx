@@ -2,6 +2,7 @@ import { PatchHeader } from '~/components/patch/Header'
 import { PatchDetails } from '~/components/patch/Details'
 import { ErrorComponent } from '~/components/error/ErrorComponent'
 import { serverApi } from '~/lib/trpc-server'
+import type { Patch } from '~/types/api/patch'
 
 export default async function Patch({
   params

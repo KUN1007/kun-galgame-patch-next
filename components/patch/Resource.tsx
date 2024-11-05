@@ -1,14 +1,24 @@
 'use client'
 
+import { useState, useEffect } from 'react'
 import { Chip, Button, Card, CardBody, Link } from '@nextui-org/react'
-import { Download, ExternalLink, Heart, Lock } from 'lucide-react'
-import { type patch_resource } from '@prisma/client'
+import { Download, Heart, Lock } from 'lucide-react'
+import { api } from '~/lib/trpc-client'
+import type { PatchResource } from '~/types/api/patch'
 
-interface PatchResourcesProps {
-  resources: patch_resource[]
-}
+export const Resources = ({ id }: { id: number }) => {
+  const [resources, setResources] = useState<PatchResource[]>([])
 
-export function PatchResources({ resources }: PatchResourcesProps) {
+  useEffect(() => {
+    const fetchPatchResources = async () => {
+      const res = await api.patch.getPatchResources.query({
+        patchId: Number(id)
+      })
+      setResources(res)
+    }
+    fetchPatchResources()
+  }, [])
+
   return (
     <div className="space-y-4">
       {resources.map((resource) => (

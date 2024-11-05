@@ -30,7 +30,7 @@ export const editRouter = router({
         data: {
           name,
           vndb_id: vndbId,
-          alias: alias ?? [],
+          alias: alias ? JSON.parse(alias as unknown as string) : [],
           introduction,
           user_id: ctx.uid,
           banner: imageLink

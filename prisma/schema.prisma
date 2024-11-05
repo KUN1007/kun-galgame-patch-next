@@ -355,7 +355,7 @@ model patch_comment {
   content String @default("") @db.VarChar(10007)
   likes   Int[]
 
-  likeBy       user_patch_comment_like_relation[]
+  like_by      user_patch_comment_like_relation[]
   mention_user patch_comment_mention[]
 
   reply     patch_comment[] @relation("comment_reply")

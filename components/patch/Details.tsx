@@ -1,82 +1,14 @@
 'use client'
 
-import {
-  Chip,
-  Divider,
-  Button,
-  Card,
-  CardHeader,
-  CardBody,
-  Tabs,
-  Tab
-} from '@nextui-org/react'
+import DOMPurify from 'isomorphic-dompurify'
+import { Card, CardHeader, CardBody, Tabs, Tab } from '@nextui-org/react'
 import { Calendar, Clock, Link } from 'lucide-react'
-import { PatchResources } from './Resource'
-import { PatchComments } from './Comments'
-import { PatchHistory } from './History'
+import { Resources } from './Resource'
+import { Comments } from './Comments'
+import { History } from './History'
 import type { Patch } from '~/types/api/patch'
 
-interface PatchDetailsProps {
-  patch: Patch
-}
-
-export function PatchDetails({ patch }: PatchDetailsProps) {
-  // Mock data for demonstration
-  const mockResources = [
-    {
-      id: 1,
-      size: '2.3 GB',
-      type: ['汉化补丁', 'v1.02'],
-      language: ['简体中文'],
-      note: '莲最可爱莲最可爱',
-      link: ['https://www.kungal.com/zh-cn/galgame/1'],
-      password: '',
-      platform: ['Windows'],
-      like: [],
-      time: 0,
-      status: 1,
-      user_id: 1,
-      patch_id: 1,
-      created: new Date(),
-      updated: new Date(),
-      code: ''
-    }
-  ]
-
-  const mockComments = [
-    {
-      pcid: 1,
-      pid: 1,
-      content: '莲最可爱莲最可爱',
-      likes: [1, 2, 3],
-      parent_id: null,
-      user_id: 1,
-      patch_id: 1,
-      created: new Date(),
-      updated: new Date(),
-      user: {
-        name: '鲲',
-        avatar: ''
-      }
-    }
-  ]
-
-  const mockHistory = [
-    {
-      phid: 1,
-      action: '更新汉化补丁',
-      type: '补丁',
-      content: '莲最可爱莲最可爱',
-      user_id: 1,
-      patch_id: 1,
-      created: new Date(),
-      updated: new Date(),
-      user: {
-        name: 'kun'
-      }
-    }
-  ]
-
+export const PatchDetails = ({ patch }: { patch: Patch }) => {
   return (
     <Tabs className="w-full" color="primary" fullWidth={true}>
       <Tab key="introduction" title="游戏介绍">
@@ -85,9 +17,12 @@ export function PatchDetails({ patch }: PatchDetailsProps) {
             <h2 className="text-2xl font-medium">游戏介绍</h2>
           </CardHeader>
           <CardBody className="space-y-6">
-            <div className="prose prose-lg max-w-none dark:prose-invert">
-              {patch.introduction || 'No introduction available.'}
-            </div>
+            <div
+              dangerouslySetInnerHTML={{
+                __html: DOMPurify.sanitize(patch.introduction)
+              }}
+              className="prose max-w-none dark:prose-invert"
+            />
 
             <div className="grid grid-cols-2 gap-4 mt-6">
               <div className="flex items-center gap-2 text-sm text-gray-500">
@@ -127,7 +62,7 @@ export function PatchDetails({ patch }: PatchDetailsProps) {
             <h2 className="text-2xl font-medium">资源链接</h2>
           </CardHeader>
           <CardBody>
-            <PatchResources resources={mockResources} />
+            <Resources id={patch.id} />
           </CardBody>
         </Card>
       </Tab>
@@ -138,7 +73,7 @@ export function PatchDetails({ patch }: PatchDetailsProps) {
             <h2 className="text-2xl font-medium">游戏评论</h2>
           </CardHeader>
           <CardBody>
-            <PatchComments comments={mockComments} />
+            <Comments id={patch.id} />
           </CardBody>
         </Card>
       </Tab>
@@ -149,7 +84,7 @@ export function PatchDetails({ patch }: PatchDetailsProps) {
             <h2 className="text-2xl font-medium">贡献历史</h2>
           </CardHeader>
           <CardBody>
-            <PatchHistory history={mockHistory} />
+            <History id={patch.id} />
           </CardBody>
         </Card>
       </Tab>

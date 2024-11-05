@@ -12,8 +12,8 @@ export interface Patch {
   type: string[]
   alias: string[]
   language: Language
-  created: Date
-  updated: Date
+  created: string
+  updated: string
   user: {
     id: number
     name: string
@@ -26,4 +26,48 @@ export interface Patch {
     resource: number
     comment: number
   }
+}
+
+interface PatchResource {
+  id: number
+  size: string
+  type: string[]
+  language: string[]
+  note: string
+  link: string[]
+  password: string
+  platform: string[]
+  likedBy: KunUser[]
+  time: number
+  status: number
+  userId: number
+  patchId: number
+  created: string
+  updated: string
+  code: string
+  user: KunUser
+}
+
+interface PatchComment {
+  id: number
+  content: string
+  likedBy: KunUser[]
+  parentId: number | null
+  userId: number
+  patchId: number
+  created: string
+  updated: string
+  user: KunUser
+}
+
+interface PatchHistory {
+  id: number
+  action: string
+  type: string
+  content: string
+  userId: number
+  patchId: number
+  created: string
+  updated: string
+  user: KunUser
 }
