@@ -1,6 +1,5 @@
 'use client'
 
-import superjson from 'superjson'
 import {
   loggerLink,
   splitLink,
@@ -11,13 +10,9 @@ import { observable } from '@trpc/server/observable'
 import { experimental_createTRPCNextAppDirClient } from '@trpc/next/app-dir/client'
 import { experimental_nextHttpLink } from '@trpc/next/app-dir/links/nextHttp'
 import toast from 'react-hot-toast'
+import { getUrl } from './trpc-helpers'
 import type { AppRouter } from '~/server/routers/_app'
 import type { TRPCLink } from '@trpc/client'
-
-const getBaseUrl = () => {
-  if (typeof window !== 'undefined') return ''
-  return process.env.KUN_PATCH_ADDRESS
-}
 
 export const errorHandlerLink: TRPCLink<AppRouter> = () => {
   return ({ next, op }) => {
@@ -48,7 +43,7 @@ export const api = experimental_createTRPCNextAppDirClient<AppRouter>({
         splitLink({
           condition: (op) => isNonJsonSerializable(op.input),
           true: experimental_nextHttpLink({
-            url: `${getBaseUrl()}/api/trpc`,
+            url: getUrl(),
             headers() {
               return {
                 'x-trpc-source': 'client'
@@ -56,7 +51,7 @@ export const api = experimental_createTRPCNextAppDirClient<AppRouter>({
             }
           }),
           false: httpBatchLink({
-            url: `${getBaseUrl()}/api/trpc`,
+            url: getUrl(),
             headers() {
               return {
                 'x-trpc-source': 'client'

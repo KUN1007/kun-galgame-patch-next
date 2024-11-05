@@ -1,9 +1,10 @@
 import { z } from 'zod'
 import { router, publicProcedure } from '~/lib/trpc'
+import { prisma } from '~/prisma/index'
 import type { Language, Patch } from '~/types/api/patch'
 
 export const patchRouter = router({
-  patch: publicProcedure
+  getPatchById: publicProcedure
     .input(
       z.object({
         id: z.number()
@@ -12,7 +13,7 @@ export const patchRouter = router({
     .query(async ({ ctx, input }) => {
       const { id } = input
 
-      const patch = await ctx.prisma.patch.findUnique({
+      const patch = await prisma.patch.findUnique({
         where: { id },
         include: {
           user: true,
@@ -32,7 +33,7 @@ export const patchRouter = router({
         return '未找到对应补丁'
       }
 
-      await ctx.prisma.patch.update({
+      await prisma.patch.update({
         where: { id: patch.id },
         data: { view: { increment: 1 } }
       })
