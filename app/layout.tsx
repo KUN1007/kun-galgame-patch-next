@@ -1,6 +1,6 @@
 import { Toaster } from 'react-hot-toast'
 import { Providers } from './providers'
-import { KunTopBar } from '~/components/kun/TopBar'
+import { KunTopBar } from '~/components/kun/top-bar/TopBar'
 import '~/styles/index.scss'
 
 export default function RootLayout({
@@ -14,7 +14,7 @@ export default function RootLayout({
         <Providers>
           <div className="relative flex flex-col items-center justify-center min-h-screen bg-white bg-radial">
             <KunTopBar />
-            <div className="flex w-full flex-grow max-w-7xl min-h-[calc(100dvh-64px)]">
+            <div className="flex px-6 w-full flex-grow max-w-7xl min-h-[calc(100dvh-64px)]">
               {children}
               <Toaster />
             </div>

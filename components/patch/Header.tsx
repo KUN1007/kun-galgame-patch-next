@@ -22,12 +22,12 @@ export const PatchHeader = ({ patch }: PatchHeaderProps) => {
       <CardHeader className="relative h-[312px] p-0">
         <img
           src={patch.banner}
-          alt="鲲 Galgame 补丁"
-          className="w-full h-[312px] object-cover"
+          alt={patch.name}
+          className="w-full max-h-[720px] h-[312px] object-cover"
         />
       </CardHeader>
-      <CardBody className="px-6 py-4">
-        <div className="flex items-start justify-between">
+      <CardBody className="px-0 py-4">
+        <div className="flex flex-col items-start justify-between sm:flex-row">
           <div className="space-y-2">
             <h1 className="text-3xl font-bold">{patch.name}</h1>
             <div className="flex flex-wrap gap-2">
@@ -56,7 +56,7 @@ export const PatchHeader = ({ patch }: PatchHeaderProps) => {
 
         <Divider className="my-4" />
 
-        <div className="flex gap-6 text-sm text-muted-foreground">
+        <div className="flex gap-6 text-sm">
           <div className="flex items-center gap-1">
             <Avatar
               showFallback
