@@ -4,7 +4,7 @@ import { zodResolver } from '@hookform/resolvers/zod'
 import { z } from 'zod'
 import { Input, Button, Divider, Link, Checkbox } from '@nextui-org/react'
 import { api } from '~/lib/trpc-client'
-import { registerSchema } from '~/validations/login'
+import { registerSchema } from '~/validations/auth'
 
 type RegisterFormData = z.infer<typeof registerSchema>
 
@@ -19,7 +19,7 @@ export const RegisterForm: React.FC = () => {
   })
 
   const onSubmit = async (data: RegisterFormData) => {
-    await api.login.register.mutate(data)
+    await api.auth.register.mutate(data)
   }
 
   return (

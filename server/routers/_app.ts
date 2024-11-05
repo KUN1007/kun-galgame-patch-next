@@ -1,10 +1,10 @@
 import { router } from '~/lib/trpc'
-import { loginRouter } from './login/index'
+import { authRouter } from './auth/index'
 import { editRouter } from './edit/index'
 import { patchRouter } from './patch/index'
 
 export const appRouter = router({
-  login: loginRouter,
+  auth: authRouter,
   edit: editRouter,
   patch: patchRouter
 })

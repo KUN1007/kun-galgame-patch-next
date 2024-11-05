@@ -4,7 +4,7 @@ import { useForm, Controller } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { Input, Button, Divider, Link } from '@nextui-org/react'
 import { api } from '~/lib/trpc-client'
-import { loginSchema } from '~/validations/login'
+import { loginSchema } from '~/validations/auth'
 import { useUserStore } from '~/store/userStore'
 import { useErrorHandler } from '~/hooks/useErrorHandler'
 
@@ -22,7 +22,7 @@ export const LoginForm: React.FC = () => {
   })
 
   const onSubmit = async (data: LoginFormData) => {
-    const res = await api.login.login.mutate(data)
+    const res = await api.auth.login.mutate(data)
     useErrorHandler(res, (value) => {
       userStore.login(value)
       reset()

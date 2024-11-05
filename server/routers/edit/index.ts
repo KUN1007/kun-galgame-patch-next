@@ -23,7 +23,7 @@ export const editRouter = router({
       return res
     }
 
-    const imageLink = `${process.env.KUN_VISUAL_NOVEL_IMAGE_BED_URL}/patch/${newId}/banner/banner.webp`
+    const imageLink = `${process.env.KUN_VISUAL_NOVEL_IMAGE_BED_URL}/patch/${newId}/banner/banner.avif`
 
     return await ctx.prisma.$transaction(async (prisma) => {
       const patch = await prisma.patch.create({

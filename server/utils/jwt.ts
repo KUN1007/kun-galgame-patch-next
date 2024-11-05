@@ -1,5 +1,5 @@
 import jwt from 'jsonwebtoken'
-import { setKv, getKv } from '~/lib/redis'
+import { setKv, getKv, delKv } from '~/lib/redis'
 
 export interface KunGalgamePayload {
   iss: string
@@ -44,4 +44,8 @@ export const verifyKunToken = async (refreshToken: string) => {
   } catch (error) {
     return null
   }
+}
+
+export const deleteKunToken = async (uid: number) => {
+  await delKv(`access:token:${uid}`)
 }

@@ -21,7 +21,7 @@ export const PatchHeader = ({ patch }: PatchHeaderProps) => {
     <Card className="border-none shadow-none">
       <CardHeader className="relative h-[312px] p-0">
         <img
-          src="/bg1.webp"
+          src={patch.banner}
           alt="鲲 Galgame 补丁"
           className="w-full h-[312px] object-cover"
         />
