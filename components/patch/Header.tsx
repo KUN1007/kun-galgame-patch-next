@@ -70,10 +70,6 @@ export const PatchHeader = ({ patch }: PatchHeaderProps) => {
             <span>{patch.view}</span>
           </div>
           <div className="flex items-center gap-1">
-            <Heart className="w-4 h-4" />
-            <span>{patch._count?.like_by || 0}</span>
-          </div>
-          <div className="flex items-center gap-1">
             <Star className="w-4 h-4" />
             <span>{patch._count?.favorite_by || 0}</span>
           </div>

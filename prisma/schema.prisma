@@ -32,6 +32,7 @@ enum MessageType {
   DECLINE
   MENTION
   ADMIN
+  OTHER
 }
 
 model user {
@@ -54,16 +55,15 @@ model user {
   patch_comment_like  user_patch_comment_like_relation[]
   patch_resource_like user_patch_resource_like_relation[]
 
-  following             user_follow_relation[]  @relation("user_following")
-  follower              user_follow_relation[]  @relation("user_follower")
-  patch                 patch[]                 @relation("user_patch")
-  patch_comment         patch_comment[]         @relation("user_patch_comment")
-  patch_comment_mention patch_comment_mention[] @relation("user_patch_comment_mention")
-  patch_resource        patch_resource[]        @relation("user_patch_resource")
-  patch_history         patch_history[]         @relation("user_patch_history")
-  patch_pull_request    patch_pull_request[]    @relation("user_patch_pull_request")
-  send_message          user_message[]          @relation("user_send_message")
-  receive_message       user_message[]          @relation("user_receive_message")
+  following          user_follow_relation[] @relation("user_following")
+  follower           user_follow_relation[] @relation("user_follower")
+  patch              patch[]                @relation("user_patch")
+  patch_comment      patch_comment[]        @relation("user_patch_comment")
+  patch_resource     patch_resource[]       @relation("user_patch_resource")
+  patch_history      patch_history[]        @relation("user_patch_history")
+  patch_pull_request patch_pull_request[]   @relation("user_patch_pull_request")
+  send_message       user_message[]         @relation("user_send_message")
+  receive_message    user_message[]         @relation("user_receive_message")
 
   created DateTime @default(now())
   updated DateTime @updatedAt
@@ -83,7 +83,7 @@ model user_follow_relation {
 
 model user_message {
   id      Int         @id @default(autoincrement())
-  type    MessageType
+  type    MessageType @default(OTHER)
   content String      @db.VarChar(10007)
   status  Int         @default(0)
 
@@ -352,8 +352,7 @@ model patch_comment {
   content String @default("") @db.VarChar(10007)
   likes   Int[]
 
-  like_by      user_patch_comment_like_relation[]
-  mention_user patch_comment_mention[]
+  like_by user_patch_comment_like_relation[]
 
   reply     patch_comment[] @relation("comment_reply")
   parent_id Int?
@@ -365,18 +364,4 @@ model patch_comment {
 
   created DateTime @default(now())
   updated DateTime @updatedAt
-}
-
-model patch_comment_mention {
-  id Int @id @default(autoincrement())
-
-  user_id    Int
-  user       user          @relation("user_patch_comment_mention", fields: [user_id], references: [id])
-  comment_id Int
-  comment    patch_comment @relation(fields: [comment_id], references: [id])
-
-  created DateTime @default(now())
-  updated DateTime @updatedAt
-
-  @@unique([comment_id, user_id])
 }

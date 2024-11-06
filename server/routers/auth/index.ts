@@ -52,7 +52,8 @@ export const authRouter = router({
         data: {
           name,
           email,
-          password: hashedPassword
+          password: hashedPassword,
+          register_time: Date.now()
         }
       })
 

@@ -1,6 +1,7 @@
 import { z } from 'zod'
 import { router, privateProcedure } from '~/lib/trpc'
 import { hash } from '@node-rs/argon2'
+import type { UserInfo } from '~/types/api/user'
 
 export const updateUserSchema = z.object({
   name: z.string().min(1).max(17).optional(),
@@ -36,25 +37,40 @@ export const userRouter = router({
     }),
 
   getProfile: privateProcedure
-    .input(z.number())
+    .input(
+      z.object({
+        id: z.number({ message: '请输入合法的用户 ID' }).min(1).max(9999999)
+      })
+    )
     .query(async ({ ctx, input }) => {
-      const user = await ctx.prisma.user.findUnique({
-        where: { id: input },
-        select: {
-          id: true,
-          name: true,
-          email: true,
-          avatar: true,
-          bio: true,
-          moemoepoint: true,
-          like: true,
-          role: true,
-          register_time: true
+      const data = await ctx.prisma.user.findUnique({
+        where: { id: input.id },
+        include: {
+          _count: {
+            select: {
+              patch: true,
+              patch_comment: true,
+              patch_favorite: true,
+              patch_pull_request: true
+            }
+          }
         }
       })
+      if (!data) {
+        return '未找到用户'
+      }
 
-      if (!user) {
-        throw new Error('User not found')
+      const user: UserInfo = {
+        id: data.id,
+        name: data.name,
+        email: data.email,
+        avatar: data.avatar,
+        bio: data.bio,
+        role: data.role,
+        status: data.status,
+        registerTime: String(data.register_time),
+        moemoepoint: data.moemoepoint,
+        _count: data._count
       }
 
       return user

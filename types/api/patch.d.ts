@@ -19,8 +19,7 @@ export interface Patch {
     name: string
     avatar: string
   }
-  _count?: {
-    like_by: number
+  _count: {
     favorite_by: number
     contribute_by: number
     resource: number

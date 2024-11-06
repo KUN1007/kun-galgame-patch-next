@@ -26,7 +26,6 @@ export const patchRouter = router({
           user: true,
           _count: {
             select: {
-              like_by: true,
               favorite_by: true,
               contribute_by: true,
               resource: true,

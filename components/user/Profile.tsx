@@ -1,219 +1,199 @@
 'use client'
 
-import { useEffect, useState } from 'react'
+import { useState, useEffect } from 'react'
 import {
   Card,
   CardBody,
   CardHeader,
-  Input,
-  Button,
-  Textarea,
   Avatar,
-  Spinner
+  Button,
+  Chip,
+  Divider,
+  Progress,
+  Tab,
+  Tabs,
+  Badge
 } from '@nextui-org/react'
-import { useRouter } from 'next/navigation'
-import { Camera } from 'lucide-react'
+import { formatDistanceToNow } from '~/utils/formatDistanceToNow'
+import {
+  Plus,
+  MessageCircle,
+  Star,
+  GitPullRequest,
+  FileCode,
+  Mail,
+  Calendar,
+  MapPin,
+  Link as LinkIcon
+} from 'lucide-react'
+import { api } from '~/lib/trpc-client'
+import { useErrorHandler } from '~/hooks/useErrorHandler'
+import type { UserInfo } from '~/types/api/user'
 
-const useAuth = () => {
-  const [user, setUser] = useState(mockUser)
-  const [loading, setLoading] = useState(true)
-
-  useEffect(() => {
-    setTimeout(() => setLoading(false), 500)
-  }, [])
-
-  return { user, loading, isAuthenticated: !!user }
-}
-
-const mockUser = {
-  id: 1,
-  name: '鲲',
-  email: 'kun@moyu.moe',
-  avatar: '	https://image.kungal.com/avatar/user_2/avatar.webp',
-  bio: '🚀 Full-stack developer'
-}
-
-export default function SettingsPage() {
-  const router = useRouter()
-  const { user, loading, isAuthenticated } = useAuth()
-  const [formData, setFormData] = useState({
-    name: '',
-    email: '',
-    password: '',
-    newPassword: '',
-    bio: '',
-    avatar: ''
-  })
-  const [isLoading, setIsLoading] = useState(false)
+export const Profile = ({ id }: { id: number }) => {
+  const [user, setUser] = useState<UserInfo>()
+  const [stats, setStats] = useState([
+    { label: '补丁', value: 0, icon: FileCode },
+    { label: '更新请求', value: 0, icon: GitPullRequest },
+    { label: '评论', value: 0, icon: MessageCircle },
+    { label: '收藏', value: 0, icon: Star }
+  ])
 
   useEffect(() => {
-    if (user) {
-      setFormData({
-        name: user.name,
-        email: user.email,
-        password: '',
-        newPassword: '',
-        bio: user.bio,
-        avatar: user.avatar
+    const fetchPatchHistories = async () => {
+      const res = await api.user.getProfile.query({ id: Number(id) })
+      useErrorHandler(res, (value) => {
+        setUser(value)
+        setStats((prevStats) => [
+          { ...prevStats[0], value: value._count.patch },
+          { ...prevStats[1], value: value._count.patch_pull_request },
+          { ...prevStats[2], value: value._count.patch_comment },
+          { ...prevStats[3], value: value._count.patch_favorite }
+        ])
       })
     }
-  }, [user])
+    fetchPatchHistories()
+  }, [id])
 
-  useEffect(() => {
-    if (!loading && !isAuthenticated) {
-      router.push('/')
-    }
-  }, [loading, isAuthenticated, router])
-
-  if (loading) {
-    return (
-      <div className="flex items-center justify-center min-h-screen">
-        <Spinner size="lg" />
-      </div>
-    )
-  }
-
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault()
-    setIsLoading(true)
-
-    try {
-      await new Promise((resolve) => setTimeout(resolve, 1000))
-      console.log('Profile updated:', formData)
-    } catch (error) {
-      console.error('Error updating profile:', error)
-    } finally {
-      setIsLoading(false)
-    }
-  }
-
-  const handleAvatarChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0]
-    if (file) {
-      const reader = new FileReader()
-      reader.onloadend = () => {
-        setFormData((prev) => ({
-          ...prev,
-          avatar: reader.result as string
-        }))
-      }
-      reader.readAsDataURL(file)
-    }
+  if (!user) {
+    return '加载中'
   }
 
   return (
-    <main className="min-h-screen px-4 py-8 bg-gray-50 sm:px-6 lg:px-8">
-      <div className="max-w-2xl mx-auto">
+    <div className="grid grid-cols-1 gap-6 lg:grid-cols-3">
+      <div className="lg:col-span-1">
         <Card className="w-full">
-          <CardHeader className="flex flex-col gap-1 px-6 pt-6">
-            <h1 className="text-2xl font-bold">Account Settings</h1>
-            <p className="text-default-500">
-              Manage your account settings and profile information
-            </p>
+          <CardHeader className="justify-center pt-8">
+            <div className="flex flex-col items-center gap-3">
+              <Avatar
+                src={user.avatar}
+                className="w-24 h-24"
+                isBordered
+                color="primary"
+              />
+              <div className="flex flex-col items-center gap-1">
+                <h4 className="text-2xl font-bold">{user.name}</h4>
+                <Chip color="primary" variant="flat" size="sm" className="mt-1">
+                  {user.role}
+                </Chip>
+              </div>
+            </div>
           </CardHeader>
           <CardBody className="px-6 py-4">
-            <form onSubmit={handleSubmit} className="space-y-6">
-              <div className="flex flex-col items-center gap-4">
-                <div className="relative group">
-                  <Avatar
-                    src={formData.avatar}
-                    className="w-24 h-24"
-                    isBordered
-                    color="primary"
-                  />
-                  <label
-                    htmlFor="avatar-upload"
-                    className="absolute inset-0 flex items-center justify-center transition-opacity rounded-full opacity-0 cursor-pointer bg-black/50 group-hover:opacity-100"
-                  >
-                    <Camera className="w-6 h-6 text-white" />
-                  </label>
-                  <input
-                    id="avatar-upload"
-                    type="file"
-                    accept="image/*"
-                    className="hidden"
-                    onChange={handleAvatarChange}
-                  />
+            {user.bio && (
+              <p className="mb-6 text-center text-default-600">{user.bio}</p>
+            )}
+            <div className="flex flex-col gap-4">
+              {/* <div className="flex items-center gap-2">
+                <MapPin className="w-4 h-4 text-default-400" />
+                <span className="text-small text-default-500">
+                  {user.location}
+                </span>
+              </div> */}
+              <div className="flex items-center gap-2">
+                <LinkIcon className="w-4 h-4 text-default-400" />
+                <a
+                  href={`https://www.moyu.moe/user/${user.id}`}
+                  className="text-small text-primary hover:underline"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                >
+                  {`https://www.moyu.moe/user/${user.id}`}
+                </a>
+              </div>
+              <div className="flex items-center gap-2">
+                <Calendar className="w-4 h-4 text-default-400" />
+                <span className="text-small text-default-500">
+                  加入于 {formatDistanceToNow(user.registerTime)}
+                </span>
+              </div>
+            </div>
+            <Divider className="my-4" />
+            <div className="flex flex-col gap-4">
+              <div>
+                <div className="flex justify-between mb-2">
+                  <span className="text-small">萌萌点</span>
+                  <span className="text-small text-default-500">
+                    {user.moemoepoint}
+                  </span>
                 </div>
-                <p className="text-small text-default-500">
-                  Click to upload new avatar
-                </p>
-              </div>
-
-              <Input
-                label="Display Name"
-                value={formData.name}
-                onChange={(e) =>
-                  setFormData((prev) => ({ ...prev, name: e.target.value }))
-                }
-                required
-              />
-
-              <Input
-                type="email"
-                label="Email"
-                value={formData.email}
-                onChange={(e) =>
-                  setFormData((prev) => ({ ...prev, email: e.target.value }))
-                }
-                required
-              />
-
-              <Input
-                type="password"
-                label="Current Password"
-                value={formData.password}
-                onChange={(e) =>
-                  setFormData((prev) => ({ ...prev, password: e.target.value }))
-                }
-                placeholder="Enter current password to make changes"
-                required
-              />
-
-              <Input
-                type="password"
-                label="New Password (Optional)"
-                value={formData.newPassword}
-                onChange={(e) =>
-                  setFormData((prev) => ({
-                    ...prev,
-                    newPassword: e.target.value
-                  }))
-                }
-                placeholder="Leave blank to keep current password"
-              />
-
-              <Textarea
-                label="Bio"
-                value={formData.bio}
-                onChange={(e) =>
-                  setFormData((prev) => ({ ...prev, bio: e.target.value }))
-                }
-                placeholder="Tell us about yourself"
-                maxRows={4}
-              />
-
-              <div className="flex justify-end gap-3">
-                <Button
-                  color="danger"
-                  variant="light"
-                  onClick={() => router.back()}
-                >
-                  Cancel
-                </Button>
-                <Button
+                <Progress
+                  aria-label="moemoepoint"
+                  value={user.moemoepoint / 20}
                   color="primary"
-                  type="submit"
-                  isLoading={isLoading}
-                  disabled={isLoading}
+                  className="h-2"
+                />
+              </div>
+              <div className="flex gap-2">
+                <Button
+                  startContent={<Plus className="w-4 h-4" />}
+                  color="primary"
+                  variant="flat"
+                  fullWidth
                 >
-                  Save Changes
+                  关注
+                </Button>
+                <Button
+                  startContent={<Mail className="w-4 h-4" />}
+                  color="default"
+                  variant="flat"
+                  fullWidth
+                >
+                  Message
                 </Button>
               </div>
-            </form>
+            </div>
           </CardBody>
         </Card>
       </div>
-    </main>
+
+      <div className="lg:col-span-2">
+        <div className="grid grid-cols-2 gap-4 mb-6 md:grid-cols-4">
+          {stats.map((stat) => (
+            <Card key={stat.label} className="w-full">
+              <CardBody className="flex flex-row items-center gap-4 p-4">
+                <stat.icon className="w-8 h-8 text-primary" />
+                <div>
+                  <p className="text-xl font-bold">{stat.value}</p>
+                  <p className="text-small text-default-500">{stat.label}</p>
+                </div>
+              </CardBody>
+            </Card>
+          ))}
+        </div>
+
+        <Card className="w-full">
+          <CardBody>
+            <Tabs aria-label="User activity" variant="underlined" fullWidth>
+              <Tab key="patches" title="补丁">
+                <div className="p-4">
+                  <p className="text-default-500">补丁</p>
+                </div>
+              </Tab>
+              <Tab key="resources" title="资源">
+                <div className="p-4">
+                  <p className="text-default-500">资源</p>
+                </div>
+              </Tab>
+              <Tab key="contributions" title="贡献">
+                <div className="p-4">
+                  <p className="text-default-500">贡献</p>
+                </div>
+              </Tab>
+              <Tab key="comments" title="评论">
+                <div className="p-4">
+                  <p className="text-default-500">评论</p>
+                </div>
+              </Tab>
+              <Tab key="favorite" title="收藏">
+                <div className="p-4">
+                  <p className="text-default-500">收藏</p>
+                </div>
+              </Tab>
+            </Tabs>
+          </CardBody>
+        </Card>
+      </div>
+    </div>
   )
 }
