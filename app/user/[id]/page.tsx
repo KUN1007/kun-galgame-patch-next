@@ -19,14 +19,13 @@ import {
   MessageCircle,
   Star,
   GitPullRequest,
-  History,
   FileCode,
   Mail,
   Calendar,
   MapPin,
   Link as LinkIcon
 } from 'lucide-react'
-import { UserNav } from '~/components/user/Nav'
+import { api } from '~/lib/trpc-client'
 
 const mockUser = {
   id: 1,
@@ -45,6 +44,19 @@ const mockUser = {
   website: 'https://moyu.moe'
 }
 
+interface UserInfo {
+  id: number
+  name: string
+  email: string
+  avatar: string
+  bio: string
+  role: string
+  status: number
+  registerTime: string
+  moemoepoint: number
+  like: number
+}
+
 const stats = [
   { label: 'Patches', value: 156, icon: FileCode },
   { label: 'Pull Requests', value: 28, icon: GitPullRequest },
@@ -53,12 +65,20 @@ const stats = [
 ]
 
 export default function Home() {
-  return (
-    <div className="mx-auto">
-      <div className="flex justify-end mb-6">
-        <UserNav user={mockUser} />
-      </div>
+  const [histories, setHistories] = useState<PatchHistory[]>([])
 
+  useEffect(() => {
+    const fetchPatchHistories = async () => {
+      const res = await api.patch.getPatchHistories.query({
+        patchId: Number(id)
+      })
+      setHistories(res)
+    }
+    fetchPatchHistories()
+  }, [])
+
+  return (
+    <div className="w-full py-8 mx-auto">
       <div className="grid grid-cols-1 gap-6 lg:grid-cols-3">
         <div className="lg:col-span-1">
           <Card className="w-full">

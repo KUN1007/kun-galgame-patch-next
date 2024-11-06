@@ -1,12 +1,12 @@
 import { create } from 'zustand'
 import { persist, createJSONStorage } from 'zustand/middleware'
-import { cookieStorage } from './_cookie'
 
 export interface UserStore {
   uid: number
   name: string
   email: string
   avatar: string
+  bio: string
   moemoepoint: number
 }
 
@@ -21,6 +21,7 @@ const initialUserStore: UserStore = {
   name: '',
   email: '',
   avatar: '',
+  bio: '',
   moemoepoint: 0
 }
 
@@ -33,7 +34,7 @@ export const useUserStore = create<UserState>()(
     }),
     {
       name: 'kun-patch-user-store',
-      storage: createJSONStorage(() => cookieStorage)
+      storage: createJSONStorage(() => localStorage)
     }
   )
 )

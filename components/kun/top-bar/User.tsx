@@ -8,14 +8,15 @@ import {
   DropdownMenu,
   Avatar,
   Button,
-  Skeleton,
-  Card
+  Skeleton
 } from '@nextui-org/react'
 import { Search } from 'lucide-react'
 import { useUserStore } from '~/store/userStore'
 import { useEffect, useState } from 'react'
+import { useRouter } from 'next/navigation'
 
 export const KunTopBarUser = () => {
+  const router = useRouter()
   const { user } = useUserStore()
   const [isLoading, setIsLoading] = useState(true)
 
@@ -69,9 +70,24 @@ export const KunTopBarUser = () => {
                 />
               </DropdownTrigger>
               <DropdownMenu aria-label="Profile Actions" variant="flat">
-                <DropdownItem key="profile">用户主页</DropdownItem>
-                <DropdownItem key="settings">信息设置</DropdownItem>
-                <DropdownItem key="help_and_feedback">帮助与反馈</DropdownItem>
+                <DropdownItem
+                  key="profile"
+                  onPress={() => router.push(`/user/${user.uid}`)}
+                >
+                  用户主页
+                </DropdownItem>
+                <DropdownItem
+                  key="settings"
+                  onPress={() => router.push(`/user/${user.uid}/settings`)}
+                >
+                  信息设置
+                </DropdownItem>
+                <DropdownItem
+                  key="help_and_feedback"
+                  onPress={() => router.push(`/about`)}
+                >
+                  帮助与反馈
+                </DropdownItem>
                 <DropdownItem key="logout" color="danger">
                   退出登录
                 </DropdownItem>

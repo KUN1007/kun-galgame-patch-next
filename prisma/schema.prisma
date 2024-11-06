@@ -46,16 +46,16 @@ model user {
   register_time     Int    @default(0)
   moemoepoint       Int    @default(0)
   bio               String @default("") @db.VarChar(107)
-  like              Int    @default(0)
   daily_image_count Int    @default(0)
   daily_check_in    Int    @default(0)
 
-  patch_like          user_patch_like_relation[]
   patch_favorite      user_patch_favorite_relation[]
   patch_contribute    user_patch_contribute_relation[]
   patch_comment_like  user_patch_comment_like_relation[]
   patch_resource_like user_patch_resource_like_relation[]
 
+  following             user_follow_relation[]  @relation("user_following")
+  follower              user_follow_relation[]  @relation("user_follower")
   patch                 patch[]                 @relation("user_patch")
   patch_comment         patch_comment[]         @relation("user_patch_comment")
   patch_comment_mention patch_comment_mention[] @relation("user_patch_comment_mention")
@@ -67,6 +67,18 @@ model user {
 
   created DateTime @default(now())
   updated DateTime @updatedAt
+}
+
+model user_follow_relation {
+  id Int @id @default(autoincrement())
+
+  followerId  Int
+  followingId Int
+
+  follower  user @relation("user_follower", fields: [followerId], references: [id])
+  following user @relation("user_following", fields: [followingId], references: [id])
+
+  @@unique([followerId, followingId])
 }
 
 model user_message {
@@ -86,20 +98,6 @@ model user_message {
 
   created DateTime @default(now())
   updated DateTime @updatedAt
-}
-
-model user_patch_like_relation {
-  id Int @id @default(autoincrement())
-
-  user_id  Int
-  user     user  @relation(fields: [user_id], references: [id], onDelete: Cascade)
-  patch_id Int
-  patch    patch @relation(fields: [patch_id], references: [id], onDelete: Cascade)
-
-  created DateTime @default(now())
-  updated DateTime @updatedAt
-
-  @@unique([user_id, patch_id])
 }
 
 model user_patch_favorite_relation {
@@ -174,7 +172,6 @@ model patch {
   user_id Int
   user    user @relation("user_patch", fields: [user_id], references: [id])
 
-  like_by       user_patch_like_relation[]
   favorite_by   user_patch_favorite_relation[]
   contribute_by user_patch_contribute_relation[]
   platform      patch_platform_realtion[]
