@@ -21,8 +21,8 @@ export const Password = () => {
             这是您的密码, 您需要输入旧密码以更改新密码, 密码长度最多 1000 个字符
           </p>
         </div>
-        <Input type="password" label="旧密码" autoComplete="old-password" />
-        <Input type="password" label="新密码" autoComplete="new-password" />
+        <Input type="text" label="旧密码" autoComplete="old-password" />
+        <Input type="text" label="新密码" autoComplete="new-password" />
       </CardBody>
 
       <CardFooter>

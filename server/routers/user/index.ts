@@ -2,6 +2,7 @@ import { z } from 'zod'
 import { router, privateProcedure } from '~/lib/trpc'
 import { hash } from '@node-rs/argon2'
 import { prisma } from '~/prisma/index'
+import { bioSchema } from '~/validations/user'
 import type { UserInfo } from '~/types/api/user'
 
 export const updateUserSchema = z.object({
@@ -13,28 +14,13 @@ export const updateUserSchema = z.object({
 })
 
 export const userRouter = router({
-  update: privateProcedure
-    .input(updateUserSchema)
+  updateBio: privateProcedure
+    .input(bioSchema)
     .mutation(async ({ ctx, input }) => {
-      const { password, ...rest } = input
-      const updateData: any = { ...rest }
-
-      if (password) {
-        updateData.password = await hash(password)
-      }
-
-      const user = await prisma.user.update({
+      await prisma.user.update({
         where: { id: ctx.uid },
-        data: updateData
+        data: { bio: input }
       })
-
-      return {
-        uid: user.id,
-        name: user.name,
-        email: user.email,
-        avatar: user.avatar,
-        moemoepoint: user.moemoepoint
-      }
     }),
 
   getProfile: privateProcedure

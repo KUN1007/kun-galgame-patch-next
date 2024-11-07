@@ -11,7 +11,7 @@ import { redirect } from 'next/navigation'
 type LoginFormData = z.infer<typeof loginSchema>
 
 export const LoginForm = () => {
-  const { login } = useUserStore()
+  const { setUser } = useUserStore()
 
   const { control, handleSubmit, reset } = useForm<LoginFormData>({
     resolver: zodResolver(loginSchema),
@@ -24,7 +24,7 @@ export const LoginForm = () => {
   const onSubmit = async (data: LoginFormData) => {
     const res = await api.auth.login.mutate(data)
     useErrorHandler(res, (value) => {
-      login(value)
+      setUser(value)
       reset()
       redirect(`/user/${value.uid}`)
     })

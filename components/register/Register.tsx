@@ -12,7 +12,7 @@ import { redirect } from 'next/navigation'
 type RegisterFormData = z.infer<typeof registerSchema>
 
 export const RegisterForm: React.FC = () => {
-  const { login } = useUserStore()
+  const { setUser } = useUserStore()
 
   const { control, handleSubmit, reset } = useForm<RegisterFormData>({
     resolver: zodResolver(registerSchema),
@@ -26,7 +26,7 @@ export const RegisterForm: React.FC = () => {
   const onSubmit = async (data: RegisterFormData) => {
     const res = await api.auth.register.mutate(data)
     useErrorHandler(res, (value) => {
-      login(value)
+      setUser(value)
       reset()
       redirect(`/user/${value.uid}`)
     })
