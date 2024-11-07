@@ -78,7 +78,7 @@ export const KunTopBarUser = () => {
                 </DropdownItem>
                 <DropdownItem
                   key="settings"
-                  onPress={() => router.push(`/user/${user.uid}/settings`)}
+                  onPress={() => router.push('/settings/user')}
                 >
                   信息设置
                 </DropdownItem>

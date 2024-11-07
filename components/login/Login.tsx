@@ -1,5 +1,4 @@
 import { z } from 'zod'
-import React from 'react'
 import { useForm, Controller } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { Input, Button, Divider, Link } from '@nextui-org/react'
@@ -11,7 +10,7 @@ import { redirect } from 'next/navigation'
 
 type LoginFormData = z.infer<typeof loginSchema>
 
-export const LoginForm: React.FC = () => {
+export const LoginForm = () => {
   const { login } = useUserStore()
 
   const { control, handleSubmit, reset } = useForm<LoginFormData>({
