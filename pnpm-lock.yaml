@@ -92,6 +92,9 @@ importers:
       react-hot-toast:
         specifier: ^2.4.1
         version: 2.4.1(csstype@3.1.3)(react-dom@18.3.1(react@18.3.1))(react@18.3.1)
+      react-image-crop:
+        specifier: ^11.0.7
+        version: 11.0.7(react@18.3.1)
       react-spinners:
         specifier: ^0.14.1
         version: 0.14.1(react-dom@18.3.1(react@18.3.1))(react@18.3.1)
@@ -4825,6 +4828,11 @@ packages:
     peerDependencies:
       react: '>=16'
       react-dom: '>=16'
+
+  react-image-crop@11.0.7:
+    resolution: {integrity: sha512-ZciKWHDYzmm366JDL18CbrVyjnjH0ojufGDmScfS4ZUqLHg4nm6ATY+K62C75W4ZRNt4Ii+tX0bSjNk9LQ2xzQ==}
+    peerDependencies:
+      react: '>=16.13.1'
 
   react-is@16.13.1:
     resolution: {integrity: sha512-24e6ynE2H+OKt4kqsOvNd8kBpV65zoxbA4BVsEOB3ARVWQki/DHzaUoC5KuON/BiccDaCCTZBuOcfZs70kR8bQ==}
@@ -11862,6 +11870,10 @@ snapshots:
       react-dom: 18.3.1(react@18.3.1)
     transitivePeerDependencies:
       - csstype
+
+  react-image-crop@11.0.7(react@18.3.1):
+    dependencies:
+      react: 18.3.1
 
   react-is@16.13.1: {}
 

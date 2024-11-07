@@ -13,6 +13,7 @@ export const Bio = () => {
   const { user, setUser } = useUserStore()
   const [bio, setBio] = useState('')
   const [error, setError] = useState('')
+  const [loading, setLoading] = useState(false)
 
   const handleSave = async () => {
     const result = bioSchema.safeParse(bio)
@@ -21,8 +22,9 @@ export const Bio = () => {
     } else {
       setError('')
       setUser({ ...user, bio })
-      toast.loading('正在更新签名...')
+      setLoading(true)
       await api.user.updateBio.mutate(bio)
+      setLoading(false)
       toast.success('更新签名成功')
       setBio('')
     }
@@ -56,6 +58,8 @@ export const Bio = () => {
           variant="solid"
           className="ml-auto"
           onClick={handleSave}
+          isLoading={loading}
+          disabled={loading}
         >
           保存
         </Button>

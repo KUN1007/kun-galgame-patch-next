@@ -37,8 +37,8 @@ export const Profile = ({ user }: { user: UserInfo }) => {
           <CardHeader className="justify-center pt-8">
             <div className="flex flex-col items-center gap-3">
               <Avatar
-                src={user.avatar}
-                className="w-24 h-24"
+                src={user.avatar.replace('-mini', '')}
+                className="w-32 h-32"
                 isBordered
                 color="primary"
               />

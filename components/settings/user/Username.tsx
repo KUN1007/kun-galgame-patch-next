@@ -22,6 +22,7 @@ export const Username = () => {
   const { user, setUser } = useUserStore()
   const [username, setUsername] = useState('')
   const [error, setError] = useState('')
+  const [loading, setLoading] = useState(false)
   const { isOpen, onOpen, onOpenChange } = useDisclosure()
 
   const handleSave = async () => {
@@ -36,8 +37,10 @@ export const Username = () => {
     } else {
       setError('')
 
+      setLoading(true)
       const res = await api.user.updateUsername.mutate(username)
       useErrorHandler(res, () => {
+        setLoading(false)
         toast.success('更新用户名成功')
         setUser({ ...user, name: username, moemoepoint: user.moemoepoint - 30 })
         setUsername('')
@@ -99,6 +102,8 @@ export const Username = () => {
                       handleSave()
                       onClose()
                     }}
+                    isLoading={loading}
+                    disabled={loading}
                   >
                     确定
                   </Button>

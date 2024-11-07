@@ -1,0 +1,32 @@
+import sharp from 'sharp'
+
+import { uploadObject } from '~/server/utils/uploadImage'
+import { checkBufferSize } from '~/server/utils/checkBufferSize'
+
+export const uploadUserAvatar = async (image: ArrayBuffer, uid: number) => {
+  const avatar = await sharp(image)
+    .resize(512, 512, {
+      fit: 'inside',
+      withoutEnlargement: true
+    })
+    .avif({ quality: 80 })
+    .toBuffer()
+  const miniAvatar = await sharp(image)
+    .resize(100, 100, {
+      fit: 'inside',
+      withoutEnlargement: true
+    })
+    .avif({ quality: 50 })
+    .toBuffer()
+
+  if (!checkBufferSize(avatar, 1.007)) {
+    return '图片体积过大'
+  }
+
+  const bucketName = `kun-galgame-patch/user/avatar/user_${uid}`
+
+  const res1 = await uploadObject(avatar, 'avatar.avif', bucketName)
+  const res2 = await uploadObject(miniAvatar, 'avatar-mini.avif', bucketName)
+
+  return !!(res1 && res2)
+}

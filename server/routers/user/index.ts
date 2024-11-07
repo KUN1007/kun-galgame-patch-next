@@ -1,8 +1,10 @@
 import { z } from 'zod'
-import { router, privateProcedure } from '~/lib/trpc'
-import { hash } from '@node-rs/argon2'
+import { router, publicProcedure, privateProcedure } from '~/lib/trpc'
+import { verify } from '@node-rs/argon2'
 import { prisma } from '~/prisma/index'
-import { bioSchema, usernameSchema } from '~/validations/user'
+import { avatarSchema, bioSchema, usernameSchema } from '~/validations/user'
+import { parseAvatarImageMiddleware } from './_middleware'
+import { uploadUserAvatar } from './_upload'
 import type { UserInfo } from '~/types/api/user'
 
 export const updateUserSchema = z.object({
@@ -14,6 +16,29 @@ export const updateUserSchema = z.object({
 })
 
 export const userRouter = router({
+  updateUserAvatar: privateProcedure
+    .use(parseAvatarImageMiddleware)
+    .input(avatarSchema)
+    .mutation(async ({ ctx, input }) => {
+      const avatarArrayBuffer = input.avatar as ArrayBuffer
+      const res = await uploadUserAvatar(avatarArrayBuffer, ctx.uid)
+      if (!res) {
+        return '上传图片错误, 未知错误'
+      }
+      if (typeof res === 'string') {
+        return res
+      }
+
+      const imageLink = `${process.env.KUN_VISUAL_NOVEL_IMAGE_BED_URL}/user/avatar/user_${ctx.uid}/avatar-mini.avif`
+
+      await prisma.user.update({
+        where: { id: ctx.uid },
+        data: { avatar: imageLink }
+      })
+
+      return { avatar: imageLink }
+    }),
+
   updateUsername: privateProcedure
     .input(usernameSchema)
     .mutation(async ({ ctx, input }) => {
@@ -40,7 +65,7 @@ export const userRouter = router({
       })
     }),
 
-  getProfile: privateProcedure
+  getProfile: publicProcedure
     .input(
       z.object({
         id: z.number({ message: '请输入合法的用户 ID' }).min(1).max(9999999)

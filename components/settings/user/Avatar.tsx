@@ -3,6 +3,7 @@
 import { Card, CardBody, CardFooter } from '@nextui-org/card'
 import { Camera } from 'lucide-react'
 import { Avatar } from '@nextui-org/avatar'
+import { AvatarCrop } from './AvatarCrop'
 import { useUserStore } from '~/store/userStore'
 
 export const UserAvatar = () => {
@@ -28,28 +29,7 @@ export const UserAvatar = () => {
           <p>您可以点击头像以上传图片文件</p>
         </div>
 
-        <div className="relative group">
-          <Avatar
-            name={user.name}
-            src={user.avatar}
-            className="w-16 h-16"
-            color="primary"
-          />
-
-          <label
-            htmlFor="avatar-upload"
-            className="absolute inset-0 flex items-center justify-center transition-opacity rounded-full opacity-0 cursor-pointer bg-black/50 group-hover:opacity-100"
-          >
-            <Camera className="w-6 h-6 text-white" />
-          </label>
-          <input
-            id="avatar-upload"
-            type="file"
-            accept="image/*"
-            className="hidden"
-            onChange={handleAvatarChange}
-          />
-        </div>
+        <AvatarCrop />
       </CardBody>
 
       <CardFooter>

@@ -1,5 +1,9 @@
 import { z } from 'zod'
 
+export const avatarSchema = z.object({
+  avatar: z.any()
+})
+
 export const bioSchema = z
   .string()
   .trim()
