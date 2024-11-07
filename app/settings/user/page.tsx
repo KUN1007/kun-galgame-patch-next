@@ -8,24 +8,11 @@ import {
   Input,
   Button,
   Textarea,
-  Avatar,
-  Spinner
+  Avatar
 } from '@nextui-org/react'
 import { useRouter } from 'next/navigation'
 import { Camera } from 'lucide-react'
-
-// Mock authentication - replace with your actual auth logic
-const useAuth = () => {
-  const [user, setUser] = useState(mockUser)
-  const [loading, setLoading] = useState(true)
-
-  useEffect(() => {
-    // Simulate auth check
-    setTimeout(() => setLoading(false), 500)
-  }, [])
-
-  return { user, loading, isAuthenticated: !!user }
-}
+import { useUserStore } from '~/store/userStore'
 
 const mockUser = {
   id: 1,
@@ -37,7 +24,7 @@ const mockUser = {
 
 export default function SettingsPage() {
   const router = useRouter()
-  const { user, loading, isAuthenticated } = useAuth()
+  const { user } = useUserStore()
   const [formData, setFormData] = useState({
     name: '',
     email: '',
@@ -61,34 +48,9 @@ export default function SettingsPage() {
     }
   }, [user])
 
-  useEffect(() => {
-    if (!loading && !isAuthenticated) {
-      router.push('/')
-    }
-  }, [loading, isAuthenticated, router])
-
-  if (loading) {
-    return (
-      <div className="flex items-center justify-center min-h-screen">
-        <Spinner size="lg" />
-      </div>
-    )
-  }
-
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
     setIsLoading(true)
-
-    try {
-      // Simulate API call
-      await new Promise((resolve) => setTimeout(resolve, 1000))
-      // Handle successful update
-      console.log('Profile updated:', formData)
-    } catch (error) {
-      console.error('Error updating profile:', error)
-    } finally {
-      setIsLoading(false)
-    }
   }
 
   const handleAvatarChange = (e: React.ChangeEvent<HTMLInputElement>) => {

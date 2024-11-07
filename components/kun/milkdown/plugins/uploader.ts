@@ -21,13 +21,14 @@ export const kunUploader: Uploader = async (files, schema) => {
     images.push(file)
   }
 
-  // @ts-ignore-next-line
+  // @ts-expect-error
   const nodes: Node[] = await Promise.all(
     images.map(async (image) => {
       const formData = new FormData()
       const miniImage = await resizeImage(image, 1920, 1080)
       formData.append('image', miniImage)
 
+      // @ts-expect-error
       const res = await api.edit.image.mutate(formData)
       if (typeof res === 'string') {
         toast.error(res)

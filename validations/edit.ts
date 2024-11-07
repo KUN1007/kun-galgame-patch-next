@@ -30,24 +30,8 @@ export const duplicateSchema = z.object({
   vndbId: z.string().regex(/^v\d{1,6}$/, { message: 'VNDB ID 格式无效' })
 })
 
-export const imageSchema = zfd.formData({
-  image: zfd
-    .file()
-    .refine(
-      (file: File | null) => file?.size! < KUN_BANNER_MAX_SIZE,
-      `图片尺寸最大为 1007kb`
-    )
-    .refine(
-      (file: File | null) =>
-        [
-          'image/jpeg',
-          'image/jpg',
-          'image/png',
-          'image/webp',
-          'image/avif'
-        ].includes(file?.type!),
-      '我们仅支持 .jpg, .jpeg, .png, .webp, .avif 图片'
-    )
+export const imageSchema = z.object({
+  image: z.any()
 })
 
 export const editLinkSchema = z.object({

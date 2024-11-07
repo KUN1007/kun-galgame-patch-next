@@ -63,26 +63,20 @@ export const KunMilkdownPluginsMenu = ({
     const miniImage = await resizeImage(file, 1920, 1080)
     formData.append('image', miniImage)
 
-    toast.promise(
-      (async () => {
-        const res = await api.edit.image.mutate(formData)
-        if (typeof res === 'string') {
-          toast.error(res)
-          return
-        }
+    toast.loading('正在上传图片...')
+    // @ts-expect-error
+    const res = await api.edit.image.mutate(formData)
+    if (typeof res === 'string') {
+      toast.error(res)
+      return
+    }
+    toast.success('上传图片成功')
 
-        call(insertImageCommand.key, {
-          src: res.imageLink,
-          title: file.name,
-          alt: file.name
-        })
-      })(),
-      {
-        loading: '正在上传图片...',
-        success: '上传图片成功',
-        error: '上传图片错误'
-      }
-    )
+    call(insertImageCommand.key, {
+      src: res.imageLink,
+      title: file.name,
+      alt: file.name
+    })
   }
 
   return (

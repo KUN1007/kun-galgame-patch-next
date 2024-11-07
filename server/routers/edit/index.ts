@@ -1,35 +1,11 @@
 import { router, privateProcedure } from '~/lib/trpc'
 import { patchSchema, duplicateSchema, imageSchema } from '~/validations/edit'
 import { uploadPatchBanner, uploadIntroductionImage } from './_upload'
-import { middleware } from '~/lib/trpc'
+import {
+  parseEditFormDataMiddleware,
+  parseEditorImageMiddleware
+} from './_middleware'
 import { prisma } from '~/prisma/index'
-import type { PatchFormData } from '~/store/editStore'
-
-const parseEditFormDataMiddleware = middleware(
-  async ({ ctx, next, getRawInput }) => {
-    const input = (await getRawInput()) as FormData
-
-    const nameData = input.get('name')
-    const bannerData = input.get('banner')
-    const introductionData = input.get('introduction')
-    const vndbIdData = input.get('vndbId')
-    const aliasesData = input.get('alias')
-
-    const requestData: Partial<PatchFormData> & {
-      banner: ArrayBuffer
-    } = {
-      name: nameData?.toString(),
-      banner: await new Response(bannerData)?.arrayBuffer(),
-      introduction: introductionData?.toString(),
-      vndbId: vndbIdData?.toString(),
-      alias: JSON.parse(aliasesData ? aliasesData.toString() : '')
-    }
-
-    return next({
-      getRawInput: async () => requestData
-    })
-  }
-)
 
 export const editRouter = router({
   edit: privateProcedure
@@ -46,7 +22,7 @@ export const editRouter = router({
         await prisma.$queryRaw`SELECT last_value FROM patch_id_seq`
       const newId = Number(currentId[0].last_value) + 1
 
-      const bannerArrayBuffer: ArrayBuffer = banner
+      const bannerArrayBuffer = banner as ArrayBuffer
       const res = await uploadPatchBanner(bannerArrayBuffer, newId)
       if (!res) {
         return '上传图片错误, 未知错误'
@@ -103,11 +79,12 @@ export const editRouter = router({
     }),
 
   image: privateProcedure
+    .use(parseEditorImageMiddleware)
     .input(imageSchema)
     .mutation(async ({ ctx, input }) => {
       const newFileName = `${ctx.uid}-${Date.now()}`
 
-      const bannerArrayBuffer = await input.image.arrayBuffer()
+      const bannerArrayBuffer = input.image as ArrayBuffer
       const res = await uploadIntroductionImage(
         newFileName,
         bannerArrayBuffer,
