@@ -17,17 +17,16 @@ export const Password = () => {
       </CardHeader>
       <CardBody className="py-0 space-y-4">
         <div>
-          <p>
-            这是您的密码, 您需要输入旧密码以更改新密码, 密码长度最多 1000 个字符
-          </p>
+          <p>这是您的密码, 您需要输入旧密码以更改新密码</p>
         </div>
         <Input type="text" label="旧密码" autoComplete="old-password" />
         <Input type="text" label="新密码" autoComplete="new-password" />
       </CardBody>
 
-      <CardFooter>
+      <CardFooter className="flex-wrap">
         <p className="text-gray-500">
-          您的邮箱在设置后, 需要经过验证码检测才会生效
+          密码长度最短 6 个字符, 最长 1000 个字符, 可以包含任意字符,
+          至少包含数字和英语字母
         </p>
 
         <Button color="primary" variant="solid" className="ml-auto">
@@ -36,6 +35,7 @@ export const Password = () => {
       </CardFooter>
 
       <Divider />
+
       <CardFooter>
         <Link showAnchorIcon href="/auth/forgot">
           忘记密码?

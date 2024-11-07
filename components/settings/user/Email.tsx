@@ -27,7 +27,7 @@ export const Email = () => {
         />
       </CardBody>
 
-      <CardFooter>
+      <CardFooter className="flex-wrap">
         <p className="text-gray-500">
           您的新邮箱在设置后, 将会收到一封确认邮件, 请在确认邮件的链接中进行验证
         </p>

@@ -4,9 +4,46 @@ import { Card, CardHeader, CardBody, CardFooter } from '@nextui-org/card'
 import { Input } from '@nextui-org/input'
 import { Button } from '@nextui-org/button'
 import { useUserStore } from '~/store/userStore'
+import { useState } from 'react'
+import { api } from '~/lib/trpc-client'
+import { useErrorHandler } from '~/hooks/useErrorHandler'
+import { usernameSchema } from '~/validations/user'
+import {
+  Modal,
+  ModalContent,
+  ModalHeader,
+  ModalBody,
+  ModalFooter,
+  useDisclosure
+} from '@nextui-org/modal'
+import toast from 'react-hot-toast'
 
 export const Username = () => {
-  const { user } = useUserStore()
+  const { user, setUser } = useUserStore()
+  const [username, setUsername] = useState('')
+  const [error, setError] = useState('')
+  const { isOpen, onOpen, onOpenChange } = useDisclosure()
+
+  const handleSave = async () => {
+    if (user.moemoepoint < 30) {
+      toast.error('更改用户名最少需要 30 萌萌点, 您的萌萌点不足')
+      return
+    }
+
+    const result = usernameSchema.safeParse(username)
+    if (!result.success) {
+      setError(result.error.errors[0].message)
+    } else {
+      setError('')
+
+      const res = await api.user.updateUsername.mutate(username)
+      useErrorHandler(res, () => {
+        toast.success('更新用户名成功')
+        setUser({ ...user, name: username, moemoepoint: user.moemoepoint - 30 })
+        setUsername('')
+      })
+    }
+  }
 
   return (
     <Card className="w-full text-sm">
@@ -17,15 +54,59 @@ export const Username = () => {
         <div>
           <p>这是您的用户名设置, 您的用户名是唯一的</p>
         </div>
-        <Input label="用户名" autoComplete="username" />
+        <Input
+          label="用户名"
+          autoComplete="text"
+          defaultValue={user.name}
+          value={username}
+          onChange={(e) => setUsername(e.target.value)}
+          isInvalid={!!error}
+          errorMessage={error}
+        />
       </CardBody>
 
-      <CardFooter>
-        <p className="text-gray-500">用户名长度最大为 16, 可以是任意字符</p>
+      <CardFooter className="flex-wrap">
+        <p className="text-gray-500">
+          用户名长度最大为 16, 可以是任意字符, 更改用户名需要消耗您 30 萌萌点
+        </p>
 
-        <Button color="primary" variant="solid" className="ml-auto">
+        <Button
+          color="primary"
+          variant="solid"
+          className="ml-auto"
+          onClick={onOpen}
+        >
           保存
         </Button>
+
+        <Modal isOpen={isOpen} onOpenChange={onOpenChange}>
+          <ModalContent>
+            {(onClose) => (
+              <>
+                <ModalHeader className="flex flex-col gap-1">
+                  您确定要更改用户名吗?
+                </ModalHeader>
+                <ModalBody>
+                  <p>更改用户名需要消耗您 30 萌萌点, 该操作不可撤销</p>
+                </ModalBody>
+                <ModalFooter>
+                  <Button color="danger" variant="light" onPress={onClose}>
+                    关闭
+                  </Button>
+                  <Button
+                    color="primary"
+                    onPress={() => {
+                      handleSave()
+                      onClose()
+                    }}
+                  >
+                    确定
+                  </Button>
+                </ModalFooter>
+              </>
+            )}
+          </ModalContent>
+        </Modal>
       </CardFooter>
     </Card>
   )

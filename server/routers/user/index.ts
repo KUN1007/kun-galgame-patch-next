@@ -2,7 +2,7 @@ import { z } from 'zod'
 import { router, privateProcedure } from '~/lib/trpc'
 import { hash } from '@node-rs/argon2'
 import { prisma } from '~/prisma/index'
-import { bioSchema } from '~/validations/user'
+import { bioSchema, usernameSchema } from '~/validations/user'
 import type { UserInfo } from '~/types/api/user'
 
 export const updateUserSchema = z.object({
@@ -14,6 +14,23 @@ export const updateUserSchema = z.object({
 })
 
 export const userRouter = router({
+  updateUsername: privateProcedure
+    .input(usernameSchema)
+    .mutation(async ({ ctx, input }) => {
+      const user = await prisma.user.findUnique({ where: { id: ctx.uid } })
+      if (!user) {
+        return '用户未找到'
+      }
+      if (user.moemoepoint < 30) {
+        return '更改用户名最少需要 30 萌萌点, 您的萌萌点不足'
+      }
+
+      await prisma.user.update({
+        where: { id: ctx.uid },
+        data: { name: input, moemoepoint: { increment: -30 } }
+      })
+    }),
+
   updateBio: privateProcedure
     .input(bioSchema)
     .mutation(async ({ ctx, input }) => {

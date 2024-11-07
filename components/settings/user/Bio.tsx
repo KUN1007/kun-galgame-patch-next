@@ -21,7 +21,7 @@ export const Bio = () => {
     } else {
       setError('')
       setUser({ ...user, bio })
-
+      toast.loading('正在更新签名...')
       await api.user.updateBio.mutate(bio)
       toast.success('更新签名成功')
       setBio('')
@@ -48,7 +48,7 @@ export const Bio = () => {
         />
       </CardBody>
 
-      <CardFooter>
+      <CardFooter className="flex-wrap">
         <p className="text-gray-500">签名最大长度为 107, 可以是任意字符</p>
 
         <Button
