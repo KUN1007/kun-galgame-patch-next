@@ -7,11 +7,12 @@ import { api } from '~/lib/trpc-client'
 import { loginSchema } from '~/validations/auth'
 import { useUserStore } from '~/store/userStore'
 import { useErrorHandler } from '~/hooks/useErrorHandler'
+import { redirect } from 'next/navigation'
 
 type LoginFormData = z.infer<typeof loginSchema>
 
 export const LoginForm: React.FC = () => {
-  const userStore = useUserStore()
+  const { login } = useUserStore()
 
   const { control, handleSubmit, reset } = useForm<LoginFormData>({
     resolver: zodResolver(loginSchema),
@@ -24,8 +25,9 @@ export const LoginForm: React.FC = () => {
   const onSubmit = async (data: LoginFormData) => {
     const res = await api.auth.login.mutate(data)
     useErrorHandler(res, (value) => {
-      userStore.login(value)
+      login(value)
       reset()
+      redirect(`/user/${value.uid}`)
     })
   }
 

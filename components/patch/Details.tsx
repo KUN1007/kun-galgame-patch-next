@@ -1,7 +1,8 @@
 'use client'
 
 import DOMPurify from 'isomorphic-dompurify'
-import { Card, CardHeader, CardBody, Tabs, Tab } from '@nextui-org/react'
+import { Card, CardHeader, CardBody } from '@nextui-org/card'
+import { Tabs, Tab } from '@nextui-org/tabs'
 import { Calendar, Clock, Link } from 'lucide-react'
 import { Resources } from './Resource'
 import { Comments } from './Comments'

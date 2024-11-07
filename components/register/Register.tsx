@@ -5,11 +5,16 @@ import { z } from 'zod'
 import { Input, Button, Divider, Link, Checkbox } from '@nextui-org/react'
 import { api } from '~/lib/trpc-client'
 import { registerSchema } from '~/validations/auth'
+import { useUserStore } from '~/store/userStore'
+import { useErrorHandler } from '~/hooks/useErrorHandler'
+import { redirect } from 'next/navigation'
 
 type RegisterFormData = z.infer<typeof registerSchema>
 
 export const RegisterForm: React.FC = () => {
-  const { control, handleSubmit } = useForm<RegisterFormData>({
+  const { login } = useUserStore()
+
+  const { control, handleSubmit, reset } = useForm<RegisterFormData>({
     resolver: zodResolver(registerSchema),
     defaultValues: {
       name: '',
@@ -19,7 +24,12 @@ export const RegisterForm: React.FC = () => {
   })
 
   const onSubmit = async (data: RegisterFormData) => {
-    await api.auth.register.mutate(data)
+    const res = await api.auth.register.mutate(data)
+    useErrorHandler(res, (value) => {
+      login(value)
+      reset()
+      redirect(`/user/${value.uid}`)
+    })
   }
 
   return (

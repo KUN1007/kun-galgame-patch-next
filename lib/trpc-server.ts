@@ -20,7 +20,6 @@ export const serverApi = experimental_createTRPCNextAppDirServer<
           // requests are cached for 5 seconds
           revalidate: 5,
           router: appRouter,
-          // @ts-expect-error
           createContext: async () => {
             return {
               headers: {

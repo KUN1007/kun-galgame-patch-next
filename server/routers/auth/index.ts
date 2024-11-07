@@ -3,13 +3,14 @@ import { router, publicProcedure, privateProcedure } from '~/lib/trpc'
 import { verify, hash } from '@node-rs/argon2'
 import { generateKunToken, deleteKunToken } from '~/server/utils/jwt'
 import { loginSchema, registerSchema } from '~/validations/auth'
+import { prisma } from '~/prisma/index'
 import type { UserStore } from '~/store/userStore'
 
 export const authRouter = router({
   login: publicProcedure.input(loginSchema).mutation(async ({ ctx, input }) => {
     const { name, password } = input
 
-    const user = await ctx.prisma.user.findFirst({
+    const user = await prisma.user.findFirst({
       where: {
         OR: [{ email: name }, { name }]
       }
@@ -48,12 +49,11 @@ export const authRouter = router({
       const { name, email, password } = input
       const hashedPassword = await hash(password)
 
-      const user = await ctx.prisma.user.create({
+      const user = await prisma.user.create({
         data: {
           name,
           email,
-          password: hashedPassword,
-          register_time: Date.now()
+          password: hashedPassword
         }
       })
 

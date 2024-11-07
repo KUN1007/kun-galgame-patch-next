@@ -1,14 +1,8 @@
-'use client'
-
-import {
-  Avatar,
-  Chip,
-  Divider,
-  Button,
-  Card,
-  CardHeader,
-  CardBody
-} from '@nextui-org/react'
+import { Card, CardHeader, CardBody } from '@nextui-org/card'
+import { Avatar } from '@nextui-org/avatar'
+import { Chip } from '@nextui-org/chip'
+import { Button } from '@nextui-org/button'
+import { Divider } from '@nextui-org/divider'
 import { Eye, Heart, MessageSquare, Share2, Star, User } from 'lucide-react'
 import type { Patch } from '~/types/api/patch'
 

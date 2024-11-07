@@ -8,6 +8,7 @@
     "codemirror",
     "commonmark",
     "dompurify",
+    "frontmatter",
     "Galgame",
     "hookform",
     "katex",

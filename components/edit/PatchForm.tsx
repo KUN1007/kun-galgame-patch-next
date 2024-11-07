@@ -10,7 +10,6 @@ import {
 } from '@nextui-org/react'
 import localforage from 'localforage'
 import { Upload, Plus } from 'lucide-react'
-import { useEditorStore } from '~/store/editorStore'
 import { useEditStore } from '~/store/editStore'
 import { cn } from '~/utils/cn'
 import { Editor } from '~/components/kun/milkdown/PatchEditor'
@@ -19,11 +18,11 @@ import { api } from '~/lib/trpc-client'
 import { useErrorHandler } from '~/hooks/useErrorHandler'
 import { patchSchema } from '~/validations/edit'
 import { resizeImage } from '~/utils/resizeImage'
+import { redirect } from 'next/navigation'
 import type { PatchFormRequestData } from '~/store/editStore'
 import type { VNDBResponse } from './VNDB'
 
 export const PatchSubmissionForm = () => {
-  const { markdown, setMarkdown } = useEditorStore()
   const { data, setData, resetData } = useEditStore()
   const [banner, setBanner] = useState<Blob | null>(null)
   const [newAlias, setNewAlias] = useState<string>('')
@@ -98,8 +97,7 @@ export const PatchSubmissionForm = () => {
 
     const result = patchSchema.safeParse({
       ...data,
-      banner,
-      introduction: markdown
+      banner
     })
     if (!result.success) {
       const newErrors: Partial<Record<keyof PatchFormRequestData, string>> = {}
@@ -119,15 +117,16 @@ export const PatchSubmissionForm = () => {
     formDataToSend.append('banner', banner!)
     formDataToSend.append('name', data.name)
     formDataToSend.append('vndbId', data.vndbId)
-    formDataToSend.append('introduction', markdown)
+    formDataToSend.append('introduction', data.introduction)
     formDataToSend.append('alias', JSON.stringify(data.alias))
 
+    // @ts-expect-error
     const res = await api.edit.edit.mutate(formDataToSend)
-    useErrorHandler(res, async () => {
+    useErrorHandler(res, async (value) => {
       resetData()
-      setMarkdown('')
       setPreviewUrl('')
       await localforage.removeItem('kun-patch-banner')
+      redirect(`/patch/${value}`)
     })
   }
 

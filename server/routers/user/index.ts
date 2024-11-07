@@ -1,6 +1,7 @@
 import { z } from 'zod'
 import { router, privateProcedure } from '~/lib/trpc'
 import { hash } from '@node-rs/argon2'
+import { prisma } from '~/prisma/index'
 import type { UserInfo } from '~/types/api/user'
 
 export const updateUserSchema = z.object({
@@ -22,7 +23,7 @@ export const userRouter = router({
         updateData.password = await hash(password)
       }
 
-      const user = await ctx.prisma.user.update({
+      const user = await prisma.user.update({
         where: { id: ctx.uid },
         data: updateData
       })
@@ -43,7 +44,7 @@ export const userRouter = router({
       })
     )
     .query(async ({ ctx, input }) => {
-      const data = await ctx.prisma.user.findUnique({
+      const data = await prisma.user.findUnique({
         where: { id: input.id },
         include: {
           _count: {

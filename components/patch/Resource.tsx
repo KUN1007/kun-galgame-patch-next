@@ -1,7 +1,10 @@
 'use client'
 
 import { useState, useEffect } from 'react'
-import { Chip, Button, Card, CardBody, Link } from '@nextui-org/react'
+import { Chip } from '@nextui-org/chip'
+import { Button } from '@nextui-org/button'
+import { Card, CardBody } from '@nextui-org/card'
+import { Link } from '@nextui-org/link'
 import { Download, Heart, Lock } from 'lucide-react'
 import { api } from '~/lib/trpc-client'
 import type { PatchResource } from '~/types/api/patch'

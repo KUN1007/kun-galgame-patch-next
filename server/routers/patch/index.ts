@@ -78,7 +78,7 @@ export const patchRouter = router({
     .query(async ({ ctx, input }) => {
       const { patchId } = input
 
-      const data = await ctx.prisma.patch_resource.findMany({
+      const data = await prisma.patch_resource.findMany({
         where: { patch_id: patchId },
         include: {
           user: true,
@@ -130,7 +130,7 @@ export const patchRouter = router({
     .query(async ({ ctx, input }) => {
       const { patchId } = input
 
-      const data = await ctx.prisma.patch_comment.findMany({
+      const data = await prisma.patch_comment.findMany({
         where: { patch_id: patchId },
         include: {
           user: true,
@@ -174,7 +174,7 @@ export const patchRouter = router({
     .query(async ({ ctx, input }) => {
       const { patchId } = input
 
-      const data = await ctx.prisma.patch_history.findMany({
+      const data = await prisma.patch_history.findMany({
         where: { patch_id: patchId },
         include: {
           user: true

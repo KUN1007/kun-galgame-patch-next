@@ -1,7 +1,8 @@
 'use client'
 
 import { useState, useEffect } from 'react'
-import { Card, CardBody, Chip } from '@nextui-org/react'
+import { Card, CardBody } from '@nextui-org/card'
+import { Chip } from '@nextui-org/chip'
 import { formatDistanceToNow } from '~/utils/formatDistanceToNow'
 import { Activity } from 'lucide-react'
 import { api } from '~/lib/trpc-client'

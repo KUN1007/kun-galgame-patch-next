@@ -1,19 +1,9 @@
-'use client'
-
-import { useState, useEffect } from 'react'
-import {
-  Card,
-  CardBody,
-  CardHeader,
-  Avatar,
-  Button,
-  Chip,
-  Divider,
-  Progress,
-  Tab,
-  Tabs,
-  Badge
-} from '@nextui-org/react'
+import { Card, CardBody, CardHeader } from '@nextui-org/card'
+import { Avatar } from '@nextui-org/avatar'
+import { Button } from '@nextui-org/button'
+import { Chip } from '@nextui-org/chip'
+import { Divider } from '@nextui-org/divider'
+import { Progress } from '@nextui-org/progress'
 import { formatDistanceToNow } from '~/utils/formatDistanceToNow'
 import {
   Plus,
@@ -23,41 +13,22 @@ import {
   FileCode,
   Mail,
   Calendar,
-  MapPin,
   Link as LinkIcon
 } from 'lucide-react'
-import { api } from '~/lib/trpc-client'
-import { useErrorHandler } from '~/hooks/useErrorHandler'
+import { UserActivity } from './Activity'
 import type { UserInfo } from '~/types/api/user'
 
-export const Profile = ({ id }: { id: number }) => {
-  const [user, setUser] = useState<UserInfo>()
-  const [stats, setStats] = useState([
-    { label: '补丁', value: 0, icon: FileCode },
-    { label: '更新请求', value: 0, icon: GitPullRequest },
-    { label: '评论', value: 0, icon: MessageCircle },
-    { label: '收藏', value: 0, icon: Star }
-  ])
-
-  useEffect(() => {
-    const fetchPatchHistories = async () => {
-      const res = await api.user.getProfile.query({ id: Number(id) })
-      useErrorHandler(res, (value) => {
-        setUser(value)
-        setStats((prevStats) => [
-          { ...prevStats[0], value: value._count.patch },
-          { ...prevStats[1], value: value._count.patch_pull_request },
-          { ...prevStats[2], value: value._count.patch_comment },
-          { ...prevStats[3], value: value._count.patch_favorite }
-        ])
-      })
-    }
-    fetchPatchHistories()
-  }, [id])
-
-  if (!user) {
-    return '加载中'
-  }
+export const Profile = ({ user }: { user: UserInfo }) => {
+  const stats = [
+    { label: '补丁', value: user._count.patch, icon: FileCode },
+    {
+      label: '更新请求',
+      value: user._count.patch_pull_request,
+      icon: GitPullRequest
+    },
+    { label: '评论', value: user._count.patch_comment, icon: MessageCircle },
+    { label: '收藏', value: user._count.patch_favorite, icon: Star }
+  ]
 
   return (
     <div className="grid grid-cols-1 gap-6 lg:grid-cols-3">
@@ -164,33 +135,7 @@ export const Profile = ({ id }: { id: number }) => {
 
         <Card className="w-full">
           <CardBody>
-            <Tabs aria-label="User activity" variant="underlined" fullWidth>
-              <Tab key="patches" title="补丁">
-                <div className="p-4">
-                  <p className="text-default-500">补丁</p>
-                </div>
-              </Tab>
-              <Tab key="resources" title="资源">
-                <div className="p-4">
-                  <p className="text-default-500">资源</p>
-                </div>
-              </Tab>
-              <Tab key="contributions" title="贡献">
-                <div className="p-4">
-                  <p className="text-default-500">贡献</p>
-                </div>
-              </Tab>
-              <Tab key="comments" title="评论">
-                <div className="p-4">
-                  <p className="text-default-500">评论</p>
-                </div>
-              </Tab>
-              <Tab key="favorite" title="收藏">
-                <div className="p-4">
-                  <p className="text-default-500">收藏</p>
-                </div>
-              </Tab>
-            </Tabs>
+            <UserActivity />
           </CardBody>
         </Card>
       </div>

@@ -36,19 +36,19 @@ enum MessageType {
 }
 
 model user {
-  id                Int    @id @default(autoincrement())
-  name              String @unique @db.VarChar(17)
-  email             String @unique @db.VarChar(1007)
-  password          String @db.VarChar(1007)
-  ip                String @default("") @db.VarChar(233)
-  avatar            String @default("") @db.VarChar(233)
-  role              Role   @default(USER)
-  status            Int    @default(0)
-  register_time     Int    @default(0)
-  moemoepoint       Int    @default(0)
-  bio               String @default("") @db.VarChar(107)
-  daily_image_count Int    @default(0)
-  daily_check_in    Int    @default(0)
+  id                Int      @id @default(autoincrement())
+  name              String   @unique @db.VarChar(17)
+  email             String   @unique @db.VarChar(1007)
+  password          String   @db.VarChar(1007)
+  ip                String   @default("") @db.VarChar(233)
+  avatar            String   @default("") @db.VarChar(233)
+  role              Role     @default(USER)
+  status            Int      @default(0)
+  register_time     DateTime @default(now())
+  moemoepoint       Int      @default(0)
+  bio               String   @default("") @db.VarChar(107)
+  daily_image_count Int      @default(0)
+  daily_check_in    Int      @default(0)
 
   patch_favorite      user_patch_favorite_relation[]
   patch_contribute    user_patch_contribute_relation[]

@@ -11,7 +11,7 @@ export default async function Patch({
 }) {
   const { id } = await params
 
-  if (isNaN(Number(1))) {
+  if (isNaN(Number(id))) {
     return <ErrorComponent error={'提取页面参数错误'} />
   }
 

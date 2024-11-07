@@ -16,7 +16,7 @@ const t = initTRPC.context<typeof createContext>().create({
   }
 })
 
-const middleware = t.middleware
+export const middleware = t.middleware
 
 const authMiddleware = middleware(async ({ ctx, next }) => {
   const token = parseCookies(ctx.headers?.cookie ?? '')[

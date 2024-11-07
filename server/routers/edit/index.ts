@@ -1,68 +1,100 @@
 import { router, privateProcedure } from '~/lib/trpc'
 import { patchSchema, duplicateSchema, imageSchema } from '~/validations/edit'
 import { uploadPatchBanner, uploadIntroductionImage } from './_upload'
+import { middleware } from '~/lib/trpc'
+import { prisma } from '~/prisma/index'
+import type { PatchFormData } from '~/store/editStore'
+
+const parseEditFormDataMiddleware = middleware(
+  async ({ ctx, next, getRawInput }) => {
+    const input = (await getRawInput()) as FormData
+
+    const nameData = input.get('name')
+    const bannerData = input.get('banner')
+    const introductionData = input.get('introduction')
+    const vndbIdData = input.get('vndbId')
+    const aliasesData = input.get('alias')
+
+    const requestData: Partial<PatchFormData> & {
+      banner: ArrayBuffer
+    } = {
+      name: nameData?.toString(),
+      banner: await new Response(bannerData)?.arrayBuffer(),
+      introduction: introductionData?.toString(),
+      vndbId: vndbIdData?.toString(),
+      alias: JSON.parse(aliasesData ? aliasesData.toString() : '')
+    }
+
+    return next({
+      getRawInput: async () => requestData
+    })
+  }
+)
 
 export const editRouter = router({
-  edit: privateProcedure.input(patchSchema).mutation(async ({ ctx, input }) => {
-    const { name, vndbId, alias, banner, introduction } = input
+  edit: privateProcedure
+    .use(parseEditFormDataMiddleware)
+    .input(patchSchema)
+    .mutation(async ({ ctx, input }) => {
+      const { name, vndbId, alias, banner, introduction } = input
 
-    // await ctx.prisma.$executeRaw`ALTER SEQUENCE patch_id_seq RESTART WITH 1`
-    // await ctx.prisma
-    //   .$executeRaw`ALTER SEQUENCE patch_history_id_seq RESTART WITH 1`
+      // await ctx.prisma.$executeRaw`ALTER SEQUENCE patch_id_seq RESTART WITH 1`
+      // await ctx.prisma
+      //   .$executeRaw`ALTER SEQUENCE patch_history_id_seq RESTART WITH 1`
 
-    const currentId: { last_value: number }[] = await ctx.prisma
-      .$queryRaw`SELECT last_value FROM patch_id_seq`
-    const newId = Number(currentId[0].last_value) + 1
+      const currentId: { last_value: number }[] =
+        await prisma.$queryRaw`SELECT last_value FROM patch_id_seq`
+      const newId = Number(currentId[0].last_value) + 1
 
-    const bannerArrayBuffer = await banner.arrayBuffer()
-    const res = await uploadPatchBanner(bannerArrayBuffer, newId)
-    if (!res) {
-      return '上传图片错误, 未知错误'
-    }
-    if (typeof res === 'string') {
-      return res
-    }
+      const bannerArrayBuffer: ArrayBuffer = banner
+      const res = await uploadPatchBanner(bannerArrayBuffer, newId)
+      if (!res) {
+        return '上传图片错误, 未知错误'
+      }
+      if (typeof res === 'string') {
+        return res
+      }
 
-    const imageLink = `${process.env.KUN_VISUAL_NOVEL_IMAGE_BED_URL}/patch/${newId}/banner/banner.avif`
+      const imageLink = `${process.env.KUN_VISUAL_NOVEL_IMAGE_BED_URL}/patch/${newId}/banner/banner.avif`
 
-    return await ctx.prisma.$transaction(async (prisma) => {
-      const patch = await prisma.patch.create({
-        data: {
-          name,
-          vndb_id: vndbId,
-          alias: alias ? JSON.parse(alias as unknown as string) : [],
-          introduction,
-          user_id: ctx.uid,
-          banner: imageLink
-        }
+      return await prisma.$transaction(async (prisma) => {
+        const patch = await prisma.patch.create({
+          data: {
+            name,
+            vndb_id: vndbId,
+            alias: alias ? alias : [],
+            introduction,
+            user_id: ctx.uid,
+            banner: imageLink
+          }
+        })
+
+        await prisma.user.update({
+          where: { id: ctx.uid },
+          data: {
+            daily_image_count: { increment: 1 },
+            moemoepoint: { increment: 1 }
+          }
+        })
+
+        await prisma.patch_history.create({
+          data: {
+            action: '创建了',
+            type: '补丁',
+            content: name,
+            user_id: ctx.uid,
+            patch_id: patch.id
+          }
+        })
+
+        return patch.id
       })
-
-      await prisma.user.update({
-        where: { id: ctx.uid },
-        data: {
-          daily_image_count: { increment: 1 },
-          moemoepoint: { increment: 1 }
-        }
-      })
-
-      await prisma.patch_history.create({
-        data: {
-          action: '创建了',
-          type: '补丁',
-          content: name,
-          user_id: ctx.uid,
-          patch_id: patch.id
-        }
-      })
-
-      return patch.id
-    })
-  }),
+    }),
 
   duplicate: privateProcedure
     .input(duplicateSchema)
     .mutation(async ({ ctx, input }) => {
-      const patch = await ctx.prisma.patch.findFirst({
+      const patch = await prisma.patch.findFirst({
         where: { vndb_id: input.vndbId }
       })
       if (patch) {
