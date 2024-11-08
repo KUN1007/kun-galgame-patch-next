@@ -18,6 +18,7 @@ export const RegisterForm = () => {
   const { setUser } = useUserStore()
   const router = useRouter()
   const [isAgree, setIsAgree] = useState(false)
+  const [loading, setLoading] = useState(false)
 
   const { control, watch, handleSubmit, reset } = useForm<RegisterFormData>({
     resolver: zodResolver(registerSchema),
@@ -35,7 +36,10 @@ export const RegisterForm = () => {
       return
     }
 
+    setLoading(true)
     const res = await api.auth.register.mutate(data)
+    setLoading(false)
+
     useErrorHandler(res, (value) => {
       setUser(value)
       reset()
@@ -131,7 +135,12 @@ export const RegisterForm = () => {
         <Link className="ml-1">鲲 Galgame 补丁用户协议</Link>
       </Checkbox>
 
-      <Button type="submit" color="primary" className="w-full">
+      <Button
+        type="submit"
+        color="primary"
+        className="w-full"
+        isLoading={loading}
+      >
         注册
       </Button>
 
@@ -145,7 +154,7 @@ export const RegisterForm = () => {
         color="primary"
         variant="bordered"
         className="w-full mb-4"
-        onClick={() => router.push('/forgot')}
+        onClick={() => router.push('/auth/forgot')}
       >
         忘记密码
       </Button>

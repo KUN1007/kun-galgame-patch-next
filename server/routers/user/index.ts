@@ -2,9 +2,17 @@ import { z } from 'zod'
 import { router, publicProcedure, privateProcedure } from '~/lib/trpc'
 import { verify } from '@node-rs/argon2'
 import { prisma } from '~/prisma/index'
-import { avatarSchema, bioSchema, usernameSchema } from '~/validations/user'
+import {
+  avatarSchema,
+  bioSchema,
+  usernameSchema,
+  sendResetEmailVerificationCodeSchema,
+  resetEmailSchema
+} from '~/validations/user'
 import { parseAvatarImageMiddleware } from './_middleware'
 import { uploadUserAvatar } from './_upload'
+import { sendVerificationCodeEmail } from '~/server/utils/sendVerificationCodeEmail'
+import { verifyVerificationCode } from '~/server/utils/verifyVerificationCode'
 import type { UserInfo } from '~/types/api/user'
 
 export const updateUserSchema = z.object({
@@ -62,6 +70,41 @@ export const userRouter = router({
       await prisma.user.update({
         where: { id: ctx.uid },
         data: { bio: input }
+      })
+    }),
+
+  sendResetEmailVerificationCode: privateProcedure
+    .input(sendResetEmailVerificationCodeSchema)
+    .mutation(async ({ ctx, input }) => {
+      if (!ctx.headers || !ctx.headers['x-forwarded-for']) {
+        return '读取请求头失败'
+      }
+
+      const result = await sendVerificationCodeEmail(
+        ctx.headers,
+        input.email,
+        'reset'
+      )
+      if (result) {
+        return result
+      }
+    }),
+
+  updateEmail: privateProcedure
+    .input(resetEmailSchema)
+    .mutation(async ({ ctx, input }) => {
+      if (!ctx.headers || !ctx.headers['x-forwarded-for']) {
+        return '读取请求头失败'
+      }
+
+      const isCodeValid = await verifyVerificationCode(input.email, input.code)
+      if (!isCodeValid) {
+        return '您的验证码无效, 请重新输入'
+      }
+
+      await prisma.user.update({
+        where: { id: ctx.uid },
+        data: { email: input.email }
       })
     }),
 

@@ -17,7 +17,7 @@ export const Password = () => {
       </CardHeader>
       <CardBody className="py-0 space-y-4">
         <div>
-          <p>这是您的密码, 您需要输入旧密码以更改新密码</p>
+          <p>这是您的密码设置, 您需要输入旧密码以更改新密码</p>
         </div>
         <Input type="text" label="旧密码" autoComplete="old-password" />
         <Input type="text" label="新密码" autoComplete="new-password" />

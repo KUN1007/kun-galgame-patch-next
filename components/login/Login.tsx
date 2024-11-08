@@ -1,3 +1,4 @@
+import { useState } from 'react'
 import { z } from 'zod'
 import { useForm, Controller } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
@@ -15,6 +16,7 @@ type LoginFormData = z.infer<typeof loginSchema>
 export const LoginForm = () => {
   const { setUser } = useUserStore()
   const router = useRouter()
+  const [loading, setLoading] = useState(false)
 
   const { control, handleSubmit, reset } = useForm<LoginFormData>({
     resolver: zodResolver(loginSchema),
@@ -25,7 +27,10 @@ export const LoginForm = () => {
   })
 
   const onSubmit = async (data: LoginFormData) => {
+    setLoading(true)
     const res = await api.auth.login.mutate(data)
+    setLoading(false)
+
     useErrorHandler(res, (value) => {
       setUser(value)
       reset()
@@ -70,7 +75,12 @@ export const LoginForm = () => {
           />
         )}
       />
-      <Button type="submit" color="primary" className="w-full">
+      <Button
+        type="submit"
+        color="primary"
+        className="w-full"
+        isLoading={loading}
+      >
         登录
       </Button>
 
@@ -84,7 +94,7 @@ export const LoginForm = () => {
         color="primary"
         variant="bordered"
         className="w-full mb-4"
-        onClick={() => router.push('/forgot')}
+        onClick={() => router.push('/auth/forgot')}
       >
         忘记密码
       </Button>

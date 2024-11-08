@@ -9,7 +9,7 @@ import { useErrorHandler } from '~/hooks/useErrorHandler'
 interface Props {
   username: string
   email: string
-  type: 'register' | 'reset' | 'forgot'
+  type: 'register' | 'email'
 }
 
 export const EmailVerification = ({ username, email, type }: Props) => {
@@ -34,13 +34,22 @@ export const EmailVerification = ({ username, email, type }: Props) => {
       toast.error('请输入合法的邮箱格式')
       return
     }
-
     setLoading(true)
-    const res = await api.auth.sendRegisterCode.mutate({
-      name: username,
-      email
-    })
-    useErrorHandler(res, (value) => {
+
+    let res
+
+    if (type === 'register') {
+      res = await api.auth.sendRegisterCode.mutate({
+        name: username,
+        email
+      })
+    } else {
+      res = await api.user.sendResetEmailVerificationCode.mutate({
+        email
+      })
+    }
+
+    useErrorHandler(res, () => {
       toast.success('发送成功, 验证码已发送到您的邮箱')
       startCountdown()
     })

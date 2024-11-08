@@ -1,25 +1,9 @@
 'use client'
 
 import { Card, CardBody, CardFooter } from '@nextui-org/card'
-import { Camera } from 'lucide-react'
-import { Avatar } from '@nextui-org/avatar'
 import { AvatarCrop } from './AvatarCrop'
-import { useUserStore } from '~/store/userStore'
 
 export const UserAvatar = () => {
-  const { user } = useUserStore()
-
-  const handleAvatarChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0]
-    if (file) {
-      const reader = new FileReader()
-      // reader.onloadend = () => {
-      //   setValue('avatar', reader.result as string)
-      // }
-      reader.readAsDataURL(file)
-    }
-  }
-
   return (
     <Card className="w-full text-sm">
       <CardBody className="flex flex-row items-center justify-between gap-4 pb-0">
