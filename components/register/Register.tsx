@@ -10,11 +10,13 @@ import { useErrorHandler } from '~/hooks/useErrorHandler'
 import { redirect } from 'next/navigation'
 import toast from 'react-hot-toast'
 import { EmailVerification } from '~/components/kun/verification-code/Code'
+import { useRouter } from 'next/navigation'
 
 type RegisterFormData = z.infer<typeof registerSchema>
 
 export const RegisterForm = () => {
   const { setUser } = useUserStore()
+  const router = useRouter()
   const [isAgree, setIsAgree] = useState(false)
 
   const { control, watch, handleSubmit, reset } = useForm<RegisterFormData>({
@@ -138,7 +140,12 @@ export const RegisterForm = () => {
         <Divider className="my-8" />
       </div>
 
-      <Button color="primary" variant="bordered" className="w-full mb-4">
+      <Button
+        color="primary"
+        variant="bordered"
+        className="w-full mb-4"
+        onClick={() => router.push('/forgot')}
+      >
         忘记密码
       </Button>
 

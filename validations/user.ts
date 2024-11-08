@@ -14,4 +14,4 @@ export const usernameSchema = z
   .string()
   .trim()
   .min(1, { message: '您的用户名最少需要 1 个字符' })
-  .max(16, { message: '用户名长度不能超过 16 个字符' })
+  .max(17, { message: '用户名长度不能超过 17 个字符' })

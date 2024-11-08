@@ -70,7 +70,7 @@ export const Username = () => {
 
       <CardFooter className="flex-wrap">
         <p className="text-gray-500">
-          用户名长度最大为 16, 可以是任意字符, 更改用户名需要消耗您 30 萌萌点
+          用户名长度最大为 17, 可以是任意字符, 更改用户名需要消耗您 30 萌萌点
         </p>
 
         <Button

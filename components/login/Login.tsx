@@ -7,11 +7,13 @@ import { loginSchema } from '~/validations/auth'
 import { useUserStore } from '~/store/userStore'
 import { useErrorHandler } from '~/hooks/useErrorHandler'
 import { redirect } from 'next/navigation'
+import { useRouter } from 'next/navigation'
 
 type LoginFormData = z.infer<typeof loginSchema>
 
 export const LoginForm = () => {
   const { setUser } = useUserStore()
+  const router = useRouter()
 
   const { control, handleSubmit, reset } = useForm<LoginFormData>({
     resolver: zodResolver(loginSchema),
@@ -76,7 +78,12 @@ export const LoginForm = () => {
         <Divider className="my-8" />
       </div>
 
-      <Button color="primary" variant="bordered" className="w-full mb-4">
+      <Button
+        color="primary"
+        variant="bordered"
+        className="w-full mb-4"
+        onClick={() => router.push('/forgot')}
+      >
         忘记密码
       </Button>
 
