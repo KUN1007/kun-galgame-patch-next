@@ -1,7 +1,8 @@
 import { createTransport } from 'nodemailer'
 import SMPTransport from 'nodemailer-smtp-transport'
+import { getRemoteIp } from './getRemoteIp'
 import { getKv, setKv } from '~/lib/redis'
-import type { H3Event } from 'h3'
+import { generateRandomCode } from './generateRandomCode'
 
 const getMailContent = (
   type: 'register' | 'forgot' | 'reset',
@@ -17,44 +18,44 @@ const getMailContent = (
 }
 
 export const sendVerificationCodeEmail = async (
-  event: H3Event,
+  headers: Record<string, string>,
   email: string,
   type: 'register' | 'forgot' | 'reset'
 ) => {
-  const ip = getRemoteIp(event)
+  const ip = getRemoteIp(headers)
 
-  const limitEmail = await useStorage('redis').getItem(`limit:email:${email}`)
-  const limitIP = await useStorage('redis').getItem(`limit:ip:${ip}`)
+  const limitEmail = await getKv(`limit:email:${email}`)
+  const limitIP = await getKv(`limit:ip:${ip}`)
   if (limitEmail || limitIP) {
-    return 10301
+    return '您发送邮件的频率太快了, 请 30 秒后重试'
   }
 
   const code = generateRandomCode(7)
-  await useStorage('redis').setItem(email, code, { ttl: 10 * 60 })
-  await useStorage('redis').setItem(`limit:email:${email}`, code, { ttl: 30 })
-  await useStorage('redis').setItem(`limit:ip:${ip}`, code, { ttl: 30 })
+  await setKv(email, code, 10 * 60)
+  await setKv(`limit:email:${email}`, code, 30)
+  await setKv(`limit:ip:${ip}`, code, 30)
 
   const transporter = createTransport(
     SMPTransport({
       pool: {
         pool: true
       },
-      host: env.KUN_VISUAL_NOVEL_EMAIL_HOST,
-      port: Number(env.KUN_VISUAL_NOVEL_EMAIL_PORT) || 587,
+      host: process.env.KUN_VISUAL_NOVEL_EMAIL_HOST,
+      port: Number(process.env.KUN_VISUAL_NOVEL_EMAIL_PORT) || 587,
       secure: false,
       requireTLS: true,
       auth: {
-        user: env.KUN_VISUAL_NOVEL_EMAIL_ACCOUNT,
-        pass: env.KUN_VISUAL_NOVEL_EMAIL_PASSWORD
+        user: process.env.KUN_VISUAL_NOVEL_EMAIL_ACCOUNT,
+        pass: process.env.KUN_VISUAL_NOVEL_EMAIL_PASSWORD
       }
     })
   )
 
   const mailOptions = {
-    from: `${env.KUN_VISUAL_NOVEL_EMAIL_FROM}<${env.KUN_VISUAL_NOVEL_EMAIL_ACCOUNT}>`,
-    sender: env.KUN_VISUAL_NOVEL_EMAIL_ACCOUNT,
+    from: `${process.env.KUN_VISUAL_NOVEL_EMAIL_FROM}<${process.env.KUN_VISUAL_NOVEL_EMAIL_ACCOUNT}>`,
+    sender: process.env.KUN_VISUAL_NOVEL_EMAIL_ACCOUNT,
     to: email,
-    subject: 'KUN Visual Novel Verification Code',
+    subject: '鲲 Galgame 补丁 - 验证码',
     text: getMailContent(type, code)
   }
 

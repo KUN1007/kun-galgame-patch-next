@@ -3,13 +3,16 @@
 import { useState } from 'react'
 import { Button } from '@nextui-org/button'
 import toast from 'react-hot-toast'
+import { api } from '~/lib/trpc-client'
+import { useErrorHandler } from '~/hooks/useErrorHandler'
 
 interface Props {
+  username: string
   email: string
   type: 'register' | 'reset' | 'forgot'
 }
 
-export const EmailVerification = ({ email, type }: Props) => {
+export const EmailVerification = ({ username, email, type }: Props) => {
   const [countdown, setCountdown] = useState(0)
   const [loading, setLoading] = useState(false)
 
@@ -33,10 +36,15 @@ export const EmailVerification = ({ email, type }: Props) => {
     }
 
     setLoading(true)
+    const res = await api.auth.sendRegisterCode.mutate({
+      name: username,
+      email
+    })
+    useErrorHandler(res, (value) => {
+      toast.success('发送成功, 验证码已发送到您的邮箱')
+      startCountdown()
+    })
 
-    await new Promise((resolve) => setTimeout(resolve, 1000))
-    toast.success('发送成功, 验证码已发送到您的邮箱')
-    startCountdown()
     setLoading(false)
   }
 

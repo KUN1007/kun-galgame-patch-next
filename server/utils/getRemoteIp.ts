@@ -1,8 +1,6 @@
-import type { H3Event } from 'h3'
-
-export const getRemoteIp = (event: H3Event) => {
+export const getRemoteIp = (headers: Record<string, string>): string => {
   const ipForwarded = () => {
-    const ip = event.node.req.headers['x-forwarded-for']
+    const ip = headers['x-forwarded-for']
     if (Array.isArray(ip)) {
       return ip[0]
     } else {
@@ -10,8 +8,8 @@ export const getRemoteIp = (event: H3Event) => {
     }
   }
 
-  const xRealIp = event.node.req.headers['x-real-ip']
-  const cfConnectingIp = event.node.req.headers['CF-Connecting-IP']
+  const xRealIp = headers['x-real-ip']
+  const cfConnectingIp = headers['CF-Connecting-IP']
 
   return cfConnectingIp || ipForwarded() || xRealIp || ''
 }

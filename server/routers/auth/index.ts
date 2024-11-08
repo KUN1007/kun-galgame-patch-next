@@ -3,8 +3,15 @@ import { cookies } from 'next/headers'
 import { router, publicProcedure, privateProcedure } from '~/lib/trpc'
 import { verify, hash } from '@node-rs/argon2'
 import { generateKunToken, deleteKunToken } from '~/server/utils/jwt'
-import { loginSchema, registerSchema } from '~/validations/auth'
+import {
+  loginSchema,
+  registerSchema,
+  sendRegisterEmailVerificationCodeSchema
+} from '~/validations/auth'
 import { prisma } from '~/prisma/index'
+import { sendVerificationCodeEmail } from '~/server/utils/sendVerificationCodeEmail'
+import { verifyVerificationCode } from '~/server/utils/verifyVerificationCode'
+import { getRemoteIp } from '~/server/utils/getRemoteIp'
 import type { UserStore } from '~/store/userStore'
 
 export const authRouter = router({
@@ -47,14 +54,36 @@ export const authRouter = router({
   register: publicProcedure
     .input(registerSchema)
     .mutation(async ({ ctx, input }) => {
-      const { name, email, password } = input
+      const { name, email, code, password } = input
+
+      if (!ctx.headers || !ctx.headers['x-forwarded-for']) {
+        return '读取请求头失败'
+      }
+
+      const isCodeValid = await verifyVerificationCode(email, code)
+      if (!isCodeValid) {
+        return '您的验证码无效, 请重新输入'
+      }
+
+      const sameUsernameUser = await prisma.user.findUnique({ where: { name } })
+      if (sameUsernameUser) {
+        return '您的用户名已经有人注册了, 请修改'
+      }
+
+      const sameEmailUser = await prisma.user.findUnique({ where: { email } })
+      if (sameEmailUser) {
+        return '您的邮箱已经有人注册了, 请修改'
+      }
+
       const hashedPassword = await hash(password)
+      const ip = getRemoteIp(ctx.headers)
 
       const user = await prisma.user.create({
         data: {
           name,
           email,
-          password: hashedPassword
+          password: hashedPassword,
+          ip
         }
       })
 
@@ -78,13 +107,34 @@ export const authRouter = router({
     }),
 
   sendRegisterCode: publicProcedure
-    .input(
-      z.object({
-        email: z.string().email({ message: '请输入合法的邮箱格式' })
+    .input(sendRegisterEmailVerificationCodeSchema)
+    .mutation(async ({ ctx, input }) => {
+      if (!ctx.headers || !ctx.headers['x-forwarded-for']) {
+        return '读取请求头失败'
+      }
+
+      const sameUsernameUser = await prisma.user.findUnique({
+        where: { name: input.name }
       })
-    )
-    .mutation(async (a) => {
-      console.log(a)
+      if (sameUsernameUser) {
+        return '您的用户名已经有人注册了, 请修改'
+      }
+
+      const sameEmailUser = await prisma.user.findUnique({
+        where: { email: input.email }
+      })
+      if (sameEmailUser) {
+        return '您的邮箱已经有人注册了, 请修改'
+      }
+
+      const result = await sendVerificationCodeEmail(
+        ctx.headers,
+        input.email,
+        'register'
+      )
+      if (result) {
+        return result
+      }
     }),
 
   logout: privateProcedure.mutation(async ({ ctx }) => {

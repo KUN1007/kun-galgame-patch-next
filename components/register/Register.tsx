@@ -95,7 +95,11 @@ export const RegisterForm: React.FC = () => {
             autoComplete="one-time-code"
             className="mb-4"
             endContent={
-              <EmailVerification email={watch().email} type="register" />
+              <EmailVerification
+                username={watch().name}
+                email={watch().email}
+                type="register"
+              />
             }
           />
         )}
