@@ -8,6 +8,7 @@ import { useUserStore } from '~/store/userStore'
 import { useErrorHandler } from '~/hooks/useErrorHandler'
 import { redirect } from 'next/navigation'
 import { useRouter } from 'next/navigation'
+import toast from 'react-hot-toast'
 
 type LoginFormData = z.infer<typeof loginSchema>
 
@@ -28,6 +29,7 @@ export const LoginForm = () => {
     useErrorHandler(res, (value) => {
       setUser(value)
       reset()
+      toast.success('登录成功!')
       redirect(`/user/${value.uid}`)
     })
   }

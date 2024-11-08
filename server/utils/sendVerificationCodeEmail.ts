@@ -27,13 +27,13 @@ export const sendVerificationCodeEmail = async (
   const limitEmail = await getKv(`limit:email:${email}`)
   const limitIP = await getKv(`limit:ip:${ip}`)
   if (limitEmail || limitIP) {
-    return '您发送邮件的频率太快了, 请 30 秒后重试'
+    return '您发送邮件的频率太快了, 请 60 秒后重试'
   }
 
   const code = generateRandomCode(7)
   await setKv(email, code, 10 * 60)
-  await setKv(`limit:email:${email}`, code, 30)
-  await setKv(`limit:ip:${ip}`, code, 30)
+  await setKv(`limit:email:${email}`, code, 60)
+  await setKv(`limit:ip:${ip}`, code, 60)
 
   const transporter = createTransport(
     SMPTransport({

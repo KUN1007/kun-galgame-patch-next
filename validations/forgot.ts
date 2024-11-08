@@ -18,6 +18,15 @@ export const stepOneSchema = z.object({
 })
 
 export const stepTwoSchema = z.object({
+  name: z
+    .string()
+    .trim()
+    .email({ message: '请输入合法的邮箱格式, 用户名则应为 1~17 位任意字符' })
+    .or(
+      z.string().trim().regex(kunUsernameRegex, {
+        message: '非法的用户名，用户名为 1~17 位任意字符'
+      })
+    ),
   verificationCode: z
     .string()
     .regex(kunValidMailConfirmCodeRegex, { message: '邮箱验证码格式无效' }),

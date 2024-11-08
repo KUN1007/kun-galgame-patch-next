@@ -39,6 +39,7 @@ export const RegisterForm = () => {
     useErrorHandler(res, (value) => {
       setUser(value)
       reset()
+      toast.success('注册成功!')
       redirect(`/user/${value.uid}`)
     })
   }

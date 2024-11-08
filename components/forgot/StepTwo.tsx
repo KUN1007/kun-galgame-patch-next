@@ -7,6 +7,10 @@ import { zodResolver } from '@hookform/resolvers/zod'
 import { Input, Button } from '@nextui-org/react'
 import { LockKeyhole, KeyRound } from 'lucide-react'
 import { stepTwoSchema } from '~/validations/forgot'
+import { api } from '~/lib/trpc-client'
+import { useErrorHandler } from '~/hooks/useErrorHandler'
+import toast from 'react-hot-toast'
+import { redirect } from 'next/navigation'
 
 type StepTwoFormData = z.infer<typeof stepTwoSchema>
 
@@ -21,10 +25,12 @@ export const StepTwo = ({ name, setStep }: Props) => {
   const {
     control,
     handleSubmit,
+    reset,
     formState: { errors }
   } = useForm<StepTwoFormData>({
     resolver: zodResolver(stepTwoSchema),
     defaultValues: {
+      name,
       verificationCode: '',
       newPassword: '',
       confirmPassword: ''
@@ -32,16 +38,31 @@ export const StepTwo = ({ name, setStep }: Props) => {
   })
 
   const handleResetPassword = async (data: StepTwoFormData) => {
-    console.log(name)
+    if (data.newPassword !== data.confirmPassword) {
+      toast.error('您两次输入的密码不一致, 请重新输入')
+      return
+    }
 
     setLoading(true)
-    await new Promise((resolve) => setTimeout(resolve, 1000))
+    const res = await api.forgot.stepTwo.mutate({ ...data, name })
+    useErrorHandler(res, () => {
+      reset()
+      toast.success('重置密码成功! 正在跳转到登录页')
+      redirect('/login')
+    })
     setLoading(false)
-    // Redirect to login page or show success message
   }
 
   return (
     <form onSubmit={handleSubmit(handleResetPassword)} className="space-y-4">
+      <Input
+        isDisabled
+        label="用户名"
+        autoComplete="username"
+        defaultValue={name}
+        isInvalid={!!errors.name}
+        errorMessage={errors.name?.message}
+      />
       <Controller
         name="verificationCode"
         control={control}

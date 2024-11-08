@@ -6,6 +6,9 @@ import { useForm, Controller } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { Input, Button } from '@nextui-org/react'
 import { User } from 'lucide-react'
+import { api } from '~/lib/trpc-client'
+import { useErrorHandler } from '~/hooks/useErrorHandler'
+import toast from 'react-hot-toast'
 import { stepOneSchema } from '~/validations/forgot'
 
 type StepOneFormData = z.infer<typeof stepOneSchema>
@@ -28,10 +31,14 @@ export const StepOne = ({ setStep, setEmail }: Props) => {
   const handleSendCode = async (data: StepOneFormData) => {
     setLoading(true)
 
-    await new Promise((resolve) => setTimeout(resolve, 1000))
+    const res = await api.forgot.stepOne.mutate({ name: data.name })
+    useErrorHandler(res, () => {
+      setEmail(data.name)
+      setStep(2)
+      toast.success('重置验证码发送成功!')
+    })
+
     setLoading(false)
-    setStep(2)
-    setEmail(data.name)
   }
 
   return (
