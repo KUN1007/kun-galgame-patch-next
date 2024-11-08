@@ -10,7 +10,14 @@ import {
   Button,
   Skeleton
 } from '@nextui-org/react'
-import { Search } from 'lucide-react'
+import {
+  Search,
+  Lollipop,
+  UserRound,
+  Settings,
+  CircleHelp,
+  LogOut
+} from 'lucide-react'
 import { useUserStore } from '~/store/userStore'
 import { useEffect, useState } from 'react'
 import { useRouter } from 'next/navigation'
@@ -69,26 +76,44 @@ export const KunTopBarUser = () => {
                   src={user.avatar}
                 />
               </DropdownTrigger>
-              <DropdownMenu aria-label="Profile Actions" variant="flat">
+              <DropdownMenu aria-label="Profile Actions">
+                <DropdownItem key="username" textValue="用户名">
+                  <p className="font-semibold">{user.name}</p>
+                </DropdownItem>
+                <DropdownItem
+                  key="moemoepoint"
+                  textValue="萌萌点"
+                  startContent={<Lollipop className="w-4 h-4" />}
+                  endContent={user.moemoepoint}
+                >
+                  萌萌点
+                </DropdownItem>
                 <DropdownItem
                   key="profile"
                   onPress={() => router.push(`/user/${user.uid}`)}
+                  startContent={<UserRound className="w-4 h-4" />}
                 >
                   用户主页
                 </DropdownItem>
                 <DropdownItem
                   key="settings"
                   onPress={() => router.push('/settings/user')}
+                  startContent={<Settings className="w-4 h-4" />}
                 >
                   信息设置
                 </DropdownItem>
                 <DropdownItem
                   key="help_and_feedback"
                   onPress={() => router.push(`/about`)}
+                  startContent={<CircleHelp className="w-4 h-4" />}
                 >
                   帮助与反馈
                 </DropdownItem>
-                <DropdownItem key="logout" color="danger">
+                <DropdownItem
+                  key="logout"
+                  color="danger"
+                  startContent={<LogOut className="w-4 h-4" />}
+                >
                   退出登录
                 </DropdownItem>
               </DropdownMenu>
