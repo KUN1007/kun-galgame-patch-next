@@ -1,4 +1,4 @@
-import React from 'react'
+import { useState } from 'react'
 import { useForm, Controller } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { z } from 'zod'
@@ -8,15 +8,14 @@ import { registerSchema } from '~/validations/auth'
 import { useUserStore } from '~/store/userStore'
 import { useErrorHandler } from '~/hooks/useErrorHandler'
 import { redirect } from 'next/navigation'
-import { kunEmailRegex } from '~/utils/validate'
 import toast from 'react-hot-toast'
 import { EmailVerification } from '~/components/kun/verification-code/Code'
-import { Camera } from 'lucide-react'
 
 type RegisterFormData = z.infer<typeof registerSchema>
 
-export const RegisterForm: React.FC = () => {
+export const RegisterForm = () => {
   const { setUser } = useUserStore()
+  const [isAgree, setIsAgree] = useState(false)
 
   const { control, watch, handleSubmit, reset } = useForm<RegisterFormData>({
     resolver: zodResolver(registerSchema),
@@ -29,19 +28,17 @@ export const RegisterForm: React.FC = () => {
   })
 
   const onSubmit = async (data: RegisterFormData) => {
+    if (!isAgree) {
+      toast.error('请您勾选同意我们的用户协议')
+      return
+    }
+
     const res = await api.auth.register.mutate(data)
     useErrorHandler(res, (value) => {
       setUser(value)
       reset()
       redirect(`/user/${value.uid}`)
     })
-  }
-
-  const handleSendCode = async () => {
-    if (!kunEmailRegex.test(watch().email)) {
-      toast.error('请输入合法的邮箱格式')
-      return
-    }
   }
 
   return (
@@ -122,7 +119,11 @@ export const RegisterForm: React.FC = () => {
         )}
       />
 
-      <Checkbox className="mb-2">
+      <Checkbox
+        className="mb-2"
+        isSelected={isAgree}
+        onValueChange={setIsAgree}
+      >
         <span>我同意</span>
         <Link className="ml-1">鲲 Galgame 补丁用户协议</Link>
       </Checkbox>
