@@ -25,7 +25,7 @@ export const isValidName = (name: string) => {
 }
 
 export const kunPasswordRegex =
-  /^(?=.*[a-zA-Z])(?=.*[0-9])[\w!@#$%^&*()+=\\/-]{6,107}$/
+  /^(?=.*[a-zA-Z])(?=.*[0-9])[\w!@#$%^&*()+=\\/-]{6,1007}$/
 export const isValidPassword = (pwd: string) => {
   return kunPasswordRegex.test(pwd)
 }

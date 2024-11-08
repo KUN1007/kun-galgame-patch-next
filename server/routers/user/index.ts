@@ -1,13 +1,14 @@
 import { z } from 'zod'
 import { router, publicProcedure, privateProcedure } from '~/lib/trpc'
-import { verify } from '@node-rs/argon2'
+import { hash, verify } from '@node-rs/argon2'
 import { prisma } from '~/prisma/index'
 import {
   avatarSchema,
   bioSchema,
   usernameSchema,
   sendResetEmailVerificationCodeSchema,
-  resetEmailSchema
+  resetEmailSchema,
+  passwordSchema
 } from '~/validations/user'
 import { parseAvatarImageMiddleware } from './_middleware'
 import { uploadUserAvatar } from './_upload'
@@ -105,6 +106,27 @@ export const userRouter = router({
       await prisma.user.update({
         where: { id: ctx.uid },
         data: { email: input.email }
+      })
+    }),
+
+  updatePassword: privateProcedure
+    .input(passwordSchema)
+    .mutation(async ({ ctx, input }) => {
+      if (!ctx.headers || !ctx.headers['x-forwarded-for']) {
+        return '读取请求头失败'
+      }
+
+      const user = await prisma.user.findUnique({ where: { id: ctx.uid } })
+      const res = await verify(user ? user.password : '', input.oldPassword)
+      if (!res) {
+        return '旧密码输入错误'
+      }
+
+      const hashedPassword = await hash(input.newPassword)
+
+      await prisma.user.update({
+        where: { id: ctx.uid },
+        data: { password: hashedPassword }
       })
     }),
 

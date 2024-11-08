@@ -1,5 +1,8 @@
 import { z } from 'zod'
-import { kunValidMailConfirmCodeRegex } from '~/utils/validate'
+import {
+  kunPasswordRegex,
+  kunValidMailConfirmCodeRegex
+} from '~/utils/validate'
 
 export const avatarSchema = z.object({
   avatar: z.any()
@@ -26,4 +29,15 @@ export const resetEmailSchema = z.object({
 
 export const sendResetEmailVerificationCodeSchema = z.object({
   email: z.string().email({ message: '请输入合法的邮箱格式' })
+})
+
+export const passwordSchema = z.object({
+  oldPassword: z.string().trim().regex(kunPasswordRegex, {
+    message:
+      '旧密码格式非法, 密码的长度为 6 到 1007 位，必须包含至少一个英文字符和一个数字，可以选择性的包含 @!#$%^&*()_-+=\\/ 等特殊字符'
+  }),
+  newPassword: z.string().trim().regex(kunPasswordRegex, {
+    message:
+      '新密码格式非法, 密码的长度为 6 到 1007 位，必须包含至少一个英文字符和一个数字，可以选择性的包含 @!#$%^&*()_-+=\\/ 等特殊字符'
+  })
 })
