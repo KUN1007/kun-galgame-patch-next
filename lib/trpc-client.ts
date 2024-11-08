@@ -22,6 +22,9 @@ export const errorHandlerLink: TRPCLink<AppRouter> = () => {
           observer.next(value)
         },
         error(err) {
+          if (err.data?.code === 'UNAUTHORIZED') {
+            window.location.href = '/login'
+          }
           toast.error(err.message)
         },
         complete() {
