@@ -11,6 +11,14 @@ import {
   Skeleton
 } from '@nextui-org/react'
 import {
+  Modal,
+  ModalContent,
+  ModalHeader,
+  ModalBody,
+  ModalFooter,
+  useDisclosure
+} from '@nextui-org/modal'
+import {
   Search,
   Lollipop,
   UserRound,
@@ -21,21 +29,34 @@ import {
 import { useUserStore } from '~/store/userStore'
 import { useEffect, useState } from 'react'
 import { useRouter } from 'next/navigation'
+import { api } from '~/lib/trpc-client'
+import toast from 'react-hot-toast'
 
 export const KunTopBarUser = () => {
   const router = useRouter()
-  const { user } = useUserStore()
-  const [isLoading, setIsLoading] = useState(true)
+  const { user, logout } = useUserStore()
+  const [isSSRLoading, setSSRIsLoading] = useState(true)
+  const [loading, setLoading] = useState(false)
+  const { isOpen, onOpen, onOpenChange } = useDisclosure()
 
   useEffect(() => {
     if (user) {
-      setIsLoading(false)
+      setSSRIsLoading(false)
     }
   }, [user])
 
+  const handleLogOut = async () => {
+    setLoading(true)
+    await api.user.logout.mutate()
+    setLoading(false)
+    logout()
+    router.push('/login')
+    toast.success('您已经成功登出!')
+  }
+
   return (
     <NavbarContent as="div" className="items-center" justify="end">
-      {isLoading ? (
+      {isSSRLoading ? (
         <Skeleton className="rounded-lg">
           <div className="w-32 h-10 bg-gray-300 rounded-lg" />
         </Skeleton>
@@ -113,6 +134,7 @@ export const KunTopBarUser = () => {
                   key="logout"
                   color="danger"
                   startContent={<LogOut className="w-4 h-4" />}
+                  onPress={onOpen}
                 >
                   退出登录
                 </DropdownItem>
@@ -121,6 +143,40 @@ export const KunTopBarUser = () => {
           )}
         </>
       )}
+
+      <Modal isOpen={isOpen} onOpenChange={onOpenChange} placement="center">
+        <ModalContent>
+          {(onClose) => (
+            <>
+              <ModalHeader className="flex flex-col gap-1">
+                您确定要登出网站吗?
+              </ModalHeader>
+              <ModalBody>
+                <p>
+                  登出将会清除您的登录状态, 但是不会清除您的编辑草稿 (Galgame,
+                  回复等), 您可以稍后继续登录
+                </p>
+              </ModalBody>
+              <ModalFooter>
+                <Button color="danger" variant="light" onPress={onClose}>
+                  关闭
+                </Button>
+                <Button
+                  color="primary"
+                  onPress={() => {
+                    handleLogOut()
+                    onClose()
+                  }}
+                  isLoading={loading}
+                  disabled={loading}
+                >
+                  确定
+                </Button>
+              </ModalFooter>
+            </>
+          )}
+        </ModalContent>
+      </Modal>
     </NavbarContent>
   )
 }

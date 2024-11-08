@@ -14,6 +14,8 @@ import { parseAvatarImageMiddleware } from './_middleware'
 import { uploadUserAvatar } from './_upload'
 import { sendVerificationCodeEmail } from '~/server/utils/sendVerificationCodeEmail'
 import { verifyVerificationCode } from '~/server/utils/verifyVerificationCode'
+import { deleteKunToken } from '~/server/utils/jwt'
+import { cookies } from 'next/headers'
 import type { UserInfo } from '~/types/api/user'
 
 export const updateUserSchema = z.object({
@@ -168,5 +170,11 @@ export const userRouter = router({
       }
 
       return user
-    })
+    }),
+
+  logout: privateProcedure.mutation(async ({ ctx, input }) => {
+    await deleteKunToken(ctx.uid)
+    const cookie = await cookies()
+    cookie.delete('kun-galgame-patch-moe-token')
+  })
 })
