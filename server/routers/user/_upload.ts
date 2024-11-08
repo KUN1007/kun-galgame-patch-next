@@ -5,11 +5,11 @@ import { checkBufferSize } from '~/server/utils/checkBufferSize'
 
 export const uploadUserAvatar = async (image: ArrayBuffer, uid: number) => {
   const avatar = await sharp(image)
-    .resize(512, 512, {
+    .resize(256, 256, {
       fit: 'inside',
       withoutEnlargement: true
     })
-    .avif({ quality: 80 })
+    .avif({ quality: 60 })
     .toBuffer()
   const miniAvatar = await sharp(image)
     .resize(100, 100, {

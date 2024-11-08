@@ -1,5 +1,9 @@
 import { z } from 'zod'
-import { kunUsernameRegex, kunPasswordRegex } from '~/utils/validate'
+import {
+  kunUsernameRegex,
+  kunPasswordRegex,
+  kunValidMailConfirmCodeRegex
+} from '~/utils/validate'
 
 export const loginSchema = z.object({
   name: z
@@ -29,6 +33,9 @@ export const registerSchema = z.object({
         message: '非法的用户名，用户名为 1~17 位任意字符'
       })
     ),
+  code: z.string().regex(kunValidMailConfirmCodeRegex, {
+    message: '非法的邮箱验证码，验证码为 7 位数字和大小写字母组合'
+  }),
   password: z.string().trim().regex(kunPasswordRegex, {
     message:
       '非法的密码格式，密码的长度为 6 到 107 位，必须包含至少一个英文字符和一个数字，可以选择性的包含 @!#$%^&*()_-+=\\/ 等特殊字符'

@@ -8,17 +8,22 @@ import { registerSchema } from '~/validations/auth'
 import { useUserStore } from '~/store/userStore'
 import { useErrorHandler } from '~/hooks/useErrorHandler'
 import { redirect } from 'next/navigation'
+import { kunEmailRegex } from '~/utils/validate'
+import toast from 'react-hot-toast'
+import { EmailVerification } from '~/components/kun/verification-code/Code'
+import { Camera } from 'lucide-react'
 
 type RegisterFormData = z.infer<typeof registerSchema>
 
 export const RegisterForm: React.FC = () => {
   const { setUser } = useUserStore()
 
-  const { control, handleSubmit, reset } = useForm<RegisterFormData>({
+  const { control, watch, handleSubmit, reset } = useForm<RegisterFormData>({
     resolver: zodResolver(registerSchema),
     defaultValues: {
       name: '',
       email: '',
+      code: '',
       password: ''
     }
   })
@@ -30,6 +35,13 @@ export const RegisterForm: React.FC = () => {
       reset()
       redirect(`/user/${value.uid}`)
     })
+  }
+
+  const handleSendCode = async () => {
+    if (!kunEmailRegex.test(watch().email)) {
+      toast.error('请输入合法的邮箱格式')
+      return
+    }
   }
 
   return (
@@ -65,6 +77,26 @@ export const RegisterForm: React.FC = () => {
             isInvalid={!!errors.email}
             errorMessage={errors.email?.message}
             className="mb-4"
+          />
+        )}
+      />
+      <Controller
+        name="code"
+        control={control}
+        render={({ field, formState: { errors, defaultValues } }) => (
+          <Input
+            {...field}
+            isRequired
+            label="验证码"
+            type="text"
+            variant="bordered"
+            isInvalid={!!errors.code}
+            errorMessage={errors.code?.message}
+            autoComplete="one-time-code"
+            className="mb-4"
+            endContent={
+              <EmailVerification email={watch().email} type="register" />
+            }
           />
         )}
       />

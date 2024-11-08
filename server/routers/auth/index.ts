@@ -1,3 +1,4 @@
+import { z } from 'zod'
 import { cookies } from 'next/headers'
 import { router, publicProcedure, privateProcedure } from '~/lib/trpc'
 import { verify, hash } from '@node-rs/argon2'
@@ -74,6 +75,16 @@ export const authRouter = router({
         moemoepoint: user.moemoepoint
       }
       return responseData
+    }),
+
+  sendRegisterCode: publicProcedure
+    .input(
+      z.object({
+        email: z.string().email({ message: '请输入合法的邮箱格式' })
+      })
+    )
+    .mutation(async (a) => {
+      console.log(a)
     }),
 
   logout: privateProcedure.mutation(async ({ ctx }) => {
