@@ -19,7 +19,7 @@ const scrollIntoComment = (id: number | null) => {
 
   const targetComment = document.getElementById(`comment-${id}`)
   if (targetComment) {
-    targetComment.scrollIntoView({ behavior: 'smooth' })
+    targetComment.scrollIntoView({ behavior: 'smooth', block: 'center' })
     targetComment.classList.add('bg-primary-200')
     targetComment.classList.add('px-2')
     setTimeout(() => {
@@ -45,7 +45,7 @@ export const Comments = ({ id }: { id: number }) => {
   }, [id])
 
   const renderComments = (comments: PatchComment[]) => {
-    return comments.map((comment) => (
+    return comments.map((comment, index) => (
       <div key={comment.id}>
         <Card
           id={`comment-${comment.id}`}
@@ -53,11 +53,14 @@ export const Comments = ({ id }: { id: number }) => {
         >
           <CardBody className="px-0">
             <div className="flex gap-4">
-              <Avatar
-                showFallback
-                name={comment.user?.name?.charAt(0).toUpperCase()}
-                src={comment.user?.avatar}
-              />
+              <div className="flex flex-col items-center">
+                <Avatar
+                  showFallback
+                  name={comment.user?.name?.charAt(0).toUpperCase()}
+                  src={comment.user?.avatar}
+                />
+                <span className="text-default-300">{index + 1}</span>
+              </div>
               <div className="flex-1">
                 <div className="flex items-start justify-between">
                   <h4 className="space-x-2">
@@ -78,7 +81,14 @@ export const Comments = ({ id }: { id: number }) => {
                   >
                     <span>{comment.quotedUsername}</span>
                     <Chip
-                      endContent={<Quote className="w-4 h-4 text-blue-500" />}
+                      endContent={
+                        <>
+                          <Quote className="w-4 h-4 mx-2 text-primary-500" />
+                          <span className="text-primary-500">
+                            {index + 1} 楼
+                          </span>
+                        </>
+                      }
                       variant="light"
                     >
                       {comment.quotedContent}
@@ -113,6 +123,7 @@ export const Comments = ({ id }: { id: number }) => {
             <PublishComment
               patchId={id}
               parentId={comment.id}
+              receiver={comment.quotedUsername}
               onSuccess={() => {
                 setReplyTo(null)
                 fetchComments()
@@ -126,7 +137,7 @@ export const Comments = ({ id }: { id: number }) => {
 
   return (
     <div className="space-y-4">
-      <PublishComment patchId={id} onSuccess={fetchComments} />
+      <PublishComment patchId={id} onSuccess={fetchComments} receiver={null} />
       {renderComments(comments)}
     </div>
   )
