@@ -8,7 +8,7 @@ import type { PatchComment } from '~/types/api/patch'
 export const publishPatchComment = privateProcedure
   .input(patchCommentSchema)
   .mutation(async ({ ctx, input }) => {
-    await prisma.patch_comment.create({
+    const data = await prisma.patch_comment.create({
       data: {
         content: input.content,
         user_id: ctx.uid,
@@ -16,6 +16,19 @@ export const publishPatchComment = privateProcedure
         parent_id: input.parentId
       }
     })
+
+    const newComment: Omit<PatchComment, 'user'> = {
+      id: data.id,
+      content: data.content,
+      likedBy: [],
+      parentId: data.parent_id,
+      userId: data.user_id,
+      patchId: data.patch_id,
+      created: String(data.created),
+      updated: String(data.updated)
+    }
+
+    return newComment
   })
 
 export const getPatchComments = publicProcedure
@@ -102,7 +115,6 @@ export const toggleLike = privateProcedure
           }
         }
       })
-      return { message: '取消点赞成功', liked: false }
     } else {
       await prisma.user_patch_comment_like_relation.create({
         data: {
@@ -110,6 +122,12 @@ export const toggleLike = privateProcedure
           comment_id: commentId
         }
       })
-      return { message: '点赞成功', liked: true }
     }
+
+    await prisma.user.update({
+      where: { id: comment.user_id },
+      data: { moemoepoint: { increment: existingLike ? -1 : 1 } }
+    })
+
+    return !existingLike
   })

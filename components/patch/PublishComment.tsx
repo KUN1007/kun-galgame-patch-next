@@ -13,13 +13,15 @@ import { api } from '~/lib/trpc-client'
 import toast from 'react-hot-toast'
 import { patchCommentSchema } from '~/validations/patch'
 import { useUserStore } from '~/store/userStore'
+import type { PatchComment } from '~/types/api/patch'
 
 const commentSchema = patchCommentSchema.pick({ content: true })
 
 interface CreateCommentProps {
   patchId: number
-  parentId?: number | null
   receiver: string | null | undefined
+  parentId?: number | null
+  setNewComment: (newComment: PatchComment) => void
   onSuccess?: () => void
 }
 
@@ -29,6 +31,7 @@ export const PublishComment = ({
   patchId,
   parentId = null,
   receiver = null,
+  setNewComment,
   onSuccess
 }: CreateCommentProps) => {
   const [loading, setLoading] = useState(false)
@@ -49,10 +52,14 @@ export const PublishComment = ({
 
   const onSubmit = async (data: CommentFormData) => {
     setLoading(true)
-    await api.patch.publishPatchComment.mutate({
+    const res = await api.patch.publishPatchComment.mutate({
       patchId,
       parentId,
       content: data.content.trim()
+    })
+    setNewComment({
+      ...res,
+      user: { id: user.uid, name: user.name, avatar: user.avatar }
     })
     setLoading(false)
 

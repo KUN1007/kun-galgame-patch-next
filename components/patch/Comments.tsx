@@ -45,6 +45,14 @@ export const Comments = ({ id }: { id: number }) => {
     fetchComments()
   }, [id])
 
+  const setNewComment = async (newComment: PatchComment) => {
+    setComments([...comments, newComment])
+    await new Promise((resolve) => {
+      setTimeout(resolve, 500)
+    })
+    scrollIntoComment(newComment.id)
+  }
+
   const renderComments = (comments: PatchComment[]) => {
     return comments.map((comment, index) => (
       <div key={comment.id}>
@@ -54,12 +62,12 @@ export const Comments = ({ id }: { id: number }) => {
               <div className="flex flex-col items-center">
                 <Avatar
                   showFallback
-                  name={comment.user?.name?.charAt(0).toUpperCase()}
-                  src={comment.user?.avatar}
+                  name={comment.user.name.charAt(0).toUpperCase()}
+                  src={comment.user.avatar}
                 />
                 <span className="text-default-300">{index + 1}</span>
               </div>
-              <div className="flex-1">
+              <div className="flex-1 space-y-2">
                 <div className="flex items-start justify-between">
                   <h4 className="space-x-2">
                     <span className="font-semibold">{comment.user?.name}</span>
@@ -87,7 +95,7 @@ export const Comments = ({ id }: { id: number }) => {
                   </Code>
                 )}
                 <p>{comment.content}</p>
-                <div className="flex gap-2 mt-4">
+                <div className="flex gap-2 mt-2">
                   <CommentLikeButton
                     commentId={comment.id}
                     likedBy={comment.likedBy}
@@ -116,10 +124,8 @@ export const Comments = ({ id }: { id: number }) => {
               patchId={id}
               parentId={comment.id}
               receiver={comment.quotedUsername}
-              onSuccess={() => {
-                setReplyTo(null)
-                fetchComments()
-              }}
+              onSuccess={() => setReplyTo(null)}
+              setNewComment={setNewComment}
             />
           </div>
         )}
@@ -129,7 +135,11 @@ export const Comments = ({ id }: { id: number }) => {
 
   return (
     <div className="space-y-4">
-      <PublishComment patchId={id} onSuccess={fetchComments} receiver={null} />
+      <PublishComment
+        patchId={id}
+        receiver={null}
+        setNewComment={setNewComment}
+      />
       {renderComments(comments)}
     </div>
   )

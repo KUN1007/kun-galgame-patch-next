@@ -9,7 +9,6 @@ import {
 import { Button } from '@nextui-org/button'
 import { Sun, Moon, SunMoon } from 'lucide-react'
 import { Dropdown } from '@nextui-org/dropdown'
-import { Tooltip } from '@nextui-org/tooltip'
 import type { Selection } from '@nextui-org/react'
 
 enum Theme {
@@ -61,15 +60,11 @@ export const ThemeSwitcher = memo(() => {
 
   return (
     <Dropdown className="min-w-0">
-      <Tooltip content="选择主题" placement="bottom">
-        <span className="flex">
-          <DropdownTrigger>
-            <Button isIconOnly variant="light" className="text-default-500">
-              {themeIcon}
-            </Button>
-          </DropdownTrigger>
-        </span>
-      </Tooltip>
+      <DropdownTrigger>
+        <Button isIconOnly variant="light" className="text-default-500">
+          {themeIcon}
+        </Button>
+      </DropdownTrigger>
       <DropdownMenu
         disallowEmptySelection
         selectedKeys={selectedTheme}

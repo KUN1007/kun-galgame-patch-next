@@ -39,8 +39,8 @@ export const CommentLikeButton = ({ commentId, likedBy, commenter }: Props) => {
     })
     setLoading(false)
     useErrorHandler(res, (value) => {
-      setLiked(value.liked)
-      setLikeCount((prev) => (value.liked ? prev + 1 : prev - 1))
+      setLiked(value)
+      setLikeCount((prev) => (value ? prev + 1 : prev - 1))
     })
   }
 
