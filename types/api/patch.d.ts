@@ -58,6 +58,8 @@ interface PatchComment {
   updated: string
   reply: PatchComment[]
   user: KunUser
+  quotedContent?: string | null
+  quotedUsername?: string | null
 }
 
 interface PatchHistory {

@@ -3,7 +3,7 @@ import { router, publicProcedure, privateProcedure } from '~/lib/trpc'
 import { prisma } from '~/prisma/index'
 import { markdownToHtml } from '~/server/utils/markdownToHtml'
 import { patchCommentSchema } from '~/validations/patch'
-import { nestComments } from './_helpers'
+import { formatComments } from './_helpers'
 import type {
   Language,
   Patch,
@@ -184,7 +184,7 @@ export const patchRouter = router({
         }
       }))
 
-      const nestedComments = nestComments(flatComments)
+      const nestedComments = formatComments(flatComments)
 
       return nestedComments
     }),

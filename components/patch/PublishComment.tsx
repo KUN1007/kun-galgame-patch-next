@@ -66,7 +66,6 @@ export const PublishComment = ({
             render={({ field }) => (
               <Textarea
                 {...field}
-                label="评论"
                 placeholder="Write your comment..."
                 minRows={3}
                 isInvalid={!!errors.content}

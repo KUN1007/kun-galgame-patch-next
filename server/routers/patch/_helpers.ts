@@ -1,25 +1,20 @@
 import type { PatchComment } from '~/types/api/patch'
 
-export const nestComments = (flatComments: PatchComment[]): PatchComment[] => {
+export const formatComments = (
+  flatComments: PatchComment[]
+): PatchComment[] => {
   const commentMap: { [key: number]: PatchComment } = {}
 
   flatComments.forEach((comment) => {
-    comment.reply = []
-    commentMap[comment.id] = comment
+    commentMap[comment.id] = { ...comment, quotedContent: null }
   })
 
-  const nestedComments: PatchComment[] = []
-
   flatComments.forEach((comment) => {
-    if (comment.parentId) {
-      const parentComment = commentMap[comment.parentId]
-      if (parentComment) {
-        parentComment.reply.push(comment)
-      }
-    } else {
-      nestedComments.push(comment)
+    if (comment.parentId && commentMap[comment.parentId]) {
+      comment.quotedContent = commentMap[comment.parentId].content
+      comment.quotedUsername = commentMap[comment.parentId].user.name
     }
   })
 
-  return nestedComments
+  return flatComments
 }
