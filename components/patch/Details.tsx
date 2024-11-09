@@ -1,8 +1,6 @@
-'use client'
-
 import DOMPurify from 'isomorphic-dompurify'
 import { Card, CardHeader, CardBody } from '@nextui-org/card'
-import { Tabs, Tab } from '@nextui-org/tabs'
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '~/components/ui/Tabs'
 import { Calendar, Clock, Link } from 'lucide-react'
 import { Resources } from './Resource'
 import { Comments } from './Comments'
@@ -11,8 +9,15 @@ import type { Patch } from '~/types/api/patch'
 
 export const PatchDetails = ({ patch }: { patch: Patch }) => {
   return (
-    <Tabs className="w-full" color="primary" fullWidth={true}>
-      <Tab key="introduction" title="游戏介绍" className="p-0">
+    <Tabs className="w-full" defaultValue="introduction">
+      <TabsList className="grid w-full grid-cols-4">
+        <TabsTrigger value="introduction">游戏介绍</TabsTrigger>
+        <TabsTrigger value="resources">资源链接</TabsTrigger>
+        <TabsTrigger value="comments">游戏评论</TabsTrigger>
+        <TabsTrigger value="history">贡献历史</TabsTrigger>
+      </TabsList>
+
+      <TabsContent value="introduction">
         <Card>
           <CardHeader>
             <h2 className="text-2xl font-medium">游戏介绍</h2>
@@ -56,8 +61,9 @@ export const PatchDetails = ({ patch }: { patch: Patch }) => {
             )}
           </CardBody>
         </Card>
-      </Tab>
-      <Tab key="resources" title="资源链接" className="p-0">
+      </TabsContent>
+
+      <TabsContent value="resources">
         <Card>
           <CardHeader>
             <h2 className="text-2xl font-medium">资源链接</h2>
@@ -66,9 +72,9 @@ export const PatchDetails = ({ patch }: { patch: Patch }) => {
             <Resources id={patch.id} />
           </CardBody>
         </Card>
-      </Tab>
+      </TabsContent>
 
-      <Tab key="comments" title="游戏评论" className="p-0">
+      <TabsContent value="comments">
         <Card>
           <CardHeader>
             <h2 className="text-2xl font-medium">游戏评论</h2>
@@ -77,9 +83,9 @@ export const PatchDetails = ({ patch }: { patch: Patch }) => {
             <Comments id={patch.id} />
           </CardBody>
         </Card>
-      </Tab>
+      </TabsContent>
 
-      <Tab key="history" title="贡献历史" className="p-0">
+      <TabsContent value="history">
         <Card>
           <CardHeader>
             <h2 className="text-2xl font-medium">贡献历史</h2>
@@ -88,7 +94,7 @@ export const PatchDetails = ({ patch }: { patch: Patch }) => {
             <History id={patch.id} />
           </CardBody>
         </Card>
-      </Tab>
+      </TabsContent>
     </Tabs>
   )
 }
