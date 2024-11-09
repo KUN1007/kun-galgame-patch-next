@@ -1,7 +1,9 @@
 import { z } from 'zod'
-import { router, publicProcedure } from '~/lib/trpc'
+import { router, publicProcedure, privateProcedure } from '~/lib/trpc'
 import { prisma } from '~/prisma/index'
 import { markdownToHtml } from '~/server/utils/markdownToHtml'
+import { patchCommentSchema } from '~/validations/patch'
+import { nestComments } from './_helpers'
 import type {
   Language,
   Patch,
@@ -121,6 +123,19 @@ export const patchRouter = router({
       return resources
     }),
 
+  publishPatchComment: privateProcedure
+    .input(patchCommentSchema)
+    .mutation(async ({ ctx, input }) => {
+      await prisma.patch_comment.create({
+        data: {
+          content: input.content,
+          user_id: ctx.uid,
+          patch_id: input.patchId,
+          parent_id: input.parentId
+        }
+      })
+    }),
+
   getPatchComments: publicProcedure
     .input(
       z.object({
@@ -138,11 +153,17 @@ export const patchRouter = router({
             include: {
               user: true
             }
+          },
+          reply: {
+            include: {
+              user: true,
+              reply: true
+            }
           }
         }
       })
 
-      const comments: PatchComment[] = data.map((comment) => ({
+      const flatComments: PatchComment[] = data.map((comment) => ({
         id: comment.id,
         content: comment.content,
         likedBy: comment.like_by.map((likeRelation) => ({
@@ -155,6 +176,7 @@ export const patchRouter = router({
         patchId: comment.patch_id,
         created: String(comment.created),
         updated: String(comment.updated),
+        reply: [],
         user: {
           id: comment.user.id,
           name: comment.user.name,
@@ -162,7 +184,9 @@ export const patchRouter = router({
         }
       }))
 
-      return comments
+      const nestedComments = nestComments(flatComments)
+
+      return nestedComments
     }),
 
   getPatchHistories: publicProcedure

@@ -348,7 +348,6 @@ model patch_pull_request {
 
 model patch_comment {
   id      Int    @id @default(autoincrement())
-  pid     Int
   content String @default("") @db.VarChar(10007)
   likes   Int[]
 

@@ -56,6 +56,7 @@ interface PatchComment {
   patchId: number
   created: string
   updated: string
+  reply: PatchComment[]
   user: KunUser
 }
 

@@ -25,12 +25,10 @@ export const Comments = ({ id }: { id: number }) => {
     fetchComments()
   }, [id])
 
-  return (
-    <div className="space-y-4">
-      <PublishComment patchId={id} onSuccess={fetchComments} />
-
-      {comments.map((comment) => (
-        <Card key={comment.id}>
+  const renderComments = (comments: PatchComment[], depth = 0) => {
+    return comments.map((comment) => (
+      <div key={comment.id} className={`ml-${depth * 4}`}>
+        <Card>
           <CardBody className="p-6">
             <div className="flex gap-4">
               <Avatar
@@ -65,7 +63,7 @@ export const Comments = ({ id }: { id: number }) => {
                     }
                   >
                     <MessageSquare className="w-4 h-4" />
-                    Reply
+                    回复
                   </Button>
                 </div>
 
@@ -81,11 +79,23 @@ export const Comments = ({ id }: { id: number }) => {
                     />
                   </div>
                 )}
+                {comment.reply && comment.reply.length > 0 && (
+                  <div className="mt-4 ml-4">
+                    {renderComments(comment.reply, depth + 1)}
+                  </div>
+                )}
               </div>
             </div>
           </CardBody>
         </Card>
-      ))}
+      </div>
+    ))
+  }
+
+  return (
+    <div className="space-y-4">
+      <PublishComment patchId={id} onSuccess={fetchComments} />
+      {renderComments(comments)}
     </div>
   )
 }
