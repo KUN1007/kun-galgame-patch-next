@@ -10,6 +10,7 @@ import { Heart, MessageSquare, MoreHorizontal, Quote } from 'lucide-react'
 import { formatDistanceToNow } from '~/utils/formatDistanceToNow'
 import { api } from '~/lib/trpc-client'
 import { PublishComment } from './PublishComment'
+import { CommentLikeButton } from './CommentLike'
 import type { PatchComment } from '~/types/api/patch'
 
 const scrollIntoComment = (id: number | null) => {
@@ -20,10 +21,10 @@ const scrollIntoComment = (id: number | null) => {
   const targetComment = document.getElementById(`comment-${id}`)
   if (targetComment) {
     targetComment.scrollIntoView({ behavior: 'smooth', block: 'center' })
-    targetComment.classList.add('bg-primary-200')
+    targetComment.classList.add('bg-default-100')
     targetComment.classList.add('px-2')
     setTimeout(() => {
-      targetComment.classList.remove('bg-primary-200')
+      targetComment.classList.remove('bg-default-100')
       targetComment.classList.remove('px-2')
     }, 2000)
   }
@@ -47,10 +48,7 @@ export const Comments = ({ id }: { id: number }) => {
   const renderComments = (comments: PatchComment[]) => {
     return comments.map((comment, index) => (
       <div key={comment.id}>
-        <Card
-          id={`comment-${comment.id}`}
-          className="bg-transparent border-none shadow-none"
-        >
+        <Card id={`comment-${comment.id}`} className="border-none shadow-none">
           <CardBody className="px-0">
             <div className="flex gap-4">
               <div className="flex flex-col items-center">
@@ -81,14 +79,7 @@ export const Comments = ({ id }: { id: number }) => {
                   >
                     <span>{comment.quotedUsername}</span>
                     <Chip
-                      endContent={
-                        <>
-                          <Quote className="w-4 h-4 mx-2 text-primary-500" />
-                          <span className="text-primary-500">
-                            {index + 1} 楼
-                          </span>
-                        </>
-                      }
+                      endContent={<Quote className="w-4 h-4 text-blue-500" />}
                       variant="light"
                     >
                       {comment.quotedContent}
@@ -97,10 +88,11 @@ export const Comments = ({ id }: { id: number }) => {
                 )}
                 <p>{comment.content}</p>
                 <div className="flex gap-2 mt-4">
-                  <Button variant="ghost" size="sm" className="gap-2">
-                    <Heart className="w-4 h-4" />
-                    {comment.likedBy?.length || 0}
-                  </Button>
+                  <CommentLikeButton
+                    commentId={comment.id}
+                    likedBy={comment.likedBy}
+                    commenter={comment.user}
+                  />
                   <Button
                     variant="ghost"
                     size="sm"

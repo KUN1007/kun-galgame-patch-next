@@ -1,15 +1,8 @@
 import { z } from 'zod'
 
 export const patchCommentSchema = z.object({
-  patchId: z
-    .number()
-    .min(1, { message: '错误的补丁序号, 补丁序号最小为 1' })
-    .max(1000007, { message: '错误的补丁序号, 补丁序号最大为 1000007' }),
-  parentId: z
-    .number()
-    .min(1, { message: '错误的父评论序号, 父评论序号最小为 1' })
-    .max(1000007, { message: '错误的父评论序号, 父评论序号最大为 1000007' })
-    .nullable(),
+  patchId: z.number().min(1).max(9999999),
+  parentId: z.number().min(1).max(9999999).nullable(),
   content: z
     .string()
     .trim()
