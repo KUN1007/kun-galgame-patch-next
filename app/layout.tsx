@@ -12,7 +12,7 @@ export default function RootLayout({
     <html lang="zh-CN" suppressHydrationWarning>
       <body>
         <Providers>
-          <div className="relative flex flex-col items-center justify-center min-h-screen bg-white bg-radial">
+          <div className="relative flex flex-col items-center justify-center min-h-screen bg-radial">
             <KunTopBar />
             <div className="flex px-6 w-full flex-grow max-w-7xl min-h-[calc(100dvh-64px)]">
               {children}

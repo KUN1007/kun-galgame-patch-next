@@ -27,23 +27,19 @@ import {
   LogOut
 } from 'lucide-react'
 import { useUserStore } from '~/store/userStore'
-import { useEffect, useState } from 'react'
+import { useState } from 'react'
 import { useRouter } from 'next/navigation'
 import { api } from '~/lib/trpc-client'
 import toast from 'react-hot-toast'
+import { ThemeSwitcher } from '~/components/kun/ThemeSwitcher'
+import { useMounted } from '~/hooks/useMounted'
 
 export const KunTopBarUser = () => {
   const router = useRouter()
   const { user, logout } = useUserStore()
-  const [isSSRLoading, setSSRIsLoading] = useState(true)
+  const isMounted = useMounted()
   const [loading, setLoading] = useState(false)
   const { isOpen, onOpen, onOpenChange } = useDisclosure()
-
-  useEffect(() => {
-    if (user) {
-      setSSRIsLoading(false)
-    }
-  }, [user])
 
   const handleLogOut = async () => {
     setLoading(true)
@@ -56,11 +52,7 @@ export const KunTopBarUser = () => {
 
   return (
     <NavbarContent as="div" className="items-center" justify="end">
-      {isSSRLoading ? (
-        <Skeleton className="rounded-lg">
-          <div className="w-32 h-10 bg-gray-300 rounded-lg" />
-        </Skeleton>
-      ) : (
+      {isMounted ? (
         <>
           {!user.name && (
             <NavbarContent justify="end">
@@ -83,6 +75,8 @@ export const KunTopBarUser = () => {
           <Button isIconOnly variant="light">
             <Search className="w-6 h-6 text-default-500" />
           </Button>
+
+          <ThemeSwitcher />
 
           {user.name && (
             <Dropdown placement="bottom-end">
@@ -142,6 +136,10 @@ export const KunTopBarUser = () => {
             </Dropdown>
           )}
         </>
+      ) : (
+        <Skeleton className="rounded-lg">
+          <div className="w-32 h-10 bg-gray-300 rounded-lg" />
+        </Skeleton>
       )}
 
       <Modal isOpen={isOpen} onOpenChange={onOpenChange} placement="center">
