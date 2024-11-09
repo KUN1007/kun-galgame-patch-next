@@ -12,7 +12,7 @@ import type { Patch } from '~/types/api/patch'
 export const PatchDetails = ({ patch }: { patch: Patch }) => {
   return (
     <Tabs className="w-full" color="primary" fullWidth={true}>
-      <Tab key="introduction" title="游戏介绍">
+      <Tab key="introduction" title="游戏介绍" className="p-0">
         <Card>
           <CardHeader>
             <h2 className="text-2xl font-medium">游戏介绍</h2>
@@ -57,7 +57,7 @@ export const PatchDetails = ({ patch }: { patch: Patch }) => {
           </CardBody>
         </Card>
       </Tab>
-      <Tab key="resources" title="资源链接">
+      <Tab key="resources" title="资源链接" className="p-0">
         <Card>
           <CardHeader>
             <h2 className="text-2xl font-medium">资源链接</h2>
@@ -68,7 +68,7 @@ export const PatchDetails = ({ patch }: { patch: Patch }) => {
         </Card>
       </Tab>
 
-      <Tab key="comments" title="游戏评论">
+      <Tab key="comments" title="游戏评论" className="p-0">
         <Card>
           <CardHeader>
             <h2 className="text-2xl font-medium">游戏评论</h2>
@@ -79,7 +79,7 @@ export const PatchDetails = ({ patch }: { patch: Patch }) => {
         </Card>
       </Tab>
 
-      <Tab key="history" title="贡献历史">
+      <Tab key="history" title="贡献历史" className="p-0">
         <Card>
           <CardHeader>
             <h2 className="text-2xl font-medium">贡献历史</h2>

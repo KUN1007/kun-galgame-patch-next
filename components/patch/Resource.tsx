@@ -5,25 +5,49 @@ import { Chip } from '@nextui-org/chip'
 import { Button } from '@nextui-org/button'
 import { Card, CardBody } from '@nextui-org/card'
 import { Link } from '@nextui-org/link'
-import { Download, Heart, Lock } from 'lucide-react'
+import { Download, Heart, Lock, Plus } from 'lucide-react'
 import { api } from '~/lib/trpc-client'
+import { PublishResource } from './PublishResource'
 import type { PatchResource } from '~/types/api/patch'
 
 export const Resources = ({ id }: { id: number }) => {
   const [resources, setResources] = useState<PatchResource[]>([])
+  const [showCreate, setShowCreate] = useState(false)
+
+  const fetchResources = async () => {
+    const res = await api.patch.getPatchResources.query({
+      patchId: Number(id)
+    })
+    setResources(res)
+  }
 
   useEffect(() => {
-    const fetchPatchResources = async () => {
-      const res = await api.patch.getPatchResources.query({
-        patchId: Number(id)
-      })
-      setResources(res)
-    }
-    fetchPatchResources()
-  }, [])
+    fetchResources()
+  }, [id])
 
   return (
     <div className="space-y-4">
+      <div className="flex justify-end">
+        <Button
+          color="primary"
+          variant="flat"
+          startContent={<Plus className="w-4 h-4" />}
+          onPress={() => setShowCreate(!showCreate)}
+        >
+          添加资源
+        </Button>
+      </div>
+
+      {showCreate && (
+        <PublishResource
+          patchId={id}
+          onSuccess={() => {
+            setShowCreate(false)
+            fetchResources()
+          }}
+        />
+      )}
+
       {resources.map((resource) => (
         <Card key={resource.id}>
           <CardBody className="p-6">
@@ -41,7 +65,7 @@ export const Resources = ({ id }: { id: number }) => {
                     </Chip>
                   ))}
                 </div>
-                <div className="text-gray-500">资源大小: {resource.size}</div>
+                <div className="text-gray-500">Size: {resource.size}</div>
                 {resource.note && <p className="mt-2">{resource.note}</p>}
               </div>
               <div className="flex gap-2">

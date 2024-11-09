@@ -13,14 +13,14 @@ interface PatchHeaderProps {
 export const PatchHeader = ({ patch }: PatchHeaderProps) => {
   return (
     <Card className="border-none shadow-none">
-      <CardHeader className="relative h-[312px] p-0">
+      <CardHeader className="relative h-full p-0">
         <img
           src={patch.banner}
           alt={patch.name}
           className="w-full max-h-[720px] h-[312px] object-cover"
         />
       </CardHeader>
-      <CardBody className="px-0 py-4">
+      <CardBody>
         <div className="flex flex-col items-start justify-between sm:flex-row">
           <div className="space-y-2">
             <h1 className="text-3xl font-bold">{patch.name}</h1>
