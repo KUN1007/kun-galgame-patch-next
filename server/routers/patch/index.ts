@@ -5,7 +5,8 @@ import {
   publishPatchComment,
   getPatchComments,
   toggleCommentLike,
-  deleteComment
+  deleteComment,
+  updateComment
 } from './comment'
 import { getPatchHistories } from './history'
 
@@ -21,6 +22,8 @@ export const patchRouter = router({
   toggleCommentLike,
 
   deleteComment,
+
+  updateComment,
 
   getPatchHistories
 })

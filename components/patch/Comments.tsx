@@ -20,12 +20,15 @@ import {
   ModalFooter,
   useDisclosure
 } from '@nextui-org/modal'
+import { Textarea } from '@nextui-org/input'
 import {
   MessageSquare,
   MoreHorizontal,
   Quote,
   Trash2,
-  Pencil
+  Pencil,
+  Check,
+  X
 } from 'lucide-react'
 import { formatDistanceToNow } from '~/utils/formatDistanceToNow'
 import { api } from '~/lib/trpc-client'
@@ -98,6 +101,41 @@ export const Comments = ({ id }: { id: number }) => {
     toast.success('评论删除成功')
   }
 
+  const [editingComment, setEditingComment] = useState<number | null>(null)
+  const [editContent, setEditContent] = useState('')
+  const [updating, setUpdating] = useState(false)
+  const startEditing = (comment: PatchComment) => {
+    setEditingComment(comment.id)
+    setEditContent(comment.content)
+  }
+  const cancelEditing = () => {
+    setEditingComment(null)
+    setEditContent('')
+  }
+  const handleUpdateComment = async (commentId: number) => {
+    if (!editContent.trim()) {
+      toast.error('评论内容不可为空')
+      return
+    }
+
+    setUpdating(true)
+    await api.patch.updateComment.mutate({
+      commentId,
+      content: editContent.trim()
+    })
+    setComments((prev) =>
+      prev.map((comment) =>
+        comment.id === commentId
+          ? { ...comment, content: editContent }
+          : comment
+      )
+    )
+    cancelEditing()
+    setUpdating(false)
+
+    toast.success('更新评论成功!')
+  }
+
   const renderComments = (comments: PatchComment[]) => {
     return comments.map((comment, index) => (
       <div key={comment.id}>
@@ -140,6 +178,7 @@ export const Comments = ({ id }: { id: number }) => {
                         key="edit"
                         color="default"
                         startContent={<Pencil className="w-4 h-4" />}
+                        onPress={() => startEditing(comment)}
                       >
                         编辑评论
                       </DropdownItem>
@@ -173,7 +212,41 @@ export const Comments = ({ id }: { id: number }) => {
                     </Chip>
                   </Code>
                 )}
-                <p>{comment.content}</p>
+
+                {editingComment === comment.id ? (
+                  <div className="space-y-2">
+                    <Textarea
+                      value={editContent}
+                      onChange={(e) => setEditContent(e.target.value)}
+                      placeholder="Edit your comment..."
+                      minRows={2}
+                      maxRows={8}
+                    />
+                    <div className="flex gap-2">
+                      <Button
+                        size="sm"
+                        color="primary"
+                        startContent={<Check className="w-4 h-4" />}
+                        onPress={() => handleUpdateComment(comment.id)}
+                        disabled={updating}
+                        isLoading={updating}
+                      >
+                        保存
+                      </Button>
+                      <Button
+                        size="sm"
+                        variant="light"
+                        startContent={<X className="w-4 h-4" />}
+                        onPress={cancelEditing}
+                      >
+                        取消
+                      </Button>
+                    </div>
+                  </div>
+                ) : (
+                  <p>{comment.content}</p>
+                )}
+
                 <div className="flex gap-2 mt-2">
                   <CommentLikeButton
                     commentId={comment.id}

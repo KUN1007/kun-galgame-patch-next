@@ -1,7 +1,10 @@
 import { z } from 'zod'
 import { publicProcedure, privateProcedure } from '~/lib/trpc'
 import { prisma } from '~/prisma/index'
-import { patchCommentSchema } from '~/validations/patch'
+import {
+  patchCommentSchema,
+  patchCommentUpdateSchema
+} from '~/validations/patch'
 import { formatComments } from './_helpers'
 import type { PatchComment } from '~/types/api/patch'
 
@@ -34,7 +37,7 @@ export const publishPatchComment = privateProcedure
 export const getPatchComments = publicProcedure
   .input(
     z.object({
-      patchId: z.number()
+      patchId: z.number({ message: '补丁 ID 必须为数字' }).min(1).max(9999999)
     })
   )
   .query(async ({ ctx, input }) => {
@@ -149,7 +152,7 @@ const deleteCommentWithReplies = async (commentId: number) => {
 export const deleteComment = privateProcedure
   .input(
     z.object({
-      commentId: z.number()
+      commentId: z.number({ message: '评论 ID 必须为数字' }).min(1).max(9999999)
     })
   )
   .mutation(async ({ ctx, input }) => {
@@ -165,4 +168,26 @@ export const deleteComment = privateProcedure
     }
 
     await deleteCommentWithReplies(input.commentId)
+  })
+
+export const updateComment = privateProcedure
+  .input(patchCommentUpdateSchema)
+  .mutation(async ({ ctx, input }) => {
+    const { commentId, content } = input
+
+    await prisma.patch_comment.update({
+      where: { id: commentId, user_id: ctx.uid },
+      data: {
+        content,
+        edit: Date.now().toString()
+      },
+      include: {
+        user: true,
+        like_by: {
+          include: {
+            user: true
+          }
+        }
+      }
+    })
   })
