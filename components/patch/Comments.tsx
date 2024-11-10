@@ -1,17 +1,22 @@
 'use client'
 
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useRef, useCallback } from 'react'
 import { Card, CardBody } from '@nextui-org/card'
 import { Avatar } from '@nextui-org/avatar'
 import { Button } from '@nextui-org/button'
 import { Code } from '@nextui-org/code'
 import { Chip } from '@nextui-org/chip'
-import { Heart, MessageSquare, MoreHorizontal, Quote } from 'lucide-react'
+import { Spinner } from '@nextui-org/spinner'
+import { MessageSquare, MoreHorizontal, Quote } from 'lucide-react'
 import { formatDistanceToNow } from '~/utils/formatDistanceToNow'
 import { api } from '~/lib/trpc-client'
 import { PublishComment } from './PublishComment'
 import { CommentLikeButton } from './CommentLike'
 import type { PatchComment } from '~/types/api/patch'
+import toast from 'react-hot-toast'
+
+// @extendable
+// const COMMENTS_PER_PAGE = 10
 
 const scrollIntoComment = (id: number | null) => {
   if (id === null) {
@@ -21,35 +26,86 @@ const scrollIntoComment = (id: number | null) => {
   const targetComment = document.getElementById(`comment-${id}`)
   if (targetComment) {
     targetComment.scrollIntoView({ behavior: 'smooth', block: 'center' })
-    targetComment.classList.add('bg-default-100')
-    targetComment.classList.add('px-2')
+    targetComment.classList.add('bg-default-100', 'px-2')
     setTimeout(() => {
-      targetComment.classList.remove('bg-default-100')
-      targetComment.classList.remove('px-2')
+      targetComment.classList.remove('bg-default-100', 'px-2')
     }, 2000)
+  } else {
+    toast('暂未找到该评论, 请下滑')
   }
 }
 
 export const Comments = ({ id }: { id: number }) => {
   const [comments, setComments] = useState<PatchComment[]>([])
   const [replyTo, setReplyTo] = useState<number | null>(null)
+  const [isLoading, setIsLoading] = useState(false)
+  const [hasMore, setHasMore] = useState(true)
+  const [total, setTotal] = useState(0)
+  const [cursor, setCursor] = useState<number | undefined>(undefined)
 
-  const fetchComments = async () => {
+  const observerRef = useRef<IntersectionObserver>()
+  const loadingRef = useRef<HTMLDivElement>(null)
+
+  const fetchComments = async (cursorId?: number) => {
+    if (isLoading) return
+
+    setIsLoading(true)
     const res = await api.patch.getPatchComments.query({
-      patchId: Number(id)
+      patchId: Number(id),
+      cursor: cursorId
+      // limit: COMMENTS_PER_PAGE
     })
-    setComments(res)
+
+    if (cursorId) {
+      setComments((prev) => [...prev, ...res.comments])
+    } else {
+      setComments(res.comments)
+    }
+
+    setIsLoading(false)
+    setHasMore(res.hasMore)
+    setCursor(res.nextCursor)
+    setTotal(res.total)
   }
+
+  const handleObserver = useCallback(
+    (entries: IntersectionObserverEntry[]) => {
+      const target = entries[0]
+      if (target.isIntersecting && hasMore && !isLoading) {
+        fetchComments(cursor)
+      }
+    },
+    [hasMore, isLoading, cursor]
+  )
+
+  useEffect(() => {
+    const options = {
+      root: null,
+      rootMargin: '20px',
+      threshold: 0.1
+    }
+
+    observerRef.current = new IntersectionObserver(handleObserver, options)
+
+    if (loadingRef.current) {
+      observerRef.current.observe(loadingRef.current)
+    }
+
+    return () => {
+      if (observerRef.current) {
+        observerRef.current.disconnect()
+      }
+    }
+  }, [handleObserver])
 
   useEffect(() => {
     fetchComments()
   }, [id])
 
   const setNewComment = async (newComment: PatchComment) => {
-    setComments([...comments, newComment])
-    await new Promise((resolve) => {
-      setTimeout(resolve, 500)
-    })
+    setTotal(total + 1)
+    setComments((prev) => [newComment, ...prev])
+    await new Promise((resolve) => setTimeout(resolve, 500))
     scrollIntoComment(newComment.id)
   }
 
@@ -65,7 +121,7 @@ export const Comments = ({ id }: { id: number }) => {
                   name={comment.user.name.charAt(0).toUpperCase()}
                   src={comment.user.avatar}
                 />
-                <span className="text-default-300">{index + 1}</span>
+                <span className="text-default-300">{total - index}</span>
               </div>
               <div className="flex-1 space-y-2">
                 <div className="flex items-start justify-between">
@@ -141,6 +197,15 @@ export const Comments = ({ id }: { id: number }) => {
         setNewComment={setNewComment}
       />
       {renderComments(comments)}
+      <div ref={loadingRef} className="flex justify-center py-4">
+        {isLoading && <Spinner color="primary" />}
+        {!hasMore && comments.length > 0 && (
+          <p className="text-sm text-foreground">没有更多评论了</p>
+        )}
+        {!comments.length && (
+          <p className="text-sm text-foreground">暂无评论</p>
+        )}
+      </div>
     </div>
   )
 }

@@ -2,7 +2,6 @@ import { z } from 'zod'
 import { publicProcedure, privateProcedure } from '~/lib/trpc'
 import { prisma } from '~/prisma/index'
 import { patchCommentSchema } from '~/validations/patch'
-import { formatComments } from './_helpers'
 import type { PatchComment } from '~/types/api/patch'
 
 export const publishPatchComment = privateProcedure
@@ -34,17 +33,33 @@ export const publishPatchComment = privateProcedure
 export const getPatchComments = publicProcedure
   .input(
     z.object({
-      patchId: z.number()
+      patchId: z.number(),
+      cursor: z.number().optional()
+      // limit: z.number().default(10)
     })
   )
   .query(async ({ ctx, input }) => {
-    const { patchId } = input
+    const { patchId, cursor } = input
+    // @extendable
+    const limit = 10
 
     const data = await prisma.patch_comment.findMany({
-      where: { patch_id: patchId },
+      where: {
+        patch_id: patchId,
+        ...(cursor ? { id: { lt: cursor } } : {})
+      },
+      take: limit + 1,
+      orderBy: {
+        id: 'desc'
+      },
       include: {
         user: true,
         like_by: {
+          include: {
+            user: true
+          }
+        },
+        parent: {
           include: {
             user: true
           }
@@ -52,7 +67,19 @@ export const getPatchComments = publicProcedure
       }
     })
 
-    const flatComments: PatchComment[] = data.map((comment) => ({
+    const totalComments = await prisma.patch_comment.count({
+      where: {
+        patch_id: patchId
+      }
+    })
+
+    let hasMore = false
+    if (data.length > limit) {
+      hasMore = true
+      data.pop()
+    }
+
+    const comments: PatchComment[] = data.map((comment) => ({
       id: comment.id,
       content: comment.content,
       likedBy: comment.like_by.map((likeRelation) => ({
@@ -61,6 +88,7 @@ export const getPatchComments = publicProcedure
         avatar: likeRelation.user.avatar
       })),
       parentId: comment.parent_id,
+      parent: comment.parent,
       userId: comment.user_id,
       patchId: comment.patch_id,
       created: String(comment.created),
@@ -69,12 +97,17 @@ export const getPatchComments = publicProcedure
         id: comment.user.id,
         name: comment.user.name,
         avatar: comment.user.avatar
-      }
+      },
+      quotedContent: comment.parent?.content,
+      quotedUsername: comment.parent?.user.name
     }))
 
-    const nestedComments = formatComments(flatComments)
-
-    return nestedComments
+    return {
+      comments,
+      hasMore,
+      nextCursor: hasMore ? data[data.length - 1].id : undefined,
+      total: totalComments
+    }
   })
 
 export const toggleLike = privateProcedure
