@@ -6,11 +6,33 @@ import { Avatar } from '@nextui-org/avatar'
 import { Button } from '@nextui-org/button'
 import { Code } from '@nextui-org/code'
 import { Chip } from '@nextui-org/chip'
-import { Heart, MessageSquare, MoreHorizontal, Quote } from 'lucide-react'
+import {
+  Dropdown,
+  DropdownTrigger,
+  DropdownMenu,
+  DropdownItem
+} from '@nextui-org/dropdown'
+import {
+  Modal,
+  ModalContent,
+  ModalHeader,
+  ModalBody,
+  ModalFooter,
+  useDisclosure
+} from '@nextui-org/modal'
+import {
+  MessageSquare,
+  MoreHorizontal,
+  Quote,
+  Trash2,
+  Pencil
+} from 'lucide-react'
 import { formatDistanceToNow } from '~/utils/formatDistanceToNow'
 import { api } from '~/lib/trpc-client'
 import { PublishComment } from './PublishComment'
 import { CommentLikeButton } from './CommentLike'
+import toast from 'react-hot-toast'
+import { useUserStore } from '~/store/userStore'
 import type { PatchComment } from '~/types/api/patch'
 
 const scrollIntoComment = (id: number | null) => {
@@ -53,6 +75,29 @@ export const Comments = ({ id }: { id: number }) => {
     scrollIntoComment(newComment.id)
   }
 
+  const [deleteCommentCache, setDeleteCommentCache] =
+    useState<PatchComment | null>(null)
+  const { isOpen, onOpen, onClose } = useDisclosure()
+  const { user } = useUserStore()
+  const [deleting, setDeleting] = useState(false)
+  const handleDeleteComment = async () => {
+    if (!deleteCommentCache) {
+      toast.error('未选中评论')
+      return
+    }
+
+    setDeleting(true)
+    await api.patch.deleteComment.mutate({
+      commentId: deleteCommentCache.id
+    })
+    setComments((prev) =>
+      prev.filter((comment) => comment.id !== deleteCommentCache.id)
+    )
+    setDeleting(false)
+    onClose()
+    toast.success('评论删除成功')
+  }
+
   const renderComments = (comments: PatchComment[]) => {
     return comments.map((comment, index) => (
       <div key={comment.id}>
@@ -75,9 +120,43 @@ export const Comments = ({ id }: { id: number }) => {
                       {formatDistanceToNow(comment.created)}
                     </span>
                   </h4>
-                  <Button variant="ghost" isIconOnly>
-                    <MoreHorizontal className="w-4 h-4" />
-                  </Button>
+                  <Dropdown>
+                    <DropdownTrigger>
+                      <Button
+                        variant="light"
+                        isIconOnly
+                        className="text-default-400"
+                      >
+                        <MoreHorizontal className="w-4 h-4" />
+                      </Button>
+                    </DropdownTrigger>
+                    <DropdownMenu
+                      aria-label="Comment actions"
+                      disabledKeys={
+                        user.uid === comment.userId ? [] : ['delete']
+                      }
+                    >
+                      <DropdownItem
+                        key="edit"
+                        color="default"
+                        startContent={<Pencil className="w-4 h-4" />}
+                      >
+                        编辑评论
+                      </DropdownItem>
+                      <DropdownItem
+                        key="delete"
+                        className="text-danger"
+                        color="danger"
+                        startContent={<Trash2 className="w-4 h-4" />}
+                        onPress={() => {
+                          setDeleteCommentCache(comment)
+                          onOpen()
+                        }}
+                      >
+                        删除评论
+                      </DropdownItem>
+                    </DropdownMenu>
+                  </Dropdown>
                 </div>
                 {comment.quotedContent && (
                   <Code
@@ -141,6 +220,31 @@ export const Comments = ({ id }: { id: number }) => {
         setNewComment={setNewComment}
       />
       {renderComments(comments)}
+
+      <Modal isOpen={isOpen} onClose={onClose} placement="center">
+        <ModalContent>
+          <ModalHeader className="flex flex-col gap-1">删除评论</ModalHeader>
+          <ModalBody>
+            <p>
+              您确定要删除这条评论吗, 这将会删除该评论,
+              以及所有回复该评论的评论, 该操作不可撤销
+            </p>
+          </ModalBody>
+          <ModalFooter>
+            <Button variant="light" onPress={onClose}>
+              取消
+            </Button>
+            <Button
+              color="danger"
+              onPress={handleDeleteComment}
+              disabled={deleting}
+              isLoading={deleting}
+            >
+              删除
+            </Button>
+          </ModalFooter>
+        </ModalContent>
+      </Modal>
     </div>
   )
 }

@@ -1,7 +1,12 @@
 import { router } from '~/lib/trpc'
 import { getPatchById } from './patch'
 import { getPatchResources } from './resource'
-import { publishPatchComment, getPatchComments, toggleLike } from './comment'
+import {
+  publishPatchComment,
+  getPatchComments,
+  toggleCommentLike,
+  deleteComment
+} from './comment'
 import { getPatchHistories } from './history'
 
 export const patchRouter = router({
@@ -13,7 +18,9 @@ export const patchRouter = router({
 
   getPatchComments,
 
-  toggleLike,
+  toggleCommentLike,
+
+  deleteComment,
 
   getPatchHistories
 })

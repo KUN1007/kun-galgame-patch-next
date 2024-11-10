@@ -34,7 +34,7 @@ export const CommentLikeButton = ({ commentId, likedBy, commenter }: Props) => {
     }
 
     setLoading(true)
-    const res = await api.patch.toggleLike.mutate({
+    const res = await api.patch.toggleCommentLike.mutate({
       commentId
     })
     setLoading(false)

@@ -77,7 +77,7 @@ export const getPatchComments = publicProcedure
     return nestedComments
   })
 
-export const toggleLike = privateProcedure
+export const toggleCommentLike = privateProcedure
   .input(
     z.object({
       commentId: z.number({ message: '评论 ID 必须为数字' }).min(1).max(9999999)
@@ -130,4 +130,39 @@ export const toggleLike = privateProcedure
     })
 
     return !existingLike
+  })
+
+const deleteCommentWithReplies = async (commentId: number) => {
+  const childComments = await prisma.patch_comment.findMany({
+    where: { parent_id: commentId }
+  })
+
+  for (const child of childComments) {
+    await deleteCommentWithReplies(child.id)
+  }
+
+  await prisma.patch_comment.delete({
+    where: { id: commentId }
+  })
+}
+
+export const deleteComment = privateProcedure
+  .input(
+    z.object({
+      commentId: z.number()
+    })
+  )
+  .mutation(async ({ ctx, input }) => {
+    const comment = await prisma.patch_comment.findUnique({
+      where: {
+        id: input.commentId,
+        user_id: ctx.uid
+      }
+    })
+
+    if (!comment) {
+      return '未找到对应的评论'
+    }
+
+    await deleteCommentWithReplies(input.commentId)
   })
