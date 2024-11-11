@@ -34,3 +34,5 @@ export const kunValidMailConfirmCodeRegex = /^[a-zA-Z0-9]{7}$/
 export const isValidMailConfirmCode = (code: string) => {
   return kunValidMailConfirmCodeRegex.test(code)
 }
+
+export const ResourceSizeRegex: RegExp = /^.{0,107}(mb|gb)$/i

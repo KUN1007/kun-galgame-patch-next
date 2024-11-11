@@ -2,14 +2,14 @@ import { z } from 'zod'
 import { publicProcedure, privateProcedure } from '~/lib/trpc'
 import { prisma } from '~/prisma/index'
 import {
-  patchCommentSchema,
+  patchCommentCreateSchema,
   patchCommentUpdateSchema
 } from '~/validations/patch'
 import { formatComments } from './_helpers'
 import type { PatchComment } from '~/types/api/patch'
 
 export const publishPatchComment = privateProcedure
-  .input(patchCommentSchema)
+  .input(patchCommentCreateSchema)
   .mutation(async ({ ctx, input }) => {
     const data = await prisma.patch_comment.create({
       data: {

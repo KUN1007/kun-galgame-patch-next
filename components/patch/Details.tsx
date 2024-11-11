@@ -3,15 +3,16 @@
 import DOMPurify from 'isomorphic-dompurify'
 import { Card, CardHeader, CardBody } from '@nextui-org/card'
 import { Tabs, Tab } from '@nextui-org/tabs'
+import { Link as NextLink } from '@nextui-org/link'
 import { Calendar, Clock, Link } from 'lucide-react'
-import { Resources } from './Resource'
-import { Comments } from './Comments'
+import { Resources } from './resource/Resource'
+import { Comments } from './comment/Comments'
 import { History } from './History'
 import type { Patch } from '~/types/api/patch'
 
 export const PatchDetails = ({ patch }: { patch: Patch }) => {
   return (
-    <Tabs className="w-full" color="primary" fullWidth={true}>
+    <Tabs className="w-full" fullWidth={true}>
       <Tab key="introduction" title="游戏介绍" className="p-0">
         <Card>
           <CardHeader>
@@ -63,6 +64,17 @@ export const PatchDetails = ({ patch }: { patch: Patch }) => {
             <h2 className="text-2xl font-medium">资源链接</h2>
           </CardHeader>
           <CardBody>
+            <div className="text-default-700">
+              <p>
+                请注意, 本站是 Galgame 补丁站, 资源链接指的是 Galgame 补丁资源,
+                我们仅提供 Galgame 补丁的下载
+              </p>
+              如果您要下载 Galgame 本体资源, 请前往{' '}
+              <NextLink showAnchorIcon href="/auth/forgot">
+                主站论坛
+              </NextLink>
+            </div>
+
             <Resources id={patch.id} />
           </CardBody>
         </Card>

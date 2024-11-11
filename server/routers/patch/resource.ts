@@ -1,9 +1,10 @@
 import { z } from 'zod'
-import { publicProcedure } from '~/lib/trpc'
+import { privateProcedure, publicProcedure } from '~/lib/trpc'
 import { prisma } from '~/prisma/index'
+import { patchResourceCreateSchema } from '~/validations/patch'
 import type { PatchResource } from '~/types/api/patch'
 
-export const getPatchResources = publicProcedure
+export const getPatchResource = publicProcedure
   .input(
     z.object({
       patchId: z.number()
@@ -53,4 +54,42 @@ export const getPatchResources = publicProcedure
     }))
 
     return resources
+  })
+
+export const createPatchResource = privateProcedure
+  .input(patchResourceCreateSchema)
+  .mutation(async ({ ctx, input }) => {
+    const { patchId, ...resourceData } = input
+
+    const newResource = await prisma.patch_resource.create({
+      data: {
+        patch_id: patchId,
+        user_id: ctx.uid,
+        ...resourceData
+      },
+      include: {
+        user: true
+      }
+    })
+
+    return {
+      id: newResource.id,
+      patchId: newResource.patch_id,
+      userId: newResource.user_id,
+      type: newResource.type,
+      language: newResource.language,
+      platform: newResource.platform,
+      size: newResource.size,
+      code: newResource.code,
+      password: newResource.password,
+      note: newResource.note,
+      links: newResource.link,
+      created: String(newResource.created),
+      updated: String(newResource.updated),
+      user: {
+        id: newResource.user.id,
+        name: newResource.user.name,
+        avatar: newResource.user.avatar
+      }
+    }
   })

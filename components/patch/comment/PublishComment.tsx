@@ -11,11 +11,11 @@ import { Textarea } from '@nextui-org/input'
 import { Send } from 'lucide-react'
 import { api } from '~/lib/trpc-client'
 import toast from 'react-hot-toast'
-import { patchCommentSchema } from '~/validations/patch'
+import { patchCommentCreateSchema } from '~/validations/patch'
 import { useUserStore } from '~/store/userStore'
 import type { PatchComment } from '~/types/api/patch'
 
-const commentSchema = patchCommentSchema.pick({ content: true })
+const commentSchema = patchCommentCreateSchema.pick({ content: true })
 
 interface CreateCommentProps {
   patchId: number

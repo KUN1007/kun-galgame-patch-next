@@ -4,8 +4,9 @@ import { useState, useEffect } from 'react'
 import { Chip } from '@nextui-org/chip'
 import { Button } from '@nextui-org/button'
 import { Card, CardBody } from '@nextui-org/card'
+import { Code } from '@nextui-org/code'
 import { Link } from '@nextui-org/link'
-import { Download, Heart, Lock, Plus } from 'lucide-react'
+import { Download, Heart, MoreHorizontal, Plus } from 'lucide-react'
 import { api } from '~/lib/trpc-client'
 import { PublishResource } from './PublishResource'
 import type { PatchResource } from '~/types/api/patch'
@@ -15,7 +16,7 @@ export const Resources = ({ id }: { id: number }) => {
   const [showCreate, setShowCreate] = useState(false)
 
   const fetchResources = async () => {
-    const res = await api.patch.getPatchResources.query({
+    const res = await api.patch.getPatchResource.query({
       patchId: Number(id)
     })
     setResources(res)
@@ -51,7 +52,7 @@ export const Resources = ({ id }: { id: number }) => {
       {resources.map((resource) => (
         <Card key={resource.id}>
           <CardBody className="p-6">
-            <div className="flex items-start justify-between">
+            <div className="flex flex-col items-start justify-between sm:flex-row">
               <div className="space-y-2">
                 <div className="flex flex-wrap gap-2">
                   {resource.type.map((type) => (
@@ -64,23 +65,32 @@ export const Resources = ({ id }: { id: number }) => {
                       {lang}
                     </Chip>
                   ))}
+                  {<Chip variant="flat">{resource.size}</Chip>}
                 </div>
-                <div className="text-gray-500">Size: {resource.size}</div>
+
+                <div className="flex space-x-4">
+                  <div className="text-default-500">
+                    提取码
+                    <Code>{resource.code}</Code>
+                  </div>
+                  <div className="text-default-500">
+                    解压码
+                    <Code>{resource.password}</Code>
+                  </div>
+                </div>
+
                 {resource.note && <p className="mt-2">{resource.note}</p>}
               </div>
               <div className="flex gap-2">
                 <Button variant="bordered" isIconOnly>
                   <Heart className="w-4 h-4" />
                 </Button>
-                {resource.password ? (
-                  <Button variant="bordered" isIconOnly>
-                    <Lock className="w-4 h-4" />
-                  </Button>
-                ) : (
-                  <Button variant="bordered" isIconOnly>
-                    <Download className="w-4 h-4" />
-                  </Button>
-                )}
+                <Button variant="bordered" isIconOnly>
+                  <MoreHorizontal className="w-4 h-4" />
+                </Button>
+                <Button variant="bordered" isIconOnly>
+                  <Download className="w-4 h-4" />
+                </Button>
               </div>
             </div>
             <div className="flex flex-wrap gap-2 mt-4">
