@@ -44,7 +44,9 @@ interface PatchResource {
   created: string
   updated: string
   code: string
-  user: KunUser
+  user: KunUser & {
+    patchCount: number
+  }
 }
 
 interface PatchComment {

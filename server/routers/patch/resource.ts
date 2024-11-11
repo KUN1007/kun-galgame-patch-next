@@ -16,7 +16,11 @@ export const getPatchResource = publicProcedure
     const data = await prisma.patch_resource.findMany({
       where: { patch_id: patchId },
       include: {
-        user: true,
+        user: {
+          include: {
+            patch_resource: true
+          }
+        },
         like_by: {
           include: {
             user: true
@@ -49,7 +53,8 @@ export const getPatchResource = publicProcedure
       user: {
         id: resource.user.id,
         name: resource.user.name,
-        avatar: resource.user.avatar
+        avatar: resource.user.avatar,
+        patchCount: resource.user.patch_resource.length
       }
     }))
 

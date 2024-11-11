@@ -60,13 +60,14 @@ export const PublishResource = ({
 
   return (
     <Card>
-      <CardBody className="space-y-4">
-        <form onSubmit={handleSubmit(onSubmit)}>
+      <CardBody>
+        <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
           <div className="space-y-2">
             <h3 className="text-lg font-medium">资源链接</h3>
             {watch().link.map((link, index) => (
               <div key={index} className="flex gap-2">
                 <Input
+                  isRequired
                   placeholder="请输入资源链接"
                   value={link}
                   isInvalid={!!errors.link?.[index]}
@@ -107,12 +108,13 @@ export const PublishResource = ({
 
           <div className="space-y-2">
             <h3 className="text-lg font-medium">资源详情</h3>
-            <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
+            <div className="grid grid-cols-1 gap-2 md:grid-cols-2">
               <Controller
                 name="type"
                 control={control}
                 render={({ field }) => (
                   <Select
+                    isRequired
                     label="类型"
                     placeholder="请选择资源的类型"
                     selectionMode="multiple"
@@ -137,6 +139,7 @@ export const PublishResource = ({
                 control={control}
                 render={({ field }) => (
                   <Select
+                    isRequired
                     label="语言"
                     placeholder="请选择语言"
                     selectionMode="multiple"
@@ -159,6 +162,7 @@ export const PublishResource = ({
                 control={control}
                 render={({ field }) => (
                   <Select
+                    isRequired
                     label="平台"
                     placeholder="请选择资源的平台"
                     selectionMode="multiple"
@@ -180,7 +184,12 @@ export const PublishResource = ({
                 name="size"
                 control={control}
                 render={({ field }) => (
-                  <Input {...field} label="Size" placeholder="e.g., 1.2GB" />
+                  <Input
+                    {...field}
+                    isRequired
+                    label="Size"
+                    placeholder="e.g., 1.2GB"
+                  />
                 )}
               />
             </div>
