@@ -1,5 +1,10 @@
 import { z } from 'zod'
 import { ResourceSizeRegex } from '~/utils/validate'
+import {
+  SUPPORTED_TYPES,
+  SUPPORTED_LANGUAGES,
+  SUPPORTED_PLATFORMS
+} from '~/components/patch/resource/_constants'
 
 export const patchCommentCreateSchema = z.object({
   patchId: z.number().min(1).max(9999999),
@@ -51,15 +56,15 @@ export const patchResourceCreateSchema = z.object({
     .min(1)
     .max(10007, { message: '资源备注最多 10007 字' }),
   type: z
-    .array(z.string().trim().min(1).max(107))
+    .array(z.enum(SUPPORTED_TYPES))
     .min(1, { message: '请选择至少一个资源类型' })
     .max(10, { message: '您的单个补丁资源最多有 10 条链接' }),
   language: z
-    .array(z.string().trim().min(1).max(107))
+    .array(z.enum(SUPPORTED_LANGUAGES))
     .min(1, { message: '请选择至少一个资源语言' })
     .max(10, { message: '您的单个补丁资源最多有 10 个语言' }),
   platform: z
-    .array(z.string().trim().min(1).max(107))
+    .array(z.enum(SUPPORTED_PLATFORMS))
     .min(1, { message: '请选择至少一个资源平台' })
     .max(10, { message: '您的单个补丁资源最多有 10 个平台' })
 })

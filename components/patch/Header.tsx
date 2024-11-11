@@ -25,14 +25,17 @@ export const PatchHeader = ({ patch }: PatchHeaderProps) => {
           <div className="space-y-2">
             <h1 className="text-3xl font-bold">{patch.name}</h1>
             <div className="flex flex-wrap gap-2">
-              {patch.type.map((type) => (
-                <Chip key={type} variant="flat">
-                  {type}
+              {patch.type.length > 0 &&
+                patch.type.map((type) => (
+                  <Chip key={type} variant="flat">
+                    {type}
+                  </Chip>
+                ))}
+              {patch.language.length > 0 && (
+                <Chip color="primary" variant="solid">
+                  {patch.language}
                 </Chip>
-              ))}
-              <Chip color="primary" variant="solid">
-                {patch.language}
-              </Chip>
+              )}
             </div>
           </div>
           <div className="flex gap-2">

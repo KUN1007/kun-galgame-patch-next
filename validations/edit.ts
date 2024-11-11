@@ -1,8 +1,6 @@
 import { zfd } from 'zod-form-data'
 import { z } from 'zod'
 
-const KUN_BANNER_MAX_SIZE = 1.007 * 1024 * 1024
-
 export const patchSchema = z.object({
   banner: z.any(),
   name: z.string().trim().min(1, { message: '游戏名称是必填项' }),
