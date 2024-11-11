@@ -14,14 +14,6 @@ enum Role {
   SU
 }
 
-enum Language {
-  EN_US
-  JA_JP
-  ZH_CN
-  ZH_TW
-  OTHER
-}
-
 enum MessageType {
   LIKE
   FAVORITE
@@ -167,17 +159,17 @@ model patch {
   sell_time    Int      @default(0)
   type         String[]
   alias        String[]
-  language     Language @default(OTHER)
+  language     String[]
+  engine       String[]
+  platform     String[]
+  tag          String[]
+  company      String[]
 
   user_id Int
   user    user @relation("user_patch", fields: [user_id], references: [id])
 
   favorite_by   user_patch_favorite_relation[]
   contribute_by user_patch_contribute_relation[]
-  platform      patch_platform_realtion[]
-  engine        patch_engine_realtion[]
-  tag           patch_tag_realtion[]
-  company       patch_company_relation[]
 
   resource patch_resource[]     @relation("patch_resource")
   comment  patch_comment[]      @relation("patch_comment")
@@ -186,107 +178,6 @@ model patch {
 
   created DateTime @default(now())
   updated DateTime @updatedAt
-}
-
-model patch_platform {
-  id   Int    @id @default(autoincrement())
-  name String @db.VarChar(107)
-
-  patch_relation patch_platform_realtion[]
-
-  created DateTime @default(now())
-  updated DateTime @updatedAt
-}
-
-model patch_platform_realtion {
-  id Int @id @default(autoincrement())
-
-  patch_id    Int
-  patch       patch          @relation(fields: [patch_id], references: [id])
-  platform_id Int
-  platform    patch_platform @relation(fields: [platform_id], references: [id])
-
-  created DateTime @default(now())
-  updated DateTime @updatedAt
-
-  @@unique([patch_id, platform_id])
-}
-
-model patch_engine {
-  id   Int    @id @default(autoincrement())
-  name String @db.VarChar(107)
-
-  patch_relation patch_engine_realtion[]
-
-  created DateTime @default(now())
-  updated DateTime @updatedAt
-}
-
-model patch_engine_realtion {
-  id Int @id @default(autoincrement())
-
-  patch_id  Int
-  patch     patch        @relation(fields: [patch_id], references: [id])
-  engine_id Int
-  engine    patch_engine @relation(fields: [engine_id], references: [id])
-
-  created DateTime @default(now())
-  updated DateTime @updatedAt
-
-  @@unique([patch_id, engine_id])
-}
-
-model patch_tag {
-  id           Int    @id @default(autoincrement())
-  name         String @db.VarChar(107)
-  introduction String @db.VarChar(10007)
-
-  patch_relation patch_tag_realtion[]
-
-  created DateTime @default(now())
-  updated DateTime @updatedAt
-}
-
-model patch_tag_realtion {
-  id Int @id @default(autoincrement())
-
-  patch_id Int
-  patch    patch     @relation(fields: [patch_id], references: [id])
-  tag_id   Int
-  tag      patch_tag @relation(fields: [tag_id], references: [id])
-
-  created DateTime @default(now())
-  updated DateTime @updatedAt
-
-  @@unique([patch_id, tag_id])
-}
-
-model patch_company {
-  id               Int      @id @default(autoincrement())
-  name             String   @db.VarChar(107)
-  primary_language String   @db.VarChar(107)
-  official_website String[]
-  parent_brand     String[]
-  alias            String[]
-
-  patch_relations patch_company_relation[]
-
-  created DateTime @default(now())
-  updated DateTime @updatedAt
-}
-
-model patch_company_relation {
-  id Int @id @default(autoincrement())
-
-  patch_id   Int
-  patch      patch         @relation(fields: [patch_id], references: [id])
-  company_id Int
-  company    patch_company @relation(fields: [company_id], references: [id])
-
-  created DateTime @default(now())
-  updated DateTime @updatedAt
-
-  @@unique([patch_id, company_id])
 }
 
 model patch_resource {
