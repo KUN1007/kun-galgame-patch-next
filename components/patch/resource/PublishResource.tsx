@@ -1,5 +1,6 @@
 'use client'
 
+import { useState } from 'react'
 import { z } from 'zod'
 import { useForm, Controller } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
@@ -16,10 +17,11 @@ import {
   SUPPORTED_LANGUAGES,
   SUPPORTED_PLATFORMS
 } from './_constants'
+import type { PatchResource } from '~/types/api/patch'
 
 interface CreateResourceProps {
   patchId: number
-  onSuccess?: () => void
+  onSuccess?: (res: PatchResource) => void
 }
 
 type ResourceFormData = z.infer<typeof patchResourceCreateSchema>
@@ -28,6 +30,8 @@ export const PublishResource = ({
   patchId,
   onSuccess
 }: CreateResourceProps) => {
+  const [creating, setCreating] = useState(false)
+
   const {
     control,
     handleSubmit,
@@ -51,11 +55,12 @@ export const PublishResource = ({
   })
 
   const onSubmit = async (data: ResourceFormData) => {
-    await api.patch.createPatchResource.mutate(data)
-
-    toast.success('资源发布成功')
+    setCreating(true)
+    const res = await api.patch.createPatchResource.mutate(data)
     reset()
-    onSuccess?.()
+    onSuccess?.(res)
+    setCreating(false)
+    toast.success('资源发布成功')
   }
 
   return (
@@ -236,6 +241,8 @@ export const PublishResource = ({
               type="submit"
               color="primary"
               startContent={<Upload className="w-4 h-4" />}
+              disabled={creating}
+              isLoading={creating}
             >
               发布资源
             </Button>

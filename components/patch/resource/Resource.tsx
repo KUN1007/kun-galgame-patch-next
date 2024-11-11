@@ -10,6 +10,7 @@ import { Link } from '@nextui-org/link'
 import { Heart, MoreHorizontal, Plus, Download } from 'lucide-react'
 import { api } from '~/lib/trpc-client'
 import { PublishResource } from './PublishResource'
+import { formatDistanceToNow } from '~/utils/formatDistanceToNow'
 import type { PatchResource } from '~/types/api/patch'
 
 export const Resources = ({ id }: { id: number }) => {
@@ -51,9 +52,9 @@ export const Resources = ({ id }: { id: number }) => {
       {showCreate && (
         <PublishResource
           patchId={id}
-          onSuccess={() => {
+          onSuccess={(res) => {
             setShowCreate(false)
-            fetchResources()
+            setResources([...resources, res])
           }}
         />
       )}
@@ -112,7 +113,7 @@ export const Resources = ({ id }: { id: number }) => {
             <div className="flex justify-between">
               <User
                 name={resource.user.name}
-                description={`已发布补丁 ${resource.user.patchCount} 个`}
+                description={`${formatDistanceToNow(resource.created)} • 已发布补丁 ${resource.user.patchCount} 个`}
                 avatarProps={{
                   showFallback: true,
                   src: resource.user.avatar,

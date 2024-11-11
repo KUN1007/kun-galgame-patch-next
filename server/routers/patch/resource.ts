@@ -57,8 +57,6 @@ export const getPatchResource = publicProcedure
       }
     }))
 
-    console.log(resources)
-
     return resources
   })
 
