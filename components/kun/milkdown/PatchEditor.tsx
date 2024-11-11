@@ -8,16 +8,16 @@ const KunEditor = dynamic(() => import('./Editor'), {
 })
 
 export const Editor: FC = () => {
-  const { data, setData } = useEditStore()
+  const { getData, setData } = useEditStore()
 
   const saveMarkdown = (markdown: string) => {
-    setData({ ...data, introduction: markdown })
+    setData({ ...getData(), introduction: markdown })
   }
 
   return (
     <MilkdownProvider>
       <KunEditor
-        valueMarkdown={data.introduction}
+        valueMarkdown={getData().introduction}
         saveMarkdown={saveMarkdown}
       />
     </MilkdownProvider>

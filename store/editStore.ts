@@ -14,6 +14,7 @@ export interface PatchFormRequestData extends PatchFormData {
 
 interface StoreState {
   data: PatchFormData
+  getData: () => PatchFormData
   setData: (data: PatchFormData) => void
   resetData: () => void
 }
@@ -27,8 +28,9 @@ const initialState: PatchFormData = {
 
 export const useEditStore = create<StoreState>()(
   persist(
-    (set) => ({
+    (set, get) => ({
       data: initialState,
+      getData: () => get().data,
       setData: (data: PatchFormData) => set({ data }),
       resetData: () => set({ data: initialState })
     }),
