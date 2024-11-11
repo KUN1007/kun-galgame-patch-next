@@ -2,7 +2,7 @@ import { z } from 'zod'
 import { publicProcedure } from '~/lib/trpc'
 import { prisma } from '~/prisma/index'
 import { markdownToHtml } from '~/server/utils/markdownToHtml'
-import type { Language, Patch } from '~/types/api/patch'
+import type { Patch } from '~/types/api/patch'
 
 export const getPatchById = publicProcedure
   .input(
@@ -46,9 +46,9 @@ export const getPatchById = publicProcedure
       status: patch.status,
       view: patch.view,
       sell_time: patch.sell_time,
-      type: patch.type,
+      type: [],
       alias: patch.alias,
-      language: patch.language as Language,
+      language: [],
       created: String(patch.created),
       updated: String(patch.updated),
       user: {

@@ -43,7 +43,6 @@ export const getPatchResource = publicProcedure
         name: likeRelation.user.name,
         avatar: likeRelation.user.avatar
       })),
-      time: resource.time,
       status: resource.status,
       userId: resource.user_id,
       patchId: resource.patch_id,
@@ -66,35 +65,44 @@ export const createPatchResource = privateProcedure
   .mutation(async ({ ctx, input }) => {
     const { patchId, ...resourceData } = input
 
-    const newResource = await prisma.patch_resource.create({
+    const data = await prisma.patch_resource.create({
       data: {
         patch_id: patchId,
         user_id: ctx.uid,
         ...resourceData
       },
       include: {
-        user: true
+        user: {
+          include: {
+            patch_resource: true
+          }
+        }
       }
     })
 
-    return {
-      id: newResource.id,
-      patchId: newResource.patch_id,
-      userId: newResource.user_id,
-      type: newResource.type,
-      language: newResource.language,
-      platform: newResource.platform,
-      size: newResource.size,
-      code: newResource.code,
-      password: newResource.password,
-      note: newResource.note,
-      links: newResource.link,
-      created: String(newResource.created),
-      updated: String(newResource.updated),
+    const newResource: PatchResource = {
+      id: data.id,
+      size: data.size,
+      type: data.type,
+      language: data.language,
+      note: data.note,
+      link: data.link,
+      password: data.password,
+      platform: data.platform,
+      likedBy: [],
+      status: data.status,
+      userId: data.user_id,
+      patchId: data.patch_id,
+      created: String(data.created),
+      updated: String(data.updated),
+      code: data.code,
       user: {
-        id: newResource.user.id,
-        name: newResource.user.name,
-        avatar: newResource.user.avatar
+        id: data.user.id,
+        name: data.user.name,
+        avatar: data.user.avatar,
+        patchCount: data.user.patch_resource.length
       }
     }
+
+    return newResource
   })

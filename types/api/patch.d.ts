@@ -1,5 +1,3 @@
-export type Language = 'OTHER' | 'CHINESE' | 'ENGLISH' | 'JAPANESE'
-
 export interface Patch {
   id: number
   name: string
@@ -11,7 +9,7 @@ export interface Patch {
   sell_time: number
   type: string[]
   alias: string[]
-  language: Language
+  language: string[]
   created: string
   updated: string
   user: {
@@ -37,7 +35,6 @@ interface PatchResource {
   password: string
   platform: string[]
   likedBy: KunUser[]
-  time: number
   status: number
   userId: number
   patchId: number

@@ -16,10 +16,11 @@ import {
   SUPPORTED_LANGUAGES,
   SUPPORTED_PLATFORMS
 } from './_constants'
+import type { PatchResource } from '~/types/api/patch'
 
 interface CreateResourceProps {
   patchId: number
-  onSuccess?: () => void
+  onSuccess?: (patch: PatchResource) => void
 }
 
 type ResourceFormData = z.infer<typeof patchResourceCreateSchema>
@@ -51,11 +52,10 @@ export const PublishResource = ({
   })
 
   const onSubmit = async (data: ResourceFormData) => {
-    await api.patch.createPatchResource.mutate(data)
-
-    toast.success('资源发布成功')
+    const res = await api.patch.createPatchResource.mutate(data)
     reset()
-    onSuccess?.()
+    toast.success('资源发布成功')
+    onSuccess?.(res)
   }
 
   return (
@@ -114,7 +114,6 @@ export const PublishResource = ({
                 control={control}
                 render={({ field }) => (
                   <Select
-                    isRequired
                     label="类型"
                     placeholder="请选择资源的类型"
                     selectionMode="multiple"
@@ -139,7 +138,6 @@ export const PublishResource = ({
                 control={control}
                 render={({ field }) => (
                   <Select
-                    isRequired
                     label="语言"
                     placeholder="请选择语言"
                     selectionMode="multiple"
@@ -162,7 +160,6 @@ export const PublishResource = ({
                 control={control}
                 render={({ field }) => (
                   <Select
-                    isRequired
                     label="平台"
                     placeholder="请选择资源的平台"
                     selectionMode="multiple"
@@ -184,12 +181,7 @@ export const PublishResource = ({
                 name="size"
                 control={control}
                 render={({ field }) => (
-                  <Input
-                    {...field}
-                    isRequired
-                    label="Size"
-                    placeholder="e.g., 1.2GB"
-                  />
+                  <Input {...field} label="Size" placeholder="e.g., 1.2GB" />
                 )}
               />
             </div>
@@ -200,7 +192,7 @@ export const PublishResource = ({
               render={({ field }) => (
                 <Input
                   {...field}
-                  label="提取码"
+                  label="提取码 (可选)"
                   placeholder="如果资源的获取需要密码, 请填写密码"
                 />
               )}
@@ -212,7 +204,7 @@ export const PublishResource = ({
               render={({ field }) => (
                 <Input
                   {...field}
-                  label="解压码"
+                  label="解压码 (可选)"
                   placeholder="如果资源的解压需要解压码, 请填写解压码"
                 />
               )}
@@ -224,7 +216,7 @@ export const PublishResource = ({
               render={({ field }) => (
                 <Textarea
                   {...field}
-                  label="备注"
+                  label="备注 (可选)"
                   placeholder="您可以在此处随意添加备注, 例如资源的注意事项等"
                 />
               )}

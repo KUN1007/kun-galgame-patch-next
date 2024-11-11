@@ -14,14 +14,6 @@ enum Role {
   SU
 }
 
-enum Language {
-  EN_US
-  JA_JP
-  ZH_CN
-  ZH_TW
-  OTHER
-}
-
 enum MessageType {
   LIKE
   FAVORITE
@@ -157,27 +149,30 @@ model user_patch_resource_like_relation {
 }
 
 model patch {
-  id           Int      @id @default(autoincrement())
-  name         String   @db.VarChar(1007)
-  vndb_id      String   @unique @db.VarChar(107)
-  banner       String   @default("") @db.VarChar(1007)
-  introduction String   @default("") @db.VarChar(100007)
-  status       Int      @default(0)
-  view         Int      @default(0)
-  sell_time    Int      @default(0)
-  type         String[]
-  alias        String[]
-  language     Language @default(OTHER)
+  id           Int    @id @default(autoincrement())
+  name         String @db.VarChar(1007)
+  vndb_id      String @unique @db.VarChar(107)
+  banner       String @default("") @db.VarChar(1007)
+  introduction String @default("") @db.VarChar(100007)
+  status       Int    @default(0)
+  view         Int    @default(0)
+  sell_time    Int    @default(0)
+  edit         String @default("")
+
+  alias String[]
 
   user_id Int
   user    user @relation("user_patch", fields: [user_id], references: [id])
 
   favorite_by   user_patch_favorite_relation[]
   contribute_by user_patch_contribute_relation[]
-  platform      patch_platform_realtion[]
-  engine        patch_engine_realtion[]
-  tag           patch_tag_realtion[]
-  company       patch_company_relation[]
+
+  type     patch_type_relation[]
+  language patch_language_relation[]
+  platform patch_platform_relation[]
+  engine   patch_engine_relation[]
+  tag      patch_tag_relation[]
+  company  patch_company_relation[]
 
   resource patch_resource[]     @relation("patch_resource")
   comment  patch_comment[]      @relation("patch_comment")
@@ -188,17 +183,65 @@ model patch {
   updated DateTime @updatedAt
 }
 
-model patch_platform {
+model patch_type {
   id   Int    @id @default(autoincrement())
   name String @db.VarChar(107)
 
-  patch_relation patch_platform_realtion[]
+  patch_relation patch_type_relation[]
 
   created DateTime @default(now())
   updated DateTime @updatedAt
 }
 
-model patch_platform_realtion {
+model patch_type_relation {
+  id Int @id @default(autoincrement())
+
+  patch_id Int
+  patch    patch      @relation(fields: [patch_id], references: [id])
+  type_id  Int
+  type     patch_type @relation(fields: [type_id], references: [id])
+
+  created DateTime @default(now())
+  updated DateTime @updatedAt
+
+  @@unique([patch_id, type_id])
+}
+
+model patch_language {
+  id   Int    @id @default(autoincrement())
+  name String @db.VarChar(107)
+
+  patch_relation patch_language_relation[]
+
+  created DateTime @default(now())
+  updated DateTime @updatedAt
+}
+
+model patch_language_relation {
+  id Int @id @default(autoincrement())
+
+  patch_id    Int
+  patch       patch          @relation(fields: [patch_id], references: [id])
+  lanugage_id Int
+  lanugage    patch_language @relation(fields: [lanugage_id], references: [id])
+
+  created DateTime @default(now())
+  updated DateTime @updatedAt
+
+  @@unique([patch_id, lanugage_id])
+}
+
+model patch_platform {
+  id   Int    @id @default(autoincrement())
+  name String @db.VarChar(107)
+
+  patch_relation patch_platform_relation[]
+
+  created DateTime @default(now())
+  updated DateTime @updatedAt
+}
+
+model patch_platform_relation {
   id Int @id @default(autoincrement())
 
   patch_id    Int
@@ -216,13 +259,13 @@ model patch_engine {
   id   Int    @id @default(autoincrement())
   name String @db.VarChar(107)
 
-  patch_relation patch_engine_realtion[]
+  patch_relation patch_engine_relation[]
 
   created DateTime @default(now())
   updated DateTime @updatedAt
 }
 
-model patch_engine_realtion {
+model patch_engine_relation {
   id Int @id @default(autoincrement())
 
   patch_id  Int
@@ -241,13 +284,13 @@ model patch_tag {
   name         String @db.VarChar(107)
   introduction String @db.VarChar(10007)
 
-  patch_relation patch_tag_realtion[]
+  patch_relation patch_tag_relation[]
 
   created DateTime @default(now())
   updated DateTime @updatedAt
 }
 
-model patch_tag_realtion {
+model patch_tag_relation {
   id Int @id @default(autoincrement())
 
   patch_id Int
@@ -300,7 +343,7 @@ model patch_resource {
   language String[]
   platform String[]
   like     Int[]
-  time     Int      @default(0)
+  edit     String   @default("")
   status   Int      @default(0)
 
   like_by user_patch_resource_like_relation[]

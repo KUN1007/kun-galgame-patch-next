@@ -51,9 +51,10 @@ export const Resources = ({ id }: { id: number }) => {
       {showCreate && (
         <PublishResource
           patchId={id}
-          onSuccess={() => {
+          onSuccess={(res) => {
             setShowCreate(false)
             fetchResources()
+            setResources([...resources, res])
           }}
         />
       )}
@@ -77,29 +78,35 @@ export const Resources = ({ id }: { id: number }) => {
                   {<Chip variant="flat">{resource.size}</Chip>}
                 </div>
 
-                <div className="flex flex-wrap gap-2">
-                  <Snippet
-                    tooltipProps={{
-                      content: '点击复制提取码'
-                    }}
-                    size="sm"
-                    symbol="提取码"
-                    color="primary"
-                  >
-                    {resource.code}
-                  </Snippet>
+                {(resource.code || resource.password) && (
+                  <div className="flex flex-wrap gap-2">
+                    {resource.code && (
+                      <Snippet
+                        tooltipProps={{
+                          content: '点击复制提取码'
+                        }}
+                        size="sm"
+                        symbol="提取码"
+                        color="primary"
+                      >
+                        {resource.code}
+                      </Snippet>
+                    )}
 
-                  <Snippet
-                    tooltipProps={{
-                      content: '点击复制解压码'
-                    }}
-                    size="sm"
-                    symbol="解压码"
-                    color="primary"
-                  >
-                    {resource.password}
-                  </Snippet>
-                </div>
+                    {resource.password && (
+                      <Snippet
+                        tooltipProps={{
+                          content: '点击复制解压码'
+                        }}
+                        size="sm"
+                        symbol="解压码"
+                        color="primary"
+                      >
+                        {resource.password}
+                      </Snippet>
+                    )}
+                  </div>
+                )}
 
                 {resource.note && <p className="mt-2">{resource.note}</p>}
               </div>
