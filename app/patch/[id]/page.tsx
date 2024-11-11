@@ -21,7 +21,7 @@ export default async function Patch({
   }
 
   return (
-    <div className="container py-8 mx-auto space-y-8">
+    <div className="container py-8 mx-auto">
       <PatchHeader patch={res} />
       <PatchDetails patch={res} />
     </div>

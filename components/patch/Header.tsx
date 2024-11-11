@@ -12,7 +12,7 @@ interface PatchHeaderProps {
 
 export const PatchHeader = ({ patch }: PatchHeaderProps) => {
   return (
-    <Card className="border-none shadow-none">
+    <Card>
       <CardHeader className="relative h-full p-0">
         <img
           src={patch.banner}
@@ -21,29 +21,35 @@ export const PatchHeader = ({ patch }: PatchHeaderProps) => {
         />
       </CardHeader>
       <CardBody>
-        <div className="flex flex-col items-start justify-between sm:flex-row">
+        <div className="flex flex-col items-start justify-between space-y-2 sm:flex-row">
           <div className="space-y-2">
             <h1 className="text-3xl font-bold">{patch.name}</h1>
             <div className="flex flex-wrap gap-2">
+              {patch.platform.length > 0 &&
+                patch.platform.map((platform) => (
+                  <Chip key={platform} variant="flat">
+                    {platform}
+                  </Chip>
+                ))}
+
+              {patch.language.length > 0 &&
+                patch.language.map((language) => (
+                  <Chip key={language} color="primary" variant="flat">
+                    {language}
+                  </Chip>
+                ))}
+
               {patch.type.length > 0 &&
                 patch.type.map((type) => (
-                  <Chip key={type} variant="flat">
+                  <Chip key={type} color="primary" variant="solid">
                     {type}
                   </Chip>
                 ))}
-              {patch.language.length > 0 && (
-                <Chip color="primary" variant="solid">
-                  {patch.language}
-                </Chip>
-              )}
             </div>
           </div>
-          <div className="flex gap-2">
+          <div className="flex gap-2 ml-auto">
             <Button variant="bordered" isIconOnly>
               <Share2 className="w-4 h-4" />
-            </Button>
-            <Button variant="bordered" isIconOnly>
-              <Star className="w-4 h-4" />
             </Button>
             <Button variant="bordered" isIconOnly>
               <Heart className="w-4 h-4" />
@@ -67,7 +73,7 @@ export const PatchHeader = ({ patch }: PatchHeaderProps) => {
             <span>{patch.view}</span>
           </div>
           <div className="flex items-center gap-1">
-            <Star className="w-4 h-4" />
+            <Heart className="w-4 h-4" />
             <span>{patch._count?.favorite_by || 0}</span>
           </div>
           <div className="flex items-center gap-1">

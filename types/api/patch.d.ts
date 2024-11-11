@@ -1,15 +1,16 @@
 export interface Patch {
   id: number
   name: string
-  vndb_id: string
+  vndbId: string
   banner: string
   introduction: string
   status: number
   view: number
-  sell_time: number
+  sellTime: number
   type: string[]
   alias: string[]
   language: string[]
+  platform: string[]
   created: string
   updated: string
   user: {
@@ -35,7 +36,6 @@ interface PatchResource {
   password: string
   platform: string[]
   likedBy: KunUser[]
-  time: number
   status: number
   userId: number
   patchId: number

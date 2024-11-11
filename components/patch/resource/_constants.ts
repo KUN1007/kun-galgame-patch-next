@@ -4,7 +4,8 @@ export const SUPPORTED_TYPES = [
   '机翻补丁',
   '全 CG 存档',
   '破解补丁',
-  '修改补丁',
+  '修正补丁',
+  '魔改补丁',
   '其它'
 ] as const
 

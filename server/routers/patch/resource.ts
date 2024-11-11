@@ -43,7 +43,6 @@ export const getPatchResource = publicProcedure
         name: likeRelation.user.name,
         avatar: likeRelation.user.avatar
       })),
-      time: resource.time,
       status: resource.status,
       userId: resource.user_id,
       patchId: resource.patch_id,
@@ -58,43 +57,88 @@ export const getPatchResource = publicProcedure
       }
     }))
 
+    console.log(resources)
+
     return resources
   })
 
 export const createPatchResource = privateProcedure
   .input(patchResourceCreateSchema)
   .mutation(async ({ ctx, input }) => {
-    const { patchId, ...resourceData } = input
+    const { patchId, type, language, platform, ...resourceData } = input
 
-    const newResource = await prisma.patch_resource.create({
-      data: {
-        patch_id: patchId,
-        user_id: ctx.uid,
-        ...resourceData
-      },
-      include: {
-        user: true
+    return await prisma.$transaction(async (prisma) => {
+      const [newResource, currentPatch] = await Promise.all([
+        prisma.patch_resource.create({
+          data: {
+            patch_id: patchId,
+            user_id: ctx.uid,
+            type,
+            language,
+            platform,
+            ...resourceData
+          },
+          include: {
+            user: {
+              include: {
+                patch_resource: true
+              }
+            }
+          }
+        }),
+        prisma.patch.findUnique({
+          where: { id: patchId },
+          select: {
+            type: true,
+            language: true,
+            platform: true
+          }
+        })
+      ])
+
+      if (currentPatch) {
+        const updatedTypes = [...new Set(currentPatch.type.concat(type))]
+        const updatedLanguages = [
+          ...new Set(currentPatch.language.concat(language))
+        ]
+        const updatedPlatforms = [
+          ...new Set(currentPatch.platform.concat(platform))
+        ]
+
+        await prisma.patch.update({
+          where: { id: patchId },
+          data: {
+            type: { set: updatedTypes },
+            language: { set: updatedLanguages },
+            platform: { set: updatedPlatforms }
+          }
+        })
       }
+
+      const resource: PatchResource = {
+        id: newResource.id,
+        size: newResource.size,
+        type: newResource.type,
+        language: newResource.language,
+        note: newResource.note,
+        link: newResource.link,
+        password: newResource.password,
+        platform: newResource.platform,
+        likedBy: [],
+        status: newResource.status,
+        userId: newResource.user_id,
+        patchId: newResource.patch_id,
+        code: newResource.code,
+        created: String(newResource.created),
+        updated: String(newResource.updated),
+        user: {
+          id: newResource.user.id,
+          name: newResource.user.name,
+          avatar: newResource.user.avatar,
+          patchCount: newResource.user.patch_resource.length
+        }
+      }
+
+      return resource
     })
-
-    return {
-      id: newResource.id,
-      patchId: newResource.patch_id,
-      userId: newResource.user_id,
-      type: newResource.type,
-      language: newResource.language,
-      platform: newResource.platform,
-      size: newResource.size,
-      code: newResource.code,
-      password: newResource.password,
-      note: newResource.note,
-      links: newResource.link,
-      created: String(newResource.created),
-      updated: String(newResource.updated),
-      user: {
-        id: newResource.user.id,
-        name: newResource.user.name,
-        avatar: newResource.user.avatar
-      }
-    }
   })

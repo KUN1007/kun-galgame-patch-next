@@ -40,15 +40,16 @@ export const getPatchById = publicProcedure
     const response: Patch = {
       id: patch.id,
       name: patch.name,
-      vndb_id: patch.vndb_id,
+      vndbId: patch.vndb_id,
       banner: patch.banner,
       introduction: await markdownToHtml(patch.introduction),
       status: patch.status,
       view: patch.view,
-      sell_time: patch.sell_time,
+      sellTime: patch.sell_time,
       type: patch.type,
       alias: patch.alias,
       language: patch.language,
+      platform: patch.platform,
       created: String(patch.created),
       updated: String(patch.updated),
       user: {

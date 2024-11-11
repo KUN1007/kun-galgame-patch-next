@@ -86,9 +86,10 @@ export const KunTopBarUser = () => {
                   as="button"
                   className="transition-transform shrink-0"
                   color="secondary"
-                  name={user.name}
+                  name={user.name.charAt(0).toUpperCase()}
                   size="sm"
                   src={user.avatar}
+                  showFallback
                 />
               </DropdownTrigger>
               <DropdownMenu aria-label="Profile Actions">

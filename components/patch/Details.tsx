@@ -12,7 +12,10 @@ import type { Patch } from '~/types/api/patch'
 
 export const PatchDetails = ({ patch }: { patch: Patch }) => {
   return (
-    <Tabs className="w-full" fullWidth={true}>
+    <Tabs
+      className="w-full my-6 overflow-hidden shadow-medium rounded-large"
+      fullWidth={true}
+    >
       <Tab key="introduction" title="游戏介绍" className="p-0">
         <Card>
           <CardHeader>
@@ -41,7 +44,7 @@ export const PatchDetails = ({ patch }: { patch: Patch }) => {
               </div>
               <div className="flex items-center gap-2 text-sm text-gray-500">
                 <Link className="w-4 h-4" />
-                <span>VNDB ID: {patch.vndb_id}</span>
+                <span>VNDB ID: {patch.vndbId}</span>
               </div>
             </div>
 
