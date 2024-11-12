@@ -11,7 +11,14 @@ import {
   DropdownMenu,
   DropdownItem
 } from '@nextui-org/dropdown'
-import { Modal, useDisclosure } from '@nextui-org/modal'
+import {
+  Modal,
+  ModalContent,
+  ModalHeader,
+  ModalBody,
+  ModalFooter,
+  useDisclosure
+} from '@nextui-org/modal'
 import { User } from '@nextui-org/user'
 import { Link } from '@nextui-org/link'
 import { MoreHorizontal, Plus, Download, Edit, Trash } from 'lucide-react'
@@ -22,6 +29,7 @@ import { EditResourceDialog } from './EditResourceDialog'
 import { useUserStore } from '~/store/userStore'
 import { ResourceLikeButton } from './ResourceLike'
 import type { PatchResource } from '~/types/api/patch'
+import toast from 'react-hot-toast'
 
 export const Resources = ({ id }: { id: number }) => {
   const [resources, setResources] = useState<PatchResource[]>([])
@@ -46,16 +54,36 @@ export const Resources = ({ id }: { id: number }) => {
     }))
   }
 
-  const { isOpen, onOpen, onClose } = useDisclosure()
+  const {
+    isOpen: isOpenEdit,
+    onOpen: onOpenEdit,
+    onClose: onCloseEdit
+  } = useDisclosure()
   const { user } = useUserStore()
   const [editResource, setEditResource] = useState<PatchResource | null>(null)
   const completeEdit = () => {
-    onClose()
+    onCloseEdit()
     setEditResource(null)
+    toast.success('编辑资源链接成功')
   }
-  const handleDelete = async (resourceId: number) => {
-    // await api.patch.deletePatchResource.mutate({ id: resourceId })
-    // fetchResources()
+
+  const {
+    isOpen: isOpenDelete,
+    onOpen: onOpenDelete,
+    onClose: onCloseDelete
+  } = useDisclosure()
+  const [deleteResourceId, setDeleteResourceId] = useState(0)
+  const [deleting, setDeleting] = useState(false)
+  const handleDeleteResource = async () => {
+    setDeleting(true)
+    await api.patch.deleteResource.mutate({ resourceId: deleteResourceId })
+    setResources((prev) =>
+      prev.filter((resource) => resource.id !== deleteResourceId)
+    )
+    setDeleteResourceId(0)
+    setDeleting(false)
+    onCloseDelete()
+    toast.success('删除资源链接成功')
   }
 
   return (
@@ -145,7 +173,7 @@ export const Resources = ({ id }: { id: number }) => {
                     key="edit"
                     startContent={<Edit className="w-4 h-4" />}
                     onPress={() => {
-                      onOpen()
+                      onOpenEdit()
                       setEditResource(resource)
                     }}
                   >
@@ -156,7 +184,10 @@ export const Resources = ({ id }: { id: number }) => {
                     className="text-danger"
                     color="danger"
                     startContent={<Trash className="w-4 h-4" />}
-                    onPress={() => handleDelete(resource.id)}
+                    onPress={() => {
+                      onOpenDelete()
+                      setDeleteResourceId(resource.id)
+                    }}
                   >
                     删除
                   </DropdownItem>
@@ -212,7 +243,7 @@ export const Resources = ({ id }: { id: number }) => {
         </Card>
       ))}
 
-      <Modal size="3xl" isOpen={isOpen} onClose={completeEdit}>
+      <Modal size="3xl" isOpen={isOpenEdit} onClose={completeEdit}>
         <EditResourceDialog
           onClose={completeEdit}
           resource={editResource}
@@ -224,6 +255,33 @@ export const Resources = ({ id }: { id: number }) => {
             )
           }}
         />
+      </Modal>
+
+      <Modal isOpen={isOpenDelete} onClose={onCloseDelete} placement="center">
+        <ModalContent>
+          <ModalHeader className="flex flex-col gap-1">
+            删除资源链接
+          </ModalHeader>
+          <ModalBody>
+            <p>
+              您确定要删除这条资源链接吗,
+              这将会导致您发布资源链接获得的萌萌点被扣除, 该操作不可撤销
+            </p>
+          </ModalBody>
+          <ModalFooter>
+            <Button variant="light" onPress={onCloseDelete}>
+              取消
+            </Button>
+            <Button
+              color="danger"
+              onPress={handleDeleteResource}
+              disabled={deleting}
+              isLoading={deleting}
+            >
+              删除
+            </Button>
+          </ModalFooter>
+        </ModalContent>
       </Modal>
     </div>
   )

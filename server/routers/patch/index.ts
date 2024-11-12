@@ -4,7 +4,8 @@ import {
   createPatchResource,
   getPatchResource,
   updatePatchResource,
-  toggleResourceLike
+  toggleResourceLike,
+  deleteResource
 } from './resource'
 import {
   publishPatchComment,
@@ -25,6 +26,8 @@ export const patchRouter = router({
   updatePatchResource,
 
   toggleResourceLike,
+
+  deleteResource,
 
   publishPatchComment,
 

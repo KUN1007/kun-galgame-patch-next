@@ -156,18 +156,20 @@ export const deleteComment = privateProcedure
     })
   )
   .mutation(async ({ ctx, input }) => {
-    const comment = await prisma.patch_comment.findUnique({
-      where: {
-        id: input.commentId,
-        user_id: ctx.uid
+    return await prisma.$transaction(async (prisma) => {
+      const comment = await prisma.patch_comment.findUnique({
+        where: {
+          id: input.commentId,
+          user_id: ctx.uid
+        }
+      })
+
+      if (!comment) {
+        return '未找到对应的评论'
       }
+
+      await deleteCommentWithReplies(input.commentId)
     })
-
-    if (!comment) {
-      return '未找到对应的评论'
-    }
-
-    await deleteCommentWithReplies(input.commentId)
   })
 
 export const updateComment = privateProcedure

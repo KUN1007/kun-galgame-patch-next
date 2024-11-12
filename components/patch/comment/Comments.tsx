@@ -78,30 +78,25 @@ export const Comments = ({ id }: { id: number }) => {
     scrollIntoComment(newComment.id)
   }
 
-  const [deleteCommentCache, setDeleteCommentCache] =
-    useState<PatchComment | null>(null)
+  const [deleteCommentId, setDeleteCommentId] = useState(0)
   const { isOpen, onOpen, onClose } = useDisclosure()
   const { user } = useUserStore()
   const [deleting, setDeleting] = useState(false)
   const handleDeleteComment = async () => {
-    if (!deleteCommentCache) {
-      toast.error('未选中评论')
-      return
-    }
-
     setDeleting(true)
     await api.patch.deleteComment.mutate({
-      commentId: deleteCommentCache.id
+      commentId: deleteCommentId
     })
     setComments((prev) =>
-      prev.filter((comment) => comment.id !== deleteCommentCache.id)
+      prev.filter((comment) => comment.id !== deleteCommentId)
     )
     setDeleting(false)
+    setDeleteCommentId(0)
     onClose()
     toast.success('评论删除成功')
   }
 
-  const [editingComment, setEditingComment] = useState<number | null>(null)
+  const [editingComment, setEditingComment] = useState<number>(0)
   const [editContent, setEditContent] = useState('')
   const [updating, setUpdating] = useState(false)
   const startEditing = (comment: PatchComment) => {
@@ -109,7 +104,7 @@ export const Comments = ({ id }: { id: number }) => {
     setEditContent(comment.content)
   }
   const cancelEditing = () => {
-    setEditingComment(null)
+    setEditingComment(0)
     setEditContent('')
   }
   const handleUpdateComment = async (commentId: number) => {
@@ -188,7 +183,7 @@ export const Comments = ({ id }: { id: number }) => {
                         color="danger"
                         startContent={<Trash2 className="w-4 h-4" />}
                         onPress={() => {
-                          setDeleteCommentCache(comment)
+                          setDeleteCommentId(comment.id)
                           onOpen()
                         }}
                       >

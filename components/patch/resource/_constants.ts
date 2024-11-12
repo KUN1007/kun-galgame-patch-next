@@ -1,6 +1,7 @@
 export const SUPPORTED_TYPES = [
   '人工翻译补丁',
   'AI 翻译补丁',
+  '机翻润色',
   '机翻补丁',
   '全 CG 存档',
   '破解补丁',
