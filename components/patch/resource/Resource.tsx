@@ -21,7 +21,7 @@ import {
 } from '@nextui-org/modal'
 import { User } from '@nextui-org/user'
 import { Link } from '@nextui-org/link'
-import { MoreHorizontal, Plus, Download, Edit, Trash } from 'lucide-react'
+import { MoreHorizontal, Plus, Download, Edit, Trash2 } from 'lucide-react'
 import { api } from '~/lib/trpc-client'
 import { PublishResource } from './PublishResource'
 import { formatDistanceToNow } from '~/utils/formatDistanceToNow'
@@ -183,7 +183,7 @@ export const Resources = ({ id }: { id: number }) => {
                     key="delete"
                     className="text-danger"
                     color="danger"
-                    startContent={<Trash className="w-4 h-4" />}
+                    startContent={<Trash2 className="w-4 h-4" />}
                     onPress={() => {
                       onOpenDelete()
                       setDeleteResourceId(resource.id)

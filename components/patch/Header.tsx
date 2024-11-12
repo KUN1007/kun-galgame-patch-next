@@ -3,7 +3,8 @@ import { Avatar } from '@nextui-org/avatar'
 import { Chip } from '@nextui-org/chip'
 import { Button } from '@nextui-org/button'
 import { Divider } from '@nextui-org/divider'
-import { Eye, Heart, MessageSquare, Share2, Star, User } from 'lucide-react'
+import { Eye, Heart, MessageSquare, Share2, Puzzle } from 'lucide-react'
+import { ResourceFavoriteButton } from './PatchFavorite'
 import type { Patch } from '~/types/api/patch'
 
 interface PatchHeaderProps {
@@ -48,11 +49,12 @@ export const PatchHeader = ({ patch }: PatchHeaderProps) => {
             </div>
           </div>
           <div className="flex gap-2 ml-auto">
+            <ResourceFavoriteButton
+              patchId={patch.id}
+              isFavorite={patch.isFavorite}
+            />
             <Button variant="bordered" isIconOnly>
               <Share2 className="w-4 h-4" />
-            </Button>
-            <Button variant="bordered" isIconOnly>
-              <Heart className="w-4 h-4" />
             </Button>
           </div>
         </div>
@@ -74,11 +76,15 @@ export const PatchHeader = ({ patch }: PatchHeaderProps) => {
           </div>
           <div className="flex items-center gap-1">
             <Heart className="w-4 h-4" />
-            <span>{patch._count?.favorite_by || 0}</span>
+            <span>{patch._count.favorite_by || 0}</span>
+          </div>
+          <div className="flex items-center gap-1">
+            <Puzzle className="w-4 h-4" />
+            <span>{patch._count.resource || 0}</span>
           </div>
           <div className="flex items-center gap-1">
             <MessageSquare className="w-4 h-4" />
-            <span>{patch._count?.comment || 0}</span>
+            <span>{patch._count.comment || 0}</span>
           </div>
         </div>
       </CardBody>

@@ -11,6 +11,7 @@ export interface Patch {
   alias: string[]
   language: string[]
   platform: string[]
+  isFavorite: boolean
   created: string
   updated: string
   user: {

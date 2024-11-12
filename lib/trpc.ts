@@ -36,6 +36,20 @@ const authMiddleware = middleware(async ({ ctx, next }) => {
   })
 })
 
+const getUidMiddleware = middleware(async ({ ctx, next }) => {
+  const token = parseCookies(ctx.headers?.cookie ?? '')[
+    'kun-galgame-patch-moe-token'
+  ]
+  const payload = await verifyKunToken(token ?? '')
+
+  return next({
+    ctx: {
+      ...ctx,
+      uid: payload?.uid
+    }
+  })
+})
+
 export const router = t.router
-export const publicProcedure = t.procedure
+export const publicProcedure = t.procedure.use(getUidMiddleware)
 export const privateProcedure = t.procedure.use(authMiddleware)

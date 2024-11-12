@@ -1,5 +1,5 @@
 import { z } from 'zod'
-import { publicProcedure } from '~/lib/trpc'
+import { publicProcedure, privateProcedure } from '~/lib/trpc'
 import { prisma } from '~/prisma/index'
 import { markdownToHtml } from '~/server/utils/markdownToHtml'
 import type { Patch } from '~/types/api/patch'
@@ -23,6 +23,11 @@ export const getPatchById = publicProcedure
             contribute_by: true,
             resource: true,
             comment: true
+          }
+        },
+        favorite_by: {
+          where: {
+            user_id: ctx.uid
           }
         }
       }
@@ -50,6 +55,7 @@ export const getPatchById = publicProcedure
       alias: patch.alias,
       language: patch.language,
       platform: patch.platform,
+      isFavorite: patch.favorite_by.length > 0,
       created: String(patch.created),
       updated: String(patch.updated),
       user: {
@@ -61,4 +67,56 @@ export const getPatchById = publicProcedure
     }
 
     return response
+  })
+
+export const togglePatchFavorite = privateProcedure
+  .input(
+    z.object({
+      patchId: z.number({ message: '补丁 ID 必须为数字' }).min(1).max(9999999)
+    })
+  )
+  .mutation(async ({ ctx, input }) => {
+    const { patchId } = input
+
+    const patch = await prisma.patch.findUnique({
+      where: { id: patchId }
+    })
+    if (!patch) {
+      return '未找到补丁'
+    }
+
+    const existingFavorite =
+      await prisma.user_patch_favorite_relation.findUnique({
+        where: {
+          user_id_patch_id: {
+            user_id: ctx.uid,
+            patch_id: patchId
+          }
+        }
+      })
+
+    if (existingFavorite) {
+      await prisma.user_patch_favorite_relation.delete({
+        where: {
+          user_id_patch_id: {
+            user_id: ctx.uid,
+            patch_id: patchId
+          }
+        }
+      })
+    } else {
+      await prisma.user_patch_favorite_relation.create({
+        data: {
+          user_id: ctx.uid,
+          patch_id: patchId
+        }
+      })
+    }
+
+    await prisma.user.update({
+      where: { id: patch.user_id },
+      data: { moemoepoint: { increment: existingFavorite ? -1 : 1 } }
+    })
+
+    return !existingFavorite
   })
