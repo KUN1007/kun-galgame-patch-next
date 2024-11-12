@@ -5,12 +5,28 @@ import { Chip } from '@nextui-org/chip'
 import { Button } from '@nextui-org/button'
 import { Card, CardBody } from '@nextui-org/card'
 import { Snippet } from '@nextui-org/snippet'
+import {
+  Dropdown,
+  DropdownTrigger,
+  DropdownMenu,
+  DropdownItem
+} from '@nextui-org/dropdown'
+import { Modal, useDisclosure } from '@nextui-org/modal'
 import { User } from '@nextui-org/user'
 import { Link } from '@nextui-org/link'
-import { Heart, MoreHorizontal, Plus, Download } from 'lucide-react'
+import {
+  Heart,
+  MoreHorizontal,
+  Plus,
+  Download,
+  Edit,
+  Trash
+} from 'lucide-react'
 import { api } from '~/lib/trpc-client'
 import { PublishResource } from './PublishResource'
 import { formatDistanceToNow } from '~/utils/formatDistanceToNow'
+import { EditResourceDialog } from './EditResourceDialog'
+import { useUserStore } from '~/store/userStore'
 import type { PatchResource } from '~/types/api/patch'
 
 export const Resources = ({ id }: { id: number }) => {
@@ -34,6 +50,18 @@ export const Resources = ({ id }: { id: number }) => {
       ...prev,
       [resourceId]: !prev[resourceId]
     }))
+  }
+
+  const { isOpen, onOpen, onClose } = useDisclosure()
+  const { user } = useUserStore()
+  const [editResource, setEditResource] = useState<PatchResource | null>(null)
+  const completeEdit = () => {
+    onClose()
+    setEditResource(null)
+  }
+  const handleDelete = async (resourceId: number) => {
+    // await api.patch.deletePatchResource.mutate({ id: resourceId })
+    // fetchResources()
   }
 
   return (
@@ -105,9 +133,39 @@ export const Resources = ({ id }: { id: number }) => {
                 {resource.note && <p className="mt-2">{resource.note}</p>}
               </div>
 
-              <Button variant="light" isIconOnly className="text-default-400">
-                <MoreHorizontal className="w-4 h-4" />
-              </Button>
+              <Dropdown>
+                <DropdownTrigger>
+                  <Button variant="light" isIconOnly>
+                    <MoreHorizontal className="w-4 h-4" />
+                  </Button>
+                </DropdownTrigger>
+                <DropdownMenu
+                  aria-label="Resource actions"
+                  disabledKeys={
+                    user.uid === resource.userId ? [] : ['edit', 'delete']
+                  }
+                >
+                  <DropdownItem
+                    key="edit"
+                    startContent={<Edit className="w-4 h-4" />}
+                    onPress={() => {
+                      onOpen()
+                      setEditResource(resource)
+                    }}
+                  >
+                    编辑
+                  </DropdownItem>
+                  <DropdownItem
+                    key="delete"
+                    className="text-danger"
+                    color="danger"
+                    startContent={<Trash className="w-4 h-4" />}
+                    onPress={() => handleDelete(resource.id)}
+                  >
+                    删除
+                  </DropdownItem>
+                </DropdownMenu>
+              </Dropdown>
             </div>
 
             <div className="flex justify-between">
@@ -154,6 +212,20 @@ export const Resources = ({ id }: { id: number }) => {
           </CardBody>
         </Card>
       ))}
+
+      <Modal size="3xl" isOpen={isOpen} onClose={completeEdit}>
+        <EditResourceDialog
+          onClose={completeEdit}
+          resource={editResource}
+          onSuccess={(res) => {
+            setResources((prevResources) =>
+              prevResources.map((resource) =>
+                resource.id === res.id ? res : resource
+              )
+            )
+          }}
+        />
+      </Modal>
     </div>
   )
 }

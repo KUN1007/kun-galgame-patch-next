@@ -68,3 +68,9 @@ export const patchResourceCreateSchema = z.object({
     .min(1, { message: '请选择至少一个资源平台' })
     .max(10, { message: '您的单个补丁资源最多有 10 个平台' })
 })
+
+export const patchResourceUpdateSchema = patchResourceCreateSchema.merge(
+  z.object({
+    resourceId: z.number().min(1).max(9999999)
+  })
+)

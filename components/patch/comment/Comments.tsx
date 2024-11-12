@@ -171,7 +171,7 @@ export const Comments = ({ id }: { id: number }) => {
                     <DropdownMenu
                       aria-label="Comment actions"
                       disabledKeys={
-                        user.uid === comment.userId ? [] : ['delete']
+                        user.uid === comment.userId ? [] : ['edit', 'delete']
                       }
                     >
                       <DropdownItem

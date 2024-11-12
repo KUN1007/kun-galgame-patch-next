@@ -1,7 +1,10 @@
 import { z } from 'zod'
 import { privateProcedure, publicProcedure } from '~/lib/trpc'
 import { prisma } from '~/prisma/index'
-import { patchResourceCreateSchema } from '~/validations/patch'
+import {
+  patchResourceCreateSchema,
+  patchResourceUpdateSchema
+} from '~/validations/patch'
 import type { PatchResource } from '~/types/api/patch'
 
 export const getPatchResource = publicProcedure
@@ -139,4 +142,50 @@ export const createPatchResource = privateProcedure
 
       return resource
     })
+  })
+
+export const updatePatchResource = privateProcedure
+  .input(patchResourceUpdateSchema)
+  .mutation(async ({ ctx, input }) => {
+    const { resourceId, patchId, ...resourceData } = input
+
+    const newResource = await prisma.patch_resource.update({
+      where: { id: resourceId, user_id: ctx.uid },
+      data: {
+        ...resourceData
+      },
+      include: {
+        user: {
+          include: {
+            patch_resource: true
+          }
+        }
+      }
+    })
+
+    const resource: PatchResource = {
+      id: newResource.id,
+      size: newResource.size,
+      type: newResource.type,
+      language: newResource.language,
+      note: newResource.note,
+      link: newResource.link,
+      password: newResource.password,
+      platform: newResource.platform,
+      likedBy: [],
+      status: newResource.status,
+      userId: newResource.user_id,
+      patchId: newResource.patch_id,
+      code: newResource.code,
+      created: String(newResource.created),
+      updated: String(newResource.updated),
+      user: {
+        id: newResource.user.id,
+        name: newResource.user.name,
+        avatar: newResource.user.avatar,
+        patchCount: newResource.user.patch_resource.length
+      }
+    }
+
+    return resource
   })
