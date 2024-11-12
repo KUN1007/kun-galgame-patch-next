@@ -18,7 +18,12 @@ export const PatchDetails = ({ patch }: { patch: Patch }) => {
       fullWidth={true}
       defaultSelectedKey="introduction"
     >
-      <Tab key="introduction" title="游戏介绍" className="p-0">
+      <Tab
+        key="introduction"
+        title="游戏介绍"
+        className="p-0"
+        href={`/patch${patch.id}/introduction`}
+      >
         <Card>
           <CardHeader>
             <h2 className="text-2xl font-medium">游戏介绍</h2>
@@ -63,7 +68,12 @@ export const PatchDetails = ({ patch }: { patch: Patch }) => {
           </CardBody>
         </Card>
       </Tab>
-      <Tab key="resources" title="资源链接" className="p-0">
+      <Tab
+        key="resource"
+        title="资源链接"
+        className="p-0"
+        href={`/patch${patch.id}/resource`}
+      >
         <Card>
           <CardHeader>
             <h2 className="text-2xl font-medium">资源链接</h2>
@@ -85,7 +95,12 @@ export const PatchDetails = ({ patch }: { patch: Patch }) => {
         </Card>
       </Tab>
 
-      <Tab key="comments" title="游戏评论" className="p-0">
+      <Tab
+        key="comment"
+        title="游戏评论"
+        className="p-0"
+        href={`/patch${patch.id}/comment`}
+      >
         <Card>
           <CardHeader>
             <h2 className="text-2xl font-medium">游戏评论</h2>
@@ -96,7 +111,12 @@ export const PatchDetails = ({ patch }: { patch: Patch }) => {
         </Card>
       </Tab>
 
-      <Tab key="history" title="贡献历史" className="p-0">
+      <Tab
+        key="history"
+        title="贡献历史"
+        className="p-0"
+        href={`/patch${patch.id}/history`}
+      >
         <Card>
           <CardHeader>
             <h2 className="text-2xl font-medium">贡献历史</h2>
