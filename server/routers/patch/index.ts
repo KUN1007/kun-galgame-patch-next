@@ -3,7 +3,8 @@ import { getPatchById } from './patch'
 import {
   createPatchResource,
   getPatchResource,
-  updatePatchResource
+  updatePatchResource,
+  toggleResourceLike
 } from './resource'
 import {
   publishPatchComment,
@@ -22,6 +23,8 @@ export const patchRouter = router({
   getPatchResource,
 
   updatePatchResource,
+
+  toggleResourceLike,
 
   publishPatchComment,
 

@@ -189,3 +189,61 @@ export const updatePatchResource = privateProcedure
 
     return resource
   })
+
+export const toggleResourceLike = privateProcedure
+  .input(
+    z.object({
+      resourceId: z
+        .number({ message: '资源 ID 必须为数字' })
+        .min(1)
+        .max(9999999)
+    })
+  )
+  .mutation(async ({ ctx, input }) => {
+    const { resourceId } = input
+
+    const resource = await prisma.patch_resource.findUnique({
+      where: { id: resourceId }
+    })
+    if (!resource) {
+      return '未找到资源'
+    }
+    if (resource.user_id === ctx.uid) {
+      return '您不能给自己点赞'
+    }
+
+    const existingLike =
+      await prisma.user_patch_resource_like_relation.findUnique({
+        where: {
+          user_id_resource_id: {
+            user_id: ctx.uid,
+            resource_id: resourceId
+          }
+        }
+      })
+
+    if (existingLike) {
+      await prisma.user_patch_resource_like_relation.delete({
+        where: {
+          user_id_resource_id: {
+            user_id: ctx.uid,
+            resource_id: resourceId
+          }
+        }
+      })
+    } else {
+      await prisma.user_patch_resource_like_relation.create({
+        data: {
+          user_id: ctx.uid,
+          resource_id: resourceId
+        }
+      })
+    }
+
+    await prisma.user.update({
+      where: { id: resource.user_id },
+      data: { moemoepoint: { increment: existingLike ? -1 : 1 } }
+    })
+
+    return !existingLike
+  })

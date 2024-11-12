@@ -14,19 +14,13 @@ import {
 import { Modal, useDisclosure } from '@nextui-org/modal'
 import { User } from '@nextui-org/user'
 import { Link } from '@nextui-org/link'
-import {
-  Heart,
-  MoreHorizontal,
-  Plus,
-  Download,
-  Edit,
-  Trash
-} from 'lucide-react'
+import { MoreHorizontal, Plus, Download, Edit, Trash } from 'lucide-react'
 import { api } from '~/lib/trpc-client'
 import { PublishResource } from './PublishResource'
 import { formatDistanceToNow } from '~/utils/formatDistanceToNow'
 import { EditResourceDialog } from './EditResourceDialog'
 import { useUserStore } from '~/store/userStore'
+import { ResourceLikeButton } from './ResourceLike'
 import type { PatchResource } from '~/types/api/patch'
 
 export const Resources = ({ id }: { id: number }) => {
@@ -69,7 +63,7 @@ export const Resources = ({ id }: { id: number }) => {
       <div className="flex justify-end">
         <Button
           color="primary"
-          variant="flat"
+          variant="solid"
           startContent={<Plus className="w-4 h-4" />}
           onPress={() => setShowCreate(!showCreate)}
         >
@@ -114,6 +108,7 @@ export const Resources = ({ id }: { id: number }) => {
                     size="sm"
                     symbol="提取码"
                     color="primary"
+                    className="py-0"
                   >
                     {resource.code}
                   </Snippet>
@@ -125,6 +120,7 @@ export const Resources = ({ id }: { id: number }) => {
                     size="sm"
                     symbol="解压码"
                     color="primary"
+                    className="py-0"
                   >
                     {resource.password}
                   </Snippet>
@@ -180,11 +176,14 @@ export const Resources = ({ id }: { id: number }) => {
               />
 
               <div className="flex gap-2">
-                <Button variant="bordered" isIconOnly>
-                  <Heart className="w-4 h-4" />
-                </Button>
+                <ResourceLikeButton
+                  resourceId={resource.id}
+                  likedBy={resource.likedBy}
+                  publisher={resource.user}
+                />
                 <Button
-                  variant="bordered"
+                  color="primary"
+                  variant="flat"
                   isIconOnly
                   onPress={() => toggleLinks(resource.id)}
                 >
