@@ -8,15 +8,13 @@ import { Calendar, Clock, Link } from 'lucide-react'
 import { Resources } from './resource/Resource'
 import { Comments } from './comment/Comments'
 import { History } from './History'
-import { formatDate } from '~/utils/time'
 import type { Patch } from '~/types/api/patch'
 
-export const PatchDetails = ({ patch }: { patch: Patch }) => {
+export const TabNav = ({ patch }: { patch: Patch }) => {
   return (
     <Tabs
       className="w-full my-6 overflow-hidden shadow-medium rounded-large"
       fullWidth={true}
-      defaultSelectedKey="introduction"
     >
       <Tab key="introduction" title="游戏介绍" className="p-0">
         <Card>
@@ -35,13 +33,13 @@ export const PatchDetails = ({ patch }: { patch: Patch }) => {
               <div className="flex items-center gap-2 text-sm text-gray-500">
                 <Calendar className="w-4 h-4" />
                 <span>
-                  更新时间: {formatDate(patch.created, { isShowYear: true })}
+                  创建时间: {new Date(patch.created).toLocaleDateString()}
                 </span>
               </div>
               <div className="flex items-center gap-2 text-sm text-gray-500">
                 <Clock className="w-4 h-4" />
                 <span>
-                  更新时间: {formatDate(patch.updated, { isShowYear: true })}
+                  更新时间: {new Date(patch.updated).toLocaleDateString()}
                 </span>
               </div>
               <div className="flex items-center gap-2 text-sm text-gray-500">
