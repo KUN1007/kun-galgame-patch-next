@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useEffect } from 'react'
+import { useState } from 'react'
 import { Card, CardBody } from '@nextui-org/card'
 import { Avatar } from '@nextui-org/avatar'
 import { Button } from '@nextui-org/button'
@@ -38,6 +38,11 @@ import toast from 'react-hot-toast'
 import { useUserStore } from '~/store/userStore'
 import type { PatchComment } from '~/types/api/patch'
 
+interface Props {
+  initialComments: PatchComment[]
+  id: number
+}
+
 const scrollIntoComment = (id: number | null) => {
   if (id === null) {
     return
@@ -55,20 +60,9 @@ const scrollIntoComment = (id: number | null) => {
   }
 }
 
-export const Comments = ({ id }: { id: number }) => {
-  const [comments, setComments] = useState<PatchComment[]>([])
+export const Comments = ({ initialComments, id }: Props) => {
+  const [comments, setComments] = useState<PatchComment[]>(initialComments)
   const [replyTo, setReplyTo] = useState<number | null>(null)
-
-  const fetchComments = async () => {
-    const res = await api.patch.getPatchComments.query({
-      patchId: Number(id)
-    })
-    setComments(res)
-  }
-
-  useEffect(() => {
-    fetchComments()
-  }, [id])
 
   const setNewComment = async (newComment: PatchComment) => {
     setComments([...comments, newComment])

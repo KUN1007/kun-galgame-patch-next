@@ -1,19 +1,13 @@
 export interface Patch {
   id: number
   name: string
-  vndbId: string
   banner: string
-  introduction: string
   status: number
   view: number
-  sellTime: number
   type: string[]
-  alias: string[]
   language: string[]
   platform: string[]
   isFavorite: boolean
-  created: string
-  updated: string
   user: {
     id: number
     name: string
@@ -25,6 +19,15 @@ export interface Patch {
     resource: number
     comment: number
   }
+}
+
+export interface PatchIntroduction {
+  vndbId: string
+  introduction: string
+  sellTime: string
+  created: string
+  updated: string
+  alias: string[]
 }
 
 interface PatchResource {

@@ -2,7 +2,7 @@ import { z } from 'zod'
 import { publicProcedure, privateProcedure } from '~/lib/trpc'
 import { prisma } from '~/prisma/index'
 import { markdownToHtml } from '~/server/utils/markdownToHtml'
-import type { Patch } from '~/types/api/patch'
+import type { Patch, PatchIntroduction } from '~/types/api/patch'
 
 export const getPatchById = publicProcedure
   .input(
@@ -45,25 +45,52 @@ export const getPatchById = publicProcedure
     const response: Patch = {
       id: patch.id,
       name: patch.name,
-      vndbId: patch.vndb_id,
       banner: patch.banner,
-      introduction: await markdownToHtml(patch.introduction),
       status: patch.status,
       view: patch.view,
-      sellTime: patch.sell_time,
       type: patch.type,
-      alias: patch.alias,
       language: patch.language,
       platform: patch.platform,
       isFavorite: patch.favorite_by.length > 0,
-      created: String(patch.created),
-      updated: String(patch.updated),
       user: {
         id: patch.user.id,
         name: patch.user.name,
         avatar: patch.user.avatar
       },
       _count: patch._count
+    }
+
+    return response
+  })
+
+export const getPatchIntroduction = publicProcedure
+  .input(
+    z.object({
+      patchId: z.number({ message: '补丁 ID 必须为数字' }).min(1).max(9999999)
+    })
+  )
+  .query(async ({ ctx, input }) => {
+    const { patchId } = input
+
+    const patch = await prisma.patch.findUnique({
+      where: { id: patchId }
+    })
+    if (!patch) {
+      return '未找到对应补丁'
+    }
+
+    await prisma.patch.update({
+      where: { id: patch.id },
+      data: { view: { increment: 1 } }
+    })
+
+    const response: PatchIntroduction = {
+      vndbId: patch.vndb_id,
+      introduction: await markdownToHtml(patch.introduction),
+      alias: patch.alias,
+      sellTime: patch.sell_time,
+      created: String(patch.created),
+      updated: String(patch.updated)
     }
 
     return response

@@ -1,12 +1,6 @@
 import { PatchHeader } from '~/components/patch/Header'
 import { ErrorComponent } from '~/components/error/ErrorComponent'
 import { serverApi } from '~/lib/trpc-server'
-import DOMPurify from 'isomorphic-dompurify'
-import { Card, CardHeader, CardBody } from '@nextui-org/card'
-import { Tabs, Tab } from '@nextui-org/tabs'
-import { Link as NextLink } from '@nextui-org/link'
-import { Calendar, Clock, Link } from 'lucide-react'
-import { formatDate } from '~/utils/time'
 import type { Patch } from '~/types/api/patch'
 
 export default async function Patch({

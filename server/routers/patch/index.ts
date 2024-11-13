@@ -1,5 +1,9 @@
 import { router } from '~/lib/trpc'
-import { getPatchById, togglePatchFavorite } from './patch'
+import {
+  getPatchById,
+  getPatchIntroduction,
+  togglePatchFavorite
+} from './patch'
 import {
   createPatchResource,
   getPatchResource,
@@ -18,6 +22,8 @@ import { getPatchHistories } from './history'
 
 export const patchRouter = router({
   getPatchById,
+
+  getPatchIntroduction,
 
   togglePatchFavorite,
 

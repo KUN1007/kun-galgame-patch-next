@@ -31,21 +31,15 @@ import { ResourceLikeButton } from './ResourceLike'
 import type { PatchResource } from '~/types/api/patch'
 import toast from 'react-hot-toast'
 
-export const Resources = ({ id }: { id: number }) => {
-  const [resources, setResources] = useState<PatchResource[]>([])
+interface Props {
+  initialResources: PatchResource[]
+  id: number
+}
+
+export const Resources = ({ initialResources, id }: Props) => {
+  const [resources, setResources] = useState<PatchResource[]>(initialResources)
   const [showCreate, setShowCreate] = useState(false)
   const [showLinks, setShowLinks] = useState<Record<number, boolean>>({})
-
-  const fetchResources = async () => {
-    const res = await api.patch.getPatchResource.query({
-      patchId: Number(id)
-    })
-    setResources(res)
-  }
-
-  useEffect(() => {
-    fetchResources()
-  }, [id])
 
   const toggleLinks = (resourceId: number) => {
     setShowLinks((prev) => ({

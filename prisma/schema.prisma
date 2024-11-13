@@ -154,9 +154,9 @@ model patch {
   vndb_id      String   @unique @db.VarChar(107)
   banner       String   @default("") @db.VarChar(1007)
   introduction String   @default("") @db.VarChar(100007)
+  sell_time    String   @default("") @db.VarChar(107)
   status       Int      @default(0)
   view         Int      @default(0)
-  sell_time    Int      @default(0)
   type         String[]
   alias        String[]
   language     String[]

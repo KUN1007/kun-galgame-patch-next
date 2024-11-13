@@ -5,7 +5,8 @@ import { Tabs, Tab } from '@nextui-org/tabs'
 import { Link as NextLink } from '@nextui-org/link'
 import { Calendar, Clock, Link } from 'lucide-react'
 import { formatDate } from '~/utils/time'
-import type { Patch } from '~/types/api/patch'
+import { Resources } from '~/components/patch/resource/Resource'
+import { serverApi } from '~/lib/trpc-server'
 
 export default async function PatchResource({
   params
@@ -14,9 +15,10 @@ export default async function PatchResource({
 }) {
   const { id } = await params
 
-  if (isNaN(Number(id))) {
-    return <ErrorComponent error={'提取页面参数错误'} />
-  }
+  const resources = await serverApi.patch.getPatchResource.query({
+    patchId: Number(id)
+  })
+
   return (
     <Card>
       <CardHeader>
@@ -34,7 +36,7 @@ export default async function PatchResource({
           </NextLink>
         </div>
 
-        {/* <Resources id={patch.id} /> */}
+        <Resources initialResources={resources} id={Number(id)} />
       </CardBody>
     </Card>
   )
