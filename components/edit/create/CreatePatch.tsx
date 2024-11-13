@@ -10,7 +10,7 @@ import {
 } from '@nextui-org/react'
 import localforage from 'localforage'
 import { Upload, Plus } from 'lucide-react'
-import { useEditStore } from '~/store/editStore'
+import { useCreatePatchStore } from '~/store/editStore'
 import { cn } from '~/utils/cn'
 import { Editor } from '~/components/kun/milkdown/PatchEditor'
 import toast from 'react-hot-toast'
@@ -19,17 +19,17 @@ import { useErrorHandler } from '~/hooks/useErrorHandler'
 import { patchSchema } from '~/validations/edit'
 import { resizeImage } from '~/utils/resizeImage'
 import { redirect } from 'next/navigation'
-import type { PatchFormRequestData } from '~/store/editStore'
-import type { VNDBResponse } from './VNDB'
+import type { CreatePatchRequestData } from '~/store/editStore'
+import type { VNDBResponse } from '../VNDB'
 
-export const PatchSubmissionForm = () => {
-  const { data, setData, resetData } = useEditStore()
+export const CreatePatch = () => {
+  const { data, setData, resetData } = useCreatePatchStore()
   const [banner, setBanner] = useState<Blob | null>(null)
   const [newAlias, setNewAlias] = useState<string>('')
   const [isDragging, setIsDragging] = useState(false)
   const [previewUrl, setPreviewUrl] = useState<string>('')
   const [errors, setErrors] = useState<
-    Partial<Record<keyof PatchFormRequestData, string>>
+    Partial<Record<keyof CreatePatchRequestData, string>>
   >({})
 
   useEffect(() => {
@@ -101,10 +101,11 @@ export const PatchSubmissionForm = () => {
       banner
     })
     if (!result.success) {
-      const newErrors: Partial<Record<keyof PatchFormRequestData, string>> = {}
+      const newErrors: Partial<Record<keyof CreatePatchRequestData, string>> =
+        {}
       result.error.errors.forEach((err) => {
         if (err.path.length) {
-          newErrors[err.path[0] as keyof PatchFormRequestData] = err.message
+          newErrors[err.path[0] as keyof CreatePatchRequestData] = err.message
           toast.error(err.message)
         }
       })

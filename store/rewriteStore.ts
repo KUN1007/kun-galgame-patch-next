@@ -1,34 +1,33 @@
 import { create } from 'zustand'
-import { persist, createJSONStorage } from 'zustand/middleware'
 
-export interface PatchFormData {
+export interface RewritePatchData {
   name: string
   introduction: string
-  vndbId: string
   alias: string[]
+  tags: string[]
 }
 
-export interface PatchFormRequestData extends PatchFormData {
+export interface RewritePatchRequestData extends RewritePatchData {
   banner: Blob | null
 }
 
 interface StoreState {
-  data: PatchFormData
-  getData: () => PatchFormData
-  setData: (data: PatchFormData) => void
+  data: RewritePatchData
+  getData: () => RewritePatchData
+  setData: (data: RewritePatchData) => void
   resetData: () => void
 }
 
-const initialState: PatchFormData = {
+const initialState: RewritePatchData = {
   name: '',
   introduction: '',
-  vndbId: '',
-  alias: []
+  alias: [],
+  tags: []
 }
 
-export const useRewriteStore = create<StoreState>()((set, get) => ({
+export const useRewritePatchStore = create<StoreState>()((set, get) => ({
   data: initialState,
   getData: () => get().data,
-  setData: (data: PatchFormData) => set({ data }),
+  setData: (data: RewritePatchData) => set({ data }),
   resetData: () => set({ data: initialState })
 }))

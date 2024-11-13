@@ -23,7 +23,7 @@ import { resizeImage } from '~/utils/resizeImage'
 import { redirect } from 'next/navigation'
 import type { PatchFormRequestData } from '~/store/editStore'
 
-export const PatchRewriteForm = () => {
+export const RewritePatch = () => {
   const { data, setData, resetData } = useEditStore()
   const [banner, setBanner] = useState<Blob | null>(null)
   const [newAlias, setNewAlias] = useState<string>('')

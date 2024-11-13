@@ -162,8 +162,9 @@ model patch {
   language     String[]
   engine       String[]
   platform     String[]
-  tag          String[]
-  company      String[]
+
+  company patch_company_relation[]
+  tag     patch_tag_relation[]
 
   user_id Int
   user    user @relation("user_patch", fields: [user_id], references: [id])
@@ -178,6 +179,59 @@ model patch {
 
   created DateTime @default(now())
   updated DateTime @updatedAt
+}
+
+model patch_tag {
+  id           Int      @id @default(autoincrement())
+  name         String   @db.VarChar(107)
+  introduction String   @default("") @db.VarChar(10007)
+  alias        String[]
+
+  patch_relation patch_tag_relation[]
+
+  created DateTime @default(now())
+  updated DateTime @updatedAt
+}
+
+model patch_tag_relation {
+  id       Int       @id @default(autoincrement())
+  patch_id Int
+  patch    patch     @relation(fields: [patch_id], references: [id])
+  tag_id   Int
+  tag      patch_tag @relation(fields: [tag_id], references: [id])
+
+  created DateTime @default(now())
+  updated DateTime @updatedAt
+
+  @@unique([patch_id, tag_id])
+}
+
+model patch_company {
+  id Int @id @default(autoincrement())
+
+  name             String   @db.VarChar(107)
+  primary_language String   @db.VarChar(107)
+  official_website String[]
+  parent_brand     String[]
+  alias            String[]
+
+  patch_relations patch_company_relation[]
+  created         DateTime                 @default(now())
+  updated         DateTime                 @updatedAt
+}
+
+model patch_company_relation {
+  id Int @id @default(autoincrement())
+
+  patch_id   Int
+  patch      patch         @relation(fields: [patch_id], references: [id])
+  company_id Int
+  company    patch_company @relation(fields: [company_id], references: [id])
+
+  created DateTime @default(now())
+  updated DateTime @updatedAt
+
+  @@unique([patch_id, company_id])
 }
 
 model patch_resource {

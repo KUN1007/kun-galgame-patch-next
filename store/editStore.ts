@@ -1,7 +1,7 @@
 import { create } from 'zustand'
 import { persist, createJSONStorage } from 'zustand/middleware'
 
-export interface PatchFormData {
+export interface CreatePatchData {
   name: string
   introduction: string
   vndbId: string
@@ -9,18 +9,18 @@ export interface PatchFormData {
   released: string
 }
 
-export interface PatchFormRequestData extends PatchFormData {
+export interface CreatePatchRequestData extends CreatePatchData {
   banner: Blob | null
 }
 
 interface StoreState {
-  data: PatchFormData
-  getData: () => PatchFormData
-  setData: (data: PatchFormData) => void
+  data: CreatePatchData
+  getData: () => CreatePatchData
+  setData: (data: CreatePatchData) => void
   resetData: () => void
 }
 
-const initialState: PatchFormData = {
+const initialState: CreatePatchData = {
   name: '',
   introduction: '',
   vndbId: '',
@@ -28,12 +28,12 @@ const initialState: PatchFormData = {
   released: ''
 }
 
-export const useEditStore = create<StoreState>()(
+export const useCreatePatchStore = create<StoreState>()(
   persist(
     (set, get) => ({
       data: initialState,
       getData: () => get().data,
-      setData: (data: PatchFormData) => set({ data }),
+      setData: (data: CreatePatchData) => set({ data }),
       resetData: () => set({ data: initialState })
     }),
     {
