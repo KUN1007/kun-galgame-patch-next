@@ -21,7 +21,10 @@ export const patchSchema = z.object({
       )
     )
     .max(30, { message: '您最多使用 30 个别名' })
-    .optional()
+    .optional(),
+  released: z
+    .string({ message: '发售日期为空, 请点击 检查重复 以从 VNDB 获取数据' })
+    .date()
 })
 
 export const duplicateSchema = z.object({

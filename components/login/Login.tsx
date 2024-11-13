@@ -79,6 +79,7 @@ export const LoginForm = () => {
         type="submit"
         color="primary"
         className="w-full"
+        isDisabled={loading}
         isLoading={loading}
       >
         登录

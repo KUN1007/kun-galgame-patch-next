@@ -48,7 +48,7 @@ export const ResourceFavoriteButton = ({ patchId, isFavorite }: Props) => {
         <Heart
           className={cn(
             'w-4 h-4',
-            favorite ? 'text-danger-500' : 'text-default-500'
+            favorite ? 'text-danger-500' : 'text-default-400'
           )}
         />
       </Button>

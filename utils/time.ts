@@ -16,10 +16,10 @@ export const formatDate = (
   time: Date | number | string,
   config?: { isShowYear?: boolean; isPrecise?: boolean }
 ): string => {
-  let formatString = 'MM / DD'
+  let formatString = 'MM-DD'
 
   if (config?.isShowYear) {
-    formatString = 'YYYY / MM / DD'
+    formatString = 'YYYY-MM-DD'
   }
 
   if (config?.isPrecise) {

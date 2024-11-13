@@ -12,7 +12,7 @@ export const editRouter = router({
     .use(parseEditFormDataMiddleware)
     .input(patchSchema)
     .mutation(async ({ ctx, input }) => {
-      const { name, vndbId, alias, banner, introduction } = input
+      const { name, vndbId, alias, banner, introduction, released } = input
 
       // await ctx.prisma.$executeRaw`ALTER SEQUENCE patch_id_seq RESTART WITH 1`
       // await ctx.prisma
@@ -41,7 +41,8 @@ export const editRouter = router({
             alias: alias ? alias : [],
             introduction,
             user_id: ctx.uid,
-            banner: imageLink
+            banner: imageLink,
+            released
           }
         })
 

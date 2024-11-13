@@ -1,3 +1,5 @@
+'use client'
+
 import React, { useState, useEffect } from 'react'
 import {
   Button,
@@ -20,9 +22,8 @@ import { patchSchema } from '~/validations/edit'
 import { resizeImage } from '~/utils/resizeImage'
 import { redirect } from 'next/navigation'
 import type { PatchFormRequestData } from '~/store/editStore'
-import type { VNDBResponse } from './VNDB'
 
-export const PatchSubmissionForm = () => {
+export const PatchRewriteForm = () => {
   const { data, setData, resetData } = useEditStore()
   const [banner, setBanner] = useState<Blob | null>(null)
   const [newAlias, setNewAlias] = useState<string>('')
@@ -92,7 +93,6 @@ export const PatchSubmissionForm = () => {
     })
   }
 
-  const [creating, setCreating] = useState(false)
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
 
@@ -120,22 +120,15 @@ export const PatchSubmissionForm = () => {
     formDataToSend.append('vndbId', data.vndbId)
     formDataToSend.append('introduction', data.introduction)
     formDataToSend.append('alias', JSON.stringify(data.alias))
-    formDataToSend.append('released', data.released)
 
-    setCreating(true)
-    toast(
-      '正在发布中...由于要上传图片, 可能需要 十秒 左右的时间, 这取决于您的网络环境'
-    )
     // @ts-expect-error
     const res = await api.edit.edit.mutate(formDataToSend)
     useErrorHandler(res, async (value) => {
       resetData()
       setPreviewUrl('')
       await localforage.removeItem('kun-patch-banner')
-      redirect(`/patch/${value}/introduction`)
+      redirect(`/patch/${value}`)
     })
-    toast.success('发布完成, 正在为您跳转到资源介绍页面')
-    setCreating(false)
   }
 
   const handleCheckDuplicate = async () => {
@@ -152,46 +145,6 @@ export const PatchSubmissionForm = () => {
     } else {
       toast.success('检测完成, 该游戏并未重复!')
     }
-
-    toast.promise(
-      (async () => {
-        const vndbResponse = await fetch(`https://api.vndb.org/kana/vn`, {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json'
-          },
-          body: JSON.stringify({
-            filters: ['id', '=', data.vndbId],
-            fields: 'title, titles.title, aliases, released'
-          })
-        })
-
-        if (!vndbResponse.ok) {
-          throw new Error('Failed to fetch data')
-        }
-
-        const vndbData: VNDBResponse = await vndbResponse.json()
-        const allTitles = vndbData.results.flatMap((vn) => {
-          const titlesArray = [
-            vn.title,
-            ...vn.titles.map((t) => t.title),
-            ...vn.aliases
-          ]
-          return titlesArray
-        })
-
-        setData({
-          ...data,
-          alias: allTitles,
-          released: vndbData.results[0].released
-        })
-      })(),
-      {
-        loading: '正在从 VNDB 获取数据',
-        success: '获取数据成功! 已为您自动添加游戏别名!',
-        error: '从 VNDB 获取数据错误'
-      }
-    )
   }
 
   return (
@@ -199,57 +152,16 @@ export const PatchSubmissionForm = () => {
       <Card className="w-full">
         <CardHeader className="flex gap-3">
           <div className="flex flex-col">
-            <p className="text-2xl">创建新游戏</p>
+            <p className="text-2xl">编辑游戏信息</p>
             <p className="text-small text-default-500">
               您需要创建一个新游戏, 稍后在游戏页面添加补丁资源
             </p>
           </div>
         </CardHeader>
         <CardBody className="gap-4 mt-2">
-          <div className="flex flex-col w-full gap-2 mb-4">
-            <Input
-              isRequired
-              variant="underlined"
-              labelPlacement="outside"
-              label="VNDB ID"
-              placeholder="请输入 VNDB ID, 例如 v19658"
-              value={data.vndbId}
-              onChange={(e) => setData({ ...data, vndbId: e.target.value })}
-              isInvalid={!!errors.vndbId}
-              errorMessage={errors.vndbId}
-            />
-            <p className="text-sm ">
-              提示: VNDB ID 需要 VNDB 官网 (vndb.org)
-              获取，当进入对应游戏的页面，游戏页面的 URL (形如
-              https://vndb.org/v19658) 中的 v19658 就是 VNDB ID
-            </p>
-            <div className="flex items-center text-sm">
-              {data.vndbId && (
-                <Button
-                  className="mr-4"
-                  color="primary"
-                  size="sm"
-                  onClick={handleCheckDuplicate}
-                >
-                  检查重复
-                </Button>
-              )}
-
-              <p>VNDB 官网为</p>
-              <Link
-                href="http://vndb.org"
-                target="_blank"
-                rel="noopener noreferrer"
-                className="ml-2"
-              >
-                vndb.org
-              </Link>
-            </div>
-          </div>
-
           <p className="text-sm">预览图片 (必须, 宽度大于高度为好)</p>
           {errors.banner && (
-            <p className="text-xs text-danger-500">{errors.banner}</p>
+            <p className="text-xs text-red-500">{errors.banner}</p>
           )}
           <div
             className={cn(
@@ -283,7 +195,7 @@ export const PatchSubmissionForm = () => {
               </div>
             ) : (
               <div className="flex flex-col items-center justify-center h-full">
-                <Upload className="w-12 h-12 mb-4 text-default-400" />
+                <Upload className="w-12 h-12 mb-4 text-gray-400" />
                 <p className="mb-2">拖放图片到此处或</p>
                 <label>
                   <Button color="primary" variant="flat" as="span">
@@ -317,7 +229,7 @@ export const PatchSubmissionForm = () => {
 
           <p className="text-sm">游戏介绍 (必须, 十个字符以上)</p>
           {errors.introduction && (
-            <p className="text-xs text-danger-500">{errors.introduction}</p>
+            <p className="text-xs text-red-500">{errors.introduction}</p>
           )}
           <Editor />
 
@@ -359,13 +271,7 @@ export const PatchSubmissionForm = () => {
             </div>
           </div>
 
-          <Button
-            color="primary"
-            type="submit"
-            className="w-full mt-4"
-            isDisabled={creating}
-            isLoading={creating}
-          >
+          <Button color="primary" type="submit" className="w-full mt-4">
             提交
           </Button>
         </CardBody>

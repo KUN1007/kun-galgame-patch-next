@@ -88,7 +88,7 @@ export const getPatchIntroduction = publicProcedure
       vndbId: patch.vndb_id,
       introduction: await markdownToHtml(patch.introduction),
       alias: patch.alias,
-      sellTime: patch.sell_time,
+      released: patch.released,
       created: String(patch.created),
       updated: String(patch.updated)
     }

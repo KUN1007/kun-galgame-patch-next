@@ -62,7 +62,7 @@ export const PatchHeader = ({ patch }: PatchHeaderProps) => {
                 isFavorite={patch.isFavorite}
               />
               <Button variant="bordered" isIconOnly>
-                <Share2 className="w-4 h-4" />
+                <Share2 className="w-4 h-4 text-default-400" />
               </Button>
             </div>
           </div>

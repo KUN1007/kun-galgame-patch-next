@@ -6,7 +6,6 @@ export interface PatchFormData {
   introduction: string
   vndbId: string
   alias: string[]
-  released: string
 }
 
 export interface PatchFormRequestData extends PatchFormData {
@@ -24,21 +23,12 @@ const initialState: PatchFormData = {
   name: '',
   introduction: '',
   vndbId: '',
-  alias: [],
-  released: ''
+  alias: []
 }
 
-export const useEditStore = create<StoreState>()(
-  persist(
-    (set, get) => ({
-      data: initialState,
-      getData: () => get().data,
-      setData: (data: PatchFormData) => set({ data }),
-      resetData: () => set({ data: initialState })
-    }),
-    {
-      name: 'kun-patch-edit-store',
-      storage: createJSONStorage(() => localStorage)
-    }
-  )
-)
+export const useRewriteStore = create<StoreState>()((set, get) => ({
+  data: initialState,
+  getData: () => get().data,
+  setData: (data: PatchFormData) => set({ data }),
+  resetData: () => set({ data: initialState })
+}))

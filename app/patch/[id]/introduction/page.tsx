@@ -1,6 +1,6 @@
 import DOMPurify from 'isomorphic-dompurify'
 import { Card, CardHeader, CardBody } from '@nextui-org/card'
-import { Calendar, Clock, Link } from 'lucide-react'
+import { Calendar, Clock, Link, RefreshCw } from 'lucide-react'
 import { formatDate } from '~/utils/time'
 import { serverApi } from '~/lib/trpc-server'
 import { ErrorComponent } from '~/components/error/ErrorComponent'
@@ -34,20 +34,24 @@ export default async function PatchIntroduction({ params }: Props) {
 
         <div className="grid grid-cols-2 gap-4 mt-6">
           <div className="flex items-center gap-2 text-sm text-gray-500">
-            <Calendar className="w-4 h-4" />
+            <Clock className="w-4 h-4" />
+            <span>
+              发布时间: {formatDate(res.updated, { isShowYear: true })}
+            </span>
+          </div>
+          <div className="flex items-center gap-2 text-sm text-gray-500">
+            <RefreshCw className="w-4 h-4" />
             <span>
               更新时间: {formatDate(res.created, { isShowYear: true })}
             </span>
           </div>
           <div className="flex items-center gap-2 text-sm text-gray-500">
-            <Clock className="w-4 h-4" />
-            <span>
-              更新时间: {formatDate(res.updated, { isShowYear: true })}
-            </span>
-          </div>
-          <div className="flex items-center gap-2 text-sm text-gray-500">
             <Link className="w-4 h-4" />
             <span>VNDB ID: {res.vndbId}</span>
+          </div>
+          <div className="flex items-center gap-2 text-sm text-gray-500">
+            <Calendar className="w-4 h-4" />
+            <span>发售时间: {res.released}</span>
           </div>
         </div>
 

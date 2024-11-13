@@ -15,6 +15,7 @@ export interface VNDB {
   title: string
   titles: Title[]
   aliases: string[]
+  released: string
 }
 
 export interface VNDBResponse {

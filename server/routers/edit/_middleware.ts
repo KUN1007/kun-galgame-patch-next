@@ -10,6 +10,7 @@ export const parseEditFormDataMiddleware = middleware(
     const introductionData = input.get('introduction')
     const vndbIdData = input.get('vndbId')
     const aliasesData = input.get('alias')
+    const releasedData = input.get('released')
 
     const requestData: Partial<PatchFormData> & {
       banner: ArrayBuffer
@@ -18,7 +19,8 @@ export const parseEditFormDataMiddleware = middleware(
       banner: await new Response(bannerData)?.arrayBuffer(),
       introduction: introductionData?.toString(),
       vndbId: vndbIdData?.toString(),
-      alias: JSON.parse(aliasesData ? aliasesData.toString() : '')
+      alias: JSON.parse(aliasesData ? aliasesData.toString() : ''),
+      released: releasedData?.toString()
     }
 
     return next({

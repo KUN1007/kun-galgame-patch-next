@@ -24,7 +24,7 @@ export interface Patch {
 export interface PatchIntroduction {
   vndbId: string
   introduction: string
-  sellTime: string
+  released: string
   created: string
   updated: string
   alias: string[]
