@@ -29,11 +29,11 @@ export const parseTextToHTML = (text: string): string => {
   const fieldsRegex = /(name:|alias:|introduction:)/g
   const fieldReplacements: { [key: string]: string } = {
     'name:': '<b>游戏名</b>',
-    'alias:': '<b>游戏别名</b>',
-    'introduction:': '<b>游戏介绍</b>'
+    'alias:': '<br/><br/><b>游戏别名</b><br/>',
+    'introduction:': '<br/><br/><b>游戏介绍</b><br/>'
   }
   resultHTML = resultHTML.replace(fieldsRegex, (match) => {
-    return `<br/><br/>${fieldReplacements[match] || match}<br/>`
+    return `${fieldReplacements[match] || match}`
   })
 
   return resultHTML

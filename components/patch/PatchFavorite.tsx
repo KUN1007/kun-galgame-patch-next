@@ -37,11 +37,12 @@ export const ResourceFavoriteButton = ({ patchId, isFavorite }: Props) => {
   }
 
   return (
-    <Tooltip key="favorite" color="default" content="收藏" placement="bottom">
+    <Tooltip key="favorite" color="default" content="收藏">
       <Button
         isIconOnly
         variant="bordered"
         disabled={loading}
+        isLoading={loading}
         onClick={toggleLike}
         className="min-w-0 px-2"
       >

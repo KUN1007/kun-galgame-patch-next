@@ -137,30 +137,37 @@ export const PatchHeader = ({ patch }: PatchHeaderProps) => {
         className="w-full overflow-hidden shadow-medium rounded-large"
         fullWidth={true}
         selectedKey={lastSegment}
+        color="primary"
       >
         <Tab
           key="introduction"
           title="游戏介绍"
-          className="p-0"
+          className="p-0 min-w-24"
           href={`/patch/${patch.id}/introduction`}
         />
         <Tab
           key="resource"
           title="资源链接"
-          className="p-0"
+          className="p-0 min-w-24"
           href={`/patch/${patch.id}/resource`}
         />
         <Tab
           key="comment"
           title="游戏评论"
-          className="p-0"
+          className="p-0 min-w-24"
           href={`/patch/${patch.id}/comment`}
         />
         <Tab
           key="history"
           title="贡献历史"
-          className="p-0"
+          className="p-0 min-w-24"
           href={`/patch/${patch.id}/history`}
+        />
+        <Tab
+          key="pull-request"
+          title="更新请求"
+          className="p-0 min-w-24"
+          href={`/patch/${patch.id}/pr`}
         />
       </Tabs>
     </>
