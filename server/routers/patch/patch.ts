@@ -45,12 +45,14 @@ export const getPatchById = publicProcedure
     const response: Patch = {
       id: patch.id,
       name: patch.name,
+      introduction: patch.introduction,
       banner: patch.banner,
       status: patch.status,
       view: patch.view,
       type: patch.type,
       language: patch.language,
       platform: patch.platform,
+      alias: patch.alias,
       isFavorite: patch.favorite_by.length > 0,
       user: {
         id: patch.user.id,

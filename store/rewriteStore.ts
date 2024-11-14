@@ -1,14 +1,11 @@
 import { create } from 'zustand'
 
 export interface RewritePatchData {
+  id: number
+  banner: Blob | string
   name: string
   introduction: string
   alias: string[]
-  tags: string[]
-}
-
-export interface RewritePatchRequestData extends RewritePatchData {
-  banner: Blob | null
 }
 
 interface StoreState {
@@ -19,10 +16,11 @@ interface StoreState {
 }
 
 const initialState: RewritePatchData = {
+  id: 0,
+  banner: '',
   name: '',
   introduction: '',
-  alias: [],
-  tags: []
+  alias: []
 }
 
 export const useRewritePatchStore = create<StoreState>()((set, get) => ({

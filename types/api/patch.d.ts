@@ -2,8 +2,10 @@ export interface Patch {
   id: number
   name: string
   banner: string
+  introduction: string
   status: number
   view: number
+  alias: string[]
   type: string[]
   language: string[]
   platform: string[]

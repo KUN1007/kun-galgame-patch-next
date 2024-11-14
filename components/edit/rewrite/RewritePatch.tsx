@@ -7,40 +7,39 @@ import {
   CardBody,
   CardHeader,
   Input,
-  Chip,
-  Link
+  Chip
 } from '@nextui-org/react'
 import localforage from 'localforage'
 import { Upload, Plus } from 'lucide-react'
-import { useEditStore } from '~/store/editStore'
+import { useRewritePatchStore } from '~/store/rewriteStore'
 import { cn } from '~/utils/cn'
 import { Editor } from '~/components/kun/milkdown/PatchEditor'
 import toast from 'react-hot-toast'
 import { api } from '~/lib/trpc-client'
 import { useErrorHandler } from '~/hooks/useErrorHandler'
-import { patchSchema } from '~/validations/edit'
+import { patchUpdateSchema } from '~/validations/edit'
 import { resizeImage } from '~/utils/resizeImage'
 import { redirect } from 'next/navigation'
-import type { PatchFormRequestData } from '~/store/editStore'
+import type { RewritePatchData } from '~/store/rewriteStore'
 
 export const RewritePatch = () => {
-  const { data, setData, resetData } = useEditStore()
-  const [banner, setBanner] = useState<Blob | null>(null)
+  const { data, setData, resetData } = useRewritePatchStore()
   const [newAlias, setNewAlias] = useState<string>('')
   const [isDragging, setIsDragging] = useState(false)
   const [previewUrl, setPreviewUrl] = useState<string>('')
   const [errors, setErrors] = useState<
-    Partial<Record<keyof PatchFormRequestData, string>>
+    Partial<Record<keyof RewritePatchData, string>>
   >({})
 
   useEffect(() => {
     const fetchData = async () => {
-      const localeBannerBlob: Blob | null =
-        await localforage.getItem('kun-patch-banner')
-      setBanner(localeBannerBlob)
-      if (localeBannerBlob) {
-        setPreviewUrl(URL.createObjectURL(localeBannerBlob))
+      if (!data.banner) {
+        return
       }
+
+      const response = await fetch(data.banner as string)
+      const blob = await response.blob()
+      setData({ ...data, banner: blob })
     }
     fetchData()
   }, [])
@@ -56,14 +55,13 @@ export const RewritePatch = () => {
     }
 
     const miniImage = await resizeImage(file, 1920, 1080)
-    await localforage.setItem('kun-patch-banner', miniImage)
-    setBanner(miniImage)
+    setData({ ...data, banner: miniImage })
     setPreviewUrl(URL.createObjectURL(miniImage))
   }
 
   const removeBanner = async () => {
     await localforage.removeItem('kun-patch-banner')
-    setBanner(null)
+    setData({ ...data, banner: '' })
     setPreviewUrl('')
   }
 
@@ -96,15 +94,12 @@ export const RewritePatch = () => {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
 
-    const result = patchSchema.safeParse({
-      ...data,
-      banner
-    })
+    const result = patchUpdateSchema.safeParse(data)
     if (!result.success) {
-      const newErrors: Partial<Record<keyof PatchFormRequestData, string>> = {}
+      const newErrors: Partial<Record<keyof RewritePatchData, string>> = {}
       result.error.errors.forEach((err) => {
         if (err.path.length) {
-          newErrors[err.path[0] as keyof PatchFormRequestData] = err.message
+          newErrors[err.path[0] as keyof RewritePatchData] = err.message
           toast.error(err.message)
         }
       })
@@ -115,36 +110,19 @@ export const RewritePatch = () => {
     }
 
     const formDataToSend = new FormData()
-    formDataToSend.append('banner', banner!)
+    formDataToSend.append('banner', data.banner!)
     formDataToSend.append('name', data.name)
-    formDataToSend.append('vndbId', data.vndbId)
     formDataToSend.append('introduction', data.introduction)
     formDataToSend.append('alias', JSON.stringify(data.alias))
 
     // @ts-expect-error
-    const res = await api.edit.edit.mutate(formDataToSend)
+    const res = await api.edit.updatePatch.mutate(formDataToSend)
     useErrorHandler(res, async (value) => {
       resetData()
       setPreviewUrl('')
       await localforage.removeItem('kun-patch-banner')
       redirect(`/patch/${value}`)
     })
-  }
-
-  const handleCheckDuplicate = async () => {
-    const regex = new RegExp(/^v\d{1,6}$/)
-    if (!regex.test(data.vndbId)) {
-      toast.error('您输入的 VNDB ID 格式无效')
-      return
-    }
-
-    const res = await api.edit.duplicate.mutate({ vndbId: data.vndbId })
-    if (res) {
-      toast.error(res)
-      return
-    } else {
-      toast.success('检测完成, 该游戏并未重复!')
-    }
   }
 
   return (
@@ -231,7 +209,7 @@ export const RewritePatch = () => {
           {errors.introduction && (
             <p className="text-xs text-red-500">{errors.introduction}</p>
           )}
-          <Editor />
+          <Editor storeName="patchRewrite" />
 
           <div className="space-y-2">
             <div className="flex gap-2">

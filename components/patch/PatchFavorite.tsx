@@ -45,12 +45,7 @@ export const ResourceFavoriteButton = ({ patchId, isFavorite }: Props) => {
         onClick={toggleLike}
         className="min-w-0 px-2"
       >
-        <Heart
-          className={cn(
-            'w-4 h-4',
-            favorite ? 'text-danger-500' : 'text-default-400'
-          )}
-        />
+        <Heart className={cn('w-4 h-4', favorite ? 'text-danger-500' : '')} />
       </Button>
     </Tooltip>
   )

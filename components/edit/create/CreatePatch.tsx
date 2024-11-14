@@ -16,7 +16,7 @@ import { Editor } from '~/components/kun/milkdown/PatchEditor'
 import toast from 'react-hot-toast'
 import { api } from '~/lib/trpc-client'
 import { useErrorHandler } from '~/hooks/useErrorHandler'
-import { patchSchema } from '~/validations/edit'
+import { patchCreateSchema } from '~/validations/edit'
 import { resizeImage } from '~/utils/resizeImage'
 import { redirect } from 'next/navigation'
 import type { CreatePatchRequestData } from '~/store/editStore'
@@ -96,7 +96,7 @@ export const CreatePatch = () => {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
 
-    const result = patchSchema.safeParse({
+    const result = patchCreateSchema.safeParse({
       ...data,
       banner
     })
@@ -128,7 +128,7 @@ export const CreatePatch = () => {
       '正在发布中...由于要上传图片, 可能需要 十秒 左右的时间, 这取决于您的网络环境'
     )
     // @ts-expect-error
-    const res = await api.edit.edit.mutate(formDataToSend)
+    const res = await api.edit.createPatch.mutate(formDataToSend)
     useErrorHandler(res, async (value) => {
       resetData()
       setPreviewUrl('')
@@ -320,7 +320,7 @@ export const CreatePatch = () => {
           {errors.introduction && (
             <p className="text-xs text-danger-500">{errors.introduction}</p>
           )}
-          <Editor />
+          <Editor storeName="patchCreate" />
 
           <div className="space-y-2">
             <div className="flex gap-2">

@@ -1,14 +1,17 @@
 'use client'
 
+import { useEffect } from 'react'
 import { Card, CardHeader, CardBody } from '@nextui-org/card'
 import { Avatar } from '@nextui-org/avatar'
 import { Chip } from '@nextui-org/chip'
 import { Button } from '@nextui-org/button'
+import { Tooltip } from '@nextui-org/tooltip'
 import { Divider } from '@nextui-org/divider'
-import { Eye, Heart, MessageSquare, Share2, Puzzle } from 'lucide-react'
+import { Eye, Heart, MessageSquare, Share2, Puzzle, Pencil } from 'lucide-react'
 import { ResourceFavoriteButton } from './PatchFavorite'
 import { Tabs, Tab } from '@nextui-org/tabs'
-import { usePathname } from 'next/navigation'
+import { usePathname, useRouter } from 'next/navigation'
+import { useRewritePatchStore } from '~/store/rewriteStore'
 import type { Patch } from '~/types/api/patch'
 
 interface PatchHeaderProps {
@@ -16,8 +19,21 @@ interface PatchHeaderProps {
 }
 
 export const PatchHeader = ({ patch }: PatchHeaderProps) => {
+  const router = useRouter()
   const pathname = usePathname()
   const lastSegment = pathname.split('/').filter(Boolean).pop()
+
+  const { setData } = useRewritePatchStore()
+
+  useEffect(() => {
+    setData({
+      id: patch.id,
+      banner: patch.banner,
+      name: patch.name,
+      introduction: patch.introduction,
+      alias: patch.alias
+    })
+  }, [])
 
   return (
     <>
@@ -61,9 +77,28 @@ export const PatchHeader = ({ patch }: PatchHeaderProps) => {
                 patchId={patch.id}
                 isFavorite={patch.isFavorite}
               />
-              <Button variant="bordered" isIconOnly>
-                <Share2 className="w-4 h-4 text-default-400" />
-              </Button>
+              <Tooltip content="复制分享链接">
+                <Button variant="bordered" isIconOnly>
+                  <Share2 className="w-4 h-4" />
+                </Button>
+              </Tooltip>
+              <Tooltip
+                content={
+                  <div className="px-1 py-2">
+                    <div className="font-bold text-small">编辑游戏信息</div>
+                    <div className="text-tiny">任何人都可以编辑游戏信息</div>
+                    <div className="text-tiny">但需要提交更新请求</div>
+                  </div>
+                }
+              >
+                <Button
+                  variant="bordered"
+                  isIconOnly
+                  onClick={() => router.push('/edit/rewrite')}
+                >
+                  <Pencil className="w-4 h-4" />
+                </Button>
+              </Tooltip>
             </div>
           </div>
 
