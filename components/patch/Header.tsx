@@ -164,7 +164,7 @@ export const PatchHeader = ({ patch }: PatchHeaderProps) => {
           href={`/patch/${patch.id}/history`}
         />
         <Tab
-          key="pull-request"
+          key="pr"
           title="更新请求"
           className="p-0 min-w-24"
           href={`/patch/${patch.id}/pr`}

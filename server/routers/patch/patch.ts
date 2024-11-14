@@ -137,10 +137,12 @@ export const togglePatchFavorite = privateProcedure
       })
     }
 
-    await prisma.user.update({
-      where: { id: patch.user_id },
-      data: { moemoepoint: { increment: existingFavorite ? -1 : 1 } }
-    })
+    if (patch.user_id !== ctx.uid) {
+      await prisma.user.update({
+        where: { id: patch.user_id },
+        data: { moemoepoint: { increment: existingFavorite ? -1 : 1 } }
+      })
+    }
 
     return !existingFavorite
   })
