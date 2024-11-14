@@ -38,6 +38,7 @@ export interface PatchPullRequest {
   index: number
   completeTime: string
   content: string
+  note: string
   user: KunUser
   created: string
 }

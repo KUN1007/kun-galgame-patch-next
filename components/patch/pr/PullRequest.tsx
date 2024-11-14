@@ -5,6 +5,7 @@ import { Card, CardHeader, CardBody, CardFooter } from '@nextui-org/card'
 import { User } from '@nextui-org/user'
 import { Button } from '@nextui-org/button'
 import { Textarea } from '@nextui-org/input'
+import { Chip } from '@nextui-org/chip'
 import {
   Modal,
   ModalContent,
@@ -13,6 +14,7 @@ import {
   ModalFooter,
   useDisclosure
 } from '@nextui-org/modal'
+import { Check, X } from 'lucide-react'
 import { formatDistanceToNow } from '~/utils/formatDistanceToNow'
 import { HighlightedText } from '~/components/patch/DiffContent'
 import { api } from '~/lib/trpc-client'
@@ -84,12 +86,34 @@ export const PatchPullRequest = ({ pr }: Props) => {
                       name: p.user.name.charAt(0).toUpperCase()
                     }}
                   />
-                  <Button
-                    color="primary"
-                    onClick={() => handleToggleExpand(p.index)}
-                  >
-                    {expandedId === p.index ? '收起' : '详情'}
-                  </Button>
+                  {!p.status && (
+                    <Button
+                      color="primary"
+                      onClick={() => handleToggleExpand(p.index)}
+                    >
+                      {expandedId === p.index ? '收起' : '详情'}
+                    </Button>
+                  )}
+
+                  {p.status === 1 && (
+                    <Chip
+                      endContent={<Check className="w-4 h-4" />}
+                      variant="flat"
+                      color="success"
+                    >
+                      已合并
+                    </Chip>
+                  )}
+
+                  {p.status === 2 && (
+                    <Chip
+                      endContent={<X className="w-4 h-4" />}
+                      variant="flat"
+                      color="danger"
+                    >
+                      已拒绝
+                    </Chip>
+                  )}
                 </CardHeader>
                 {expandedId === p.index && (
                   <>
@@ -140,6 +164,8 @@ export const PatchPullRequest = ({ pr }: Props) => {
                     </CardFooter>
                   </>
                 )}
+
+                {p.status === 2 && <CardFooter>原因: {p.note}</CardFooter>}
               </Card>
             ))}
         </div>

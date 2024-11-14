@@ -17,7 +17,8 @@ export const getPatchHistory = publicProcedure
       where: { patch_id: patchId },
       include: {
         user: true
-      }
+      },
+      orderBy: { created: 'desc' }
     })
 
     const histories: PatchHistory[] = await Promise.all(

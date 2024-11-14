@@ -46,6 +46,7 @@ export const RewritePatch = () => {
     })
   }
 
+  const [rewriting, setRewriting] = useState(false)
   const handleSubmit = async () => {
     const result = patchUpdateSchema.safeParse(data)
     if (!result.success) {
@@ -62,10 +63,13 @@ export const RewritePatch = () => {
       setErrors({})
     }
 
+    setRewriting(true)
     const res = await api.edit.updatePatch.mutate(data)
     useErrorHandler(res, async () => {
       router.push(`/patch/${data.id}/introduction`)
     })
+    toast.success('发布编辑成功')
+    setRewriting(false)
   }
 
   return (
@@ -141,6 +145,8 @@ export const RewritePatch = () => {
             color="primary"
             className="w-full mt-4"
             onClick={handleSubmit}
+            isLoading={rewriting}
+            isDisabled={rewriting}
           >
             提交
           </Button>

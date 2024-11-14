@@ -17,7 +17,8 @@ export const getPullRequest = publicProcedure
 
     const data = await prisma.patch_pull_request.findMany({
       where: { patch_id: patchId },
-      include: { user: true }
+      include: { user: true },
+      orderBy: { created: 'desc' }
     })
     if (!data.length) {
       return []
@@ -30,6 +31,7 @@ export const getPullRequest = publicProcedure
         index: pr.index,
         completeTime: pr.complete_time,
         content: await markdownToHtml(pr.diff_content),
+        note: pr.note,
         user: {
           id: pr.user.id,
           name: pr.user.name,
@@ -125,7 +127,7 @@ export const declinePullRequest = privateProcedure
         data: {
           action: '拒绝了',
           type: '更新请求',
-          content: `# ${pullRequest.index}`,
+          content: `#${pullRequest.index}`,
           user_id: ctx.uid,
           patch_id: pullRequest.patch_id
         }
