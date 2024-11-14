@@ -1,4 +1,4 @@
-import { PatchHeader } from '~/components/patch/Header'
+import { PatchHeaderContainer } from '~/components/patch/header/Container'
 import { ErrorComponent } from '~/components/error/ErrorComponent'
 import { serverApi } from '~/lib/trpc-server'
 import type { Patch } from '~/types/api/patch'
@@ -23,7 +23,7 @@ export default async function Patch({
 
   return (
     <div className="container py-6 mx-auto space-y-6">
-      <PatchHeader patch={res} />
+      <PatchHeaderContainer patch={res} />
       {children}
     </div>
   )

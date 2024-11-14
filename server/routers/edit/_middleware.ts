@@ -1,6 +1,5 @@
 import { middleware } from '~/lib/trpc'
 import type { CreatePatchData } from '~/store/editStore'
-import type { RewritePatchData } from '~/store/rewriteStore'
 
 export const parseCreatePatchFormDataMiddleware = middleware(
   async ({ ctx, next, getRawInput }) => {

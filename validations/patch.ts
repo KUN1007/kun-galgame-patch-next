@@ -83,3 +83,8 @@ export const declinePullRequestSchema = z.object({
     .min(1)
     .max(1007, { message: '拒绝原因最多 1007 个字符' })
 })
+
+export const updatePatchBannerSchema = z.object({
+  patchId: z.number().min(1).max(9999999),
+  image: z.any()
+})

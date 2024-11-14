@@ -2,6 +2,9 @@ import { z } from 'zod'
 import { publicProcedure, privateProcedure } from '~/lib/trpc'
 import { prisma } from '~/prisma/index'
 import { markdownToHtml } from '~/server/utils/markdownToHtml'
+import { uploadPatchBanner } from '../edit/_upload'
+import { parsePatchBannerMiddleware } from './_middleware'
+import { updatePatchBannerSchema } from '~/validations/patch'
 import type { Patch, PatchIntroduction } from '~/types/api/patch'
 
 export const getPatchById = publicProcedure
@@ -145,4 +148,18 @@ export const togglePatchFavorite = privateProcedure
     }
 
     return !existingFavorite
+  })
+
+export const updatePatchBanner = privateProcedure
+  .use(parsePatchBannerMiddleware)
+  .input(updatePatchBannerSchema)
+  .mutation(async ({ ctx, input }) => {
+    const bannerArrayBuffer = input.image as ArrayBuffer
+    const res = await uploadPatchBanner(bannerArrayBuffer, input.patchId)
+    if (!res) {
+      return '上传图片错误, 未知错误'
+    }
+    if (typeof res === 'string') {
+      return res
+    }
   })

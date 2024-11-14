@@ -1,7 +1,7 @@
 'use client'
 
 import { useEffect } from 'react'
-import { Card, CardHeader, CardBody } from '@nextui-org/card'
+import { Card, CardBody } from '@nextui-org/card'
 import { Avatar } from '@nextui-org/avatar'
 import { Chip } from '@nextui-org/chip'
 import { Button } from '@nextui-org/button'
@@ -9,19 +9,18 @@ import { Tooltip } from '@nextui-org/tooltip'
 import { Divider } from '@nextui-org/divider'
 import { Eye, Heart, MessageSquare, Share2, Puzzle, Pencil } from 'lucide-react'
 import { ResourceFavoriteButton } from './PatchFavorite'
-import { Tabs, Tab } from '@nextui-org/tabs'
-import { usePathname, useRouter } from 'next/navigation'
+import { useRouter } from 'next/navigation'
 import { useRewritePatchStore } from '~/store/rewriteStore'
+import { PatchHeader } from './Header'
+import { PatchHeaderTabs } from './Tabs'
 import type { Patch } from '~/types/api/patch'
 
 interface PatchHeaderProps {
   patch: Patch
 }
 
-export const PatchHeader = ({ patch }: PatchHeaderProps) => {
+export const PatchHeaderContainer = ({ patch }: PatchHeaderProps) => {
   const router = useRouter()
-  const pathname = usePathname()
-  const lastSegment = pathname.split('/').filter(Boolean).pop()
 
   const { setData } = useRewritePatchStore()
 
@@ -37,13 +36,8 @@ export const PatchHeader = ({ patch }: PatchHeaderProps) => {
   return (
     <>
       <Card>
-        <CardHeader className="relative h-full p-0">
-          <img
-            src={patch.banner}
-            alt={patch.name}
-            className="w-full max-h-[720px] h-[312px] object-cover"
-          />
-        </CardHeader>
+        <PatchHeader patch={patch} />
+
         <CardBody>
           <div className="flex flex-col items-start justify-between space-y-2 sm:flex-row">
             <div className="space-y-2">
@@ -132,44 +126,7 @@ export const PatchHeader = ({ patch }: PatchHeaderProps) => {
         </CardBody>
       </Card>
 
-      <Tabs
-        aria-label="Options"
-        className="w-full overflow-hidden shadow-medium rounded-large"
-        fullWidth={true}
-        selectedKey={lastSegment}
-        color="primary"
-      >
-        <Tab
-          key="introduction"
-          title="游戏介绍"
-          className="p-0 min-w-24"
-          href={`/patch/${patch.id}/introduction`}
-        />
-        <Tab
-          key="resource"
-          title="资源链接"
-          className="p-0 min-w-24"
-          href={`/patch/${patch.id}/resource`}
-        />
-        <Tab
-          key="comment"
-          title="游戏评论"
-          className="p-0 min-w-24"
-          href={`/patch/${patch.id}/comment`}
-        />
-        <Tab
-          key="history"
-          title="贡献历史"
-          className="p-0 min-w-24"
-          href={`/patch/${patch.id}/history`}
-        />
-        <Tab
-          key="pr"
-          title="更新请求"
-          className="p-0 min-w-24"
-          href={`/patch/${patch.id}/pr`}
-        />
-      </Tabs>
+      <PatchHeaderTabs id={patch.id} />
     </>
   )
 }
