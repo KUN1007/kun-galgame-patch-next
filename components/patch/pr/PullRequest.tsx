@@ -1,12 +1,24 @@
 'use client'
 
 import { useState } from 'react'
-import { Card, CardHeader, CardBody } from '@nextui-org/card'
+import { Card, CardHeader, CardBody, CardFooter } from '@nextui-org/card'
 import { User } from '@nextui-org/user'
 import { Button } from '@nextui-org/button'
+import { Textarea } from '@nextui-org/input'
+import {
+  Modal,
+  ModalContent,
+  ModalHeader,
+  ModalBody,
+  ModalFooter,
+  useDisclosure
+} from '@nextui-org/modal'
 import { formatDistanceToNow } from '~/utils/formatDistanceToNow'
 import { HighlightedText } from '~/components/patch/DiffContent'
+import { api } from '~/lib/trpc-client'
+import { useErrorHandler } from '~/hooks/useErrorHandler'
 import type { PatchPullRequest as PatchPullRequestType } from '~/types/api/patch'
+import toast from 'react-hot-toast'
 
 interface Props {
   pr: PatchPullRequestType[]
@@ -17,6 +29,34 @@ export const PatchPullRequest = ({ pr }: Props) => {
 
   const handleToggleExpand = (id: number) => {
     setExpandedId((prevId) => (prevId === id ? -1 : id))
+  }
+
+  const { isOpen, onOpen, onClose } = useDisclosure()
+  const [merging, setMerging] = useState(false)
+  const [mergeId, setMergeId] = useState(0)
+  const handleMergePR = async () => {
+    setMerging(true)
+    const res = await api.patch.mergePullRequest.mutate({ prId: mergeId })
+    useErrorHandler(res, () => {
+      toast.success('合并请求成功')
+    })
+    setMerging(false)
+    onClose()
+  }
+
+  const [declining, setDeclining] = useState(false)
+  const [showDecline, setShowDecline] = useState(false)
+  const [note, setNote] = useState('')
+  const handleDeclinePR = async (prId: number) => {
+    if (!note.trim()) {
+      toast.error('请填写拒绝原因')
+      return
+    }
+
+    setDeclining(true)
+    await api.patch.declinePullRequest.mutate({ prId, note })
+    toast.success('拒绝合并成功')
+    setDeclining(false)
   }
 
   return (
@@ -52,14 +92,85 @@ export const PatchPullRequest = ({ pr }: Props) => {
                   </Button>
                 </CardHeader>
                 {expandedId === p.index && (
-                  <CardBody>
-                    <HighlightedText content={p.content} />
-                  </CardBody>
+                  <>
+                    <CardBody>
+                      <HighlightedText content={p.content} />
+                    </CardBody>
+
+                    <CardFooter className="flex flex-col w-full space-y-2">
+                      <div className="flex justify-end w-full mb-4 space-x-2">
+                        <Button
+                          color="danger"
+                          variant="flat"
+                          onClick={() => setShowDecline((prev) => !prev)}
+                        >
+                          拒绝
+                        </Button>
+                        <Button
+                          color="primary"
+                          onClick={() => {
+                            onOpen()
+                            setMergeId(p.id)
+                          }}
+                        >
+                          合并
+                        </Button>
+                      </div>
+                      {showDecline && (
+                        <div className="flex flex-col items-end w-full space-y-2 ">
+                          <Textarea
+                            labelPlacement="outside"
+                            isRequired
+                            label="拒绝原因 (最多 1007 字符)"
+                            placeholder="您需要填写拒绝合并请求的原因, 以便提出请求者了解拒绝原因"
+                            value={note}
+                            onValueChange={setNote}
+                            className="w-full"
+                          />
+                          <Button
+                            color="danger"
+                            onClick={() => handleDeclinePR(p.id)}
+                            disabled={declining}
+                            isLoading={declining}
+                          >
+                            确定拒绝
+                          </Button>
+                        </div>
+                      )}
+                    </CardFooter>
+                  </>
                 )}
               </Card>
             ))}
         </div>
       </CardBody>
+
+      <Modal isOpen={isOpen} onClose={onClose} placement="center">
+        <ModalContent>
+          <ModalHeader className="flex flex-col gap-1">
+            合并更新请求
+          </ModalHeader>
+          <ModalBody>
+            <p>
+              您确定要合并更新请求吗,
+              这将会将更新请求中的更新覆盖到目前的游戏信息上
+            </p>
+          </ModalBody>
+          <ModalFooter>
+            <Button variant="light" onPress={onClose}>
+              取消
+            </Button>
+            <Button
+              color="danger"
+              onPress={handleMergePR}
+              disabled={merging}
+              isLoading={merging}
+            >
+              确定
+            </Button>
+          </ModalFooter>
+        </ModalContent>
+      </Modal>
     </Card>
   )
 }

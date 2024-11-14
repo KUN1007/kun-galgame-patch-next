@@ -280,7 +280,8 @@ model patch_pull_request {
   status        Int    @default(0)
   index         Int    @default(0)
   complete_time String @default("")
-  content       String @default("") @db.VarChar(1007)
+  diff_content  String @default("") @db.VarChar(100007)
+  content       String @default("") @db.VarChar(100007)
   note          String @default("") @db.VarChar(1007)
 
   user_id  Int

@@ -1,7 +1,6 @@
 'use client'
 
 import { useState } from 'react'
-import type { FormEvent } from 'react'
 import {
   Button,
   Card,
@@ -17,11 +16,12 @@ import toast from 'react-hot-toast'
 import { api } from '~/lib/trpc-client'
 import { useErrorHandler } from '~/hooks/useErrorHandler'
 import { patchUpdateSchema } from '~/validations/edit'
-import { redirect } from 'next/navigation'
+import { useRouter } from 'next/navigation'
 import type { RewritePatchData } from '~/store/rewriteStore'
 
 export const RewritePatch = () => {
-  const { data, setData, resetData } = useRewritePatchStore()
+  const router = useRouter()
+  const { data, setData } = useRewritePatchStore()
   const [newAlias, setNewAlias] = useState<string>('')
   const [errors, setErrors] = useState<
     Partial<Record<keyof RewritePatchData, string>>
@@ -64,7 +64,7 @@ export const RewritePatch = () => {
 
     const res = await api.edit.updatePatch.mutate(data)
     useErrorHandler(res, async () => {
-      redirect(`/patch/${data.id}/introduction`)
+      router.push(`/patch/${data.id}/introduction`)
     })
   }
 
@@ -139,7 +139,6 @@ export const RewritePatch = () => {
 
           <Button
             color="primary"
-            type="submit"
             className="w-full mt-4"
             onClick={handleSubmit}
           >

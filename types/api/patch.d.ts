@@ -33,6 +33,7 @@ export interface PatchIntroduction {
 }
 
 export interface PatchPullRequest {
+  id: number
   status: number
   index: number
   completeTime: string

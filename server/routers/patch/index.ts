@@ -19,36 +19,32 @@ import {
   updateComment
 } from './comment'
 import { getPatchHistory } from './history'
-import { getPullRequest } from './pull-request'
+import {
+  getPullRequest,
+  mergePullRequest,
+  declinePullRequest
+} from './pull-request'
 
 export const patchRouter = router({
   getPatchById,
-
   getPatchIntroduction,
-
   togglePatchFavorite,
 
   createPatchResource,
-
   getPatchResource,
-
   updatePatchResource,
-
   toggleResourceLike,
-
   deleteResource,
 
   publishPatchComment,
-
   getPatchComment,
-
   toggleCommentLike,
-
   deleteComment,
-
   updateComment,
 
   getPatchHistory,
 
-  getPullRequest
+  getPullRequest,
+  mergePullRequest,
+  declinePullRequest
 })

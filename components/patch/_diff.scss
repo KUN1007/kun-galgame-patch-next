@@ -1,12 +1,14 @@
 .kun-content-added {
   display: inline;
   color: green;
+  font-weight: bold;
 }
 
 .kun-content-deleted {
   display: inline;
   color: red;
   text-decoration: line-through;
+  font-weight: bold;
 }
 
 .kun-content-modified {

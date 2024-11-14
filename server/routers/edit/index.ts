@@ -12,6 +12,7 @@ import {
 } from './_middleware'
 import { generatePatchDiff } from './_helpers'
 import { prisma } from '~/prisma/index'
+import type { PatchUpdate } from './_updates'
 
 export const editRouter = router({
   createPatch: privateProcedure
@@ -116,12 +117,19 @@ export const editRouter = router({
             }
           })
         } else {
+          const updates: PatchUpdate = {
+            name: input.name,
+            alias: input.alias ?? [],
+            introduction: input.introduction
+          }
+
           await prisma.patch_pull_request.create({
             data: {
               index: newIndex,
               user_id: ctx.uid,
               patch_id: id,
-              content: diffContent
+              diff_content: diffContent,
+              content: JSON.stringify(updates)
             }
           })
 

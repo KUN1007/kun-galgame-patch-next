@@ -74,3 +74,12 @@ export const patchResourceUpdateSchema = patchResourceCreateSchema.merge(
     resourceId: z.number().min(1).max(9999999)
   })
 )
+
+export const declinePullRequestSchema = z.object({
+  prId: z.number({ message: '补丁 ID 必须为数字' }).min(1).max(9999999),
+  note: z
+    .string({ message: '必须填写拒绝原因' })
+    .trim()
+    .min(1)
+    .max(1007, { message: '拒绝原因最多 1007 个字符' })
+})
