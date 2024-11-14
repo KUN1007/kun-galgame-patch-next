@@ -1,6 +1,7 @@
 import { z } from 'zod'
 import { publicProcedure } from '~/lib/trpc'
 import { prisma } from '~/prisma/index'
+import { markdownToHtml } from '~/server/utils/markdownToHtml'
 import type { PatchHistory } from '~/types/api/patch'
 
 export const getPatchHistories = publicProcedure
@@ -19,21 +20,23 @@ export const getPatchHistories = publicProcedure
       }
     })
 
-    const histories: PatchHistory[] = data.map((history) => ({
-      id: history.id,
-      action: history.action,
-      type: history.type,
-      content: history.content,
-      userId: history.user_id,
-      patchId: history.patch_id,
-      created: String(history.created),
-      updated: String(history.updated),
-      user: {
-        id: history.user.id,
-        name: history.user.name,
-        avatar: history.user.avatar
-      }
-    }))
+    const histories: PatchHistory[] = await Promise.all(
+      data.map(async (history) => ({
+        id: history.id,
+        action: history.action,
+        type: history.type,
+        content: await markdownToHtml(history.content),
+        userId: history.user_id,
+        patchId: history.patch_id,
+        created: String(history.created),
+        updated: String(history.updated),
+        user: {
+          id: history.user.id,
+          name: history.user.name,
+          avatar: history.user.avatar
+        }
+      }))
+    )
 
     return histories
   })

@@ -1,9 +1,11 @@
 import { Chip } from '@nextui-org/chip'
 import { Card, CardHeader, CardBody } from '@nextui-org/card'
-import { Activity } from 'lucide-react'
+import { ScrollShadow } from '@nextui-org/scroll-shadow'
 import { formatDistanceToNow } from '~/utils/formatDistanceToNow'
 import { serverApi } from '~/lib/trpc-server'
 import { ErrorComponent } from '~/components/error/ErrorComponent'
+import { HighlightedText } from '~/components/patch/DiffContent'
+import { Avatar } from '@nextui-org/avatar'
 
 interface Props {
   params: Promise<{ id: string }>
@@ -26,28 +28,34 @@ export default async function PatchHistory({ params }: Props) {
       </CardHeader>
       <CardBody>
         <div className="space-y-4">
-          {res.map((entry) => (
-            <Card key={entry.id}>
+          {res.map((history) => (
+            <Card key={history.id}>
               <CardBody className="p-6">
                 <div className="flex items-start gap-4">
-                  <div className="mt-1">
-                    <Activity className="w-5 h-5 text-muted-foreground" />
-                  </div>
+                  <Avatar
+                    showFallback
+                    name={history.user.name.charAt(0).toUpperCase()}
+                    src={history.user.avatar}
+                  />
                   <div className="flex-1">
                     <div className="flex items-start justify-between">
                       <div>
-                        <h4 className="font-semibold">{entry.action}</h4>
+                        <h4 className="font-semibold">
+                          {history.action} {history.type}
+                        </h4>
                         <p className="text-sm text-muted-foreground">
-                          {entry.user?.name} •{' '}
-                          {formatDistanceToNow(entry.created)}
+                          {history.user.name} •{' '}
+                          {formatDistanceToNow(history.created)}
                         </p>
                       </div>
                     </div>
-                    {entry.content && (
-                      <p className="mt-2 text-sm">{entry.content}</p>
-                    )}
+
+                    <ScrollShadow className="max-h-64">
+                      <HighlightedText content={history.content} />
+                    </ScrollShadow>
+
                     <div className="mt-2">
-                      <Chip color="primary">{entry.type}</Chip>
+                      <Chip color="primary">{history.type}</Chip>
                     </div>
                   </div>
                 </div>

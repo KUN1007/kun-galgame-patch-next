@@ -274,6 +274,7 @@ model patch_history {
   updated DateTime @updatedAt
 }
 
+// status: 0 - pending, 1 - merged, 2 - declined
 model patch_pull_request {
   id            Int    @id @default(autoincrement())
   status        Int    @default(0)

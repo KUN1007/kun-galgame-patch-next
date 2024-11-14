@@ -28,7 +28,6 @@ export const PatchHeader = ({ patch }: PatchHeaderProps) => {
   useEffect(() => {
     setData({
       id: patch.id,
-      banner: patch.banner,
       name: patch.name,
       introduction: patch.introduction,
       alias: patch.alias

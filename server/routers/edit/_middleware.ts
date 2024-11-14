@@ -30,32 +30,6 @@ export const parseCreatePatchFormDataMiddleware = middleware(
   }
 )
 
-export const parseUpdatePatchFormDataMiddleware = middleware(
-  async ({ ctx, next, getRawInput }) => {
-    const input = (await getRawInput()) as FormData
-
-    const idData = input.get('id')
-    const nameData = input.get('name')
-    const bannerData = input.get('banner')
-    const introductionData = input.get('introduction')
-    const aliasesData = input.get('alias')
-
-    const requestData: Omit<Partial<RewritePatchData>, 'banner'> & {
-      banner: ArrayBuffer
-    } = {
-      id: Number(idData?.toString()),
-      name: nameData?.toString(),
-      banner: await new Response(bannerData)?.arrayBuffer(),
-      introduction: introductionData?.toString(),
-      alias: JSON.parse(aliasesData ? aliasesData.toString() : '')
-    }
-
-    return next({
-      getRawInput: async () => requestData
-    })
-  }
-)
-
 export const parseEditorImageMiddleware = middleware(
   async ({ ctx, next, getRawInput }) => {
     const input = (await getRawInput()) as FormData

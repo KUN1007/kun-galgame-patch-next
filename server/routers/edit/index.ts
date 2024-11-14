@@ -8,7 +8,6 @@ import {
 import { uploadPatchBanner, uploadIntroductionImage } from './_upload'
 import {
   parseCreatePatchFormDataMiddleware,
-  parseUpdatePatchFormDataMiddleware,
   parseEditorImageMiddleware
 } from './_middleware'
 import { generatePatchDiff } from './_helpers'
@@ -72,44 +71,56 @@ export const editRouter = router({
     }),
 
   updatePatch: privateProcedure
-    .use(parseUpdatePatchFormDataMiddleware)
     .input(patchUpdateSchema)
     .mutation(async ({ ctx, input }) => {
-      const { id, banner, name, alias, introduction } = input
+      const { id, name, alias, introduction } = input
 
-      const bannerArrayBuffer = banner as ArrayBuffer
-      const res = await uploadPatchBanner(bannerArrayBuffer, id)
-      if (!res) {
-        return '上传图片错误, 未知错误'
-      }
-      if (typeof res === 'string') {
-        return res
+      const patch = await prisma.patch.findUnique({ where: { id } })
+      if (!patch) {
+        return '该 ID 下未找到对应补丁'
       }
 
       return await prisma.$transaction(async (prisma) => {
-        const patch = await prisma.patch.update({
-          where: { id },
-          data: {
-            name,
-            alias: alias ? alias : [],
-            introduction,
-            user_id: ctx.uid
-          }
-        })
-
         const diffContent = generatePatchDiff(patch, input)
 
-        await prisma.patch_history.create({
-          data: {
-            action: '更新了',
-            type: '补丁',
-            content: diffContent,
-            user_id: ctx.uid,
-            patch_id: patch.id
-          }
-        })
+        if (ctx.uid === patch.user_id) {
+          await prisma.patch.update({
+            where: { id },
+            data: {
+              name,
+              alias: alias ? alias : [],
+              introduction
+            }
+          })
 
-        return patch.id
+          await prisma.patch_history.create({
+            data: {
+              action: '更新了',
+              type: '补丁',
+              content: diffContent,
+              user_id: ctx.uid,
+              patch_id: patch.id
+            }
+          })
+        } else {
+          await prisma.patch_pull_request.create({
+            data: {
+              user_id: ctx.uid,
+              patch_id: id,
+              content: JSON.stringify(input)
+            }
+          })
+
+          await prisma.patch_history.create({
+            data: {
+              action: '创建了',
+              type: '更新请求',
+              content: diffContent,
+              user_id: ctx.uid,
+              patch_id: patch.id
+            }
+          })
+        }
       })
     }),
 
