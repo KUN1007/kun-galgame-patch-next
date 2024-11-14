@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useEffect } from 'react'
+import { useState } from 'react'
 import { Chip } from '@nextui-org/chip'
 import { Button } from '@nextui-org/button'
 import { Card, CardBody } from '@nextui-org/card'

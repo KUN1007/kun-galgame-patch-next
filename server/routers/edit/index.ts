@@ -56,6 +56,13 @@ export const editRouter = router({
           }
         })
 
+        await prisma.user_patch_contribute_relation.create({
+          data: {
+            user_id: ctx.uid,
+            patch_id: patch.id
+          }
+        })
+
         await prisma.patch_history.create({
           data: {
             action: '创建了',
@@ -79,6 +86,12 @@ export const editRouter = router({
       if (!patch) {
         return '该 ID 下未找到对应补丁'
       }
+
+      const lastPullRequest = await prisma.patch_pull_request.findFirst({
+        where: { patch_id: id },
+        orderBy: { index: 'desc' }
+      })
+      const newIndex = lastPullRequest ? lastPullRequest.index + 1 : 0
 
       return await prisma.$transaction(async (prisma) => {
         const diffContent = generatePatchDiff(patch, input)
@@ -105,9 +118,10 @@ export const editRouter = router({
         } else {
           await prisma.patch_pull_request.create({
             data: {
+              index: newIndex,
               user_id: ctx.uid,
               patch_id: id,
-              content: JSON.stringify(input)
+              content: diffContent
             }
           })
 

@@ -22,7 +22,7 @@ export default async function Patch({
   }
 
   return (
-    <div className="container py-8 mx-auto">
+    <div className="container py-6 mx-auto space-y-6">
       <PatchHeader patch={res} />
       {children}
     </div>

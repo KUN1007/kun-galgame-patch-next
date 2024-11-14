@@ -13,12 +13,13 @@ import {
 } from './resource'
 import {
   publishPatchComment,
-  getPatchComments,
+  getPatchComment,
   toggleCommentLike,
   deleteComment,
   updateComment
 } from './comment'
-import { getPatchHistories } from './history'
+import { getPatchHistory } from './history'
+import { getPullRequest } from './pull-request'
 
 export const patchRouter = router({
   getPatchById,
@@ -39,7 +40,7 @@ export const patchRouter = router({
 
   publishPatchComment,
 
-  getPatchComments,
+  getPatchComment,
 
   toggleCommentLike,
 
@@ -47,5 +48,7 @@ export const patchRouter = router({
 
   updateComment,
 
-  getPatchHistories
+  getPatchHistory,
+
+  getPullRequest
 })

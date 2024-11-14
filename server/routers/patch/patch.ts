@@ -81,11 +81,6 @@ export const getPatchIntroduction = publicProcedure
       return '未找到对应补丁'
     }
 
-    await prisma.patch.update({
-      where: { id: patch.id },
-      data: { view: { increment: 1 } }
-    })
-
     const response: PatchIntroduction = {
       vndbId: patch.vndb_id,
       introduction: await markdownToHtml(patch.introduction),

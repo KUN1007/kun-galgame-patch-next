@@ -279,12 +279,12 @@ model patch_pull_request {
   id            Int    @id @default(autoincrement())
   status        Int    @default(0)
   index         Int    @default(0)
-  complete_time Int    @default(0)
+  complete_time String @default("")
   content       String @default("") @db.VarChar(1007)
   note          String @default("") @db.VarChar(1007)
 
   user_id  Int
-  User     user  @relation("user_patch_pull_request", fields: [user_id], references: [id])
+  user     user  @relation("user_patch_pull_request", fields: [user_id], references: [id])
   patch_id Int
   patch    patch @relation("patch_pull_request", fields: [patch_id], references: [id])
 

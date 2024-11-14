@@ -14,7 +14,7 @@ interface Props {
 export default async function PatchHistory({ params }: Props) {
   const { id } = await params
 
-  const res = await serverApi.patch.getPatchHistories.query({
+  const res = await serverApi.patch.getPatchHistory.query({
     patchId: Number(id)
   })
   if (!res || typeof res === 'string') {

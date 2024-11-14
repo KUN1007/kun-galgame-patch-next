@@ -4,7 +4,7 @@ import { prisma } from '~/prisma/index'
 import { markdownToHtml } from '~/server/utils/markdownToHtml'
 import type { PatchHistory } from '~/types/api/patch'
 
-export const getPatchHistories = publicProcedure
+export const getPatchHistory = publicProcedure
   .input(
     z.object({
       patchId: z.number()

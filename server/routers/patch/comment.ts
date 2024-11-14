@@ -34,7 +34,7 @@ export const publishPatchComment = privateProcedure
     return newComment
   })
 
-export const getPatchComments = publicProcedure
+export const getPatchComment = publicProcedure
   .input(
     z.object({
       patchId: z.number({ message: '补丁 ID 必须为数字' }).min(1).max(9999999)

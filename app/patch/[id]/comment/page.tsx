@@ -10,7 +10,7 @@ interface Props {
 export default async function PatchComment({ params }: Props) {
   const { id } = await params
 
-  const comments = await serverApi.patch.getPatchComments.query({
+  const comments = await serverApi.patch.getPatchComment.query({
     patchId: Number(id)
   })
 

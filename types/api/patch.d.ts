@@ -32,6 +32,15 @@ export interface PatchIntroduction {
   alias: string[]
 }
 
+export interface PatchPullRequest {
+  status: number
+  index: number
+  completeTime: string
+  content: string
+  user: KunUser
+  created: string
+}
+
 interface PatchResource {
   id: number
   size: string
