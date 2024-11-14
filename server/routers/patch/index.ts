@@ -25,6 +25,7 @@ import {
   mergePullRequest,
   declinePullRequest
 } from './pull-request'
+import { getPatchContributor } from './contributor'
 
 export const patchRouter = router({
   getPatchById,
@@ -48,5 +49,7 @@ export const patchRouter = router({
 
   getPullRequest,
   mergePullRequest,
-  declinePullRequest
+  declinePullRequest,
+
+  getPatchContributor
 })
