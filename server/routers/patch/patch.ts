@@ -62,6 +62,7 @@ export const getPatchById = publicProcedure
         name: patch.user.name,
         avatar: patch.user.avatar
       },
+      created: String(patch.created),
       _count: patch._count
     }
 

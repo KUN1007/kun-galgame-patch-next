@@ -2,7 +2,7 @@
 
 import { useEffect } from 'react'
 import { Card, CardBody } from '@nextui-org/card'
-import { Avatar } from '@nextui-org/avatar'
+import { User } from '@nextui-org/user'
 import { Chip } from '@nextui-org/chip'
 import { Button } from '@nextui-org/button'
 import { Tooltip } from '@nextui-org/tooltip'
@@ -13,6 +13,7 @@ import { useRouter } from 'next/navigation'
 import { useRewritePatchStore } from '~/store/rewriteStore'
 import { PatchHeader } from './Header'
 import { PatchHeaderTabs } from './Tabs'
+import { formatDistanceToNow } from '~/utils/formatDistanceToNow'
 import type { Patch } from '~/types/api/patch'
 
 interface PatchHeaderProps {
@@ -98,30 +99,53 @@ export const PatchHeaderContainer = ({ patch }: PatchHeaderProps) => {
           <Divider className="my-4" />
 
           <div className="flex gap-6 text-sm">
-            <div className="flex items-center gap-1">
-              <Avatar
-                showFallback
-                name={patch.user.name.charAt(0).toUpperCase()}
-                src={patch.user.avatar}
-              />
-              <span>{patch.user.name}</span>
-            </div>
-            <div className="flex items-center gap-1">
-              <Eye className="w-4 h-4" />
-              <span>{patch.view}</span>
-            </div>
-            <div className="flex items-center gap-1">
-              <Heart className="w-4 h-4" />
-              <span>{patch._count.favorite_by || 0}</span>
-            </div>
-            <div className="flex items-center gap-1">
-              <Puzzle className="w-4 h-4" />
-              <span>{patch._count.resource || 0}</span>
-            </div>
-            <div className="flex items-center gap-1">
-              <MessageSquare className="w-4 h-4" />
-              <span>{patch._count.comment || 0}</span>
-            </div>
+            <User
+              name={
+                <div className="space-x-2">
+                  <span>{patch.user.name}</span>
+                  <span className="text-default-500">-</span>
+                  <span className="text-default-500">
+                    {formatDistanceToNow(patch.created)}
+                  </span>
+                </div>
+              }
+              description={
+                <div className="flex space-x-4">
+                  <Tooltip content="浏览数" placement="bottom">
+                    <div className="flex items-center gap-1">
+                      <Eye className="w-4 h-4" />
+                      <span>{patch.view}</span>
+                    </div>
+                  </Tooltip>
+
+                  <Tooltip content="收藏数" placement="bottom">
+                    <div className="flex items-center gap-1">
+                      <Heart className="w-4 h-4" />
+                      <span>{patch._count.favorite_by || 0}</span>
+                    </div>
+                  </Tooltip>
+
+                  <Tooltip content="补丁资源数" placement="bottom">
+                    <div className="flex items-center gap-1">
+                      <Puzzle className="w-4 h-4" />
+                      <span>{patch._count.resource || 0}</span>
+                    </div>
+                  </Tooltip>
+
+                  <Tooltip content="评论数" placement="bottom">
+                    <div className="flex items-center gap-1">
+                      <MessageSquare className="w-4 h-4" />
+                      <span>{patch._count.comment || 0}</span>
+                    </div>
+                  </Tooltip>
+                </div>
+              }
+              avatarProps={{
+                showFallback: true,
+                name: patch.user.name.charAt(0).toUpperCase(),
+                src: patch.user.avatar
+              }}
+            />
           </div>
         </CardBody>
       </Card>
