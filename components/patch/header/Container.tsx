@@ -14,6 +14,7 @@ import { useRewritePatchStore } from '~/store/rewriteStore'
 import { PatchHeader } from './Header'
 import { PatchHeaderTabs } from './Tabs'
 import { formatDistanceToNow } from '~/utils/formatDistanceToNow'
+import { Tags } from './Tags'
 import type { Patch } from '~/types/api/patch'
 
 interface PatchHeaderProps {
@@ -36,119 +37,111 @@ export const PatchHeaderContainer = ({ patch }: PatchHeaderProps) => {
 
   return (
     <>
-      <Card>
+      <div className="relative w-full h-[512px]">
+        <img
+          src={patch.banner}
+          alt={patch.name}
+          className="absolute top-0 left-0 object-cover w-full h-full rounded-2xl"
+        />
         <PatchHeader patch={patch} />
 
-        <CardBody>
-          <div className="flex flex-col items-start justify-between space-y-2 sm:flex-row">
-            <div className="space-y-2">
-              <h1 className="text-3xl font-bold">{patch.name}</h1>
-              <div className="flex flex-wrap gap-2">
-                {patch.platform.length > 0 &&
-                  patch.platform.map((platform) => (
-                    <Chip key={platform} variant="flat">
-                      {platform}
-                    </Chip>
-                  ))}
-
-                {patch.language.length > 0 &&
-                  patch.language.map((language) => (
-                    <Chip key={language} color="primary" variant="flat">
-                      {language}
-                    </Chip>
-                  ))}
-
-                {patch.type.length > 0 &&
-                  patch.type.map((type) => (
-                    <Chip key={type} color="primary" variant="solid">
-                      {type}
-                    </Chip>
-                  ))}
+        <Card className="absolute bottom-[-1] w-full shadow-lg bg-background/70 backdrop-blur-xl rounded-none rounded-b-2xl">
+          <CardBody>
+            <div className="flex flex-col items-start justify-between space-y-2 sm:flex-row">
+              <div className="space-y-2">
+                <h1 className="text-3xl font-bold">{patch.name}</h1>
+                <div className="flex-wrap hidden gap-2 sm:flex">
+                  <Tags patch={patch} />
+                </div>
+              </div>
+              <div className="flex gap-2 ml-auto">
+                <ResourceFavoriteButton
+                  patchId={patch.id}
+                  isFavorite={patch.isFavorite}
+                />
+                <Tooltip content="复制分享链接">
+                  <Button variant="bordered" isIconOnly>
+                    <Share2 className="w-4 h-4" />
+                  </Button>
+                </Tooltip>
+                <Tooltip
+                  content={
+                    <div className="px-1 py-2">
+                      <div className="font-bold text-small">编辑游戏信息</div>
+                      <div className="text-tiny">任何人都可以编辑游戏信息</div>
+                      <div className="text-tiny">但需要提交更新请求</div>
+                    </div>
+                  }
+                >
+                  <Button
+                    variant="bordered"
+                    isIconOnly
+                    onClick={() => router.push('/edit/rewrite')}
+                  >
+                    <Pencil className="w-4 h-4" />
+                  </Button>
+                </Tooltip>
               </div>
             </div>
-            <div className="flex gap-2 ml-auto">
-              <ResourceFavoriteButton
-                patchId={patch.id}
-                isFavorite={patch.isFavorite}
-              />
-              <Tooltip content="复制分享链接">
-                <Button variant="bordered" isIconOnly>
-                  <Share2 className="w-4 h-4" />
-                </Button>
-              </Tooltip>
-              <Tooltip
-                content={
-                  <div className="px-1 py-2">
-                    <div className="font-bold text-small">编辑游戏信息</div>
-                    <div className="text-tiny">任何人都可以编辑游戏信息</div>
-                    <div className="text-tiny">但需要提交更新请求</div>
+
+            <Divider className="my-4" />
+
+            <div className="flex gap-6 text-sm">
+              <User
+                name={
+                  <div className="space-x-2">
+                    <span>{patch.user.name}</span>
+                    <span className="text-default-500">-</span>
+                    <span className="text-default-500">
+                      {formatDistanceToNow(patch.created)}
+                    </span>
                   </div>
                 }
-              >
-                <Button
-                  variant="bordered"
-                  isIconOnly
-                  onClick={() => router.push('/edit/rewrite')}
-                >
-                  <Pencil className="w-4 h-4" />
-                </Button>
-              </Tooltip>
+                description={
+                  <div className="flex space-x-4">
+                    <Tooltip content="浏览数" placement="bottom">
+                      <div className="flex items-center gap-1">
+                        <Eye className="w-4 h-4" />
+                        <span>{patch.view}</span>
+                      </div>
+                    </Tooltip>
+
+                    <Tooltip content="收藏数" placement="bottom">
+                      <div className="flex items-center gap-1">
+                        <Heart className="w-4 h-4" />
+                        <span>{patch._count.favorite_by || 0}</span>
+                      </div>
+                    </Tooltip>
+
+                    <Tooltip content="补丁资源数" placement="bottom">
+                      <div className="flex items-center gap-1">
+                        <Puzzle className="w-4 h-4" />
+                        <span>{patch._count.resource || 0}</span>
+                      </div>
+                    </Tooltip>
+
+                    <Tooltip content="评论数" placement="bottom">
+                      <div className="flex items-center gap-1">
+                        <MessageSquare className="w-4 h-4" />
+                        <span>{patch._count.comment || 0}</span>
+                      </div>
+                    </Tooltip>
+                  </div>
+                }
+                avatarProps={{
+                  showFallback: true,
+                  name: patch.user.name.charAt(0).toUpperCase(),
+                  src: patch.user.avatar
+                }}
+              />
             </div>
-          </div>
+          </CardBody>
+        </Card>
+      </div>
 
-          <Divider className="my-4" />
-
-          <div className="flex gap-6 text-sm">
-            <User
-              name={
-                <div className="space-x-2">
-                  <span>{patch.user.name}</span>
-                  <span className="text-default-500">-</span>
-                  <span className="text-default-500">
-                    {formatDistanceToNow(patch.created)}
-                  </span>
-                </div>
-              }
-              description={
-                <div className="flex space-x-4">
-                  <Tooltip content="浏览数" placement="bottom">
-                    <div className="flex items-center gap-1">
-                      <Eye className="w-4 h-4" />
-                      <span>{patch.view}</span>
-                    </div>
-                  </Tooltip>
-
-                  <Tooltip content="收藏数" placement="bottom">
-                    <div className="flex items-center gap-1">
-                      <Heart className="w-4 h-4" />
-                      <span>{patch._count.favorite_by || 0}</span>
-                    </div>
-                  </Tooltip>
-
-                  <Tooltip content="补丁资源数" placement="bottom">
-                    <div className="flex items-center gap-1">
-                      <Puzzle className="w-4 h-4" />
-                      <span>{patch._count.resource || 0}</span>
-                    </div>
-                  </Tooltip>
-
-                  <Tooltip content="评论数" placement="bottom">
-                    <div className="flex items-center gap-1">
-                      <MessageSquare className="w-4 h-4" />
-                      <span>{patch._count.comment || 0}</span>
-                    </div>
-                  </Tooltip>
-                </div>
-              }
-              avatarProps={{
-                showFallback: true,
-                name: patch.user.name.charAt(0).toUpperCase(),
-                src: patch.user.avatar
-              }}
-            />
-          </div>
-        </CardBody>
-      </Card>
+      <div className="flex flex-wrap gap-2 sm:hidden">
+        <Tags patch={patch} />
+      </div>
 
       <PatchHeaderTabs id={patch.id} />
     </>

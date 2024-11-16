@@ -22,7 +22,7 @@ export const PatchHeaderTabs = ({ id }: PatchHeaderProps) => {
       <Tab
         key="introduction"
         title="游戏介绍"
-        className="p-0 min-w-24"
+        className="p-0 overflow-hidden min-w-24 rounded-large"
         href={`/patch/${id}/introduction`}
       />
       <Tab

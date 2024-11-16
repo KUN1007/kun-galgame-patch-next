@@ -22,24 +22,17 @@ export const PatchHeader = ({ patch }: PatchHeaderProps) => {
 
   return (
     <>
-      <CardHeader className="relative h-full p-0">
-        <img
-          src={patch.banner}
-          alt={patch.name}
-          className="w-full max-h-[720px] h-[312px] object-cover"
-        />
-        {user.uid === patch.user.id && (
-          <Button
-            color="secondary"
-            variant="bordered"
-            size="sm"
-            className="absolute top-2 right-2"
-            onClick={onOpen}
-          >
-            更改图片
-          </Button>
-        )}
-      </CardHeader>
+      {user.uid === patch.user.id && (
+        <Button
+          color="secondary"
+          variant="bordered"
+          size="sm"
+          className="absolute top-2 right-2"
+          onClick={onOpen}
+        >
+          更改图片
+        </Button>
+      )}
 
       <Modal isOpen={isOpen} onClose={onClose} placement="center">
         <ModalContent>
