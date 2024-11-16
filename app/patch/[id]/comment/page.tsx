@@ -1,4 +1,3 @@
-// import DOMPurify from 'isomorphic-dompurify'
 import { Card, CardHeader, CardBody } from '@nextui-org/card'
 import { serverApi } from '~/lib/trpc-server'
 import { Comments } from '~/components/patch/comment/Comments'
