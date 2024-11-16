@@ -54,11 +54,8 @@ export const EditResourceDialog = ({
     defaultValues: {
       patchId: resource.patchId,
       link: resource.link,
-      // @ts-expect-error
       type: resource.type,
-      // @ts-expect-error
       language: resource.language,
-      // @ts-expect-error
       platform: resource.platform,
       size: resource.size,
       code: resource.code,

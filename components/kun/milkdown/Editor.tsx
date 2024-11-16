@@ -101,7 +101,7 @@ export const KunEditor = ({ valueMarkdown, saveMarkdown }: Props) => {
     <div className="min-h-64" onClick={(e) => e.stopPropagation()}>
       <KunMilkdownPluginsMenu editorInfo={editor} />
       <Milkdown />
-      {editor.loading && <KunLoading />}
+      {editor.loading && <KunLoading hint="正在加载编辑器" />}
     </div>
   )
 }

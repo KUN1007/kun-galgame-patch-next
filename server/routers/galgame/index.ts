@@ -6,14 +6,25 @@ export const galgameRouter = router({
   getGalgame: publicProcedure
     .input(galgameSchema)
     .mutation(async ({ ctx, input }) => {
-      const { sort, page, limit } = input
+      const { selectedTypes, sortField, sortOrder, page, limit } = input
 
       const offset = (page - 1) * limit
+
+      const isSelectAll =
+        !selectedTypes.length || selectedTypes.includes('全部类型')
+      const typeQuery = isSelectAll
+        ? {}
+        : {
+            type: {
+              hasSome: selectedTypes
+            }
+          }
 
       const data: GalgameCard[] = await prisma.patch.findMany({
         take: limit,
         skip: offset,
-        orderBy: { [sort]: 'desc' },
+        orderBy: { [sortField]: sortOrder },
+        where: typeQuery,
         select: {
           id: true,
           name: true,
@@ -34,6 +45,10 @@ export const galgameRouter = router({
         }
       })
 
-      return data
+      const total = await prisma.patch.count({
+        where: typeQuery
+      })
+
+      return { data, total }
     })
 })

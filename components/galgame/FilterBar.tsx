@@ -1,95 +1,115 @@
 'use client'
 
 import {
-  Select,
-  SelectItem,
-  Button,
   Dropdown,
   DropdownTrigger,
   DropdownMenu,
   DropdownItem
-} from '@nextui-org/react'
-import { ChevronDown } from 'lucide-react'
-
-type SortOption = 'created' | 'view'
-type SortDirection = 'asc' | 'desc'
+} from '@nextui-org/dropdown'
+import { Button } from '@nextui-org/button'
+import { Card, CardHeader } from '@nextui-org/card'
+import { Select, SelectItem } from '@nextui-org/select'
+import { ArrowDownAZ, ArrowUpAZ, ChevronDown, Filter } from 'lucide-react'
+import { ALL_SUPPORTED_TYPES } from '~/components/patch/resource/_constants'
+import type { SortOption, SortDirection } from './_sort'
 
 interface Props {
   selectedTypes: string[]
   setSelectedTypes: (types: string[]) => void
-  sortBy: SortOption
-  setSortBy: (option: SortOption) => void
-  sortDirection: SortDirection
-  setSortDirection: (direction: SortDirection) => void
+  sortField: SortOption
+  setSortField: (option: SortOption) => void
+  sortOrder: SortDirection
+  setSortOrder: (direction: SortDirection) => void
 }
 
-const SUPPORTED_TYPES = [
-  '人工翻译补丁',
-  'AI 翻译补丁',
-  '机翻润色',
-  '机翻补丁',
-  '全 CG 存档',
-  '破解补丁',
-  '修正补丁',
-  '魔改补丁',
-  '其它'
-]
-
-export function FilterBar({
+export const FilterBar = ({
   selectedTypes,
   setSelectedTypes,
-  sortBy,
-  setSortBy,
-  sortDirection,
-  setSortDirection
-}: Props) {
-  return (
-    <div className="flex flex-col gap-4 mb-6 sm:flex-row">
-      <Select
-        label="类型筛选"
-        selectionMode="multiple"
-        placeholder="选择类型"
-        selectedKeys={selectedTypes}
-        className="max-w-xs"
-        onSelectionChange={(keys) =>
-          setSelectedTypes(Array.from(keys) as string[])
-        }
-      >
-        {SUPPORTED_TYPES.map((type) => (
-          <SelectItem key={type} value={type}>
-            {type}
-          </SelectItem>
-        ))}
-      </Select>
+  sortField,
+  setSortField,
+  sortOrder,
+  setSortOrder
+}: Props) => {
+  const sortFieldLabel = {
+    created: '创建时间',
+    view: '浏览量'
+  }
 
-      <div className="flex gap-2">
-        <Dropdown>
-          <DropdownTrigger>
+  const handleSelectionChange = (keys: Set<React.Key>) => {
+    setSelectedTypes(Array.from(keys) as string[])
+  }
+
+  return (
+    <Card className="w-full border bg-content1/50 backdrop-blur-lg border-content2">
+      <CardHeader>
+        <div className="flex flex-col w-full gap-4 sm:flex-row sm:items-center sm:justify-between">
+          <Select
+            label="类型筛选"
+            // selectionMode="multiple"
+            placeholder="选择类型"
+            selectedKeys={selectedTypes}
+            className="max-w-xs"
+            onSelectionChange={(keys) => handleSelectionChange(new Set(keys))}
+            startContent={<Filter className="w-4 h-4 text-default-400" />}
+            classNames={{
+              trigger: 'bg-content2/50 hover:bg-content2 transition-colors',
+              value: 'text-default-700',
+              label: 'text-default-600'
+            }}
+            radius="lg"
+            size="sm"
+          >
+            {ALL_SUPPORTED_TYPES.map((type) => (
+              <SelectItem key={type} value={type} className="text-default-700">
+                {type}
+              </SelectItem>
+            ))}
+          </Select>
+
+          <div className="flex items-center gap-2">
+            <Dropdown>
+              <DropdownTrigger>
+                <Button
+                  variant="flat"
+                  className="transition-colors bg-content2/50 hover:bg-content2"
+                  endContent={<ChevronDown className="w-4 h-4" />}
+                  radius="lg"
+                >
+                  {sortFieldLabel[sortField]}
+                </Button>
+              </DropdownTrigger>
+              <DropdownMenu
+                aria-label="排序选项"
+                onAction={(key) => setSortField(key as SortOption)}
+                className="min-w-[120px]"
+              >
+                <DropdownItem key="created" className="text-default-700">
+                  创建时间
+                </DropdownItem>
+                <DropdownItem key="view" className="text-default-700">
+                  浏览量
+                </DropdownItem>
+              </DropdownMenu>
+            </Dropdown>
+
             <Button
               variant="flat"
-              endContent={<ChevronDown className="w-4 h-4" />}
+              className="transition-colors bg-content2/50 hover:bg-content2"
+              onClick={() => setSortOrder(sortOrder === 'asc' ? 'desc' : 'asc')}
+              startContent={
+                sortOrder === 'asc' ? (
+                  <ArrowUpAZ className="w-4 h-4" />
+                ) : (
+                  <ArrowDownAZ className="w-4 h-4" />
+                )
+              }
+              radius="lg"
             >
-              {sortBy === 'created' ? '创建时间' : '浏览量'}
+              {sortOrder === 'asc' ? '升序' : '降序'}
             </Button>
-          </DropdownTrigger>
-          <DropdownMenu
-            aria-label="排序选项"
-            onAction={(key) => setSortBy(key as SortOption)}
-          >
-            <DropdownItem key="created">创建时间</DropdownItem>
-            <DropdownItem key="view">浏览量</DropdownItem>
-          </DropdownMenu>
-        </Dropdown>
-
-        <Button
-          variant="flat"
-          onClick={() =>
-            setSortDirection(sortDirection === 'asc' ? 'desc' : 'asc')
-          }
-        >
-          {sortDirection === 'asc' ? '升序' : '降序'}
-        </Button>
-      </div>
-    </div>
+          </div>
+        </div>
+      </CardHeader>
+    </Card>
   )
 }

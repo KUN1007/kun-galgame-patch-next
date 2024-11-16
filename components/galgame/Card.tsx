@@ -29,7 +29,7 @@ export const GalgameCard = ({ patch }: Props) => {
             className={`object-cover w-full h-full transition-all duration-300 ${
               imageLoaded ? 'opacity-100 scale-100' : 'opacity-0 scale-105'
             }`}
-            src={patch.banner}
+            src={patch.banner.replace(/\.avif$/, '-mini.avif')}
             style={{ aspectRatio: '16/9' }}
             onLoad={() => setImageLoaded(true)}
           />

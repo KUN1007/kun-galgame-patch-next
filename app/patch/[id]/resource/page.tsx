@@ -1,10 +1,5 @@
-import { ErrorComponent } from '~/components/error/ErrorComponent'
-// import DOMPurify from 'isomorphic-dompurify'
 import { Card, CardHeader, CardBody } from '@nextui-org/card'
-import { Tabs, Tab } from '@nextui-org/tabs'
 import { Link as NextLink } from '@nextui-org/link'
-import { Calendar, Clock, Link } from 'lucide-react'
-import { formatDate } from '~/utils/time'
 import { Resources } from '~/components/patch/resource/Resource'
 import { serverApi } from '~/lib/trpc-server'
 
