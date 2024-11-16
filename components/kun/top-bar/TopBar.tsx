@@ -6,11 +6,12 @@ import {
   NavbarMenuToggle,
   NavbarMenuItem,
   NavbarContent,
-  NavbarItem,
-  Link
-} from '@nextui-org/react'
+  NavbarItem
+} from '@nextui-org/navbar'
+import { Link } from '@nextui-org/link'
 import { KunTopBarBrand } from './Brand'
 import { KunTopBarUser } from './User'
+import { usePathname } from 'next/navigation'
 
 const menuItems = [
   'Profile',
@@ -25,7 +26,33 @@ const menuItems = [
   'Log Out'
 ]
 
+interface KunNavItem {
+  name: string
+  href: string
+}
+
+const kunNavItem: KunNavItem[] = [
+  {
+    name: '补丁下载',
+    href: '/galgame'
+  },
+  {
+    name: '发布补丁',
+    href: '/edit/create'
+  },
+  {
+    name: '关于我们',
+    href: '/about'
+  },
+  {
+    name: '主站论坛',
+    href: '/'
+  }
+]
+
 export const KunTopBar = () => {
+  const pathname = usePathname()
+
   return (
     <Navbar maxWidth="xl">
       <NavbarContent className="sm:hidden" justify="start">
@@ -34,26 +61,18 @@ export const KunTopBar = () => {
 
       <NavbarContent className="hidden gap-3 sm:flex">
         <KunTopBarBrand />
-        <NavbarItem>
-          <Link color="foreground" href="/galgame">
-            补丁下载
-          </Link>
-        </NavbarItem>
-        <NavbarItem isActive>
-          <Link href="/edit/create" aria-current="page">
-            发布补丁
-          </Link>
-        </NavbarItem>
-        <NavbarItem>
-          <Link color="foreground" href="#">
-            关于我们
-          </Link>
-        </NavbarItem>
-        <NavbarItem>
-          <Link color="foreground" href="/">
-            主站论坛
-          </Link>
-        </NavbarItem>
+        <ul className="justify-start hidden gap-4 pl-2 md:flex">
+          {kunNavItem.map((item) => (
+            <NavbarItem key={item.href} isActive={pathname === item.href}>
+              <Link
+                color={pathname === item.href ? 'primary' : 'foreground'}
+                href={item.href}
+              >
+                {item.name}
+              </Link>
+            </NavbarItem>
+          ))}
+        </ul>
       </NavbarContent>
 
       <KunTopBarUser />
