@@ -22,7 +22,15 @@ export const galgameRouter = router({
           type: true,
           language: true,
           platform: true,
-          created: true
+          created: true,
+          _count: {
+            select: {
+              favorite_by: true,
+              contribute_by: true,
+              resource: true,
+              comment: true
+            }
+          }
         }
       })
 

@@ -66,7 +66,7 @@ export default async function PatchIntroduction({ params }: Props) {
               <h3 className="mb-4 text-xl font-medium">游戏别名</h3>
               <ul className="text-sm text-gray-500 list-disc list-inside">
                 {intro.alias.map((alias) => (
-                  <li key={alias}>{alias}</li>
+                  <li key={Math.random()}>{alias}</li>
                 ))}
               </ul>
             </div>

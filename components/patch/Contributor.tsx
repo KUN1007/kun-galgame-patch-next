@@ -16,7 +16,7 @@ export const PatchContributor = ({ users }: Props) => {
         <p>感谢下面的朋友们为本补丁信息做出的贡献</p>
         <AvatarGroup isBordered className="pl-3">
           {users.map((user) => (
-            <Tooltip content={user.name}>
+            <Tooltip key={user.id} content={user.name}>
               <Avatar
                 showFallback
                 name={user.name.charAt(0).toUpperCase()}

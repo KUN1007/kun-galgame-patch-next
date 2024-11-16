@@ -35,7 +35,7 @@ export const KunTopBar = () => {
       <NavbarContent className="hidden gap-3 sm:flex">
         <KunTopBarBrand />
         <NavbarItem>
-          <Link color="foreground" href="#">
+          <Link color="foreground" href="/galgame">
             补丁下载
           </Link>
         </NavbarItem>
@@ -50,7 +50,7 @@ export const KunTopBar = () => {
           </Link>
         </NavbarItem>
         <NavbarItem>
-          <Link color="foreground" href="#">
+          <Link color="foreground" href="/">
             主站论坛
           </Link>
         </NavbarItem>

@@ -1,17 +1,6 @@
 import { serverApi } from '~/lib/trpc-server'
 import { GalgameCard } from './Card'
-import {
-  Card,
-  CardBody,
-  CardFooter,
-  Image,
-  Button,
-  Pagination,
-  Select,
-  SelectItem,
-  Chip
-} from '@nextui-org/react'
-import { Eye, Calendar, Clock } from 'lucide-react'
+import { MasonryGrid } from './MasonryGrid'
 
 export const CardContainer = async () => {
   const patches = await serverApi.galgame.getGalgame.mutate({
@@ -22,22 +11,13 @@ export const CardContainer = async () => {
 
   return (
     <div className="container py-8 mx-auto">
-      {/* <FilterBar
-        selectedTypes={selectedTypes}
-        setSelectedTypes={setSelectedTypes}
-        sortBy={sortBy}
-        setSortBy={setSortBy}
-        sortDirection={sortDirection}
-        setSortDirection={setSortDirection}
-      /> */}
-
-      <div className="grid grid-cols-1 gap-6 mx-auto mb-8 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
+      <MasonryGrid columnWidth={256} gap={24}>
         {patches.map((patch) => (
-          <GalgameCard key={patch.id} game={patch} />
+          <GalgameCard key={patch.id} patch={patch} />
         ))}
-      </div>
+      </MasonryGrid>
 
-      <div className="flex justify-center">
+      <div className="flex justify-center mt-8">
         {/* <Pagination
           total={totalPages}
           page={page}
