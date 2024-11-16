@@ -2,10 +2,9 @@ import dynamic from 'next/dynamic'
 import { MilkdownProvider } from '@milkdown/react'
 import { useCreatePatchStore } from '~/store/editStore'
 import { useRewritePatchStore } from '~/store/rewriteStore'
-
-const KunEditor = dynamic(() => import('./Editor'), {
-  ssr: false
-})
+import { useMounted } from '~/hooks/useMounted'
+import { KunLoading } from '../Loading'
+import { KunEditor } from './Editor'
 
 interface Props {
   storeName: 'patchCreate' | 'patchRewrite'
@@ -16,6 +15,7 @@ export const Editor = ({ storeName }: Props) => {
     useCreatePatchStore()
   const { getData: getRewritePatchData, setData: setRewritePatchData } =
     useRewritePatchStore()
+  const isMounted = useMounted()
 
   const saveMarkdown = (markdown: string) => {
     if (storeName === 'patchCreate') {
@@ -33,6 +33,10 @@ export const Editor = ({ storeName }: Props) => {
     } else {
       return ''
     }
+  }
+
+  if (!isMounted) {
+    return <KunLoading />
   }
 
   return (

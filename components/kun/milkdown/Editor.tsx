@@ -13,6 +13,7 @@ import { kunUploader, kunUploadWidgetFactory } from './plugins/uploader'
 import { automd } from '@milkdown/plugin-automd'
 
 import { KunMilkdownPluginsMenu } from './plugins/Menu'
+import { KunLoading } from '../Loading'
 import '~/styles/editor.scss'
 
 import bash from 'refractor/lang/bash'
@@ -41,7 +42,7 @@ type Props = {
   saveMarkdown: (markdown: string) => void
 }
 
-const KunEditor = ({ valueMarkdown, saveMarkdown }: Props) => {
+export const KunEditor = ({ valueMarkdown, saveMarkdown }: Props) => {
   const editor = useEditor((root) =>
     Editor.make()
       .config((ctx) => {
@@ -97,16 +98,10 @@ const KunEditor = ({ valueMarkdown, saveMarkdown }: Props) => {
   )
 
   return (
-    <div onClick={(e) => e.stopPropagation()}>
+    <div className="min-h-64" onClick={(e) => e.stopPropagation()}>
       <KunMilkdownPluginsMenu editorInfo={editor} />
       <Milkdown />
-      {editor.loading && (
-        <div className="flex items-center justify-center h-full loading">
-          <span className="text-2xl animate-spin">Loading...</span>
-        </div>
-      )}
+      {editor.loading && <KunLoading />}
     </div>
   )
 }
-
-export default KunEditor
