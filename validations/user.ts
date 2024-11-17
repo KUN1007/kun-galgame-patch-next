@@ -41,3 +41,16 @@ export const passwordSchema = z.object({
       '新密码格式非法, 密码的长度为 6 到 1007 位，必须包含至少一个英文字符和一个数字，可以选择性的包含 @!#$%^&*()_-+=\\/ 等特殊字符'
   })
 })
+
+export const updateUserSchema = z.object({
+  name: z.string().min(1).max(17).optional(),
+  email: z.string().email().max(1007).optional(),
+  password: z.string().min(6).max(1007).optional(),
+  avatar: z.string().max(233).optional(),
+  bio: z.string().max(107).optional()
+})
+
+export const getUserInfoSchema = z.object({
+  page: z.number().min(1).max(9999999),
+  limit: z.number().min(1).max(20)
+})

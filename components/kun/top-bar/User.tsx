@@ -110,7 +110,7 @@ export const KunTopBarUser = () => {
                 </DropdownItem>
                 <DropdownItem
                   key="profile"
-                  onPress={() => router.push(`/user/${user.uid}`)}
+                  onPress={() => router.push(`/user/${user.uid}/resource`)}
                   startContent={<UserRound className="w-4 h-4" />}
                 >
                   用户主页

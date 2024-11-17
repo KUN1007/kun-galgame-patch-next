@@ -1,35 +1,39 @@
 'use client'
 
+import { Card, CardBody } from '@nextui-org/card'
 import { Tab, Tabs } from '@nextui-org/tabs'
+import { usePathname } from 'next/navigation'
 
-export const UserActivity = () => {
+interface UserActivityProps {
+  id: number
+}
+
+export const UserActivity = ({ id }: UserActivityProps) => {
+  const pathname = usePathname()
+  const lastSegment = pathname.split('/').filter(Boolean).pop()
+
+  const tabs = [
+    { key: 'resource', title: '补丁资源', href: `/user/${id}/resource` },
+    { key: 'galgame', title: 'Galgame', href: `/user/${id}/galgame` },
+    { key: 'contribute', title: '贡献', href: `/user/${id}/contribute` },
+    { key: 'comment', title: '评论', href: `/user/${id}/comment` },
+    { key: 'favorite', title: '收藏', href: `/user/${id}/favorite` }
+  ]
+
   return (
-    <Tabs aria-label="User activity" variant="underlined" fullWidth>
-      <Tab key="patches" title="补丁">
-        <div className="p-4">
-          <p className="text-default-500">补丁</p>
-        </div>
-      </Tab>
-      <Tab key="resources" title="资源">
-        <div className="p-4">
-          <p className="text-default-500">资源</p>
-        </div>
-      </Tab>
-      <Tab key="contributions" title="贡献">
-        <div className="p-4">
-          <p className="text-default-500">贡献</p>
-        </div>
-      </Tab>
-      <Tab key="comments" title="评论">
-        <div className="p-4">
-          <p className="text-default-500">评论</p>
-        </div>
-      </Tab>
-      <Tab key="favorite" title="收藏">
-        <div className="p-4">
-          <p className="text-default-500">收藏</p>
-        </div>
-      </Tab>
-    </Tabs>
+    <Card className="w-full">
+      <CardBody>
+        <Tabs
+          aria-label="用户活动"
+          variant="underlined"
+          fullWidth
+          selectedKey={lastSegment}
+        >
+          {tabs.map((tab) => (
+            <Tab key={tab.key} title={tab.title} href={tab.href} />
+          ))}
+        </Tabs>
+      </CardBody>
+    </Card>
   )
 }

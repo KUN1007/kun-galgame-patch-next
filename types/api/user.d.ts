@@ -10,8 +10,8 @@ export interface UserInfo {
   moemoepoint: number
   _count: {
     patch: number
+    patch_resource: number
     patch_comment: number
     patch_favorite: number
-    patch_pull_request: number
   }
 }
