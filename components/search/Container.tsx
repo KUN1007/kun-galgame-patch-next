@@ -10,6 +10,7 @@ import { Search } from 'lucide-react'
 import { useDebounce } from 'use-debounce'
 import { api } from '~/lib/trpc-client'
 import { KunHeader } from '~/components/kun/Header'
+import { KunNull } from '~/components/kun/Null'
 import { SearchCard } from './Card'
 import { motion } from 'framer-motion'
 import { container, item } from './_motion'
@@ -22,6 +23,7 @@ export const SearchPage = () => {
   const [page, setPage] = useState(currentPage)
   const [query, setQuery] = useState(searchParams.get('q') || '')
   const [debouncedQuery] = useDebounce(query, 500)
+  const [hasSearched, setHasSearched] = useState(false)
   const [patches, setPatches] = useState<GalgameCard[]>([])
   const [loading, setLoading] = useState(false)
   const [total, setTotal] = useState(0)
@@ -32,6 +34,7 @@ export const SearchPage = () => {
     } else {
       setPatches([])
       setTotal(0)
+      setHasSearched(false)
     }
   }, [debouncedQuery])
 
@@ -49,6 +52,7 @@ export const SearchPage = () => {
 
     setPatches(response.patches)
     setTotal(response.total)
+    setHasSearched(true)
 
     const params = new URLSearchParams()
     params.set('q', query)
@@ -59,7 +63,7 @@ export const SearchPage = () => {
   }
 
   return (
-    <div className="w-full px-4 py-8 mx-auto max-w-7xl sm:px-6 lg:px-8">
+    <div className="w-full py-8">
       <KunHeader name="搜索" description="输入内容以自动搜索" />
 
       <div className="mb-8">
@@ -70,12 +74,7 @@ export const SearchPage = () => {
           size="lg"
           radius="lg"
           endContent={
-            <Button
-              isIconOnly
-              variant="solid"
-              color="primary"
-              onClick={() => handleSearch()}
-            >
+            <Button isIconOnly variant="light" onClick={() => handleSearch()}>
               <Search />
             </Button>
           }
@@ -115,6 +114,10 @@ export const SearchPage = () => {
                 }}
               />
             </div>
+          )}
+
+          {hasSearched && patches.length === 0 && (
+            <KunNull message="未找到相关内容, 请尝试使用游戏的日文原名搜索" />
           )}
         </motion.div>
       )}
