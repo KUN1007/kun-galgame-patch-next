@@ -24,7 +24,7 @@ export const UserResource = ({ resources, uid }: Props) => {
     setLoading(true)
     const response = await api.user.getUserPatchResource.query({
       uid,
-      page: 1,
+      page,
       limit: 20
     })
     setPatches(response.resources)
@@ -42,7 +42,7 @@ export const UserResource = ({ resources, uid }: Props) => {
   return (
     <div className="space-y-4">
       {loading ? (
-        <KunLoading hint="正在获取补丁数据..." />
+        <KunLoading hint="正在获取补丁资源数据..." />
       ) : (
         <>
           {patches.map((resource) => (

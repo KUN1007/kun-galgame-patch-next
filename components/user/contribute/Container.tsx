@@ -24,7 +24,7 @@ export const UserContribute = ({ contributes, uid }: Props) => {
     setLoading(true)
     const response = await api.user.getUserContribute.query({
       uid,
-      page: 1,
+      page,
       limit: 20
     })
     setPatches(response.contributes)

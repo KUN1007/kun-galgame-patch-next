@@ -163,3 +163,50 @@ export const getUserComment = publicProcedure
 
     return { comments, total }
   })
+
+export const getUserFavorite = publicProcedure
+  .input(getUserInfoSchema)
+  .query(async ({ ctx, input }) => {
+    const { uid, page, limit } = input
+    const offset = (page - 1) * limit
+
+    const [data, total] = await Promise.all([
+      await prisma.user_patch_favorite_relation.findMany({
+        where: { user_id: uid },
+        include: {
+          patch: {
+            select: {
+              id: true,
+              name: true,
+              banner: true,
+              view: true,
+              type: true,
+              language: true,
+              platform: true,
+              created: true,
+              _count: {
+                select: {
+                  favorite_by: true,
+                  contribute_by: true,
+                  resource: true,
+                  comment: true
+                }
+              }
+            }
+          }
+        },
+        orderBy: { created: 'desc' },
+        take: limit,
+        skip: offset
+      }),
+      await prisma.user_patch_favorite_relation.count({
+        where: { user_id: uid }
+      })
+    ])
+
+    const favorites = data.map((gal) => ({
+      ...gal.patch
+    }))
+
+    return { favorites, total }
+  })

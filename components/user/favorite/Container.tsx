@@ -5,28 +5,28 @@ import { api } from '~/lib/trpc-client'
 import { Pagination } from '@nextui-org/pagination'
 import { useMounted } from '~/hooks/useMounted'
 import { KunLoading } from '~/components/kun/Loading'
-import { UserGalgameCard } from './Card'
+import { UserGalgameCard } from '../galgame/Card'
 
 interface Props {
-  galgames: GalgameCard[]
+  favorites: GalgameCard[]
   uid: number
 }
 
-export const UserGalgame = ({ galgames, uid }: Props) => {
+export const UserFavorite = ({ favorites, uid }: Props) => {
   const isMounted = useMounted()
-  const [patches, setPatches] = useState<GalgameCard[]>(galgames)
+  const [patches, setPatches] = useState<GalgameCard[]>(favorites)
   const [loading, setLoading] = useState(false)
   const [page, setPage] = useState(1)
   const [total, setTotal] = useState(0)
 
   const fetchPatches = async () => {
     setLoading(true)
-    const response = await api.user.getUserGalgame.query({
+    const response = await api.user.getUserFavorite.query({
       uid,
       page,
       limit: 20
     })
-    setPatches(response.galgames)
+    setPatches(response.favorites)
     setTotal(response.total)
     setLoading(false)
   }
@@ -41,7 +41,7 @@ export const UserGalgame = ({ galgames, uid }: Props) => {
   return (
     <div className="space-y-4">
       {loading ? (
-        <KunLoading hint="正在获取 Galgame 数据..." />
+        <KunLoading hint="正在获取收藏数据..." />
       ) : (
         <>
           {patches.map((galgame) => (

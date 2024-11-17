@@ -24,7 +24,7 @@ export const UserComment = ({ initComments, uid }: Props) => {
     setLoading(true)
     const response = await api.user.getUserComment.query({
       uid,
-      page: 1,
+      page,
       limit: 20
     })
     setComments(response.comments)
@@ -42,7 +42,7 @@ export const UserComment = ({ initComments, uid }: Props) => {
   return (
     <div className="space-y-4">
       {loading ? (
-        <KunLoading hint="正在获取 Galgame 数据..." />
+        <KunLoading hint="正在获取评论数据..." />
       ) : (
         <>
           {comments.map((com) => (

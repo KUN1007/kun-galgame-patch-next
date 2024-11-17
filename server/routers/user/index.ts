@@ -15,7 +15,8 @@ import {
   getUserPatchResource,
   getUserGalgame,
   getUserContribute,
-  getUserComment
+  getUserComment,
+  getUserFavorite
 } from './profile'
 import type { UserInfo } from '~/types/api/user'
 
@@ -76,5 +77,6 @@ export const userRouter = router({
   getUserPatchResource,
   getUserGalgame,
   getUserContribute,
-  getUserComment
+  getUserComment,
+  getUserFavorite
 })

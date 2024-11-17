@@ -1,5 +1,5 @@
 import { serverApi } from '~/lib/trpc-server'
-import { UserContribute } from '~/components/user/contribute/Container'
+import { UserFavorite } from '~/components/user/favorite/Container'
 
 export default async function Kun({
   params
@@ -8,11 +8,11 @@ export default async function Kun({
 }) {
   const { id } = await params
 
-  const { contributes } = await serverApi.user.getUserContribute.query({
+  const { favorites } = await serverApi.user.getUserFavorite.query({
     uid: Number(id),
     page: 1,
     limit: 20
   })
 
-  return <UserContribute contributes={contributes} uid={Number(id)} />
+  return <UserFavorite favorites={favorites} uid={Number(id)} />
 }
