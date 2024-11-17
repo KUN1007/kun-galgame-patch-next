@@ -15,3 +15,15 @@ export interface UserInfo {
     patch_favorite: number
   }
 }
+
+export interface UserResource {
+  id: number
+  patchId: number
+  patchName: string
+  patchBanner: string
+  size: string
+  type: string[]
+  language: string[]
+  platform: string[]
+  created: string
+}

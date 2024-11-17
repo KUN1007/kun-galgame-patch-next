@@ -237,9 +237,9 @@ export const Resources = ({ initialResources, id }: Props) => {
         </Card>
       ))}
 
-      <Modal size="3xl" isOpen={isOpenEdit} onClose={completeEdit}>
+      <Modal size="3xl" isOpen={isOpenEdit} onClose={onCloseEdit}>
         <EditResourceDialog
-          onClose={completeEdit}
+          onClose={onCloseEdit}
           resource={editResource}
           onSuccess={(res) => {
             setResources((prevResources) =>

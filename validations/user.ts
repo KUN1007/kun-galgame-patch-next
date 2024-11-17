@@ -51,6 +51,7 @@ export const updateUserSchema = z.object({
 })
 
 export const getUserInfoSchema = z.object({
+  uid: z.number().min(1).max(9999999),
   page: z.number().min(1).max(9999999),
   limit: z.number().min(1).max(20)
 })

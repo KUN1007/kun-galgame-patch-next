@@ -1,20 +1,6 @@
 import { z } from 'zod'
 import { router, publicProcedure, privateProcedure } from '~/lib/trpc'
-import { hash, verify } from '@node-rs/argon2'
 import { prisma } from '~/prisma/index'
-import {
-  avatarSchema,
-  bioSchema,
-  usernameSchema,
-  sendResetEmailVerificationCodeSchema,
-  resetEmailSchema,
-  passwordSchema,
-  updateUserSchema
-} from '~/validations/user'
-import { parseAvatarImageMiddleware } from './_middleware'
-import { uploadUserAvatar } from './_upload'
-import { sendVerificationCodeEmail } from '~/server/utils/sendVerificationCodeEmail'
-import { verifyVerificationCode } from '~/server/utils/verifyVerificationCode'
 import { deleteKunToken } from '~/server/utils/jwt'
 import { cookies } from 'next/headers'
 import {
@@ -25,6 +11,7 @@ import {
   updateEmail,
   updatePassword
 } from './settings'
+import { getUserPatchResource } from './profile'
 import type { UserInfo } from '~/types/api/user'
 
 export const userRouter = router({
@@ -79,5 +66,7 @@ export const userRouter = router({
   updateBio,
   sendResetEmailVerificationCode,
   updateEmail,
-  updatePassword
+  updatePassword,
+
+  getUserPatchResource
 })

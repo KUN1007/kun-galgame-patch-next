@@ -1,18 +1,18 @@
-import { Card, CardHeader, CardBody } from '@nextui-org/card'
 import { serverApi } from '~/lib/trpc-server'
+import { UserResource } from '~/components/user/resource/Container'
 
-export default async function UserResource({
+export default async function Resource({
   params
 }: {
   params: Promise<{ id: string }>
 }) {
   const { id } = await params
 
-  console.log(id)
+  const { resources } = await serverApi.user.getUserPatchResource.query({
+    uid: Number(id),
+    page: 1,
+    limit: 20
+  })
 
-  // const resources = await serverApi.patch.getPatchResource.query({
-  //   patchId: Number(id)
-  // })
-
-  return <Card>资源</Card>
+  return <UserResource resources={resources} uid={Number(id)} />
 }
