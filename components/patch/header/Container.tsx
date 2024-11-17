@@ -3,14 +3,14 @@
 import { useEffect } from 'react'
 import { Card, CardBody } from '@nextui-org/card'
 import { User } from '@nextui-org/user'
-import { Chip } from '@nextui-org/chip'
 import { Button } from '@nextui-org/button'
 import { Tooltip } from '@nextui-org/tooltip'
 import { Divider } from '@nextui-org/divider'
-import { Eye, Heart, MessageSquare, Share2, Puzzle, Pencil } from 'lucide-react'
+import { Share2, Pencil } from 'lucide-react'
 import { ResourceFavoriteButton } from './PatchFavorite'
 import { useRouter } from 'next/navigation'
 import { useRewritePatchStore } from '~/store/rewriteStore'
+import { KunCardStats } from '~/components/kun/CardStats'
 import { PatchHeader } from './Header'
 import { PatchHeaderTabs } from './Tabs'
 import { formatDistanceToNow } from '~/utils/formatDistanceToNow'
@@ -98,35 +98,7 @@ export const PatchHeaderContainer = ({ patch }: PatchHeaderProps) => {
                   </div>
                 }
                 description={
-                  <div className="flex space-x-4">
-                    <Tooltip content="浏览数" placement="bottom">
-                      <div className="flex items-center gap-1">
-                        <Eye className="w-4 h-4" />
-                        <span>{patch.view}</span>
-                      </div>
-                    </Tooltip>
-
-                    <Tooltip content="收藏数" placement="bottom">
-                      <div className="flex items-center gap-1">
-                        <Heart className="w-4 h-4" />
-                        <span>{patch._count.favorite_by || 0}</span>
-                      </div>
-                    </Tooltip>
-
-                    <Tooltip content="补丁资源数" placement="bottom">
-                      <div className="flex items-center gap-1">
-                        <Puzzle className="w-4 h-4" />
-                        <span>{patch._count.resource || 0}</span>
-                      </div>
-                    </Tooltip>
-
-                    <Tooltip content="评论数" placement="bottom">
-                      <div className="flex items-center gap-1">
-                        <MessageSquare className="w-4 h-4" />
-                        <span>{patch._count.comment || 0}</span>
-                      </div>
-                    </Tooltip>
-                  </div>
+                  <KunCardStats patch={patch} disableTooltip={false} />
                 }
                 avatarProps={{
                   showFallback: true,

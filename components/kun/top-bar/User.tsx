@@ -72,7 +72,11 @@ export const KunTopBarUser = () => {
             </NavbarContent>
           )}
 
-          <Button isIconOnly variant="light">
+          <Button
+            isIconOnly
+            variant="light"
+            onClick={() => router.push('/search')}
+          >
             <Search className="w-6 h-6 text-default-500" />
           </Button>
 

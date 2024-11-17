@@ -3,8 +3,8 @@
 import { Card, CardHeader, CardBody, CardFooter } from '@nextui-org/card'
 import { Image } from '@nextui-org/image'
 import { Chip } from '@nextui-org/chip'
-import { Eye, Heart, MessageSquare, Puzzle } from 'lucide-react'
 import Link from 'next/link'
+import { KunCardStats } from '~/components/kun/CardStats'
 import { useState } from 'react'
 
 interface Props {
@@ -41,27 +41,7 @@ export const GalgameCard = ({ patch }: Props) => {
             {patch.name}
           </h3>
         </Link>
-        <div className="flex space-x-4 text-sm text-default-500">
-          <div className="flex items-center gap-1">
-            <Eye className="w-4 h-4" />
-            <span>{patch.view}</span>
-          </div>
-
-          <div className="flex items-center gap-1">
-            <Heart className="w-4 h-4" />
-            <span>{patch._count.favorite_by || 0}</span>
-          </div>
-
-          <div className="flex items-center gap-1">
-            <Puzzle className="w-4 h-4" />
-            <span>{patch._count.resource || 0}</span>
-          </div>
-
-          <div className="flex items-center gap-1">
-            <MessageSquare className="w-4 h-4" />
-            <span>{patch._count.comment || 0}</span>
-          </div>
-        </div>
+        <KunCardStats patch={patch} />
       </CardBody>
       <CardFooter className="flex-col items-start gap-2 px-4 py-3">
         <div className="flex flex-wrap gap-1.5">

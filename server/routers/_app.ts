@@ -5,6 +5,7 @@ import { patchRouter } from './patch/index'
 import { userRouter } from './user/index'
 import { forgotRouter } from './forgot/index'
 import { galgameRouter } from './galgame/index'
+import { searchRouter } from './search/index'
 
 export const appRouter = router({
   auth: authRouter,
@@ -12,7 +13,8 @@ export const appRouter = router({
   patch: patchRouter,
   user: userRouter,
   forgot: forgotRouter,
-  galgame: galgameRouter
+  galgame: galgameRouter,
+  search: searchRouter
 })
 
 export type AppRouter = typeof appRouter

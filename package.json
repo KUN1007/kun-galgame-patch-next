@@ -61,6 +61,7 @@
     "superjson": "^2.2.1",
     "tailwind-merge": "^2.5.4",
     "unified": "^11.0.5",
+    "use-debounce": "^10.0.4",
     "zod": "^3.23.8",
     "zod-form-data": "^2.0.2",
     "zustand": "^5.0.1"
