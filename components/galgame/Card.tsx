@@ -3,8 +3,8 @@
 import { Card, CardHeader, CardBody, CardFooter } from '@nextui-org/card'
 import { Image } from '@nextui-org/image'
 import { Chip } from '@nextui-org/chip'
-import Link from 'next/link'
 import { KunCardStats } from '~/components/kun/CardStats'
+import { useRouter } from 'next/navigation'
 import { useState } from 'react'
 
 interface Props {
@@ -13,9 +13,14 @@ interface Props {
 
 export const GalgameCard = ({ patch }: Props) => {
   const [imageLoaded, setImageLoaded] = useState(false)
+  const router = useRouter()
 
   return (
-    <Card className="w-full">
+    <Card
+      className="w-full"
+      isPressable
+      onPress={() => router.push(`/patch/${patch.id}/introduction`)}
+    >
       <CardHeader className="p-0">
         <div className="relative w-full mx-auto overflow-hidden text-center rounded-t-lg">
           <div
@@ -36,11 +41,9 @@ export const GalgameCard = ({ patch }: Props) => {
         </div>
       </CardHeader>
       <CardBody className="px-4 py-2 space-y-3">
-        <Link href={`/patch/${patch.id}/introduction`} className="group">
-          <h3 className="text-lg font-semibold transition-colors group-hover:text-primary-500 line-clamp-2">
-            {patch.name}
-          </h3>
-        </Link>
+        <h3 className="text-lg font-semibold transition-colors hover:text-primary-500 line-clamp-2">
+          {patch.name}
+        </h3>
         <KunCardStats patch={patch} />
       </CardBody>
       <CardFooter className="flex-col items-start gap-2 px-4 py-3">

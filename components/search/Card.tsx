@@ -15,7 +15,7 @@ export const SearchCard = ({ patch }: Props) => {
 
   return (
     <Card
-      className="transition-transform hover:scale-105"
+      className="w-full"
       isPressable
       onPress={() => router.push(`/patch/${patch.id}/introduction`)}
     >
@@ -30,7 +30,9 @@ export const SearchCard = ({ patch }: Props) => {
             />
           </div>
           <div className="flex-1 space-y-3">
-            <h3 className="text-xl font-semibold line-clamp-2">{patch.name}</h3>
+            <h3 className="text-lg font-semibold transition-colors hover:text-primary-500 line-clamp-2">
+              {patch.name}
+            </h3>
 
             <KunCardStats patch={patch} />
 

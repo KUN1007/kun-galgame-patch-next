@@ -1,6 +1,9 @@
+'use client'
+
 import { Chip } from '@nextui-org/chip'
 import { Card, CardBody } from '@nextui-org/card'
 import { Image } from '@nextui-org/image'
+import { useRouter } from 'next/navigation'
 import { formatDistanceToNow } from '~/utils/formatDistanceToNow'
 import { KunCardStats } from '~/components/kun/CardStats'
 
@@ -9,8 +12,14 @@ interface Props {
 }
 
 export const UserGalgameCard = ({ galgame }: Props) => {
+  const router = useRouter()
+
   return (
-    <Card className="w-full">
+    <Card
+      className="w-full"
+      isPressable
+      onPress={() => router.push(`/patch/${galgame.id}/introduction`)}
+    >
       <CardBody className="p-4">
         <div className="flex flex-col gap-4 sm:flex-row">
           <div className="relative w-full sm:w-40 sm:h-auto">
