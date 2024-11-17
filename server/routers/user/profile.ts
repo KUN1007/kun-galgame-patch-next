@@ -37,3 +37,41 @@ export const getUserPatchResource = publicProcedure
 
     return { resources, total }
   })
+
+export const getUserGalgame = publicProcedure
+  .input(getUserInfoSchema)
+  .query(async ({ ctx, input }) => {
+    const { uid, page, limit } = input
+    const offset = (page - 1) * limit
+
+    const [galgames, total] = await Promise.all([
+      await prisma.patch.findMany({
+        take: limit,
+        skip: offset,
+        where: { user_id: uid },
+        select: {
+          id: true,
+          name: true,
+          banner: true,
+          view: true,
+          type: true,
+          language: true,
+          platform: true,
+          created: true,
+          _count: {
+            select: {
+              favorite_by: true,
+              contribute_by: true,
+              resource: true,
+              comment: true
+            }
+          }
+        }
+      }),
+      await prisma.patch.count({
+        where: { user_id: uid }
+      })
+    ])
+
+    return { galgames, total }
+  })

@@ -1,5 +1,5 @@
 import { Card, CardBody } from '@nextui-org/card'
-import { MessageCircle, Star, GitPullRequest, FileCode } from 'lucide-react'
+import { MessageCircle, Star, Puzzle, Gamepad2 } from 'lucide-react'
 import type { UserInfo } from '~/types/api/user'
 
 export const UserStats = ({ user }: { user: UserInfo }) => {
@@ -7,9 +7,9 @@ export const UserStats = ({ user }: { user: UserInfo }) => {
     {
       label: '补丁资源',
       value: user._count.patch_resource,
-      icon: GitPullRequest
+      icon: Puzzle
     },
-    { label: 'Galgame', value: user._count.patch, icon: FileCode },
+    { label: 'Galgame', value: user._count.patch, icon: Gamepad2 },
     { label: '评论', value: user._count.patch_comment, icon: MessageCircle },
     { label: '收藏', value: user._count.patch_favorite, icon: Star }
   ]
