@@ -1,7 +1,7 @@
 import { publicProcedure } from '~/lib/trpc'
 import { prisma } from '~/prisma/index'
 import { getUserInfoSchema } from '~/validations/user'
-import { UserResource } from '~/types/api/user'
+import type { UserResource, UserContribute } from '~/types/api/user'
 
 export const getUserPatchResource = publicProcedure
   .input(getUserInfoSchema)
@@ -74,4 +74,38 @@ export const getUserGalgame = publicProcedure
     ])
 
     return { galgames, total }
+  })
+
+export const getUserContribute = publicProcedure
+  .input(getUserInfoSchema)
+  .query(async ({ ctx, input }) => {
+    const { uid, page, limit } = input
+    const offset = (page - 1) * limit
+
+    const [data, total] = await Promise.all([
+      await prisma.user_patch_contribute_relation.findMany({
+        take: limit,
+        skip: offset,
+        where: { user_id: uid },
+        include: {
+          patch: {
+            select: {
+              name: true
+            }
+          }
+        }
+      }),
+      await prisma.user_patch_contribute_relation.count({
+        where: { user_id: uid }
+      })
+    ])
+
+    const contributes: UserContribute[] = data.map((gal) => ({
+      id: gal.id,
+      patchId: gal.patch_id,
+      patchName: gal.patch.name,
+      created: String(gal.created)
+    }))
+
+    return { contributes, total }
   })

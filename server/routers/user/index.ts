@@ -11,7 +11,11 @@ import {
   updateEmail,
   updatePassword
 } from './settings'
-import { getUserPatchResource, getUserGalgame } from './profile'
+import {
+  getUserPatchResource,
+  getUserGalgame,
+  getUserContribute
+} from './profile'
 import type { UserInfo } from '~/types/api/user'
 
 export const userRouter = router({
@@ -69,5 +73,6 @@ export const userRouter = router({
   updatePassword,
 
   getUserPatchResource,
-  getUserGalgame
+  getUserGalgame,
+  getUserContribute
 })

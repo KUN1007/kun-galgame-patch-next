@@ -27,3 +27,10 @@ export interface UserResource {
   platform: string[]
   created: string
 }
+
+export interface UserContribute {
+  id: number
+  patchId: number
+  patchName: string
+  created: string
+}
