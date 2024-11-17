@@ -34,3 +34,15 @@ export interface UserContribute {
   patchName: string
   created: string
 }
+
+export interface UserComment {
+  id: number
+  content: string
+  like: number
+  userId: number
+  patchId: number
+  patchName: string
+  created: string
+  quotedUserUid?: number | null
+  quotedUsername?: string | null
+}

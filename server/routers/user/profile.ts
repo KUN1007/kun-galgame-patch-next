@@ -1,7 +1,11 @@
 import { publicProcedure } from '~/lib/trpc'
 import { prisma } from '~/prisma/index'
 import { getUserInfoSchema } from '~/validations/user'
-import type { UserResource, UserContribute } from '~/types/api/user'
+import type {
+  UserResource,
+  UserContribute,
+  UserComment
+} from '~/types/api/user'
 
 export const getUserPatchResource = publicProcedure
   .input(getUserInfoSchema)
@@ -15,6 +19,7 @@ export const getUserPatchResource = publicProcedure
         include: {
           patch: true
         },
+        orderBy: { created: 'desc' },
         skip: offset,
         take: limit
       }),
@@ -46,8 +51,6 @@ export const getUserGalgame = publicProcedure
 
     const [galgames, total] = await Promise.all([
       await prisma.patch.findMany({
-        take: limit,
-        skip: offset,
         where: { user_id: uid },
         select: {
           id: true,
@@ -66,7 +69,10 @@ export const getUserGalgame = publicProcedure
               comment: true
             }
           }
-        }
+        },
+        orderBy: { created: 'desc' },
+        take: limit,
+        skip: offset
       }),
       await prisma.patch.count({
         where: { user_id: uid }
@@ -84,8 +90,6 @@ export const getUserContribute = publicProcedure
 
     const [data, total] = await Promise.all([
       await prisma.user_patch_contribute_relation.findMany({
-        take: limit,
-        skip: offset,
         where: { user_id: uid },
         include: {
           patch: {
@@ -93,7 +97,10 @@ export const getUserContribute = publicProcedure
               name: true
             }
           }
-        }
+        },
+        orderBy: { created: 'desc' },
+        take: limit,
+        skip: offset
       }),
       await prisma.user_patch_contribute_relation.count({
         where: { user_id: uid }
@@ -108,4 +115,51 @@ export const getUserContribute = publicProcedure
     }))
 
     return { contributes, total }
+  })
+
+export const getUserComment = publicProcedure
+  .input(getUserInfoSchema)
+  .query(async ({ ctx, input }) => {
+    const { uid, page, limit } = input
+    const offset = (page - 1) * limit
+
+    const [data, total] = await Promise.all([
+      await prisma.patch_comment.findMany({
+        where: { user_id: uid },
+        include: {
+          user: true,
+          patch: true,
+          parent: {
+            include: {
+              user: true
+            }
+          },
+          like_by: {
+            include: {
+              user: true
+            }
+          }
+        },
+        orderBy: { created: 'desc' },
+        take: limit,
+        skip: offset
+      }),
+      await prisma.patch_comment.count({
+        where: { user_id: uid }
+      })
+    ])
+
+    const comments: UserComment[] = data.map((comment) => ({
+      id: comment.id,
+      content: comment.content,
+      like: comment.like_by.length,
+      userId: comment.user_id,
+      patchId: comment.patch_id,
+      patchName: comment.patch.name,
+      created: String(comment.created),
+      quotedUserUid: comment.parent?.user.id,
+      quotedUsername: comment.parent?.user.name
+    }))
+
+    return { comments, total }
   })
