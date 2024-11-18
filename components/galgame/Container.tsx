@@ -4,7 +4,7 @@ import { useState, useEffect } from 'react'
 import { Pagination } from '@nextui-org/pagination'
 import { api } from '~/lib/trpc-client'
 import { GalgameCard } from './Card'
-import { MasonryGrid } from './MasonryGrid'
+import { KunMasonryGrid } from '~/components/kun/MasonryGrid'
 import { FilterBar } from './FilterBar'
 import { useMounted } from '~/hooks/useMounted'
 import { KunLoading } from '~/components/kun/Loading'
@@ -59,11 +59,11 @@ export const CardContainer = ({ patch }: Props) => {
       {loading ? (
         <KunLoading hint="正在获取补丁数据..." />
       ) : (
-        <MasonryGrid columnWidth={256} gap={24}>
+        <KunMasonryGrid columnWidth={256} gap={24}>
           {patches.map((pa) => (
             <GalgameCard key={pa.id} patch={pa} />
           ))}
-        </MasonryGrid>
+        </KunMasonryGrid>
       )}
 
       {total > 24 && (

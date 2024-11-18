@@ -3,18 +3,19 @@
 import { useEffect, useRef, useState } from 'react'
 import { useWindowSize } from '~/hooks/useWindowSize'
 import { useMounted } from '~/hooks/useMounted'
+import { cn } from '~/utils/cn'
 
-interface MasonryGridProps {
+interface KunMasonryGridProps {
   children: React.ReactNode[]
   columnWidth?: number
   gap?: number
 }
 
-export const MasonryGrid = ({
+export const KunMasonryGrid = ({
   children,
   columnWidth = 256,
   gap = 24
-}: MasonryGridProps) => {
+}: KunMasonryGridProps) => {
   const containerRef = useRef<HTMLDivElement>(null)
   const [columns, setColumns] = useState(1)
   const isMounted = useMounted()
@@ -60,7 +61,10 @@ export const MasonryGrid = ({
       }}
     >
       {distributeItems().map((column, columnIndex) => (
-        <div key={columnIndex} className="flex flex-col gap-6">
+        <div
+          key={columnIndex}
+          className={cn('flex flex-col', `gap-${gap / 4}`)}
+        >
           {column}
         </div>
       ))}

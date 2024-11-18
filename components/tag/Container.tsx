@@ -4,6 +4,7 @@ import { useState, useEffect } from 'react'
 import { Card, CardBody } from '@nextui-org/card'
 import { Divider } from '@nextui-org/divider'
 import { Pagination } from '@nextui-org/pagination'
+import { KunMasonryGrid } from '~/components/kun/MasonryGrid'
 import { KunLoading } from '~/components/kun/Loading'
 import { TagHeader } from './Header'
 import { TagCard } from './Card'
@@ -41,20 +42,18 @@ export const Container = ({ tags }: Props) => {
   }, [page])
 
   return (
-    <Card className="w-full my-8">
+    <div className="flex flex-col w-full my-8">
       <TagHeader setNewTag={(newTag) => setKun([newTag, ...tags])} />
-      <Divider />
-      <CardBody className="gap-4">
-        {loading ? (
-          <KunLoading hint="正在获取补丁数据..." />
-        ) : (
-          <div className="grid grid-cols-1 gap-4 md:grid-cols-2 lg:grid-cols-3">
-            {kun.map((tag) => (
-              <TagCard key={tag.id} tag={tag} />
-            ))}
-          </div>
-        )}
-      </CardBody>
+
+      {!isMounted || loading ? (
+        <KunLoading hint="正在获取标签数据..." />
+      ) : (
+        <KunMasonryGrid columnWidth={256} gap={16}>
+          {kun.map((tag) => (
+            <TagCard key={tag.id} tag={tag} />
+          ))}
+        </KunMasonryGrid>
+      )}
 
       {total > 24 && (
         <div className="flex justify-center">
@@ -68,6 +67,6 @@ export const Container = ({ tags }: Props) => {
           />
         </div>
       )}
-    </Card>
+    </div>
   )
 }

@@ -12,9 +12,13 @@ interface Props {
 export const TagCard = ({ tag }: Props) => {
   const router = useRouter()
   return (
-    <Card isPressable onPress={() => router.push(`/tag/${tag.id}`)}>
+    <Card
+      isPressable
+      onPress={() => router.push(`/tag/${tag.id}`)}
+      className="w-full"
+    >
       <CardBody className="gap-2">
-        <div className="flex items-center justify-between">
+        <div className="flex flex-wrap items-center justify-between gap-2">
           <h3 className="text-lg font-semibold transition-colors hover:text-primary-500 line-clamp-2">
             {tag.name}
           </h3>

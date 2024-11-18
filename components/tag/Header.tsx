@@ -5,6 +5,7 @@ import { Button } from '@nextui-org/button'
 import { useDisclosure } from '@nextui-org/modal'
 import { Plus, Tag } from 'lucide-react'
 import { CreateTagModal } from '~/components/tag/CreateTagModal'
+import { KunHeader } from '../kun/Header'
 import type { Tag as TagType } from '~/types/api/tag'
 
 interface Props {
@@ -16,7 +17,7 @@ export const TagHeader = ({ setNewTag }: Props) => {
 
   return (
     <>
-      <CardHeader className="flex items-center justify-between px-6 py-4">
+      {/* <CardHeader className="flex items-center justify-between px-6 py-4">
         <div className="flex items-center gap-2">
           <Tag className="w-6 h-6" />
           <h1 className="text-2xl font-bold">标签列表</h1>
@@ -28,7 +29,9 @@ export const TagHeader = ({ setNewTag }: Props) => {
         >
           创建标签
         </Button>
-      </CardHeader>
+      </CardHeader> */}
+
+      <KunHeader name="标签列表" description="这里展示了本站补丁的所有标签" />
 
       <CreateTagModal
         isOpen={isOpen}

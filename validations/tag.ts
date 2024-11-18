@@ -5,7 +5,7 @@ export const createTagSchema = z.object({
     .string()
     .trim()
     .min(1, { message: '标签名不可为空' })
-    .max(107, { message: '单个标签最大 107 个字符' }),
+    .max(17, { message: '单个标签最大 17 个字符' }),
   introduction: z
     .string()
     .trim()
@@ -16,7 +16,7 @@ export const createTagSchema = z.object({
       .string()
       .trim()
       .min(1, { message: '标签名不可为空' })
-      .max(107, { message: '单个标签的别名最大 107 个字符' })
+      .max(17, { message: '单个标签的别名最大 17 个字符' })
   )
 })
 
