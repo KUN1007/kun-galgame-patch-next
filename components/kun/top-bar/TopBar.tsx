@@ -41,6 +41,10 @@ const kunNavItem: KunNavItem[] = [
     href: '/edit/create'
   },
   {
+    name: '补丁标签',
+    href: '/tag'
+  },
+  {
     name: '关于我们',
     href: '/about'
   },

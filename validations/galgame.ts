@@ -4,6 +4,8 @@ import { ALL_SUPPORTED_TYPES } from '~/components/patch/resource/_constants'
 export const galgameSchema = z.object({
   selectedTypes: z
     .array(z.string())
+    .min(1)
+    .max(10)
     .refine(
       (types) => types.every((type) => ALL_SUPPORTED_TYPES.includes(type)),
       { message: '非法的补丁类型' }

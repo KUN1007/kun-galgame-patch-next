@@ -56,17 +56,32 @@ export const patchResourceCreateSchema = z.object({
     .min(1)
     .max(10007, { message: '资源备注最多 10007 字' }),
   type: z
-    .array(z.enum(SUPPORTED_TYPES))
+    .array(z.string())
     .min(1, { message: '请选择至少一个资源类型' })
-    .max(10, { message: '您的单个补丁资源最多有 10 条链接' }),
+    .max(10, { message: '您的单个补丁资源最多有 10 条链接' })
+    .refine((types) => types.every((type) => SUPPORTED_TYPES.includes(type)), {
+      message: '非法的补丁类型'
+    }),
   language: z
-    .array(z.enum(SUPPORTED_LANGUAGES))
+    .array(z.string())
     .min(1, { message: '请选择至少一个资源语言' })
-    .max(10, { message: '您的单个补丁资源最多有 10 个语言' }),
+    .max(10, { message: '您的单个补丁资源最多有 10 个语言' })
+    .refine(
+      (types) => types.every((type) => SUPPORTED_LANGUAGES.includes(type)),
+      {
+        message: '非法的补丁语言'
+      }
+    ),
   platform: z
-    .array(z.enum(SUPPORTED_PLATFORMS))
+    .array(z.string())
     .min(1, { message: '请选择至少一个资源平台' })
     .max(10, { message: '您的单个补丁资源最多有 10 个平台' })
+    .refine(
+      (types) => types.every((type) => SUPPORTED_PLATFORMS.includes(type)),
+      {
+        message: '非法的补丁平台'
+      }
+    )
 })
 
 export const patchResourceUpdateSchema = patchResourceCreateSchema.merge(

@@ -1,8 +1,45 @@
-import { router, privateProcedure } from '~/lib/trpc'
+import { router, publicProcedure, privateProcedure } from '~/lib/trpc'
 import { prisma } from '~/prisma/index'
-import { createTagSchema } from '~/validations/tag'
+import { createTagSchema, getTagByIdSchema } from '~/validations/tag'
+import type { Tag, TagDetail } from '~/types/api/tag'
 
 export const tagRouter = router({
+  getTag: publicProcedure.query(async ({ ctx, input }) => {
+    const data = await prisma.patch_tag.findMany()
+
+    const tags: Tag[] = data.map((tag) => ({
+      id: tag.id,
+      name: tag.name,
+      count: tag.count,
+      alias: tag.alias
+    }))
+
+    return tags
+  }),
+
+  getTagById: publicProcedure
+    .input(getTagByIdSchema)
+    .query(async ({ ctx, input }) => {
+      const { tagId } = input
+
+      const tag: TagDetail | null = await prisma.patch_tag.findUnique({
+        where: { id: tagId },
+        select: {
+          id: true,
+          name: true,
+          count: true,
+          alias: true,
+          introduction: true,
+          created: true
+        }
+      })
+      if (!tag) {
+        return '未找到标签'
+      }
+
+      return tag
+    }),
+
   createTag: privateProcedure
     .input(createTagSchema)
     .mutation(async ({ ctx, input }) => {
@@ -23,6 +60,12 @@ export const tagRouter = router({
           name,
           introduction,
           alias
+        },
+        select: {
+          id: true,
+          name: true,
+          count: true,
+          alias: true
         }
       })
 
