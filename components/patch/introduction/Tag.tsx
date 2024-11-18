@@ -1,40 +1,37 @@
 'use client'
 
 import { useState } from 'react'
-import { CreateTag } from './CreateTag'
-
-interface PatchTag {
-  name: string
-  count: number
-}
+import { Chip } from '@nextui-org/chip'
+import { PatchTagSelector } from './PatchTagSelector'
+import type { Tag } from '~/types/api/tag'
 
 interface Props {
-  // tags: PatchTag[]
   patchId: number
+  initialTags: Tag[]
 }
 
-export const Tag = ({ patchId }: Props) => {
-  const [selectedTags, setSelectedTags] = useState<PatchTag[]>([])
-
-  const existingTags: PatchTag[] = []
-
-  const handleTagsChange = (newTags: PatchTag[]) => {
-    setSelectedTags(newTags)
-  }
+export const PatchTag = ({ patchId, initialTags }: Props) => {
+  const [selectedTags, setSelectedTags] = useState<Tag[]>(initialTags)
 
   return (
-    <div className="mt-4">
-      <h3 className="mb-4 text-xl font-medium">游戏标签</h3>
+    <div className="mt-4 space-y-4">
+      <h3 className="text-xl font-medium">游戏标签</h3>
 
-      <div>
-        <h2 className="mb-2 text-lg font-semibold">Tags</h2>
-        <CreateTag
-          patchId={patchId}
-          existingTags={existingTags}
-          selectedTags={selectedTags}
-          onTagsChange={handleTagsChange}
-        />
+      <div className="space-x-2">
+        {initialTags.map((tag) => (
+          <Chip color="secondary" variant="flat" key={tag.id}>
+            {tag.name}
+          </Chip>
+        ))}
       </div>
+
+      <PatchTagSelector
+        patchId={patchId}
+        initialTags={initialTags}
+        onTagsAdded={(newTags) => {
+          setSelectedTags([...selectedTags, ...newTags])
+        }}
+      />
     </div>
   )
 }

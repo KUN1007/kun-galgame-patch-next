@@ -21,13 +21,13 @@ export const Info = ({ intro }: Props) => {
         <div className="flex items-center gap-2 text-sm text-gray-500">
           <Clock className="w-4 h-4" />
           <span>
-            发布时间: {formatDate(intro.updated, { isShowYear: true })}
+            发布时间: {formatDate(intro.created, { isShowYear: true })}
           </span>
         </div>
         <div className="flex items-center gap-2 text-sm text-gray-500">
           <RefreshCw className="w-4 h-4" />
           <span>
-            更新时间: {formatDate(intro.created, { isShowYear: true })}
+            更新时间: {formatDate(intro.updated, { isShowYear: true })}
           </span>
         </div>
         <div className="flex items-center gap-2 text-sm text-gray-500">

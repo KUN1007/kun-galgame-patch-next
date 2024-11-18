@@ -1,11 +1,10 @@
 import { z } from 'zod'
 import { publicProcedure, privateProcedure } from '~/lib/trpc'
 import { prisma } from '~/prisma/index'
-import { markdownToHtml } from '~/server/utils/markdownToHtml'
 import { uploadPatchBanner } from '../edit/_upload'
 import { parsePatchBannerMiddleware } from './_middleware'
 import { updatePatchBannerSchema } from '~/validations/patch'
-import type { Patch, PatchIntroduction } from '~/types/api/patch'
+import type { Patch } from '~/types/api/patch'
 
 export const getPatchById = publicProcedure
   .input(
@@ -64,34 +63,6 @@ export const getPatchById = publicProcedure
       },
       created: String(patch.created),
       _count: patch._count
-    }
-
-    return response
-  })
-
-export const getPatchIntroduction = publicProcedure
-  .input(
-    z.object({
-      patchId: z.number({ message: '补丁 ID 必须为数字' }).min(1).max(9999999)
-    })
-  )
-  .query(async ({ ctx, input }) => {
-    const { patchId } = input
-
-    const patch = await prisma.patch.findUnique({
-      where: { id: patchId }
-    })
-    if (!patch) {
-      return '未找到对应补丁'
-    }
-
-    const response: PatchIntroduction = {
-      vndbId: patch.vndb_id,
-      introduction: await markdownToHtml(patch.introduction),
-      alias: patch.alias,
-      released: patch.released,
-      created: String(patch.created),
-      updated: String(patch.updated)
     }
 
     return response

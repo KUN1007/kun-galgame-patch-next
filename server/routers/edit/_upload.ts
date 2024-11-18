@@ -9,14 +9,14 @@ export const uploadPatchBanner = async (image: ArrayBuffer, id: number) => {
       fit: 'inside',
       withoutEnlargement: true
     })
-    .avif({ quality: 50 })
+    .avif({ quality: 60 })
     .toBuffer()
   const miniBanner = await sharp(image)
     .resize(460, 259, {
       fit: 'inside',
       withoutEnlargement: true
     })
-    .avif({ quality: 50 })
+    .avif({ quality: 60 })
     .toBuffer()
 
   if (!checkBufferSize(miniBanner, 1.007)) {

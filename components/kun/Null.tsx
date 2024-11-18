@@ -1,5 +1,4 @@
 import { randomNum } from '~/utils/random'
-import Image from 'next/image'
 
 const randomPackIndex = randomNum(1, 5)
 const randomStickerIndex = randomNum(1, 80)
@@ -11,7 +10,7 @@ interface Props {
 
 export const KunNull = ({ message }: Props) => {
   return (
-    <div className="grid w-full h-full space-y-4 place-items-center">
+    <div className="flex flex-col items-center justify-center w-full h-full space-y-4">
       <img
         className="rounded-2xl"
         src={stickerSrc}

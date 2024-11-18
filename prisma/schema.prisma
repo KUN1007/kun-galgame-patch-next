@@ -211,7 +211,7 @@ model patch_company {
   id Int @id @default(autoincrement())
 
   name             String   @db.VarChar(107)
-  primary_language String   @db.VarChar(107)
+  primary_language String[]
   official_website String[]
   parent_brand     String[]
   alias            String[]

@@ -6,6 +6,14 @@ import {
   SUPPORTED_PLATFORMS
 } from '~/components/patch/resource/_constants'
 
+export const patchTagAddSchema = z.object({
+  patchId: z.number({ message: '补丁 ID 必须为数字' }).min(1).max(9999999),
+  tagId: z
+    .array(z.number({ message: '标签 ID 必须为数字' }).min(1).max(9999999))
+    .min(1)
+    .max(107, { message: '一个补丁最多有 107 个标签' })
+})
+
 export const patchCommentCreateSchema = z.object({
   patchId: z.number().min(1).max(9999999),
   parentId: z.number().min(1).max(9999999).nullable(),

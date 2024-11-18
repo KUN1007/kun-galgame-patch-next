@@ -1,3 +1,5 @@
+import { Tag } from './tag'
+
 export interface Patch {
   id: number
   name: string
@@ -28,9 +30,10 @@ export interface PatchIntroduction {
   vndbId: string
   introduction: string
   released: string
+  alias: string[]
+  tag: Tag[]
   created: string
   updated: string
-  alias: string[]
 }
 
 export interface PatchPullRequest {

@@ -2,92 +2,120 @@
 
 import { useEffect, useState } from 'react'
 import {
-  Button,
-  Chip,
   Modal,
   ModalContent,
   ModalHeader,
   ModalBody,
   ModalFooter,
-  useDisclosure,
-  Checkbox,
-  ScrollShadow
-} from '@nextui-org/react'
+  useDisclosure
+} from '@nextui-org/modal'
+import { Button } from '@nextui-org/button'
+import { Chip } from '@nextui-org/chip'
+import { Checkbox } from '@nextui-org/checkbox'
+import { ScrollShadow } from '@nextui-org/scroll-shadow'
+import { Link } from '@nextui-org/link'
 import { Tag } from 'lucide-react'
-
-interface PatchTag {
-  id: number
-  name: string
-  introduction: string
-  count: number
-}
+import { useMounted } from '~/hooks/useMounted'
+import { api } from '~/lib/trpc-client'
+import { useDebounce } from 'use-debounce'
+import { SearchTags } from '~/components/tag/SearchTag'
+import { KunLoading } from '~/components/kun/Loading'
+import type { Tag as TagType } from '~/types/api/tag'
 
 interface Props {
   patchId: number
-  onTagsAdded?: () => void
+  initialTags: TagType[]
+  onTagsAdded: (tags: TagType[]) => void
 }
 
-export const PatchTagSelector = ({ patchId, onTagsAdded }: Props) => {
+export const PatchTagSelector = ({
+  patchId,
+  initialTags,
+  onTagsAdded
+}: Props) => {
   const { isOpen, onOpen, onClose } = useDisclosure()
-  const [tags, setTags] = useState<PatchTag[]>([])
+  const [tags, setTags] = useState<TagType[]>([])
   const [selectedTags, setSelectedTags] = useState<number[]>([])
   const [existingTags, setExistingTags] = useState<number[]>([])
   const [isLoading, setIsLoading] = useState(false)
-  const [error, setError] = useState('')
 
-  useEffect(() => {
-    if (isOpen) {
-      fetchTags()
-      fetchExistingTags()
-    }
-  }, [isOpen, patchId])
+  const [loading, setLoading] = useState(false)
+  const isMounted = useMounted()
 
   const fetchTags = async () => {
-    const response = await fetch('/api/patch-tags')
-    if (!response.ok) throw new Error('Failed to fetch tags')
-    const data = await response.json()
-    setTags(data.data)
+    setLoading(true)
+    const response = await api.tag.getTag.query({
+      page: 1,
+      limit: 100
+    })
+    setTags(response.tags)
+
+    const ids1 = initialTags.map((tag) => tag.id)
+    const ids2 = response.tags.map((tag) => tag.id)
+    const commonIds = ids1.filter((id) => ids2.includes(id))
+    setExistingTags(commonIds)
+
+    setLoading(false)
   }
 
-  const fetchExistingTags = async () => {
-    const response = await fetch(`/api/patches/${patchId}/tags`)
-    if (!response.ok) throw new Error('Failed to fetch existing tags')
-    const data = await response.json()
-    setExistingTags(data.data.map((r: any) => r.tag_id))
+  useEffect(() => {
+    if (!isMounted) {
+      return
+    }
+    fetchTags()
+  }, [])
+
+  const [query, setQuery] = useState('')
+  const [debouncedQuery] = useDebounce(query, 500)
+  const [searching, setSearching] = useState(false)
+
+  useEffect(() => {
+    if (debouncedQuery) {
+      handleSearch()
+    } else {
+      fetchTags()
+    }
+  }, [debouncedQuery])
+
+  const handleSearch = async () => {
+    if (!query.trim()) {
+      return
+    }
+
+    setSearching(true)
+    const response = await api.tag.searchTag.mutate({
+      query: query.split(' ').filter((term) => term.length > 0)
+    })
+    setTags(response)
+    setSearching(false)
   }
 
   const handleSubmit = async () => {
-    if (selectedTags.length === 0) return
-
-    setIsLoading(true)
-    setError('')
-
-    const response = await fetch(`/api/patches/${patchId}/tags`, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ tagIds: selectedTags })
-    })
-
-    if (!response.ok) {
-      const error = await response.json()
-      throw new Error(error.error || 'Failed to add tags')
+    if (!selectedTags.length) {
+      return
     }
 
+    setIsLoading(true)
+    await api.patch.handleAddPatchTag.mutate({
+      patchId,
+      tagId: selectedTags
+    })
+
     setSelectedTags([])
-    onTagsAdded?.()
+    onTagsAdded(tags.filter((t) => selectedTags.includes(t.id)))
     onClose()
     setIsLoading(false)
   }
 
   return (
-    <>
+    <div>
       <Button
         onPress={onOpen}
         color="primary"
-        variant="flat"
+        variant="bordered"
         startContent={<Tag size={20} />}
       >
-        Add Tags
+        更改标签
       </Button>
 
       <Modal
@@ -97,61 +125,76 @@ export const PatchTagSelector = ({ patchId, onTagsAdded }: Props) => {
         scrollBehavior="inside"
       >
         <ModalContent>
-          <ModalHeader>Add Tags to Patch</ModalHeader>
+          <ModalHeader>更改这个 Galgame 的标签</ModalHeader>
           <ModalBody>
-            {error && <div className="mb-4 text-sm text-danger">{error}</div>}
-            <ScrollShadow className="max-h-[400px]">
-              <div className="space-y-2">
-                {tags.map((tag) => (
-                  <div
-                    key={tag.id}
-                    className="flex items-start gap-2 p-2 rounded-lg hover:bg-default-100"
-                  >
-                    <Checkbox
-                      isDisabled={existingTags.includes(tag.id)}
-                      isSelected={selectedTags.includes(tag.id)}
-                      onValueChange={(checked) => {
-                        setSelectedTags(
-                          checked
-                            ? [...selectedTags, tag.id]
-                            : selectedTags.filter((id) => id !== tag.id)
-                        )
-                      }}
-                    >
-                      <div className="flex flex-col gap-1">
-                        <div className="flex items-center gap-2">
-                          <span className="font-medium">{tag.name}</span>
-                          <Chip size="sm" variant="flat">
-                            {tag.count} uses
-                          </Chip>
-                        </div>
-                        {tag.introduction && (
-                          <p className="text-small text-default-500">
-                            {tag.introduction}
-                          </p>
-                        )}
+            <SearchTags
+              query={query}
+              setQuery={setQuery}
+              handleSearch={handleSearch}
+              searching={searching}
+            />
+
+            {!searching && (
+              <ScrollShadow className="max-h-[400px]">
+                {loading ? (
+                  <KunLoading hint="正在获取标签数据..." />
+                ) : (
+                  <div className="space-y-2">
+                    {tags.map((tag) => (
+                      <div
+                        key={tag.id}
+                        className="flex items-start gap-2 p-2 rounded-lg hover:bg-default-100"
+                      >
+                        <Checkbox
+                          isDisabled={existingTags.includes(tag.id)}
+                          isSelected={selectedTags.includes(tag.id)}
+                          onValueChange={(checked) => {
+                            setSelectedTags(
+                              checked
+                                ? [...selectedTags, tag.id]
+                                : selectedTags.filter((id) => id !== tag.id)
+                            )
+                          }}
+                        >
+                          <div className="flex flex-col gap-1">
+                            <div className="flex items-center gap-2">
+                              <span className="font-medium">{tag.name}</span>
+                              <Chip size="sm" variant="flat">
+                                {tag.count} 个补丁
+                              </Chip>
+                            </div>
+                          </div>
+                        </Checkbox>
                       </div>
-                    </Checkbox>
+                    ))}
                   </div>
-                ))}
-              </div>
-            </ScrollShadow>
+                )}
+              </ScrollShadow>
+            )}
           </ModalBody>
-          <ModalFooter>
-            <Button variant="flat" onPress={onClose}>
-              Cancel
-            </Button>
-            <Button
-              color="primary"
-              onPress={handleSubmit}
-              isLoading={isLoading}
-              isDisabled={selectedTags.length === 0}
-            >
-              Add Selected Tags
-            </Button>
+          <ModalFooter className="flex-col">
+            <div className="ml-auto space-x-2">
+              <Button variant="flat" onPress={onClose}>
+                取消
+              </Button>
+              <Button
+                color="primary"
+                onPress={handleSubmit}
+                isLoading={isLoading}
+                isDisabled={selectedTags.length === 0}
+              >
+                添加选中标签
+              </Button>
+            </div>
+            <div>
+              没有您想要的标签?{' '}
+              <Link color="primary" showAnchorIcon href="/tag">
+                去创建标签
+              </Link>
+            </div>
           </ModalFooter>
         </ModalContent>
       </Modal>
-    </>
+    </div>
   )
 }
