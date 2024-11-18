@@ -1,11 +1,25 @@
 import { router, publicProcedure, privateProcedure } from '~/lib/trpc'
 import { prisma } from '~/prisma/index'
-import { createTagSchema, getTagByIdSchema } from '~/validations/tag'
+import {
+  createTagSchema,
+  getTagSchema,
+  getTagByIdSchema
+} from '~/validations/tag'
 import type { Tag, TagDetail } from '~/types/api/tag'
 
 export const tagRouter = router({
-  getTag: publicProcedure.query(async ({ ctx, input }) => {
-    const data = await prisma.patch_tag.findMany()
+  getTag: publicProcedure.input(getTagSchema).query(async ({ ctx, input }) => {
+    const { page, limit } = input
+    const offset = (page - 1) * limit
+
+    const [data, total] = await Promise.all([
+      await prisma.patch_tag.findMany({
+        take: limit,
+        skip: offset,
+        orderBy: { count: 'desc' }
+      }),
+      await prisma.patch.count()
+    ])
 
     const tags: Tag[] = data.map((tag) => ({
       id: tag.id,
@@ -14,7 +28,7 @@ export const tagRouter = router({
       alias: tag.alias
     }))
 
-    return tags
+    return { tags, total }
   }),
 
   getTagById: publicProcedure

@@ -9,15 +9,16 @@ import {
   ModalContent,
   ModalHeader,
   ModalBody,
-  ModalFooter,
-  Button,
-  Input,
-  Textarea,
-  Chip
-} from '@nextui-org/react'
+  ModalFooter
+} from '@nextui-org/modal'
+import { Button } from '@nextui-org/button'
+import { Input, Textarea } from '@nextui-org/input'
+import { Chip } from '@nextui-org/chip'
+import { Plus } from 'lucide-react'
 import { createTagSchema } from '~/validations/tag'
 import { api } from '~/lib/trpc-client'
 import { useErrorHandler } from '~/hooks/useErrorHandler'
+import toast from 'react-hot-toast'
 import type { Tag } from '~/types/api/tag'
 
 type FormData = z.infer<typeof createTagSchema>
@@ -29,51 +30,66 @@ interface Props {
 }
 
 export const CreateTagModal = ({ isOpen, onClose, onSuccess }: Props) => {
-  const [aliases, setAliases] = useState<string[]>([])
-  const [aliasInput, setAliasInput] = useState('')
+  const [input, setInput] = useState('')
   const [isSubmitting, setIsSubmitting] = useState(false)
 
   const {
     register,
     handleSubmit,
     formState: { errors },
+    getValues,
+    watch,
+    setValue,
     reset
   } = useForm<FormData>({
-    resolver: zodResolver(createTagSchema)
+    resolver: zodResolver(createTagSchema),
+    defaultValues: {
+      name: '',
+      introduction: '',
+      alias: []
+    }
   })
 
-  const handleAddAlias = (e: React.KeyboardEvent) => {
-    if (e.key === 'Enter' && aliasInput.trim()) {
-      e.preventDefault()
-      if (!aliases.includes(aliasInput.trim())) {
-        setAliases([...aliases, aliasInput.trim()])
-      }
-      setAliasInput('')
+  const addTag = () => {
+    const lowerTag = input.trim().toLowerCase()
+    if (!lowerTag) {
+      return
+    }
+
+    const prevAlias = getValues().alias
+    if (!prevAlias?.includes(lowerTag)) {
+      setValue('alias', [...prevAlias, lowerTag])
+      setInput('')
+    } else {
+      toast.error('标签已存在, 请更换')
     }
   }
 
   const handleRemoveAlias = (index: number) => {
-    setAliases(aliases.filter((_, i) => i !== index))
+    const prevAlias = getValues().alias
+    setValue(
+      'alias',
+      prevAlias?.filter((_, i) => i !== index)
+    )
   }
 
   const onSubmit = async (data: FormData) => {
-    setIsSubmitting(true)
+    if (!data.alias) {
+      return
+    }
+    addTag()
 
+    setIsSubmitting(true)
     const res = await api.tag.createTag.mutate(data)
     useErrorHandler(res, (value) => {
       reset()
-      setAliases([])
-      setAliasInput('')
       onSuccess(value)
     })
-
     setIsSubmitting(false)
   }
 
   const handleClose = () => {
     reset()
-    setAliases([])
-    setAliasInput('')
     onClose()
   }
 
@@ -101,15 +117,35 @@ export const CreateTagModal = ({ isOpen, onClose, onSuccess }: Props) => {
               />
 
               <div className="space-y-2">
-                <Input
-                  label="别名"
-                  placeholder="按回车添加别名"
-                  value={aliasInput}
-                  onChange={(e) => setAliasInput(e.target.value)}
-                  onKeyDown={handleAddAlias}
-                />
+                <div className="flex space-x-2">
+                  <Input
+                    labelPlacement="outside"
+                    label="别名"
+                    placeholder="可以按回车添加别名"
+                    value={input}
+                    onChange={(e) => {
+                      e.preventDefault()
+                      setInput(e.target.value)
+                    }}
+                    onKeyDown={(e) => {
+                      if (e.key === 'Enter') {
+                        e.preventDefault()
+                        addTag()
+                      }
+                    }}
+                  />
+                  <Button
+                    color="primary"
+                    onClick={addTag}
+                    className="self-end"
+                    isIconOnly
+                  >
+                    <Plus size={20} />
+                  </Button>
+                </div>
+
                 <div className="flex flex-wrap gap-2">
-                  {aliases.map((alias, index) => (
+                  {watch().alias?.map((alias, index) => (
                     <Chip
                       key={index}
                       onClose={() => handleRemoveAlias(index)}

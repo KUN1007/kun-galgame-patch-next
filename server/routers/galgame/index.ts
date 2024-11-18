@@ -20,34 +20,35 @@ export const galgameRouter = router({
             }
           }
 
-      const data: GalgameCard[] = await prisma.patch.findMany({
-        take: limit,
-        skip: offset,
-        orderBy: { [sortField]: sortOrder },
-        where: typeQuery,
-        select: {
-          id: true,
-          name: true,
-          banner: true,
-          view: true,
-          type: true,
-          language: true,
-          platform: true,
-          created: true,
-          _count: {
-            select: {
-              favorite_by: true,
-              contribute_by: true,
-              resource: true,
-              comment: true
+      const [data, total] = await Promise.all([
+        await prisma.patch.findMany({
+          take: limit,
+          skip: offset,
+          orderBy: { [sortField]: sortOrder },
+          where: typeQuery,
+          select: {
+            id: true,
+            name: true,
+            banner: true,
+            view: true,
+            type: true,
+            language: true,
+            platform: true,
+            created: true,
+            _count: {
+              select: {
+                favorite_by: true,
+                contribute_by: true,
+                resource: true,
+                comment: true
+              }
             }
           }
-        }
-      })
-
-      const total = await prisma.patch.count({
-        where: typeQuery
-      })
+        }),
+        await prisma.patch.count({
+          where: typeQuery
+        })
+      ])
 
       return { data, total }
     })
