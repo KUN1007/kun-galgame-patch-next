@@ -1,4 +1,3 @@
-import dynamic from 'next/dynamic'
 import { MilkdownProvider } from '@milkdown/react'
 import { useCreatePatchStore } from '~/store/editStore'
 import { useRewritePatchStore } from '~/store/rewriteStore'

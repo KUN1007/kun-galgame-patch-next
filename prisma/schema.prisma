@@ -185,6 +185,7 @@ model patch_tag {
   id           Int      @id @default(autoincrement())
   name         String   @db.VarChar(107)
   introduction String   @default("") @db.VarChar(10007)
+  count        Int      @default(0)
   alias        String[]
 
   patch_relation patch_tag_relation[]
