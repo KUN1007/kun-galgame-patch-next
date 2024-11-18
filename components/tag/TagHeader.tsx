@@ -11,18 +11,24 @@ interface Props {
   setNewTag: (tag: TagType) => void
 }
 
-export const AddTag = ({ setNewTag }: Props) => {
+export const TagHeader = ({ setNewTag }: Props) => {
   const { isOpen, onOpen, onClose } = useDisclosure()
 
   return (
     <>
-      <Button
-        color="primary"
-        onPress={onOpen}
-        startContent={<Plus size={20} />}
-      >
-        创建标签
-      </Button>
+      <KunHeader
+        name="标签列表"
+        description="这里是补丁中的所有标签"
+        headerEndContent={
+          <Button
+            color="primary"
+            onPress={onOpen}
+            startContent={<Plus size={20} />}
+          >
+            创建标签
+          </Button>
+        }
+      />
 
       <CreateTagModal
         isOpen={isOpen}

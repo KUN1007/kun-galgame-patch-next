@@ -9,8 +9,7 @@ import { useDebounce } from 'use-debounce'
 import { Pagination } from '@nextui-org/pagination'
 import { KunMasonryGrid } from '~/components/kun/MasonryGrid'
 import { KunLoading } from '~/components/kun/Loading'
-import { KunHeader } from '~/components/kun/Header'
-import { AddTag } from './AddTag'
+import { TagHeader } from './TagHeader'
 import { TagCard } from './Card'
 import { api } from '~/lib/trpc-client'
 import { useMounted } from '~/hooks/useMounted'
@@ -75,7 +74,7 @@ export const Container = ({ initialTags }: Props) => {
 
   return (
     <div className="flex flex-col w-full my-8">
-      <KunHeader name="标签列表" description="这里展示了本站补丁的所有标签" />
+      <TagHeader setNewTag={(newTag) => setTags([newTag, ...initialTags])} />
 
       <div className="mb-8">
         <div className="flex space-x-4">
@@ -92,7 +91,6 @@ export const Container = ({ initialTags }: Props) => {
               if (e.key === 'Enter') handleSearch()
             }}
           />
-          <AddTag setNewTag={(newTag) => setTags([newTag, ...initialTags])} />
         </div>
 
         {searching && <KunLoading hint="正在搜索标签数据..." />}
