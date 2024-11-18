@@ -39,14 +39,12 @@ export const searchRouter = router({
                 }
               }
             },
+            orderBy: { updated: 'desc' },
             take: limit,
-            skip: offset,
-            orderBy: { updated: 'desc' }
+            skip: offset
           })
         )
       )
-
-      const flatPatches: GalgameCard[] = patches.flat()
 
       const total = await prisma.patch.count({
         where: {
@@ -61,6 +59,6 @@ export const searchRouter = router({
         }
       })
 
-      return { patches: flatPatches, total }
+      return { patches: patches.flat(), total }
     })
 })

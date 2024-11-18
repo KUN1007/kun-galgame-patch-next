@@ -28,3 +28,16 @@ export const getTagSchema = z.object({
 export const getTagByIdSchema = z.object({
   tagId: z.number().min(1).max(9999999)
 })
+
+export const searchTagSchema = z.object({
+  query: z
+    .array(
+      z
+        .string()
+        .trim()
+        .min(1)
+        .max(107, { message: '单个搜索关键词最大长度为 107' })
+    )
+    .min(1)
+    .max(10, { message: '您最多使用 10 组关键词' })
+})

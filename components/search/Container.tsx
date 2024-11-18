@@ -64,7 +64,7 @@ export const SearchPage = () => {
 
   return (
     <div className="w-full py-8">
-      <KunHeader name="搜索" description="输入内容以自动搜索" />
+      <KunHeader name="搜索 Galgame" description="输入内容以自动搜索 Galgame" />
 
       <div className="mb-8">
         <Input

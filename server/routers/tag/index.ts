@@ -3,7 +3,8 @@ import { prisma } from '~/prisma/index'
 import {
   createTagSchema,
   getTagSchema,
-  getTagByIdSchema
+  getTagByIdSchema,
+  searchTagSchema
 } from '~/validations/tag'
 import type { Tag, TagDetail } from '~/types/api/tag'
 
@@ -52,6 +53,35 @@ export const tagRouter = router({
       }
 
       return tag
+    }),
+
+  searchTag: publicProcedure
+    .input(searchTagSchema)
+    .mutation(async ({ ctx, input }) => {
+      const { query } = input
+
+      const tags = await Promise.all(
+        query.map(async (q) =>
+          prisma.patch_tag.findMany({
+            where: {
+              OR: [
+                { name: { contains: q, mode: 'insensitive' } },
+                { alias: { has: q } }
+              ]
+            },
+            select: {
+              id: true,
+              name: true,
+              count: true,
+              alias: true
+            },
+            orderBy: { count: 'desc' },
+            take: 100
+          })
+        )
+      )
+
+      return tags.flat()
     }),
 
   createTag: privateProcedure

@@ -6,5 +6,5 @@ export default async function Kun() {
     page: 1,
     limit: 100
   })
-  return <Container tags={res.tags} />
+  return <Container initialTags={res.tags} />
 }
