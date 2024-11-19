@@ -6,7 +6,7 @@ import {
   SUPPORTED_PLATFORMS
 } from '~/components/patch/resource/_constants'
 
-export const patchTagAddSchema = z.object({
+export const patchTagChangeSchema = z.object({
   patchId: z.number({ message: '补丁 ID 必须为数字' }).min(1).max(9999999),
   tagId: z
     .array(z.number({ message: '标签 ID 必须为数字' }).min(1).max(9999999))

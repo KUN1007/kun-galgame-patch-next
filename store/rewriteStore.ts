@@ -1,5 +1,4 @@
 import { create } from 'zustand'
-
 export interface RewritePatchData {
   id: number
   name: string

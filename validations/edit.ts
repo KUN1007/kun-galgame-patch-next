@@ -37,13 +37,11 @@ export const patchUpdateSchema = z.object({
     .max(100007, { message: '游戏介绍最多 100007 字' }),
   alias: z
     .array(
-      zfd.text(
-        z
-          .string()
-          .trim()
-          .min(1, { message: '单个别名至少一个字符' })
-          .max(107, { message: '单个别名至多 107 个字符' })
-      )
+      z
+        .string()
+        .trim()
+        .min(1, { message: '单个别名至少一个字符' })
+        .max(107, { message: '单个别名至多 107 个字符' })
     )
     .max(30, { message: '您最多使用 30 个别名' })
     .optional()

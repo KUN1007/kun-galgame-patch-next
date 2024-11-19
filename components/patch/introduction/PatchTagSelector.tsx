@@ -1,6 +1,6 @@
 'use client'
 
-import { useEffect, useState } from 'react'
+import { useEffect, useReducer, useState } from 'react'
 import {
   Modal,
   ModalContent,
@@ -20,54 +20,89 @@ import { api } from '~/lib/trpc-client'
 import { useDebounce } from 'use-debounce'
 import { SearchTags } from '~/components/tag/SearchTag'
 import { KunLoading } from '~/components/kun/Loading'
+import { useRouter } from 'next/navigation'
 import type { Tag as TagType } from '~/types/api/tag'
+import toast from 'react-hot-toast'
 
 interface Props {
   patchId: number
   initialTags: TagType[]
-  onTagsAdded: (tags: TagType[]) => void
+  onTagChange: (tags: TagType[]) => void
+}
+
+type State = {
+  selectedTags: number[]
+  removedTags: number[]
+  existingTags: number[]
+  isLoading: boolean
+}
+
+type Action =
+  | { type: 'SET_SELECTED_TAGS'; payload: number[] }
+  | { type: 'SET_REMOVED_TAGS'; payload: number[] }
+  | { type: 'SET_EXISTING_TAGS'; payload: number[] }
+  | { type: 'SET_LOADING'; payload: boolean }
+
+const reducer = (state: State, action: Action): State => {
+  switch (action.type) {
+    case 'SET_SELECTED_TAGS':
+      return { ...state, selectedTags: action.payload }
+    case 'SET_REMOVED_TAGS':
+      return { ...state, removedTags: action.payload }
+    case 'SET_EXISTING_TAGS':
+      return { ...state, existingTags: action.payload }
+    case 'SET_LOADING':
+      return { ...state, isLoading: action.payload }
+    default:
+      return state
+  }
 }
 
 export const PatchTagSelector = ({
   patchId,
   initialTags,
-  onTagsAdded
+  onTagChange
 }: Props) => {
   const { isOpen, onOpen, onClose } = useDisclosure()
   const [tags, setTags] = useState<TagType[]>([])
-  const [selectedTags, setSelectedTags] = useState<number[]>([])
-  const [existingTags, setExistingTags] = useState<number[]>([])
-  const [isLoading, setIsLoading] = useState(false)
-
-  const [loading, setLoading] = useState(false)
-  const isMounted = useMounted()
-
-  const fetchTags = async () => {
-    setLoading(true)
-    const response = await api.tag.getTag.query({
-      page: 1,
-      limit: 100
-    })
-    setTags(response.tags)
-
-    const ids1 = initialTags.map((tag) => tag.id)
-    const ids2 = response.tags.map((tag) => tag.id)
-    const commonIds = ids1.filter((id) => ids2.includes(id))
-    setExistingTags(commonIds)
-
-    setLoading(false)
-  }
-
-  useEffect(() => {
-    if (!isMounted) {
-      return
-    }
-    fetchTags()
-  }, [])
-
   const [query, setQuery] = useState('')
   const [debouncedQuery] = useDebounce(query, 500)
   const [searching, setSearching] = useState(false)
+  const isMounted = useMounted()
+
+  useEffect(() => {
+    if (isOpen) {
+      const commonIds = initialTags.map((tag) => tag.id)
+      dispatch({ type: 'SET_EXISTING_TAGS', payload: commonIds })
+      dispatch({ type: 'SET_SELECTED_TAGS', payload: [] })
+      dispatch({ type: 'SET_REMOVED_TAGS', payload: [] })
+    }
+  }, [isOpen, initialTags])
+
+  const [state, dispatch] = useReducer(reducer, {
+    selectedTags: [],
+    removedTags: [],
+    existingTags: [],
+    isLoading: false
+  })
+
+  const fetchTags = async () => {
+    dispatch({ type: 'SET_LOADING', payload: true })
+    const response = await api.tag.getTag.query({ page: 1, limit: 100 })
+    setTags(response.tags)
+
+    const commonIds = initialTags
+      .map((tag) => tag.id)
+      .filter((id) => response.tags.some((tag) => tag.id === id))
+    dispatch({ type: 'SET_EXISTING_TAGS', payload: commonIds })
+    dispatch({ type: 'SET_LOADING', payload: false })
+  }
+
+  useEffect(() => {
+    if (isMounted) {
+      fetchTags()
+    }
+  }, [isMounted])
 
   useEffect(() => {
     if (debouncedQuery) {
@@ -78,33 +113,75 @@ export const PatchTagSelector = ({
   }, [debouncedQuery])
 
   const handleSearch = async () => {
-    if (!query.trim()) {
-      return
-    }
+    if (!query.trim()) return
 
     setSearching(true)
     const response = await api.tag.searchTag.mutate({
-      query: query.split(' ').filter((term) => term.length > 0)
+      query: query.split(' ').filter(Boolean)
     })
     setTags(response)
     setSearching(false)
   }
 
+  const toggleTagSelection = (tagId: number, isSelected: boolean) => {
+    if (isSelected) {
+      if (state.existingTags.includes(tagId)) {
+        dispatch({
+          type: 'SET_REMOVED_TAGS',
+          payload: state.removedTags.filter((id) => id !== tagId)
+        })
+      } else {
+        dispatch({
+          type: 'SET_SELECTED_TAGS',
+          payload: [...state.selectedTags, tagId]
+        })
+      }
+    } else {
+      if (state.existingTags.includes(tagId)) {
+        dispatch({
+          type: 'SET_REMOVED_TAGS',
+          payload: [...state.removedTags, tagId]
+        })
+      } else {
+        dispatch({
+          type: 'SET_SELECTED_TAGS',
+          payload: state.selectedTags.filter((id) => id !== tagId)
+        })
+      }
+    }
+  }
+
+  const router = useRouter()
   const handleSubmit = async () => {
-    if (!selectedTags.length) {
-      return
+    if (!state.selectedTags.length && !state.removedTags.length) return
+
+    dispatch({ type: 'SET_LOADING', payload: true })
+
+    if (state.removedTags.length) {
+      await api.patch.handleRemovePatchTag.mutate({
+        patchId,
+        tagId: state.removedTags
+      })
     }
 
-    setIsLoading(true)
-    await api.patch.handleAddPatchTag.mutate({
-      patchId,
-      tagId: selectedTags
-    })
+    if (state.selectedTags.length) {
+      await api.patch.handleAddPatchTag.mutate({
+        patchId,
+        tagId: state.selectedTags
+      })
+    }
 
-    setSelectedTags([])
-    onTagsAdded(tags.filter((t) => selectedTags.includes(t.id)))
+    const updatedTags = initialTags
+      .filter((tag) => !state.removedTags.includes(tag.id))
+      .concat(tags.filter((tag) => state.selectedTags.includes(tag.id)))
+    onTagChange(updatedTags)
+    router.refresh()
+    toast.success('更改标签成功')
+
+    dispatch({ type: 'SET_SELECTED_TAGS', payload: [] })
+    dispatch({ type: 'SET_REMOVED_TAGS', payload: [] })
     onClose()
-    setIsLoading(false)
+    dispatch({ type: 'SET_LOADING', payload: false })
   }
 
   return (
@@ -133,10 +210,9 @@ export const PatchTagSelector = ({
               handleSearch={handleSearch}
               searching={searching}
             />
-
             {!searching && (
               <ScrollShadow className="max-h-[400px]">
-                {loading ? (
+                {state.isLoading ? (
                   <KunLoading hint="正在获取标签数据..." />
                 ) : (
                   <div className="space-y-2">
@@ -146,15 +222,14 @@ export const PatchTagSelector = ({
                         className="flex items-start gap-2 p-2 rounded-lg hover:bg-default-100"
                       >
                         <Checkbox
-                          isDisabled={existingTags.includes(tag.id)}
-                          isSelected={selectedTags.includes(tag.id)}
-                          onValueChange={(checked) => {
-                            setSelectedTags(
-                              checked
-                                ? [...selectedTags, tag.id]
-                                : selectedTags.filter((id) => id !== tag.id)
-                            )
-                          }}
+                          isSelected={
+                            state.selectedTags.includes(tag.id) ||
+                            (!state.removedTags.includes(tag.id) &&
+                              state.existingTags.includes(tag.id))
+                          }
+                          onValueChange={(checked) =>
+                            toggleTagSelection(tag.id, checked)
+                          }
                         >
                           <div className="flex flex-col gap-1">
                             <div className="flex items-center gap-2">
@@ -180,10 +255,10 @@ export const PatchTagSelector = ({
               <Button
                 color="primary"
                 onPress={handleSubmit}
-                isLoading={isLoading}
-                isDisabled={selectedTags.length === 0}
+                isLoading={state.isLoading}
+                isDisabled={state.isLoading}
               >
-                添加选中标签
+                确定更改
               </Button>
             </div>
             <div>

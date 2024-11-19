@@ -1,6 +1,10 @@
 import { router } from '~/lib/trpc'
 import { getPatchById, togglePatchFavorite, updatePatchBanner } from './patch'
-import { getPatchIntroduction, handleAddPatchTag } from './introduction'
+import {
+  getPatchIntroduction,
+  handleAddPatchTag,
+  handleRemovePatchTag
+} from './introduction'
 import {
   createPatchResource,
   getPatchResource,
@@ -30,6 +34,7 @@ export const patchRouter = router({
 
   getPatchIntroduction,
   handleAddPatchTag,
+  handleRemovePatchTag,
 
   createPatchResource,
   getPatchResource,

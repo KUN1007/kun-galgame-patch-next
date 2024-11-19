@@ -11,14 +11,14 @@ interface Props {
 }
 
 export const PatchTag = ({ patchId, initialTags }: Props) => {
-  const [selectedTags, setSelectedTags] = useState<Tag[]>(initialTags)
+  const [selectedTags, setSelectedTags] = useState<Tag[]>(initialTags ?? [])
 
   return (
     <div className="mt-4 space-y-4">
       <h3 className="text-xl font-medium">游戏标签</h3>
 
       <div className="space-x-2">
-        {initialTags.map((tag) => (
+        {selectedTags.map((tag) => (
           <Chip color="secondary" variant="flat" key={tag.id}>
             {tag.name}
           </Chip>
@@ -27,10 +27,8 @@ export const PatchTag = ({ patchId, initialTags }: Props) => {
 
       <PatchTagSelector
         patchId={patchId}
-        initialTags={initialTags}
-        onTagsAdded={(newTags) => {
-          setSelectedTags([...selectedTags, ...newTags])
-        }}
+        initialTags={selectedTags}
+        onTagChange={setSelectedTags}
       />
     </div>
   )

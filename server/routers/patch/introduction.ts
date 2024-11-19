@@ -2,7 +2,7 @@ import { z } from 'zod'
 import { privateProcedure, publicProcedure } from '~/lib/trpc'
 import { prisma } from '~/prisma/index'
 import { markdownToHtml } from '~/server/utils/markdownToHtml'
-import { patchTagAddSchema } from '~/validations/patch'
+import { patchTagChangeSchema } from '~/validations/patch'
 import type { PatchIntroduction } from '~/types/api/patch'
 
 export const getPatchIntroduction = publicProcedure
@@ -49,21 +49,9 @@ export const getPatchIntroduction = publicProcedure
   })
 
 export const handleAddPatchTag = privateProcedure
-  .input(patchTagAddSchema)
+  .input(patchTagChangeSchema)
   .mutation(async ({ ctx, input }) => {
     const { patchId, tagId } = input
-
-    const user = await prisma.user.findUnique({
-      where: { id: ctx.uid }
-    })
-    if (!user) {
-      return '未找到用户'
-    }
-
-    const relationData = tagId.map((id) => ({
-      patch_id: patchId,
-      tag_id: id
-    }))
 
     const tags = await prisma.patch_tag.findMany({
       where: { id: { in: tagId } },
@@ -72,13 +60,48 @@ export const handleAddPatchTag = privateProcedure
     const tagsNameArray = tags.map((t) => t.name)
 
     return await prisma.$transaction(async (prisma) => {
+      const relationData = tagId.map((id) => ({
+        patch_id: patchId,
+        tag_id: id
+      }))
       await prisma.patch_tag_relation.createMany({
         data: relationData
       })
 
       await prisma.patch_history.create({
         data: {
-          action: '更新了',
+          action: '增加了',
+          type: '标签',
+          content: tagsNameArray.toString(),
+          user_id: ctx.uid,
+          patch_id: patchId
+        }
+      })
+    })
+  })
+
+export const handleRemovePatchTag = privateProcedure
+  .input(patchTagChangeSchema)
+  .mutation(async ({ ctx, input }) => {
+    const { patchId, tagId } = input
+
+    const tags = await prisma.patch_tag.findMany({
+      where: { id: { in: tagId } },
+      select: { name: true }
+    })
+    const tagsNameArray = tags.map((t) => t.name)
+
+    return await prisma.$transaction(async (prisma) => {
+      await prisma.patch_tag_relation.deleteMany({
+        where: {
+          patch_id: patchId,
+          tag_id: { in: tagId }
+        }
+      })
+
+      await prisma.patch_history.create({
+        data: {
+          action: '删除了',
           type: '标签',
           content: tagsNameArray.toString(),
           user_id: ctx.uid,

@@ -1,11 +1,6 @@
 'use client'
 
-import {
-  loggerLink,
-  splitLink,
-  httpBatchLink,
-  isNonJsonSerializable
-} from '@trpc/client'
+import { splitLink, httpBatchLink, isNonJsonSerializable } from '@trpc/client'
 import { observable } from '@trpc/server/observable'
 import { experimental_createTRPCNextAppDirClient } from '@trpc/next/app-dir/client'
 import { experimental_nextHttpLink } from '@trpc/next/app-dir/links/nextHttp'
@@ -39,9 +34,6 @@ export const api = experimental_createTRPCNextAppDirClient<AppRouter>({
   config() {
     return {
       links: [
-        loggerLink({
-          enabled: (op) => true
-        }),
         errorHandlerLink,
         splitLink({
           condition: (op) => isNonJsonSerializable(op.input),
