@@ -6,6 +6,7 @@ import { Input } from '@nextui-org/input'
 import { Button } from '@nextui-org/react'
 import { Pagination } from '@nextui-org/pagination'
 import { KunLoading } from '~/components/kun/Loading'
+import { KunMasonryGrid } from '~/components/kun/MasonryGrid'
 import { Search } from 'lucide-react'
 import { useDebounce } from 'use-debounce'
 import { api } from '~/lib/trpc-client'
@@ -87,16 +88,21 @@ export const SearchPage = () => {
       {loading ? (
         <KunLoading hint="正在搜索中..." />
       ) : (
-        <motion.div variants={cardContainer} initial="hidden" animate="show">
-          <div className="grid grid-cols-1 gap-6 mb-8 lg:grid-cols-2">
+        <motion.div
+          variants={cardContainer}
+          initial="hidden"
+          animate="show"
+          className="space-y-6"
+        >
+          <KunMasonryGrid columnWidth={512} gap={24}>
             {patches.map((patch) => (
               <motion.div key={patch.id} variants={cardItem}>
                 <SearchCard patch={patch} />
               </motion.div>
             ))}
-          </div>
+          </KunMasonryGrid>
 
-          {total > 0 && (
+          {total > 10 && (
             <div className="flex justify-center">
               <Pagination
                 total={Math.ceil(total / 10)}

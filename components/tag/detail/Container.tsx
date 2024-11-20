@@ -10,6 +10,7 @@ import { Pencil } from 'lucide-react'
 import { TagDetail } from '~/types/api/tag'
 import { KunLoading } from '~/components/kun/Loading'
 import { KunHeader } from '~/components/kun/Header'
+import { KunMasonryGrid } from '~/components/kun/MasonryGrid'
 import { useMounted } from '~/hooks/useMounted'
 import { SearchCard } from '~/components/search/Card'
 import { motion } from 'framer-motion'
@@ -107,13 +108,13 @@ export const TagDetailCOntainer = ({
         <KunLoading hint="正在获取 Galgame 中..." />
       ) : (
         <motion.div variants={cardContainer} initial="hidden" animate="show">
-          <div className="grid grid-cols-1 gap-6 mb-8 lg:grid-cols-2">
+          <KunMasonryGrid columnWidth={512} gap={24}>
             {patches.map((patch) => (
               <motion.div key={patch.id} variants={cardItem}>
                 <SearchCard patch={patch} />
               </motion.div>
             ))}
-          </div>
+          </KunMasonryGrid>
 
           {total > 24 && (
             <div className="flex justify-center">
