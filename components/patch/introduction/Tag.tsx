@@ -2,6 +2,8 @@
 
 import { useState } from 'react'
 import { Chip } from '@nextui-org/chip'
+import { Tooltip } from '@nextui-org/tooltip'
+import { Link } from '@nextui-org/link'
 import { PatchTagSelector } from './PatchTagSelector'
 import type { Tag } from '~/types/api/tag'
 
@@ -19,9 +21,14 @@ export const PatchTag = ({ patchId, initialTags }: Props) => {
 
       <div className="space-x-2">
         {selectedTags.map((tag) => (
-          <Chip color="secondary" variant="flat" key={tag.id}>
-            {tag.name}
-          </Chip>
+          <Tooltip key={tag.id} content={`${tag.count} 个补丁使用此标签`}>
+            <Link href={`/tag/${tag.id}`}>
+              <Chip color="secondary" variant="flat">
+                {tag.name}
+                {`+${tag.count}`}
+              </Chip>
+            </Link>
+          </Tooltip>
         ))}
       </div>
 

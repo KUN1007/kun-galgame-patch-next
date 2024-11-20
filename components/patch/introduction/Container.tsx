@@ -17,9 +17,9 @@ export const InfoContainer = ({ intro, patchId }: Props) => {
       <CardBody className="space-y-6">
         <Info intro={intro} />
 
-        <div className="mt-4">
+        {/* <div className="mt-4">
           <h3 className="mb-4 text-xl font-medium">游戏制作商</h3>
-        </div>
+        </div> */}
 
         <PatchTag patchId={patchId} initialTags={intro.tag} />
       </CardBody>

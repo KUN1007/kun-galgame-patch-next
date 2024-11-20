@@ -68,6 +68,11 @@ export const handleAddPatchTag = privateProcedure
         data: relationData
       })
 
+      await prisma.patch_tag.updateMany({
+        where: { id: { in: tagId } },
+        data: { count: { increment: 1 } }
+      })
+
       await prisma.patch_history.create({
         data: {
           action: '增加了',
@@ -97,6 +102,11 @@ export const handleRemovePatchTag = privateProcedure
           patch_id: patchId,
           tag_id: { in: tagId }
         }
+      })
+
+      await prisma.patch_tag.updateMany({
+        where: { id: { in: tagId } },
+        data: { count: { increment: -1 } }
       })
 
       await prisma.patch_history.create({
