@@ -30,6 +30,8 @@ export const PatchTag = ({ patchId, initialTags }: Props) => {
             </Link>
           </Tooltip>
         ))}
+
+        {!initialTags.length && <Chip>{'这个补丁暂时没有标签, 欢迎添加'}</Chip>}
       </div>
 
       <PatchTagSelector

@@ -11,11 +11,13 @@ interface Props {
 export default async function PatchHistory({ params }: Props) {
   const { id } = await params
 
-  const res = await serverApi.patch.getPatchHistory.query({
+  const { histories, total } = await serverApi.patch.getPatchHistory.query({
+    page: 1,
+    limit: 30,
     patchId: Number(id)
   })
-  if (!res || typeof res === 'string') {
-    return <ErrorComponent error={res} />
+  if (!histories || typeof histories === 'string') {
+    return <ErrorComponent error={histories} />
   }
 
   const contributors = await serverApi.patch.getPatchContributor.query({
@@ -29,7 +31,11 @@ export default async function PatchHistory({ params }: Props) {
           <h2 className="text-2xl font-medium">贡献历史</h2>
         </CardHeader>
         <CardBody>
-          <History histories={res} />
+          <History
+            patchId={Number(id)}
+            initialHistories={histories}
+            total={total}
+          />
         </CardBody>
       </Card>
 

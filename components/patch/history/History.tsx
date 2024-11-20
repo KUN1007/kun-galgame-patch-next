@@ -1,64 +1,69 @@
 'use client'
 
-import DOMPurify from 'isomorphic-dompurify'
-import { Chip } from '@nextui-org/chip'
-import { Card, CardBody } from '@nextui-org/card'
-import { ScrollShadow } from '@nextui-org/scroll-shadow'
-import { formatDistanceToNow } from '~/utils/formatDistanceToNow'
-import { HighlightedText } from '~/components/patch/DiffContent'
-import { Avatar } from '@nextui-org/avatar'
+import { useState, useEffect } from 'react'
+import { Pagination } from '@nextui-org/pagination'
+import { api } from '~/lib/trpc-client'
+import { useMounted } from '~/hooks/useMounted'
+import { HistoryCard } from './Card'
+import { KunLoading } from '~/components/kun/Loading'
 import type { PatchHistory } from '~/types/api/patch'
 
 interface Props {
-  histories: PatchHistory[]
+  patchId: number
+  initialHistories: PatchHistory[]
+  total: number
 }
 
-export const History = ({ histories }: Props) => {
+export const History = ({ patchId, initialHistories, total }: Props) => {
+  const [histories, setHistories] = useState<PatchHistory[]>(
+    initialHistories ?? []
+  )
+  const [loading, setLoading] = useState(false)
+  const isMounted = useMounted()
+  const [page, setPage] = useState(1)
+
+  const fetchPatches = async () => {
+    setLoading(true)
+    const response = await api.patch.getPatchHistory.query({
+      page,
+      limit: 30,
+      patchId: patchId
+    })
+    setHistories(response.histories)
+    setLoading(false)
+  }
+
+  useEffect(() => {
+    if (!isMounted) {
+      return
+    }
+    fetchPatches()
+  }, [page])
+
   return (
     <div className="space-y-4">
-      {histories.map((history) => (
-        <Card key={history.id}>
-          <CardBody className="p-6">
-            <div className="flex items-start gap-4">
-              <Avatar
-                showFallback
-                name={history.user.name.charAt(0).toUpperCase()}
-                src={history.user.avatar}
-              />
-              <div className="flex-1">
-                <div className="flex items-start justify-between">
-                  <div>
-                    <h4 className="font-semibold">
-                      {history.action} {history.type}
-                    </h4>
-                    <p className="text-sm text-muted-foreground">
-                      {history.user.name} •{' '}
-                      {formatDistanceToNow(history.created)}
-                    </p>
-                  </div>
-                </div>
+      {loading ? (
+        <KunLoading hint="正在获取贡献历史..." />
+      ) : (
+        <>
+          {histories.map((history) => (
+            <HistoryCard key={history.id} history={history} />
+          ))}
+        </>
+      )}
 
-                {history.action === '创建了' && history.type === '更新请求' ? (
-                  <ScrollShadow className="max-h-64">
-                    <HighlightedText content={history.content} />
-                  </ScrollShadow>
-                ) : (
-                  <div
-                    dangerouslySetInnerHTML={{
-                      __html: DOMPurify.sanitize(history.content)
-                    }}
-                    className="prose max-w-none dark:prose-invert"
-                  />
-                )}
-
-                <div className="mt-2">
-                  <Chip color="primary">{history.type}</Chip>
-                </div>
-              </div>
-            </div>
-          </CardBody>
-        </Card>
-      ))}
+      {total > 30 && (
+        <div className="flex justify-center">
+          <Pagination
+            total={Math.ceil(total / 30)}
+            page={page}
+            onChange={(newPage: number) => setPage(newPage)}
+            showControls
+            color="primary"
+            size="lg"
+          />
+        </div>
+      )}
     </div>
   )
 }

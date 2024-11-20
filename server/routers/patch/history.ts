@@ -2,23 +2,23 @@ import { z } from 'zod'
 import { publicProcedure } from '~/lib/trpc'
 import { prisma } from '~/prisma/index'
 import { markdownToHtml } from '~/server/utils/markdownToHtml'
+import { getPatchHistorySchema } from '~/validations/patch'
 import type { PatchHistory } from '~/types/api/patch'
 
 export const getPatchHistory = publicProcedure
-  .input(
-    z.object({
-      patchId: z.number()
-    })
-  )
+  .input(getPatchHistorySchema)
   .query(async ({ ctx, input }) => {
-    const { patchId } = input
+    const { patchId, page, limit } = input
+    const offset = (page - 1) * limit
 
     const data = await prisma.patch_history.findMany({
       where: { patch_id: patchId },
       include: {
         user: true
       },
-      orderBy: { created: 'desc' }
+      orderBy: { created: 'desc' },
+      take: limit,
+      skip: offset
     })
 
     const histories: PatchHistory[] = await Promise.all(
@@ -39,5 +39,9 @@ export const getPatchHistory = publicProcedure
       }))
     )
 
-    return histories
+    const total = await prisma.patch_history.count({
+      where: { patch_id: patchId }
+    })
+
+    return { histories, total }
   })

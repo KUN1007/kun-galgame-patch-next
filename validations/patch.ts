@@ -111,3 +111,9 @@ export const updatePatchBannerSchema = z.object({
   patchId: z.number().min(1).max(9999999),
   image: z.any()
 })
+
+export const getPatchHistorySchema = z.object({
+  patchId: z.number({ message: '补丁 ID 必须为数字' }).min(1).max(9999999),
+  page: z.number().min(1).max(9999999),
+  limit: z.number().min(1).max(30)
+})
