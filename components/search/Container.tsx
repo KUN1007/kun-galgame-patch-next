@@ -13,7 +13,7 @@ import { KunHeader } from '~/components/kun/Header'
 import { KunNull } from '~/components/kun/Null'
 import { SearchCard } from './Card'
 import { motion } from 'framer-motion'
-import { container, item } from './_motion'
+import { cardContainer, cardItem } from '~/motion/card'
 
 export const SearchPage = () => {
   const searchParams = useSearchParams()
@@ -87,10 +87,10 @@ export const SearchPage = () => {
       {loading ? (
         <KunLoading hint="正在搜索中..." />
       ) : (
-        <motion.div variants={container} initial="hidden" animate="show">
+        <motion.div variants={cardContainer} initial="hidden" animate="show">
           <div className="grid grid-cols-1 gap-6 mb-8 lg:grid-cols-2">
             {patches.map((patch) => (
-              <motion.div key={patch.id} variants={item}>
+              <motion.div key={patch.id} variants={cardItem}>
                 <SearchCard patch={patch} />
               </motion.div>
             ))}

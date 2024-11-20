@@ -4,6 +4,7 @@ import {
   createTagSchema,
   getTagSchema,
   getTagByIdSchema,
+  getPatchByTagSchema,
   searchTagSchema
 } from '~/validations/tag'
 import type { Tag, TagDetail } from '~/types/api/tag'
@@ -53,6 +54,51 @@ export const tagRouter = router({
       }
 
       return tag
+    }),
+
+  getPatchByTag: publicProcedure
+    .input(getPatchByTagSchema)
+    .query(async ({ ctx, input }) => {
+      const { tagId, page, limit } = input
+      const offset = (page - 1) * limit
+
+      const [data, total] = await Promise.all([
+        await prisma.patch_tag_relation.findMany({
+          where: { tag_id: tagId },
+          select: {
+            patch: {
+              select: {
+                id: true,
+                name: true,
+                banner: true,
+                view: true,
+                type: true,
+                language: true,
+                platform: true,
+                created: true,
+                _count: {
+                  select: {
+                    favorite_by: true,
+                    contribute_by: true,
+                    resource: true,
+                    comment: true
+                  }
+                }
+              }
+            }
+          },
+          orderBy: { created: 'desc' },
+          take: limit,
+          skip: offset
+        }),
+        await prisma.patch_tag_relation.count({
+          where: { tag_id: tagId }
+        })
+      ])
+
+      const patches = data.map((p) => p.patch)
+
+      return { patches, total }
     }),
 
   searchTag: publicProcedure

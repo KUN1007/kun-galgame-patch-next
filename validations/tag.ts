@@ -29,6 +29,12 @@ export const getTagByIdSchema = z.object({
   tagId: z.number().min(1).max(9999999)
 })
 
+export const getPatchByTagSchema = z.object({
+  tagId: z.number().min(1).max(9999999),
+  page: z.number().min(1).max(9999999),
+  limit: z.number().min(1).max(24)
+})
+
 export const searchTagSchema = z.object({
   query: z
     .array(

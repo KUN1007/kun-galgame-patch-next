@@ -1,14 +1,26 @@
 import { randomNum } from '~/utils/random'
-
-const randomPackIndex = randomNum(1, 5)
-const randomStickerIndex = randomNum(1, 80)
-const stickerSrc = `https://sticker.kungal.com/stickers/KUNgal${randomPackIndex}/${randomStickerIndex}.webp`
+import { useEffect, useState } from 'react'
+import { KunLoading } from './Loading'
 
 interface Props {
   message: string
 }
 
 export const KunNull = ({ message }: Props) => {
+  const [stickerSrc, setStickerSrc] = useState('')
+
+  useEffect(() => {
+    const randomPackIndex = randomNum(1, 5)
+    const randomStickerIndex = randomNum(1, 80)
+    setStickerSrc(
+      `https://sticker.kungal.com/stickers/KUNgal${randomPackIndex}/${randomStickerIndex}.webp`
+    )
+  }, [])
+
+  if (!stickerSrc) {
+    return <KunLoading hint="正在加载中..." />
+  }
+
   return (
     <div className="flex flex-col items-center justify-center w-full h-full space-y-4">
       <img

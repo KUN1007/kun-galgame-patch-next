@@ -39,7 +39,7 @@ export const searchRouter = router({
                 }
               }
             },
-            orderBy: { updated: 'desc' },
+            orderBy: { created: 'desc' },
             take: limit,
             skip: offset
           })
