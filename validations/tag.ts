@@ -20,6 +20,12 @@ export const createTagSchema = z.object({
   )
 })
 
+export const updateTagSchema = createTagSchema.merge(
+  z.object({
+    tagId: z.number().min(1).max(9999999)
+  })
+)
+
 export const getTagSchema = z.object({
   page: z.number().min(1).max(9999999),
   limit: z.number().min(1).max(100)

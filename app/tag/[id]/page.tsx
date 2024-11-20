@@ -21,5 +21,11 @@ export default async function Kun({ params }: Props) {
     limit: 24
   })
 
-  return <TagDetailCOntainer tag={tag} initialPatches={patches} total={total} />
+  return (
+    <TagDetailCOntainer
+      initialTag={tag}
+      initialPatches={patches}
+      total={total}
+    />
+  )
 }

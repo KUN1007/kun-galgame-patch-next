@@ -5,7 +5,8 @@ import {
   getTagSchema,
   getTagByIdSchema,
   getPatchByTagSchema,
-  searchTagSchema
+  searchTagSchema,
+  updateTagSchema
 } from '~/validations/tag'
 import type { Tag, TagDetail } from '~/types/api/tag'
 
@@ -137,7 +138,7 @@ export const tagRouter = router({
 
       const existingTag = await prisma.patch_tag.findFirst({
         where: {
-          OR: [{ name }, { alias: { hasSome: alias } }]
+          OR: [{ name }, { alias: { has: name } }]
         }
       })
 
@@ -156,6 +157,33 @@ export const tagRouter = router({
           name: true,
           count: true,
           alias: true
+        }
+      })
+
+      return newTag
+    }),
+
+  rewriteTag: privateProcedure
+    .input(updateTagSchema)
+    .mutation(async ({ ctx, input }) => {
+      const { tagId, name, introduction = '', alias = [] } = input
+
+      const existingTag = await prisma.patch_tag.findFirst({
+        where: {
+          OR: [{ name }, { alias: { has: name } }]
+        }
+      })
+
+      if (existingTag) {
+        return '这个标签已经存在了'
+      }
+
+      const newTag: TagDetail = await prisma.patch_tag.update({
+        where: { id: tagId },
+        data: {
+          name,
+          introduction,
+          alias
         }
       })
 
