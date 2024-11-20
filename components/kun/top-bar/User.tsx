@@ -1,3 +1,5 @@
+'use client'
+
 import {
   NavbarContent,
   NavbarItem,
@@ -29,7 +31,7 @@ import {
   Sparkles
 } from 'lucide-react'
 import { useUserStore } from '~/store/userStore'
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
 import { api } from '~/lib/trpc-client'
 import toast from 'react-hot-toast'
@@ -44,6 +46,20 @@ export const KunTopBarUser = () => {
   const isMounted = useMounted()
   const [loading, setLoading] = useState(false)
   const { isOpen, onOpen, onOpenChange } = useDisclosure()
+
+  useEffect(() => {
+    if (!isMounted) {
+      return
+    }
+
+    const getUserStatus = async () => {
+      const user = await api.user.status.query()
+      useErrorHandler(user, (value) => {
+        setUser(value)
+      })
+    }
+    getUserStatus()
+  }, [isMounted])
 
   const handleLogOut = async () => {
     setLoading(true)
@@ -66,7 +82,7 @@ export const KunTopBarUser = () => {
     useErrorHandler(res, (value) => {
       showKunSooner(
         value
-          ? `签到成功! 您获得了 ${value} 萌萌点`
+          ? `签到成功! 您今天获得了 ${value} 萌萌点`
           : '您的运气不好...今天没有获得萌萌点...'
       )
       setUser({

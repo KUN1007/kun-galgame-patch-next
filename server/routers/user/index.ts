@@ -19,6 +19,7 @@ import {
   getUserComment,
   getUserFavorite
 } from './profile'
+import type { UserStore } from '~/store/userStore'
 import type { UserInfo } from '~/types/api/user'
 
 export const userRouter = router({
@@ -90,6 +91,27 @@ export const userRouter = router({
     })
 
     return randomMoemoepoints
+  }),
+
+  status: privateProcedure.query(async ({ ctx, input }) => {
+    const user = await prisma.user.findUnique({
+      where: { id: ctx.uid }
+    })
+    if (!user) {
+      return '用户未找到'
+    }
+
+    const responseData: UserStore = {
+      uid: user.id,
+      name: user.name,
+      email: user.email,
+      avatar: user.avatar,
+      bio: user.bio,
+      moemoepoint: user.moemoepoint,
+      checkIn: user.daily_check_in
+    }
+
+    return responseData
   }),
 
   updateUserAvatar,

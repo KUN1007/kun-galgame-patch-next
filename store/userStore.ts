@@ -36,7 +36,10 @@ export const useUserStore = create<UserState>()(
     }),
     {
       name: 'kun-patch-user-store',
-      storage: createJSONStorage(() => localStorage)
+      storage: createJSONStorage(() => localStorage),
+      onRehydrateStorage: () => (state) => {
+        console.log('Rehydrated state:', state)
+      }
     }
   )
 )
