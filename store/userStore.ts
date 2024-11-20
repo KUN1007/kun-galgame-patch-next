@@ -8,6 +8,7 @@ export interface UserStore {
   avatar: string
   bio: string
   moemoepoint: number
+  checkIn: number
 }
 
 interface UserState {
@@ -22,7 +23,8 @@ const initialUserStore: UserStore = {
   email: '',
   avatar: '',
   bio: '',
-  moemoepoint: 0
+  moemoepoint: 0,
+  checkIn: 1
 }
 
 export const useUserStore = create<UserState>()(

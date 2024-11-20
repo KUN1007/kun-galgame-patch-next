@@ -3,6 +3,7 @@ import { router, publicProcedure, privateProcedure } from '~/lib/trpc'
 import { prisma } from '~/prisma/index'
 import { deleteKunToken } from '~/server/utils/jwt'
 import { cookies } from 'next/headers'
+import { randomNum } from '~/utils/random'
 import {
   updateUserAvatar,
   updateUsername,
@@ -65,6 +66,30 @@ export const userRouter = router({
     await deleteKunToken(ctx.uid)
     const cookie = await cookies()
     cookie.delete('kun-galgame-patch-moe-token')
+  }),
+
+  checkIn: privateProcedure.mutation(async ({ ctx, input }) => {
+    const user = await prisma.user.findUnique({
+      where: { id: ctx.uid }
+    })
+    if (!user) {
+      return '用户未找到'
+    }
+    if (user.daily_check_in) {
+      return '您今天已经签到过了'
+    }
+
+    const randomMoemoepoints = randomNum(0, 7)
+
+    await prisma.user.update({
+      where: { id: ctx.uid },
+      data: {
+        moemoepoint: { increment: randomMoemoepoints },
+        daily_check_in: { set: 1 }
+      }
+    })
+
+    return randomMoemoepoints
   }),
 
   updateUserAvatar,

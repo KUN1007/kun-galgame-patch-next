@@ -24,7 +24,9 @@ import {
   UserRound,
   Settings,
   CircleHelp,
-  LogOut
+  LogOut,
+  CalendarCheck,
+  Sparkles
 } from 'lucide-react'
 import { useUserStore } from '~/store/userStore'
 import { useState } from 'react'
@@ -33,10 +35,12 @@ import { api } from '~/lib/trpc-client'
 import toast from 'react-hot-toast'
 import { ThemeSwitcher } from '~/components/kun/ThemeSwitcher'
 import { useMounted } from '~/hooks/useMounted'
+import { showKunSooner } from '~/components/kun/Sooner'
+import { useErrorHandler } from '~/hooks/useErrorHandler'
 
 export const KunTopBarUser = () => {
   const router = useRouter()
-  const { user, logout } = useUserStore()
+  const { user, setUser, logout } = useUserStore()
   const isMounted = useMounted()
   const [loading, setLoading] = useState(false)
   const { isOpen, onOpen, onOpenChange } = useDisclosure()
@@ -48,6 +52,30 @@ export const KunTopBarUser = () => {
     logout()
     router.push('/login')
     toast.success('您已经成功登出!')
+  }
+
+  const [checking, setChecking] = useState(false)
+  const handleCheckIn = async () => {
+    if (checking) {
+      return
+    }
+
+    toast('正在签到...')
+    setChecking(true)
+    const res = await api.user.checkIn.mutate()
+    useErrorHandler(res, (value) => {
+      showKunSooner(
+        value
+          ? `签到成功! 您获得了 ${value} 萌萌点`
+          : '您的运气不好...今天没有获得萌萌点...'
+      )
+      setUser({
+        ...user,
+        checkIn: 1,
+        moemoepoint: user.moemoepoint + value
+      })
+    })
+    setChecking(false)
   }
 
   return (
@@ -96,13 +124,21 @@ export const KunTopBarUser = () => {
                   showFallback
                 />
               </DropdownTrigger>
-              <DropdownMenu aria-label="Profile Actions">
-                <DropdownItem key="username" textValue="用户名">
+              <DropdownMenu
+                aria-label="Profile Actions"
+                disabledKeys={user.checkIn ? ['check'] : []}
+              >
+                <DropdownItem
+                  key="username"
+                  textValue="用户名"
+                  className="data-[hover=true]:bg-background cursor-default"
+                >
                   <p className="font-semibold">{user.name}</p>
                 </DropdownItem>
                 <DropdownItem
                   key="moemoepoint"
                   textValue="萌萌点"
+                  className="data-[hover=true]:bg-background cursor-default"
                   startContent={<Lollipop className="w-4 h-4" />}
                   endContent={user.moemoepoint}
                 >
@@ -136,6 +172,23 @@ export const KunTopBarUser = () => {
                   onPress={onOpen}
                 >
                   退出登录
+                </DropdownItem>
+
+                <DropdownItem
+                  key="check"
+                  textValue="今日签到"
+                  color="secondary"
+                  startContent={<CalendarCheck className="w-4 h-4" />}
+                  endContent={
+                    user.checkIn ? (
+                      <span className="text-xs">签到过啦</span>
+                    ) : (
+                      <Sparkles className="w-5 h-5 text-secondary-500" />
+                    )
+                  }
+                  onPress={handleCheckIn}
+                >
+                  今日签到
                 </DropdownItem>
               </DropdownMenu>
             </Dropdown>

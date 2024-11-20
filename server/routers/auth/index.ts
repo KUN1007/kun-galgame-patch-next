@@ -45,7 +45,8 @@ export const authRouter = router({
       email: user.email,
       avatar: user.avatar,
       bio: user.bio,
-      moemoepoint: user.moemoepoint
+      moemoepoint: user.moemoepoint,
+      checkIn: user.daily_check_in
     }
     return responseData
   }),
@@ -100,7 +101,8 @@ export const authRouter = router({
         email: user.email,
         avatar: user.avatar,
         bio: user.bio,
-        moemoepoint: user.moemoepoint
+        moemoepoint: user.moemoepoint,
+        checkIn: user.daily_check_in
       }
       return responseData
     }),
