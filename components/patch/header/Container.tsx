@@ -33,6 +33,9 @@ export const PatchHeaderContainer = ({ patch }: PatchHeaderProps) => {
       introduction: patch.introduction,
       alias: patch.alias
     })
+
+    // TODO:
+    window.scroll(0, 0)
   }, [])
 
   return (
