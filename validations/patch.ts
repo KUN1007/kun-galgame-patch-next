@@ -4,7 +4,7 @@ import {
   SUPPORTED_TYPES,
   SUPPORTED_LANGUAGES,
   SUPPORTED_PLATFORMS
-} from '~/components/patch/resource/_constants'
+} from '~/constants/resource'
 
 export const patchTagChangeSchema = z.object({
   patchId: z.number({ message: '补丁 ID 必须为数字' }).min(1).max(9999999),

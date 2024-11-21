@@ -16,7 +16,7 @@ import {
   SUPPORTED_TYPES,
   SUPPORTED_LANGUAGES,
   SUPPORTED_PLATFORMS
-} from './_constants'
+} from '~/constants/resource'
 import type { PatchResource } from '~/types/api/patch'
 
 interface CreateResourceProps {

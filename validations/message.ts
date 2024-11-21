@@ -1,5 +1,5 @@
 import { z } from 'zod'
-import { MESSAGE_TYPE } from '~/components/message/_message'
+import { MESSAGE_TYPE } from '~/constants/message'
 
 export const createMessageSchema = z.object({
   type: z.enum(MESSAGE_TYPE),
@@ -14,7 +14,7 @@ export const createMessageSchema = z.object({
 })
 
 export const getMessageSchema = z.object({
-  type: z.enum(MESSAGE_TYPE),
+  type: z.enum(MESSAGE_TYPE).optional(),
   page: z.number().min(1).max(9999999),
   limit: z.number().min(1).max(30)
 })

@@ -10,7 +10,7 @@ import { Button } from '@nextui-org/button'
 import { Card, CardHeader } from '@nextui-org/card'
 import { Select, SelectItem } from '@nextui-org/select'
 import { ArrowDownAZ, ArrowUpAZ, ChevronDown, Filter } from 'lucide-react'
-import { ALL_SUPPORTED_TYPES } from '~/components/patch/resource/_constants'
+import { ALL_SUPPORTED_TYPES } from '~/constants/resource'
 import type { SortOption, SortDirection } from './_sort'
 
 interface Props {

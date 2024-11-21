@@ -20,7 +20,7 @@ import {
   SUPPORTED_TYPES,
   SUPPORTED_LANGUAGES,
   SUPPORTED_PLATFORMS
-} from './_constants'
+} from '~/constants/resource'
 import { api } from '~/lib/trpc-client'
 import toast from 'react-hot-toast'
 import { patchResourceCreateSchema } from '~/validations/patch'

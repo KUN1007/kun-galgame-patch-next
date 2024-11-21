@@ -1,5 +1,5 @@
 import { z } from 'zod'
-import { ALL_SUPPORTED_TYPES } from '~/components/patch/resource/_constants'
+import { ALL_SUPPORTED_TYPES } from '~/constants/resource'
 
 export const galgameSchema = z.object({
   selectedTypes: z
