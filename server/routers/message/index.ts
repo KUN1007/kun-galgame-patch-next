@@ -1,7 +1,7 @@
 import { router, privateProcedure } from '~/lib/trpc'
 import { prisma } from '~/prisma/index'
 import { createMessageSchema, getMessageSchema } from '~/validations/message'
-import { createMessage } from './message'
+import { createMessage } from '~/server/utils/message'
 
 export const messageRouter = router({
   createMessage: privateProcedure

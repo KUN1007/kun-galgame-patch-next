@@ -1,42 +1,43 @@
 'use client'
 
 import { Button } from '@nextui-org/react'
-import { Bell, Heart, MessageCircle, UserPlus, Globe } from 'lucide-react'
+import { Bell, UserPlus, Globe } from 'lucide-react'
+import { Card, CardBody } from '@nextui-org/card'
+import { usePathname } from 'next/navigation'
+import Link from 'next/link'
 
-interface NotificationSidebarProps {
-  activeType: string | null
-  onTypeChange: (type: string | null) => void
-}
+const notificationTypes = [
+  { type: 'notice', label: '全部消息', icon: Bell, href: '/message/notice' },
+  {
+    type: 'follow',
+    label: '关注消息',
+    icon: UserPlus,
+    href: '/message/follow'
+  },
+  { type: 'system', label: '系统消息', icon: Globe, href: '/message/system' }
+]
 
-export const MessageNav = ({
-  activeType,
-  onTypeChange
-}: NotificationSidebarProps) => {
-  const notificationTypes = [
-    { type: null, label: 'All Notifications', icon: Bell },
-    { type: 'LIKE', label: 'Likes', icon: Heart },
-    { type: 'COMMENT', label: 'Comments', icon: MessageCircle },
-    { type: 'FOLLOW', label: 'Follows', icon: UserPlus },
-    { type: 'SYSTEM', label: 'System', icon: Globe }
-  ]
+export const MessageNav = () => {
+  const pathname = usePathname()
+  const lastSegment = pathname.split('/').filter(Boolean).pop()
 
   return (
-    <div className="p-4 bg-white rounded-lg shadow-sm">
-      <h2 className="mb-4 text-lg font-semibold">Filter Notifications</h2>
-      <div className="flex flex-row gap-2 lg:flex-col">
-        {notificationTypes.map(({ type, label, icon: Icon }) => (
+    <Card className="w-full lg:w-1/4">
+      <CardBody className="flex flex-row gap-2 lg:flex-col">
+        {notificationTypes.map(({ type, label, icon: Icon, href }) => (
           <Button
             key={label}
-            color={activeType === type ? 'primary' : 'default'}
-            onClick={() => onTypeChange(type)}
+            color={lastSegment === type ? 'primary' : 'default'}
+            as={Link}
             className="justify-start w-full"
-            variant={activeType === type ? 'solid' : 'light'}
+            variant={lastSegment === type ? 'solid' : 'light'}
             startContent={<Icon className="w-4 h-4" />}
+            href={href}
           >
             <span className="hidden lg:inline">{label}</span>
           </Button>
         ))}
-      </div>
-    </div>
+      </CardBody>
+    </Card>
   )
 }

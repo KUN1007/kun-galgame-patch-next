@@ -5,7 +5,5 @@ export const MESSAGE_TYPE = [
   'favorite',
   'comment',
   'follow',
-  'pr',
-  'pr-merge',
-  'pr-decline'
+  'pr'
 ] as const

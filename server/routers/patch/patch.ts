@@ -4,6 +4,7 @@ import { prisma } from '~/prisma/index'
 import { uploadPatchBanner } from '../edit/_upload'
 import { parsePatchBannerMiddleware } from './_middleware'
 import { updatePatchBannerSchema } from '~/validations/patch'
+import { createDedupMessage } from '~/server/utils/message'
 import type { Patch } from '~/types/api/patch'
 
 export const getPatchById = publicProcedure
@@ -116,6 +117,14 @@ export const togglePatchFavorite = privateProcedure
       await prisma.user.update({
         where: { id: patch.user_id },
         data: { moemoepoint: { increment: existingFavorite ? -1 : 1 } }
+      })
+
+      await createDedupMessage({
+        type: 'favorite',
+        content: patch.name,
+        sender_id: ctx.uid,
+        recipient_id: patch.user_id,
+        patch_id: patch.id
       })
     }
 

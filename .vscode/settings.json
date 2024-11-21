@@ -8,6 +8,7 @@
     "CMAPI",
     "codemirror",
     "commonmark",
+    "Dedup",
     "dompurify",
     "frontmatter",
     "Galgame",

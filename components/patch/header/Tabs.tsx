@@ -24,8 +24,6 @@ export const PatchHeaderTabs = ({ id }: PatchHeaderProps) => {
     { key: 'pr', title: '更新请求', href: `/patch/${id}/pr` }
   ]
 
-  const tabClassName = 'p-0 min-w-24 rounded-large'
-
   return (
     <Tabs
       aria-label="Options"
@@ -40,7 +38,7 @@ export const PatchHeaderTabs = ({ id }: PatchHeaderProps) => {
           as={Link}
           title={title}
           href={href}
-          className={tabClassName}
+          className="p-0 min-w-24 rounded-large"
         />
       ))}
     </Tabs>

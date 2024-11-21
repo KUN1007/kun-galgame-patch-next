@@ -1,26 +1,65 @@
 'use client'
 
-import { useState } from 'react'
-import { MessageList } from './MessageList'
-import { MessageNav } from './MessageNav'
+import { useState, useEffect } from 'react'
+import { useMounted } from '~/hooks/useMounted'
+import { Pagination } from '@nextui-org/pagination'
+import { KunLoading } from '~/components/kun/Loading'
+import { MessageCard } from './MessageCard'
+import { api } from '~/lib/trpc-client'
+import type { Message } from '~/types/api/message'
 
-export const MessageContainer = () => {
-  const [activeType, setActiveType] = useState<string | null>(null)
-  const userId = 1 // Example user ID
+interface Props {
+  initialMessages: Message[]
+  total: number
+}
+
+export const MessageContainer = ({ initialMessages, total }: Props) => {
+  const [messages, setMessages] = useState<Message[]>(initialMessages)
+  const [loading, setLoading] = useState(false)
+  const [page, setPage] = useState(1)
+  const isMounted = useMounted()
+
+  const fetchMessages = async () => {
+    setLoading(true)
+    const { messages } = await api.message.getMessage.query({
+      page,
+      limit: 30
+    })
+    setMessages(messages)
+    setLoading(false)
+  }
+
+  useEffect(() => {
+    if (!isMounted) {
+      return
+    }
+    fetchMessages()
+  }, [page])
 
   return (
-    <div className="container px-4 mx-auto">
-      <div className="flex flex-col gap-6 lg:flex-row">
-        {/* Sidebar - Full width on mobile, 1/4 width on desktop */}
-        <div className="w-full lg:w-1/4">
-          <MessageNav activeType={activeType} onTypeChange={setActiveType} />
-        </div>
+    <>
+      {loading ? (
+        <KunLoading hint="正在获取补丁数据..." />
+      ) : (
+        <>
+          {messages.map((msg) => (
+            <MessageCard key={msg.id} msg={msg} />
+          ))}
+        </>
+      )}
 
-        {/* Main content - Full width on mobile, 3/4 width on desktop */}
-        <div className="w-full lg:w-3/4">
-          <MessageList userId={userId} activeType={activeType} />
+      {total > 24 && (
+        <div className="flex justify-center">
+          <Pagination
+            total={Math.ceil(total / 24)}
+            page={page}
+            onChange={(newPage: number) => setPage(newPage)}
+            showControls
+            color="primary"
+            size="lg"
+          />
         </div>
-      </div>
-    </div>
+      )}
+    </>
   )
 }
