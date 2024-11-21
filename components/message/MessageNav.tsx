@@ -31,10 +31,10 @@ export const MessageNav = () => {
             as={Link}
             className="justify-start w-full"
             variant={lastSegment === type ? 'solid' : 'light'}
-            startContent={<Icon className="w-4 h-4" />}
+            startContent={<Icon className="flex-shrink-0 w-4 h-4" />}
             href={href}
           >
-            <span className="hidden lg:inline">{label}</span>
+            <span>{label}</span>
           </Button>
         ))}
       </CardBody>
