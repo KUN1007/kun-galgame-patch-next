@@ -8,7 +8,7 @@ import {
   CardHeader
 } from '@nextui-org/react'
 import { AlertTriangle, ArrowLeft, Home } from 'lucide-react'
-import { useRouter } from 'next/navigation'
+import { useRouter } from 'next-nprogress-bar'
 
 interface ErrorComponentProps {
   error: string

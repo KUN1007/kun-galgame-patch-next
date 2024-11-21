@@ -17,7 +17,7 @@ import { motion } from 'framer-motion'
 import { cardContainer, cardItem } from '~/motion/card'
 import { KunNull } from '~/components/kun/Null'
 import { EditTagModal } from './EditTagModel'
-import { useRouter } from 'next/navigation'
+import { useRouter } from 'next-nprogress-bar'
 
 interface Props {
   initialTag: TagDetail

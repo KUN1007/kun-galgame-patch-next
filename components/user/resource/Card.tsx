@@ -4,7 +4,7 @@ import { Chip } from '@nextui-org/chip'
 import { Card, CardBody } from '@nextui-org/card'
 import { Image } from '@nextui-org/image'
 import { formatDistanceToNow } from '~/utils/formatDistanceToNow'
-import { useRouter } from 'next/navigation'
+import { useRouter } from 'next-nprogress-bar'
 import type { UserResource as UserResourceType } from '~/types/api/user'
 
 interface Props {

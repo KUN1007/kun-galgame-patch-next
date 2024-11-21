@@ -3,7 +3,7 @@
 import { Chip } from '@nextui-org/chip'
 import { Card, CardBody } from '@nextui-org/card'
 import { Image } from '@nextui-org/image'
-import { useRouter } from 'next/navigation'
+import { useRouter } from 'next-nprogress-bar'
 import { formatDistanceToNow } from '~/utils/formatDistanceToNow'
 import { KunCardStats } from '~/components/kun/CardStats'
 

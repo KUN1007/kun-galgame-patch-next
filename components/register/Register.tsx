@@ -10,7 +10,7 @@ import { useErrorHandler } from '~/hooks/useErrorHandler'
 import { redirect } from 'next/navigation'
 import toast from 'react-hot-toast'
 import { EmailVerification } from '~/components/kun/verification-code/Code'
-import { useRouter } from 'next/navigation'
+import { useRouter } from 'next-nprogress-bar'
 
 type RegisterFormData = z.infer<typeof registerSchema>
 

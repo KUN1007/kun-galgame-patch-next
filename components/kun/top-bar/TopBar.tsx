@@ -8,10 +8,11 @@ import {
   NavbarContent,
   NavbarItem
 } from '@nextui-org/navbar'
-import { Link } from '@nextui-org/link'
+import Link from 'next/link'
 import { KunTopBarBrand } from './Brand'
 import { KunTopBarUser } from './User'
 import { usePathname } from 'next/navigation'
+import { cn } from '~/utils/cn'
 
 const menuItems = [
   'Profile',
@@ -69,7 +70,9 @@ export const KunTopBar = () => {
           {kunNavItem.map((item) => (
             <NavbarItem key={item.href} isActive={pathname === item.href}>
               <Link
-                color={pathname === item.href ? 'primary' : 'foreground'}
+                className={
+                  pathname === item.href ? 'text-primary' : 'text-foreground'
+                }
                 href={item.href}
               >
                 {item.name}
@@ -85,16 +88,15 @@ export const KunTopBar = () => {
         {menuItems.map((item, index) => (
           <NavbarMenuItem key={`${item}-${index}`}>
             <Link
-              className="w-full"
-              color={
+              className={cn(
+                'w-full',
                 index === 2
-                  ? 'warning'
+                  ? 'text-warning'
                   : index === menuItems.length - 1
-                    ? 'danger'
-                    : 'foreground'
-              }
+                    ? 'text-danger'
+                    : 'text-foreground'
+              )}
               href="#"
-              size="lg"
             >
               {item}
             </Link>

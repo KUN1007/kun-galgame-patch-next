@@ -8,7 +8,7 @@ import { loginSchema } from '~/validations/auth'
 import { useUserStore } from '~/store/userStore'
 import { useErrorHandler } from '~/hooks/useErrorHandler'
 import { redirect } from 'next/navigation'
-import { useRouter } from 'next/navigation'
+import { useRouter } from 'next-nprogress-bar'
 import toast from 'react-hot-toast'
 
 type LoginFormData = z.infer<typeof loginSchema>

@@ -1,6 +1,6 @@
 'use client'
 
-import { useRouter } from 'next/navigation'
+import { useRouter } from 'next-nprogress-bar'
 import { Card, CardBody } from '@nextui-org/card'
 import { Chip } from '@nextui-org/chip'
 import type { Tag as TagType } from '~/types/api/tag'

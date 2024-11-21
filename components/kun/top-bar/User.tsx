@@ -32,7 +32,7 @@ import {
 } from 'lucide-react'
 import { useUserStore } from '~/store/userStore'
 import { useState, useEffect } from 'react'
-import { useRouter } from 'next/navigation'
+import { useRouter } from 'next-nprogress-bar'
 import { api } from '~/lib/trpc-client'
 import toast from 'react-hot-toast'
 import { ThemeSwitcher } from '~/components/kun/ThemeSwitcher'

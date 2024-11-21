@@ -4,7 +4,7 @@ import { Card, CardHeader, CardBody, CardFooter } from '@nextui-org/card'
 import { Image } from '@nextui-org/image'
 import { Chip } from '@nextui-org/chip'
 import { KunCardStats } from '~/components/kun/CardStats'
-import { useRouter } from 'next/navigation'
+import { useRouter } from 'next-nprogress-bar'
 import { useState } from 'react'
 
 interface Props {
