@@ -22,7 +22,7 @@ import {
 } from '@nextui-org/modal'
 import { Textarea } from '@nextui-org/input'
 import {
-  MessageSquare,
+  MessageCircle,
   MoreHorizontal,
   Quote,
   Trash2,
@@ -250,7 +250,7 @@ export const Comments = ({ initialComments, id }: Props) => {
                       setReplyTo(replyTo === comment.id ? null : comment.id)
                     }
                   >
-                    <MessageSquare className="w-4 h-4" />
+                    <MessageCircle className="w-4 h-4" />
                     回复
                   </Button>
                 </div>

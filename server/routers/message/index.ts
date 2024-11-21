@@ -34,7 +34,10 @@ export const messageRouter = router({
             recipient_id: ctx.uid,
             type
           }
-        : { recipient_id: ctx.uid }
+        : {
+            recipient_id: ctx.uid,
+            type: { in: ['like', 'favorite', 'comment', 'pr'] }
+          }
 
       const [messages, total] = await Promise.all([
         prisma.user_message.findMany({

@@ -2,7 +2,7 @@ import { useState } from 'react'
 import { api } from '~/lib/trpc-client'
 import { Button } from '@nextui-org/button'
 import { Tooltip } from '@nextui-org/tooltip'
-import { Heart } from 'lucide-react'
+import { ThumbsUp } from 'lucide-react'
 import { useUserStore } from '~/store/userStore'
 import toast from 'react-hot-toast'
 import { useErrorHandler } from '~/hooks/useErrorHandler'
@@ -63,12 +63,7 @@ export const CommentLikeButton = ({ commentId, likedBy, commenter }: Props) => {
         isLoading={loading}
         onClick={toggleLike}
       >
-        <Heart
-          className={cn(
-            'w-4 h-4',
-            liked ? 'text-danger-500' : 'text-default-500'
-          )}
-        />
+        <ThumbsUp className={cn('w-4 h-4', liked ? 'text-danger-500' : '')} />
         {likeCount}
       </Button>
     </Tooltip>
