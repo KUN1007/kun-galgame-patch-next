@@ -2,6 +2,7 @@
 
 import { Tabs, Tab } from '@nextui-org/tabs'
 import { usePathname } from 'next/navigation'
+import Link from 'next/link'
 
 interface PatchHeaderProps {
   id: number
@@ -11,44 +12,37 @@ export const PatchHeaderTabs = ({ id }: PatchHeaderProps) => {
   const pathname = usePathname()
   const lastSegment = pathname.split('/').filter(Boolean).pop()
 
+  const tabs = [
+    {
+      key: 'introduction',
+      title: '游戏介绍',
+      href: `/patch/${id}/introduction`
+    },
+    { key: 'resource', title: '资源链接', href: `/patch/${id}/resource` },
+    { key: 'comment', title: '游戏评论', href: `/patch/${id}/comment` },
+    { key: 'history', title: '贡献历史', href: `/patch/${id}/history` },
+    { key: 'pr', title: '更新请求', href: `/patch/${id}/pr` }
+  ]
+
+  const tabClassName = 'p-0 min-w-24 rounded-large'
+
   return (
     <Tabs
       aria-label="Options"
       className="w-full overflow-hidden shadow-medium rounded-large"
-      fullWidth={true}
+      fullWidth
       selectedKey={lastSegment}
       color="primary"
     >
-      <Tab
-        key="introduction"
-        title="游戏介绍"
-        className="p-0 overflow-hidden min-w-24 rounded-large"
-        href={`/patch/${id}/introduction`}
-      />
-      <Tab
-        key="resource"
-        title="资源链接"
-        className="p-0 min-w-24"
-        href={`/patch/${id}/resource`}
-      />
-      <Tab
-        key="comment"
-        title="游戏评论"
-        className="p-0 min-w-24"
-        href={`/patch/${id}/comment`}
-      />
-      <Tab
-        key="history"
-        title="贡献历史"
-        className="p-0 min-w-24"
-        href={`/patch/${id}/history`}
-      />
-      <Tab
-        key="pr"
-        title="更新请求"
-        className="p-0 min-w-24"
-        href={`/patch/${id}/pr`}
-      />
+      {tabs.map(({ key, title, href }) => (
+        <Tab
+          key={key}
+          as={Link}
+          title={title}
+          href={href}
+          className={tabClassName}
+        />
+      ))}
     </Tabs>
   )
 }

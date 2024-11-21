@@ -3,6 +3,7 @@
 import { Card, CardBody } from '@nextui-org/card'
 import { Tab, Tabs } from '@nextui-org/tabs'
 import { usePathname } from 'next/navigation'
+import Link from 'next/link'
 
 interface UserActivityProps {
   id: number
@@ -29,8 +30,8 @@ export const UserActivity = ({ id }: UserActivityProps) => {
           fullWidth
           selectedKey={lastSegment}
         >
-          {tabs.map((tab) => (
-            <Tab key={tab.key} title={tab.title} href={tab.href} />
+          {tabs.map(({ key, title, href }) => (
+            <Tab key={key} as={Link} title={title} href={href} />
           ))}
         </Tabs>
       </CardBody>
