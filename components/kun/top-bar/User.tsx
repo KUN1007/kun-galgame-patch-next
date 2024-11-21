@@ -28,7 +28,8 @@ import {
   CircleHelp,
   LogOut,
   CalendarCheck,
-  Sparkles
+  Sparkles,
+  Bell
 } from 'lucide-react'
 import { useUserStore } from '~/store/userStore'
 import { useState, useEffect } from 'react'
@@ -125,6 +126,14 @@ export const KunTopBarUser = () => {
           </Button>
 
           <ThemeSwitcher />
+
+          <Button
+            isIconOnly
+            variant="light"
+            onClick={() => router.push('/message')}
+          >
+            <Bell className="w-6 h-6 text-default-500" />
+          </Button>
 
           {user.name && (
             <Dropdown placement="bottom-end">

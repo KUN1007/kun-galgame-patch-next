@@ -14,19 +14,6 @@ enum Role {
   SU
 }
 
-enum MessageType {
-  LIKE
-  FAVORITE
-  COMMENT
-  EXPIRED
-  REQUEST
-  MERGE
-  DECLINE
-  MENTION
-  ADMIN
-  OTHER
-}
-
 model user {
   id                Int      @id @default(autoincrement())
   name              String   @unique @db.VarChar(17)
@@ -74,10 +61,10 @@ model user_follow_relation {
 }
 
 model user_message {
-  id      Int         @id @default(autoincrement())
-  type    MessageType @default(OTHER)
-  content String      @db.VarChar(10007)
-  status  Int         @default(0)
+  id      Int    @id @default(autoincrement())
+  type    String
+  content String @db.VarChar(10007)
+  status  Int    @default(0)
 
   sender_id    Int
   sender       user @relation("user_send_message", fields: [sender_id], references: [id])
