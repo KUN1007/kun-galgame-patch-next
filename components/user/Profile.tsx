@@ -77,7 +77,11 @@ export const UserProfile = ({ user }: { user: UserInfo }) => {
               {user.id === user.requestUserUid ? (
                 <EditButton />
               ) : (
-                <UserFollow user={user} />
+                <UserFollow
+                  uid={user.id}
+                  name={user.name}
+                  follow={user.isFollow}
+                />
               )}
 
               {/* TODO: */}

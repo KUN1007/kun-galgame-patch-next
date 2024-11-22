@@ -19,7 +19,12 @@ import {
   getUserComment,
   getUserFavorite
 } from './profile'
-import { getUserFollower, followUser, unfollowUser } from './follow'
+import {
+  getUserFollower,
+  getUserFollowing,
+  followUser,
+  unfollowUser
+} from './follow'
 import type { UserState } from '~/store/userStore'
 import type { UserInfo } from '~/types/api/user'
 
@@ -137,6 +142,7 @@ export const userRouter = router({
   getUserFavorite,
 
   getUserFollower,
+  getUserFollowing,
   followUser,
   unfollowUser
 })

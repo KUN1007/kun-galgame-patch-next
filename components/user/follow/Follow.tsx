@@ -13,22 +13,24 @@ import {
 import { Plus, Check } from 'lucide-react'
 import { api } from '~/lib/trpc-client'
 import { useRouter } from 'next-nprogress-bar'
-import type { UserInfo } from '~/types/api/user'
 
 interface Props {
-  user: UserInfo
+  uid: number
+  name: string
+  follow: boolean
+  fullWidth?: boolean
 }
 
-export const UserFollow = ({ user }: Props) => {
+export const UserFollow = ({ uid, name, follow, fullWidth = true }: Props) => {
   const router = useRouter()
   const { isOpen, onOpen, onClose } = useDisclosure()
-  const [isFollow, setIsFollow] = useState(user.isFollow)
+  const [isFollow, setIsFollow] = useState(follow)
   const [following, setFollowing] = useState(false)
 
   const handleUnfollow = async () => {
     setFollowing(true)
     await api.user.unfollowUser.mutate({
-      uid: user.id
+      uid
     })
     setIsFollow(false)
     setFollowing(false)
@@ -42,7 +44,7 @@ export const UserFollow = ({ user }: Props) => {
       onOpen()
     } else {
       await api.user.followUser.mutate({
-        uid: user.id
+        uid
       })
       setIsFollow(true)
     }
@@ -63,7 +65,7 @@ export const UserFollow = ({ user }: Props) => {
         }
         color={isFollow ? 'success' : 'primary'}
         variant="flat"
-        fullWidth
+        fullWidth={fullWidth}
         onClick={handleFollow}
         isDisabled={following}
         isLoading={following}
@@ -75,7 +77,7 @@ export const UserFollow = ({ user }: Props) => {
         <ModalContent>
           <ModalHeader className="flex flex-col gap-1">取消关注</ModalHeader>
           <ModalBody>
-            <p>您确定要取消关注 {user.name} 吗?</p>
+            <p>您确定要取消关注 {name} 吗?</p>
           </ModalBody>
           <ModalFooter>
             <Button variant="light" onPress={onClose}>

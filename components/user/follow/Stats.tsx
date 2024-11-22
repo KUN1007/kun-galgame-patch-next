@@ -38,7 +38,7 @@ export const Stats = ({ user }: { user: UserInfo }) => {
           startContent={<Users className="w-4 h-4 text-default-400" />}
         >
           {user.follower}
-          <span className="text-default-500">人关注TA</span>
+          <span className="text-default-500">人关注 TA</span>
         </Button>
         <Button
           variant="light"
@@ -59,10 +59,12 @@ export const Stats = ({ user }: { user: UserInfo }) => {
         <ModalContent>
           <ModalHeader>
             <h3 className="text-xl">
-              {activeTab === 'followers' ? 'Followers' : 'Following'}
+              {activeTab === 'followers'
+                ? `关注 ${user.name} 的人`
+                : `${user.name} 正在关注的人`}
             </h3>
           </ModalHeader>
-          <ModalBody>
+          <ModalBody className="py-4">
             <UserList userId={user.id} type={activeTab} />
           </ModalBody>
         </ModalContent>
