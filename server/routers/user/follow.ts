@@ -1,6 +1,7 @@
 import { z } from 'zod'
 import { publicProcedure, privateProcedure } from '~/lib/trpc'
 import { prisma } from '~/prisma/index'
+import { createDedupMessage } from '~/server/utils/message'
 import type { UserFollow } from '~/types/api/user'
 
 export const getUserFollower = publicProcedure
@@ -88,11 +89,20 @@ export const followUser = privateProcedure
       return '您不能关注自己'
     }
 
-    await prisma.user_follow_relation.create({
-      data: {
-        follower_id: ctx.uid,
-        following_id: input.uid
-      }
+    return prisma.$transaction(async (prisma) => {
+      await prisma.user_follow_relation.create({
+        data: {
+          follower_id: ctx.uid,
+          following_id: input.uid
+        }
+      })
+
+      await createDedupMessage({
+        type: 'follow',
+        content: '关注了您!',
+        sender_id: ctx.uid,
+        recipient_id: input.uid
+      })
     })
   })
 

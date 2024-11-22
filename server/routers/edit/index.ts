@@ -12,6 +12,7 @@ import {
 } from './_middleware'
 import { generatePatchDiff } from './_helpers'
 import { prisma } from '~/prisma/index'
+import { createDedupMessage } from '~/server/utils/message'
 import type { PatchUpdate } from './_updates'
 
 export const editRouter = router({
@@ -141,6 +142,14 @@ export const editRouter = router({
               user_id: ctx.uid,
               patch_id: patch.id
             }
+          })
+
+          await createDedupMessage({
+            type: 'pr',
+            content: '向您提出了更新请求',
+            sender_id: ctx.uid,
+            recipient_id: patch.user_id,
+            patch_id: patch.id
           })
         }
       })

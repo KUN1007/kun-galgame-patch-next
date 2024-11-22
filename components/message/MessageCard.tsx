@@ -5,10 +5,13 @@ import { Avatar } from '@nextui-org/avatar'
 import { Chip } from '@nextui-org/chip'
 import { formatDistanceToNow } from '~/utils/formatDistanceToNow'
 import {
+  MonitorCog,
+  Mail,
   Bell,
   Heart,
   MessageCircle,
   GitPullRequestArrow,
+  Users,
   ThumbsUp
 } from 'lucide-react'
 import { useRouter } from 'next-nprogress-bar'
@@ -20,6 +23,10 @@ interface Props {
 
 const getNotificationIcon = (type: string) => {
   switch (type) {
+    case 'system':
+      return <MonitorCog className="w-5 h-5 text-secondary-500" />
+    case 'pm':
+      return <Mail className="w-5 h-5 text-secondary-500" />
     case 'like':
       return <ThumbsUp className="w-5 h-5 text-secondary-500" />
     case 'favorite':
@@ -28,6 +35,8 @@ const getNotificationIcon = (type: string) => {
       return <MessageCircle className="w-5 h-5 text-primary-500" />
     case 'pr':
       return <GitPullRequestArrow className="w-5 h-5 text-success-500" />
+    case 'follow':
+      return <Users className="w-5 h-5 text-success-500" />
     default:
       return <Bell className="w-5 h-5 text-default-500" />
   }
@@ -35,12 +44,18 @@ const getNotificationIcon = (type: string) => {
 
 const getMessageName = (type: string) => {
   switch (type) {
+    case 'system':
+      return '系统消息'
+    case 'pm':
+      return '向您发送了私信'
     case 'like':
       return '点赞了'
     case 'favorite':
       return '收藏了'
     case 'comment':
       return '评论了'
+    case 'follow':
+      return '新关注'
     case 'pr':
       return '更新请求'
     default:

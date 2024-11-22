@@ -49,11 +49,11 @@ export const MessageContainer = ({ initialMessages, total, type }: Props) => {
       {loading ? (
         <KunLoading hint="正在获取消息数据..." />
       ) : (
-        <>
+        <div className="space-y-4">
           {messages.map((msg) => (
             <MessageCard key={msg.id} msg={msg} />
           ))}
-        </>
+        </div>
       )}
 
       {total > 30 && (

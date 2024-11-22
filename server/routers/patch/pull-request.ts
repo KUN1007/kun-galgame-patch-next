@@ -3,6 +3,7 @@ import { publicProcedure, privateProcedure } from '~/lib/trpc'
 import { prisma } from '~/prisma/index'
 import { markdownToHtml } from '~/server/utils/markdownToHtml'
 import { declinePullRequestSchema } from '~/validations/patch'
+import { createDedupMessage } from '~/server/utils/message'
 import type { PatchPullRequest } from '~/types/api/patch'
 import type { PatchUpdate } from '../edit/_updates'
 
@@ -90,6 +91,14 @@ export const mergePullRequest = privateProcedure
         }
       })
 
+      await createDedupMessage({
+        type: 'pr',
+        content: '合并了您的更新请求!',
+        sender_id: ctx.uid,
+        recipient_id: pullRequest.user_id,
+        patch_id: pullRequest.patch_id
+      })
+
       const contribute = await prisma.user_patch_contribute_relation.findFirst({
         where: { user_id: pullRequest.user_id, patch_id: pullRequest.patch_id }
       })
@@ -131,6 +140,14 @@ export const declinePullRequest = privateProcedure
           user_id: ctx.uid,
           patch_id: pullRequest.patch_id
         }
+      })
+
+      await createDedupMessage({
+        type: 'pr',
+        content: `拒绝了您的更新请求... 理由: ${input.note}`,
+        sender_id: ctx.uid,
+        recipient_id: pullRequest.user_id,
+        patch_id: pullRequest.patch_id
       })
     })
   })

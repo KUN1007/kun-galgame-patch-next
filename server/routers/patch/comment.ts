@@ -6,6 +6,7 @@ import {
   patchCommentUpdateSchema
 } from '~/validations/patch'
 import { formatComments } from './_helpers'
+import { createDedupMessage } from '~/server/utils/message'
 import type { PatchComment } from '~/types/api/patch'
 
 export const publishPatchComment = privateProcedure
@@ -19,6 +20,22 @@ export const publishPatchComment = privateProcedure
         parent_id: input.parentId
       }
     })
+
+    if (input.parentId) {
+      const parentComment = await prisma.patch_comment.findUnique({
+        where: { id: input.parentId }
+      })
+      if (!parentComment) {
+        return
+      }
+
+      await createDedupMessage({
+        type: 'like',
+        content: `点赞了您的评论! -> ${parentComment.content.slice(0, 107)}`,
+        sender_id: ctx.uid,
+        recipient_id: parentComment.user_id
+      })
+    }
 
     const newComment: Omit<PatchComment, 'user'> = {
       id: data.id,
@@ -126,6 +143,13 @@ export const toggleCommentLike = privateProcedure
         }
       })
     }
+
+    await createDedupMessage({
+      type: 'like',
+      content: `点赞了您的评论! -> ${comment.content.slice(0, 107)}`,
+      sender_id: ctx.uid,
+      recipient_id: comment.user_id
+    })
 
     await prisma.user.update({
       where: { id: comment.user_id },

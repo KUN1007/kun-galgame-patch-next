@@ -5,6 +5,7 @@ import {
   patchResourceCreateSchema,
   patchResourceUpdateSchema
 } from '~/validations/patch'
+import { createDedupMessage } from '~/server/utils/message'
 import type { PatchResource } from '~/types/api/patch'
 
 export const getPatchResource = publicProcedure
@@ -203,7 +204,10 @@ export const toggleResourceLike = privateProcedure
     const { resourceId } = input
 
     const resource = await prisma.patch_resource.findUnique({
-      where: { id: resourceId }
+      where: { id: resourceId },
+      include: {
+        patch: true
+      }
     })
     if (!resource) {
       return '未找到资源'
@@ -243,6 +247,14 @@ export const toggleResourceLike = privateProcedure
     await prisma.user.update({
       where: { id: resource.user_id },
       data: { moemoepoint: { increment: existingLike ? -1 : 1 } }
+    })
+
+    await createDedupMessage({
+      type: 'favorite',
+      content: `点赞了您在 ${resource.patch.name} 下发布的补丁资源`,
+      sender_id: ctx.uid,
+      recipient_id: resource.user_id,
+      patch_id: resource.patch_id
     })
 
     return !existingLike
