@@ -54,6 +54,7 @@ export const userRouter = router({
 
       const user: UserInfo = {
         id: data.id,
+        requestUserUid: ctx.uid ?? 0,
         name: data.name,
         email: data.email,
         avatar: data.avatar,

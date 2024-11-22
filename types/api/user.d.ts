@@ -1,5 +1,6 @@
 export interface UserInfo {
   id: number
+  requestUserUid: number
   name: string
   email: string
   avatar: string

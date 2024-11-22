@@ -89,6 +89,10 @@ export const followUser = privateProcedure
     })
   )
   .mutation(async ({ ctx, input }) => {
+    if (ctx.uid === input.uid) {
+      return '您不能关注自己'
+    }
+
     await prisma.user_follow_relation.create({
       data: {
         follower_id: ctx.uid,
@@ -104,6 +108,10 @@ export const unfollowUser = privateProcedure
     })
   )
   .mutation(async ({ ctx, input }) => {
+    if (ctx.uid === input.uid) {
+      return '您不能取消关注自己'
+    }
+
     await prisma.user_follow_relation.delete({
       where: {
         follower_id_following_id: {

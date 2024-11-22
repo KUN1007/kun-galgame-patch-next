@@ -5,9 +5,10 @@ import { Chip } from '@nextui-org/chip'
 import { Divider } from '@nextui-org/divider'
 import { Progress } from '@nextui-org/progress'
 import { formatDistanceToNow } from '~/utils/formatDistanceToNow'
-import { Mail, Calendar, Link as LinkIcon } from 'lucide-react'
+import { Calendar, Link as LinkIcon, Pencil } from 'lucide-react'
 import { UserFollow } from './follow/Follow'
 import { Stats } from './follow/Stats'
+import { EditButton } from './EditButton'
 import type { UserInfo } from '~/types/api/user'
 
 export const UserProfile = ({ user }: { user: UserInfo }) => {
@@ -73,7 +74,11 @@ export const UserProfile = ({ user }: { user: UserInfo }) => {
             </div>
 
             <div className="flex gap-2">
-              <UserFollow user={user} />
+              {user.id === user.requestUserUid ? (
+                <EditButton />
+              ) : (
+                <UserFollow user={user} />
+              )}
 
               {/* TODO: */}
               {/* <Button
