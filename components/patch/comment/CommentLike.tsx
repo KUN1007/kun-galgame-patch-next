@@ -3,7 +3,7 @@ import { api } from '~/lib/trpc-client'
 import { Button } from '@nextui-org/button'
 import { Tooltip } from '@nextui-org/tooltip'
 import { ThumbsUp } from 'lucide-react'
-import { useUserStore } from '~/store/userStore'
+import { useUserStore } from '~/store/providers/user'
 import toast from 'react-hot-toast'
 import { useErrorHandler } from '~/hooks/useErrorHandler'
 import { cn } from '~/utils/cn'
@@ -15,7 +15,7 @@ interface Props {
 }
 
 export const CommentLikeButton = ({ commentId, likedBy, commenter }: Props) => {
-  const { user } = useUserStore()
+  const { user } = useUserStore((state) => state)
   const isLiked = likedBy.some((u) => u.id === user.uid)
 
   const [liked, setLiked] = useState(isLiked)

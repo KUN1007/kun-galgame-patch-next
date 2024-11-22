@@ -1,7 +1,7 @@
-import { create } from 'zustand'
+import { createStore } from 'zustand/vanilla'
 import { persist, createJSONStorage } from 'zustand/middleware'
 
-export interface UserStore {
+export interface UserState {
   uid: number
   name: string
   email: string
@@ -11,13 +11,13 @@ export interface UserStore {
   checkIn: number
 }
 
-interface UserState {
-  user: UserStore
-  setUser: (user: UserStore) => void
+export interface UserStore {
+  user: UserState
+  setUser: (user: UserState) => void
   logout: () => void
 }
 
-const initialUserStore: UserStore = {
+const initialUserStore: UserState = {
   uid: 0,
   name: '',
   email: '',
@@ -27,16 +27,18 @@ const initialUserStore: UserStore = {
   checkIn: 1
 }
 
-export const useUserStore = create<UserState>()(
-  persist(
-    (set) => ({
-      user: initialUserStore,
-      setUser: (user: UserStore) => set({ user }),
-      logout: () => set({ user: initialUserStore })
-    }),
-    {
-      name: 'kun-patch-user-store',
-      storage: createJSONStorage(() => localStorage)
-    }
+export const createUserStore = (initState: UserState = initialUserStore) => {
+  return createStore<UserStore>()(
+    persist(
+      (set) => ({
+        user: initState,
+        setUser: (user: UserState) => set({ user }),
+        logout: () => set({ user: initState })
+      }),
+      {
+        name: 'kun-patch-user-store',
+        storage: createJSONStorage(() => localStorage)
+      }
+    )
   )
-)
+}

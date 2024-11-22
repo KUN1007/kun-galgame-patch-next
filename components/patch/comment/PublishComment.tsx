@@ -12,7 +12,7 @@ import { Send } from 'lucide-react'
 import { api } from '~/lib/trpc-client'
 import toast from 'react-hot-toast'
 import { patchCommentCreateSchema } from '~/validations/patch'
-import { useUserStore } from '~/store/userStore'
+import { useUserStore } from '~/store/providers/user'
 import type { PatchComment } from '~/types/api/patch'
 
 const commentSchema = patchCommentCreateSchema.pick({ content: true })
@@ -35,7 +35,7 @@ export const PublishComment = ({
   onSuccess
 }: CreateCommentProps) => {
   const [loading, setLoading] = useState(false)
-  const { user } = useUserStore()
+  const { user } = useUserStore((state) => state)
 
   const {
     control,

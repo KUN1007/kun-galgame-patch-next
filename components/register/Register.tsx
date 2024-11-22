@@ -5,7 +5,7 @@ import { z } from 'zod'
 import { Input, Button, Divider, Link, Checkbox } from '@nextui-org/react'
 import { api } from '~/lib/trpc-client'
 import { registerSchema } from '~/validations/auth'
-import { useUserStore } from '~/store/userStore'
+import { useUserStore } from '~/store/providers/user'
 import { useErrorHandler } from '~/hooks/useErrorHandler'
 import { redirect } from 'next/navigation'
 import toast from 'react-hot-toast'
@@ -15,7 +15,7 @@ import { useRouter } from 'next-nprogress-bar'
 type RegisterFormData = z.infer<typeof registerSchema>
 
 export const RegisterForm = () => {
-  const { setUser } = useUserStore()
+  const { setUser } = useUserStore((state) => state)
   const router = useRouter()
   const [isAgree, setIsAgree] = useState(false)
   const [loading, setLoading] = useState(false)

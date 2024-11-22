@@ -8,7 +8,7 @@ import { Card, CardHeader, CardBody, CardFooter } from '@nextui-org/card'
 import { Input } from '@nextui-org/input'
 import { Button } from '@nextui-org/button'
 import { Mail, KeyRound } from 'lucide-react'
-import { useUserStore } from '~/store/userStore'
+import { useUserStore } from '~/store/providers/user'
 import { EmailVerification } from '~/components/kun/verification-code/Code'
 import { resetEmailSchema } from '~/validations/user'
 import { api } from '~/lib/trpc-client'
@@ -18,7 +18,7 @@ import toast from 'react-hot-toast'
 type EmailFormData = z.infer<typeof resetEmailSchema>
 
 export const Email = () => {
-  const { user, setUser } = useUserStore()
+  const { user, setUser } = useUserStore((state) => state)
   const [loading, setLoading] = useState(false)
 
   const {

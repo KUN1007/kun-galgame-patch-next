@@ -11,7 +11,7 @@ import {
   Button,
   useDisclosure
 } from '@nextui-org/react'
-import { useUserStore } from '~/store/userStore'
+import { useUserStore } from '~/store/providers/user'
 import { Camera } from 'lucide-react'
 import { dataURItoBlob } from '~/utils/dataURItoBlob'
 import { api } from '~/lib/trpc-client'
@@ -19,7 +19,7 @@ import { useErrorHandler } from '~/hooks/useErrorHandler'
 import toast from 'react-hot-toast'
 
 export const AvatarCrop = () => {
-  const { user, setUser } = useUserStore()
+  const { user, setUser } = useUserStore((state) => state)
   const { isOpen, onOpen, onClose } = useDisclosure()
   const [crop, setCrop] = useState<Crop>()
   const [image, setImage] = useState<string | null>(null)

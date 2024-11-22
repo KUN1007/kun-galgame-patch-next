@@ -4,7 +4,7 @@ import { useState } from 'react'
 import { Button } from '@nextui-org/react'
 import { Plus, Check } from 'lucide-react'
 import { api } from '~/lib/trpc-client'
-import { useUserStore } from '~/store/userStore'
+import { useUserStore } from '~/store/providers/user'
 import type { UserInfo } from '~/types/api/user'
 
 interface Props {

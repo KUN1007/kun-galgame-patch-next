@@ -3,7 +3,7 @@
 import { Card, CardHeader, CardBody, CardFooter } from '@nextui-org/card'
 import { Input } from '@nextui-org/input'
 import { Button } from '@nextui-org/button'
-import { useUserStore } from '~/store/userStore'
+import { useUserStore } from '~/store/providers/user'
 import { useState } from 'react'
 import { api } from '~/lib/trpc-client'
 import { useErrorHandler } from '~/hooks/useErrorHandler'
@@ -19,7 +19,7 @@ import {
 import toast from 'react-hot-toast'
 
 export const Username = () => {
-  const { user, setUser } = useUserStore()
+  const { user, setUser } = useUserStore((state) => state)
   const [username, setUsername] = useState('')
   const [error, setError] = useState('')
   const [loading, setLoading] = useState(false)

@@ -20,7 +20,7 @@ import {
   getUserFavorite
 } from './profile'
 import { getUserFollower, followUser, unfollowUser } from './follow'
-import type { UserStore } from '~/store/userStore'
+import type { UserState } from '~/store/userStore'
 import type { UserInfo } from '~/types/api/user'
 
 export const userRouter = router({
@@ -109,7 +109,7 @@ export const userRouter = router({
       return '用户未找到'
     }
 
-    const responseData: UserStore = {
+    const responseData: UserState = {
       uid: user.id,
       name: user.name,
       email: user.email,

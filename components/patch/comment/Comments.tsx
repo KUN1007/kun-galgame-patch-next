@@ -35,7 +35,7 @@ import { api } from '~/lib/trpc-client'
 import { PublishComment } from './PublishComment'
 import { CommentLikeButton } from './CommentLike'
 import toast from 'react-hot-toast'
-import { useUserStore } from '~/store/userStore'
+import { useUserStore } from '~/store/providers/user'
 import type { PatchComment } from '~/types/api/patch'
 
 interface Props {
@@ -74,7 +74,7 @@ export const Comments = ({ initialComments, id }: Props) => {
 
   const [deleteCommentId, setDeleteCommentId] = useState(0)
   const { isOpen, onOpen, onClose } = useDisclosure()
-  const { user } = useUserStore()
+  const { user } = useUserStore((state) => state)
   const [deleting, setDeleting] = useState(false)
   const handleDeleteComment = async () => {
     setDeleting(true)

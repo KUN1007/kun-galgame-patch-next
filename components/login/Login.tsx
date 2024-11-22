@@ -5,7 +5,7 @@ import { zodResolver } from '@hookform/resolvers/zod'
 import { Input, Button, Divider, Link } from '@nextui-org/react'
 import { api } from '~/lib/trpc-client'
 import { loginSchema } from '~/validations/auth'
-import { useUserStore } from '~/store/userStore'
+import { useUserStore } from '~/store/providers/user'
 import { useErrorHandler } from '~/hooks/useErrorHandler'
 import { redirect } from 'next/navigation'
 import { useRouter } from 'next-nprogress-bar'
@@ -14,7 +14,7 @@ import toast from 'react-hot-toast'
 type LoginFormData = z.infer<typeof loginSchema>
 
 export const LoginForm = () => {
-  const { setUser } = useUserStore()
+  const { setUser } = useUserStore((state) => state)
   const router = useRouter()
   const [loading, setLoading] = useState(false)
 

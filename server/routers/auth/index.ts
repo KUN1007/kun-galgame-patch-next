@@ -11,7 +11,7 @@ import { prisma } from '~/prisma/index'
 import { sendVerificationCodeEmail } from '~/server/utils/sendVerificationCodeEmail'
 import { verifyVerificationCode } from '~/server/utils/verifyVerificationCode'
 import { getRemoteIp } from '~/server/utils/getRemoteIp'
-import type { UserStore } from '~/store/userStore'
+import type { UserState } from '~/store/userStore'
 
 export const authRouter = router({
   login: publicProcedure.input(loginSchema).mutation(async ({ ctx, input }) => {
@@ -39,7 +39,7 @@ export const authRouter = router({
       maxAge: 30 * 24 * 60 * 60 * 1000
     })
 
-    const responseData: UserStore = {
+    const responseData: UserState = {
       uid: user.id,
       name: user.name,
       email: user.email,
@@ -95,7 +95,7 @@ export const authRouter = router({
         maxAge: 30 * 24 * 60 * 60 * 1000
       })
 
-      const responseData: UserStore = {
+      const responseData: UserState = {
         uid: user.id,
         name: user.name,
         email: user.email,

@@ -5,7 +5,7 @@ import { api } from '~/lib/trpc-client'
 import { Button } from '@nextui-org/button'
 import { Tooltip } from '@nextui-org/tooltip'
 import { Heart } from 'lucide-react'
-import { useUserStore } from '~/store/userStore'
+import { useUserStore } from '~/store/providers/user'
 import toast from 'react-hot-toast'
 import { useErrorHandler } from '~/hooks/useErrorHandler'
 import { cn } from '~/utils/cn'
@@ -16,7 +16,7 @@ interface Props {
 }
 
 export const ResourceFavoriteButton = ({ patchId, isFavorite }: Props) => {
-  const { user } = useUserStore()
+  const { user } = useUserStore((state) => state)
   const [favorite, setFavorite] = useState(isFavorite)
   const [loading, setLoading] = useState(false)
 

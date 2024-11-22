@@ -31,7 +31,7 @@ import {
   Sparkles,
   Bell
 } from 'lucide-react'
-import { useUserStore } from '~/store/userStore'
+import { useUserStore } from '~/store/providers/user'
 import { useState, useEffect } from 'react'
 import { useRouter } from 'next-nprogress-bar'
 import { api } from '~/lib/trpc-client'
@@ -43,7 +43,7 @@ import { useErrorHandler } from '~/hooks/useErrorHandler'
 
 export const KunTopBarUser = () => {
   const router = useRouter()
-  const { user, setUser, logout } = useUserStore()
+  const { user, setUser, logout } = useUserStore((state) => state)
   const isMounted = useMounted()
   const [loading, setLoading] = useState(false)
   const { isOpen, onOpen, onOpenChange } = useDisclosure()

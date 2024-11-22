@@ -9,7 +9,7 @@ import {
   useDisclosure
 } from '@nextui-org/modal'
 import { RewritePatchBanner } from '~/components/edit/rewrite/RewritePatchBanner'
-import { useUserStore } from '~/store/userStore'
+import { useUserStore } from '~/store/providers/user'
 import type { Patch } from '~/types/api/patch'
 
 interface PatchHeaderProps {
@@ -18,7 +18,7 @@ interface PatchHeaderProps {
 
 export const PatchHeader = ({ patch }: PatchHeaderProps) => {
   const { isOpen, onOpen, onClose } = useDisclosure()
-  const { user } = useUserStore()
+  const { user } = useUserStore((state) => state)
 
   return (
     <>

@@ -1,49 +1,16 @@
-'use client'
-
-import { useState } from 'react'
 import { Card, CardBody, CardHeader } from '@nextui-org/card'
-import {
-  Modal,
-  ModalContent,
-  ModalHeader,
-  ModalBody,
-  useDisclosure
-} from '@nextui-org/modal'
 import { Avatar } from '@nextui-org/avatar'
 import { Button } from '@nextui-org/button'
 import { Chip } from '@nextui-org/chip'
 import { Divider } from '@nextui-org/divider'
 import { Progress } from '@nextui-org/progress'
 import { formatDistanceToNow } from '~/utils/formatDistanceToNow'
-import {
-  Plus,
-  Mail,
-  Calendar,
-  Link as LinkIcon,
-  Users,
-  Telescope
-} from 'lucide-react'
+import { Mail, Calendar, Link as LinkIcon } from 'lucide-react'
 import { UserFollow } from './follow/Follow'
-import { UserList } from './follow/UserList'
-import { api } from '~/lib/trpc-client'
+import { Stats } from './follow/Stats'
 import type { UserInfo } from '~/types/api/user'
 
 export const UserProfile = ({ user }: { user: UserInfo }) => {
-  const { isOpen, onOpen, onClose } = useDisclosure()
-  const [activeTab, setActiveTab] = useState<'followers' | 'following'>(
-    'followers'
-  )
-
-  const showFollowers = () => {
-    setActiveTab('followers')
-    onOpen()
-  }
-
-  const showFollowing = () => {
-    setActiveTab('following')
-    onOpen()
-  }
-
   return (
     <div className="lg:col-span-1">
       <Card className="w-full">
@@ -61,44 +28,7 @@ export const UserProfile = ({ user }: { user: UserInfo }) => {
                 {user.role}
               </Chip>
 
-              <div className="flex gap-4 mt-2">
-                <Button
-                  variant="light"
-                  onClick={showFollowers}
-                  startContent={<Users className="w-4 h-4 text-default-400" />}
-                >
-                  {user.follower}
-                  <span className="text-default-500">人关注TA</span>
-                </Button>
-                <Button
-                  variant="light"
-                  onClick={showFollowing}
-                  startContent={
-                    <Telescope className="w-4 h-4 text-default-400" />
-                  }
-                >
-                  {user.following}
-                  <span className="text-default-500">正在关注</span>
-                </Button>
-              </div>
-
-              <Modal
-                isOpen={isOpen}
-                onClose={onClose}
-                scrollBehavior="inside"
-                size="2xl"
-              >
-                <ModalContent>
-                  <ModalHeader>
-                    <h3 className="text-xl">
-                      {activeTab === 'followers' ? 'Followers' : 'Following'}
-                    </h3>
-                  </ModalHeader>
-                  <ModalBody>
-                    <UserList userId={user.id} type={activeTab} />
-                  </ModalBody>
-                </ModalContent>
-              </Modal>
+              <Stats user={user} />
             </div>
           </div>
         </CardHeader>
@@ -145,14 +75,15 @@ export const UserProfile = ({ user }: { user: UserInfo }) => {
             <div className="flex gap-2">
               <UserFollow user={user} />
 
-              <Button
+              {/* TODO: */}
+              {/* <Button
                 startContent={<Mail className="w-4 h-4" />}
                 color="default"
                 variant="flat"
                 fullWidth
               >
                 Message
-              </Button>
+              </Button> */}
             </div>
           </div>
         </CardBody>

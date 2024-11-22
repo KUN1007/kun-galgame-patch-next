@@ -26,7 +26,7 @@ import { api } from '~/lib/trpc-client'
 import { PublishResource } from './PublishResource'
 import { formatDistanceToNow } from '~/utils/formatDistanceToNow'
 import { EditResourceDialog } from './EditResourceDialog'
-import { useUserStore } from '~/store/userStore'
+import { useUserStore } from '~/store/providers/user'
 import { ResourceLikeButton } from './ResourceLike'
 import type { PatchResource } from '~/types/api/patch'
 import toast from 'react-hot-toast'
@@ -53,7 +53,7 @@ export const Resources = ({ initialResources, id }: Props) => {
     onOpen: onOpenEdit,
     onClose: onCloseEdit
   } = useDisclosure()
-  const { user } = useUserStore()
+  const { user } = useUserStore((state) => state)
   const [editResource, setEditResource] = useState<PatchResource | null>(null)
   const completeEdit = () => {
     onCloseEdit()

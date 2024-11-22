@@ -3,14 +3,14 @@
 import { Card, CardHeader, CardBody, CardFooter } from '@nextui-org/card'
 import { Textarea } from '@nextui-org/input'
 import { Button } from '@nextui-org/button'
-import { useUserStore } from '~/store/userStore'
+import { useUserStore } from '~/store/providers/user'
 import { useState } from 'react'
 import { api } from '~/lib/trpc-client'
 import { bioSchema } from '~/validations/user'
 import toast from 'react-hot-toast'
 
 export const Bio = () => {
-  const { user, setUser } = useUserStore()
+  const { user, setUser } = useUserStore((state) => state)
   const [bio, setBio] = useState('')
   const [error, setError] = useState('')
   const [loading, setLoading] = useState(false)
