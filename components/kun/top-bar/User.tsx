@@ -80,7 +80,10 @@ export const KunTopBarUser = () => {
 
           {user.name && (
             <>
-              <UserMessageBell hasUnreadMessages={hasUnread} />
+              <UserMessageBell
+                hasUnreadMessages={hasUnread}
+                setReadMessage={() => setHasUnread(false)}
+              />
 
               <UserDropdown />
             </>

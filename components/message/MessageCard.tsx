@@ -84,9 +84,13 @@ export const MessageCard = ({ msg }: Props) => {
             {formatDistanceToNow(msg.created)}
           </span>
         </div>
-        {msg.status === 0 && (
+        {msg.status === 0 ? (
           <Chip color="danger" size="sm">
             新消息
+          </Chip>
+        ) : (
+          <Chip color="default" size="sm">
+            已阅读
           </Chip>
         )}
       </CardBody>

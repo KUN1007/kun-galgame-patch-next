@@ -9,19 +9,28 @@ import { dotVariants, bellShakeVariants } from '~/motion/bell'
 
 interface AnimatedNotificationBellProps {
   hasUnreadMessages: boolean
+  setReadMessage: () => void
 }
 
 export const UserMessageBell = ({
-  hasUnreadMessages
+  hasUnreadMessages,
+  setReadMessage
 }: AnimatedNotificationBellProps) => {
   const router = useRouter()
+
+  const handleClickButton = () => {
+    router.push('/message/notice')
+    if (hasUnreadMessages) {
+      setReadMessage()
+    }
+  }
 
   return (
     <Tooltip content={hasUnreadMessages ? '您有新消息!' : '我的消息'}>
       <Button
         isIconOnly
         variant="light"
-        onClick={() => router.push('/message/notice')}
+        onClick={handleClickButton}
         className="relative"
       >
         <motion.div

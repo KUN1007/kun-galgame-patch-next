@@ -11,6 +11,13 @@ export const messageRouter = router({
     return unread
   }),
 
+  readMessage: privateProcedure.mutation(async ({ ctx, input }) => {
+    await prisma.user_message.updateMany({
+      where: { recipient_id: ctx.uid },
+      data: { status: { set: 1 } }
+    })
+  }),
+
   createMessage: privateProcedure
     .input(createMessageSchema)
     .mutation(async ({ ctx, input }) => {
@@ -42,8 +49,8 @@ export const messageRouter = router({
             type
           }
         : {
-            recipient_id: ctx.uid,
-            type: { in: ['like', 'favorite', 'comment', 'pr'] }
+            recipient_id: ctx.uid
+            // type: { in: ['like', 'favorite', 'comment', 'pr'] }
           }
 
       const [messages, total] = await Promise.all([

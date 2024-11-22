@@ -1,5 +1,7 @@
 'use client'
 
+import { useEffect } from 'react'
+import { api } from '~/lib/trpc-client'
 import { Button } from '@nextui-org/react'
 import { Bell, UserPlus, Globe } from 'lucide-react'
 import { Card, CardBody } from '@nextui-org/card'
@@ -20,6 +22,13 @@ const notificationTypes = [
 export const MessageNav = () => {
   const pathname = usePathname()
   const lastSegment = pathname.split('/').filter(Boolean).pop()
+
+  useEffect(() => {
+    const readAllMessage = async () => {
+      await api.message.readMessage.mutate()
+    }
+    readAllMessage()
+  }, [])
 
   return (
     <Card className="w-full lg:w-1/4">
