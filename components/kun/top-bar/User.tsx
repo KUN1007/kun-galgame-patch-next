@@ -52,6 +52,9 @@ export const KunTopBarUser = () => {
     if (!isMounted) {
       return
     }
+    if (!user.uid) {
+      return
+    }
 
     const getUserStatus = async () => {
       const user = await api.user.status.query()
@@ -127,96 +130,98 @@ export const KunTopBarUser = () => {
 
           <ThemeSwitcher />
 
-          <Button
-            isIconOnly
-            variant="light"
-            onClick={() => router.push('/message')}
-          >
-            <Bell className="w-6 h-6 text-default-500" />
-          </Button>
-
           {user.name && (
-            <Dropdown placement="bottom-end">
-              <DropdownTrigger>
-                <Avatar
-                  isBordered
-                  as="button"
-                  className="transition-transform shrink-0"
-                  color="secondary"
-                  name={user.name.charAt(0).toUpperCase()}
-                  size="sm"
-                  src={user.avatar}
-                  showFallback
-                />
-              </DropdownTrigger>
-              <DropdownMenu
-                aria-label="Profile Actions"
-                disabledKeys={user.checkIn ? ['check'] : []}
+            <>
+              <Button
+                isIconOnly
+                variant="light"
+                onClick={() => router.push('/message/notice')}
               >
-                <DropdownItem
-                  key="username"
-                  textValue="用户名"
-                  className="data-[hover=true]:bg-background cursor-default"
-                >
-                  <p className="font-semibold">{user.name}</p>
-                </DropdownItem>
-                <DropdownItem
-                  key="moemoepoint"
-                  textValue="萌萌点"
-                  className="data-[hover=true]:bg-background cursor-default"
-                  startContent={<Lollipop className="w-4 h-4" />}
-                  endContent={user.moemoepoint}
-                >
-                  萌萌点
-                </DropdownItem>
-                <DropdownItem
-                  key="profile"
-                  onPress={() => router.push(`/user/${user.uid}/resource`)}
-                  startContent={<UserRound className="w-4 h-4" />}
-                >
-                  用户主页
-                </DropdownItem>
-                <DropdownItem
-                  key="settings"
-                  onPress={() => router.push('/settings/user')}
-                  startContent={<Settings className="w-4 h-4" />}
-                >
-                  信息设置
-                </DropdownItem>
-                <DropdownItem
-                  key="help_and_feedback"
-                  onPress={() => router.push(`/about`)}
-                  startContent={<CircleHelp className="w-4 h-4" />}
-                >
-                  帮助与反馈
-                </DropdownItem>
-                <DropdownItem
-                  key="logout"
-                  color="danger"
-                  startContent={<LogOut className="w-4 h-4" />}
-                  onPress={onOpen}
-                >
-                  退出登录
-                </DropdownItem>
+                <Bell className="w-6 h-6 text-default-500" />
+              </Button>
 
-                <DropdownItem
-                  key="check"
-                  textValue="今日签到"
-                  color="secondary"
-                  startContent={<CalendarCheck className="w-4 h-4" />}
-                  endContent={
-                    user.checkIn ? (
-                      <span className="text-xs">签到过啦</span>
-                    ) : (
-                      <Sparkles className="w-5 h-5 text-secondary-500" />
-                    )
-                  }
-                  onPress={handleCheckIn}
+              <Dropdown placement="bottom-end">
+                <DropdownTrigger>
+                  <Avatar
+                    isBordered
+                    as="button"
+                    className="transition-transform shrink-0"
+                    color="secondary"
+                    name={user.name.charAt(0).toUpperCase()}
+                    size="sm"
+                    src={user.avatar}
+                    showFallback
+                  />
+                </DropdownTrigger>
+                <DropdownMenu
+                  aria-label="Profile Actions"
+                  disabledKeys={user.checkIn ? ['check'] : []}
                 >
-                  今日签到
-                </DropdownItem>
-              </DropdownMenu>
-            </Dropdown>
+                  <DropdownItem
+                    key="username"
+                    textValue="用户名"
+                    className="data-[hover=true]:bg-background cursor-default"
+                  >
+                    <p className="font-semibold">{user.name}</p>
+                  </DropdownItem>
+                  <DropdownItem
+                    key="moemoepoint"
+                    textValue="萌萌点"
+                    className="data-[hover=true]:bg-background cursor-default"
+                    startContent={<Lollipop className="w-4 h-4" />}
+                    endContent={user.moemoepoint}
+                  >
+                    萌萌点
+                  </DropdownItem>
+                  <DropdownItem
+                    key="profile"
+                    onPress={() => router.push(`/user/${user.uid}/resource`)}
+                    startContent={<UserRound className="w-4 h-4" />}
+                  >
+                    用户主页
+                  </DropdownItem>
+                  <DropdownItem
+                    key="settings"
+                    onPress={() => router.push('/settings/user')}
+                    startContent={<Settings className="w-4 h-4" />}
+                  >
+                    信息设置
+                  </DropdownItem>
+                  <DropdownItem
+                    key="help_and_feedback"
+                    onPress={() => router.push(`/about`)}
+                    startContent={<CircleHelp className="w-4 h-4" />}
+                  >
+                    帮助与反馈
+                  </DropdownItem>
+                  <DropdownItem
+                    key="logout"
+                    color="danger"
+                    startContent={<LogOut className="w-4 h-4" />}
+                    onPress={onOpen}
+                  >
+                    退出登录
+                  </DropdownItem>
+
+                  <DropdownItem
+                    key="check"
+                    textValue="今日签到"
+                    color="secondary"
+                    startContent={<CalendarCheck className="w-4 h-4" />}
+                    endContent={
+                      user.checkIn ? (
+                        <span className="text-xs">签到过啦</span>
+                      ) : (
+                        <Sparkles className="w-5 h-5 text-secondary-500" />
+                      )
+                    }
+                    onPress={handleCheckIn}
+                  >
+                    今日签到
+                  </DropdownItem>
+                </DropdownMenu>
+              </Dropdown>
+            </>
           )}
         </>
       ) : (

@@ -51,13 +51,13 @@ model user {
 model user_follow_relation {
   id Int @id @default(autoincrement())
 
-  followerId  Int
-  followingId Int
+  follower_id  Int
+  following_id Int
 
-  follower  user @relation("user_follower", fields: [followerId], references: [id])
-  following user @relation("user_following", fields: [followingId], references: [id])
+  follower  user @relation("user_follower", fields: [follower_id], references: [id])
+  following user @relation("user_following", fields: [following_id], references: [id])
 
-  @@unique([followerId, followingId])
+  @@unique([follower_id, following_id])
 }
 
 model user_message {

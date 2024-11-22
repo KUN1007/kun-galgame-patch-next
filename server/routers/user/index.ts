@@ -19,6 +19,7 @@ import {
   getUserComment,
   getUserFavorite
 } from './profile'
+import { getUserFollower, followUser, unfollowUser } from './follow'
 import type { UserStore } from '~/store/userStore'
 import type { UserInfo } from '~/types/api/user'
 
@@ -40,12 +41,16 @@ export const userRouter = router({
               patch_comment: true,
               patch_favorite: true
             }
-          }
+          },
+          follower: true,
+          following: true
         }
       })
       if (!data) {
         return '未找到用户'
       }
+
+      const followerUserUid = data.following.map((f) => f.follower_id)
 
       const user: UserInfo = {
         id: data.id,
@@ -57,6 +62,9 @@ export const userRouter = router({
         status: data.status,
         registerTime: String(data.register_time),
         moemoepoint: data.moemoepoint,
+        follower: data.following.length,
+        following: data.follower.length,
+        isFollow: followerUserUid.includes(ctx.uid ?? 0),
         _count: data._count
       }
 
@@ -125,5 +133,9 @@ export const userRouter = router({
   getUserGalgame,
   getUserContribute,
   getUserComment,
-  getUserFavorite
+  getUserFavorite,
+
+  getUserFollower,
+  followUser,
+  unfollowUser
 })
