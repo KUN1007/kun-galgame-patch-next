@@ -4,6 +4,13 @@ import { createMessageSchema, getMessageSchema } from '~/validations/message'
 import { createMessage } from '~/server/utils/message'
 
 export const messageRouter = router({
+  getUnread: privateProcedure.query(async ({ ctx, input }) => {
+    const unread = await prisma.user_message.findFirst({
+      where: { recipient_id: ctx.uid, status: 0 }
+    })
+    return unread
+  }),
+
   createMessage: privateProcedure
     .input(createMessageSchema)
     .mutation(async ({ ctx, input }) => {
