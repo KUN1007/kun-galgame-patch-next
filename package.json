@@ -15,7 +15,9 @@
     "not op_mini all"
   ],
   "dependencies": {
+    "@aws-sdk/client-s3": "^3.699.0",
     "@hookform/resolvers": "^3.9.1",
+    "@microsoft/microsoft-graph-client": "^3.0.7",
     "@milkdown/plugin-automd": "^7.5.0",
     "@nextui-org/react": "^2.4.8",
     "@node-rs/argon2": "^2.0.0",
@@ -41,6 +43,7 @@
     "localforage": "^1.10.0",
     "lucide-react": "^0.455.0",
     "lz-string": "^1.5.0",
+    "mime": "^4.0.4",
     "next": "15.0.3",
     "next-nprogress-bar": "^2.3.14",
     "next-themes": "^0.4.3",
@@ -60,6 +63,7 @@
     "remark-gfm": "^4.0.0",
     "remark-parse": "^11.0.0",
     "remark-rehype": "^11.1.1",
+    "rimraf": "^6.0.1",
     "sharp": "^0.33.5",
     "superjson": "^2.2.1",
     "tailwind-merge": "^2.5.4",

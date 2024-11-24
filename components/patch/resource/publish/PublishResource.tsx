@@ -11,6 +11,7 @@ import { patchResourceCreateSchema } from '~/validations/patch'
 import { ResourceLinksInput } from './ResourceLinksInput'
 import { ResourceDetailsForm } from './ResourceDetailsForm'
 import { SubmitButton } from './SubmitButton'
+import { FileUpload } from '../upload/FileUpload'
 import type { PatchResource } from '~/types/api/patch'
 
 export type ResourceFormData = z.infer<typeof patchResourceCreateSchema>
@@ -61,6 +62,7 @@ export const PublishResource = ({
     <Card>
       <CardBody>
         <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
+          <FileUpload />
           <ResourceLinksInput
             errors={errors}
             links={watch().link}
