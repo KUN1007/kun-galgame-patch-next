@@ -39,7 +39,6 @@ export const getPatchResource = publicProcedure
       type: resource.type,
       language: resource.language,
       note: resource.note,
-      link: resource.link,
       password: resource.password,
       platform: resource.platform,
       likedBy: resource.like_by.map((likeRelation) => ({
@@ -63,6 +62,8 @@ export const getPatchResource = publicProcedure
 
     return resources
   })
+
+const createPatchResourceLink = async () => {}
 
 export const createPatchResource = privateProcedure
   .input(patchResourceCreateSchema)

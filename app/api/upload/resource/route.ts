@@ -1,41 +1,26 @@
 import { NextResponse } from 'next/server'
-import { join } from 'path'
-import { writeFile } from 'fs/promises'
-import {
-  S3Client,
-  CreateBucketCommand,
-  PutObjectCommand
-} from '@aws-sdk/client-s3'
-
-const s3 = new S3Client({
-  endpoint: process.env.KUN_VISUAL_NOVEL_S3_STORAGE_ENDPOINT!,
-  region: process.env.KUN_VISUAL_NOVEL_S3_STORAGE_REGION!,
-  credentials: {
-    accessKeyId: process.env.KUN_VISUAL_NOVEL_S3_STORAGE_ACCESS_KEY_ID!,
-    secretAccessKey: process.env.KUN_VISUAL_NOVEL_S3_STORAGE_SECRET_ACCESS_KEY!
-  }
-})
+import { setKv } from '~/lib/redis'
+import { calculateFileStreamHash } from '../fs'
+import { verifyHeaderCookie } from '../auth'
 
 export async function POST(req: Request) {
   const formData = await req.formData()
   const file = formData.get('file')
 
+  const payload = await verifyHeaderCookie(req)
+
+  if (!payload) {
+    return NextResponse.json({ status: 233, statusText: '用户未认证' })
+  }
+
   if (!file || !(file instanceof File)) {
-    return NextResponse.json('success', { status: 500 })
+    return NextResponse.json({ status: 500, statusText: '错误的文件输入' })
   }
 
   const buffer = Buffer.from(await file.arrayBuffer())
-  const filePath = join(process.cwd(), 'uploads', file.name)
+  const res = await calculateFileStreamHash(buffer, 'uploads', file.name)
 
-  await writeFile(filePath, buffer)
+  await setKv(res.fileHash, res.finalFilePath)
 
-  await s3.send(
-    new PutObjectCommand({
-      Bucket: 'kun-galgame-patch',
-      Key: Date.now().toString(),
-      Body: buffer
-    })
-  )
-
-  return NextResponse.json('success', { status: 200 })
+  return NextResponse.json({ status: 200, fileHash: res.fileHash })
 }

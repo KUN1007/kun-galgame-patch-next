@@ -42,7 +42,6 @@ export const patchResourceCreateSchema = z.object({
         .url('请输入有效的链接格式')
         .max(1007, { message: '单个链接的长度最大 1007 个字符' })
     )
-    .min(1, { message: '请提供至少一条资源链接' })
     .max(10, { message: '您的单个补丁资源最多有 10 条链接' }),
   size: z
     .string()

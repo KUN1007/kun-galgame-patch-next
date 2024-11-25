@@ -47,13 +47,19 @@ export interface PatchPullRequest {
   created: string
 }
 
-interface PatchResource {
+export interface PatchResourceLink {
+  id: number
+  type: string
+  md5: string
+  content: string
+}
+
+export interface PatchResource {
   id: number
   size: string
   type: string[]
   language: string[]
   note: string
-  link: string[]
   password: string
   platform: string[]
   likedBy: KunUser[]
@@ -68,7 +74,7 @@ interface PatchResource {
   }
 }
 
-interface PatchComment {
+export interface PatchComment {
   id: number
   content: string
   likedBy: KunUser[]
@@ -82,7 +88,7 @@ interface PatchComment {
   quotedUsername?: string | null
 }
 
-interface PatchHistory {
+export interface PatchHistory {
   id: number
   action: string
   type: string

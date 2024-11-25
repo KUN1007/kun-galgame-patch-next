@@ -248,9 +248,10 @@ model patch_resource {
 }
 
 model patch_resource_link {
-  id   Int    @id @default(autoincrement())
-  type String
-  md5  String @default("")
+  id      Int    @id @default(autoincrement())
+  type    String
+  md5     String @default("")
+  content String @default("")
 
   patch_id          Int
   patch_resource_id Int

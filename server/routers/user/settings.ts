@@ -1,5 +1,5 @@
 import { privateProcedure } from '~/lib/trpc'
-import { hash, verify } from '@node-rs/argon2'
+import { hashPassword, verifyPassword } from '~/server/utils/algorithm'
 import { prisma } from '~/prisma/index'
 import {
   avatarSchema,
@@ -106,12 +106,15 @@ export const updatePassword = privateProcedure
     }
 
     const user = await prisma.user.findUnique({ where: { id: ctx.uid } })
-    const res = await verify(user ? user.password : '', input.oldPassword)
+    const res = await verifyPassword(
+      input.oldPassword,
+      user ? user.password : ''
+    )
     if (!res) {
       return '旧密码输入错误'
     }
 
-    const hashedPassword = await hash(input.newPassword)
+    const hashedPassword = await hashPassword(input.newPassword)
 
     await prisma.user.update({
       where: { id: ctx.uid },

@@ -28,3 +28,5 @@ export const SUPPORTED_PLATFORMS = [
   'Linux',
   '其它'
 ]
+
+export const SUPPORTED_RESOURCE_LINK = ['s3', 'onedrive', 'user'] as const

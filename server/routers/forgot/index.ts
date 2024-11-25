@@ -2,7 +2,7 @@ import { router, publicProcedure } from '~/lib/trpc'
 import { stepOneSchema, stepTwoSchema } from '~/validations/forgot'
 import { prisma } from '~/prisma/index'
 import { sendVerificationCodeEmail } from '~/server/utils/sendVerificationCodeEmail'
-import { verify, hash } from '@node-rs/argon2'
+import { hashPassword, verifyPassword } from '~/server/utils/algorithm'
 import { verifyVerificationCode } from '~/server/utils/verifyVerificationCode'
 
 export const forgotRouter = router({
@@ -60,7 +60,7 @@ export const forgotRouter = router({
         return '您的邮箱验证码无效'
       }
 
-      const hashedPassword = await hash(input.newPassword)
+      const hashedPassword = await hashPassword(input.newPassword)
       await prisma.user.update({
         where: { id: user.id },
         data: { password: hashedPassword }

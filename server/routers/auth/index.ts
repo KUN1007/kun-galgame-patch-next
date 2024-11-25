@@ -1,6 +1,6 @@
 import { cookies } from 'next/headers'
 import { router, publicProcedure, privateProcedure } from '~/lib/trpc'
-import { verify, hash } from '@node-rs/argon2'
+import { hashPassword, verifyPassword } from '~/server/utils/algorithm'
 import { generateKunToken, deleteKunToken } from '~/server/utils/jwt'
 import {
   loginSchema,
@@ -26,7 +26,7 @@ export const authRouter = router({
       return '用户未找到'
     }
 
-    const isPasswordValid = await verify(user.password, password)
+    const isPasswordValid = await verifyPassword(password, user.password)
     if (!isPasswordValid) {
       return '用户密码错误'
     }
@@ -75,7 +75,7 @@ export const authRouter = router({
         return '您的邮箱已经有人注册了, 请修改'
       }
 
-      const hashedPassword = await hash(password)
+      const hashedPassword = await hashPassword(password)
       const ip = getRemoteIp(ctx.headers)
 
       const user = await prisma.user.create({
