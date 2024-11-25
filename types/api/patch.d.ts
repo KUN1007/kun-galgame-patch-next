@@ -50,7 +50,7 @@ export interface PatchPullRequest {
 export interface PatchResourceLink {
   id: number
   type: string
-  md5: string
+  hash: string
   content: string
 }
 
@@ -58,6 +58,7 @@ export interface PatchResource {
   id: number
   size: string
   type: string[]
+  link: PatchResourceLink[]
   language: string[]
   note: string
   password: string

@@ -22,5 +22,5 @@ export async function POST(req: Request) {
 
   await setKv(res.fileHash, res.finalFilePath)
 
-  return NextResponse.json({ status: 200, fileHash: res.fileHash })
+  return NextResponse.json({ filetype: 's3', fileHash: res.fileHash })
 }

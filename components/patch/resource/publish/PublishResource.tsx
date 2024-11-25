@@ -38,7 +38,14 @@ export const PublishResource = ({
     resolver: zodResolver(patchResourceCreateSchema),
     defaultValues: {
       patchId,
-      link: [''],
+      link: [
+        {
+          id: 0,
+          type: 'user',
+          content: '',
+          hash: ''
+        }
+      ],
       type: [],
       language: [],
       platform: [],
@@ -62,7 +69,9 @@ export const PublishResource = ({
     <Card>
       <CardBody>
         <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
-          <FileUpload />
+          <FileUpload
+            onSuccess={(link) => setValue('link', [...watch().link, link])}
+          />
           <ResourceLinksInput
             errors={errors}
             links={watch().link}

@@ -3,7 +3,8 @@ import { ResourceSizeRegex } from '~/utils/validate'
 import {
   SUPPORTED_TYPES,
   SUPPORTED_LANGUAGES,
-  SUPPORTED_PLATFORMS
+  SUPPORTED_PLATFORMS,
+  SUPPORTED_RESOURCE_LINK
 } from '~/constants/resource'
 
 export const patchTagChangeSchema = z.object({
@@ -33,16 +34,23 @@ export const patchCommentUpdateSchema = z.object({
     .max(10007, { message: '评论的内容最多为 10007 个字符' })
 })
 
+const patchResourceLinkSchema = z.array(
+  z.object({
+    id: z.number().max(9999999),
+    type: z.string().refine((type) => SUPPORTED_RESOURCE_LINK.includes(type), {
+      message: '非法的资源链接类型'
+    }),
+    content: z
+      .string()
+      .url('请输入有效的链接格式')
+      .max(1007, { message: '单个链接的长度最大 1007 个字符' }),
+    hash: z.string().max(107)
+  })
+)
+
 export const patchResourceCreateSchema = z.object({
   patchId: z.number().min(1).max(9999999),
-  link: z
-    .array(
-      z
-        .string()
-        .url('请输入有效的链接格式')
-        .max(1007, { message: '单个链接的长度最大 1007 个字符' })
-    )
-    .max(10, { message: '您的单个补丁资源最多有 10 条链接' }),
+  link: patchResourceLinkSchema,
   size: z
     .string()
     .trim()

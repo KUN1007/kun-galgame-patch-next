@@ -6,7 +6,7 @@ import {
   SUPPORTED_LANGUAGES,
   SUPPORTED_PLATFORMS
 } from '~/constants/resource'
-import { ErrorType, ControlType } from './share'
+import { ErrorType, ControlType } from '../share'
 
 interface ResourceDetailsFormProps {
   control: ControlType

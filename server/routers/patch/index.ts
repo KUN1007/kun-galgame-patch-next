@@ -5,13 +5,11 @@ import {
   handleAddPatchTag,
   handleRemovePatchTag
 } from './introduction'
-import {
-  createPatchResource,
-  getPatchResource,
-  updatePatchResource,
-  toggleResourceLike,
-  deleteResource
-} from './resource'
+import { createPatchResource } from './resource/create'
+import { getPatchResource } from './resource/get'
+import { updatePatchResource } from './resource/update'
+import { toggleResourceLike } from './resource/toggleLike'
+import { deleteResource } from './resource/delete'
 import {
   publishPatchComment,
   getPatchComment,

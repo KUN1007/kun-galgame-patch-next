@@ -13,15 +13,15 @@ import { Upload, File as FileIcon } from 'lucide-react'
 import axios from 'axios'
 import { cn } from '~/utils/cn'
 import toast from 'react-hot-toast'
+import type { UploadFileResponse } from '~/types/api/upload'
+import type { FileStatus } from '../share'
+import type { PatchResourceLink } from '~/types/api/patch'
 
-interface FileStatus {
-  file: File
-  progress: number
-  error?: string
-  filename?: string
+interface Props {
+  onSuccess: (link: PatchResourceLink) => void
 }
 
-export const FileUpload = () => {
+export const FileUpload = ({ onSuccess }: Props) => {
   const [fileData, setFileData] = useState<FileStatus | null>(null)
   const [isDragging, setIsDragging] = useState(false)
 
@@ -33,21 +33,37 @@ export const FileUpload = () => {
     const formData = new FormData()
     formData.append('file', file)
 
-    const res = await axios.post<string>('/api/upload/resource', formData, {
-      onUploadProgress: (progressEvent) => {
-        const progress = Math.round(
-          (progressEvent.loaded * 100) / (progressEvent.total || 0)
-        )
-        setFileData((prev) => (prev ? { ...prev, progress } : null))
+    const res = await axios.post<UploadFileResponse>(
+      '/api/upload/resource',
+      formData,
+      {
+        onUploadProgress: (progressEvent) => {
+          const progress = Math.round(
+            (progressEvent.loaded * 100) / (progressEvent.total || 0)
+          )
+          setFileData((prev) => (prev ? { ...prev, progress } : null))
+        }
       }
-    })
+    )
 
     if (res.status !== 200) {
       toast.error(res.statusText)
       return
     }
 
-    setFileData((prev) => (prev ? { ...prev, filename: res.data } : null))
+    const { filetype, fileHash } = res.data
+
+    setFileData((prev) =>
+      prev
+        ? { ...prev, hash: res.data.fileHash, filetype: res.data.filetype }
+        : null
+    )
+    onSuccess({
+      id: 0,
+      type: filetype,
+      hash: fileHash,
+      content: `https://www.moyu.moe/${fileHash}`
+    })
   }
 
   const handleDrop = async (e: React.DragEvent) => {
@@ -125,9 +141,9 @@ export const FileUpload = () => {
                   </p>
                 </div>
               </div>
-              {fileData.filename ? (
-                <div className="flex items-center gap-2">
-                  <Chip color="success">上传成功</Chip>
+              {fileData.hash ? (
+                <div className="flex items-center gap-2 ml-auto">
+                  <span className="text-sm text-default-500">文件上传成功</span>
                   <Button color="danger" variant="flat" onClick={removeFile}>
                     移除
                   </Button>

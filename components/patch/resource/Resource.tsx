@@ -217,7 +217,7 @@ export const Resources = ({ initialResources, id }: Props) => {
               </div>
             </div>
 
-            {showLinks[resource.id] && (
+            {/* {showLinks[resource.id] && (
               <div className="flex flex-wrap gap-2 mt-4">
                 {resource.link.map((link, index) => (
                   <Button
@@ -232,7 +232,7 @@ export const Resources = ({ initialResources, id }: Props) => {
                   </Button>
                 ))}
               </div>
-            )}
+            )} */}
           </CardBody>
         </Card>
       ))}

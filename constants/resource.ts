@@ -29,4 +29,10 @@ export const SUPPORTED_PLATFORMS = [
   '其它'
 ]
 
-export const SUPPORTED_RESOURCE_LINK = ['s3', 'onedrive', 'user'] as const
+export const SUPPORTED_RESOURCE_LINK = ['s3', 'onedrive', 'user']
+
+export const SUPPORTED_RESOURCE_LINK_MAP = {
+  s3: '对象存储',
+  onedrive: 'OneDrive',
+  user: '用户链接'
+}
