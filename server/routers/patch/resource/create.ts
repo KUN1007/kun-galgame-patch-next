@@ -1,12 +1,29 @@
 import { privateProcedure } from '~/lib/trpc'
 import { prisma } from '~/prisma/index'
 import { patchResourceCreateSchema } from '~/validations/patch'
+import { uploadFileToS3 } from '~/lib/s3'
+import { getKv } from '~/lib/redis'
 import type { PatchResource } from '~/types/api/patch'
+
+const uploadPatchResource = async (patchId: number, hash: string) => {
+  const filePath = await getKv(hash)
+  if (!filePath) {
+    return '本地临时文件存储未找到, 请重新上传补丁文件'
+  }
+  const fileName = filePath.split('/').pop()
+
+  const s3Key = `patch/${patchId}/${fileName}`
+  await uploadFileToS3(s3Key, filePath)
+
+  const downloadLink = `${process.env.KUN_VISUAL_NOVEL_S3_STORAGE_URL!}/${s3Key}`
+  return { downloadLink }
+}
 
 export const createPatchResource = privateProcedure
   .input(patchResourceCreateSchema)
   .mutation(async ({ ctx, input }) => {
-    const { patchId, type, language, platform, ...resourceData } = input
+    const { patchId, type, language, platform, content, ...resourceData } =
+      input
 
     const currentPatch = await prisma.patch.findUnique({
       where: { id: patchId },
@@ -17,6 +34,11 @@ export const createPatchResource = privateProcedure
       }
     })
 
+    const res = await uploadPatchResource(patchId, resourceData.hash)
+    if (typeof res === 'string') {
+      return res
+    }
+
     return await prisma.$transaction(async (prisma) => {
       const newResource = await prisma.patch_resource.create({
         data: {
@@ -25,6 +47,7 @@ export const createPatchResource = privateProcedure
           type,
           language,
           platform,
+          content: res.downloadLink,
           ...resourceData
         },
         include: {

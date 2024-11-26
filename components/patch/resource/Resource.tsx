@@ -175,14 +175,7 @@ export const Resources = ({ initialResources, id }: Props) => {
         />
       </Modal>
 
-      <Modal
-        isOpen={isOpenDelete}
-        onClose={onCloseDelete}
-        placement="center"
-        scrollBehavior="outside"
-        isDismissable={false}
-        isKeyboardDismissDisabled={true}
-      >
+      <Modal isOpen={isOpenDelete} onClose={onCloseDelete} placement="center">
         <ModalContent>
           <ModalHeader className="flex flex-col gap-1">
             删除资源链接

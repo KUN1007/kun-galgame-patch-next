@@ -1,5 +1,5 @@
 import { S3Client } from '@aws-sdk/client-s3'
-import { readFile } from 'fs/promises'
+import { readFile, unlink } from 'fs/promises'
 import { DeleteObjectCommand, PutObjectCommand } from '@aws-sdk/client-s3'
 
 export const s3 = new S3Client({
@@ -20,6 +20,7 @@ export const uploadFileToS3 = async (key: string, filePath: string) => {
     ContentType: 'application/octet-stream'
   })
   await s3.send(uploadCommand)
+  await unlink(filePath)
 }
 
 export const deleteFileFromS3 = async (key: string) => {
