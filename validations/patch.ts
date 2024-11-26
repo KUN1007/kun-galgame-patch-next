@@ -53,23 +53,10 @@ export const patchResourceCreateSchema = z.object({
   link: patchResourceLinkSchema,
   size: z
     .string()
-    .trim()
     .regex(ResourceSizeRegex, { message: '请选择资源的大小, MB 或 GB' }),
-  code: z
-    .string()
-    .trim()
-    .min(1)
-    .max(1007, { message: '资源提取码长度最多 1007 位' }),
-  password: z
-    .string()
-    .trim()
-    .min(1)
-    .max(1007, { message: '资源解压码长度最多 1007 位' }),
-  note: z
-    .string()
-    .trim()
-    .min(1)
-    .max(10007, { message: '资源备注最多 10007 字' }),
+  code: z.string().trim().max(1007, { message: '资源提取码长度最多 1007 位' }),
+  password: z.string().max(1007, { message: '资源解压码长度最多 1007 位' }),
+  note: z.string().max(10007, { message: '资源备注最多 10007 字' }),
   type: z
     .array(z.string())
     .min(1, { message: '请选择至少一个资源类型' })

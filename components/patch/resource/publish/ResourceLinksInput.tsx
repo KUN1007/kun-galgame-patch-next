@@ -1,7 +1,6 @@
 import { Input } from '@nextui-org/input'
 import { Button } from '@nextui-org/button'
 import { Chip } from '@nextui-org/chip'
-import { Code } from '@nextui-org/code'
 import { Plus, X } from 'lucide-react'
 import { ErrorType } from '../share'
 import { SUPPORTED_RESOURCE_LINK_MAP } from '~/constants/resource'

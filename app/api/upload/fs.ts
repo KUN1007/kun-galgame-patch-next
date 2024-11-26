@@ -1,4 +1,4 @@
-import { join } from 'path'
+import path from 'path'
 import { createReadStream, createWriteStream } from 'fs'
 import { writeFile, mkdir } from 'fs/promises'
 import { blake3 } from '@noble/hashes/blake3'
@@ -28,7 +28,7 @@ export const calculateFileStreamHash = async (
 ) => {
   await mkdir(fileDir, { recursive: true })
 
-  const tempFilePath = join(fileDir, 'temp')
+  const tempFilePath = path.posix.join(fileDir, 'temp')
   const hashInstance = blake3.create({})
 
   const writeStream = createWriteStream(tempFilePath)
@@ -49,7 +49,7 @@ export const calculateFileStreamHash = async (
     })
 
     const fileHash = bytesToHex(hashInstance.digest())
-    const finalFilePath = join(fileDir, `${fileHash}_${filename}`)
+    const finalFilePath = path.posix.join(fileDir, `${fileHash}_${filename}`)
 
     await writeFile(finalFilePath, fileBuffer)
 

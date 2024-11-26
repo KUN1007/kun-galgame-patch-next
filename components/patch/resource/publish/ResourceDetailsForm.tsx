@@ -54,6 +54,8 @@ export const ResourceDetailsForm = ({
             selectionMode="multiple"
             selectedKeys={field.value}
             onSelectionChange={(keys) => field.onChange([...keys] as string[])}
+            isInvalid={!!errors.language}
+            errorMessage={errors.language?.message}
           >
             {SUPPORTED_LANGUAGES.map((lang) => (
               <SelectItem key={lang} value={lang}>
@@ -75,6 +77,8 @@ export const ResourceDetailsForm = ({
             selectionMode="multiple"
             selectedKeys={field.value}
             onSelectionChange={(keys) => field.onChange([...keys] as string[])}
+            isInvalid={!!errors.platform}
+            errorMessage={errors.platform?.message}
           >
             {SUPPORTED_PLATFORMS.map((platform) => (
               <SelectItem key={platform} value={platform}>
@@ -94,6 +98,8 @@ export const ResourceDetailsForm = ({
             isRequired
             label="大小"
             placeholder="请选择资源的大小, 例如 1.007MB"
+            isInvalid={!!errors.size}
+            errorMessage={errors.size?.message}
           />
         )}
       />
@@ -107,6 +113,8 @@ export const ResourceDetailsForm = ({
           {...field}
           label="提取码"
           placeholder="如果资源的获取需要密码, 请填写密码"
+          isInvalid={!!errors.password}
+          errorMessage={errors.password?.message}
         />
       )}
     />
@@ -119,6 +127,8 @@ export const ResourceDetailsForm = ({
           {...field}
           label="解压码"
           placeholder="如果资源的解压需要解压码, 请填写解压码"
+          isInvalid={!!errors.code}
+          errorMessage={errors.code?.message}
         />
       )}
     />
@@ -131,6 +141,8 @@ export const ResourceDetailsForm = ({
           {...field}
           label="备注"
           placeholder="您可以在此处随意添加备注, 例如资源的注意事项等"
+          isInvalid={!!errors.note}
+          errorMessage={errors.note?.message}
         />
       )}
     />

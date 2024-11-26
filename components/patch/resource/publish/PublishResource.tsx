@@ -12,7 +12,8 @@ import { ResourceLinksInput } from './ResourceLinksInput'
 import { ResourceDetailsForm } from './ResourceDetailsForm'
 import { SubmitButton } from './SubmitButton'
 import { FileUpload } from '../upload/FileUpload'
-import type { PatchResource } from '~/types/api/patch'
+import { useErrorHandler } from '~/hooks/useErrorHandler'
+import type { PatchResourceLink, PatchResource } from '~/types/api/patch'
 
 export type ResourceFormData = z.infer<typeof patchResourceCreateSchema>
 
@@ -59,19 +60,29 @@ export const PublishResource = ({
   const onSubmit = async (data: ResourceFormData) => {
     setCreating(true)
     const res = await api.patch.createPatchResource.mutate(data)
-    reset()
-    onSuccess?.(res)
     setCreating(false)
-    toast.success('资源发布成功')
+    useErrorHandler(res, (value) => {
+      reset()
+      onSuccess?.(value)
+      toast.success('资源发布成功')
+    })
+  }
+
+  const handleUploadSuccess = (link: PatchResourceLink) => {
+    const currentLinks = watch().link
+
+    const updatedLinks = [...currentLinks, link].filter(
+      (item) => item.content !== ''
+    )
+
+    setValue('link', updatedLinks)
   }
 
   return (
     <Card>
       <CardBody>
         <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
-          <FileUpload
-            onSuccess={(link) => setValue('link', [...watch().link, link])}
-          />
+          <FileUpload onSuccess={handleUploadSuccess} />
           <ResourceLinksInput
             errors={errors}
             links={watch().link}

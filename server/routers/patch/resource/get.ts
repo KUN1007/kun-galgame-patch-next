@@ -20,6 +20,14 @@ export const getPatchResource = publicProcedure
             patch_resource: true
           }
         },
+        link: {
+          select: {
+            id: true,
+            type: true,
+            hash: true,
+            content: true
+          }
+        },
         like_by: {
           include: {
             user: true
@@ -32,6 +40,7 @@ export const getPatchResource = publicProcedure
       id: resource.id,
       size: resource.size,
       type: resource.type,
+      link: resource.link,
       language: resource.language,
       note: resource.note,
       password: resource.password,

@@ -1,6 +1,7 @@
 import { privateProcedure } from '~/lib/trpc'
 import { prisma } from '~/prisma/index'
 import { patchResourceCreateSchema } from '~/validations/patch'
+import { createOrUpdatePatchResourceLink } from './link'
 import type { PatchResource } from '~/types/api/patch'
 
 export const createPatchResource = privateProcedure
@@ -8,54 +9,44 @@ export const createPatchResource = privateProcedure
   .mutation(async ({ ctx, input }) => {
     const { patchId, type, language, platform, link, ...resourceData } = input
 
-    return await prisma.$transaction(async (prisma) => {
-      await prisma.patch_resource_link.createMany({
-        data: link.map(({ type, hash, content }) => ({
-          patch_id: patchId,
-          patch_resource_id: newResource.id,
-          type,
-          hash,
-          content
-        }))
-      })
+    const currentPatch = await prisma.patch.findUnique({
+      where: { id: patchId },
+      select: {
+        type: true,
+        language: true,
+        platform: true
+      }
+    })
 
-      const [newResource, currentPatch] = await Promise.all([
-        prisma.patch_resource.create({
-          data: {
-            patch_id: patchId,
-            user_id: ctx.uid,
-            type,
-            language,
-            platform,
-            ...resourceData
-          },
-          include: {
-            link: {
-              select: {
-                id: true,
-                type: true,
-                hash: true,
-                content: true
-              }
-            },
-            user: {
-              include: {
-                _count: {
-                  select: { patch_resource: true }
-                }
+    return await prisma.$transaction(async (prisma) => {
+      const newResource = await prisma.patch_resource.create({
+        data: {
+          patch_id: patchId,
+          user_id: ctx.uid,
+          type,
+          language,
+          platform,
+          ...resourceData
+        },
+        include: {
+          user: {
+            include: {
+              _count: {
+                select: { patch_resource: true }
               }
             }
           }
-        }),
-        prisma.patch.findUnique({
-          where: { id: patchId },
-          select: {
-            type: true,
-            language: true,
-            platform: true
-          }
-        })
-      ])
+        }
+      })
+
+      const res = await createOrUpdatePatchResourceLink(
+        patchId,
+        newResource.id,
+        link
+      )
+      if (typeof res === 'string') {
+        return res
+      }
 
       if (currentPatch) {
         const updatedTypes = [...new Set(currentPatch.type.concat(type))]
@@ -80,7 +71,7 @@ export const createPatchResource = privateProcedure
         id: newResource.id,
         size: newResource.size,
         type: newResource.type,
-        link: newResource.link,
+        link: res,
         language: newResource.language,
         note: newResource.note,
         password: newResource.password,

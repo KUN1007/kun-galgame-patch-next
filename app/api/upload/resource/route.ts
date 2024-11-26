@@ -20,7 +20,7 @@ export async function POST(req: Request) {
   const buffer = Buffer.from(await file.arrayBuffer())
   const res = await calculateFileStreamHash(buffer, 'uploads', file.name)
 
-  await setKv(res.fileHash, res.finalFilePath)
+  await setKv(res.fileHash, res.finalFilePath, 24 * 60 * 60)
 
   return NextResponse.json({ filetype: 's3', fileHash: res.fileHash })
 }
