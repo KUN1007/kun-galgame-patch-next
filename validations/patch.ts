@@ -34,23 +34,16 @@ export const patchCommentUpdateSchema = z.object({
     .max(10007, { message: '评论的内容最多为 10007 个字符' })
 })
 
-const patchResourceLinkSchema = z.array(
-  z.object({
-    id: z.number().max(9999999),
-    type: z.string().refine((type) => SUPPORTED_RESOURCE_LINK.includes(type), {
-      message: '非法的资源链接类型'
-    }),
-    content: z
-      .string()
-      .url('请输入有效的链接格式')
-      .max(1007, { message: '单个链接的长度最大 1007 个字符' }),
-    hash: z.string().max(107)
-  })
-)
-
 export const patchResourceCreateSchema = z.object({
   patchId: z.number().min(1).max(9999999),
-  link: patchResourceLinkSchema,
+  storage: z.string().refine((type) => SUPPORTED_RESOURCE_LINK.includes(type), {
+    message: '非法的资源链接类型'
+  }),
+  hash: z.string().max(107),
+  content: z
+    .string()
+    .min(1)
+    .max(1007, { message: '您的资源链接内容最多 1007 个字符' }),
   size: z
     .string()
     .regex(ResourceSizeRegex, { message: '请选择资源的大小, MB 或 GB' }),

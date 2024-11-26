@@ -6,7 +6,7 @@ import type { PatchResource } from '~/types/api/patch'
 export const updatePatchResource = privateProcedure
   .input(patchResourceUpdateSchema)
   .mutation(async ({ ctx, input }) => {
-    const { resourceId, patchId, link, ...resourceData } = input
+    const { resourceId, patchId, ...resourceData } = input
 
     return await prisma.$transaction(async (prisma) => {
       const newResource = await prisma.patch_resource.update({
@@ -15,14 +15,6 @@ export const updatePatchResource = privateProcedure
           ...resourceData
         },
         include: {
-          link: {
-            select: {
-              id: true,
-              type: true,
-              hash: true,
-              content: true
-            }
-          },
           user: {
             include: {
               _count: {
@@ -64,20 +56,21 @@ export const updatePatchResource = privateProcedure
 
       const resource: PatchResource = {
         id: newResource.id,
+        storage: newResource.storage,
         size: newResource.size,
         type: newResource.type,
         language: newResource.language,
         note: newResource.note,
-        link: newResource.link,
+        hash: newResource.hash,
+        content: newResource.content,
+        code: newResource.code,
         password: newResource.password,
         platform: newResource.platform,
         likedBy: [],
         status: newResource.status,
         userId: newResource.user_id,
         patchId: newResource.patch_id,
-        code: newResource.code,
         created: String(newResource.created),
-        updated: String(newResource.updated),
         user: {
           id: newResource.user.id,
           name: newResource.user.name,

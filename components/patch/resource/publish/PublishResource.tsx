@@ -13,7 +13,7 @@ import { ResourceDetailsForm } from './ResourceDetailsForm'
 import { SubmitButton } from './SubmitButton'
 import { FileUpload } from '../upload/FileUpload'
 import { useErrorHandler } from '~/hooks/useErrorHandler'
-import type { PatchResourceLink, PatchResource } from '~/types/api/patch'
+import type { PatchResource } from '~/types/api/patch'
 
 export type ResourceFormData = z.infer<typeof patchResourceCreateSchema>
 
@@ -39,19 +39,14 @@ export const PublishResource = ({
     resolver: zodResolver(patchResourceCreateSchema),
     defaultValues: {
       patchId,
-      link: [
-        {
-          id: 0,
-          type: 'user',
-          content: '',
-          hash: ''
-        }
-      ],
+      storage: 'user',
+      hash: '',
+      content: '',
+      code: '',
       type: [],
       language: [],
       platform: [],
       size: '',
-      code: '',
       password: '',
       note: ''
     }
@@ -68,14 +63,14 @@ export const PublishResource = ({
     })
   }
 
-  const handleUploadSuccess = (link: PatchResourceLink) => {
-    const currentLinks = watch().link
-
-    const updatedLinks = [...currentLinks, link].filter(
-      (item) => item.content !== ''
-    )
-
-    setValue('link', updatedLinks)
+  const handleUploadSuccess = (
+    storage: string,
+    hash: string,
+    content: string
+  ) => {
+    setValue('storage', storage)
+    setValue('hash', hash)
+    setValue('content', content)
   }
 
   return (
@@ -85,8 +80,9 @@ export const PublishResource = ({
           <FileUpload onSuccess={handleUploadSuccess} />
           <ResourceLinksInput
             errors={errors}
-            links={watch().link}
-            setValue={(links) => setValue('link', links)}
+            storage={watch().storage}
+            content={watch().content}
+            setContent={(content) => setValue('content', content)}
           />
           <ResourceDetailsForm control={control} errors={errors} />
           <div className="flex justify-end">

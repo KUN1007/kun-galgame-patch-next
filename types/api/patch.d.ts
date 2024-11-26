@@ -47,20 +47,16 @@ export interface PatchPullRequest {
   created: string
 }
 
-export interface PatchResourceLink {
-  id: number
-  type: string
-  hash: string
-  content: string
-}
-
 export interface PatchResource {
   id: number
+  storage: string
   size: string
   type: string[]
-  link: PatchResourceLink[]
   language: string[]
   note: string
+  hash: string
+  content: string
+  code: string
   password: string
   platform: string[]
   likedBy: KunUser[]
@@ -68,8 +64,6 @@ export interface PatchResource {
   userId: number
   patchId: number
   created: string
-  updated: string
-  code: string
   user: KunUser & {
     patchCount: number
   }

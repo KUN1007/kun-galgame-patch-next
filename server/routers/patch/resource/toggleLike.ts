@@ -1,12 +1,7 @@
 import { z } from 'zod'
-import { privateProcedure, publicProcedure } from '~/lib/trpc'
+import { privateProcedure } from '~/lib/trpc'
 import { prisma } from '~/prisma/index'
-import {
-  patchResourceCreateSchema,
-  patchResourceUpdateSchema
-} from '~/validations/patch'
 import { createDedupMessage } from '~/server/utils/message'
-import type { PatchResource } from '~/types/api/patch'
 
 export const toggleResourceLike = privateProcedure
   .input(

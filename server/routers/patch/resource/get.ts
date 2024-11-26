@@ -17,15 +17,9 @@ export const getPatchResource = publicProcedure
       include: {
         user: {
           include: {
-            patch_resource: true
-          }
-        },
-        link: {
-          select: {
-            id: true,
-            type: true,
-            hash: true,
-            content: true
+            _count: {
+              select: { patch_resource: true }
+            }
           }
         },
         like_by: {
@@ -38,11 +32,14 @@ export const getPatchResource = publicProcedure
 
     const resources: PatchResource[] = data.map((resource) => ({
       id: resource.id,
+      storage: resource.storage,
       size: resource.size,
       type: resource.type,
-      link: resource.link,
       language: resource.language,
       note: resource.note,
+      hash: resource.hash,
+      content: resource.content,
+      code: resource.code,
       password: resource.password,
       platform: resource.platform,
       likedBy: resource.like_by.map((likeRelation) => ({
@@ -54,13 +51,11 @@ export const getPatchResource = publicProcedure
       userId: resource.user_id,
       patchId: resource.patch_id,
       created: String(resource.created),
-      updated: String(resource.updated),
-      code: resource.code,
       user: {
         id: resource.user.id,
         name: resource.user.name,
         avatar: resource.user.avatar,
-        patchCount: resource.user.patch_resource.length
+        patchCount: resource.user._count.patch_resource
       }
     }))
 

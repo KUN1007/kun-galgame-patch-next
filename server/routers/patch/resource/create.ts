@@ -1,13 +1,13 @@
 import { privateProcedure } from '~/lib/trpc'
 import { prisma } from '~/prisma/index'
 import { patchResourceCreateSchema } from '~/validations/patch'
-import { createOrUpdatePatchResourceLink } from './link'
 import type { PatchResource } from '~/types/api/patch'
 
 export const createPatchResource = privateProcedure
   .input(patchResourceCreateSchema)
   .mutation(async ({ ctx, input }) => {
-    const { patchId, type, language, platform, link, ...resourceData } = input
+    const { patchId, storage, type, language, platform, ...resourceData } =
+      input
 
     const currentPatch = await prisma.patch.findUnique({
       where: { id: patchId },
@@ -21,6 +21,7 @@ export const createPatchResource = privateProcedure
     return await prisma.$transaction(async (prisma) => {
       const newResource = await prisma.patch_resource.create({
         data: {
+          storage,
           patch_id: patchId,
           user_id: ctx.uid,
           type,
@@ -38,15 +39,6 @@ export const createPatchResource = privateProcedure
           }
         }
       })
-
-      const res = await createOrUpdatePatchResourceLink(
-        patchId,
-        newResource.id,
-        link
-      )
-      if (typeof res === 'string') {
-        return res
-      }
 
       if (currentPatch) {
         const updatedTypes = [...new Set(currentPatch.type.concat(type))]
@@ -69,20 +61,21 @@ export const createPatchResource = privateProcedure
 
       const resource: PatchResource = {
         id: newResource.id,
+        storage: newResource.storage,
         size: newResource.size,
         type: newResource.type,
-        link: res,
         language: newResource.language,
         note: newResource.note,
+        hash: newResource.hash,
+        content: newResource.content,
+        code: newResource.code,
         password: newResource.password,
         platform: newResource.platform,
         likedBy: [],
         status: newResource.status,
         userId: newResource.user_id,
         patchId: newResource.patch_id,
-        code: newResource.code,
         created: String(newResource.created),
-        updated: String(newResource.updated),
         user: {
           id: newResource.user.id,
           name: newResource.user.name,

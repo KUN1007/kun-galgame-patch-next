@@ -2,10 +2,12 @@ import type { Control, FieldErrors } from 'react-hook-form'
 import type { PatchResourceLink } from '~/types/api/patch'
 
 interface Fields {
+  type: string[]
   patchId: number
   code: string
-  type: string[]
-  link: PatchResourceLink[]
+  storage: string
+  hash: string
+  content: string
   size: string
   password: string
   note: string

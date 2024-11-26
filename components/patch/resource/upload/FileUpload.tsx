@@ -15,10 +15,9 @@ import { cn } from '~/utils/cn'
 import toast from 'react-hot-toast'
 import type { UploadFileResponse } from '~/types/api/upload'
 import type { FileStatus } from '../share'
-import type { PatchResourceLink } from '~/types/api/patch'
 
 interface Props {
-  onSuccess: (link: PatchResourceLink) => void
+  onSuccess: (storage: string, hash: string, content: string) => void
 }
 
 export const FileUpload = ({ onSuccess }: Props) => {
@@ -58,12 +57,7 @@ export const FileUpload = ({ onSuccess }: Props) => {
         ? { ...prev, hash: res.data.fileHash, filetype: res.data.filetype }
         : null
     )
-    onSuccess({
-      id: 0,
-      type: filetype,
-      hash: fileHash,
-      content: `https://www.moyu.moe/${fileHash}`
-    })
+    onSuccess(filetype, fileHash, `https://www.moyu.moe/${fileHash}`)
   }
 
   const handleDrop = async (e: React.DragEvent) => {
