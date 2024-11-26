@@ -12,6 +12,7 @@ import { ResourceLinksInput } from './ResourceLinksInput'
 import { ResourceDetailsForm } from './ResourceDetailsForm'
 import { SubmitButton } from './SubmitButton'
 import { FileUpload } from '../upload/FileUpload'
+import { ResourceTypeSelect } from './ResourceTypeSelect'
 import { useErrorHandler } from '~/hooks/useErrorHandler'
 import type { PatchResource } from '~/types/api/patch'
 
@@ -39,7 +40,7 @@ export const PublishResource = ({
     resolver: zodResolver(patchResourceCreateSchema),
     defaultValues: {
       patchId,
-      storage: 'user',
+      storage: 's3',
       hash: '',
       content: '',
       code: '',
@@ -77,13 +78,21 @@ export const PublishResource = ({
     <Card>
       <CardBody>
         <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
-          <FileUpload onSuccess={handleUploadSuccess} />
-          <ResourceLinksInput
-            errors={errors}
-            storage={watch().storage}
-            content={watch().content}
-            setContent={(content) => setValue('content', content)}
-          />
+          <ResourceTypeSelect control={control} errors={errors} />
+
+          {watch().storage !== 'user' && (
+            <FileUpload onSuccess={handleUploadSuccess} />
+          )}
+
+          {(watch().storage === 'user' || watch().content) && (
+            <ResourceLinksInput
+              errors={errors}
+              storage={watch().storage}
+              content={watch().content}
+              setContent={(content) => setValue('content', content)}
+            />
+          )}
+
           <ResourceDetailsForm control={control} errors={errors} />
           <div className="flex justify-end">
             <SubmitButton creating={creating} />

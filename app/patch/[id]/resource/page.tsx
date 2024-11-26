@@ -1,5 +1,5 @@
 import { Card, CardHeader, CardBody } from '@nextui-org/card'
-import { Link as NextLink } from '@nextui-org/link'
+import { Link } from '@nextui-org/link'
 import { Resources } from '~/components/patch/resource/Resource'
 import { serverApi } from '~/lib/trpc-server'
 
@@ -26,9 +26,9 @@ export default async function PatchResource({
             我们仅提供 Galgame 补丁的下载
           </p>
           如果您要下载 Galgame 本体资源, 请前往{' '}
-          <NextLink showAnchorIcon href="/auth/forgot">
+          <Link showAnchorIcon isExternal href="https://www.kungal.com/zh-cn">
             主站论坛
-          </NextLink>
+          </Link>
         </div>
 
         <Resources initialResources={resources} id={Number(id)} />

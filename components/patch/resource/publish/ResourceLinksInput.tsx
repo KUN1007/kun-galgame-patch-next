@@ -24,8 +24,9 @@ export const ResourceLinksInput = ({
     <div className="space-y-2">
       <h3 className="text-lg font-medium">资源链接</h3>
       <p className="text-sm text-default-500">
-        上传资源会自动添加资源链接, 您也可以自行添加资源链接。为保证单一性,
-        建议您一次添加一条资源链接
+        {storage === 'user'
+          ? '上传资源会自动添加资源链接, 您也可以自行添加资源链接。为保证单一性, 建议您一次添加一条资源链接'
+          : '已为您自动创建资源链接 √'}
       </p>
 
       {links.map((link, index) => {
@@ -38,6 +39,7 @@ export const ResourceLinksInput = ({
                 ]
               }
             </Chip>
+
             <div className="flex-col w-full">
               <Input
                 isRequired
@@ -57,29 +59,32 @@ export const ResourceLinksInput = ({
                 }}
               />
             </div>
-            <div className="flex justify-end">
-              {index === links.length - 1 ? (
-                <Button
-                  isIconOnly
-                  variant="flat"
-                  onPress={() => setContent([...links, ''].toString())}
-                >
-                  <Plus className="w-4 h-4" />
-                </Button>
-              ) : (
-                <Button
-                  isIconOnly
-                  variant="flat"
-                  color="danger"
-                  onPress={() => {
-                    const newLinks = links.filter((_, i) => i !== index)
-                    setContent(newLinks.toString())
-                  }}
-                >
-                  <X className="w-4 h-4" />
-                </Button>
-              )}
-            </div>
+
+            {storage === 'user' && (
+              <div className="flex justify-end">
+                {index === links.length - 1 ? (
+                  <Button
+                    isIconOnly
+                    variant="flat"
+                    onPress={() => setContent([...links, ''].toString())}
+                  >
+                    <Plus className="w-4 h-4" />
+                  </Button>
+                ) : (
+                  <Button
+                    isIconOnly
+                    variant="flat"
+                    color="danger"
+                    onPress={() => {
+                      const newLinks = links.filter((_, i) => i !== index)
+                      setContent(newLinks.toString())
+                    }}
+                  >
+                    <X className="w-4 h-4" />
+                  </Button>
+                )}
+              </div>
+            )}
           </div>
         )
       })}

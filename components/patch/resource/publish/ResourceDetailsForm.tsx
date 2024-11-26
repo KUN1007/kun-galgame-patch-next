@@ -97,7 +97,7 @@ export const ResourceDetailsForm = ({
             {...field}
             isRequired
             label="大小"
-            placeholder="请选择资源的大小, 例如 1.007MB"
+            placeholder="请输入资源的大小, 例如 1.007MB"
             isInvalid={!!errors.size}
             errorMessage={errors.size?.message}
           />

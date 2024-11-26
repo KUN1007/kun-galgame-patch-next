@@ -13,9 +13,5 @@ export const bellShakeVariants = {
       repeat: Infinity,
       repeatDelay: 2
     }
-  },
-  hover: {
-    scale: 1.1,
-    transition: { duration: 0.2 }
   }
 }
