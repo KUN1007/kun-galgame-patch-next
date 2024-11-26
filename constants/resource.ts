@@ -32,7 +32,7 @@ export const SUPPORTED_PLATFORMS = [
 export const SUPPORTED_RESOURCE_LINK = ['s3', 'onedrive', 'user']
 
 export const SUPPORTED_RESOURCE_LINK_MAP = {
-  s3: '对象存储',
-  onedrive: 'OneDrive',
-  user: '自定义链接'
+  s3: '对象存储下载',
+  onedrive: 'OneDrive 下载',
+  user: '自定义链接下载'
 }

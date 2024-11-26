@@ -6,7 +6,7 @@ import type { PatchResource } from '~/types/api/patch'
 export const updatePatchResource = privateProcedure
   .input(patchResourceUpdateSchema)
   .mutation(async ({ ctx, input }) => {
-    const { resourceId, patchId, ...resourceData } = input
+    const { resourceId, patchId, content, ...resourceData } = input
 
     return await prisma.$transaction(async (prisma) => {
       const newResource = await prisma.patch_resource.update({

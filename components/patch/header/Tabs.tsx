@@ -30,7 +30,6 @@ export const PatchHeaderTabs = ({ id }: PatchHeaderProps) => {
       className="w-full overflow-hidden shadow-medium rounded-large"
       fullWidth
       selectedKey={lastSegment}
-      color="primary"
     >
       {tabs.map(({ key, title, href }) => (
         <Tab

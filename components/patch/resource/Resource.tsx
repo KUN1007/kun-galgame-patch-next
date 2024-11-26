@@ -1,10 +1,8 @@
 'use client'
 
 import { useState } from 'react'
-import { Chip } from '@nextui-org/chip'
 import { Button } from '@nextui-org/button'
 import { Card, CardBody } from '@nextui-org/card'
-import { Snippet } from '@nextui-org/snippet'
 import {
   Dropdown,
   DropdownTrigger,
@@ -19,15 +17,13 @@ import {
   ModalFooter,
   useDisclosure
 } from '@nextui-org/modal'
-import { User } from '@nextui-org/user'
-import { Link } from '@nextui-org/link'
-import { MoreHorizontal, Plus, Download, Edit, Trash2 } from 'lucide-react'
+import { MoreHorizontal, Plus, Edit, Trash2 } from 'lucide-react'
 import { api } from '~/lib/trpc-client'
 import { PublishResource } from './publish/PublishResource'
-import { formatDistanceToNow } from '~/utils/formatDistanceToNow'
 import { EditResourceDialog } from './edit/EditResourceDialog'
 import { useUserStore } from '~/store/providers/user'
-import { ResourceLikeButton } from './ResourceLike'
+import { ResourceInfo } from './ResourceInfo'
+import { ResourceDownload } from './ResourceDownload'
 import type { PatchResource } from '~/types/api/patch'
 import toast from 'react-hot-toast'
 
@@ -38,15 +34,12 @@ interface Props {
 
 export const Resources = ({ initialResources, id }: Props) => {
   const [resources, setResources] = useState<PatchResource[]>(initialResources)
-  const [showCreate, setShowCreate] = useState(false)
-  const [showLinks, setShowLinks] = useState<Record<number, boolean>>({})
 
-  const toggleLinks = (resourceId: number) => {
-    setShowLinks((prev) => ({
-      ...prev,
-      [resourceId]: !prev[resourceId]
-    }))
-  }
+  const {
+    isOpen: isOpenCreate,
+    onOpen: onOpenCreate,
+    onClose: onCloseCreate
+  } = useDisclosure()
 
   const {
     isOpen: isOpenEdit,
@@ -87,69 +80,17 @@ export const Resources = ({ initialResources, id }: Props) => {
           color="primary"
           variant="solid"
           startContent={<Plus className="w-4 h-4" />}
-          onPress={() => setShowCreate(!showCreate)}
+          onPress={onOpenCreate}
         >
           添加资源
         </Button>
       </div>
 
-      {showCreate && (
-        <PublishResource
-          patchId={id}
-          onSuccess={(res) => {
-            setShowCreate(false)
-            setResources([...resources, res])
-          }}
-        />
-      )}
-
       {resources.map((resource) => (
         <Card key={resource.id}>
           <CardBody className="space-y-2">
             <div className="flex items-start justify-between">
-              <div className="space-y-2">
-                <div className="flex flex-wrap gap-2">
-                  {resource.type.map((type) => (
-                    <Chip key={type} variant="flat">
-                      {type}
-                    </Chip>
-                  ))}
-                  {resource.language.map((lang) => (
-                    <Chip key={lang} variant="bordered">
-                      {lang}
-                    </Chip>
-                  ))}
-                  {<Chip variant="flat">{resource.size}</Chip>}
-                </div>
-
-                <div className="flex flex-wrap gap-2">
-                  <Snippet
-                    tooltipProps={{
-                      content: '点击复制提取码'
-                    }}
-                    size="sm"
-                    symbol="提取码"
-                    color="primary"
-                    className="py-0"
-                  >
-                    {resource.code}
-                  </Snippet>
-
-                  <Snippet
-                    tooltipProps={{
-                      content: '点击复制解压码'
-                    }}
-                    size="sm"
-                    symbol="解压码"
-                    color="primary"
-                    className="py-0"
-                  >
-                    {resource.password}
-                  </Snippet>
-                </div>
-
-                {resource.note && <p className="mt-2">{resource.note}</p>}
-              </div>
+              <ResourceInfo resource={resource} />
 
               <Dropdown>
                 <DropdownTrigger>
@@ -189,55 +130,37 @@ export const Resources = ({ initialResources, id }: Props) => {
               </Dropdown>
             </div>
 
-            <div className="flex justify-between">
-              <User
-                name={resource.user.name}
-                description={`${formatDistanceToNow(resource.created)} • 已发布补丁 ${resource.user.patchCount} 个`}
-                avatarProps={{
-                  showFallback: true,
-                  src: resource.user.avatar,
-                  name: resource.user.name.charAt(0).toUpperCase()
-                }}
-              />
-
-              <div className="flex gap-2">
-                <ResourceLikeButton
-                  resourceId={resource.id}
-                  likedBy={resource.likedBy}
-                  publisher={resource.user}
-                />
-                <Button
-                  color="primary"
-                  variant="flat"
-                  isIconOnly
-                  onPress={() => toggleLinks(resource.id)}
-                >
-                  <Download className="w-4 h-4" />
-                </Button>
-              </div>
-            </div>
-
-            {/* {showLinks[resource.id] && (
-              <div className="flex flex-wrap gap-2 mt-4">
-                {resource.link.map((link, index) => (
-                  <Button
-                    key={index}
-                    as={Link}
-                    href={link}
-                    showAnchorIcon
-                    color="primary"
-                    variant="solid"
-                  >
-                    下载链接 {index + 1}
-                  </Button>
-                ))}
-              </div>
-            )} */}
+            <ResourceDownload resource={resource} />
           </CardBody>
         </Card>
       ))}
 
-      <Modal size="3xl" isOpen={isOpenEdit} onClose={onCloseEdit}>
+      <Modal
+        size="3xl"
+        isOpen={isOpenCreate}
+        onClose={onCloseCreate}
+        scrollBehavior="outside"
+        isDismissable={false}
+        isKeyboardDismissDisabled={true}
+      >
+        <PublishResource
+          patchId={id}
+          onClose={onCloseCreate}
+          onSuccess={(res) => {
+            setResources([...resources, res])
+            onCloseCreate()
+          }}
+        />
+      </Modal>
+
+      <Modal
+        size="3xl"
+        isOpen={isOpenEdit}
+        onClose={onCloseEdit}
+        scrollBehavior="outside"
+        isDismissable={false}
+        isKeyboardDismissDisabled={true}
+      >
         <EditResourceDialog
           onClose={onCloseEdit}
           resource={editResource}
@@ -247,11 +170,19 @@ export const Resources = ({ initialResources, id }: Props) => {
                 resource.id === res.id ? res : resource
               )
             )
+            onCloseEdit()
           }}
         />
       </Modal>
 
-      <Modal isOpen={isOpenDelete} onClose={onCloseDelete} placement="center">
+      <Modal
+        isOpen={isOpenDelete}
+        onClose={onCloseDelete}
+        placement="center"
+        scrollBehavior="outside"
+        isDismissable={false}
+        isKeyboardDismissDisabled={true}
+      >
         <ModalContent>
           <ModalHeader className="flex flex-col gap-1">
             删除资源链接

@@ -6,8 +6,7 @@ import type { PatchResource } from '~/types/api/patch'
 export const createPatchResource = privateProcedure
   .input(patchResourceCreateSchema)
   .mutation(async ({ ctx, input }) => {
-    const { patchId, storage, type, language, platform, ...resourceData } =
-      input
+    const { patchId, type, language, platform, ...resourceData } = input
 
     const currentPatch = await prisma.patch.findUnique({
       where: { id: patchId },
@@ -21,7 +20,6 @@ export const createPatchResource = privateProcedure
     return await prisma.$transaction(async (prisma) => {
       const newResource = await prisma.patch_resource.create({
         data: {
-          storage,
           patch_id: patchId,
           user_id: ctx.uid,
           type,

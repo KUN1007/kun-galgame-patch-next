@@ -9,6 +9,7 @@
     "codemirror",
     "commonmark",
     "Dedup",
+    "Dismissable",
     "dompurify",
     "frontmatter",
     "Galgame",

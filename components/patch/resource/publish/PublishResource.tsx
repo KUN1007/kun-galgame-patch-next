@@ -4,13 +4,20 @@ import { z } from 'zod'
 import { useState } from 'react'
 import { useForm } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
-import { Card, CardBody } from '@nextui-org/card'
+import { Button } from '@nextui-org/button'
+import { Link } from '@nextui-org/link'
+import {
+  ModalContent,
+  ModalHeader,
+  ModalBody,
+  ModalFooter
+} from '@nextui-org/react'
 import toast from 'react-hot-toast'
 import { api } from '~/lib/trpc-client'
 import { patchResourceCreateSchema } from '~/validations/patch'
 import { ResourceLinksInput } from './ResourceLinksInput'
 import { ResourceDetailsForm } from './ResourceDetailsForm'
-import { SubmitButton } from './SubmitButton'
+import { Upload } from 'lucide-react'
 import { FileUpload } from '../upload/FileUpload'
 import { ResourceTypeSelect } from './ResourceTypeSelect'
 import { useErrorHandler } from '~/hooks/useErrorHandler'
@@ -20,11 +27,13 @@ export type ResourceFormData = z.infer<typeof patchResourceCreateSchema>
 
 interface CreateResourceProps {
   patchId: number
+  onClose: () => void
   onSuccess?: (res: PatchResource) => void
 }
 
 export const PublishResource = ({
   patchId,
+  onClose,
   onSuccess
 }: CreateResourceProps) => {
   const [creating, setCreating] = useState(false)
@@ -75,9 +84,17 @@ export const PublishResource = ({
   }
 
   return (
-    <Card>
-      <CardBody>
-        <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
+    <ModalContent>
+      <ModalHeader className="flex-col space-y-2">
+        <h3 className="text-lg">创建补丁资源</h3>
+        <p className="text-sm font-medium text-default-500">
+          您需要先自行发布 3 个补丁资源以使用我们的对象存储, 当您发布完成 3
+          个补丁后, 您可以 <Link href="#">申请成为创作者</Link>
+        </p>
+      </ModalHeader>
+
+      <ModalBody>
+        <form className="space-y-6">
           <ResourceTypeSelect control={control} errors={errors} />
 
           {watch().storage !== 'user' && (
@@ -94,11 +111,24 @@ export const PublishResource = ({
           )}
 
           <ResourceDetailsForm control={control} errors={errors} />
-          <div className="flex justify-end">
-            <SubmitButton creating={creating} />
-          </div>
         </form>
-      </CardBody>
-    </Card>
+      </ModalBody>
+
+      <ModalFooter>
+        <Button color="danger" variant="light" onPress={onClose}>
+          取消
+        </Button>
+        <Button
+          color="primary"
+          type="submit"
+          disabled={creating}
+          isLoading={creating}
+          endContent={<Upload className="w-4 h-4" />}
+          onClick={handleSubmit(onSubmit)}
+        >
+          发布资源
+        </Button>
+      </ModalFooter>
+    </ModalContent>
   )
 }
