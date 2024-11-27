@@ -8,11 +8,11 @@ export default async function Kun({
 }) {
   const { id } = await params
 
-  const { comments } = await serverApi.user.getUserComment.query({
+  const { comments, total } = await serverApi.user.getUserComment.query({
     uid: Number(id),
     page: 1,
     limit: 20
   })
 
-  return <UserComment initComments={comments} uid={Number(id)} />
+  return <UserComment initComments={comments} total={total} uid={Number(id)} />
 }

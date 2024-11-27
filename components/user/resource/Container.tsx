@@ -5,20 +5,21 @@ import { api } from '~/lib/trpc-client'
 import { Pagination } from '@nextui-org/pagination'
 import { useMounted } from '~/hooks/useMounted'
 import { KunLoading } from '~/components/kun/Loading'
+import { KunNull } from '~/components/kun/Null'
 import { UserResourceCard } from './Card'
 import type { UserResource as UserResourceType } from '~/types/api/user'
 
 interface Props {
   resources: UserResourceType[]
+  total: number
   uid: number
 }
 
-export const UserResource = ({ resources, uid }: Props) => {
+export const UserResource = ({ resources, total, uid }: Props) => {
   const isMounted = useMounted()
   const [patches, setPatches] = useState<UserResourceType[]>(resources)
   const [loading, setLoading] = useState(false)
   const [page, setPage] = useState(1)
-  const [total, setTotal] = useState(0)
 
   const fetchPatches = async () => {
     setLoading(true)
@@ -28,7 +29,6 @@ export const UserResource = ({ resources, uid }: Props) => {
       limit: 20
     })
     setPatches(response.resources)
-    setTotal(response.total)
     setLoading(false)
   }
 
@@ -50,6 +50,8 @@ export const UserResource = ({ resources, uid }: Props) => {
           ))}
         </>
       )}
+
+      {!total && <KunNull message="这个孩子还没有发布过补丁资源哦" />}
 
       {total > 24 && (
         <div className="flex justify-center">

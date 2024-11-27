@@ -8,11 +8,13 @@ export default async function Kun({
 }) {
   const { id } = await params
 
-  const { contributes } = await serverApi.user.getUserContribute.query({
+  const { contributes, total } = await serverApi.user.getUserContribute.query({
     uid: Number(id),
     page: 1,
     limit: 20
   })
 
-  return <UserContribute contributes={contributes} uid={Number(id)} />
+  return (
+    <UserContribute contributes={contributes} total={total} uid={Number(id)} />
+  )
 }

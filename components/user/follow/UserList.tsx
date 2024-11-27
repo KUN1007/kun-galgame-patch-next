@@ -4,6 +4,7 @@ import { Avatar, Card, CardBody } from '@nextui-org/react'
 import { Users } from 'lucide-react'
 import { useEffect, useState } from 'react'
 import { api } from '~/lib/trpc-client'
+import { useRouter } from 'next-nprogress-bar'
 import { KunLoading } from '~/components/kun/Loading'
 import { KunNull } from '~/components/kun/Null'
 import { UserFollow } from './Follow'
@@ -15,6 +16,8 @@ interface UserListProps {
 }
 
 export const UserList = ({ userId, type }: UserListProps) => {
+  const router = useRouter()
+
   const [users, setUsers] = useState<UserFollowType[]>([])
   const [loading, setLoading] = useState(false)
 
@@ -51,7 +54,12 @@ export const UserList = ({ userId, type }: UserListProps) => {
               <CardBody className="flex flex-row items-center gap-4">
                 <Avatar src={user.avatar} className="w-12 h-12" />
                 <div className="flex-grow space-y-2">
-                  <h4 className="text-lg font-semibold">{user.name}</h4>
+                  <h4
+                    className="text-lg font-semibold transition-colors cursor-pointer hover:text-primary-500"
+                    onClick={() => router.push(`/user/${user.id}/resource`)}
+                  >
+                    {user.name}
+                  </h4>
                   <p className="text-small text-default-500">{user.bio}</p>
 
                   <div className="flex items-center gap-2 text-sm text-default-500">

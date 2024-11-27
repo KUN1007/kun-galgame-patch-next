@@ -8,11 +8,11 @@ export default async function Resource({
 }) {
   const { id } = await params
 
-  const { resources } = await serverApi.user.getUserPatchResource.query({
+  const { resources, total } = await serverApi.user.getUserPatchResource.query({
     uid: Number(id),
     page: 1,
     limit: 20
   })
 
-  return <UserResource resources={resources} uid={Number(id)} />
+  return <UserResource resources={resources} total={total} uid={Number(id)} />
 }

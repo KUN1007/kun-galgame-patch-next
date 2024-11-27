@@ -4,21 +4,22 @@ import { useState, useEffect } from 'react'
 import { api } from '~/lib/trpc-client'
 import { Pagination } from '@nextui-org/pagination'
 import { useMounted } from '~/hooks/useMounted'
+import { KunNull } from '~/components/kun/Null'
 import { KunLoading } from '~/components/kun/Loading'
 import { UserCommentCard } from './Card'
 import type { UserComment as UserCommentType } from '~/types/api/user'
 
 interface Props {
   initComments: UserCommentType[]
+  total: number
   uid: number
 }
 
-export const UserComment = ({ initComments, uid }: Props) => {
+export const UserComment = ({ initComments, total, uid }: Props) => {
   const isMounted = useMounted()
   const [comments, setComments] = useState<UserCommentType[]>(initComments)
   const [loading, setLoading] = useState(false)
   const [page, setPage] = useState(1)
-  const [total, setTotal] = useState(0)
 
   const fetchPatches = async () => {
     setLoading(true)
@@ -28,7 +29,6 @@ export const UserComment = ({ initComments, uid }: Props) => {
       limit: 20
     })
     setComments(response.comments)
-    setTotal(response.total)
     setLoading(false)
   }
 
@@ -50,6 +50,8 @@ export const UserComment = ({ initComments, uid }: Props) => {
           ))}
         </>
       )}
+
+      {!total && <KunNull message="这个孩子还没有发布过评论哦" />}
 
       {total > 24 && (
         <div className="flex justify-center">

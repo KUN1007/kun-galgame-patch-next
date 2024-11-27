@@ -8,11 +8,11 @@ export default async function Galgame({
 }) {
   const { id } = await params
 
-  const { galgames } = await serverApi.user.getUserGalgame.query({
+  const { galgames, total } = await serverApi.user.getUserGalgame.query({
     uid: Number(id),
     page: 1,
     limit: 20
   })
 
-  return <UserGalgame galgames={galgames} uid={Number(id)} />
+  return <UserGalgame galgames={galgames} total={total} uid={Number(id)} />
 }

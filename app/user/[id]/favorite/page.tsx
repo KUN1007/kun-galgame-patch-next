@@ -8,11 +8,11 @@ export default async function Kun({
 }) {
   const { id } = await params
 
-  const { favorites } = await serverApi.user.getUserFavorite.query({
+  const { favorites, total } = await serverApi.user.getUserFavorite.query({
     uid: Number(id),
     page: 1,
     limit: 20
   })
 
-  return <UserFavorite favorites={favorites} uid={Number(id)} />
+  return <UserFavorite favorites={favorites} total={total} uid={Number(id)} />
 }

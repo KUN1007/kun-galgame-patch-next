@@ -78,7 +78,7 @@ export const UserProfile = ({ user }: { user: UserInfo }) => {
               </div>
               <Progress
                 aria-label="moemoepoint"
-                value={user.moemoepoint / 20}
+                value={user.moemoepoint % 100}
                 color="primary"
                 className="h-2"
               />
