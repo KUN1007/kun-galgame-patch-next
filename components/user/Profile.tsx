@@ -1,15 +1,26 @@
 import { Card, CardBody, CardHeader } from '@nextui-org/card'
 import { Avatar } from '@nextui-org/avatar'
-import { Button } from '@nextui-org/button'
 import { Chip } from '@nextui-org/chip'
 import { Divider } from '@nextui-org/divider'
 import { Progress } from '@nextui-org/progress'
 import { formatDistanceToNow } from '~/utils/formatDistanceToNow'
-import { Calendar, Link as LinkIcon, Pencil } from 'lucide-react'
+import { Calendar, Link as LinkIcon } from 'lucide-react'
 import { UserFollow } from './follow/Follow'
 import { Stats } from './follow/Stats'
 import { EditButton } from './EditButton'
 import type { UserInfo } from '~/types/api/user'
+
+const getUserRole = (role: number) => {
+  if (role === 2) {
+    return '创作者'
+  } else if (role === 3) {
+    return '管理员'
+  } else if (role === 4) {
+    return '超级管理员'
+  } else {
+    return '用户'
+  }
+}
 
 export const UserProfile = ({ user }: { user: UserInfo }) => {
   return (
@@ -26,7 +37,7 @@ export const UserProfile = ({ user }: { user: UserInfo }) => {
             <div className="flex flex-col items-center gap-1">
               <h4 className="text-2xl font-bold">{user.name}</h4>
               <Chip color="primary" variant="flat" size="sm" className="mt-1">
-                {user.role}
+                {getUserRole(user.role)}
               </Chip>
 
               <Stats user={user} />

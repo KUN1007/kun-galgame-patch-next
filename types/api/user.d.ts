@@ -5,7 +5,7 @@ export interface UserInfo {
   email: string
   avatar: string
   bio: string
-  role: string
+  role: number
   status: number
   registerTime: string
   moemoepoint: number

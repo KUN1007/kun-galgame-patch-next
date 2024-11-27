@@ -100,7 +100,8 @@ export const status = privateProcedure.query(async ({ ctx, input }) => {
     avatar: user.avatar,
     bio: user.bio,
     moemoepoint: user.moemoepoint,
-    checkIn: user.daily_check_in
+    checkIn: user.daily_check_in,
+    role: user.role
   }
 
   return responseData

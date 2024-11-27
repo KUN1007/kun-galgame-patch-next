@@ -36,3 +36,11 @@ export const SUPPORTED_RESOURCE_LINK_MAP = {
   onedrive: 'OneDrive 下载',
   user: '自定义链接下载'
 }
+
+export const ALLOWED_MIME_TYPES = [
+  'application/zip',
+  'application/x-rar-compressed',
+  'application/x-7z-compressed'
+]
+
+export const ALLOWED_EXTENSIONS = ['.zip', '.rar', '.7z']

@@ -18,7 +18,7 @@ import { patchResourceCreateSchema } from '~/validations/patch'
 import { ResourceLinksInput } from './ResourceLinksInput'
 import { ResourceDetailsForm } from './ResourceDetailsForm'
 import { Upload } from 'lucide-react'
-import { FileUpload } from '../upload/FileUpload'
+import { FileUploadContainer } from '../upload/FileUploadContainer'
 import { ResourceTypeSelect } from './ResourceTypeSelect'
 import { useErrorHandler } from '~/hooks/useErrorHandler'
 import type { PatchResource } from '~/types/api/patch'
@@ -100,7 +100,7 @@ export const PublishResource = ({
           <ResourceTypeSelect control={control} errors={errors} />
 
           {watch().storage !== 'user' && (
-            <FileUpload
+            <FileUploadContainer
               onSuccess={handleUploadSuccess}
               handleRemoveFile={() => reset()}
             />

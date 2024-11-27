@@ -8,8 +8,7 @@ export const isValidURL = (url: string) => {
   try {
     const _ = new URL(url)
     return true
-  } catch (err) {
-    console.log(err)
+  } catch (_) {
     return false
   }
 }

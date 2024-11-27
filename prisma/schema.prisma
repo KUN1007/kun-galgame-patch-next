@@ -7,13 +7,7 @@ datasource db {
   url      = env("KUN_DATABASE_URL")
 }
 
-enum Role {
-  USER
-  PUBLISHER
-  ADMIN
-  SU
-}
-
+// role: 1 - user, 2 - publisher, 3 - admin, 4 - super admin
 model user {
   id                Int      @id @default(autoincrement())
   name              String   @unique @db.VarChar(17)
@@ -21,7 +15,7 @@ model user {
   password          String   @db.VarChar(1007)
   ip                String   @default("") @db.VarChar(233)
   avatar            String   @default("") @db.VarChar(233)
-  role              Role     @default(USER)
+  role              Int      @default(1)
   status            Int      @default(0)
   register_time     DateTime @default(now())
   moemoepoint       Int      @default(0)
