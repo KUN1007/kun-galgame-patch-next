@@ -8,6 +8,7 @@ import { galgameRouter } from './galgame/index'
 import { searchRouter } from './search/index'
 import { tagRouter } from './tag/index'
 import { messageRouter } from './message/index'
+import { applyRouter } from './apply/index'
 
 export const appRouter = router({
   auth: authRouter,
@@ -18,7 +19,8 @@ export const appRouter = router({
   galgame: galgameRouter,
   search: searchRouter,
   tag: tagRouter,
-  message: messageRouter
+  message: messageRouter,
+  app: applyRouter
 })
 
 export type AppRouter = typeof appRouter

@@ -93,7 +93,7 @@ export const PublishResource = ({
         <h3 className="text-lg">创建补丁资源</h3>
         <p className="text-sm font-medium text-default-500">
           您需要先自行发布 3 个补丁资源以使用我们的对象存储, 当您发布完成 3
-          个合法补丁后, 您可以 <Link href="#">申请成为创作者</Link>
+          个合法补丁后, 您可以 <Link href="/apply">申请成为创作者</Link>
         </p>
       </ModalHeader>
 

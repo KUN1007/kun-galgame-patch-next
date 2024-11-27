@@ -77,7 +77,7 @@ export const UserProfile = ({ user }: { user: UserInfo }) => {
                 </span>
               </div>
               <Progress
-                aria-label="moemoepoint"
+                aria-label="萌萌点"
                 value={user.moemoepoint % 100}
                 color="primary"
                 className="h-2"
