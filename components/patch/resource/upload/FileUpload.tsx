@@ -10,15 +10,31 @@ import type { UploadFileResponse } from '~/types/api/upload'
 import type { FileStatus } from '../share'
 
 interface Props {
-  onSuccess: (storage: string, hash: string, content: string) => void
+  onSuccess: (
+    storage: string,
+    hash: string,
+    content: string,
+    size: string
+  ) => void
+  handleRemoveFile: () => void
 }
 
-export const FileUpload = ({ onSuccess }: Props) => {
+export const FileUpload = ({ onSuccess, handleRemoveFile }: Props) => {
   const [fileData, setFileData] = useState<FileStatus | null>(null)
   const [isDragging, setIsDragging] = useState(false)
 
   const handleFile = async (file: File) => {
-    if (!file) return
+    if (!file) {
+      return
+    }
+
+    const fileSizeMB = file.size / (1024 * 1024)
+    if (fileSizeMB > 100) {
+      toast.error(
+        `文件大小超出限制: ${fileSizeMB.toFixed(3)} MB, 最大允许大小为 100 MB`
+      )
+      return
+    }
 
     setFileData({ file, progress: 0 })
 
@@ -43,14 +59,14 @@ export const FileUpload = ({ onSuccess }: Props) => {
       return
     }
 
-    const { filetype, fileHash } = res.data
+    const { filetype, fileHash, fileSize } = res.data
 
     setFileData((prev) =>
       prev
         ? { ...prev, hash: res.data.fileHash, filetype: res.data.filetype }
         : null
     )
-    onSuccess(filetype, fileHash, `https://www.moyu.moe/${fileHash}`)
+    onSuccess(filetype, fileHash, `https://www.moyu.moe/${fileHash}`, fileSize)
   }
 
   const handleDrop = async (e: React.DragEvent) => {
@@ -73,42 +89,45 @@ export const FileUpload = ({ onSuccess }: Props) => {
 
   const removeFile = () => {
     setFileData(null)
+    handleRemoveFile()
   }
 
   return (
     <div className="space-y-4">
       <h3 className="text-lg font-medium">上传资源</h3>
 
-      <div
-        className={cn(
-          'border-2 border-dashed rounded-lg p-8 transition-colors',
-          isDragging ? 'border-primary bg-primary/10' : 'border-gray-300'
-        )}
-        onDrop={handleDrop}
-        onDragOver={(e) => {
-          e.preventDefault()
-          setIsDragging(true)
-        }}
-        onDragLeave={() => setIsDragging(false)}
-      >
-        <div className="flex flex-col items-center justify-center gap-4">
-          <Upload className="w-12 h-12 text-primary/60" />
-          <p className="text-lg font-medium text-center">
-            {isDragging ? '拖动文件到此处' : '拖动或点击以上传文件'}
-          </p>
-          <label>
-            <Button color="primary" variant="flat" as="span">
-              选择文件
-            </Button>
-            <Input
-              type="file"
-              className="hidden"
-              onChange={handleFileInput}
-              accept="*/*"
-            />
-          </label>
+      {!fileData && (
+        <div
+          className={cn(
+            'border-2 border-dashed rounded-lg p-8 transition-colors',
+            isDragging ? 'border-primary bg-primary/10' : 'border-gray-300'
+          )}
+          onDrop={handleDrop}
+          onDragOver={(e) => {
+            e.preventDefault()
+            setIsDragging(true)
+          }}
+          onDragLeave={() => setIsDragging(false)}
+        >
+          <div className="flex flex-col items-center justify-center gap-4">
+            <Upload className="w-12 h-12 text-primary/60" />
+            <p className="text-lg font-medium text-center">
+              {isDragging ? '拖动文件到此处' : '拖动或点击以上传文件'}
+            </p>
+            <label>
+              <Button color="primary" variant="flat" as="span">
+                选择文件
+              </Button>
+              <Input
+                type="file"
+                className="hidden"
+                onChange={handleFileInput}
+                accept="*/*"
+              />
+            </label>
+          </div>
         </div>
-      </div>
+      )}
 
       {fileData && (
         <Card className="p-4 mt-6">

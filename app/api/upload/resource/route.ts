@@ -18,9 +18,25 @@ export async function POST(req: Request) {
   }
 
   const buffer = Buffer.from(await file.arrayBuffer())
+  const fileSizeInMB = buffer.length / (1024 * 1024)
+
+  if (fileSizeInMB > 100) {
+    return NextResponse.json({
+      status: 400,
+      statusText: '文件大小超过限制',
+      fileSize: `${fileSizeInMB.toFixed(3)} MB`
+    })
+  }
+
   const res = await calculateFileStreamHash(buffer, 'uploads', file.name)
 
   await setKv(res.fileHash, res.finalFilePath, 24 * 60 * 60)
 
-  return NextResponse.json({ filetype: 's3', fileHash: res.fileHash })
+  return NextResponse.json({
+    filetype: 's3',
+    fileHash: res.fileHash,
+    fileSize: `${fileSizeInMB.toFixed(3)} MB`
+  })
 }
+
+export async function DELETE(req: Request) {}

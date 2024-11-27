@@ -76,11 +76,13 @@ export const PublishResource = ({
   const handleUploadSuccess = (
     storage: string,
     hash: string,
-    content: string
+    content: string,
+    size: string
   ) => {
     setValue('storage', storage)
     setValue('hash', hash)
     setValue('content', content)
+    setValue('size', size)
   }
 
   return (
@@ -98,7 +100,10 @@ export const PublishResource = ({
           <ResourceTypeSelect control={control} errors={errors} />
 
           {watch().storage !== 'user' && (
-            <FileUpload onSuccess={handleUploadSuccess} />
+            <FileUpload
+              onSuccess={handleUploadSuccess}
+              handleRemoveFile={() => reset()}
+            />
           )}
 
           {(watch().storage === 'user' || watch().content) && (
