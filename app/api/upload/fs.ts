@@ -49,7 +49,8 @@ export const calculateFileStreamHash = async (
     })
 
     const fileHash = bytesToHex(hashInstance.digest())
-    const finalFilePath = path.posix.join(fileDir, `${fileHash}_${filename}`)
+    await mkdir(`${fileDir}/${fileHash}`, { recursive: true })
+    const finalFilePath = path.posix.join(fileDir, `${fileHash}/${filename}`)
 
     await writeFile(finalFilePath, fileBuffer)
 

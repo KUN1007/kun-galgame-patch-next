@@ -12,7 +12,7 @@ const uploadPatchResource = async (patchId: number, hash: string) => {
   }
   const fileName = filePath.split('/').pop()
 
-  const s3Key = `patch/${patchId}/${fileName}`
+  const s3Key = `patch/${patchId}/${hash}/${fileName}`
   await uploadFileToS3(s3Key, filePath)
 
   const downloadLink = `${process.env.KUN_VISUAL_NOVEL_S3_STORAGE_URL!}/${s3Key}`
