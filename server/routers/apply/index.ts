@@ -29,9 +29,9 @@ export const applyRouter = router({
       return '您暂时不可以申请成为创作者, 您可以继续发布补丁'
     }
 
-    await prisma.user.update({
-      where: { id: ctx.uid },
-      data: { role: { set: 2 } }
-    })
+    // await prisma.user.update({
+    //   where: { id: ctx.uid },
+    //   data: { role: { set: 2 } }
+    // })
   })
 })
