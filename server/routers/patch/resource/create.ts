@@ -22,8 +22,15 @@ const uploadPatchResource = async (patchId: number, hash: string) => {
 export const createPatchResource = privateProcedure
   .input(patchResourceCreateSchema)
   .mutation(async ({ ctx, input }) => {
-    const { patchId, type, language, platform, content, ...resourceData } =
-      input
+    const {
+      patchId,
+      type,
+      language,
+      platform,
+      content,
+      storage,
+      ...resourceData
+    } = input
 
     const currentPatch = await prisma.patch.findUnique({
       where: { id: patchId },
@@ -34,9 +41,15 @@ export const createPatchResource = privateProcedure
       }
     })
 
-    const res = await uploadPatchResource(patchId, resourceData.hash)
-    if (typeof res === 'string') {
-      return res
+    let res: string
+    if (storage === 'user') {
+      res = content
+    } else {
+      const result = await uploadPatchResource(patchId, resourceData.hash)
+      if (typeof result === 'string') {
+        return result
+      }
+      res = result.downloadLink
     }
 
     return await prisma.$transaction(async (prisma) => {
@@ -47,7 +60,8 @@ export const createPatchResource = privateProcedure
           type,
           language,
           platform,
-          content: res.downloadLink,
+          content: res,
+          storage,
           ...resourceData
         },
         include: {

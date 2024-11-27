@@ -21,6 +21,7 @@ import { Upload } from 'lucide-react'
 import { FileUploadContainer } from '../upload/FileUploadContainer'
 import { ResourceTypeSelect } from './ResourceTypeSelect'
 import { useErrorHandler } from '~/hooks/useErrorHandler'
+import { useUserStore } from '~/store/providers/user'
 import type { PatchResource } from '~/types/api/patch'
 
 export type ResourceFormData = z.infer<typeof patchResourceCreateSchema>
@@ -37,6 +38,7 @@ export const PublishResource = ({
   onSuccess
 }: CreateResourceProps) => {
   const [creating, setCreating] = useState(false)
+  const user = useUserStore((state) => state.user)
 
   const {
     control,
@@ -49,7 +51,7 @@ export const PublishResource = ({
     resolver: zodResolver(patchResourceCreateSchema),
     defaultValues: {
       patchId,
-      storage: 's3',
+      storage: user.role > 1 ? 's3' : 'user',
       hash: '',
       content: '',
       code: '',
@@ -91,7 +93,7 @@ export const PublishResource = ({
         <h3 className="text-lg">创建补丁资源</h3>
         <p className="text-sm font-medium text-default-500">
           您需要先自行发布 3 个补丁资源以使用我们的对象存储, 当您发布完成 3
-          个补丁后, 您可以 <Link href="#">申请成为创作者</Link>
+          个合法补丁后, 您可以 <Link href="#">申请成为创作者</Link>
         </p>
       </ModalHeader>
 

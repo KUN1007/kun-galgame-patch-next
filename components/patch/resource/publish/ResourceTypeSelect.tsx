@@ -4,6 +4,7 @@ import { z } from 'zod'
 import { Controller } from 'react-hook-form'
 import { Select, SelectItem } from '@nextui-org/select'
 import { patchResourceCreateSchema } from '~/validations/patch'
+import { useUserStore } from '~/store/providers/user'
 import { ErrorType, ControlType } from '../share'
 
 export type ResourceFormData = z.infer<typeof patchResourceCreateSchema>
@@ -16,12 +17,12 @@ interface Props {
 const storageTypes = [
   {
     value: 's3',
-    label: '对象存储 (<100MB)',
+    label: '对象存储 (<100MB, 创作者可用)',
     description: '此选项适合 <100MB 的补丁, 稳定, 永远不会失效过期'
   },
   {
     value: 'onedrive',
-    label: 'OneDrive (>100MB, <1GB)',
+    label: 'OneDrive (>100MB, <1GB, 创作者可用)',
     description: '此选项适合 >100MB 且 <1GB 的补丁, 较稳定, 我们还在开发中...'
   },
   {
@@ -32,6 +33,8 @@ const storageTypes = [
 ]
 
 export const ResourceTypeSelect = ({ control, errors }: Props) => {
+  const user = useUserStore((state) => state.user)
+
   return (
     <div className="space-y-2">
       <h3 className="text-lg font-medium">选择存储类型</h3>
@@ -47,9 +50,12 @@ export const ResourceTypeSelect = ({ control, errors }: Props) => {
             label="请选择您的资源存储类型"
             selectedKeys={[field.value]}
             onSelectionChange={(key) => {
+              if (key.currentKey === key.anchorKey) {
+                return
+              }
               field.onChange(Array.from(key).join(''))
             }}
-            disabledKeys={['onedrive']}
+            disabledKeys={user.role > 1 ? ['onedrive'] : ['onedrive', 's3']}
             isInvalid={!!errors.storage}
             errorMessage={errors.storage?.message}
           >
