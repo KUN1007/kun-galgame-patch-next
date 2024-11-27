@@ -7,7 +7,7 @@ import { formatDistanceToNow } from '~/utils/formatDistanceToNow'
 import { Calendar, Link as LinkIcon } from 'lucide-react'
 import { UserFollow } from './follow/Follow'
 import { Stats } from './follow/Stats'
-import { EditButton } from './EditButton'
+import { SelfButton } from './SelfButton'
 import type { UserInfo } from '~/types/api/user'
 
 const getUserRole = (role: number) => {
@@ -86,7 +86,7 @@ export const UserProfile = ({ user }: { user: UserInfo }) => {
 
             <div className="flex gap-2">
               {user.id === user.requestUserUid ? (
-                <EditButton />
+                <SelfButton role={user.role} />
               ) : (
                 <UserFollow
                   uid={user.id}
