@@ -4,12 +4,20 @@ import { User, Chip, Button } from '@nextui-org/react'
 import { Edit2, Trash2 } from 'lucide-react'
 import { SUPPORTED_RESOURCE_LINK_MAP } from '~/constants/resource'
 import { formatDistanceToNow } from '~/utils/formatDistanceToNow'
+import Link from 'next/link'
 import type { AdminResource } from '~/types/api/admin'
 
 export const RenderCell = (resource: AdminResource, columnKey: string) => {
   switch (columnKey) {
     case 'name':
-      return <div className="font-medium">{resource.patchName}</div>
+      return (
+        <Link
+          href={`/patch/${resource.patchId}/resource`}
+          className="font-medium hover:text-primary-500"
+        >
+          {resource.patchName}
+        </Link>
+      )
     case 'user':
       return (
         <User

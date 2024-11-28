@@ -1,5 +1,5 @@
 import { serverApi } from '~/lib/trpc-server'
-import { AdminUser } from '~/components/admin/user/Container'
+import { User } from '~/components/admin/user/Container'
 
 export default async function Kun() {
   const { users, total } = await serverApi.admin.getUserInfo.query({
@@ -7,5 +7,5 @@ export default async function Kun() {
     limit: 100
   })
 
-  return <AdminUser initialUsers={users} total={total} />
+  return <User initialUsers={users} total={total} />
 }

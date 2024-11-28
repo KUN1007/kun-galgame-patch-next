@@ -11,6 +11,14 @@ export interface AdminUser {
   }
 }
 
+export interface AdminGalgame {
+  id: number
+  name: string
+  banner: string
+  user: KunUser
+  created: Date | string
+}
+
 export interface AdminResource {
   id: number
   patchId: number

@@ -70,15 +70,17 @@ export const Resource = ({ initialResources, total }: Props) => {
           aria-label="Patches table"
           bottomContent={
             <div className="flex justify-center w-full">
-              <Pagination
-                isCompact
-                showControls
-                showShadow
-                color="primary"
-                page={page}
-                total={total}
-                onChange={(page) => setPage(page)}
-              />
+              {total >= 100 && (
+                <Pagination
+                  isCompact
+                  showControls
+                  showShadow
+                  color="primary"
+                  page={page}
+                  total={total}
+                  onChange={(page) => setPage(page)}
+                />
+              )}
             </div>
           }
         >

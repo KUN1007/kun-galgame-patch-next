@@ -15,34 +15,34 @@ import { RenderCell } from './RenderCell'
 import { api } from '~/lib/trpc-client'
 import { KunLoading } from '~/components/kun/Loading'
 import { useMounted } from '~/hooks/useMounted'
-import type { AdminUser as AdminUserType } from '~/types/api/admin'
+import type { AdminGalgame } from '~/types/api/admin'
 
 const columns = [
+  { name: '封面', uid: 'banner' },
+  { name: '标题', uid: 'name' },
   { name: '用户', uid: 'user' },
-  { name: '角色', uid: 'role' },
-  { name: '状态', uid: 'status' },
-  { name: '操作', uid: 'actions' }
+  { name: '时间', uid: 'created' }
 ]
 
 interface Props {
-  initialUsers: AdminUserType[]
+  initialGalgames: AdminGalgame[]
   total: number
 }
 
-export const AdminUser = ({ initialUsers, total }: Props) => {
-  const [users, setUsers] = useState<AdminUserType[]>(initialUsers)
+export const Galgame = ({ initialGalgames, total }: Props) => {
+  const [galgames, setGalgames] = useState<AdminGalgame[]>(initialGalgames)
   const [page, setPage] = useState(1)
   const isMounted = useMounted()
 
   const [loading, setLoading] = useState(false)
   const fetchUserData = async () => {
     setLoading(true)
-    const data = await api.admin.getUserInfo.query({
+    const data = await api.admin.getGalgame.query({
       page,
       limit: 100
     })
     setLoading(false)
-    setUsers(data.users)
+    setGalgames(data.galgames)
   }
 
   useEffect(() => {
@@ -55,9 +55,9 @@ export const AdminUser = ({ initialUsers, total }: Props) => {
   return (
     <div className="space-y-6">
       <div className="flex items-center justify-between">
-        <h1 className="text-2xl font-bold">用户管理</h1>
+        <h1 className="text-2xl font-bold">Galgame 管理</h1>
         <Chip color="primary" variant="flat">
-          八嘎! 不许视奸!
+          正在开发中...
         </Chip>
       </div>
 
@@ -87,7 +87,7 @@ export const AdminUser = ({ initialUsers, total }: Props) => {
               <TableColumn key={column.uid}>{column.name}</TableColumn>
             )}
           </TableHeader>
-          <TableBody items={users}>
+          <TableBody items={galgames}>
             {(item) => (
               <TableRow key={item.id}>
                 {(columnKey) => (

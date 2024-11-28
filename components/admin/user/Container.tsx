@@ -15,7 +15,7 @@ import { RenderCell } from './RenderCell'
 import { api } from '~/lib/trpc-client'
 import { KunLoading } from '~/components/kun/Loading'
 import { useMounted } from '~/hooks/useMounted'
-import type { AdminUser as AdminUserType } from '~/types/api/admin'
+import type { AdminUser } from '~/types/api/admin'
 
 const columns = [
   { name: '用户', uid: 'user' },
@@ -25,12 +25,12 @@ const columns = [
 ]
 
 interface Props {
-  initialUsers: AdminUserType[]
+  initialUsers: AdminUser[]
   total: number
 }
 
-export const AdminUser = ({ initialUsers, total }: Props) => {
-  const [users, setUsers] = useState<AdminUserType[]>(initialUsers)
+export const User = ({ initialUsers, total }: Props) => {
+  const [users, setUsers] = useState<AdminUser[]>(initialUsers)
   const [page, setPage] = useState(1)
   const isMounted = useMounted()
 

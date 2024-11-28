@@ -75,7 +75,7 @@ export const UserProfile = ({ user }: { user: UserInfo }) => {
 
             <div className="flex gap-2">
               {user.id === user.requestUserUid ? (
-                <SelfButton role={user.role} />
+                <SelfButton user={user} />
               ) : (
                 <UserFollow
                   uid={user.id}

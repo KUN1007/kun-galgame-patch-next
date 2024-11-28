@@ -39,9 +39,6 @@ export const RenderCell = (user: AdminUserType, columnKey: string) => {
           <Button isIconOnly size="sm" variant="light">
             <Edit2 size={16} />
           </Button>
-          <Button isIconOnly size="sm" variant="light" color="danger">
-            <Trash2 size={16} />
-          </Button>
         </div>
       )
     default:
