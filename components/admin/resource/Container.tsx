@@ -37,7 +37,7 @@ export const Resource = ({ initialResources, total }: Props) => {
   const isMounted = useMounted()
 
   const [loading, setLoading] = useState(false)
-  const fetchUserData = async () => {
+  const fetchData = async () => {
     setLoading(true)
     const data = await api.admin.getPatchResource.query({
       page,
@@ -51,7 +51,7 @@ export const Resource = ({ initialResources, total }: Props) => {
     if (!isMounted) {
       return
     }
-    fetchUserData()
+    fetchData()
   }, [page])
 
   return (
@@ -72,12 +72,10 @@ export const Resource = ({ initialResources, total }: Props) => {
             <div className="flex justify-center w-full">
               {total >= 100 && (
                 <Pagination
-                  isCompact
                   showControls
-                  showShadow
                   color="primary"
                   page={page}
-                  total={total}
+                  total={Math.ceil(total / 100)}
                   onChange={(page) => setPage(page)}
                 />
               )}

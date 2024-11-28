@@ -3,6 +3,7 @@ import { getAdminStats } from './stats'
 import { getUserInfo } from './user'
 import { getGalgame } from './galgame'
 import { getPatchResource } from './resource'
+import { getComment } from './comment'
 
 export const adminRouter = router({
   getAdminStats,
@@ -11,5 +12,7 @@ export const adminRouter = router({
 
   getGalgame,
 
-  getPatchResource
+  getPatchResource,
+
+  getComment
 })

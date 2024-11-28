@@ -35,7 +35,7 @@ export const User = ({ initialUsers, total }: Props) => {
   const isMounted = useMounted()
 
   const [loading, setLoading] = useState(false)
-  const fetchUserData = async () => {
+  const fetchData = async () => {
     setLoading(true)
     const data = await api.admin.getUserInfo.query({
       page,
@@ -49,7 +49,7 @@ export const User = ({ initialUsers, total }: Props) => {
     if (!isMounted) {
       return
     }
-    fetchUserData()
+    fetchData()
   }, [page])
 
   return (
@@ -70,9 +70,7 @@ export const User = ({ initialUsers, total }: Props) => {
             <div className="flex justify-center w-full">
               {total >= 100 && (
                 <Pagination
-                  isCompact
                   showControls
-                  showShadow
                   color="primary"
                   page={page}
                   total={total}

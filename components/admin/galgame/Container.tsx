@@ -35,7 +35,7 @@ export const Galgame = ({ initialGalgames, total }: Props) => {
   const isMounted = useMounted()
 
   const [loading, setLoading] = useState(false)
-  const fetchUserData = async () => {
+  const fetchData = async () => {
     setLoading(true)
     const data = await api.admin.getGalgame.query({
       page,
@@ -49,7 +49,7 @@ export const Galgame = ({ initialGalgames, total }: Props) => {
     if (!isMounted) {
       return
     }
-    fetchUserData()
+    fetchData()
   }, [page])
 
   return (
@@ -62,7 +62,7 @@ export const Galgame = ({ initialGalgames, total }: Props) => {
       </div>
 
       {loading ? (
-        <KunLoading hint="正在获取消息数据..." />
+        <KunLoading hint="正在获取 Galgame 数据..." />
       ) : (
         <Table
           aria-label="Users table"
@@ -70,12 +70,10 @@ export const Galgame = ({ initialGalgames, total }: Props) => {
             <div className="flex justify-center w-full">
               {total >= 100 && (
                 <Pagination
-                  isCompact
                   showControls
-                  showShadow
                   color="primary"
                   page={page}
-                  total={total}
+                  total={Math.ceil(total / 100)}
                   onChange={(page) => setPage(page)}
                 />
               )}

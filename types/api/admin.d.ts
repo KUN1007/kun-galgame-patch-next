@@ -34,3 +34,13 @@ export interface AdminResource {
   size: string
   created: Date | string
 }
+
+export interface AdminComment {
+  id: number
+  user: KunUser
+  content: string
+  patchName: string
+  patchId: number
+  like: number
+  created: Date | string
+}
