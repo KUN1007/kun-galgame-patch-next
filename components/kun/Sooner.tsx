@@ -16,6 +16,7 @@ interface ToastProps {
 }
 
 const { loli, name } = loliImage
+
 const KunSooner = ({ message, t }: ToastProps) => {
   return (
     <motion.div

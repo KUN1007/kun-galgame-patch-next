@@ -8,19 +8,8 @@ import { Calendar, Link as LinkIcon } from 'lucide-react'
 import { UserFollow } from './follow/Follow'
 import { Stats } from './follow/Stats'
 import { SelfButton } from './SelfButton'
+import { getUserRole } from '~/constants/user'
 import type { UserInfo } from '~/types/api/user'
-
-const getUserRole = (role: number) => {
-  if (role === 2) {
-    return '创作者'
-  } else if (role === 3) {
-    return '管理员'
-  } else if (role === 4) {
-    return '超级管理员'
-  } else {
-    return '用户'
-  }
-}
 
 export const UserProfile = ({ user }: { user: UserInfo }) => {
   return (

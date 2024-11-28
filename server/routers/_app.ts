@@ -9,6 +9,7 @@ import { searchRouter } from './search/index'
 import { tagRouter } from './tag/index'
 import { messageRouter } from './message/index'
 import { applyRouter } from './apply/index'
+import { adminRouter } from './admin/index'
 
 export const appRouter = router({
   auth: authRouter,
@@ -20,7 +21,8 @@ export const appRouter = router({
   search: searchRouter,
   tag: tagRouter,
   message: messageRouter,
-  app: applyRouter
+  app: applyRouter,
+  admin: adminRouter
 })
 
 export type AppRouter = typeof appRouter
