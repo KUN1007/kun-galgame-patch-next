@@ -21,9 +21,10 @@ model user {
   moemoepoint   Int      @default(0)
   bio           String   @default("") @db.VarChar(107)
 
-  daily_image_count Int @default(0)
-  daily_check_in    Int @default(0)
-  daily_upload_size Int @default(5)
+  daily_image_count Int    @default(0)
+  daily_check_in    Int    @default(0)
+  daily_upload_size Int    @default(5)
+  last_login_time   String @default("")
 
   patch_favorite      user_patch_favorite_relation[]
   patch_contribute    user_patch_contribute_relation[]

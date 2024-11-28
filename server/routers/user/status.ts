@@ -93,6 +93,11 @@ export const status = privateProcedure.query(async ({ ctx, input }) => {
     return '用户未找到'
   }
 
+  await prisma.user.update({
+    where: { id: ctx.uid },
+    data: { last_login_time: { set: Date.now().toString() } }
+  })
+
   const responseData: UserState = {
     uid: user.id,
     name: user.name,

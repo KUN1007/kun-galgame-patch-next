@@ -1,3 +1,9 @@
+export interface AdminStats {
+  title: string
+  value: string
+  change: number
+}
+
 export interface AdminUser {
   id: number
   name: string
