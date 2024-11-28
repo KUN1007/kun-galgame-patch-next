@@ -10,3 +10,13 @@ export interface AdminUser {
     patch_resource: number
   }
 }
+
+export interface AdminResource {
+  id: number
+  patchId: number
+  patchName: string
+  storage: string
+  user: KunUser
+  size: string
+  created: Date | string
+}

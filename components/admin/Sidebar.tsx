@@ -11,7 +11,9 @@ import {
   MessageSquare,
   Settings,
   ChevronLeft,
-  ChevronRight
+  ChevronRight,
+  Gamepad2,
+  Puzzle
 } from 'lucide-react'
 import { cn } from '~/utils/cn'
 
@@ -27,9 +29,14 @@ const menuItems = [
     icon: BadgeCheck
   },
   {
-    name: '补丁管理',
-    href: '/admin/patch',
-    icon: BookOpen
+    name: '补丁资源管理',
+    href: '/admin/resource',
+    icon: Puzzle
+  },
+  {
+    name: 'Galgame 管理',
+    href: '/admin/galgame',
+    icon: Gamepad2
   },
   {
     name: '评论管理',

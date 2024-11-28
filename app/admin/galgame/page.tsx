@@ -17,28 +17,28 @@ import { useState } from 'react'
 const patches = [
   {
     id: 1,
-    name: 'Sample Patch 1',
-    vndb_id: 'v1234',
+    name: '啊这可海星',
+    vndb_id: 'v1007',
     status: 'active',
     language: ['English', 'Japanese'],
-    released: '2024-01-15'
+    released: '2019-10-07'
   },
   {
     id: 2,
-    name: 'Sample Patch 2',
-    vndb_id: 'v5678',
+    name: '莲最可爱了',
+    vndb_id: 'v1007',
     status: 'pending',
     language: ['Chinese', 'English'],
-    released: '2024-02-20'
+    released: '2019-10-07'
   }
 ]
 
 const columns = [
-  { name: 'NAME', uid: 'name' },
+  { name: '游戏名', uid: 'name' },
   { name: 'VNDB ID', uid: 'vndb_id' },
-  { name: 'STATUS', uid: 'status' },
-  { name: 'LANGUAGE', uid: 'language' },
-  { name: 'ACTIONS', uid: 'actions' }
+  { name: '状态', uid: 'status' },
+  { name: '语言', uid: 'language' },
+  { name: '操作', uid: 'actions' }
 ]
 
 export default function PatchesPage() {
@@ -89,8 +89,10 @@ export default function PatchesPage() {
   return (
     <div className="space-y-6">
       <div className="flex items-center justify-between">
-        <h1 className="text-2xl font-bold">Patches Management</h1>
-        <Button color="primary">Add New Patch</Button>
+        <h1 className="text-2xl font-bold">补丁管理</h1>
+        <Chip color="primary" variant="flat">
+          太无聊了不想写了。。。
+        </Chip>
       </div>
 
       <Table
