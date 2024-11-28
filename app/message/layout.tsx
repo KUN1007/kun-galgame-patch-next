@@ -7,7 +7,7 @@ export default function MessageLayout({
   children: React.ReactNode
 }) {
   return (
-    <div className="container py-8 mx-auto">
+    <div className="container mx-auto my-8">
       <KunHeader
         name="消息"
         description="这是消息页面, 第一次访问对应的页面会自动已读所有消息"

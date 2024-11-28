@@ -1,0 +1,100 @@
+'use client'
+
+import { useState } from 'react'
+import { Chip } from '@nextui-org/react'
+import Link from 'next/link'
+import { usePathname } from 'next/navigation'
+import {
+  Users,
+  BadgeCheck,
+  BookOpen,
+  MessageSquare,
+  Settings,
+  ChevronLeft,
+  ChevronRight
+} from 'lucide-react'
+import { cn } from '~/utils/cn'
+
+const menuItems = [
+  {
+    name: '用户管理',
+    href: '/admin/user',
+    icon: Users
+  },
+  {
+    name: '创作者管理',
+    href: '/admin/creator',
+    icon: BadgeCheck
+  },
+  {
+    name: '补丁管理',
+    href: '/admin/patch',
+    icon: BookOpen
+  },
+  {
+    name: '评论管理',
+    href: '/admin/comment',
+    icon: MessageSquare
+  },
+  {
+    name: '网站设置',
+    href: '/admin/setting',
+    icon: Settings
+  }
+]
+
+export const Sidebar = () => {
+  const pathname = usePathname()
+  const [isOpen, setIsOpen] = useState(false)
+
+  return (
+    <>
+      <aside
+        className={cn(
+          'fixed z-50 md:static w-64 h-full bg-background border-r border-divider transition-transform duration-300 ease-in-out',
+          isOpen ? 'translate-x-0' : '-translate-x-full md:translate-x-0',
+          'flex items-center'
+        )}
+      >
+        <div className="flex flex-col w-full h-full">
+          <div className="p-4 pl-0">
+            <h1 className="text-2xl font-bold">管理面板</h1>
+          </div>
+
+          <nav className="flex-1 p-4 pl-0">
+            <ul className="space-y-2">
+              {menuItems.map((item) => {
+                const Icon = item.icon
+                const isActive = pathname === item.href
+
+                return (
+                  <li key={item.href}>
+                    <Link
+                      href={item.href}
+                      className={`flex items-center gap-3 px-4 py-2 rounded-medium transition-colors ${
+                        isActive
+                          ? 'bg-primary text-primary-foreground'
+                          : 'hover:bg-default-100'
+                      }`}
+                    >
+                      <Icon size={20} />
+                      <span>{item.name}</span>
+                    </Link>
+                  </li>
+                )
+              })}
+            </ul>
+          </nav>
+        </div>
+
+        <Chip
+          className="translate-x-3 md:hidden text-default-500"
+          variant="light"
+          onClick={() => setIsOpen(!isOpen)}
+        >
+          {isOpen ? <ChevronLeft size={24} /> : <ChevronRight size={24} />}
+        </Chip>
+      </aside>
+    </>
+  )
+}
