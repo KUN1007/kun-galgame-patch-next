@@ -2,7 +2,7 @@ import { adminProcedure } from '~/lib/trpc'
 import { prisma } from '~/prisma/index'
 import {
   adminPaginationSchema,
-  agreeCreatorSchema,
+  approveCreatorSchema,
   declineCreatorSchema
 } from '~/validations/admin'
 import { createMessage } from '~/server/utils/message'
@@ -16,16 +16,18 @@ export const getCreator = adminProcedure
 
     const [data, total] = await Promise.all([
       await prisma.user_message.findMany({
-        where: { type: 'apply' },
+        where: { type: 'apply', sender_id: { not: null } },
         take: limit,
         skip: offset,
         orderBy: { created: 'desc' },
         include: {
           sender: {
-            select: {
-              id: true,
-              name: true,
-              avatar: true
+            include: {
+              _count: {
+                select: {
+                  patch_resource: true
+                }
+              }
             }
           }
         }
@@ -37,15 +39,21 @@ export const getCreator = adminProcedure
       id: creator.id,
       content: creator.content,
       status: creator.status,
-      sender: creator.sender
+      sender: {
+        id: creator.sender!.id,
+        name: creator.sender!.name,
+        avatar: creator.sender!.avatar
+      },
+      patchResourceCount: creator.sender?._count.patch_resource ?? 0,
+      created: creator.created
     }))
 
     return { creators, total }
   })
 
-export const agreeCreator = adminProcedure
-  .input(agreeCreatorSchema)
-  .query(async ({ ctx, input }) => {
+export const approveCreator = adminProcedure
+  .input(approveCreatorSchema)
+  .mutation(async ({ ctx, input }) => {
     const { messageId } = input
     const message = await prisma.user_message.findUnique({
       where: { id: messageId }
@@ -57,7 +65,7 @@ export const agreeCreator = adminProcedure
     return prisma.$transaction(async (prisma) => {
       await prisma.user_message.update({
         where: { id: messageId },
-        // status: 0 - unread, 1 - read, 2 - agree, 3 - decline
+        // status: 0 - unread, 1 - read, 2 - approve, 3 - decline
         data: { status: { set: 2 } }
       })
 
@@ -71,7 +79,7 @@ export const agreeCreator = adminProcedure
 
 export const declineCreator = adminProcedure
   .input(declineCreatorSchema)
-  .query(async ({ ctx, input }) => {
+  .mutation(async ({ ctx, input }) => {
     const { messageId, reason } = input
     const message = await prisma.user_message.findUnique({
       where: { id: messageId }
@@ -83,7 +91,7 @@ export const declineCreator = adminProcedure
     return prisma.$transaction(async (prisma) => {
       await prisma.user_message.update({
         where: { id: messageId },
-        // status: 0 - unread, 1 - read, 2 - agree, 3 - decline
+        // status: 0 - unread, 1 - read, 2 - approve, 3 - decline
         data: { status: { set: 3 } }
       })
 

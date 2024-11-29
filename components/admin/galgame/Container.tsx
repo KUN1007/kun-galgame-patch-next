@@ -65,7 +65,7 @@ export const Galgame = ({ initialGalgames, total }: Props) => {
         <KunLoading hint="正在获取 Galgame 数据..." />
       ) : (
         <Table
-          aria-label="Users table"
+          aria-label="Galgame 管理"
           bottomContent={
             <div className="flex justify-center w-full">
               {total >= 100 && (

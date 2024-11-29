@@ -57,7 +57,7 @@ model user_follow_relation {
   @@unique([follower_id, following_id])
 }
 
-// status: 0 - unread, 1 - read, 2 - agree, 3 - decline
+// status: 0 - unread, 1 - read, 2 - approve, 3 - decline
 model user_message {
   id      Int    @id @default(autoincrement())
   type    String

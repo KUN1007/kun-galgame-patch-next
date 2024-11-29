@@ -34,6 +34,10 @@ export const applyRouter = router({
       return '您暂时不可以申请成为创作者, 您可以继续发布补丁'
     }
 
+    if (user.role > 1) {
+      return '您已经是一名创作者了! 无需重复申请'
+    }
+
     const message = await prisma.user_message.findFirst({
       where: { type: 'apply', sender_id: ctx.uid, status: 0 }
     })

@@ -65,7 +65,7 @@ export const User = ({ initialUsers, total }: Props) => {
         <KunLoading hint="正在获取消息数据..." />
       ) : (
         <Table
-          aria-label="Users table"
+          aria-label="用户管理"
           bottomContent={
             <div className="flex justify-center w-full">
               {total >= 100 && (

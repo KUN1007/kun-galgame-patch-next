@@ -5,11 +5,11 @@ export const adminPaginationSchema = z.object({
   limit: z.number().min(1).max(100)
 })
 
-export const agreeCreatorSchema = z.object({
+export const approveCreatorSchema = z.object({
   messageId: z.number().min(1).max(9999999)
 })
 
-export const declineCreatorSchema = agreeCreatorSchema.merge(
+export const declineCreatorSchema = approveCreatorSchema.merge(
   z.object({
     reason: z
       .string()

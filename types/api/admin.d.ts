@@ -22,6 +22,8 @@ export interface AdminCreator {
   content: string
   status: number
   sender: KunUser | null
+  patchResourceCount: number
+  created: Date | string
 }
 
 export interface AdminGalgame {
