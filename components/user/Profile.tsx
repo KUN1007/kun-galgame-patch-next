@@ -8,7 +8,7 @@ import { Calendar, Link as LinkIcon } from 'lucide-react'
 import { UserFollow } from './follow/Follow'
 import { Stats } from './follow/Stats'
 import { SelfButton } from './SelfButton'
-import { getUserRole } from '~/constants/user'
+import { USER_ROLE_MAP } from '~/constants/user'
 import type { UserInfo } from '~/types/api/user'
 
 export const UserProfile = ({ user }: { user: UserInfo }) => {
@@ -26,7 +26,7 @@ export const UserProfile = ({ user }: { user: UserInfo }) => {
             <div className="flex flex-col items-center gap-1">
               <h4 className="text-2xl font-bold">{user.name}</h4>
               <Chip color="primary" variant="flat" size="sm" className="mt-1">
-                {getUserRole(user.role)}
+                {USER_ROLE_MAP[user.role]}
               </Chip>
 
               <Stats user={user} />

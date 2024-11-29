@@ -7,9 +7,11 @@ export interface AdminStats {
 export interface AdminUser {
   id: number
   name: string
+  bio: string
   avatar: string
   role: number
   status: number
+  dailyImageCount: number
   created: Date | string
   _count: {
     patch: number

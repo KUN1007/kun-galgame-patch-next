@@ -1,31 +1,21 @@
-export const getUserRole = (role: number) => {
-  if (role === 2) {
-    return '创作者'
-  } else if (role === 3) {
-    return '管理员'
-  } else if (role === 4) {
-    return '超级管理员'
-  } else {
-    return '用户'
-  }
+export const USER_ROLE_MAP: Record<number, string> = {
+  1: '用户',
+  2: '创作者',
+  3: '管理员',
+  4: '超级管理员'
 }
 
-export const getUserStatus = (status: number) => {
-  if (status === 0) {
-    return '正常'
-  } else if (status === 1) {
-    return '限制'
-  } else {
-    return '封禁'
-  }
+export const USER_STATUS_MAP: Record<number, string> = {
+  0: '正常',
+  1: '限制',
+  2: '封禁'
 }
 
-export const getUserStatusColor = (status: number) => {
-  if (status === 0) {
-    return 'success'
-  } else if (status === 1) {
-    return 'warning'
-  } else {
-    return 'danger'
-  }
+export const USER_STATUS_COLOR_MAP: Record<
+  number,
+  'success' | 'warning' | 'danger'
+> = {
+  0: 'success',
+  1: 'warning',
+  2: 'danger'
 }

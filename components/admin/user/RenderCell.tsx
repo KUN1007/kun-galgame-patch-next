@@ -1,12 +1,12 @@
 'use client'
 
-import { User, Chip, Button } from '@nextui-org/react'
-import { Edit2, Trash2 } from 'lucide-react'
+import { User, Chip } from '@nextui-org/react'
 import {
-  getUserRole,
-  getUserStatus,
-  getUserStatusColor
+  USER_ROLE_MAP,
+  USER_STATUS_MAP,
+  USER_STATUS_COLOR_MAP
 } from '~/constants/user'
+import { UserEdit } from './UserEdit'
 import type { AdminUser as AdminUserType } from '~/types/api/admin'
 
 export const RenderCell = (user: AdminUserType, columnKey: string) => {
@@ -24,23 +24,17 @@ export const RenderCell = (user: AdminUserType, columnKey: string) => {
     case 'role':
       return (
         <Chip color="primary" variant="flat">
-          {getUserRole(user.role)}
+          {USER_ROLE_MAP[user.role]}
         </Chip>
       )
     case 'status':
       return (
-        <Chip color={getUserStatusColor(user.status)} variant="flat">
-          {getUserStatus(user.status)}
+        <Chip color={USER_STATUS_COLOR_MAP[user.status]} variant="flat">
+          {USER_STATUS_MAP[user.status]}
         </Chip>
       )
     case 'actions':
-      return (
-        <div className="flex gap-2">
-          <Button isIconOnly size="sm" variant="light">
-            <Edit2 size={16} />
-          </Button>
-        </div>
-      )
+      return <UserEdit initialUser={user} />
     default:
       return (
         <Chip color="primary" variant="flat">
