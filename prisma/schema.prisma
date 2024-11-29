@@ -23,7 +23,7 @@ model user {
 
   daily_image_count Int    @default(0)
   daily_check_in    Int    @default(0)
-  daily_upload_size Int    @default(5)
+  daily_upload_size Int    @default(0)
   last_login_time   String @default("")
 
   patch_favorite      user_patch_favorite_relation[]
