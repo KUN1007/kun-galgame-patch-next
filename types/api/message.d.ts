@@ -7,5 +7,5 @@ export interface Message {
   patch_resource_id: number
   comment_id: number
   created: string | Date
-  sender: KunUser
+  sender: KunUser | null
 }

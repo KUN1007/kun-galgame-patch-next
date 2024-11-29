@@ -15,6 +15,7 @@ import {
   ThumbsUp
 } from 'lucide-react'
 import { useRouter } from 'next-nprogress-bar'
+import { MESSAGE_TYPE_MAP } from '~/constants/message'
 import type { Message } from '~/types/api/message'
 
 interface Props {
@@ -42,28 +43,11 @@ const getNotificationIcon = (type: string) => {
   }
 }
 
-const getMessageName = (type: string) => {
-  switch (type) {
-    case 'system':
-      return '系统消息'
-    case 'pm':
-      return '向您发送了私信'
-    case 'like':
-      return '点赞了'
-    case 'favorite':
-      return '收藏了'
-    case 'comment':
-      return '评论了'
-    case 'follow':
-      return '新关注'
-    case 'pr':
-      return '更新请求'
-    default:
-      return ''
-  }
-}
-
 const getCardRoute = (msg: Message) => {
+  if (!msg.sender) {
+    return '/'
+  }
+
   if (msg.patch_id) {
     return `/patch/${msg.patch_id}/introduction`
   } else if (msg.comment_id) {
@@ -71,7 +55,7 @@ const getCardRoute = (msg: Message) => {
   } else if (msg.patch_resource_id) {
     return `/patch/${msg.patch_id}/resource`
   } else {
-    return `/user/${msg.sender.id}/resource`
+    return `/user/${msg.sender?.id}/resource`
   }
 }
 
@@ -87,12 +71,21 @@ export const MessageCard = ({ msg }: Props) => {
       className="w-full"
     >
       <CardBody className="flex flex-row items-center gap-4">
-        <Avatar src={msg.sender.avatar} name={msg.sender.name} />
+        {msg.sender ? (
+          <Avatar src={msg.sender?.avatar} name={msg.sender?.name} />
+        ) : (
+          <Avatar src="/favicon.webp" name="系统消息" />
+        )}
+
         <div className="flex-1 space-y-2">
           <div className="flex items-center gap-2">
             {getNotificationIcon(msg.type)}
-            <span className="font-semibold">{msg.sender.name}</span>
-            <span>{getMessageName(msg.type)}</span>
+
+            <span className="font-semibold">
+              {msg.sender ? msg.sender.name : '系统'}
+            </span>
+
+            <span>{MESSAGE_TYPE_MAP[msg.type]}</span>
           </div>
           <p className="text-gray-600">{msg.content}</p>
           <span className="text-sm text-gray-400">

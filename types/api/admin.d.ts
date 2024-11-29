@@ -17,6 +17,13 @@ export interface AdminUser {
   }
 }
 
+export interface AdminCreator {
+  id: number
+  content: string
+  status: number
+  sender: KunUser | null
+}
+
 export interface AdminGalgame {
   id: number
   name: string

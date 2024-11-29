@@ -64,8 +64,8 @@ model user_message {
   content String @db.VarChar(10007)
   status  Int    @default(0)
 
-  sender_id    Int
-  sender       user  @relation("user_send_message", fields: [sender_id], references: [id])
+  sender_id    Int?
+  sender       user? @relation("user_send_message", fields: [sender_id], references: [id])
   recipient_id Int?
   recipient    user? @relation("user_receive_message", fields: [recipient_id], references: [id])
 
