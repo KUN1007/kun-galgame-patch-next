@@ -46,8 +46,10 @@ export const authRouter = router({
       avatar: user.avatar,
       bio: user.bio,
       moemoepoint: user.moemoepoint,
-      checkIn: user.daily_check_in,
-      role: user.role
+      role: user.role,
+      dailyCheckIn: user.daily_check_in,
+      dailyImageLimit: user.daily_image_count,
+      dailyUploadLimit: user.daily_upload_size
     }
     return responseData
   }),
@@ -103,8 +105,10 @@ export const authRouter = router({
         avatar: user.avatar,
         bio: user.bio,
         moemoepoint: user.moemoepoint,
-        checkIn: user.daily_check_in,
-        role: user.role
+        role: user.role,
+        dailyCheckIn: user.daily_check_in,
+        dailyImageLimit: user.daily_image_count,
+        dailyUploadLimit: user.daily_upload_size
       }
       return responseData
     }),

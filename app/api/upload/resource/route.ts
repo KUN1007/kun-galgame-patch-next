@@ -30,6 +30,9 @@ const checkRequestValid = async (req: Request) => {
   const buffer = Buffer.from(await file.arrayBuffer())
   const fileSizeInMB = buffer.length / (1024 * 1024)
 
+  if (fileSizeInMB < 0.001) {
+    return '文件过小, 您的文件小于 0.001 MB'
+  }
   if (fileSizeInMB > 100) {
     return '文件大小超过限制, 最大为 100 MB'
   }
@@ -41,6 +44,15 @@ const checkRequestValid = async (req: Request) => {
   if (user.role < 2) {
     return '您的权限不足, 创作者或者管理员才可以上传文件到对象存储'
   }
+  if (user.daily_upload_size >= 5120) {
+    return '您今日的上传大小已达到 5GB 限额'
+  }
+
+  const fileSizeInGB = Number(fileSizeInMB.toFixed(3))
+  await prisma.user.update({
+    where: { id: payload.uid },
+    data: { daily_upload_size: { increment: fileSizeInGB } }
+  })
 
   return { buffer, file, fileSizeInMB }
 }

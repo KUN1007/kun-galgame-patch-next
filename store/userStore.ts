@@ -8,8 +8,10 @@ export interface UserState {
   avatar: string
   bio: string
   moemoepoint: number
-  checkIn: number
   role: number
+  dailyCheckIn: number
+  dailyImageLimit: number
+  dailyUploadLimit: number
 }
 
 export interface UserStore {
@@ -25,8 +27,10 @@ const initialUserStore: UserState = {
   avatar: '',
   bio: '',
   moemoepoint: 0,
-  checkIn: 1,
-  role: 1
+  role: 1,
+  dailyCheckIn: 1,
+  dailyImageLimit: 0,
+  dailyUploadLimit: 0
 }
 
 export const createUserStore = (initState: UserState = initialUserStore) => {

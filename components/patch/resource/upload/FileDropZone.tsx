@@ -26,11 +26,15 @@ const handleFileInput = (file: File | undefined) => {
   }
 
   if (!validateFileType(file)) {
-    toast.error('文件类型不被支持，仅接受 .zip, .rar, .7z 格式')
+    toast.error('文件类型不被支持，仅接受 .zip, .rar, .7z, .lz4 格式')
     return
   }
 
   const fileSizeMB = file.size / (1024 * 1024)
+  if (fileSizeMB < 0.001) {
+    toast.error('文件过小, 您的文件小于 0.001 MB')
+    return
+  }
   if (fileSizeMB > 100) {
     toast.error(
       `文件大小超出限制: ${fileSizeMB.toFixed(3)} MB, 最大允许大小为 100 MB`
@@ -93,6 +97,10 @@ export const FileDropZone = ({ onFileUpload }: Props) => {
             accept="*/*"
           />
         </label>
+        <p className="text-sm text-default-500">
+          我们支持 .zip .7z .rar .lz4 压缩格式, 由于不会发生资源失效,
+          请您根据自身需求设置解压密码
+        </p>
       </div>
     </div>
   )

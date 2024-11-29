@@ -39,8 +39,9 @@ export const SUPPORTED_RESOURCE_LINK_MAP: Record<string, string> = {
 
 export const ALLOWED_MIME_TYPES = [
   'application/zip',
+  'application/x-lz4',
   'application/x-rar-compressed',
   'application/x-7z-compressed'
 ]
 
-export const ALLOWED_EXTENSIONS = ['.zip', '.rar', '.7z']
+export const ALLOWED_EXTENSIONS = ['.zip', '.rar', '.7z', '.lz4']

@@ -10,7 +10,8 @@ import {
   ModalContent,
   ModalHeader,
   ModalBody,
-  ModalFooter
+  ModalFooter,
+  Progress
 } from '@nextui-org/react'
 import toast from 'react-hot-toast'
 import { api } from '~/lib/trpc-client'
@@ -87,14 +88,29 @@ export const PublishResource = ({
     setValue('size', size)
   }
 
+  const progress = Math.min((user.dailyUploadLimit / 5120) * 100, 100)
+
   return (
     <ModalContent>
       <ModalHeader className="flex-col space-y-2">
         <h3 className="text-lg">创建补丁资源</h3>
-        <p className="text-sm font-medium text-default-500">
-          您需要先自行发布 3 个补丁资源以使用我们的对象存储, 当您发布完成 3
-          个合法补丁后, 您可以 <Link href="/apply">申请成为创作者</Link>
-        </p>
+        <div className="text-sm font-medium text-default-500">
+          {user.role > 1 ? (
+            <div className="space-y-1">
+              <p>
+                作为创作者, 您每天有 5GB (5120MB) 的上传额度, 该额度每天早上 8
+                点重置
+              </p>
+              <p>{`您今日已使用存储 ${user.dailyUploadLimit} MB`}</p>
+              <Progress size="sm" value={progress} aria-label="已使用存储" />
+            </div>
+          ) : (
+            <>
+              您需要先自行发布 3 个补丁资源以使用我们的对象存储, 当您发布完成 3
+              个合法补丁后, 您可以 <Link href="/apply">申请成为创作者</Link>
+            </>
+          )}
+        </div>
       </ModalHeader>
 
       <ModalBody>
@@ -121,20 +137,31 @@ export const PublishResource = ({
         </form>
       </ModalBody>
 
-      <ModalFooter>
-        <Button color="danger" variant="light" onPress={onClose}>
-          取消
-        </Button>
-        <Button
-          color="primary"
-          type="submit"
-          disabled={creating}
-          isLoading={creating}
-          endContent={<Upload className="w-4 h-4" />}
-          onClick={handleSubmit(onSubmit)}
-        >
-          发布资源
-        </Button>
+      <ModalFooter className="flex-col items-end">
+        <div className="space-x-2">
+          <Button color="danger" variant="light" onPress={onClose}>
+            取消
+          </Button>
+          <Button
+            color="primary"
+            type="submit"
+            disabled={creating}
+            isLoading={creating}
+            endContent={<Upload className="w-4 h-4" />}
+            onClick={handleSubmit(onSubmit)}
+          >
+            发布资源
+          </Button>
+        </div>
+
+        {creating && (
+          <>
+            <p>
+              我们正在将您的补丁从服务器同步到云端, 请稍后 ...
+              取决于您的网络环境, 这也许需要一段时间
+            </p>
+          </>
+        )}
       </ModalFooter>
     </ModalContent>
   )

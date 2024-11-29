@@ -42,13 +42,16 @@ export const FileUploadCard = ({ fileData, onRemove }: Props) => {
             </Button>
           </div>
         ) : (
-          <Progress
-            value={fileData.progress}
-            className="w-24"
-            size="sm"
-            color="primary"
-            aria-label={`上传进度: ${fileData.progress}%`}
-          />
+          <div className="space-y-2">
+            <p className="text-sm text-default-500">正在上传中...</p>
+            <Progress
+              value={fileData.progress}
+              className="w-24"
+              size="sm"
+              color="primary"
+              aria-label={`上传进度: ${fileData.progress}%`}
+            />
+          </div>
         )}
       </div>
     </Card>
