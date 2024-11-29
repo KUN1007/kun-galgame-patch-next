@@ -11,11 +11,11 @@ import {
   Divider,
   Chip
 } from '@nextui-org/react'
-import { CheckCircle2, CircleSlash, Trophy } from 'lucide-react'
+import { BadgeCheck, CheckCircle2, CircleSlash, Trophy } from 'lucide-react'
 import { useRouter } from 'next/navigation'
 import { api } from '~/lib/trpc-client'
-import { useUserStore } from '~/store/providers/user'
 import { useErrorHandler } from '~/hooks/useErrorHandler'
+import toast from 'react-hot-toast'
 
 interface Props {
   count: number
@@ -23,8 +23,6 @@ interface Props {
 
 export const ApplyContainer = ({ count }: Props) => {
   const router = useRouter()
-  const user = useUserStore((state) => state.user)
-  const setUser = useUserStore((state) => state.setUser)
   const [applying, setApplying] = useState(false)
 
   const progress = Math.min((count / 3) * 100, 100)
@@ -34,8 +32,8 @@ export const ApplyContainer = ({ count }: Props) => {
     setApplying(true)
     const res = await api.app.applyForCreator.mutate()
     useErrorHandler(res, () => {
-      setUser({ ...user, role: 2 })
-      router.refresh()
+      toast.success('恭喜您, 您的申请已成功提交')
+      router.push('/apply/pending')
     })
     setApplying(false)
   }
@@ -105,7 +103,7 @@ export const ApplyContainer = ({ count }: Props) => {
           <Button
             color="primary"
             size="lg"
-            startContent={<CheckCircle2 className="w-5 h-5" />}
+            startContent={<BadgeCheck className="w-5 h-5" />}
             isLoading={applying}
             isDisabled={!canApply || applying}
             onClick={handleApply}

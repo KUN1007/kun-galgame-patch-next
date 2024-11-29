@@ -1,7 +1,7 @@
 'use client'
 
 import { Button } from '@nextui-org/button'
-import { Pencil, CheckCircle2, Shield } from 'lucide-react'
+import { Pencil, BadgeCheck, Shield } from 'lucide-react'
 import { useRouter } from 'next-nprogress-bar'
 import type { UserInfo } from '~/types/api/user'
 
@@ -41,7 +41,7 @@ export const SelfButton = ({ user }: Props) => {
 
       {user.role < 2 && (
         <Button
-          startContent={<CheckCircle2 className="w-4 h-4" />}
+          startContent={<BadgeCheck className="w-4 h-4" />}
           color="primary"
           fullWidth
           onClick={() => router.push('/apply')}
