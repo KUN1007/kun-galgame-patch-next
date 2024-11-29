@@ -84,7 +84,7 @@ export const UserDropdown = () => {
       )
       setUser({
         ...user,
-        checkIn: 1,
+        dailyCheckIn: 1,
         moemoepoint: user.moemoepoint + value
       })
     })
@@ -108,7 +108,7 @@ export const UserDropdown = () => {
         </DropdownTrigger>
         <DropdownMenu
           aria-label="Profile Actions"
-          disabledKeys={user.checkIn ? ['check'] : []}
+          disabledKeys={user.dailyCheckIn ? ['check'] : []}
         >
           <DropdownItem
             key="username"
@@ -162,7 +162,7 @@ export const UserDropdown = () => {
             color="secondary"
             startContent={<CalendarCheck className="w-4 h-4" />}
             endContent={
-              user.checkIn ? (
+              user.dailyCheckIn ? (
                 <span className="text-xs">签到过啦</span>
               ) : (
                 <Sparkles className="w-5 h-5 text-secondary-500" />

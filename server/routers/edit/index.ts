@@ -170,6 +170,16 @@ export const editRouter = router({
     .use(parseEditorImageMiddleware)
     .input(imageSchema)
     .mutation(async ({ ctx, input }) => {
+      const user = await prisma.user.findUnique({
+        where: { id: ctx.uid }
+      })
+      if (!user) {
+        return '用户未找到'
+      }
+      if (user.daily_image_count >= 50) {
+        return '您今日上传的图片已达到 50 张限额'
+      }
+
       const newFileName = `${ctx.uid}-${Date.now()}`
 
       const bannerArrayBuffer = input.image as ArrayBuffer
