@@ -4,7 +4,7 @@ import { useEffect } from 'react'
 import { Card, CardBody, Button } from '@nextui-org/react'
 import { motion } from 'framer-motion'
 import { BadgeCheck, Rocket, Home } from 'lucide-react'
-import { useRouter } from 'next/navigation'
+import { useRouter } from 'next-nprogress-bar'
 import { useConfetti } from '~/hooks/useConfetti'
 
 export default function Kun() {

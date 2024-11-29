@@ -12,7 +12,7 @@ import {
   Chip
 } from '@nextui-org/react'
 import { BadgeCheck, CheckCircle2, CircleSlash, Trophy } from 'lucide-react'
-import { useRouter } from 'next/navigation'
+import { useRouter } from 'next-nprogress-bar'
 import { api } from '~/lib/trpc-client'
 import { useErrorHandler } from '~/hooks/useErrorHandler'
 import toast from 'react-hot-toast'
