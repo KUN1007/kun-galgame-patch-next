@@ -12,10 +12,9 @@ import { useRouter } from 'next-nprogress-bar'
 
 interface ErrorComponentProps {
   error: string
-  reset?: () => void
 }
 
-export const ErrorComponent = ({ error, reset }: ErrorComponentProps) => {
+export const ErrorComponent = ({ error }: ErrorComponentProps) => {
   const router = useRouter()
 
   return (
@@ -46,11 +45,6 @@ export const ErrorComponent = ({ error, reset }: ErrorComponentProps) => {
           >
             返回上一页
           </Button>
-          {reset && (
-            <Button variant="flat" color="secondary" onClick={reset}>
-              重试
-            </Button>
-          )}
           <Button
             startContent={<Home className="w-4 h-4" />}
             color="primary"

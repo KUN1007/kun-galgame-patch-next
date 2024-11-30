@@ -5,10 +5,11 @@ import { useMounted } from '~/hooks/useMounted'
 import { Pagination } from '@nextui-org/pagination'
 import { KunLoading } from '~/components/kun/Loading'
 import { MessageCard } from './MessageCard'
-import { api } from '~/lib/trpc-client'
+import { kunFetchGet } from '~/utils/kunFetch'
 import { KunNull } from '~/components/kun/Null'
 import { MESSAGE_TYPE } from '~/constants/message'
 import type { Message } from '~/types/api/message'
+import toast from 'react-hot-toast'
 
 interface Props {
   initialMessages: Message[]
@@ -28,12 +29,23 @@ export const MessageContainer = ({ initialMessages, total, type }: Props) => {
 
   const fetchMessages = async () => {
     setLoading(true)
-    const { messages } = await api.message.getMessage.query({
-      type,
+
+    const response = await kunFetchGet<
+      KunResponse<{
+        messages: Message[]
+        total: number
+      }>
+    >('/message/all', {
+      type: type ?? '',
       page,
       limit: 30
     })
-    setMessages(messages)
+    if (typeof response === 'string') {
+      toast.error(response)
+    } else {
+      setMessages(response.messages)
+    }
+
     setLoading(false)
   }
 

@@ -1,12 +1,13 @@
 'use client'
 
 import { useEffect } from 'react'
-import { api } from '~/lib/trpc-client'
+import { kunFetchPut } from '~/utils/kunFetch'
 import { Button } from '@nextui-org/react'
 import { Bell, UserPlus, Globe } from 'lucide-react'
 import { Card, CardBody } from '@nextui-org/card'
 import { usePathname } from 'next/navigation'
 import Link from 'next/link'
+import toast from 'react-hot-toast'
 
 const notificationTypes = [
   { type: 'notice', label: '全部消息', icon: Bell, href: '/message/notice' },
@@ -25,7 +26,10 @@ export const MessageNav = () => {
 
   useEffect(() => {
     const readAllMessage = async () => {
-      await api.message.readMessage.mutate()
+      const res = await kunFetchPut('/message/read')
+      if (typeof res === 'string') {
+        toast.error(res)
+      }
     }
     readAllMessage()
   }, [])
