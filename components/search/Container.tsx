@@ -9,7 +9,7 @@ import { KunLoading } from '~/components/kun/Loading'
 import { KunMasonryGrid } from '~/components/kun/MasonryGrid'
 import { Search } from 'lucide-react'
 import { useDebounce } from 'use-debounce'
-import { api } from '~/lib/trpc-client'
+import { kunFetchPost } from '~/utils/kunFetch'
 import { KunHeader } from '~/components/kun/Header'
 import { KunNull } from '~/components/kun/Null'
 import { SearchCard } from './Card'
@@ -45,14 +45,17 @@ export const SearchPage = () => {
     }
 
     setLoading(true)
-    const response = await api.search.searchPatch.mutate({
+    const { galgames, total } = await kunFetchPost<{
+      galgames: GalgameCard[]
+      total: number
+    }>('/search', {
       query: query.split(' ').filter((term) => term.length > 0),
       page,
       limit: 10
     })
 
-    setPatches(response.patches)
-    setTotal(response.total)
+    setPatches(galgames)
+    setTotal(total)
     setHasSearched(true)
 
     const params = new URLSearchParams()
