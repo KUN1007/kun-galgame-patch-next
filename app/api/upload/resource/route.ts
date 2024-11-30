@@ -1,7 +1,7 @@
 import { NextResponse } from 'next/server'
 import { setKv } from '~/lib/redis'
 import { calculateFileStreamHash } from '../fs'
-import { verifyHeaderCookie } from '../auth'
+import { verifyHeaderCookie } from '~/app/api/auth'
 import { ALLOWED_EXTENSIONS } from '~/constants/resource'
 import { prisma } from '~/prisma'
 

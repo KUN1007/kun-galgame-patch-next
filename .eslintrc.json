@@ -3,7 +3,7 @@
   "env": {
     "node": true,
     "browser": true,
-    "esnext": true
+    "es2024": true
   },
   "extends": [
     "next/core-web-vitals",
