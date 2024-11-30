@@ -1,5 +1,3 @@
-import { ZodSchema } from 'zod'
-
 type FetchOptions = {
   headers?: Record<string, string>
   query?: Record<string, string | number>
@@ -21,7 +19,7 @@ const kunFetchRequest = async <T>(
           .map(([key, value]) => `${key}=${value}`)
           .join('&')
       : ''
-    const fullUrl = `http://localhost:2333/api${url}${queryString}`
+    const fullUrl = `http://127.0.0.1:2333/api${url}${queryString}`
 
     const fetchOptions: RequestInit = {
       method,

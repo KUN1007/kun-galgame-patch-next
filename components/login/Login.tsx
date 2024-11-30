@@ -3,13 +3,14 @@ import { z } from 'zod'
 import { useForm, Controller } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { Input, Button, Divider, Link } from '@nextui-org/react'
-import { api } from '~/lib/trpc-client'
+import { kunFetchPost } from '~/utils/kunFetch'
 import { loginSchema } from '~/validations/auth'
 import { useUserStore } from '~/store/providers/user'
 import { useErrorHandler } from '~/hooks/useErrorHandler'
 import { redirect } from 'next/navigation'
 import { useRouter } from 'next-nprogress-bar'
 import toast from 'react-hot-toast'
+import type { UserState } from '~/store/userStore'
 
 type LoginFormData = z.infer<typeof loginSchema>
 
@@ -28,7 +29,7 @@ export const LoginForm = () => {
 
   const onSubmit = async (data: LoginFormData) => {
     setLoading(true)
-    const res = await api.auth.login.mutate(data)
+    const res = await kunFetchPost<KunResponse<UserState>>('/auth/login', data)
     setLoading(false)
 
     useErrorHandler(res, (value) => {

@@ -39,7 +39,7 @@ export const EmailVerification = ({ username, email, type }: Props) => {
     let res
 
     if (type === 'register') {
-      res = await api.auth.sendRegisterCode.mutate({
+      await kunFetchPost('/auth/send-register-code', {
         name: username,
         email
       })

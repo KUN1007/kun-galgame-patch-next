@@ -3,7 +3,7 @@ import { useForm, Controller } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { z } from 'zod'
 import { Input, Button, Divider, Link, Checkbox } from '@nextui-org/react'
-import { api } from '~/lib/trpc-client'
+import { kunFetchPost } from '~/utils/kunFetch'
 import { registerSchema } from '~/validations/auth'
 import { useUserStore } from '~/store/providers/user'
 import { useErrorHandler } from '~/hooks/useErrorHandler'
@@ -11,6 +11,7 @@ import { redirect } from 'next/navigation'
 import toast from 'react-hot-toast'
 import { EmailVerification } from '~/components/kun/verification-code/Code'
 import { useRouter } from 'next-nprogress-bar'
+import type { UserState } from '~/store/userStore'
 
 type RegisterFormData = z.infer<typeof registerSchema>
 
@@ -37,7 +38,11 @@ export const RegisterForm = () => {
     }
 
     setLoading(true)
-    const res = await api.auth.register.mutate(data)
+    const res = await kunFetchPost<KunResponse<UserState>>(
+      '/auth/register',
+      data
+    )
+
     setLoading(false)
 
     useErrorHandler(res, (value) => {
