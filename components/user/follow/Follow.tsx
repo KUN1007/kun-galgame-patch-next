@@ -10,8 +10,8 @@ import {
   ModalFooter,
   useDisclosure
 } from '@nextui-org/modal'
+import { kunFetchPost } from '~/utils/kunFetch'
 import { Plus, Check } from 'lucide-react'
-import { api } from '~/lib/trpc-client'
 import { useRouter } from 'next-nprogress-bar'
 
 interface Props {
@@ -29,9 +29,7 @@ export const UserFollow = ({ uid, name, follow, fullWidth = true }: Props) => {
 
   const handleUnfollow = async () => {
     setFollowing(true)
-    await api.user.unfollowUser.mutate({
-      uid
-    })
+    await kunFetchPost('/user/follow/unfollow', { uid })
     setIsFollow(false)
     setFollowing(false)
     onClose()
@@ -43,9 +41,7 @@ export const UserFollow = ({ uid, name, follow, fullWidth = true }: Props) => {
     if (isFollow) {
       onOpen()
     } else {
-      await api.user.followUser.mutate({
-        uid
-      })
+      await kunFetchPost('/user/follow/follow', { uid })
       setIsFollow(true)
     }
 

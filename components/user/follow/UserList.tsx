@@ -3,7 +3,7 @@
 import { Avatar, Card, CardBody } from '@nextui-org/react'
 import { Users } from 'lucide-react'
 import { useEffect, useState } from 'react'
-import { api } from '~/lib/trpc-client'
+import { kunFetchGet } from '~/utils/kunFetch'
 import { useRouter } from 'next-nprogress-bar'
 import { KunLoading } from '~/components/kun/Loading'
 import { KunNull } from '~/components/kun/Null'
@@ -26,11 +26,11 @@ export const UserList = ({ userId, type }: UserListProps) => {
     let results = []
 
     if (type === 'followers') {
-      results = await api.user.getUserFollower.query({
+      results = await kunFetchGet<UserFollowType[]>('/user/follow/follower', {
         uid: userId
       })
     } else {
-      results = await api.user.getUserFollowing.query({
+      results = await kunFetchGet<UserFollowType[]>('/user/follow/following', {
         uid: userId
       })
     }
@@ -64,7 +64,9 @@ export const UserList = ({ userId, type }: UserListProps) => {
 
                   <div className="flex items-center gap-2 text-sm text-default-500">
                     <Users className="w-4 h-4 text-default-400" />
-                    {user.follower} 人关注 TA - {user.following} 正在关注
+                    {
+                      user.follower
+                    } 人关注 TA - {user.following} 正在关注
                   </div>
                 </div>
 
