@@ -14,7 +14,7 @@ import {
 import { useUserStore } from '~/store/providers/user'
 import { Camera } from 'lucide-react'
 import { dataURItoBlob } from '~/utils/dataURItoBlob'
-import { api } from '~/lib/trpc-client'
+import { kunFetchFormData } from '~/utils/kunFetch'
 import { useErrorHandler } from '~/hooks/useErrorHandler'
 import toast from 'react-hot-toast'
 
@@ -70,15 +70,19 @@ export const AvatarCrop = () => {
     formData.append('avatar', avatarBlob)
 
     setLoading(true)
-    // @ts-expect-error
-    const res = await api.user.updateUserAvatar.mutate(formData)
-    useErrorHandler(res, async (value) => {
+    const res = await kunFetchFormData<KunResponse<{ avatar: string }>>(
+      '/user/setting/avatar',
+      formData
+    )
+    if (typeof res === 'string') {
+      toast.error(res)
+    } else {
       setLoading(false)
       toast.success('更新头像成功!')
       setCroppedImage(base64Image)
-      setUser({ ...user, avatar: value.avatar })
+      setUser({ ...user, avatar: res.avatar })
       onClose()
-    })
+    }
   }
 
   return (

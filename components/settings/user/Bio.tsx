@@ -5,7 +5,7 @@ import { Textarea } from '@nextui-org/input'
 import { Button } from '@nextui-org/button'
 import { useUserStore } from '~/store/providers/user'
 import { useState } from 'react'
-import { api } from '~/lib/trpc-client'
+import { kunFetchPost } from '~/utils/kunFetch'
 import { bioSchema } from '~/validations/user'
 import toast from 'react-hot-toast'
 
@@ -23,7 +23,9 @@ export const Bio = () => {
       setError('')
       setUser({ ...user, bio })
       setLoading(true)
-      await api.user.updateBio.mutate(bio)
+
+      await kunFetchPost<KunResponse<{}>>('/user/setting/bio', { bio })
+
       setLoading(false)
       toast.success('更新签名成功')
       setBio('')

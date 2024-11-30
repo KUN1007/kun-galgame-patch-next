@@ -1,5 +1,1 @@
-interface KunResponse<T> {
-  code: number
-  message: string
-  data: T
-}
+type KunResponse<T> = string | T

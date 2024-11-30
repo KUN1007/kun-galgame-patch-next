@@ -11,7 +11,7 @@ import { Divider } from '@nextui-org/divider'
 import { Link } from '@nextui-org/link'
 import toast from 'react-hot-toast'
 import { passwordSchema } from '~/validations/user'
-import { api } from '~/lib/trpc-client'
+import { kunFetchPost } from '~/utils/kunFetch'
 import { useErrorHandler } from '~/hooks/useErrorHandler'
 
 type PasswordFormData = z.infer<typeof passwordSchema>
@@ -34,13 +34,13 @@ export const Password = () => {
 
   const onSubmit = async (data: PasswordFormData) => {
     setLoading(true)
-    const res = await api.user.updatePassword.mutate(data)
+
+    await kunFetchPost('/user/setting/password', data)
+
     setLoading(false)
 
-    useErrorHandler(res, () => {
-      reset()
-      toast.success('更改密码成功!')
-    })
+    reset()
+    toast.success('更改密码成功!')
   }
 
   return (

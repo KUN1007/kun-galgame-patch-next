@@ -11,7 +11,7 @@ import { Mail, KeyRound } from 'lucide-react'
 import { useUserStore } from '~/store/providers/user'
 import { EmailVerification } from '~/components/kun/verification-code/Code'
 import { resetEmailSchema } from '~/validations/user'
-import { api } from '~/lib/trpc-client'
+import { kunFetchPost } from '~/utils/kunFetch'
 import { useErrorHandler } from '~/hooks/useErrorHandler'
 import toast from 'react-hot-toast'
 
@@ -37,14 +37,14 @@ export const Email = () => {
 
   const onSubmit = async (data: EmailFormData) => {
     setLoading(true)
-    const res = await api.user.updateEmail.mutate(data)
+
+    await kunFetchPost('/user/setting/email', data)
+
     setLoading(false)
 
-    useErrorHandler(res, () => {
-      reset()
-      toast.success('更新邮箱成功!')
-      setUser({ ...user, email: data.email })
-    })
+    reset()
+    toast.success('更新邮箱成功!')
+    setUser({ ...user, email: data.email })
   }
 
   return (

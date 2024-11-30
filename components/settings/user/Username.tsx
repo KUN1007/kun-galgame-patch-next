@@ -5,7 +5,7 @@ import { Input } from '@nextui-org/input'
 import { Button } from '@nextui-org/button'
 import { useUserStore } from '~/store/providers/user'
 import { useState } from 'react'
-import { api } from '~/lib/trpc-client'
+import { kunFetchPost } from '~/utils/kunFetch'
 import { useErrorHandler } from '~/hooks/useErrorHandler'
 import { usernameSchema } from '~/validations/user'
 import {
@@ -38,13 +38,13 @@ export const Username = () => {
       setError('')
 
       setLoading(true)
-      const res = await api.user.updateUsername.mutate(username)
-      useErrorHandler(res, () => {
-        setLoading(false)
-        toast.success('更新用户名成功')
-        setUser({ ...user, name: username, moemoepoint: user.moemoepoint - 30 })
-        setUsername('')
-      })
+
+      await kunFetchPost('/user/setting/username', { username })
+
+      setLoading(false)
+      toast.success('更新用户名成功')
+      setUser({ ...user, name: username, moemoepoint: user.moemoepoint - 30 })
+      setUsername('')
     }
   }
 

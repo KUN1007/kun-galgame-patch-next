@@ -3,7 +3,7 @@
 import { useState } from 'react'
 import { Button } from '@nextui-org/button'
 import toast from 'react-hot-toast'
-import { api } from '~/lib/trpc-client'
+import { kunFetchPost } from '~/utils/kunFetch'
 import { useErrorHandler } from '~/hooks/useErrorHandler'
 
 interface Props {
@@ -44,15 +44,13 @@ export const EmailVerification = ({ username, email, type }: Props) => {
         email
       })
     } else {
-      res = await api.user.sendResetEmailVerificationCode.mutate({
-        email
-      })
+      await kunFetchPost('/user/setting/send-reset-email-code', { email })
     }
 
-    useErrorHandler(res, () => {
-      toast.success('发送成功, 验证码已发送到您的邮箱')
-      startCountdown()
-    })
+    // useErrorHandler(res, () => {
+    toast.success('发送成功, 验证码已发送到您的邮箱')
+    startCountdown()
+    // })
 
     setLoading(false)
   }

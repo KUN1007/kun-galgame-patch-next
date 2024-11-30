@@ -18,7 +18,7 @@ const getMailContent = (
 }
 
 export const sendVerificationCodeEmail = async (
-  headers: Record<string, string>,
+  headers: Headers,
   email: string,
   type: 'register' | 'forgot' | 'reset'
 ) => {

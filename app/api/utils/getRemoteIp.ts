@@ -1,6 +1,6 @@
-export const getRemoteIp = (headers: Record<string, string>): string => {
+export const getRemoteIp = (headers: Headers): string => {
   const ipForwarded = () => {
-    const ip = headers['x-forwarded-for']
+    const ip = headers.get('x-forwarded-for')
     if (Array.isArray(ip)) {
       return ip[0]
     } else {
@@ -8,8 +8,8 @@ export const getRemoteIp = (headers: Record<string, string>): string => {
     }
   }
 
-  const xRealIp = headers['x-real-ip']
-  const cfConnectingIp = headers['CF-Connecting-IP']
+  const xRealIp = headers.get('x-real-ip')
+  const cfConnectingIp = headers.get('CF-Connecting-IP')
 
   return cfConnectingIp || ipForwarded() || xRealIp || ''
 }
