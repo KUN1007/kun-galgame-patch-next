@@ -16,8 +16,8 @@ export const patchTagChangeSchema = z.object({
 })
 
 export const patchCommentCreateSchema = z.object({
-  patchId: z.number().min(1).max(9999999),
-  parentId: z.number().min(1).max(9999999).nullable(),
+  patchId: z.coerce.number().min(1).max(9999999),
+  parentId: z.coerce.number().min(1).max(9999999).nullable(),
   content: z
     .string()
     .trim()
@@ -26,7 +26,7 @@ export const patchCommentCreateSchema = z.object({
 })
 
 export const patchCommentUpdateSchema = z.object({
-  commentId: z.number().min(1).max(9999999),
+  commentId: z.coerce.number().min(1).max(9999999),
   content: z
     .string()
     .trim()
@@ -35,7 +35,7 @@ export const patchCommentUpdateSchema = z.object({
 })
 
 export const patchResourceCreateSchema = z.object({
-  patchId: z.number().min(1).max(9999999),
+  patchId: z.coerce.number().min(1).max(9999999),
   storage: z.string().refine((type) => SUPPORTED_RESOURCE_LINK.includes(type), {
     message: '非法的资源链接类型'
   }),
@@ -81,7 +81,7 @@ export const patchResourceCreateSchema = z.object({
 
 export const patchResourceUpdateSchema = patchResourceCreateSchema.merge(
   z.object({
-    resourceId: z.number().min(1).max(9999999)
+    resourceId: z.coerce.number().min(1).max(9999999)
   })
 )
 
@@ -95,12 +95,12 @@ export const declinePullRequestSchema = z.object({
 })
 
 export const updatePatchBannerSchema = z.object({
-  patchId: z.number().min(1).max(9999999),
+  patchId: z.coerce.number().min(1).max(9999999),
   image: z.any()
 })
 
 export const getPatchHistorySchema = z.object({
   patchId: z.number({ message: '补丁 ID 必须为数字' }).min(1).max(9999999),
-  page: z.number().min(1).max(9999999),
-  limit: z.number().min(1).max(30)
+  page: z.coerce.number().min(1).max(9999999),
+  limit: z.coerce.number().min(1).max(30)
 })

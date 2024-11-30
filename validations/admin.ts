@@ -2,21 +2,21 @@ import { z } from 'zod'
 import { bioSchema, usernameSchema } from './user'
 
 export const adminPaginationSchema = z.object({
-  page: z.number().min(1).max(9999999),
-  limit: z.number().min(1).max(100)
+  page: z.coerce.number().min(1).max(9999999),
+  limit: z.coerce.number().min(1).max(100)
 })
 
 export const adminUpdateUserSchema = z.object({
-  uid: z.number().min(1).max(9999999),
+  uid: z.coerce.number().min(1).max(9999999),
   name: usernameSchema,
-  role: z.number().min(1).max(3),
-  status: z.number().min(0).max(2),
-  dailyImageCount: z.number().min(0).max(50),
+  role: z.coerce.number().min(1).max(3),
+  status: z.coerce.number().min(0).max(2),
+  dailyImageCount: z.coerce.number().min(0).max(50),
   bio: bioSchema
 })
 
 export const approveCreatorSchema = z.object({
-  messageId: z.number().min(1).max(9999999)
+  messageId: z.coerce.number().min(1).max(9999999)
 })
 
 export const declineCreatorSchema = approveCreatorSchema.merge(

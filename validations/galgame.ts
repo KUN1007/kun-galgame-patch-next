@@ -16,6 +16,6 @@ export const galgameSchema = z.object({
     z.literal('view')
   ]),
   sortOrder: z.union([z.literal('asc'), z.literal('desc')]),
-  page: z.number().min(1).max(9999999),
-  limit: z.number().min(1).max(24)
+  page: z.coerce.number().min(1).max(9999999),
+  limit: z.coerce.number().min(1).max(24)
 })

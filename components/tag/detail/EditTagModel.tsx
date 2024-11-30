@@ -16,12 +16,12 @@ import { Input, Textarea } from '@nextui-org/input'
 import { Chip } from '@nextui-org/chip'
 import { Plus } from 'lucide-react'
 import { updateTagSchema } from '~/validations/tag'
-import { api } from '~/lib/trpc-client'
+import { kunFetchPut } from '~/utils/kunFetch'
 import { useErrorHandler } from '~/hooks/useErrorHandler'
 import toast from 'react-hot-toast'
 import type { TagDetail } from '~/types/api/tag'
 
-type FormData = z.infer<typeof updateTagSchema>
+type UpdateTagData = z.infer<typeof updateTagSchema>
 
 interface Props {
   tag: TagDetail
@@ -42,7 +42,7 @@ export const EditTagModal = ({ tag, isOpen, onClose, onSuccess }: Props) => {
     watch,
     setValue,
     reset
-  } = useForm<FormData>({
+  } = useForm<UpdateTagData>({
     resolver: zodResolver(updateTagSchema),
     defaultValues: {
       tagId: tag.id,
@@ -86,14 +86,16 @@ export const EditTagModal = ({ tag, isOpen, onClose, onSuccess }: Props) => {
     )
   }
 
-  const onSubmit = async (data: FormData) => {
+  const onSubmit = async (data: UpdateTagData) => {
     if (!data.alias) {
       return
     }
     addTag()
 
     setIsSubmitting(true)
-    const res = await api.tag.rewriteTag.mutate(data)
+
+    const res = await kunFetchPut<KunResponse<TagDetail>>('/tag', data)
+
     useErrorHandler(res, (value) => {
       reset()
       toast.success('标签重新编辑成功!')

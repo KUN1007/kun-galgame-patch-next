@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from 'react'
 import { Pagination } from '@nextui-org/pagination'
-import { api } from '~/lib/trpc-client'
+import { kunFetchGet } from '~/utils/kunFetch'
 import { Chip } from '@nextui-org/chip'
 import { Button } from '@nextui-org/button'
 import { useDisclosure } from '@nextui-org/modal'
@@ -41,12 +41,17 @@ export const TagDetailCOntainer = ({
 
   const fetchPatches = async () => {
     setLoading(true)
-    const { patches } = await api.tag.getPatchByTag.query({
+
+    const { galgames, total } = await kunFetchGet<{
+      galgames: GalgameCard[]
+      total: number
+    }>('/tag/galgame', {
       tagId: tag.id,
       page,
       limit: 24
     })
-    setPatches(patches)
+
+    setPatches(galgames)
     setLoading(false)
   }
 

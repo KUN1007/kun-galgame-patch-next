@@ -6,7 +6,7 @@ import type { PatchResource } from '~/types/api/patch'
 export const getPatchResource = publicProcedure
   .input(
     z.object({
-      patchId: z.number()
+      patchId: z.coerce.number()
     })
   )
   .query(async ({ ctx, input }) => {

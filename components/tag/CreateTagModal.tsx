@@ -16,7 +16,7 @@ import { Input, Textarea } from '@nextui-org/input'
 import { Chip } from '@nextui-org/chip'
 import { Plus } from 'lucide-react'
 import { createTagSchema } from '~/validations/tag'
-import { api } from '~/lib/trpc-client'
+import { kunFetchPost } from '~/utils/kunFetch'
 import { useErrorHandler } from '~/hooks/useErrorHandler'
 import toast from 'react-hot-toast'
 import type { Tag } from '~/types/api/tag'
@@ -80,7 +80,7 @@ export const CreateTagModal = ({ isOpen, onClose, onSuccess }: Props) => {
     addTag()
 
     setIsSubmitting(true)
-    const res = await api.tag.createTag.mutate(data)
+    const res = await kunFetchPost<KunResponse<Tag>>('/tag', data)
     useErrorHandler(res, (value) => {
       reset()
       onSuccess(value)

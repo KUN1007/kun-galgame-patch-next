@@ -22,23 +22,23 @@ export const createTagSchema = z.object({
 
 export const updateTagSchema = createTagSchema.merge(
   z.object({
-    tagId: z.number().min(1).max(9999999)
+    tagId: z.coerce.number().min(1).max(9999999)
   })
 )
 
 export const getTagSchema = z.object({
-  page: z.number().min(1).max(9999999),
-  limit: z.number().min(1).max(100)
+  page: z.coerce.number().min(1).max(9999999),
+  limit: z.coerce.number().min(1).max(100)
 })
 
 export const getTagByIdSchema = z.object({
-  tagId: z.number().min(1).max(9999999)
+  tagId: z.coerce.number().min(1).max(9999999)
 })
 
 export const getPatchByTagSchema = z.object({
-  tagId: z.number().min(1).max(9999999),
-  page: z.number().min(1).max(9999999),
-  limit: z.number().min(1).max(24)
+  tagId: z.coerce.number().min(1).max(9999999),
+  page: z.coerce.number().min(1).max(9999999),
+  limit: z.coerce.number().min(1).max(24)
 })
 
 export const searchTagSchema = z.object({

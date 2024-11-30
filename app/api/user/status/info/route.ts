@@ -5,7 +5,7 @@ import { prisma } from '~/prisma/index'
 import type { UserInfo } from '~/types/api/user'
 
 const getProfileSchema = z.object({
-  id: z.number().min(1).max(9999999).optional()
+  id: z.coerce.number().min(1).max(9999999).optional()
 })
 
 export const getUserProfile = async (

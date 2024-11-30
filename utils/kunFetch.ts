@@ -7,7 +7,7 @@ type FetchOptions = {
 
 const kunFetchRequest = async <T>(
   url: string,
-  method: 'GET' | 'POST' | 'DELETE',
+  method: 'GET' | 'POST' | 'PUT' | 'DELETE',
   options?: FetchOptions
 ): Promise<T> => {
   try {
@@ -62,6 +62,13 @@ export const kunFetchPost = async <T>(
   body?: Record<string, unknown>
 ): Promise<T> => {
   return kunFetchRequest<T>(url, 'POST', { body })
+}
+
+export const kunFetchPut = async <T>(
+  url: string,
+  body?: Record<string, unknown>
+): Promise<T> => {
+  return kunFetchRequest<T>(url, 'PUT', { body })
 }
 
 export const kunFetchDelete = async <T>(

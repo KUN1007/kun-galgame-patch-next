@@ -10,7 +10,7 @@ import type { Patch } from '~/types/api/patch'
 export const getPatchById = publicProcedure
   .input(
     z.object({
-      id: z.number()
+      id: z.coerce.number()
     })
   )
   .query(async ({ ctx, input }) => {

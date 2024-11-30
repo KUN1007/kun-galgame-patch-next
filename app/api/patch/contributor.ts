@@ -5,7 +5,7 @@ import { prisma } from '~/prisma/index'
 export const getPatchContributor = publicProcedure
   .input(
     z.object({
-      patchId: z.number()
+      patchId: z.coerce.number()
     })
   )
   .query(async ({ ctx, input }) => {

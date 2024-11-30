@@ -6,7 +6,7 @@ import { Pagination } from '@nextui-org/pagination'
 import { TagHeader } from './TagHeader'
 import { SearchTags } from './SearchTag'
 import { TagList } from './TagList'
-import { api } from '~/lib/trpc-client'
+import { kunFetchGet, kunFetchPost } from '~/utils/kunFetch'
 import { useMounted } from '~/hooks/useMounted'
 import type { Tag as TagType } from '~/types/api/tag'
 
@@ -23,12 +23,15 @@ export const Container = ({ initialTags }: Props) => {
 
   const fetchTags = async () => {
     setLoading(true)
-    const response = await api.tag.getTag.query({
-      page,
+    const { tags, total } = await kunFetchGet<{
+      tags: TagType[]
+      total: number
+    }>('/tag/all', {
+      page: 1,
       limit: 100
     })
-    setTags(response.tags)
-    setTotal(response.total)
+    setTags(tags)
+    setTotal(total)
     setLoading(false)
   }
 
@@ -57,7 +60,7 @@ export const Container = ({ initialTags }: Props) => {
     }
 
     setSearching(true)
-    const response = await api.tag.searchTag.mutate({
+    const response = await kunFetchPost<TagType[]>('/tag/search', {
       query: query.split(' ').filter((term) => term.length > 0)
     })
     setTags(response)
