@@ -1,9 +1,13 @@
-import { NextResponse } from 'next/server'
+import { z } from 'zod'
+import { NextRequest, NextResponse } from 'next/server'
+import { kunParseGetQuery } from '../utils/parseQuery'
 import { prisma } from '~/prisma/index'
 import { adminPaginationSchema } from '~/validations/admin'
 import type { AdminComment } from '~/types/api/admin'
 
-export const getComment = async () => {
+export const getComment = async (
+  input: z.infer<typeof adminPaginationSchema>
+) => {
   const { page, limit } = input
   const offset = (page - 1) * limit
 
@@ -48,4 +52,11 @@ export const getComment = async () => {
   return { comments, total }
 }
 
-export async function GET(req: Request) {}
+export async function GET(req: NextRequest) {
+  const input = kunParseGetQuery(req, adminPaginationSchema)
+  if (typeof input === 'string') {
+    return NextResponse.json(input)
+  }
+
+  return NextResponse.json(getComment(input))
+}

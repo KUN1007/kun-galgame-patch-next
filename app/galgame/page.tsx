@@ -1,8 +1,11 @@
-import { serverApi } from '~/lib/trpc-server'
 import { CardContainer } from '~/components/galgame/Container'
+import { kunFetchPost } from '~/utils/kunFetch'
 
 export default async function PatchComment() {
-  const patches = await serverApi.galgame.getGalgame.mutate({
+  const { galgames } = await kunFetchPost<{
+    galgames: GalgameCard[]
+    total: number
+  }>('/galgame', {
     selectedTypes: ['全部类型'],
     sortField: 'created',
     sortOrder: 'desc',
@@ -10,5 +13,5 @@ export default async function PatchComment() {
     limit: 24
   })
 
-  return <CardContainer patch={patches.data} />
+  return <CardContainer initialGalgames={galgames} />
 }

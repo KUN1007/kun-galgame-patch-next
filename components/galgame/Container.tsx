@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from 'react'
 import { Pagination } from '@nextui-org/pagination'
-import { api } from '~/lib/trpc-client'
+import { kunFetchGet } from '~/utils/kunFetch'
 import { GalgameCard } from './Card'
 import { KunMasonryGrid } from '~/components/kun/MasonryGrid'
 import { FilterBar } from './FilterBar'
@@ -11,11 +11,11 @@ import { KunLoading } from '~/components/kun/Loading'
 import type { SortOption, SortDirection } from './_sort'
 
 interface Props {
-  patch: GalgameCard[]
+  initialGalgames: GalgameCard[]
 }
 
-export const CardContainer = ({ patch }: Props) => {
-  const [patches, setPatches] = useState<GalgameCard[]>(patch)
+export const CardContainer = ({ initialGalgames }: Props) => {
+  const [galgames, setGalgames] = useState<GalgameCard[]>(initialGalgames)
   const [total, setTotal] = useState(0)
   const [loading, setLoading] = useState(false)
   const [selectedTypes, setSelectedTypes] = useState<string[]>(['全部类型'])
@@ -26,15 +26,20 @@ export const CardContainer = ({ patch }: Props) => {
 
   const fetchPatches = async () => {
     setLoading(true)
-    const response = await api.galgame.getGalgame.mutate({
-      selectedTypes,
+
+    const { galgames, total } = await kunFetchGet<{
+      galgames: GalgameCard[]
+      total: number
+    }>('/galgame', {
+      selectedTypes: selectedTypes.toString(),
       sortField,
       sortOrder,
       page,
       limit: 24
     })
-    setPatches(response.data)
-    setTotal(response.total)
+
+    setGalgames(galgames)
+    setTotal(total)
     setLoading(false)
   }
 
@@ -57,10 +62,10 @@ export const CardContainer = ({ patch }: Props) => {
       />
 
       {loading ? (
-        <KunLoading hint="正在获取补丁数据..." />
+        <KunLoading hint="正在获取 Galgame 数据..." />
       ) : (
         <KunMasonryGrid columnWidth={256} gap={24}>
-          {patches.map((pa) => (
+          {galgames.map((pa) => (
             <GalgameCard key={pa.id} patch={pa} />
           ))}
         </KunMasonryGrid>

@@ -8,12 +8,12 @@ import { Skeleton } from '@nextui-org/skeleton'
 import { Search } from 'lucide-react'
 import { useUserStore } from '~/store/providers/user'
 import { useRouter } from 'next-nprogress-bar'
-import { api } from '~/lib/trpc-client'
+import { kunFetchGet, kunFetchPost } from '~/utils/kunFetch'
 import { ThemeSwitcher } from '~/components/kun/ThemeSwitcher'
 import { useMounted } from '~/hooks/useMounted'
-import { useErrorHandler } from '~/hooks/useErrorHandler'
 import { UserDropdown } from './UserDropdown'
 import { UserMessageBell } from './UserMessageBell'
+import type { UserState } from '~/store/userStore'
 
 export const KunTopBarUser = () => {
   const router = useRouter()
@@ -30,20 +30,18 @@ export const KunTopBarUser = () => {
     }
 
     const getUserStatus = async () => {
-      const user = await api.user.status.query()
-      useErrorHandler(user, (value) => {
-        setUser(value)
-      })
+      const user = await kunFetchGet<UserState>('/user/status')
+      setUser(user)
     }
-    const getUserUnreadMessage = async () => {
-      const message = await api.message.getUnread.query()
-      if (message) {
-        setHasUnread(true)
-      }
-    }
+    // const getUserUnreadMessage = async () => {
+    //   const message = await api.message.getUnread.query()
+    //   if (message) {
+    //     setHasUnread(true)
+    //   }
+    // }
 
     getUserStatus()
-    getUserUnreadMessage()
+    // getUserUnreadMessage()
   }, [isMounted])
 
   return (

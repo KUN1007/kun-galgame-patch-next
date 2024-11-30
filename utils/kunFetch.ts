@@ -1,0 +1,84 @@
+import { ZodSchema } from 'zod'
+
+type FetchOptions = {
+  headers?: Record<string, string>
+  query?: Record<string, string | number>
+  body?: Record<string, unknown>
+  formData?: FormData
+}
+
+const kunFetchRequest = async <T>(
+  url: string,
+  method: 'GET' | 'POST' | 'DELETE',
+  options?: FetchOptions
+): Promise<T> => {
+  try {
+    const { headers = {}, query, body, formData } = options || {}
+
+    const queryString = query
+      ? '?' +
+        Object.entries(query)
+          .map(([key, value]) => `${key}=${value}`)
+          .join('&')
+      : ''
+    const fullUrl = `http://localhost:2333/api${url}${queryString}`
+
+    const fetchOptions: RequestInit = {
+      method,
+      headers: {
+        'Content-Type': formData ? 'multipart/form-data' : 'application/json',
+        ...headers
+      }
+    }
+
+    if (formData) {
+      fetchOptions.body = formData
+    } else if (body) {
+      fetchOptions.body = JSON.stringify(body)
+    }
+
+    const response = await fetch(fullUrl, fetchOptions)
+
+    if (!response.ok) {
+      throw new Error(`Kun Fetch error! Status: ${response.status}`)
+    }
+
+    const res = await response.json()
+
+    return res
+  } catch (error) {
+    console.error(`Kun Fetch error: ${error}`)
+    throw error
+  }
+}
+
+export const kunFetchGet = async <T>(
+  url: string,
+  query?: Record<string, string | number>
+): Promise<T> => {
+  return kunFetchRequest<T>(url, 'GET', { query })
+}
+
+export const kunFetchPost = async <T>(
+  url: string,
+  body?: Record<string, unknown>
+): Promise<T> => {
+  return kunFetchRequest<T>(url, 'POST', { body })
+}
+
+export const kunFetchDelete = async <T>(
+  url: string,
+  query?: Record<string, string | number>
+): Promise<T> => {
+  return kunFetchRequest<T>(url, 'DELETE', { query })
+}
+
+export const kunFetchFormData = async <T>(
+  url: string,
+  formData?: FormData
+): Promise<T> => {
+  if (!formData) {
+    throw new Error('formData is required for kunFetchFormData')
+  }
+  return kunFetchRequest<T>(url, 'POST', { formData })
+}

@@ -1,7 +1,7 @@
-import { NextResponse } from 'next/server'
+import { NextRequest, NextResponse } from 'next/server'
 import { setKv } from '~/lib/redis'
 import { calculateFileStreamHash } from '../fs'
-import { verifyHeaderCookie } from '~/app/api/auth'
+import { verifyHeaderCookie } from '~/middleware/_verifyHeaderCookie'
 import { ALLOWED_EXTENSIONS } from '~/constants/resource'
 import { prisma } from '~/prisma'
 
@@ -9,7 +9,7 @@ const getFileExtension = (filename: string) => {
   return filename.slice(filename.lastIndexOf('.')).toLowerCase()
 }
 
-const checkRequestValid = async (req: Request) => {
+const checkRequestValid = async (req: NextRequest) => {
   const formData = await req.formData()
   const file = formData.get('file')
 
@@ -57,7 +57,7 @@ const checkRequestValid = async (req: Request) => {
   return { buffer, file, fileSizeInMB }
 }
 
-export async function POST(req: Request) {
+export async function POST(req: NextRequest) {
   const validData = await checkRequestValid(req)
   if (typeof validData === 'string') {
     return NextResponse.json(validData)

@@ -28,11 +28,12 @@ import {
 import { useUserStore } from '~/store/providers/user'
 import { useState, useEffect } from 'react'
 import { useRouter } from 'next-nprogress-bar'
-import { api } from '~/lib/trpc-client'
+import { kunFetchGet, kunFetchPost } from '~/utils/kunFetch'
 import toast from 'react-hot-toast'
 import { useMounted } from '~/hooks/useMounted'
 import { showKunSooner } from '~/components/kun/Sooner'
 import { useErrorHandler } from '~/hooks/useErrorHandler'
+import type { UserState } from '~/store/userStore'
 
 export const UserDropdown = () => {
   const router = useRouter()
@@ -50,17 +51,15 @@ export const UserDropdown = () => {
     }
 
     const getUserStatus = async () => {
-      const user = await api.user.status.query()
-      useErrorHandler(user, (value) => {
-        setUser(value)
-      })
+      const user = await kunFetchGet<UserState>('/user/status')
+      setUser(user)
     }
     getUserStatus()
   }, [isMounted])
 
   const handleLogOut = async () => {
     setLoading(true)
-    await api.user.logout.mutate()
+    // await api.user.logout.mutate()
     setLoading(false)
     logout()
     router.push('/login')
@@ -75,19 +74,19 @@ export const UserDropdown = () => {
 
     toast('正在签到...')
     setChecking(true)
-    const res = await api.user.checkIn.mutate()
-    useErrorHandler(res, (value) => {
-      showKunSooner(
-        value
-          ? `签到成功! 您今天获得了 ${value} 萌萌点`
-          : '您的运气不好...今天没有获得萌萌点...'
-      )
-      setUser({
-        ...user,
-        dailyCheckIn: 1,
-        moemoepoint: user.moemoepoint + value
-      })
-    })
+    // const res = await api.user.checkIn.mutate()
+    // useErrorHandler(res, (value) => {
+    //   showKunSooner(
+    //     value
+    //       ? `签到成功! 您今天获得了 ${value} 萌萌点`
+    //       : '您的运气不好...今天没有获得萌萌点...'
+    //   )
+    //   setUser({
+    //     ...user,
+    //     dailyCheckIn: 1,
+    //     moemoepoint: user.moemoepoint + value
+    //   })
+    // })
     setChecking(false)
   }
 
