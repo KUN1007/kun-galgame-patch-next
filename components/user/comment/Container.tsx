@@ -1,7 +1,7 @@
 'use client'
 
 import { useState, useEffect } from 'react'
-import { api } from '~/lib/trpc-client'
+import { kunFetchGet } from '~/utils/kunFetch'
 import { Pagination } from '@nextui-org/pagination'
 import { useMounted } from '~/hooks/useMounted'
 import { KunNull } from '~/components/kun/Null'
@@ -21,14 +21,18 @@ export const UserComment = ({ initComments, total, uid }: Props) => {
   const [loading, setLoading] = useState(false)
   const [page, setPage] = useState(1)
 
-  const fetchPatches = async () => {
+  const fetchData = async () => {
     setLoading(true)
-    const response = await api.user.getUserComment.query({
+    const { comments } = await kunFetchGet<{
+      comments: UserCommentType[]
+      total: number
+    }>('/user/profile/comment', {
       uid,
       page,
       limit: 20
     })
-    setComments(response.comments)
+
+    setComments(comments)
     setLoading(false)
   }
 
@@ -36,7 +40,7 @@ export const UserComment = ({ initComments, total, uid }: Props) => {
     if (!isMounted) {
       return
     }
-    fetchPatches()
+    fetchData()
   }, [page])
 
   return (

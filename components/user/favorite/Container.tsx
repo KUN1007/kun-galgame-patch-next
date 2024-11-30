@@ -1,7 +1,7 @@
 'use client'
 
 import { useState, useEffect } from 'react'
-import { api } from '~/lib/trpc-client'
+import { kunFetchGet } from '~/utils/kunFetch'
 import { Pagination } from '@nextui-org/pagination'
 import { useMounted } from '~/hooks/useMounted'
 import { KunNull } from '~/components/kun/Null'
@@ -20,14 +20,17 @@ export const UserFavorite = ({ favorites, total, uid }: Props) => {
   const [loading, setLoading] = useState(false)
   const [page, setPage] = useState(1)
 
-  const fetchPatches = async () => {
+  const fetchData = async () => {
     setLoading(true)
-    const response = await api.user.getUserFavorite.query({
+    const { favorites } = await kunFetchGet<{
+      favorites: GalgameCard[]
+      total: number
+    }>('/user/profile/favorite', {
       uid,
       page,
       limit: 20
     })
-    setPatches(response.favorites)
+    setPatches(favorites)
     setLoading(false)
   }
 
@@ -35,7 +38,7 @@ export const UserFavorite = ({ favorites, total, uid }: Props) => {
     if (!isMounted) {
       return
     }
-    fetchPatches()
+    fetchData()
   }, [page])
 
   return (

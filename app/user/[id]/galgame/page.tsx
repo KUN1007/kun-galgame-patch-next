@@ -1,5 +1,5 @@
-import { serverApi } from '~/lib/trpc-server'
 import { UserGalgame } from '~/components/user/galgame/Container'
+import { kunFetchGet } from '~/utils/kunFetch'
 
 export default async function Galgame({
   params
@@ -8,7 +8,10 @@ export default async function Galgame({
 }) {
   const { id } = await params
 
-  const { galgames, total } = await serverApi.user.getUserGalgame.query({
+  const { galgames, total } = await kunFetchGet<{
+    galgames: GalgameCard[]
+    total: number
+  }>('/user/profile/galgame', {
     uid: Number(id),
     page: 1,
     limit: 20

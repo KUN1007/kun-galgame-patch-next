@@ -1,5 +1,5 @@
-import { serverApi } from '~/lib/trpc-server'
 import { UserFavorite } from '~/components/user/favorite/Container'
+import { kunFetchGet } from '~/utils/kunFetch'
 
 export default async function Kun({
   params
@@ -8,7 +8,10 @@ export default async function Kun({
 }) {
   const { id } = await params
 
-  const { favorites, total } = await serverApi.user.getUserFavorite.query({
+  const { favorites, total } = await kunFetchGet<{
+    favorites: GalgameCard[]
+    total: number
+  }>('/user/profile/favorite', {
     uid: Number(id),
     page: 1,
     limit: 20

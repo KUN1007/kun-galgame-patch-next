@@ -1,7 +1,7 @@
 'use client'
 
 import { useState, useEffect } from 'react'
-import { api } from '~/lib/trpc-client'
+import { kunFetchGet } from '~/utils/kunFetch'
 import { Pagination } from '@nextui-org/pagination'
 import { useMounted } from '~/hooks/useMounted'
 import { KunNull } from '~/components/kun/Null'
@@ -21,14 +21,17 @@ export const UserContribute = ({ contributes, total, uid }: Props) => {
   const [loading, setLoading] = useState(false)
   const [page, setPage] = useState(1)
 
-  const fetchPatches = async () => {
+  const fetchData = async () => {
     setLoading(true)
-    const response = await api.user.getUserContribute.query({
+    const { contributes } = await kunFetchGet<{
+      contributes: UserContributeType[]
+      total: number
+    }>('/user/profile/contribute', {
       uid,
       page,
       limit: 20
     })
-    setPatches(response.contributes)
+    setPatches(contributes)
     setLoading(false)
   }
 
@@ -36,7 +39,7 @@ export const UserContribute = ({ contributes, total, uid }: Props) => {
     if (!isMounted) {
       return
     }
-    fetchPatches()
+    fetchData()
   }, [page])
 
   return (

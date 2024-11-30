@@ -1,7 +1,7 @@
 'use client'
 
 import { useState, useEffect } from 'react'
-import { api } from '~/lib/trpc-client'
+import { kunFetchGet } from '~/utils/kunFetch'
 import { Pagination } from '@nextui-org/pagination'
 import { useMounted } from '~/hooks/useMounted'
 import { KunNull } from '~/components/kun/Null'
@@ -22,12 +22,17 @@ export const UserGalgame = ({ galgames, total, uid }: Props) => {
 
   const fetchPatches = async () => {
     setLoading(true)
-    const response = await api.user.getUserGalgame.query({
+
+    const { galgames } = await kunFetchGet<{
+      galgames: GalgameCard[]
+      total: number
+    }>('/user/profile/galgame', {
       uid,
       page,
       limit: 20
     })
-    setPatches(response.galgames)
+
+    setPatches(galgames)
     setLoading(false)
   }
 

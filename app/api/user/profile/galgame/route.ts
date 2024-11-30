@@ -1,30 +1,18 @@
 import { z } from 'zod'
 import { NextRequest, NextResponse } from 'next/server'
-import { kunParsePostBody } from '../utils/parseQuery'
+import { kunParseGetQuery } from '~/app/api/utils/parseQuery'
 import { prisma } from '~/prisma/index'
-import { galgameSchema } from '~/validations/galgame'
+import { getUserInfoSchema } from '~/validations/user'
 
-export const getGalgame = async (input: z.infer<typeof galgameSchema>) => {
-  const { selectedTypes, sortField, sortOrder, page, limit } = input
-
+export const getUserGalgame = async (
+  input: z.infer<typeof getUserInfoSchema>
+) => {
+  const { uid, page, limit } = input
   const offset = (page - 1) * limit
-
-  const isSelectAll =
-    !selectedTypes.length || selectedTypes.includes('全部类型')
-  const typeQuery = isSelectAll
-    ? {}
-    : {
-        type: {
-          hasSome: selectedTypes
-        }
-      }
 
   const [galgames, total] = await Promise.all([
     await prisma.patch.findMany({
-      take: limit,
-      skip: offset,
-      orderBy: { [sortField]: sortOrder },
-      where: typeQuery,
+      where: { user_id: uid },
       select: {
         id: true,
         name: true,
@@ -42,22 +30,25 @@ export const getGalgame = async (input: z.infer<typeof galgameSchema>) => {
             comment: true
           }
         }
-      }
+      },
+      orderBy: { created: 'desc' },
+      take: limit,
+      skip: offset
     }),
     await prisma.patch.count({
-      where: typeQuery
+      where: { user_id: uid }
     })
   ])
 
   return { galgames, total }
 }
 
-export const POST = async (req: NextRequest) => {
-  const input = await kunParsePostBody(req, galgameSchema)
+export const GET = async (req: NextRequest) => {
+  const input = kunParseGetQuery(req, getUserInfoSchema)
   if (typeof input === 'string') {
     return NextResponse.json(input)
   }
 
-  const response = await getGalgame(input)
+  const response = await getUserGalgame(input)
   return NextResponse.json(response)
 }

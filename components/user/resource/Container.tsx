@@ -1,7 +1,7 @@
 'use client'
 
 import { useState, useEffect } from 'react'
-import { api } from '~/lib/trpc-client'
+import { kunFetchGet } from '~/utils/kunFetch'
 import { Pagination } from '@nextui-org/pagination'
 import { useMounted } from '~/hooks/useMounted'
 import { KunLoading } from '~/components/kun/Loading'
@@ -23,12 +23,17 @@ export const UserResource = ({ resources, total, uid }: Props) => {
 
   const fetchPatches = async () => {
     setLoading(true)
-    const response = await api.user.getUserPatchResource.query({
+
+    const { resources } = await kunFetchGet<{
+      resources: UserResourceType[]
+      total: number
+    }>('/user/profile/resource', {
       uid,
       page,
       limit: 20
     })
-    setPatches(response.resources)
+
+    setPatches(resources)
     setLoading(false)
   }
 

@@ -1,5 +1,6 @@
-import { serverApi } from '~/lib/trpc-server'
 import { UserContribute } from '~/components/user/contribute/Container'
+import { kunFetchGet } from '~/utils/kunFetch'
+import type { UserContribute as UserContributeType } from '~/types/api/user'
 
 export default async function Kun({
   params
@@ -8,7 +9,10 @@ export default async function Kun({
 }) {
   const { id } = await params
 
-  const { contributes, total } = await serverApi.user.getUserContribute.query({
+  const { contributes, total } = await kunFetchGet<{
+    contributes: UserContributeType[]
+    total: number
+  }>('/user/profile/contribute', {
     uid: Number(id),
     page: 1,
     limit: 20
