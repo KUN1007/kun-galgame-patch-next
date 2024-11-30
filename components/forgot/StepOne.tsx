@@ -6,7 +6,7 @@ import { useForm, Controller } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { Input, Button } from '@nextui-org/react'
 import { User } from 'lucide-react'
-import { api } from '~/lib/trpc-client'
+import { kunFetchPost } from '~/utils/kunFetch'
 import { useErrorHandler } from '~/hooks/useErrorHandler'
 import toast from 'react-hot-toast'
 import { stepOneSchema } from '~/validations/forgot'
@@ -31,7 +31,9 @@ export const StepOne = ({ setStep, setEmail }: Props) => {
   const handleSendCode = async (data: StepOneFormData) => {
     setLoading(true)
 
-    const res = await api.forgot.stepOne.mutate({ name: data.name })
+    const res = await kunFetchPost<KunResponse<undefined>>('/forgot/one', {
+      name: data.name
+    })
     useErrorHandler(res, () => {
       setEmail(data.name)
       setStep(2)

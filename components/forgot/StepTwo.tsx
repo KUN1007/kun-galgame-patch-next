@@ -7,7 +7,7 @@ import { zodResolver } from '@hookform/resolvers/zod'
 import { Input, Button } from '@nextui-org/react'
 import { LockKeyhole, KeyRound } from 'lucide-react'
 import { stepTwoSchema } from '~/validations/forgot'
-import { api } from '~/lib/trpc-client'
+import { kunFetchPost } from '~/utils/kunFetch'
 import { useErrorHandler } from '~/hooks/useErrorHandler'
 import toast from 'react-hot-toast'
 import { redirect } from 'next/navigation'
@@ -44,7 +44,10 @@ export const StepTwo = ({ name, setStep }: Props) => {
     }
 
     setLoading(true)
-    const res = await api.forgot.stepTwo.mutate({ ...data, name })
+    const res = await kunFetchPost<KunResponse<undefined>>('/forgot/two', {
+      ...data,
+      name
+    })
     useErrorHandler(res, () => {
       reset()
       toast.success('重置密码成功! 正在跳转到登录页')
