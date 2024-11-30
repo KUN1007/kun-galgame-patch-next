@@ -13,7 +13,7 @@ import {
 } from '@nextui-org/react'
 import { BadgeCheck, CheckCircle2, CircleSlash, Trophy } from 'lucide-react'
 import { useRouter } from 'next-nprogress-bar'
-import { api } from '~/lib/trpc-client'
+import { kunFetchPost } from '~/utils/kunFetch'
 import { useErrorHandler } from '~/hooks/useErrorHandler'
 import toast from 'react-hot-toast'
 
@@ -30,7 +30,7 @@ export const ApplyContainer = ({ count }: Props) => {
 
   const handleApply = async () => {
     setApplying(true)
-    const res = await api.app.applyForCreator.mutate()
+    const res = await kunFetchPost<KunResponse<{}>>('/apply')
     useErrorHandler(res, () => {
       toast.success('恭喜您, 您的申请已成功提交')
       router.push('/apply/pending')
