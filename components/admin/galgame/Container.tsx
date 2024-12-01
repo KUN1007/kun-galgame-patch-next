@@ -12,7 +12,7 @@ import {
 } from '@nextui-org/react'
 import { useState, useEffect } from 'react'
 import { RenderCell } from './RenderCell'
-import { api } from '~/lib/trpc-client'
+import { kunFetchGet } from '~/utils/kunFetch'
 import { KunLoading } from '~/components/kun/Loading'
 import { useMounted } from '~/hooks/useMounted'
 import type { AdminGalgame } from '~/types/api/admin'
@@ -37,12 +37,17 @@ export const Galgame = ({ initialGalgames, total }: Props) => {
   const [loading, setLoading] = useState(false)
   const fetchData = async () => {
     setLoading(true)
-    const data = await api.admin.getGalgame.query({
+
+    const { galgames } = await kunFetchGet<{
+      galgames: AdminGalgame[]
+      total: number
+    }>('/admin/galgame', {
       page,
       limit: 100
     })
+
     setLoading(false)
-    setGalgames(data.galgames)
+    setGalgames(galgames)
   }
 
   useEffect(() => {

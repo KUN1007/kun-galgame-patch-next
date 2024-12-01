@@ -10,7 +10,7 @@ import {
   Chip,
   Pagination
 } from '@nextui-org/react'
-import { api } from '~/lib/trpc-client'
+import { kunFetchGet } from '~/utils/kunFetch'
 import { useState, useEffect } from 'react'
 import { useMounted } from '~/hooks/useMounted'
 import { KunLoading } from '~/components/kun/Loading'
@@ -39,12 +39,17 @@ export const Resource = ({ initialResources, total }: Props) => {
   const [loading, setLoading] = useState(false)
   const fetchData = async () => {
     setLoading(true)
-    const data = await api.admin.getPatchResource.query({
+
+    const { resources } = await kunFetchGet<{
+      resources: AdminResource[]
+      total: number
+    }>('/admin/resource', {
       page,
       limit: 100
     })
+
     setLoading(false)
-    setResources(data.resources)
+    setResources(resources)
   }
 
   useEffect(() => {

@@ -1,11 +1,13 @@
-import { publicProcedure } from '~/lib/trpc'
+import { NextRequest, NextResponse } from 'next/server'
+import { kunParseGetQuery } from '~/app/api/utils/parseQuery'
 import { prisma } from '~/prisma/index'
+import { adminPaginationSchema } from '~/validations/admin'
 import { setKv, getKv } from '~/lib/redis'
 import type { AdminStats } from '~/types/api/admin'
 
 const CACHE_KEY = 'admin:stats'
 
-export const getAdminStats = publicProcedure.query(async () => {
+export const getAdminStats = async () => {
   const cachedStats = await getKv(CACHE_KEY)
 
   if (cachedStats) {
@@ -107,4 +109,9 @@ export const getAdminStats = publicProcedure.query(async () => {
   await setKv(CACHE_KEY, JSON.stringify(stats), 60 * 60)
 
   return stats
-})
+}
+
+export async function GET(req: NextRequest) {
+  const stats = await getAdminStats()
+  return NextResponse.json(stats)
+}

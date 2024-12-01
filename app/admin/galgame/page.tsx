@@ -1,8 +1,12 @@
-import { serverApi } from '~/lib/trpc-server'
 import { Galgame } from '~/components/admin/galgame/Container'
+import { kunFetchGet } from '~/utils/kunFetch'
+import type { AdminGalgame } from '~/types/api/admin'
 
 export default async function Kun() {
-  const { galgames, total } = await serverApi.admin.getGalgame.query({
+  const { galgames, total } = await kunFetchGet<{
+    galgames: AdminGalgame[]
+    total: number
+  }>('/admin/galgame', {
     page: 1,
     limit: 100
   })

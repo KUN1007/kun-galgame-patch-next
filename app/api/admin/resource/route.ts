@@ -1,18 +1,18 @@
 import { z } from 'zod'
 import { NextRequest, NextResponse } from 'next/server'
-import { kunParseGetQuery } from '../utils/parseQuery'
+import { kunParseGetQuery } from '~/app/api/utils/parseQuery'
 import { prisma } from '~/prisma/index'
 import { adminPaginationSchema } from '~/validations/admin'
-import type { AdminComment } from '~/types/api/admin'
+import type { AdminResource } from '~/types/api/admin'
 
-export const getComment = async (
+export const getPatchResource = async (
   input: z.infer<typeof adminPaginationSchema>
 ) => {
   const { page, limit } = input
   const offset = (page - 1) * limit
 
   const [data, total] = await Promise.all([
-    await prisma.patch_comment.findMany({
+    await prisma.patch_resource.findMany({
       take: limit,
       skip: offset,
       orderBy: { created: 'desc' },
@@ -28,28 +28,23 @@ export const getComment = async (
             name: true,
             avatar: true
           }
-        },
-        _count: {
-          select: {
-            like_by: true
-          }
         }
       }
     }),
-    await prisma.patch.count()
+    await prisma.patch_resource.count()
   ])
 
-  const comments: AdminComment[] = data.map((comment) => ({
-    id: comment.id,
-    user: comment.user,
-    content: comment.content,
-    patchName: comment.patch.name,
-    patchId: comment.patch_id,
-    like: comment._count.like_by,
-    created: comment.created
+  const resources: AdminResource[] = data.map((resource) => ({
+    id: resource.id,
+    patchId: resource.patch_id,
+    patchName: resource.patch.name,
+    storage: resource.storage,
+    user: resource.user,
+    size: resource.size,
+    created: resource.created
   }))
 
-  return { comments, total }
+  return { resources, total }
 }
 
 export async function GET(req: NextRequest) {
@@ -58,5 +53,5 @@ export async function GET(req: NextRequest) {
     return NextResponse.json(input)
   }
 
-  return NextResponse.json(getComment(input))
+  return NextResponse.json(getPatchResource(input))
 }

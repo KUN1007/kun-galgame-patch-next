@@ -2,7 +2,7 @@
 
 import { Pagination } from '@nextui-org/react'
 import { useState, useEffect } from 'react'
-import { api } from '~/lib/trpc-client'
+import { kunFetchGet } from '~/utils/kunFetch'
 import { KunLoading } from '~/components/kun/Loading'
 import { useMounted } from '~/hooks/useMounted'
 import { CommentCard } from './Card'
@@ -21,12 +21,17 @@ export const Comment = ({ initialComments, total }: Props) => {
   const [loading, setLoading] = useState(false)
   const fetchData = async () => {
     setLoading(true)
-    const data = await api.admin.getComment.query({
+
+    const { comments } = await kunFetchGet<{
+      comments: AdminComment[]
+      total: number
+    }>('/admin/resource', {
       page,
       limit: 100
     })
+
     setLoading(false)
-    setComments(data.comments)
+    setComments(comments)
   }
 
   useEffect(() => {

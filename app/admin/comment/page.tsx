@@ -1,8 +1,12 @@
-import { serverApi } from '~/lib/trpc-server'
 import { Comment } from '~/components/admin/comment/Container'
+import { kunFetchGet } from '~/utils/kunFetch'
+import type { AdminComment } from '~/types/api/admin'
 
 export default async function Kun() {
-  const { comments, total } = await serverApi.admin.getComment.query({
+  const { comments, total } = await kunFetchGet<{
+    comments: AdminComment[]
+    total: number
+  }>('/admin/comment', {
     page: 1,
     limit: 100
   })

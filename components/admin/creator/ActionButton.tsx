@@ -11,7 +11,7 @@ import {
   Button,
   Textarea
 } from '@nextui-org/react'
-import { api } from '~/lib/trpc-client'
+import { kunFetchPut } from '~/utils/kunFetch'
 import type { AdminCreator } from '~/types/api/admin'
 import { useErrorHandler } from '~/hooks/useErrorHandler'
 import toast from 'react-hot-toast'
@@ -29,7 +29,8 @@ export const ActionButton = ({ creator }: Props) => {
   } = useDisclosure()
   const handleApprove = async () => {
     setApproving(true)
-    const res = await api.admin.approveCreator.mutate({
+
+    const res = await kunFetchPut<KunResponse<{}>>('/admin/creator/approve', {
       messageId: creator.id
     })
     useErrorHandler(res, () => {
@@ -48,7 +49,8 @@ export const ActionButton = ({ creator }: Props) => {
   } = useDisclosure()
   const handleDecline = async () => {
     serDeclining(true)
-    const res = await api.admin.declineCreator.mutate({
+
+    const res = await kunFetchPut<KunResponse<{}>>('/admin/creator/decline', {
       messageId: creator.id,
       reason
     })

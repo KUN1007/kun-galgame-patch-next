@@ -1,8 +1,9 @@
 import { Stats } from '~/components/admin/stats'
-import { serverApi } from '~/lib/trpc-server'
+import { kunFetchGet } from '~/utils/kunFetch'
+import type { AdminStats } from '~/types/api/admin'
 
 export default async function Kun() {
-  const stats = await serverApi.admin.getAdminStats.query()
+  const stats = await kunFetchGet<AdminStats[]>('/admin/stats')
 
   return <Stats stats={stats} />
 }

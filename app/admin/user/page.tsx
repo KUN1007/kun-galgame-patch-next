@@ -1,8 +1,12 @@
-import { serverApi } from '~/lib/trpc-server'
+import { kunFetchGet } from '~/utils/kunFetch'
 import { User } from '~/components/admin/user/Container'
+import type { AdminUser } from '~/types/api/admin'
 
 export default async function Kun() {
-  const { users, total } = await serverApi.admin.getUserInfo.query({
+  const { users, total } = await kunFetchGet<{
+    users: AdminUser[]
+    total: number
+  }>('/admin/user', {
     page: 1,
     limit: 100
   })

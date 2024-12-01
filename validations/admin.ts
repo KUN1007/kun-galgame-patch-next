@@ -1,5 +1,4 @@
 import { z } from 'zod'
-import { bioSchema, usernameSchema } from './user'
 
 export const adminPaginationSchema = z.object({
   page: z.coerce.number().min(1).max(9999999),
@@ -8,11 +7,19 @@ export const adminPaginationSchema = z.object({
 
 export const adminUpdateUserSchema = z.object({
   uid: z.coerce.number().min(1).max(9999999),
-  name: usernameSchema,
+  name: z
+    .string()
+    .trim()
+    .min(1, { message: '您的用户名最少需要 1 个字符' })
+    .max(17, { message: '用户名长度不能超过 17 个字符' }),
   role: z.coerce.number().min(1).max(3),
   status: z.coerce.number().min(0).max(2),
   dailyImageCount: z.coerce.number().min(0).max(50),
-  bio: bioSchema
+  bio: z
+    .string()
+    .trim()
+    .min(1, { message: '您的签名最少需要 1 个字符' })
+    .max(107, { message: '签名不能超过 107 个字符' })
 })
 
 export const approveCreatorSchema = z.object({

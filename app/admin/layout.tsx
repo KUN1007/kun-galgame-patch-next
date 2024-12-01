@@ -1,7 +1,7 @@
 'use client'
 
 import { Sidebar } from '~/components/admin/Sidebar'
-import { Navbar } from '~/components/admin/Navbar'
+// import { Navbar } from '~/components/admin/Navbar'
 
 export default function AdminLayout({
   children

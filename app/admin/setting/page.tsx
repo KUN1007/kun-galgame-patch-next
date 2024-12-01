@@ -31,12 +31,12 @@ export default function SettingsPage() {
             <Input
               label="Site Name"
               placeholder="Enter site name"
-              defaultValue="Visual Novel Patch Database"
+              defaultValue="Visual Novel Patch Download"
             />
             <Input
               label="Site Description"
               placeholder="Enter site description"
-              defaultValue="A community-driven visual novel translation patch database"
+              defaultValue="A community-driven visual novel translation patch download website, powered by KUN Visual Novel"
             />
             <Select
               label="Default Language"
