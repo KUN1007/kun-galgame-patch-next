@@ -14,7 +14,7 @@ import { useCreatePatchStore } from '~/store/editStore'
 import { cn } from '~/utils/cn'
 import { Editor } from '~/components/kun/milkdown/PatchEditor'
 import toast from 'react-hot-toast'
-import { api } from '~/lib/trpc-client'
+import { kunFetchGet, kunFetchFormData } from '~/utils/kunFetch'
 import { useErrorHandler } from '~/hooks/useErrorHandler'
 import { patchCreateSchema } from '~/validations/edit'
 import { resizeImage } from '~/utils/resizeImage'
@@ -127,8 +127,11 @@ export const CreatePatch = () => {
     toast(
       '正在发布中...由于要上传图片, 可能需要 十秒 左右的时间, 这取决于您的网络环境'
     )
-    // @ts-expect-error
-    const res = await api.edit.createPatch.mutate(formDataToSend)
+
+    const res = await kunFetchFormData<KunResponse<number>>(
+      '/edit',
+      formDataToSend
+    )
     useErrorHandler(res, async (value) => {
       resetData()
       setPreviewUrl('')
@@ -146,9 +149,11 @@ export const CreatePatch = () => {
       return
     }
 
-    const res = await api.edit.duplicate.mutate({ vndbId: data.vndbId })
-    if (res) {
-      toast.error(res)
+    const res = await kunFetchGet<KunResponse<{}>>('/edit/duplicate', {
+      vndbId: data.vndbId
+    })
+    if (typeof res === 'string') {
+      toast.error('游戏重复, 该游戏已经有人发布过了')
       return
     } else {
       toast.success('检测完成, 该游戏并未重复!')

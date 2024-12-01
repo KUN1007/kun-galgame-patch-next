@@ -8,7 +8,7 @@ import { Upload } from 'lucide-react'
 import { ModalBody, ModalFooter } from '@nextui-org/modal'
 import { cn } from '~/utils/cn'
 import toast from 'react-hot-toast'
-import { api } from '~/lib/trpc-client'
+import { kunFetchFormData } from '~/utils/kunFetch'
 import { useErrorHandler } from '~/hooks/useErrorHandler'
 import { resizeImage } from '~/utils/resizeImage'
 
@@ -62,8 +62,11 @@ export const RewritePatchBanner = ({ patchId, onClose }: Props) => {
     formData.append('image', banner)
 
     setUpdating(true)
-    // @ts-expect-error
-    const res = await api.patch.updatePatchBanner.mutate(formData)
+
+    const res = await kunFetchFormData<KunResponse<{}>>(
+      '/patch/banner',
+      formData
+    )
     useErrorHandler(res, () => {
       setBanner(null)
       setPreviewUrl('')

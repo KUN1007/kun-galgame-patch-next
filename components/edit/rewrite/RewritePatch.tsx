@@ -5,7 +5,7 @@ import { Button, Card, CardBody, CardHeader } from '@nextui-org/react'
 import { useRewritePatchStore } from '~/store/rewriteStore'
 import { Editor } from '~/components/kun/milkdown/PatchEditor'
 import toast from 'react-hot-toast'
-import { api } from '~/lib/trpc-client'
+import { kunFetchPut } from '~/utils/kunFetch'
 import { useErrorHandler } from '~/hooks/useErrorHandler'
 import { patchUpdateSchema } from '~/validations/edit'
 import { useRouter } from 'next-nprogress-bar'
@@ -51,7 +51,8 @@ export const RewritePatch = () => {
     }
 
     setRewriting(true)
-    const res = await api.edit.updatePatch.mutate(data)
+
+    const res = kunFetchPut<KunResponse<{}>>('/edit', { ...data })
     useErrorHandler(res, async () => {
       router.push(`/patch/${data.id}/introduction`)
     })
