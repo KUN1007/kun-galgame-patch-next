@@ -16,7 +16,7 @@ import {
 } from '@nextui-org/react'
 import { Edit2 } from 'lucide-react'
 import { USER_ROLE_MAP, USER_STATUS_MAP } from '~/constants/user'
-import { api } from '~/lib/trpc-client'
+import { kunFetchPut } from '~/utils/kunFetch'
 import type { AdminUser } from '~/types/api/admin'
 import { useErrorHandler } from '~/hooks/useErrorHandler'
 import toast from 'react-hot-toast'
@@ -55,7 +55,7 @@ export const UserEdit = ({ initialUser }: Props) => {
     }
 
     setUpdating(true)
-    const res = await api.admin.updateUser.mutate(requestData)
+    const res = await kunFetchPut<KunResponse<{}>>('/admin/user', requestData)
     useErrorHandler(res, () => {
       toast.success('更新用户信息成功')
     })

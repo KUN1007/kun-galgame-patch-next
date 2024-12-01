@@ -82,6 +82,8 @@ export const updateUser = async (
       ...rest
     }
   })
+
+  return {}
 }
 
 export const PUT = async (req: NextRequest) => {

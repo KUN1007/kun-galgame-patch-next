@@ -1,5 +1,5 @@
 import { Decoration } from '@milkdown/prose/view'
-import { api } from '~/lib/trpc-client'
+import { kunFetchFormData } from '~/utils/kunFetch'
 import toast from 'react-hot-toast'
 import { resizeImage } from '~/utils/resizeImage'
 import type { Uploader } from '@milkdown/plugin-upload'
@@ -28,8 +28,11 @@ export const kunUploader: Uploader = async (files, schema) => {
       const miniImage = await resizeImage(image, 1920, 1080)
       formData.append('image', miniImage)
 
-      // @ts-expect-error
-      const res = await api.edit.image.mutate(formData)
+      const res = await kunFetchFormData<
+        KunResponse<{
+          imageLink: string
+        }>
+      >('/user/image', formData)
       if (typeof res === 'string') {
         toast.error(res)
         return

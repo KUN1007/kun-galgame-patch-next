@@ -37,7 +37,7 @@ import {
 import { toggleStrikethroughCommand } from '@milkdown/preset-gfm'
 import toast from 'react-hot-toast'
 import { resizeImage } from '~/utils/resizeImage'
-import { api } from '~/lib/trpc-client'
+import { kunFetchFormData } from '~/utils/kunFetch'
 import type { UseEditorReturn } from '@milkdown/react'
 
 export const KunMilkdownPluginsMenu = ({
@@ -64,19 +64,23 @@ export const KunMilkdownPluginsMenu = ({
     formData.append('image', miniImage)
 
     toast.loading('正在上传图片...')
-    // @ts-expect-error
-    const res = await api.edit.image.mutate(formData)
+
+    const res = await kunFetchFormData<
+      KunResponse<{
+        imageLink: string
+      }>
+    >('/user/image', formData)
     if (typeof res === 'string') {
       toast.error(res)
       return
+    } else {
+      toast.success('上传图片成功')
+      call(insertImageCommand.key, {
+        src: res.imageLink,
+        title: file.name,
+        alt: file.name
+      })
     }
-    toast.success('上传图片成功')
-
-    call(insertImageCommand.key, {
-      src: res.imageLink,
-      title: file.name,
-      alt: file.name
-    })
   }
 
   return (

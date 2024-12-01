@@ -1,8 +1,9 @@
 import { ErrorComponent } from '~/components/error/ErrorComponent'
-import { serverApi } from '~/lib/trpc-server'
+import { kunFetchGet } from '~/utils/kunFetch'
 import { UserProfile } from '~/components/user/Profile'
 import { UserStats } from '~/components/user/Stats'
 import { UserActivity } from '~/components/user/Activity'
+import type { UserInfo } from '~/types/api/user'
 
 export default async function Patch({
   params,
@@ -16,7 +17,9 @@ export default async function Patch({
     return <ErrorComponent error={'提取页面参数错误'} />
   }
 
-  const user = await serverApi.user.getProfile.query({ id: Number(id) })
+  const user = await kunFetchGet<KunResponse<UserInfo>>('/user/status/info', {
+    id: Number(id)
+  })
   if (!user || typeof user === 'string') {
     return <ErrorComponent error={user} />
   }

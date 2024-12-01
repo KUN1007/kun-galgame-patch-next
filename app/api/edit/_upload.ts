@@ -29,25 +29,3 @@ export const uploadPatchBanner = async (image: ArrayBuffer, id: number) => {
 
   return !!(res1 && res2)
 }
-
-export const uploadIntroductionImage = async (
-  name: string,
-  image: ArrayBuffer,
-  uid: number
-) => {
-  const minImage = await sharp(image)
-    .resize(1920, 1080, {
-      fit: 'inside',
-      withoutEnlargement: true
-    })
-    .avif({ quality: 30 })
-    .toBuffer()
-
-  if (!checkBufferSize(minImage, 1.007)) {
-    return '图片体积过大'
-  }
-
-  const bucketName = `kun-galgame-patch/user_${uid}/patch/introduction`
-  const res1 = await uploadObject(minImage, `${name}.avif`, bucketName)
-  return !!res1
-}
