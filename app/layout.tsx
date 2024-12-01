@@ -2,6 +2,7 @@ import { Toaster } from 'react-hot-toast'
 import { Providers } from './providers'
 import { KunTopBar } from '~/components/kun/top-bar/TopBar'
 import '~/styles/index.scss'
+import './actions'
 
 export default function RootLayout({
   children
