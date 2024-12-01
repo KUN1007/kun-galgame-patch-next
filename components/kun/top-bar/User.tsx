@@ -36,7 +36,7 @@ export const KunTopBarUser = () => {
     }
 
     const getUserUnreadMessage = async () => {
-      const message = await kunFetchGet<Message | null>('/user/status')
+      const message = await kunFetchGet<Message | null>('/message/unread')
       if (message) {
         setHasUnread(true)
       }

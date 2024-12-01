@@ -59,7 +59,7 @@ export const UserDropdown = () => {
 
   const handleLogOut = async () => {
     setLoading(true)
-    // await api.user.logout.mutate()
+    await kunFetchPost<KunResponse<{}>>('/user/status/logout')
     setLoading(false)
     logout()
     router.push('/login')
@@ -74,19 +74,23 @@ export const UserDropdown = () => {
 
     toast('正在签到...')
     setChecking(true)
-    // const res = await api.user.checkIn.mutate()
-    // useErrorHandler(res, (value) => {
-    //   showKunSooner(
-    //     value
-    //       ? `签到成功! 您今天获得了 ${value} 萌萌点`
-    //       : '您的运气不好...今天没有获得萌萌点...'
-    //   )
-    //   setUser({
-    //     ...user,
-    //     dailyCheckIn: 1,
-    //     moemoepoint: user.moemoepoint + value
-    //   })
-    // })
+    const res = await kunFetchPost<
+      KunResponse<{
+        randomMoemoepoints: number
+      }>
+    >('/user/status/check-in')
+    useErrorHandler(res, (value) => {
+      showKunSooner(
+        value
+          ? `签到成功! 您今天获得了 ${value.randomMoemoepoints} 萌萌点`
+          : '您的运气不好...今天没有获得萌萌点...'
+      )
+      setUser({
+        ...user,
+        dailyCheckIn: 1,
+        moemoepoint: user.moemoepoint + value.randomMoemoepoints
+      })
+    })
     setChecking(false)
   }
 

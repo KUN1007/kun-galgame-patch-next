@@ -7,7 +7,6 @@ import { kunFetchPost } from '~/utils/kunFetch'
 import { loginSchema } from '~/validations/auth'
 import { useUserStore } from '~/store/providers/user'
 import { useErrorHandler } from '~/hooks/useErrorHandler'
-import { redirect } from 'next/navigation'
 import { useRouter } from 'next-nprogress-bar'
 import toast from 'react-hot-toast'
 import type { UserState } from '~/store/userStore'
@@ -36,7 +35,7 @@ export const LoginForm = () => {
       setUser(value)
       reset()
       toast.success('登录成功!')
-      redirect(`/user/${value.uid}`)
+      router.push(`/user/${value.uid}`)
     })
   }
 

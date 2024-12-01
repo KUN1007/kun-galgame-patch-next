@@ -6,7 +6,10 @@ import { verifyHeaderCookie } from '~/middleware/_verifyHeaderCookie'
 import { createDedupMessage } from '~/app/api/utils/message'
 
 const resourceIdSchema = z.object({
-  resourceId: z.number({ message: '资源 ID 必须为数字' }).min(1).max(9999999)
+  resourceId: z.coerce
+    .number({ message: '资源 ID 必须为数字' })
+    .min(1)
+    .max(9999999)
 })
 
 export const toggleResourceLike = async (

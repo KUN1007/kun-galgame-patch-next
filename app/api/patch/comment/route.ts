@@ -21,7 +21,10 @@ const patchIdSchema = z.object({
 })
 
 const commentIdSchema = z.object({
-  commentId: z.number({ message: '评论 ID 必须为数字' }).min(1).max(9999999)
+  commentId: z.coerce
+    .number({ message: '评论 ID 必须为数字' })
+    .min(1)
+    .max(9999999)
 })
 
 export const GET = async (req: NextRequest) => {

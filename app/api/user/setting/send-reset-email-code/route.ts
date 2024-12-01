@@ -32,4 +32,5 @@ export const POST = async (req: NextRequest) => {
   if (typeof res === 'string') {
     return NextResponse.json(res)
   }
+  return NextResponse.json({})
 }

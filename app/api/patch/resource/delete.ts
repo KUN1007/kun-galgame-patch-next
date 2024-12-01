@@ -3,7 +3,10 @@ import { deleteFileFromS3 } from '~/lib/s3'
 import { prisma } from '~/prisma/index'
 
 const resourceIdSchema = z.object({
-  resourceId: z.number({ message: '资源 ID 必须为数字' }).min(1).max(9999999)
+  resourceId: z.coerce
+    .number({ message: '资源 ID 必须为数字' })
+    .min(1)
+    .max(9999999)
 })
 
 export const deleteResource = async (

@@ -5,7 +5,7 @@ import { prisma } from '~/prisma/index'
 import { verifyHeaderCookie } from '~/middleware/_verifyHeaderCookie'
 
 const uidSchema = z.object({
-  uid: z.number({ message: '请输入合法的用户 ID' }).min(1).max(9999999)
+  uid: z.coerce.number({ message: '请输入合法的用户 ID' }).min(1).max(9999999)
 })
 
 export const unfollowUser = async (uid: number, currentUserUid: number) => {

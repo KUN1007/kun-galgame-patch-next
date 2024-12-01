@@ -6,7 +6,7 @@ import { verifyHeaderCookie } from '~/middleware/_verifyHeaderCookie'
 import type { UserFollow } from '~/types/api/user'
 
 const uidSchema = z.object({
-  uid: z.number({ message: '请输入合法的用户 ID' }).min(1).max(9999999)
+  uid: z.coerce.number({ message: '请输入合法的用户 ID' }).min(1).max(9999999)
 })
 
 export const getUserFollowing = async (

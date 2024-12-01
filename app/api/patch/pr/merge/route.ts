@@ -7,7 +7,7 @@ import { createDedupMessage } from '~/app/api/utils/message'
 import type { PatchUpdate } from '~/types/api/patch'
 
 const prIdSchema = z.object({
-  prId: z.number({ message: '补丁 ID 必须为数字' }).min(1).max(9999999)
+  prId: z.coerce.number({ message: '补丁 ID 必须为数字' }).min(1).max(9999999)
 })
 
 export const mergePullRequest = async (

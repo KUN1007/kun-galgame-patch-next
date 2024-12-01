@@ -2,7 +2,10 @@ import { z } from 'zod'
 import { prisma } from '~/prisma/index'
 
 const commentIdSchema = z.object({
-  commentId: z.number({ message: '评论 ID 必须为数字' }).min(1).max(9999999)
+  commentId: z.coerce
+    .number({ message: '评论 ID 必须为数字' })
+    .min(1)
+    .max(9999999)
 })
 
 const deleteCommentWithReplies = async (commentId: number) => {

@@ -33,5 +33,6 @@ export async function POST(req: NextRequest) {
     return NextResponse.json('用户未登录')
   }
 
-  return NextResponse.json(checkIn(payload.uid))
+  const res = await checkIn(payload.uid)
+  return NextResponse.json(res)
 }

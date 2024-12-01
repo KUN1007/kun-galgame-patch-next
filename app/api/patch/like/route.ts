@@ -6,7 +6,10 @@ import { verifyHeaderCookie } from '~/middleware/_verifyHeaderCookie'
 import { createDedupMessage } from '~/app/api/utils/message'
 
 const patchIdSchema = z.object({
-  patchId: z.number({ message: '补丁 ID 必须为数字' }).min(1).max(9999999)
+  patchId: z.coerce
+    .number({ message: '补丁 ID 必须为数字' })
+    .min(1)
+    .max(9999999)
 })
 
 export const togglePatchFavorite = async (

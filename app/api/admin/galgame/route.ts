@@ -46,5 +46,6 @@ export async function GET(req: NextRequest) {
     return NextResponse.json(input)
   }
 
-  return NextResponse.json(getGalgame(input))
+  const res = await getGalgame(input)
+  return NextResponse.json(res)
 }

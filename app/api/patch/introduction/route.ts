@@ -6,7 +6,10 @@ import { markdownToHtml } from '~/app/api/utils/markdownToHtml'
 import type { PatchIntroduction } from '~/types/api/patch'
 
 const patchIdSchema = z.object({
-  patchId: z.number({ message: '补丁 ID 必须为数字' }).min(1).max(9999999)
+  patchId: z.coerce
+    .number({ message: '补丁 ID 必须为数字' })
+    .min(1)
+    .max(9999999)
 })
 
 export const getPatchIntroduction = async (

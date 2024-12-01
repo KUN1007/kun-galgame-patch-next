@@ -26,9 +26,7 @@ export default async function PatchHistory({ params }: Props) {
 
   const contributors = await kunServerFetchGet<KunUser[]>(
     '/patch/contributor',
-    {
-      patchId: Number(id)
-    }
+    { patchId: Number(id) }
   )
 
   return (

@@ -53,5 +53,6 @@ export async function GET(req: NextRequest) {
     return NextResponse.json(input)
   }
 
-  return NextResponse.json(getPatchResource(input))
+  const res = await getPatchResource(input)
+  return NextResponse.json(res)
 }

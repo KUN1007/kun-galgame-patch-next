@@ -17,7 +17,7 @@ export default async function Patch({
   }
 
   const res = await kunFetchGet<KunResponse<Patch>>('/patch', {
-    id: Number(id)
+    patchId: Number(id)
   })
   if (!res || typeof res === 'string') {
     return <ErrorComponent error={res} />
