@@ -1,7 +1,8 @@
 import { Card, CardHeader, CardBody } from '@nextui-org/card'
 import { Link } from '@nextui-org/link'
 import { Resources } from '~/components/patch/resource/Resource'
-import { serverApi } from '~/lib/trpc-server'
+import { kunFetchGet } from '~/utils/kunFetch'
+import type { PatchResource } from '~/types/api/patch'
 
 export default async function PatchResource({
   params
@@ -10,7 +11,7 @@ export default async function PatchResource({
 }) {
   const { id } = await params
 
-  const resources = await serverApi.patch.getPatchResource.query({
+  const resources = await kunFetchGet<PatchResource[]>('/patch/resource', {
     patchId: Number(id)
   })
 

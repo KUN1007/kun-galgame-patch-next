@@ -12,9 +12,10 @@ import { useState } from 'react'
 import { useForm } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
 import toast from 'react-hot-toast'
-import { api } from '~/lib/trpc-client'
+import { kunFetchPut } from '~/utils/kunFetch'
 import { patchResourceCreateSchema } from '~/validations/patch'
 import { ResourceLinksInput } from '../publish/ResourceLinksInput'
+import { useErrorHandler } from '~/hooks/useErrorHandler'
 import { ResourceDetailsForm } from '../publish/ResourceDetailsForm'
 import type { PatchResource } from '~/types/api/patch'
 
@@ -47,13 +48,15 @@ export const EditResourceDialog = ({
 
   const onSubmit = async (data: EditResourceFormData) => {
     setEditing(true)
-    const res = await api.patch.updatePatchResource.mutate({
-      resourceId: resource.id,
-      ...data
+    const res = await kunFetchPut<KunResponse<PatchResource>>(
+      '/patch/resource',
+      { resourceId: resource.id, ...data }
+    )
+    useErrorHandler(res, (value) => {
+      onSuccess(value)
+      toast.success('资源更新成功')
     })
-    onSuccess(res)
     setEditing(false)
-    toast.success('资源更新成功')
   }
 
   return (

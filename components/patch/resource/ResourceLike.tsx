@@ -1,5 +1,5 @@
 import { useState } from 'react'
-import { api } from '~/lib/trpc-client'
+import { kunFetchPut } from '~/utils/kunFetch'
 import { Button } from '@nextui-org/button'
 import { Tooltip } from '@nextui-org/tooltip'
 import { Heart } from 'lucide-react'
@@ -38,9 +38,12 @@ export const ResourceLikeButton = ({
     }
 
     setLoading(true)
-    const res = await api.patch.toggleResourceLike.mutate({
-      resourceId
-    })
+
+    const res = await kunFetchPut<KunResponse<boolean>>(
+      '/patch/resource/like',
+      { resourceId }
+    )
+
     setLoading(false)
     useErrorHandler(res, (value) => {
       setLiked(value)

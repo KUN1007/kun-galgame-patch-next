@@ -14,7 +14,7 @@ import {
   Progress
 } from '@nextui-org/react'
 import toast from 'react-hot-toast'
-import { api } from '~/lib/trpc-client'
+import { kunFetchPost } from '~/utils/kunFetch'
 import { patchResourceCreateSchema } from '~/validations/patch'
 import { ResourceLinksInput } from './ResourceLinksInput'
 import { ResourceDetailsForm } from './ResourceDetailsForm'
@@ -67,7 +67,10 @@ export const PublishResource = ({
 
   const onSubmit = async (data: ResourceFormData) => {
     setCreating(true)
-    const res = await api.patch.createPatchResource.mutate(data)
+    const res = await kunFetchPost<KunResponse<PatchResource>>(
+      '/patch/resource',
+      data
+    )
     setCreating(false)
     useErrorHandler(res, (value) => {
       reset()

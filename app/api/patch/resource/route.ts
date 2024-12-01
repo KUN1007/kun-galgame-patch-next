@@ -8,20 +8,20 @@ import {
 } from '~/app/api/utils/parseQuery'
 import { verifyHeaderCookie } from '~/middleware/_verifyHeaderCookie'
 import {
-  patchCommentCreateSchema,
-  patchCommentUpdateSchema
+  patchResourceCreateSchema,
+  patchResourceUpdateSchema
 } from '~/validations/patch'
-import { getPatchComment } from './get'
-import { createPatchComment } from './create'
-import { updateComment } from './update'
-import { deleteComment } from './delete'
+import { getPatchResource } from './get'
+import { createPatchResource } from './create'
+import { updatePatchResource } from './update'
+import { deleteResource } from './delete'
 
 const patchIdSchema = z.object({
   patchId: z.coerce.number().min(1).max(9999999)
 })
 
-const commentIdSchema = z.object({
-  commentId: z.number({ message: '评论 ID 必须为数字' }).min(1).max(9999999)
+const resourceIdSchema = z.object({
+  resourceId: z.number({ message: '资源 ID 必须为数字' }).min(1).max(9999999)
 })
 
 export const GET = async (req: NextRequest) => {
@@ -30,12 +30,12 @@ export const GET = async (req: NextRequest) => {
     return NextResponse.json(input)
   }
 
-  const response = await getPatchComment(input)
+  const response = await getPatchResource(input)
   return NextResponse.json(response)
 }
 
 export const POST = async (req: NextRequest) => {
-  const input = await kunParsePostBody(req, patchCommentCreateSchema)
+  const input = await kunParsePostBody(req, patchResourceCreateSchema)
   if (typeof input === 'string') {
     return NextResponse.json(input)
   }
@@ -44,12 +44,12 @@ export const POST = async (req: NextRequest) => {
     return NextResponse.json('用户未登录')
   }
 
-  const response = await createPatchComment(input, payload.uid)
+  const response = await createPatchResource(input, payload.uid)
   return NextResponse.json(response)
 }
 
 export const PUT = async (req: NextRequest) => {
-  const input = await kunParsePutBody(req, patchCommentUpdateSchema)
+  const input = await kunParsePutBody(req, patchResourceUpdateSchema)
   if (typeof input === 'string') {
     return NextResponse.json(input)
   }
@@ -58,12 +58,12 @@ export const PUT = async (req: NextRequest) => {
     return NextResponse.json('用户未登录')
   }
 
-  const response = await updateComment(input, payload.uid)
+  const response = await updatePatchResource(input, payload.uid)
   return NextResponse.json(response)
 }
 
 export const DELETE = async (req: NextRequest) => {
-  const input = kunParseDeleteQuery(req, commentIdSchema)
+  const input = kunParseDeleteQuery(req, resourceIdSchema)
   if (typeof input === 'string') {
     return NextResponse.json(input)
   }
@@ -72,6 +72,6 @@ export const DELETE = async (req: NextRequest) => {
     return NextResponse.json('用户未登录')
   }
 
-  const response = await deleteComment(input, payload.uid)
+  const response = await deleteResource(input, payload.uid)
   return NextResponse.json(response)
 }

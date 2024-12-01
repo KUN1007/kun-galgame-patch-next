@@ -18,7 +18,7 @@ import {
   useDisclosure
 } from '@nextui-org/modal'
 import { MoreHorizontal, Plus, Edit, Trash2 } from 'lucide-react'
-import { api } from '~/lib/trpc-client'
+import { kunFetchDelete } from '~/utils/kunFetch'
 import { PublishResource } from './publish/PublishResource'
 import { EditResourceDialog } from './edit/EditResourceDialog'
 import { useUserStore } from '~/store/providers/user'
@@ -48,11 +48,6 @@ export const Resources = ({ initialResources, id }: Props) => {
   } = useDisclosure()
   const { user } = useUserStore((state) => state)
   const [editResource, setEditResource] = useState<PatchResource | null>(null)
-  const completeEdit = () => {
-    onCloseEdit()
-    setEditResource(null)
-    toast.success('编辑资源链接成功')
-  }
 
   const {
     isOpen: isOpenDelete,
@@ -63,7 +58,11 @@ export const Resources = ({ initialResources, id }: Props) => {
   const [deleting, setDeleting] = useState(false)
   const handleDeleteResource = async () => {
     setDeleting(true)
-    await api.patch.deleteResource.mutate({ resourceId: deleteResourceId })
+
+    await kunFetchDelete<KunResponse<{}>>('/patch/resource', {
+      resourceId: deleteResourceId
+    })
+
     setResources((prev) =>
       prev.filter((resource) => resource.id !== deleteResourceId)
     )
