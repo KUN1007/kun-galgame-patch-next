@@ -21,6 +21,8 @@ export const unfollowUser = async (uid: number, currentUserUid: number) => {
       }
     }
   })
+
+  return {}
 }
 
 export const POST = async (req: NextRequest) => {

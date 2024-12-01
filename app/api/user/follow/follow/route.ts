@@ -17,8 +17,8 @@ export const followUser = async (uid: number, currentUserUid: number) => {
   return prisma.$transaction(async (prisma) => {
     await prisma.user_follow_relation.create({
       data: {
-        follower_id: uid,
-        following_id: currentUserUid
+        follower_id: currentUserUid,
+        following_id: uid
       }
     })
 
@@ -28,6 +28,8 @@ export const followUser = async (uid: number, currentUserUid: number) => {
       sender_id: currentUserUid,
       recipient_id: uid
     })
+
+    return {}
   })
 }
 

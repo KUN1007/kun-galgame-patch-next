@@ -13,6 +13,8 @@ import {
 import { kunFetchPost } from '~/utils/kunFetch'
 import { Plus, Check } from 'lucide-react'
 import { useRouter } from 'next-nprogress-bar'
+import { useUserStore } from '~/store/providers/user'
+import { useErrorHandler } from '~/hooks/useErrorHandler'
 
 interface Props {
   uid: number
@@ -23,16 +25,21 @@ interface Props {
 
 export const UserFollow = ({ uid, name, follow, fullWidth = true }: Props) => {
   const router = useRouter()
+  const user = useUserStore((state) => state.user)
   const { isOpen, onOpen, onClose } = useDisclosure()
   const [isFollow, setIsFollow] = useState(follow)
   const [following, setFollowing] = useState(false)
 
   const handleUnfollow = async () => {
     setFollowing(true)
-    await kunFetchPost('/user/follow/unfollow', { uid })
-    setIsFollow(false)
+    const res = await kunFetchPost<KunResponse<{}>>('/user/follow/unfollow', {
+      uid
+    })
+    useErrorHandler(res, () => {
+      setIsFollow(false)
+      onClose()
+    })
     setFollowing(false)
-    onClose()
   }
 
   const handleFollow = async () => {
@@ -41,7 +48,8 @@ export const UserFollow = ({ uid, name, follow, fullWidth = true }: Props) => {
     if (isFollow) {
       onOpen()
     } else {
-      await kunFetchPost('/user/follow/follow', { uid })
+      const res = await kunFetchPost('/user/follow/follow', { uid })
+      useErrorHandler(res, () => {})
       setIsFollow(true)
     }
 
@@ -63,7 +71,7 @@ export const UserFollow = ({ uid, name, follow, fullWidth = true }: Props) => {
         variant="flat"
         fullWidth={fullWidth}
         onClick={handleFollow}
-        isDisabled={following}
+        isDisabled={following || user.uid === uid}
         isLoading={following}
       >
         {isFollow ? '已关注' : '关注'}
