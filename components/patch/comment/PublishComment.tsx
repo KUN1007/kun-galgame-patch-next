@@ -9,10 +9,11 @@ import { Avatar } from '@nextui-org/avatar'
 import { Button } from '@nextui-org/button'
 import { Textarea } from '@nextui-org/input'
 import { Send } from 'lucide-react'
-import { api } from '~/lib/trpc-client'
+import { kunFetchPost } from '~/utils/kunFetch'
 import toast from 'react-hot-toast'
 import { patchCommentCreateSchema } from '~/validations/patch'
 import { useUserStore } from '~/store/providers/user'
+import { useErrorHandler } from '~/hooks/useErrorHandler'
 import type { PatchComment } from '~/types/api/patch'
 
 const commentSchema = patchCommentCreateSchema.pick({ content: true })
@@ -52,20 +53,25 @@ export const PublishComment = ({
 
   const onSubmit = async (data: CommentFormData) => {
     setLoading(true)
-    const res = await api.patch.publishPatchComment.mutate({
-      patchId,
-      parentId,
-      content: data.content.trim()
+    const res = await kunFetchPost<KunResponse<PatchComment>>(
+      '/patch/comment',
+      {
+        patchId,
+        parentId,
+        content: data.content.trim()
+      }
+    )
+    useErrorHandler(res, (value) => {
+      setNewComment({
+        ...value,
+        user: { id: user.uid, name: user.name, avatar: user.avatar }
+      })
+      toast.success('评论发布成功')
+      reset()
+      onSuccess?.()
     })
-    setNewComment({
-      ...res,
-      user: { id: user.uid, name: user.name, avatar: user.avatar }
-    })
-    setLoading(false)
 
-    toast.success('评论发布成功')
-    reset()
-    onSuccess?.()
+    setLoading(false)
   }
 
   return (

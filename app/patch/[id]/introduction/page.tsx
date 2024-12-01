@@ -1,7 +1,8 @@
-import { serverApi } from '~/lib/trpc-server'
 import { ErrorComponent } from '~/components/error/ErrorComponent'
 import { InfoContainer } from '~/components/patch/introduction/Container'
 import { PatchContributor } from '~/components/patch/Contributor'
+import { kunFetchGet } from '~/utils/kunFetch'
+import type { PatchIntroduction } from '~/types/api/patch'
 
 interface Props {
   params: Promise<{ id: string }>
@@ -10,17 +11,17 @@ interface Props {
 export default async function PatchIntroduction({ params }: Props) {
   const { id } = await params
 
-  const intro = await serverApi.patch.getPatchIntroduction.query({
-    patchId: Number(id)
-  })
+  const intro = await kunFetchGet<KunResponse<PatchIntroduction>>(
+    '/patch/introduction',
+    { patchId: Number(id) }
+  )
   if (!intro || typeof intro === 'string') {
     return <ErrorComponent error={intro} />
   }
 
-  const contributors = await serverApi.patch.getPatchContributor.query({
+  const contributors = await kunFetchGet<KunUser[]>('/patch/contributor', {
     patchId: Number(id)
   })
-
   return (
     <>
       <InfoContainer intro={intro} patchId={Number(id)} />

@@ -1,5 +1,5 @@
 import { useState } from 'react'
-import { api } from '~/lib/trpc-client'
+import { kunFetchPut } from '~/utils/kunFetch'
 import { Button } from '@nextui-org/button'
 import { Tooltip } from '@nextui-org/tooltip'
 import { ThumbsUp } from 'lucide-react'
@@ -34,9 +34,10 @@ export const CommentLikeButton = ({ commentId, likedBy, commenter }: Props) => {
     }
 
     setLoading(true)
-    const res = await api.patch.toggleCommentLike.mutate({
+    const res = await kunFetchPut<KunResponse<boolean>>('/patch/comment/like', {
       commentId
     })
+
     setLoading(false)
     useErrorHandler(res, (value) => {
       setLiked(value)

@@ -1,6 +1,6 @@
 import { PatchHeaderContainer } from '~/components/patch/header/Container'
 import { ErrorComponent } from '~/components/error/ErrorComponent'
-import { serverApi } from '~/lib/trpc-server'
+import { kunFetchGet } from '~/utils/kunFetch'
 import type { Patch } from '~/types/api/patch'
 
 export default async function Patch({
@@ -16,7 +16,9 @@ export default async function Patch({
     return <ErrorComponent error={'提取页面参数错误'} />
   }
 
-  const res = await serverApi.patch.getPatchById.query({ id: Number(id) })
+  const res = await kunFetchGet<KunResponse<Patch>>('/patch', {
+    id: Number(id)
+  })
   if (!res || typeof res === 'string') {
     return <ErrorComponent error={res} />
   }

@@ -1,6 +1,7 @@
 import { Card, CardHeader, CardBody } from '@nextui-org/card'
-import { serverApi } from '~/lib/trpc-server'
 import { Comments } from '~/components/patch/comment/Comments'
+import { kunFetchGet } from '~/utils/kunFetch'
+import type { PatchComment } from '~/types/api/patch'
 
 interface Props {
   params: Promise<{ id: string }>
@@ -9,7 +10,7 @@ interface Props {
 export default async function PatchComment({ params }: Props) {
   const { id } = await params
 
-  const comments = await serverApi.patch.getPatchComment.query({
+  const comments = await kunFetchGet<PatchComment[]>('/patch/comment', {
     patchId: Number(id)
   })
 

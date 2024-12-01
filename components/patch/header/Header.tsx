@@ -1,6 +1,5 @@
 'use client'
 
-import { CardHeader } from '@nextui-org/card'
 import { Button } from '@nextui-org/button'
 import {
   Modal,

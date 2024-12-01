@@ -31,12 +31,13 @@ import {
   X
 } from 'lucide-react'
 import { formatDistanceToNow } from '~/utils/formatDistanceToNow'
-import { api } from '~/lib/trpc-client'
+import { kunFetchPost, kunFetchPut, kunFetchDelete } from '~/utils/kunFetch'
 import { PublishComment } from './PublishComment'
 import { CommentLikeButton } from './CommentLike'
 import toast from 'react-hot-toast'
 import { useUserStore } from '~/store/providers/user'
 import type { PatchComment } from '~/types/api/patch'
+import { useErrorHandler } from '~/hooks/useErrorHandler'
 
 interface Props {
   initialComments: PatchComment[]
@@ -78,16 +79,18 @@ export const Comments = ({ initialComments, id }: Props) => {
   const [deleting, setDeleting] = useState(false)
   const handleDeleteComment = async () => {
     setDeleting(true)
-    await api.patch.deleteComment.mutate({
+    const res = await kunFetchDelete<KunResponse<{}>>('/patch/comment', {
       commentId: deleteCommentId
     })
-    setComments((prev) =>
-      prev.filter((comment) => comment.id !== deleteCommentId)
-    )
+    useErrorHandler(res, () => {
+      setComments((prev) =>
+        prev.filter((comment) => comment.id !== deleteCommentId)
+      )
+      setDeleteCommentId(0)
+      onClose()
+      toast.success('评论删除成功')
+    })
     setDeleting(false)
-    setDeleteCommentId(0)
-    onClose()
-    toast.success('评论删除成功')
   }
 
   const [editingComment, setEditingComment] = useState<number>(0)
@@ -108,21 +111,23 @@ export const Comments = ({ initialComments, id }: Props) => {
     }
 
     setUpdating(true)
-    await api.patch.updateComment.mutate({
+    const res = await kunFetchPut<KunResponse<PatchComment>>('/patch/comment', {
       commentId,
       content: editContent.trim()
     })
-    setComments((prev) =>
-      prev.map((comment) =>
-        comment.id === commentId
-          ? { ...comment, content: editContent }
-          : comment
+    useErrorHandler(res, () => {
+      setComments((prev) =>
+        prev.map((comment) =>
+          comment.id === commentId
+            ? { ...comment, content: editContent }
+            : comment
+        )
       )
-    )
-    cancelEditing()
-    setUpdating(false)
+      cancelEditing()
+      toast.success('更新评论成功!')
+    })
 
-    toast.success('更新评论成功!')
+    setUpdating(false)
   }
 
   const renderComments = (comments: PatchComment[]) => {

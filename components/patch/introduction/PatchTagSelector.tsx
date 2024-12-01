@@ -16,7 +16,7 @@ import { ScrollShadow } from '@nextui-org/scroll-shadow'
 import { Link } from '@nextui-org/link'
 import { Tag } from 'lucide-react'
 import { useMounted } from '~/hooks/useMounted'
-import { api } from '~/lib/trpc-client'
+import { kunFetchGet, kunFetchPost, kunFetchPut } from '~/utils/kunFetch'
 import { useDebounce } from 'use-debounce'
 import { SearchTags } from '~/components/tag/SearchTag'
 import { KunLoading } from '~/components/kun/Loading'
@@ -88,7 +88,11 @@ export const PatchTagSelector = ({
 
   const fetchTags = async () => {
     dispatch({ type: 'SET_LOADING', payload: true })
-    const response = await api.tag.getTag.query({ page: 1, limit: 100 })
+
+    const response = await kunFetchGet<{
+      tags: TagType[]
+      total: number
+    }>('/tag/all', { page: 1, limit: 100 })
     setTags(response.tags)
 
     const commonIds = initialTags
@@ -116,7 +120,7 @@ export const PatchTagSelector = ({
     if (!query.trim()) return
 
     setSearching(true)
-    const response = await api.tag.searchTag.mutate({
+    const response = await kunFetchPost<TagType[]>('/tag/search', {
       query: query.split(' ').filter(Boolean)
     })
     setTags(response)
@@ -158,14 +162,14 @@ export const PatchTagSelector = ({
     dispatch({ type: 'SET_LOADING', payload: true })
 
     if (state.removedTags.length) {
-      await api.patch.handleRemovePatchTag.mutate({
+      await kunFetchPut<{}>('/patch/introduction/tag', {
         patchId,
         tagId: state.removedTags
       })
     }
 
     if (state.selectedTags.length) {
-      await api.patch.handleAddPatchTag.mutate({
+      await kunFetchPost<{}>('/patch/introduction/tag', {
         patchId,
         tagId: state.selectedTags
       })

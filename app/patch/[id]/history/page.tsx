@@ -1,8 +1,9 @@
 import { Card, CardHeader, CardBody } from '@nextui-org/card'
-import { serverApi } from '~/lib/trpc-server'
 import { ErrorComponent } from '~/components/error/ErrorComponent'
 import { History } from '~/components/patch/history/History'
 import { PatchContributor } from '~/components/patch/Contributor'
+import { kunFetchGet } from '~/utils/kunFetch'
+import type { PatchHistory } from '~/types/api/patch'
 
 interface Props {
   params: Promise<{ id: string }>
@@ -11,7 +12,10 @@ interface Props {
 export default async function PatchHistory({ params }: Props) {
   const { id } = await params
 
-  const { histories, total } = await serverApi.patch.getPatchHistory.query({
+  const { histories, total } = await kunFetchGet<{
+    histories: PatchHistory[]
+    total: number
+  }>('/patch/history', {
     page: 1,
     limit: 30,
     patchId: Number(id)
@@ -20,7 +24,7 @@ export default async function PatchHistory({ params }: Props) {
     return <ErrorComponent error={histories} />
   }
 
-  const contributors = await serverApi.patch.getPatchContributor.query({
+  const contributors = await kunFetchGet<KunUser[]>('/patch/contributor', {
     patchId: Number(id)
   })
 

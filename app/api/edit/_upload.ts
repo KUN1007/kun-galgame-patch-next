@@ -1,7 +1,7 @@
 import sharp from 'sharp'
 
-import { uploadObject } from '~/server/utils/uploadImage'
-import { checkBufferSize } from '~/server/utils/checkBufferSize'
+import { uploadObject } from '~/app/api/utils/uploadImage'
+import { checkBufferSize } from '~/app/api/utils/checkBufferSize'
 
 export const uploadPatchBanner = async (image: ArrayBuffer, id: number) => {
   const banner = await sharp(image)

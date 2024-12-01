@@ -1,7 +1,7 @@
 'use client'
 
 import { useState } from 'react'
-import { api } from '~/lib/trpc-client'
+import { kunFetchPut } from '~/utils/kunFetch'
 import { Button } from '@nextui-org/button'
 import { Tooltip } from '@nextui-org/tooltip'
 import { Heart } from 'lucide-react'
@@ -27,9 +27,10 @@ export const ResourceFavoriteButton = ({ patchId, isFavorite }: Props) => {
     }
 
     setLoading(true)
-    const res = await api.patch.togglePatchFavorite.mutate({
+    const res = await kunFetchPut<KunResponse<boolean>>('/patch/like', {
       patchId
     })
+
     setLoading(false)
     useErrorHandler(res, (value) => {
       setFavorite(value)

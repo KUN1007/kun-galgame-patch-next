@@ -36,6 +36,12 @@ export interface PatchIntroduction {
   updated: string
 }
 
+export interface PatchUpdate {
+  name: string
+  alias: string[]
+  introduction: string
+}
+
 export interface PatchPullRequest {
   id: number
   status: number

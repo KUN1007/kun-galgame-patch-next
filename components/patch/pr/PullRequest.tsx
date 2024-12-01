@@ -1,6 +1,7 @@
 'use client'
 
 import { useState } from 'react'
+import toast from 'react-hot-toast'
 import { Card, CardHeader, CardBody, CardFooter } from '@nextui-org/card'
 import { User } from '@nextui-org/user'
 import { Button } from '@nextui-org/button'
@@ -17,10 +18,9 @@ import {
 import { Check, X } from 'lucide-react'
 import { formatDistanceToNow } from '~/utils/formatDistanceToNow'
 import { HighlightedText } from '~/components/patch/DiffContent'
-import { api } from '~/lib/trpc-client'
+import { kunFetchPut } from '~/utils/kunFetch'
 import { useErrorHandler } from '~/hooks/useErrorHandler'
 import type { PatchPullRequest as PatchPullRequestType } from '~/types/api/patch'
-import toast from 'react-hot-toast'
 
 interface Props {
   pr: PatchPullRequestType[]
@@ -38,7 +38,9 @@ export const PatchPullRequest = ({ pr }: Props) => {
   const [mergeId, setMergeId] = useState(0)
   const handleMergePR = async () => {
     setMerging(true)
-    const res = await api.patch.mergePullRequest.mutate({ prId: mergeId })
+    const res = await kunFetchPut<KunResponse<{}>>('/patch/pr/merge', {
+      prId: mergeId
+    })
     useErrorHandler(res, () => {
       toast.success('合并请求成功')
     })
@@ -56,8 +58,13 @@ export const PatchPullRequest = ({ pr }: Props) => {
     }
 
     setDeclining(true)
-    await api.patch.declinePullRequest.mutate({ prId, note })
-    toast.success('拒绝合并成功')
+    const res = await kunFetchPut<KunResponse<{}>>('/patch/pr/decline', {
+      prId,
+      note
+    })
+    useErrorHandler(res, () => {
+      toast.success('拒绝合并成功')
+    })
     setDeclining(false)
   }
 

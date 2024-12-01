@@ -1,5 +1,6 @@
-import { serverApi } from '~/lib/trpc-server'
 import { PatchPullRequest } from '~/components/patch/pr/PullRequest'
+import { kunFetchGet } from '~/utils/kunFetch'
+import type { PatchPullRequest as PatchPullRequestType } from '~/types/api/patch'
 
 interface Props {
   params: Promise<{ id: string }>
@@ -8,7 +9,7 @@ interface Props {
 export default async function PatchPR({ params }: Props) {
   const { id } = await params
 
-  const pr = await serverApi.patch.getPullRequest.query({
+  const pr = await kunFetchGet<PatchPullRequestType[]>('/patch/pr', {
     patchId: Number(id)
   })
 

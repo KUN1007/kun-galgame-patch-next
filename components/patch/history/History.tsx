@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from 'react'
 import { Pagination } from '@nextui-org/pagination'
-import { api } from '~/lib/trpc-client'
+import { kunFetchGet } from '~/utils/kunFetch'
 import { useMounted } from '~/hooks/useMounted'
 import { HistoryCard } from './Card'
 import { KunLoading } from '~/components/kun/Loading'
@@ -24,12 +24,17 @@ export const History = ({ patchId, initialHistories, total }: Props) => {
 
   const fetchPatches = async () => {
     setLoading(true)
-    const response = await api.patch.getPatchHistory.query({
+
+    const { histories } = await kunFetchGet<{
+      histories: PatchHistory[]
+      total: number
+    }>('/patch/history', {
       page,
       limit: 30,
       patchId: patchId
     })
-    setHistories(response.histories)
+
+    setHistories(histories)
     setLoading(false)
   }
 
