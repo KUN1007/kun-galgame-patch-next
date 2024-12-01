@@ -65,7 +65,8 @@ export interface PatchResource {
   code: string
   password: string
   platform: string[]
-  likedBy: KunUser[]
+  likeCount: number
+  isLike: boolean
   status: number
   userId: number
   patchId: number

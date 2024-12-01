@@ -36,6 +36,11 @@ export default async function PatchHistory({ params }: Props) {
           <h2 className="text-2xl font-medium">贡献历史</h2>
         </CardHeader>
         <CardBody>
+          <div className="mb-4 text-default-600">
+            <p>对补丁信息, 标签, 预览图的更改将会被计入历史记录</p>
+            <p>红色代表删除, 绿色代表增加</p>
+          </div>
+
           <History
             patchId={Number(id)}
             initialHistories={histories}

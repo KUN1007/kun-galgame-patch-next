@@ -7,23 +7,17 @@ import { useUserStore } from '~/store/providers/user'
 import toast from 'react-hot-toast'
 import { useErrorHandler } from '~/hooks/useErrorHandler'
 import { cn } from '~/utils/cn'
+import { PatchResource } from '~/types/api/patch'
 
 interface Props {
-  resourceId: number
-  likedBy: KunUser[]
-  publisher: KunUser
+  resource: PatchResource
 }
 
-export const ResourceLikeButton = ({
-  resourceId,
-  likedBy,
-  publisher
-}: Props) => {
+export const ResourceLikeButton = ({ resource }: Props) => {
   const { user } = useUserStore((state) => state)
-  const isLiked = likedBy.some((u) => u.id === user.uid)
 
-  const [liked, setLiked] = useState(isLiked)
-  const [likeCount, setLikeCount] = useState(likedBy.length)
+  const [liked, setLiked] = useState(resource.isLike)
+  const [likeCount, setLikeCount] = useState(resource.likeCount)
   const [loading, setLoading] = useState(false)
 
   const toggleLike = async () => {
@@ -32,7 +26,7 @@ export const ResourceLikeButton = ({
       return
     }
 
-    if (publisher.id === user.uid) {
+    if (resource.user.id === user.uid) {
       toast.error('您不能给自己点赞')
       return
     }
@@ -41,7 +35,7 @@ export const ResourceLikeButton = ({
 
     const res = await kunFetchPut<KunResponse<boolean>>(
       '/patch/resource/like',
-      { resourceId }
+      { resourceId: resource.id }
     )
 
     setLoading(false)
@@ -52,16 +46,7 @@ export const ResourceLikeButton = ({
   }
 
   return (
-    <Tooltip
-      key="like"
-      color="default"
-      content={
-        likedBy.length
-          ? `${likedBy.map((u) => u.name).toString()} 点赞过`
-          : '点赞'
-      }
-      placement="bottom"
-    >
+    <Tooltip key="like" color="default" content="点赞" placement="bottom">
       <Button
         variant="light"
         disabled={loading}
@@ -69,10 +54,8 @@ export const ResourceLikeButton = ({
         className="min-w-0 px-2"
       >
         <Heart
-          className={cn(
-            'w-4 h-4',
-            liked ? 'text-danger-500' : 'text-default-500'
-          )}
+          fill={liked ? '#f31260' : '#00000000'}
+          className={cn('w-4 h-4', liked ? 'text-danger-500' : '')}
         />
         {likeCount}
       </Button>

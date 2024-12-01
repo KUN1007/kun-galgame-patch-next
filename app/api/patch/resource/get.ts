@@ -7,7 +7,8 @@ const patchIdSchema = z.object({
 })
 
 export const getPatchResource = async (
-  input: z.infer<typeof patchIdSchema>
+  input: z.infer<typeof patchIdSchema>,
+  uid: number
 ) => {
   const { patchId } = input
 
@@ -21,9 +22,12 @@ export const getPatchResource = async (
           }
         }
       },
+      _count: {
+        select: { like_by: true }
+      },
       like_by: {
-        include: {
-          user: true
+        where: {
+          user_id: uid
         }
       }
     }
@@ -41,11 +45,8 @@ export const getPatchResource = async (
     code: resource.code,
     password: resource.password,
     platform: resource.platform,
-    likedBy: resource.like_by.map((likeRelation) => ({
-      id: likeRelation.user.id,
-      name: likeRelation.user.name,
-      avatar: likeRelation.user.avatar
-    })),
+    likeCount: resource.like_by.length,
+    isLike: resource.like_by.length > 0,
     status: resource.status,
     userId: resource.user_id,
     patchId: resource.patch_id,

@@ -1,4 +1,3 @@
-import DOMPurify from 'isomorphic-dompurify'
 import { Chip } from '@nextui-org/chip'
 import { Card, CardBody } from '@nextui-org/card'
 import { ScrollShadow } from '@nextui-org/scroll-shadow'
@@ -33,18 +32,9 @@ export const HistoryCard = ({ history }: Props) => {
               </div>
             </div>
 
-            {history.action === '创建了' && history.type === '更新请求' ? (
-              <ScrollShadow className="max-h-64">
-                <HighlightedText content={history.content} />
-              </ScrollShadow>
-            ) : (
-              <div
-                dangerouslySetInnerHTML={{
-                  __html: DOMPurify.sanitize(history.content)
-                }}
-                className="prose max-w-none dark:prose-invert"
-              />
-            )}
+            <ScrollShadow className="max-h-64">
+              <HighlightedText content={history.content} />
+            </ScrollShadow>
 
             <div className="mt-2">
               <Chip color="primary">{history.type}</Chip>

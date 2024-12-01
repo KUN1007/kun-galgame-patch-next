@@ -40,6 +40,7 @@ export const handleAddPatchTag = async (
         patch_id: patchId
       }
     })
+    return {}
   })
 }
 
@@ -91,6 +92,7 @@ export const handleRemovePatchTag = async (
         patch_id: patchId
       }
     })
+    return {}
   })
 }
 

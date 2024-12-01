@@ -22,7 +22,7 @@ export default async function PatchResource({
         <h2 className="text-2xl font-medium">资源链接</h2>
       </CardHeader>
       <CardBody>
-        <div className="text-default-700">
+        <div className="text-default-600">
           <p>
             请注意, 本站是 Galgame 补丁站, 资源链接指的是 Galgame 补丁资源,
             我们仅提供 Galgame 补丁的下载

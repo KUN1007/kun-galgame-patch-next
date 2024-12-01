@@ -74,12 +74,15 @@ export const PatchPullRequest = ({ pr }: Props) => {
         <h2 className="text-2xl font-medium">更新请求</h2>
       </CardHeader>
       <CardBody>
-        <p>如果是游戏的发布者或者网站管理员更新了游戏, 更新会立即生效</p>
-        <p>
-          贡献者提交的更新请求, 可以由游戏发布者或者管理员同意后合并到游戏信息中
-        </p>
+        <div className="mb-4 text-default-600">
+          <p>如果是游戏的发布者或者网站管理员更新了游戏, 更新会立即生效</p>
+          <p>
+            贡献者提交的更新请求,
+            可以由游戏发布者或者管理员同意后合并到游戏信息中
+          </p>
+        </div>
 
-        <div className="mt-4 space-y-4">
+        <div className="space-y-4">
           {pr.length > 0 &&
             pr.map((p) => (
               <Card key={p.index}>

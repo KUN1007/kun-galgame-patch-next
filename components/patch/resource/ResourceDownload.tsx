@@ -37,11 +37,7 @@ export const ResourceDownload = ({ resource }: Props) => {
         />
 
         <div className="flex gap-2">
-          <ResourceLikeButton
-            resourceId={resource.id}
-            likedBy={resource.likedBy}
-            publisher={resource.user}
-          />
+          <ResourceLikeButton resource={resource} />
           <Button
             color="primary"
             variant="flat"

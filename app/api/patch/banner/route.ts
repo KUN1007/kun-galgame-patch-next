@@ -31,7 +31,7 @@ export const updatePatchBanner = async (
   return {}
 }
 
-export const PUT = async (req: NextRequest) => {
+export const POST = async (req: NextRequest) => {
   const input = await kunParseFormData(req, updatePatchBannerSchema)
   if (typeof input === 'string') {
     return NextResponse.json(input)
