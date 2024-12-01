@@ -58,5 +58,6 @@ export async function GET(req: NextRequest) {
     return NextResponse.json(input)
   }
 
-  return NextResponse.json(getUserProfile(input))
+  const user = await getUserProfile(input)
+  return NextResponse.json(user)
 }

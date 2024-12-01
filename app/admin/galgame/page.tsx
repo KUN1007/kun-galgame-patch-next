@@ -1,9 +1,9 @@
 import { Galgame } from '~/components/admin/galgame/Container'
-import { kunFetchGet } from '~/utils/kunFetch'
+import { kunServerFetchGet } from '~/utils/kunServerFetch'
 import type { AdminGalgame } from '~/types/api/admin'
 
 export default async function Kun() {
-  const { galgames, total } = await kunFetchGet<{
+  const { galgames, total } = await kunServerFetchGet<{
     galgames: AdminGalgame[]
     total: number
   }>('/admin/galgame', {

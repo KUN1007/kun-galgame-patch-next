@@ -1,5 +1,5 @@
 import { PatchPullRequest } from '~/components/patch/pr/PullRequest'
-import { kunFetchGet } from '~/utils/kunFetch'
+import { kunServerFetchGet } from '~/utils/kunServerFetch'
 import type { PatchPullRequest as PatchPullRequestType } from '~/types/api/patch'
 
 interface Props {
@@ -9,7 +9,7 @@ interface Props {
 export default async function PatchPR({ params }: Props) {
   const { id } = await params
 
-  const pr = await kunFetchGet<PatchPullRequestType[]>('/patch/pr', {
+  const pr = await kunServerFetchGet<PatchPullRequestType[]>('/patch/pr', {
     patchId: Number(id)
   })
 

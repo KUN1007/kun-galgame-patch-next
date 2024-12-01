@@ -1,5 +1,5 @@
 import { UserContribute } from '~/components/user/contribute/Container'
-import { kunFetchGet } from '~/utils/kunFetch'
+import { kunServerFetchGet } from '~/utils/kunServerFetch'
 import type { UserContribute as UserContributeType } from '~/types/api/user'
 
 export default async function Kun({
@@ -9,7 +9,7 @@ export default async function Kun({
 }) {
   const { id } = await params
 
-  const { contributes, total } = await kunFetchGet<{
+  const { contributes, total } = await kunServerFetchGet<{
     contributes: UserContributeType[]
     total: number
   }>('/user/profile/contribute', {

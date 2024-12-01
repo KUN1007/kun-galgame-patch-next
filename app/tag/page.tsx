@@ -1,9 +1,9 @@
 import { Container } from '~/components/tag/Container'
-import { kunFetchGet } from '~/utils/kunFetch'
+import { kunServerFetchGet } from '~/utils/kunServerFetch'
 import type { Tag } from '~/types/api/tag'
 
 export default async function Kun() {
-  const { tags } = await kunFetchGet<{
+  const { tags } = await kunServerFetchGet<{
     tags: Tag[]
     total: number
   }>('/tag/all', {

@@ -1,9 +1,9 @@
 import { Creator } from '~/components/admin/creator/Container'
-import { kunFetchGet } from '~/utils/kunFetch'
+import { kunServerFetchGet } from '~/utils/kunServerFetch'
 import type { AdminCreator } from '~/types/api/admin'
 
 export default async function Kun() {
-  const { creators, total } = await kunFetchGet<{
+  const { creators, total } = await kunServerFetchGet<{
     creators: AdminCreator[]
     total: number
   }>('/admin/creator', {

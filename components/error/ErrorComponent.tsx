@@ -18,7 +18,7 @@ export const ErrorComponent = ({ error }: ErrorComponentProps) => {
   const router = useRouter()
 
   return (
-    <div className="flex items-center justify-center w-full min-h-screen p-4 bg-gradient-to-br from-background to-default-100">
+    <div className="flex items-center justify-center w-full h-full p-8">
       <Card className="w-full max-w-lg shadow-2xl">
         <CardHeader className="flex gap-3 px-8 pt-8">
           <div className="flex items-center gap-4">

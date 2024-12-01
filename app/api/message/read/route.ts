@@ -7,6 +7,7 @@ export const readMessage = async (uid: number) => {
     where: { recipient_id: uid },
     data: { status: { set: 1 } }
   })
+  return {}
 }
 
 export const PUT = async (req: NextRequest) => {

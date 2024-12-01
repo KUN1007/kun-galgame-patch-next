@@ -1,5 +1,5 @@
 import { UserResource } from '~/components/user/resource/Container'
-import { kunFetchGet } from '~/utils/kunFetch'
+import { kunServerFetchGet } from '~/utils/kunServerFetch'
 import type { UserResource as UserResourceType } from '~/types/api/user'
 
 export default async function Resource({
@@ -9,7 +9,7 @@ export default async function Resource({
 }) {
   const { id } = await params
 
-  const { resources, total } = await kunFetchGet<{
+  const { resources, total } = await kunServerFetchGet<{
     resources: UserResourceType[]
     total: number
   }>('/user/profile/resource', {

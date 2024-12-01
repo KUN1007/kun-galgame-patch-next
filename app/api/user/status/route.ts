@@ -35,5 +35,6 @@ export const getStatus = async (uid: number | undefined) => {
 export async function GET(req: NextRequest) {
   const payload = await verifyHeaderCookie(req)
 
-  return NextResponse.json(getStatus(payload?.uid))
+  const status = await getStatus(payload?.uid)
+  return NextResponse.json(status)
 }

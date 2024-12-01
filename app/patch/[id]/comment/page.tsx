@@ -1,6 +1,6 @@
 import { Card, CardHeader, CardBody } from '@nextui-org/card'
 import { Comments } from '~/components/patch/comment/Comments'
-import { kunFetchGet } from '~/utils/kunFetch'
+import { kunServerFetchGet } from '~/utils/kunServerFetch'
 import type { PatchComment } from '~/types/api/patch'
 
 interface Props {
@@ -10,7 +10,7 @@ interface Props {
 export default async function PatchComment({ params }: Props) {
   const { id } = await params
 
-  const comments = await kunFetchGet<PatchComment[]>('/patch/comment', {
+  const comments = await kunServerFetchGet<PatchComment[]>('/patch/comment', {
     patchId: Number(id)
   })
 

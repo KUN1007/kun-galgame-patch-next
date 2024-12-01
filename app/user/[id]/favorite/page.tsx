@@ -1,5 +1,5 @@
 import { UserFavorite } from '~/components/user/favorite/Container'
-import { kunFetchGet } from '~/utils/kunFetch'
+import { kunServerFetchGet } from '~/utils/kunServerFetch'
 
 export default async function Kun({
   params
@@ -8,7 +8,7 @@ export default async function Kun({
 }) {
   const { id } = await params
 
-  const { favorites, total } = await kunFetchGet<{
+  const { favorites, total } = await kunServerFetchGet<{
     favorites: GalgameCard[]
     total: number
   }>('/user/profile/favorite', {

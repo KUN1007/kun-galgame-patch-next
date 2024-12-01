@@ -1,5 +1,5 @@
 import { UserComment } from '~/components/user/comment/Container'
-import { kunFetchGet } from '~/utils/kunFetch'
+import { kunServerFetchGet } from '~/utils/kunServerFetch'
 import type { UserComment as UserCommentType } from '~/types/api/user'
 
 export default async function Kun({
@@ -9,7 +9,7 @@ export default async function Kun({
 }) {
   const { id } = await params
 
-  const { comments, total } = await kunFetchGet<{
+  const { comments, total } = await kunServerFetchGet<{
     comments: UserCommentType[]
     total: number
   }>('/user/profile/comment', {

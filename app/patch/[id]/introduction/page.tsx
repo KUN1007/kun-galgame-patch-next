@@ -1,7 +1,7 @@
 import { ErrorComponent } from '~/components/error/ErrorComponent'
 import { InfoContainer } from '~/components/patch/introduction/Container'
 import { PatchContributor } from '~/components/patch/Contributor'
-import { kunFetchGet } from '~/utils/kunFetch'
+import { kunServerFetchGet } from '~/utils/kunServerFetch'
 import type { PatchIntroduction } from '~/types/api/patch'
 
 interface Props {
@@ -11,7 +11,7 @@ interface Props {
 export default async function PatchIntroduction({ params }: Props) {
   const { id } = await params
 
-  const intro = await kunFetchGet<KunResponse<PatchIntroduction>>(
+  const intro = await kunServerFetchGet<KunResponse<PatchIntroduction>>(
     '/patch/introduction',
     { patchId: Number(id) }
   )
@@ -19,9 +19,12 @@ export default async function PatchIntroduction({ params }: Props) {
     return <ErrorComponent error={intro} />
   }
 
-  const contributors = await kunFetchGet<KunUser[]>('/patch/contributor', {
-    patchId: Number(id)
-  })
+  const contributors = await kunServerFetchGet<KunUser[]>(
+    '/patch/contributor',
+    {
+      patchId: Number(id)
+    }
+  )
   return (
     <>
       <InfoContainer intro={intro} patchId={Number(id)} />

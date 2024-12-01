@@ -1,9 +1,9 @@
 import { ApplyContainer } from '~/components/apply/Container'
-import { kunFetchGet } from '~/utils/kunFetch'
+import { kunServerFetchGet } from '~/utils/kunServerFetch'
 import { redirect } from 'next/navigation'
 
 export default async function Kun() {
-  const { count, role } = await kunFetchGet<{
+  const { count, role } = await kunServerFetchGet<{
     count: number
     role: number
   }>('/apply/status')

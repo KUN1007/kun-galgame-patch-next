@@ -1,5 +1,3 @@
-'use client'
-
 import { CreatePatch } from '~/components/edit/create/CreatePatch'
 
 export default function Create() {

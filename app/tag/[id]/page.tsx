@@ -1,6 +1,6 @@
 import { ErrorComponent } from '~/components/error/ErrorComponent'
 import { TagDetailCOntainer } from '~/components/tag/detail/Container'
-import { kunFetchGet } from '~/utils/kunFetch'
+import { kunServerFetchGet } from '~/utils/kunServerFetch'
 import type { TagDetail } from '~/types/api/tag'
 
 interface Props {
@@ -10,14 +10,14 @@ interface Props {
 export default async function Kun({ params }: Props) {
   const { id } = await params
 
-  const tag = await kunFetchGet<KunResponse<TagDetail>>('/tag', {
+  const tag = await kunServerFetchGet<KunResponse<TagDetail>>('/tag', {
     tagId: Number(id)
   })
   if (typeof tag === 'string') {
     return <ErrorComponent error={tag} />
   }
 
-  const { galgames, total } = await kunFetchGet<{
+  const { galgames, total } = await kunServerFetchGet<{
     galgames: GalgameCard[]
     total: number
   }>('/tag/galgame', {

@@ -2,7 +2,7 @@ import { Card, CardHeader, CardBody } from '@nextui-org/card'
 import { ErrorComponent } from '~/components/error/ErrorComponent'
 import { History } from '~/components/patch/history/History'
 import { PatchContributor } from '~/components/patch/Contributor'
-import { kunFetchGet } from '~/utils/kunFetch'
+import { kunServerFetchGet } from '~/utils/kunServerFetch'
 import type { PatchHistory } from '~/types/api/patch'
 
 interface Props {
@@ -12,7 +12,7 @@ interface Props {
 export default async function PatchHistory({ params }: Props) {
   const { id } = await params
 
-  const { histories, total } = await kunFetchGet<{
+  const { histories, total } = await kunServerFetchGet<{
     histories: PatchHistory[]
     total: number
   }>('/patch/history', {
@@ -24,9 +24,12 @@ export default async function PatchHistory({ params }: Props) {
     return <ErrorComponent error={histories} />
   }
 
-  const contributors = await kunFetchGet<KunUser[]>('/patch/contributor', {
-    patchId: Number(id)
-  })
+  const contributors = await kunServerFetchGet<KunUser[]>(
+    '/patch/contributor',
+    {
+      patchId: Number(id)
+    }
+  )
 
   return (
     <>

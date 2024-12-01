@@ -1,7 +1,7 @@
 import { CardContainer } from '~/components/galgame/Container'
 import { kunFetchPost } from '~/utils/kunFetch'
 
-export default async function PatchComment() {
+export default async function Kun() {
   const { galgames } = await kunFetchPost<{
     galgames: GalgameCard[]
     total: number

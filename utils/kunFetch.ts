@@ -19,7 +19,7 @@ const kunFetchRequest = async <T>(
           .map(([key, value]) => `${key}=${value}`)
           .join('&')
       : ''
-    const fullUrl = `http://127.0.0.1:2333/api${url}${queryString}`
+    const fullUrl = `http://${process.env.NEXT_PUBLIC_KUN_PATCH_ADDRESS}/api${url}${queryString}`
 
     const fetchOptions: RequestInit = {
       method,

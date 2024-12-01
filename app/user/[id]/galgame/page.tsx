@@ -1,5 +1,5 @@
 import { UserGalgame } from '~/components/user/galgame/Container'
-import { kunFetchGet } from '~/utils/kunFetch'
+import { kunServerFetchGet } from '~/utils/kunServerFetch'
 
 export default async function Galgame({
   params
@@ -8,7 +8,7 @@ export default async function Galgame({
 }) {
   const { id } = await params
 
-  const { galgames, total } = await kunFetchGet<{
+  const { galgames, total } = await kunServerFetchGet<{
     galgames: GalgameCard[]
     total: number
   }>('/user/profile/galgame', {
