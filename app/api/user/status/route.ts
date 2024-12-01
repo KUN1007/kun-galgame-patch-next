@@ -19,7 +19,6 @@ export const getStatus = async (uid: number | undefined) => {
   const responseData: UserState = {
     uid: user.id,
     name: user.name,
-    email: user.email,
     avatar: user.avatar,
     bio: user.bio,
     moemoepoint: user.moemoepoint,
@@ -34,6 +33,9 @@ export const getStatus = async (uid: number | undefined) => {
 
 export async function GET(req: NextRequest) {
   const payload = await verifyHeaderCookie(req)
+  if (!payload) {
+    return NextResponse.json('用户登陆失效')
+  }
 
   const status = await getStatus(payload?.uid)
   return NextResponse.json(status)

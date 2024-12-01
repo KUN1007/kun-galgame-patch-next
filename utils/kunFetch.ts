@@ -24,7 +24,6 @@ const kunFetchRequest = async <T>(
     const fetchOptions: RequestInit = {
       method,
       headers: {
-        'Content-Type': formData ? 'multipart/form-data' : 'application/json',
         ...headers
       }
     }

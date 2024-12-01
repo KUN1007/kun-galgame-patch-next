@@ -2,9 +2,9 @@ import { NextRequest, NextResponse } from 'next/server'
 import { kunParsePostBody } from '~/app/api/utils/parseQuery'
 import { verifyHeaderCookie } from '~/middleware/_verifyHeaderCookie'
 import { prisma } from '~/prisma/index'
-import { bioSchema } from '~/validations/user'
+import { usernameSchema } from '~/validations/user'
 
-const updateUsername = async (bio: string, uid: number) => {
+const updateUsername = async (username: string, uid: number) => {
   const user = await prisma.user.findUnique({ where: { id: uid } })
   if (!user) {
     return '用户未找到'
@@ -15,12 +15,12 @@ const updateUsername = async (bio: string, uid: number) => {
 
   await prisma.user.update({
     where: { id: uid },
-    data: { name: bio, moemoepoint: { increment: -30 } }
+    data: { name: username, moemoepoint: { increment: -30 } }
   })
 }
 
 export const POST = async (req: NextRequest) => {
-  const input = await kunParsePostBody(req, bioSchema)
+  const input = await kunParsePostBody(req, usernameSchema)
   if (typeof input === 'string') {
     return NextResponse.json(input)
   }
@@ -29,7 +29,7 @@ export const POST = async (req: NextRequest) => {
     return NextResponse.json('用户未登录')
   }
 
-  const res = await updateUsername(input.bio, payload.uid)
+  const res = await updateUsername(input.username, payload.uid)
   if (typeof res === 'string') {
     return NextResponse.json(res)
   }

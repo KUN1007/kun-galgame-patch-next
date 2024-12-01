@@ -73,20 +73,19 @@ export const UserProfile = ({ user }: { user: UserInfo }) => {
               />
             </div>
 
-            {user.requestUserUid && (
-              <div className="flex gap-2">
-                {user.id === user.requestUserUid ? (
-                  <SelfButton user={user} />
-                ) : (
-                  <UserFollow
-                    uid={user.id}
-                    name={user.name}
-                    follow={user.isFollow}
-                  />
-                )}
+            <div className="flex gap-2">
+              {user.id === user.requestUserUid ? (
+                <SelfButton user={user} />
+              ) : (
+                <UserFollow
+                  uid={user.id}
+                  name={user.name}
+                  follow={user.isFollow}
+                />
+              )}
 
-                {/* TODO: */}
-                {/* <Button
+              {/* TODO: */}
+              {/* <Button
                 startContent={<Mail className="w-4 h-4" />}
                 color="default"
                 variant="flat"
@@ -94,8 +93,7 @@ export const UserProfile = ({ user }: { user: UserInfo }) => {
               >
                 Message
               </Button> */}
-              </div>
-            )}
+            </div>
           </div>
         </CardBody>
       </Card>

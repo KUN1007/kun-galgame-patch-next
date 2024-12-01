@@ -48,7 +48,9 @@ export const UserFollow = ({ uid, name, follow, fullWidth = true }: Props) => {
     if (isFollow) {
       onOpen()
     } else {
-      const res = await kunFetchPost('/user/follow/follow', { uid })
+      const res = await kunFetchPost<KunResponse<{}>>('/user/follow/follow', {
+        uid
+      })
       useErrorHandler(res, () => {})
       setIsFollow(true)
     }
@@ -71,7 +73,7 @@ export const UserFollow = ({ uid, name, follow, fullWidth = true }: Props) => {
         variant="flat"
         fullWidth={fullWidth}
         onClick={handleFollow}
-        isDisabled={following || user.uid === uid}
+        isDisabled={following || user.uid === uid || !user.uid}
         isLoading={following}
       >
         {isFollow ? '已关注' : '关注'}

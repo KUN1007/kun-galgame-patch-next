@@ -1,5 +1,6 @@
 'use client'
 
+import toast from 'react-hot-toast'
 import { useEffect, useState } from 'react'
 import { NavbarContent, NavbarItem } from '@nextui-org/navbar'
 import { Link } from '@nextui-org/link'
@@ -31,8 +32,13 @@ export const KunTopBarUser = () => {
     }
 
     const getUserStatus = async () => {
-      const user = await kunFetchGet<UserState>('/user/status')
-      setUser(user)
+      const res = await kunFetchGet<KunResponse<UserState>>('/user/status')
+      if (typeof res === 'string') {
+        toast.error(res)
+        router.push('/login')
+      } else {
+        setUser(user)
+      }
     }
 
     const getUserUnreadMessage = async () => {

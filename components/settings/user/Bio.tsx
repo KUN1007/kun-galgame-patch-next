@@ -16,7 +16,7 @@ export const Bio = () => {
   const [loading, setLoading] = useState(false)
 
   const handleSave = async () => {
-    const result = bioSchema.safeParse(bio)
+    const result = bioSchema.safeParse({ bio })
     if (!result.success) {
       setError(result.error.errors[0].message)
     } else {

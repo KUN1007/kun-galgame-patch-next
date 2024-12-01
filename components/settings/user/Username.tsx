@@ -31,7 +31,7 @@ export const Username = () => {
       return
     }
 
-    const result = usernameSchema.safeParse(username)
+    const result = usernameSchema.safeParse({ username })
     if (!result.success) {
       setError(result.error.errors[0].message)
     } else {
@@ -39,12 +39,16 @@ export const Username = () => {
 
       setLoading(true)
 
-      await kunFetchPost('/user/setting/username', { username })
-
+      const res = await kunFetchPost<KunResponse<{}>>(
+        '/user/setting/username',
+        { username }
+      )
+      useErrorHandler(res, () => {
+        toast.success('更新用户名成功')
+        setUser({ ...user, name: username, moemoepoint: user.moemoepoint - 30 })
+        setUsername('')
+      })
       setLoading(false)
-      toast.success('更新用户名成功')
-      setUser({ ...user, name: username, moemoepoint: user.moemoepoint - 30 })
-      setUsername('')
     }
   }
 

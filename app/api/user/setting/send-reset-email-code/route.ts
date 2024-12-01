@@ -2,10 +2,13 @@ import { NextRequest, NextResponse } from 'next/server'
 import { kunParsePostBody } from '~/app/api/utils/parseQuery'
 import { verifyHeaderCookie } from '~/middleware/_verifyHeaderCookie'
 import { sendVerificationCodeEmail } from '~/app/api/utils/sendVerificationCodeEmail'
-import { bioSchema } from '~/validations/user'
+import { sendResetEmailVerificationCodeSchema } from '~/validations/user'
 
 const sendCode = async (req: NextRequest) => {
-  const input = await kunParsePostBody(req, bioSchema)
+  const input = await kunParsePostBody(
+    req,
+    sendResetEmailVerificationCodeSchema
+  )
   if (typeof input === 'string') {
     return input
   }
@@ -19,7 +22,7 @@ const sendCode = async (req: NextRequest) => {
 
   const result = await sendVerificationCodeEmail(
     req.headers,
-    input.bio,
+    input.email,
     'reset'
   )
   if (result) {

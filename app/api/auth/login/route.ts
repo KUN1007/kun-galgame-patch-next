@@ -36,7 +36,6 @@ export const login = async (input: z.infer<typeof loginSchema>) => {
   const responseData: UserState = {
     uid: user.id,
     name: user.name,
-    email: user.email,
     avatar: user.avatar,
     bio: user.bio,
     moemoepoint: user.moemoepoint,
