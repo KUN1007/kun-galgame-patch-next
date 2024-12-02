@@ -3,9 +3,11 @@ import { verifyHeaderCookie } from './_verifyHeaderCookie'
 import type { NextRequest } from 'next/server'
 
 const protectedRoutes = new Map<string, number>([
-  ['/admin', 3],
+  ['/public', 0],
+  ['/user', 1],
   ['/creator', 2],
-  ['/dashboard', 4]
+  ['/admin', 3],
+  ['/su', 4]
 ])
 
 const verifyToken = async (token: string) => {

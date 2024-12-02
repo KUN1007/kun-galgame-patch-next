@@ -21,16 +21,15 @@ export const createPatchComment = async (
     const parentComment = await prisma.patch_comment.findUnique({
       where: { id: input.parentId }
     })
-    if (!parentComment) {
-      return
-    }
 
-    await createDedupMessage({
-      type: 'like',
-      content: `点赞了您的评论! -> ${parentComment.content.slice(0, 107)}`,
-      sender_id: uid,
-      recipient_id: parentComment.user_id
-    })
+    if (parentComment!.user_id !== uid) {
+      await createDedupMessage({
+        type: 'comment',
+        content: `评论了您的评论! -> ${parentComment!.content.slice(0, 107)}`,
+        sender_id: uid,
+        recipient_id: parentComment!.user_id
+      })
+    }
   }
 
   const newComment: Omit<PatchComment, 'user'> = {

@@ -6,18 +6,21 @@ export interface KunGalgamePayload {
   aud: string
   uid: number
   name: string
+  role: number
 }
 
 export const generateKunToken = async (
   uid: number,
   name: string,
+  role: number,
   expire: string
 ) => {
   const payload: KunGalgamePayload = {
     iss: process.env.JWT_ISS!,
     aud: process.env.JWT_AUD!,
     uid,
-    name
+    name,
+    role
   }
 
   const token = jwt.sign(payload, process.env.JWT_SECRET!, {
