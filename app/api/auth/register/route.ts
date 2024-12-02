@@ -42,7 +42,7 @@ export const register = async (
     }
   })
 
-  const token = await generateKunToken(user.id, name, '30d')
+  const token = await generateKunToken(user.id, name, user.role, '30d')
   const cookie = await cookies()
   cookie.set('kun-galgame-patch-moe-token', token, {
     httpOnly: true,

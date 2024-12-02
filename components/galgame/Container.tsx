@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from 'react'
 import { Pagination } from '@nextui-org/pagination'
-import { kunFetchGet } from '~/utils/kunFetch'
+import { kunFetchPost } from '~/utils/kunFetch'
 import { GalgameCard } from './Card'
 import { KunMasonryGrid } from '~/components/kun/MasonryGrid'
 import { FilterBar } from './FilterBar'
@@ -27,11 +27,11 @@ export const CardContainer = ({ initialGalgames }: Props) => {
   const fetchPatches = async () => {
     setLoading(true)
 
-    const { galgames, total } = await kunFetchGet<{
+    const { galgames, total } = await kunFetchPost<{
       galgames: GalgameCard[]
       total: number
     }>('/galgame', {
-      selectedTypes: selectedTypes.toString(),
+      selectedTypes,
       sortField,
       sortOrder,
       page,

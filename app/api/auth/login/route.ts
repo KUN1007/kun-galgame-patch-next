@@ -25,7 +25,7 @@ export const login = async (input: z.infer<typeof loginSchema>) => {
     return '用户密码错误'
   }
 
-  const token = await generateKunToken(user.id, user.name, '30d')
+  const token = await generateKunToken(user.id, user.name, user.role, '30d')
   const cookie = await cookies()
   cookie.set('kun-galgame-patch-moe-token', token, {
     httpOnly: true,

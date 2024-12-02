@@ -39,18 +39,21 @@ export const EmailVerification = ({ username, email, type }: Props) => {
     let res
 
     if (type === 'register') {
-      await kunFetchPost('/auth/send-register-code', {
+      res = await kunFetchPost<KunResponse<{}>>('/auth/send-register-code', {
         name: username,
         email
       })
     } else {
-      await kunFetchPost('/user/setting/send-reset-email-code', { email })
+      res = await kunFetchPost<KunResponse<{}>>(
+        '/user/setting/send-reset-email-code',
+        { email }
+      )
     }
 
-    // useErrorHandler(res, () => {
-    toast.success('发送成功, 验证码已发送到您的邮箱')
-    startCountdown()
-    // })
+    useErrorHandler(res, () => {
+      toast.success('发送成功, 验证码已发送到您的邮箱')
+      startCountdown()
+    })
 
     setLoading(false)
   }
