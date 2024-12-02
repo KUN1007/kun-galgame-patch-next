@@ -7,6 +7,7 @@ import {
   adminPaginationSchema,
   adminUpdateUserSchema
 } from '~/validations/admin'
+import { deleteKunToken } from '~/app/api/utils/jwt'
 import type { AdminUser } from '~/types/api/admin'
 
 export const getUserInfo = async (
@@ -75,6 +76,8 @@ export const updateUser = async (
     }
   }
 
+  await deleteKunToken(uid)
+
   await prisma.user.update({
     where: { id: uid },
     data: {
@@ -94,6 +97,9 @@ export const PUT = async (req: NextRequest) => {
   const payload = await verifyHeaderCookie(req)
   if (!payload) {
     return NextResponse.json('用户未登录')
+  }
+  if (payload.role < 3) {
+    return NextResponse.json('本页面仅管理员可访问')
   }
 
   const response = await updateUser(input, payload.uid)

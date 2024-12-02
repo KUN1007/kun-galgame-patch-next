@@ -1,6 +1,7 @@
 'use client'
 
 import { useState } from 'react'
+import toast from 'react-hot-toast'
 import {
   Modal,
   ModalContent,
@@ -17,9 +18,9 @@ import {
 import { Edit2 } from 'lucide-react'
 import { USER_ROLE_MAP, USER_STATUS_MAP } from '~/constants/user'
 import { kunFetchPut } from '~/utils/kunFetch'
-import type { AdminUser } from '~/types/api/admin'
 import { useErrorHandler } from '~/hooks/useErrorHandler'
-import toast from 'react-hot-toast'
+import { useUserStore } from '~/store/providers/user'
+import type { AdminUser } from '~/types/api/admin'
 
 interface Props {
   initialUser: AdminUser
@@ -37,6 +38,7 @@ const statusOptions = Object.entries(USER_STATUS_MAP).map(([value, label]) => ({
 
 export const UserEdit = ({ initialUser }: Props) => {
   const [user, setUser] = useState<AdminUser>(initialUser)
+  const currentUser = useUserStore((state) => state.user)
   const { isOpen, onOpen, onClose } = useDisclosure()
 
   const handleChange = (key: keyof AdminUser, value: string | number) => {
@@ -65,7 +67,13 @@ export const UserEdit = ({ initialUser }: Props) => {
 
   return (
     <>
-      <Button isIconOnly size="sm" variant="light" onClick={onOpen}>
+      <Button
+        isIconOnly
+        size="sm"
+        variant="light"
+        onClick={onOpen}
+        isDisabled={currentUser.role < 3}
+      >
         <Edit2 size={16} />
       </Button>
 

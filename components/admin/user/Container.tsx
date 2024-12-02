@@ -62,7 +62,7 @@ export const User = ({ initialUsers, total }: Props) => {
       <div className="flex items-center justify-between">
         <h1 className="text-2xl font-bold">用户管理</h1>
         <Chip color="primary" variant="flat">
-          八嘎! 不许视奸!
+          杂鱼! 不许视奸!
         </Chip>
       </div>
 

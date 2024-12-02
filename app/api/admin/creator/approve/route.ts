@@ -3,13 +3,13 @@ import { NextRequest, NextResponse } from 'next/server'
 import { prisma } from '~/prisma/index'
 import { verifyHeaderCookie } from '~/middleware/_verifyHeaderCookie'
 import { createMessage } from '~/app/api/utils/message'
-import { kunParseGetQuery } from '~/app/api/utils/parseQuery'
+import { kunParsePutBody } from '~/app/api/utils/parseQuery'
 import { approveCreatorSchema } from '~/validations/admin'
 
 export const approveCreator = async (
   input: z.infer<typeof approveCreatorSchema>
 ) => {
-  const { messageId } = input
+  const { messageId, uid } = input
   const message = await prisma.user_message.findUnique({
     where: { id: messageId }
   })
@@ -24,6 +24,11 @@ export const approveCreator = async (
       data: { status: { set: 2 } }
     })
 
+    await prisma.user.update({
+      where: { id: uid },
+      data: { role: { set: 2 } }
+    })
+
     await createMessage({
       type: 'apply',
       content: '恭喜! 您的创作者申请已经通过!',
@@ -35,13 +40,16 @@ export const approveCreator = async (
 }
 
 export const PUT = async (req: NextRequest) => {
-  const input = kunParseGetQuery(req, approveCreatorSchema)
+  const input = await kunParsePutBody(req, approveCreatorSchema)
   if (typeof input === 'string') {
     return NextResponse.json(input)
   }
   const payload = await verifyHeaderCookie(req)
   if (!payload) {
     return NextResponse.json('用户未登录')
+  }
+  if (payload.role < 3) {
+    return NextResponse.json('本页面仅管理员可访问')
   }
 
   const response = await approveCreator(input)

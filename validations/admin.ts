@@ -23,15 +23,15 @@ export const adminUpdateUserSchema = z.object({
 })
 
 export const approveCreatorSchema = z.object({
-  messageId: z.coerce.number().min(1).max(9999999)
+  messageId: z.coerce.number().min(1).max(9999999),
+  uid: z.coerce.number().min(1).max(9999999)
 })
 
-export const declineCreatorSchema = approveCreatorSchema.merge(
-  z.object({
-    reason: z
-      .string()
-      .trim()
-      .min(1)
-      .max(1007, { message: '拒绝理由最多 1007 个字符' })
-  })
-)
+export const declineCreatorSchema = z.object({
+  messageId: z.coerce.number().min(1).max(9999999),
+  reason: z
+    .string()
+    .trim()
+    .min(1)
+    .max(1007, { message: '拒绝理由最多 1007 个字符' })
+})

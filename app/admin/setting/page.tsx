@@ -4,6 +4,7 @@ import {
   Card,
   CardBody,
   CardHeader,
+  Chip,
   Input,
   Button,
   Switch,
@@ -20,7 +21,12 @@ const languages = [
 export default function SettingsPage() {
   return (
     <div className="space-y-6">
-      <h1 className="text-2xl font-bold">Settings</h1>
+      <div className="flex items-center justify-between">
+        <h1 className="text-2xl font-bold">Settings</h1>
+        <Chip color="primary" variant="flat">
+          正在开发中...
+        </Chip>
+      </div>
 
       <div className="grid gap-6">
         <Card>
@@ -36,7 +42,7 @@ export default function SettingsPage() {
             <Input
               label="Site Description"
               placeholder="Enter site description"
-              defaultValue="A community-driven visual novel translation patch download website, powered by KUN Visual Novel"
+              defaultValue="The most advanced visual novel patch resource website in the world at the moment! Free forever!"
             />
             <Select
               label="Default Language"

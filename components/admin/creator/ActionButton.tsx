@@ -31,7 +31,8 @@ export const ActionButton = ({ creator }: Props) => {
     setApproving(true)
 
     const res = await kunFetchPut<KunResponse<{}>>('/admin/creator/approve', {
-      messageId: creator.id
+      messageId: creator.id,
+      uid: creator.sender?.id
     })
     useErrorHandler(res, () => {
       toast.success('同意申请成功!')

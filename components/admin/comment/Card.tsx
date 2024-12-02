@@ -9,6 +9,7 @@ import {
 import { MoreVertical, ThumbsUp } from 'lucide-react'
 import { formatDate } from '~/utils/time'
 import Link from 'next/link'
+import { CommentEdit } from './CommentEdit'
 import type { AdminComment } from '~/types/api/admin'
 
 interface Props {
@@ -54,19 +55,8 @@ export const CommentCard = ({ comment }: Props) => {
               </div>
             </div>
           </div>
-          <Dropdown>
-            <DropdownTrigger>
-              <Button isIconOnly size="sm" variant="light">
-                <MoreVertical size={16} />
-              </Button>
-            </DropdownTrigger>
-            <DropdownMenu>
-              <DropdownItem>编辑</DropdownItem>
-              <DropdownItem className="text-danger" color="danger">
-                删除
-              </DropdownItem>
-            </DropdownMenu>
-          </Dropdown>
+
+          <CommentEdit initialComment={comment} />
         </div>
       </CardBody>
     </Card>

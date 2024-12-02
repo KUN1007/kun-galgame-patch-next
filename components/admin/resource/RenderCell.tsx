@@ -1,10 +1,10 @@
 'use client'
 
-import { User, Chip, Button } from '@nextui-org/react'
-import { Edit2, Trash2 } from 'lucide-react'
+import { User, Chip } from '@nextui-org/react'
 import { SUPPORTED_RESOURCE_LINK_MAP } from '~/constants/resource'
 import { formatDistanceToNow } from '~/utils/formatDistanceToNow'
 import Link from 'next/link'
+import { ResourceEdit } from './ResourceEdit'
 import type { AdminResource } from '~/types/api/admin'
 
 export const RenderCell = (resource: AdminResource, columnKey: string) => {
@@ -46,16 +46,7 @@ export const RenderCell = (resource: AdminResource, columnKey: string) => {
         </Chip>
       )
     case 'actions':
-      return (
-        <div className="flex gap-2">
-          <Button isIconOnly size="sm" variant="light">
-            <Edit2 size={16} />
-          </Button>
-          <Button isIconOnly size="sm" variant="light" color="danger">
-            <Trash2 size={16} />
-          </Button>
-        </div>
-      )
+      return <ResourceEdit initialResource={resource} />
     default:
       return (
         <Chip color="primary" variant="flat">
