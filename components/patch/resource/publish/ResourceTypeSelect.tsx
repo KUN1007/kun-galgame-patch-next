@@ -50,9 +50,6 @@ export const ResourceTypeSelect = ({ control, errors }: Props) => {
             label="请选择您的资源存储类型"
             selectedKeys={[field.value]}
             onSelectionChange={(key) => {
-              if (key.currentKey === key.anchorKey) {
-                return
-              }
               field.onChange(Array.from(key).join(''))
             }}
             disabledKeys={user.role > 1 ? ['onedrive'] : ['onedrive', 's3']}

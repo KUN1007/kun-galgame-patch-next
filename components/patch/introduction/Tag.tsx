@@ -25,7 +25,7 @@ export const PatchTag = ({ patchId, initialTags }: Props) => {
             <Link href={`/tag/${tag.id}`}>
               <Chip color="secondary" variant="flat">
                 {tag.name}
-                {`+${tag.count}`}
+                {` +${tag.count}`}
               </Chip>
             </Link>
           </Tooltip>

@@ -6,6 +6,11 @@ import { Chip } from '@nextui-org/chip'
 import { KunCardStats } from '~/components/kun/CardStats'
 import { useRouter } from 'next-nprogress-bar'
 import { useState } from 'react'
+import {
+  SUPPORTED_TYPE_MAP,
+  SUPPORTED_LANGUAGE_MAP,
+  SUPPORTED_PLATFORM_MAP
+} from '~/constants/resource'
 
 interface Props {
   patch: GalgameCard
@@ -56,20 +61,7 @@ export const GalgameCard = ({ patch }: Props) => {
               variant="flat"
               className="text-xs"
             >
-              {type}
-            </Chip>
-          ))}
-        </div>
-        <div className="flex flex-wrap gap-1.5">
-          {patch.platform.map((platform) => (
-            <Chip
-              key={platform}
-              size="sm"
-              color="secondary"
-              variant="flat"
-              className="text-xs"
-            >
-              {platform}
+              {SUPPORTED_TYPE_MAP[type]}
             </Chip>
           ))}
         </div>
@@ -82,7 +74,20 @@ export const GalgameCard = ({ patch }: Props) => {
               variant="flat"
               className="text-xs"
             >
-              {lang}
+              {SUPPORTED_LANGUAGE_MAP[lang]}
+            </Chip>
+          ))}
+        </div>
+        <div className="flex flex-wrap gap-1.5">
+          {patch.platform.map((platform) => (
+            <Chip
+              key={platform}
+              size="sm"
+              color="secondary"
+              variant="flat"
+              className="text-xs"
+            >
+              {SUPPORTED_PLATFORM_MAP[platform]}
             </Chip>
           ))}
         </div>

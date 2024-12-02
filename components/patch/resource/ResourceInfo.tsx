@@ -1,5 +1,10 @@
 import { Chip } from '@nextui-org/chip'
 import { Snippet } from '@nextui-org/snippet'
+import {
+  SUPPORTED_TYPE_MAP,
+  SUPPORTED_LANGUAGE_MAP,
+  SUPPORTED_PLATFORM_MAP
+} from '~/constants/resource'
 import type { PatchResource } from '~/types/api/patch'
 
 interface Props {
@@ -11,13 +16,18 @@ export const ResourceInfo = ({ resource }: Props) => {
     <div className="space-y-2">
       <div className="flex flex-wrap gap-2">
         {resource.type.map((type) => (
-          <Chip key={type} variant="flat">
-            {type}
+          <Chip key={type} variant="flat" color="primary">
+            {SUPPORTED_TYPE_MAP[type]}
           </Chip>
         ))}
         {resource.language.map((lang) => (
-          <Chip key={lang} variant="bordered">
-            {lang}
+          <Chip key={lang} variant="flat" color="secondary">
+            {SUPPORTED_LANGUAGE_MAP[lang]}
+          </Chip>
+        ))}
+        {resource.platform.map((platform) => (
+          <Chip key={platform} variant="flat" color="success">
+            {SUPPORTED_PLATFORM_MAP[platform]}
           </Chip>
         ))}
         {<Chip variant="flat">{resource.size}</Chip>}

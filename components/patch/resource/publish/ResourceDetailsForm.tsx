@@ -34,9 +34,6 @@ export const ResourceDetailsForm = ({
             selectionMode="multiple"
             selectedKeys={field.value}
             onSelectionChange={(key) => {
-              if (key.currentKey === key.anchorKey) {
-                return
-              }
               field.onChange([...key] as string[])
             }}
             isInvalid={!!errors.type}
@@ -62,9 +59,6 @@ export const ResourceDetailsForm = ({
             selectionMode="multiple"
             selectedKeys={field.value}
             onSelectionChange={(key) => {
-              if (key.currentKey === key.anchorKey) {
-                return
-              }
               field.onChange([...key] as string[])
             }}
             isInvalid={!!errors.language}
@@ -90,9 +84,6 @@ export const ResourceDetailsForm = ({
             selectionMode="multiple"
             selectedKeys={field.value}
             onSelectionChange={(key) => {
-              if (key.currentKey === key.anchorKey) {
-                return
-              }
               field.onChange([...key] as string[])
             }}
             isInvalid={!!errors.platform}

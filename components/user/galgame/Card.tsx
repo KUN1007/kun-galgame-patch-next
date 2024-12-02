@@ -6,6 +6,7 @@ import { Image } from '@nextui-org/image'
 import { useRouter } from 'next-nprogress-bar'
 import { formatDistanceToNow } from '~/utils/formatDistanceToNow'
 import { KunCardStats } from '~/components/kun/CardStats'
+import { SUPPORTED_TYPE_MAP } from '~/constants/resource'
 
 interface Props {
   galgame: GalgameCard
@@ -49,7 +50,7 @@ export const UserGalgameCard = ({ galgame }: Props) => {
                   variant="flat"
                   className="text-xs"
                 >
-                  {type}
+                  {SUPPORTED_TYPE_MAP[type]}
                 </Chip>
               ))}
             </div>

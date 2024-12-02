@@ -5,6 +5,12 @@ import { Card, CardBody } from '@nextui-org/card'
 import { Image } from '@nextui-org/image'
 import { formatDistanceToNow } from '~/utils/formatDistanceToNow'
 import { useRouter } from 'next-nprogress-bar'
+import {
+  SUPPORTED_TYPE_MAP,
+  SUPPORTED_LANGUAGE_MAP,
+  SUPPORTED_PLATFORM_MAP
+} from '~/constants/resource'
+
 import type { UserResource as UserResourceType } from '~/types/api/user'
 
 interface Props {
@@ -49,29 +55,29 @@ export const UserResourceCard = ({ resource }: Props) => {
                   variant="flat"
                   className="text-xs"
                 >
-                  {type}
-                </Chip>
-              ))}
-              {resource.platform.map((platform) => (
-                <Chip
-                  key={platform}
-                  size="sm"
-                  color="secondary"
-                  variant="flat"
-                  className="text-xs"
-                >
-                  {platform}
+                  {SUPPORTED_TYPE_MAP[type]}
                 </Chip>
               ))}
               {resource.language.map((lang) => (
                 <Chip
                   key={lang}
                   size="sm"
+                  color="secondary"
+                  variant="flat"
+                  className="text-xs"
+                >
+                  {SUPPORTED_LANGUAGE_MAP[lang]}
+                </Chip>
+              ))}
+              {resource.platform.map((platform) => (
+                <Chip
+                  key={platform}
+                  size="sm"
                   color="success"
                   variant="flat"
                   className="text-xs"
                 >
-                  {lang}
+                  {SUPPORTED_PLATFORM_MAP[platform]}
                 </Chip>
               ))}
             </div>
