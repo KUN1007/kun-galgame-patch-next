@@ -10,13 +10,6 @@ const protectedRoutes = new Map<string, number>([
   ['/su', 4]
 ])
 
-const verifyToken = async (token: string) => {
-  // TODO:
-  if (token === 'admin-token') return 3
-  if (token === 'creator-token') return 2
-  return 1
-}
-
 const redirectToLogin = (request: NextRequest) => {
   const loginUrl = new URL('/login', request.url)
   loginUrl.searchParams.set('from', request.nextUrl.pathname)
@@ -24,23 +17,36 @@ const redirectToLogin = (request: NextRequest) => {
 }
 
 export const config = {
-  matcher: ['/admin/:path*', '/creator/:path*', '/dashboard/:path*']
+  matcher: [
+    '/public/:path*',
+    '/user/:path*',
+    '/creator/:path*',
+    '/admin/:path*',
+    '/su/:path*'
+  ]
 }
 
 export const kunAuthMiddleware = async (request: NextRequest) => {
-  // const pathname = request.nextUrl.pathname
+  const pathname = request.nextUrl.pathname
 
-  // const requiredRoles = protectedRoutes.get(pathname)
-  // if (!requiredRoles) {
+  const pathElements = pathname.split('/')
+  const secondElement = pathElements[2]
+
+  // const requiredRole = protectedRoutes.get(secondElement)
+
+  // if (!requiredRole) {
   //   return NextResponse.next()
   // }
 
   // const payload = await verifyHeaderCookie(request)
+
   // if (!payload) {
-  //   return '用户未认证'
+  //   request.headers.set('x-uid', '0')
+  //   request.headers.set('x-role', '0')
+  //   return NextResponse.next()
   // }
 
-  // if (!requiredRoles.includes(userRole)) {
+  // if (payload.role < requiredRole) {
   //   return new NextResponse(
   //     JSON.stringify({
   //       error: 'Insufficient permissions'
@@ -51,6 +57,9 @@ export const kunAuthMiddleware = async (request: NextRequest) => {
   //     }
   //   )
   // }
+
+  // request.headers.set('x-uid', String(payload.uid))
+  // request.headers.set('x-role', String(payload.role))
 
   return NextResponse.next()
 }
