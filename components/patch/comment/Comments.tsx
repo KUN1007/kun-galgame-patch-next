@@ -31,7 +31,7 @@ import {
   X
 } from 'lucide-react'
 import { formatDistanceToNow } from '~/utils/formatDistanceToNow'
-import { kunFetchPost, kunFetchPut, kunFetchDelete } from '~/utils/kunFetch'
+import { kunFetchPut, kunFetchDelete } from '~/utils/kunFetch'
 import { PublishComment } from './PublishComment'
 import { CommentLikeButton } from './CommentLike'
 import toast from 'react-hot-toast'
@@ -212,7 +212,6 @@ export const Comments = ({ initialComments, id }: Props) => {
                     <Textarea
                       value={editContent}
                       onChange={(e) => setEditContent(e.target.value)}
-                      placeholder="Edit your comment..."
                       minRows={2}
                       maxRows={8}
                     />
