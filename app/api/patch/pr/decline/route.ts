@@ -17,6 +17,14 @@ export const declinePullRequest = async (
     return '未找到这个更新请求'
   }
 
+  const patch = await prisma.patch.findUnique({
+    where: { id: pullRequest.patch_id }
+  })
+  const user = await prisma.user.findUnique({ where: { id: uid } })
+  if (patch?.user_id !== uid && user!.role < 3) {
+    return '您没有权限拒绝更新请求'
+  }
+
   return await prisma.$transaction(async (prisma) => {
     await prisma.patch_pull_request.update({
       where: { id: input.prId },
@@ -46,6 +54,8 @@ export const declinePullRequest = async (
       recipient_id: pullRequest.user_id,
       patch_id: pullRequest.patch_id
     })
+
+    return {}
   })
 }
 

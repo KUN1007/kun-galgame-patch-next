@@ -72,7 +72,6 @@ export const UserDropdown = () => {
       return
     }
 
-    toast('正在签到...')
     setChecking(true)
     const res = await kunFetchPost<
       KunResponse<{

@@ -1,6 +1,6 @@
 import { PatchHeaderContainer } from '~/components/patch/header/Container'
 import { ErrorComponent } from '~/components/error/ErrorComponent'
-import { kunFetchGet } from '~/utils/kunFetch'
+import { kunServerFetchGet } from '~/utils/kunServerFetch'
 import type { Patch } from '~/types/api/patch'
 
 export default async function Patch({
@@ -16,7 +16,7 @@ export default async function Patch({
     return <ErrorComponent error={'提取页面参数错误'} />
   }
 
-  const res = await kunFetchGet<KunResponse<Patch>>('/patch', {
+  const res = await kunServerFetchGet<KunResponse<Patch>>('/patch', {
     patchId: Number(id)
   })
   if (!res || typeof res === 'string') {

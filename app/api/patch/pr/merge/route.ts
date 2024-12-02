@@ -21,6 +21,14 @@ export const mergePullRequest = async (
     return '未找到这个更新请求'
   }
 
+  const patch = await prisma.patch.findUnique({
+    where: { id: pullRequest.patch_id }
+  })
+  const user = await prisma.user.findUnique({ where: { id: uid } })
+  if (patch?.user_id !== uid && user!.role < 3) {
+    return '您没有权限合并更新请求'
+  }
+
   const updates = JSON.parse(pullRequest.content) as PatchUpdate
 
   return await prisma.$transaction(async (prisma) => {
@@ -69,6 +77,8 @@ export const mergePullRequest = async (
         data: { user_id: pullRequest.user_id, patch_id: pullRequest.patch_id }
       })
     }
+
+    return {}
   })
 }
 
