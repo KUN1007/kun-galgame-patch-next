@@ -61,13 +61,15 @@ export const mergePullRequest = async (
       }
     })
 
-    await createDedupMessage({
-      type: 'pr',
-      content: '合并了您的更新请求!',
-      sender_id: uid,
-      recipient_id: pullRequest.user_id,
-      patch_id: pullRequest.patch_id
-    })
+    if (pullRequest.user_id !== uid) {
+      await createDedupMessage({
+        type: 'pr',
+        content: '合并了您的更新请求!',
+        sender_id: uid,
+        recipient_id: pullRequest.user_id,
+        patch_id: pullRequest.patch_id
+      })
+    }
 
     const contribute = await prisma.user_patch_contribute_relation.findFirst({
       where: { user_id: pullRequest.user_id, patch_id: pullRequest.patch_id }

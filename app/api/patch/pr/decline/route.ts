@@ -47,13 +47,15 @@ export const declinePullRequest = async (
       }
     })
 
-    await createDedupMessage({
-      type: 'pr',
-      content: `拒绝了您的更新请求... 理由: ${input.note}`,
-      sender_id: uid,
-      recipient_id: pullRequest.user_id,
-      patch_id: pullRequest.patch_id
-    })
+    if (pullRequest.user_id !== uid) {
+      await createDedupMessage({
+        type: 'pr',
+        content: `拒绝了您的更新请求... 理由: ${input.note}`,
+        sender_id: uid,
+        recipient_id: pullRequest.user_id,
+        patch_id: pullRequest.patch_id
+      })
+    }
 
     return {}
   })

@@ -16,12 +16,11 @@ import type { RewritePatchData } from '~/store/rewriteStore'
 export const RewritePatch = () => {
   const router = useRouter()
   const { data, setData } = useRewritePatchStore()
-  const [newAlias, setNewAlias] = useState<string>('')
   const [errors, setErrors] = useState<
     Partial<Record<keyof RewritePatchData, string>>
   >({})
 
-  const addAlias = () => {
+  const addAlias = (newAlias: string) => {
     const alias = newAlias.trim().toLowerCase()
     if (data.alias.includes(alias)) {
       toast.error('请不要使用重复的别名')
@@ -29,7 +28,6 @@ export const RewritePatch = () => {
     }
     if (newAlias.trim()) {
       setData({ ...data, alias: [...data.alias, alias] })
-      setNewAlias('')
     }
   }
 
