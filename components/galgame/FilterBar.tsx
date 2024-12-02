@@ -1,5 +1,6 @@
 'use client'
 
+import { useState } from 'react'
 import {
   Dropdown,
   DropdownTrigger,
@@ -10,7 +11,7 @@ import { Button } from '@nextui-org/button'
 import { Card, CardHeader } from '@nextui-org/card'
 import { Select, SelectItem } from '@nextui-org/select'
 import { ArrowDownAZ, ArrowUpAZ, ChevronDown, Filter } from 'lucide-react'
-import { ALL_SUPPORTED_TYPES } from '~/constants/resource'
+import { SUPPORTED_TYPE_MAP, ALL_SUPPORTED_TYPE } from '~/constants/resource'
 import type { SortOption, SortDirection } from './_sort'
 
 interface Props {
@@ -22,6 +23,11 @@ interface Props {
   setSortOrder: (direction: SortDirection) => void
 }
 
+const sortFieldLabelMap: Record<string, string> = {
+  created: '创建时间',
+  view: '浏览量'
+}
+
 export const FilterBar = ({
   selectedTypes,
   setSelectedTypes,
@@ -30,15 +36,6 @@ export const FilterBar = ({
   sortOrder,
   setSortOrder
 }: Props) => {
-  const sortFieldLabel = {
-    created: '创建时间',
-    view: '浏览量'
-  }
-
-  const handleSelectionChange = (keys: Set<React.Key>) => {
-    setSelectedTypes(Array.from(keys) as string[])
-  }
-
   return (
     <Card className="w-full border bg-content1/50 backdrop-blur-lg border-content2">
       <CardHeader>
@@ -49,7 +46,12 @@ export const FilterBar = ({
             placeholder="选择类型"
             selectedKeys={selectedTypes}
             className="max-w-xs"
-            onSelectionChange={(keys) => handleSelectionChange(new Set(keys))}
+            onSelectionChange={(key) => {
+              if (key.currentKey === key.anchorKey) {
+                return
+              }
+              setSelectedTypes(Array.from(key) as string[])
+            }}
             startContent={<Filter className="w-4 h-4 text-default-400" />}
             classNames={{
               trigger: 'bg-content2/50 hover:bg-content2 transition-colors',
@@ -59,9 +61,9 @@ export const FilterBar = ({
             radius="lg"
             size="sm"
           >
-            {ALL_SUPPORTED_TYPES.map((type) => (
+            {ALL_SUPPORTED_TYPE.map((type) => (
               <SelectItem key={type} value={type} className="text-default-700">
-                {type}
+                {SUPPORTED_TYPE_MAP[type]}
               </SelectItem>
             ))}
           </Select>
@@ -75,7 +77,7 @@ export const FilterBar = ({
                   endContent={<ChevronDown className="w-4 h-4" />}
                   radius="lg"
                 >
-                  {sortFieldLabel[sortField]}
+                  {sortFieldLabelMap[sortField]}
                 </Button>
               </DropdownTrigger>
               <DropdownMenu

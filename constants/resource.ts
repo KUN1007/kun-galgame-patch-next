@@ -1,33 +1,57 @@
-export const SUPPORTED_TYPES = [
-  '人工翻译补丁',
-  'AI 翻译补丁',
-  '机翻润色',
-  '机翻补丁',
-  '全 CG 存档',
-  '破解补丁',
-  '修正补丁',
-  '魔改补丁',
-  '其它'
+export const SUPPORTED_TYPE = [
+  'manual',
+  'ai',
+  'machine_polishing',
+  'machine',
+  'save',
+  'crack',
+  'fix',
+  'mod',
+  'other'
 ]
 
-export const ALL_SUPPORTED_TYPES = ['全部类型', ...SUPPORTED_TYPES]
+export const SUPPORTED_TYPE_MAP: Record<string, string> = {
+  all: '全部类型',
+  manual: '人工翻译补丁',
+  ai: 'AI 翻译补丁',
+  machine_polishing: '机翻润色',
+  machine: '机翻补丁',
+  save: '全 CG 存档',
+  crack: '破解补丁',
+  fix: '修正补丁',
+  mod: '魔改补丁',
+  other: '其它'
+}
 
-export const SUPPORTED_LANGUAGES = [
-  '简体中文',
-  '繁體中文',
-  '日本語',
-  'English',
-  '其它'
+export const ALL_SUPPORTED_TYPE = ['all', ...SUPPORTED_TYPE]
+
+export const SUPPORTED_LANGUAGE = ['zh-Hans', 'zh-Hant', 'ja', 'en', 'other']
+
+export const SUPPORTED_LANGUAGE_MAP: Record<string, string> = {
+  'zh-Hans': '简体中文',
+  'zh-Hant': '繁體中文',
+  ja: '日本語',
+  en: 'English',
+  other: '其它'
+}
+
+export const SUPPORTED_PLATFORM = [
+  'windows',
+  'android',
+  'macos',
+  'ios',
+  'linux',
+  'other'
 ]
 
-export const SUPPORTED_PLATFORMS = [
-  'Windows',
-  'Android',
-  'MacOS',
-  'iOS',
-  'Linux',
-  '其它'
-]
+export const SUPPORTED_PLATFORM_MAP: Record<string, string> = {
+  windows: 'Windows',
+  android: 'Android',
+  macos: 'MacOS',
+  ios: 'iOS',
+  linux: 'Linux',
+  other: '其它'
+}
 
 export const SUPPORTED_RESOURCE_LINK = ['s3', 'onedrive', 'user']
 

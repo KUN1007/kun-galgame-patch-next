@@ -1,5 +1,5 @@
 import { z } from 'zod'
-import { ALL_SUPPORTED_TYPES } from '~/constants/resource'
+import { ALL_SUPPORTED_TYPE } from '~/constants/resource'
 
 export const galgameSchema = z.object({
   selectedTypes: z
@@ -7,7 +7,7 @@ export const galgameSchema = z.object({
     .min(1)
     .max(10)
     .refine(
-      (types) => types.every((type) => ALL_SUPPORTED_TYPES.includes(type)),
+      (types) => types.every((type) => ALL_SUPPORTED_TYPE.includes(type)),
       { message: '非法的补丁类型' }
     ),
   sortField: z.union([

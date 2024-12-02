@@ -1,9 +1,9 @@
 import { z } from 'zod'
 import { ResourceSizeRegex } from '~/utils/validate'
 import {
-  SUPPORTED_TYPES,
-  SUPPORTED_LANGUAGES,
-  SUPPORTED_PLATFORMS,
+  SUPPORTED_TYPE,
+  SUPPORTED_LANGUAGE,
+  SUPPORTED_PLATFORM,
   SUPPORTED_RESOURCE_LINK
 } from '~/constants/resource'
 
@@ -59,7 +59,7 @@ export const patchResourceCreateSchema = z.object({
     .array(z.string())
     .min(1, { message: '请选择至少一个资源类型' })
     .max(10, { message: '您的单个补丁资源最多有 10 条链接' })
-    .refine((types) => types.every((type) => SUPPORTED_TYPES.includes(type)), {
+    .refine((types) => types.every((type) => SUPPORTED_TYPE.includes(type)), {
       message: '非法的补丁类型'
     }),
   language: z
@@ -67,7 +67,7 @@ export const patchResourceCreateSchema = z.object({
     .min(1, { message: '请选择至少一个资源语言' })
     .max(10, { message: '您的单个补丁资源最多有 10 个语言' })
     .refine(
-      (types) => types.every((type) => SUPPORTED_LANGUAGES.includes(type)),
+      (types) => types.every((type) => SUPPORTED_LANGUAGE.includes(type)),
       {
         message: '非法的补丁语言'
       }
@@ -77,7 +77,7 @@ export const patchResourceCreateSchema = z.object({
     .min(1, { message: '请选择至少一个资源平台' })
     .max(10, { message: '您的单个补丁资源最多有 10 个平台' })
     .refine(
-      (types) => types.every((type) => SUPPORTED_PLATFORMS.includes(type)),
+      (types) => types.every((type) => SUPPORTED_PLATFORM.includes(type)),
       {
         message: '非法的补丁平台'
       }

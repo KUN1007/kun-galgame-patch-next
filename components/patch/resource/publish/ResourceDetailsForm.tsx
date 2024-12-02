@@ -2,9 +2,12 @@ import { Controller } from 'react-hook-form'
 import { Input, Textarea } from '@nextui-org/input'
 import { Select, SelectItem } from '@nextui-org/select'
 import {
-  SUPPORTED_TYPES,
-  SUPPORTED_LANGUAGES,
-  SUPPORTED_PLATFORMS
+  SUPPORTED_TYPE,
+  SUPPORTED_TYPE_MAP,
+  SUPPORTED_LANGUAGE,
+  SUPPORTED_LANGUAGE_MAP,
+  SUPPORTED_PLATFORM,
+  SUPPORTED_PLATFORM_MAP
 } from '~/constants/resource'
 import { ErrorType, ControlType } from '../share'
 
@@ -30,13 +33,18 @@ export const ResourceDetailsForm = ({
             placeholder="请选择资源的类型"
             selectionMode="multiple"
             selectedKeys={field.value}
-            onSelectionChange={(keys) => field.onChange([...keys] as string[])}
+            onSelectionChange={(key) => {
+              if (key.currentKey === key.anchorKey) {
+                return
+              }
+              field.onChange([...key] as string[])
+            }}
             isInvalid={!!errors.type}
             errorMessage={errors.type?.message}
           >
-            {SUPPORTED_TYPES.map((type) => (
+            {SUPPORTED_TYPE.map((type) => (
               <SelectItem key={type} value={type}>
-                {type}
+                {SUPPORTED_TYPE_MAP[type]}
               </SelectItem>
             ))}
           </Select>
@@ -53,13 +61,18 @@ export const ResourceDetailsForm = ({
             placeholder="请选择语言"
             selectionMode="multiple"
             selectedKeys={field.value}
-            onSelectionChange={(keys) => field.onChange([...keys] as string[])}
+            onSelectionChange={(key) => {
+              if (key.currentKey === key.anchorKey) {
+                return
+              }
+              field.onChange([...key] as string[])
+            }}
             isInvalid={!!errors.language}
             errorMessage={errors.language?.message}
           >
-            {SUPPORTED_LANGUAGES.map((lang) => (
+            {SUPPORTED_LANGUAGE.map((lang) => (
               <SelectItem key={lang} value={lang}>
-                {lang}
+                {SUPPORTED_LANGUAGE_MAP[lang]}
               </SelectItem>
             ))}
           </Select>
@@ -76,13 +89,18 @@ export const ResourceDetailsForm = ({
             placeholder="请选择资源的平台"
             selectionMode="multiple"
             selectedKeys={field.value}
-            onSelectionChange={(keys) => field.onChange([...keys] as string[])}
+            onSelectionChange={(key) => {
+              if (key.currentKey === key.anchorKey) {
+                return
+              }
+              field.onChange([...key] as string[])
+            }}
             isInvalid={!!errors.platform}
             errorMessage={errors.platform?.message}
           >
-            {SUPPORTED_PLATFORMS.map((platform) => (
+            {SUPPORTED_PLATFORM.map((platform) => (
               <SelectItem key={platform} value={platform}>
-                {platform}
+                {SUPPORTED_PLATFORM_MAP[platform]}
               </SelectItem>
             ))}
           </Select>
