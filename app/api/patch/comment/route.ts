@@ -32,8 +32,9 @@ export const GET = async (req: NextRequest) => {
   if (typeof input === 'string') {
     return NextResponse.json(input)
   }
+  const payload = await verifyHeaderCookie(req)
 
-  const response = await getPatchComment(input)
+  const response = await getPatchComment(input, payload?.uid ?? 0)
   return NextResponse.json(response)
 }
 

@@ -36,8 +36,8 @@ import { PublishComment } from './PublishComment'
 import { CommentLikeButton } from './CommentLike'
 import toast from 'react-hot-toast'
 import { useUserStore } from '~/store/providers/user'
-import type { PatchComment } from '~/types/api/patch'
 import { useErrorHandler } from '~/hooks/useErrorHandler'
+import type { PatchComment } from '~/types/api/patch'
 
 interface Props {
   initialComments: PatchComment[]
@@ -241,11 +241,7 @@ export const Comments = ({ initialComments, id }: Props) => {
                 )}
 
                 <div className="flex gap-2 mt-2">
-                  <CommentLikeButton
-                    commentId={comment.id}
-                    likedBy={comment.likedBy}
-                    commenter={comment.user}
-                  />
+                  <CommentLikeButton comment={comment} />
                   <Button
                     variant="ghost"
                     size="sm"

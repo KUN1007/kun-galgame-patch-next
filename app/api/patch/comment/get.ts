@@ -7,7 +7,10 @@ const patchIdSchema = z.object({
   patchId: z.coerce.number().min(1).max(9999999)
 })
 
-export const getPatchComment = async (input: z.infer<typeof patchIdSchema>) => {
+export const getPatchComment = async (
+  input: z.infer<typeof patchIdSchema>,
+  uid: number
+) => {
   const { patchId } = input
 
   const data = await prisma.patch_comment.findMany({
@@ -15,9 +18,12 @@ export const getPatchComment = async (input: z.infer<typeof patchIdSchema>) => {
     include: {
       user: true,
       like_by: {
-        include: {
-          user: true
+        where: {
+          user_id: uid
         }
+      },
+      _count: {
+        select: { like_by: true }
       }
     }
   })
@@ -25,11 +31,8 @@ export const getPatchComment = async (input: z.infer<typeof patchIdSchema>) => {
   const flatComments: PatchComment[] = data.map((comment) => ({
     id: comment.id,
     content: comment.content,
-    likedBy: comment.like_by.map((likeRelation) => ({
-      id: likeRelation.user.id,
-      name: likeRelation.user.name,
-      avatar: likeRelation.user.avatar
-    })),
+    isLike: comment.like_by.length > 0,
+    likeCount: comment._count.like_by,
     parentId: comment.parent_id,
     userId: comment.user_id,
     patchId: comment.patch_id,

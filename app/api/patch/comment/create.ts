@@ -35,7 +35,8 @@ export const createPatchComment = async (
   const newComment: Omit<PatchComment, 'user'> = {
     id: data.id,
     content: data.content,
-    likedBy: [],
+    isLike: false,
+    likeCount: 0,
     parentId: data.parent_id,
     userId: data.user_id,
     patchId: data.patch_id,

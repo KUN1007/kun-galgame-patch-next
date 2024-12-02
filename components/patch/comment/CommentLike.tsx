@@ -7,19 +7,16 @@ import { useUserStore } from '~/store/providers/user'
 import toast from 'react-hot-toast'
 import { useErrorHandler } from '~/hooks/useErrorHandler'
 import { cn } from '~/utils/cn'
+import type { PatchComment } from '~/types/api/patch'
 
 interface Props {
-  commentId: number
-  likedBy: KunUser[]
-  commenter: KunUser
+  comment: PatchComment
 }
 
-export const CommentLikeButton = ({ commentId, likedBy, commenter }: Props) => {
+export const CommentLikeButton = ({ comment }: Props) => {
   const { user } = useUserStore((state) => state)
-  const isLiked = likedBy.some((u) => u.id === user.uid)
-
-  const [liked, setLiked] = useState(isLiked)
-  const [likeCount, setLikeCount] = useState(likedBy.length)
+  const [liked, setLiked] = useState(comment.isLike)
+  const [likeCount, setLikeCount] = useState(comment.likeCount)
   const [loading, setLoading] = useState(false)
 
   const toggleLike = async () => {
@@ -28,14 +25,14 @@ export const CommentLikeButton = ({ commentId, likedBy, commenter }: Props) => {
       return
     }
 
-    if (commenter.id === user.uid) {
+    if (comment.user.id === user.uid) {
       toast.error('您不能给自己点赞')
       return
     }
 
     setLoading(true)
     const res = await kunFetchPut<KunResponse<boolean>>('/patch/comment/like', {
-      commentId
+      commentId: comment.id
     })
 
     setLoading(false)
@@ -46,16 +43,7 @@ export const CommentLikeButton = ({ commentId, likedBy, commenter }: Props) => {
   }
 
   return (
-    <Tooltip
-      key="like"
-      color="default"
-      content={
-        likedBy.length
-          ? `${likedBy.map((u) => u.name).toString()} 点赞过`
-          : '点赞'
-      }
-      placement="bottom"
-    >
+    <Tooltip key="like" color="default" content="点赞" placement="bottom">
       <Button
         variant="ghost"
         size="sm"

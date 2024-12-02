@@ -79,7 +79,8 @@ export interface PatchResource {
 export interface PatchComment {
   id: number
   content: string
-  likedBy: KunUser[]
+  isLike: boolean
+  likeCount: number
   parentId: number | null
   userId: number
   patchId: number
