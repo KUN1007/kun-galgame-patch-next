@@ -35,7 +35,7 @@ export const Password = () => {
   const onSubmit = async (data: PasswordFormData) => {
     setLoading(true)
 
-    await kunFetchPost('/user/setting/password', data)
+    await kunFetchPost('/user/user/setting/password', data)
 
     setLoading(false)
 

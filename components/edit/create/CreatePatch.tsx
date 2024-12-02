@@ -131,7 +131,7 @@ export const CreatePatch = () => {
     )
 
     const res = await kunFetchFormData<KunResponse<number>>(
-      '/edit',
+      '/user/edit',
       formDataToSend
     )
     useErrorHandler(res, async (value) => {
@@ -151,7 +151,7 @@ export const CreatePatch = () => {
       return
     }
 
-    const res = await kunFetchGet<KunResponse<{}>>('/edit/duplicate', {
+    const res = await kunFetchGet<KunResponse<{}>>('/user/edit/duplicate', {
       vndbId: data.vndbId
     })
     if (typeof res === 'string') {

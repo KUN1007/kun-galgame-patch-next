@@ -31,7 +31,7 @@ import {
   X
 } from 'lucide-react'
 import { formatDistanceToNow } from '~/utils/formatDistanceToNow'
-import { kunFetchPost, kunFetchPut, kunFetchDelete } from '~/utils/kunFetch'
+import { kunFetchPut, kunFetchDelete } from '~/utils/kunFetch'
 import { PublishComment } from './PublishComment'
 import { CommentLikeButton } from './CommentLike'
 import toast from 'react-hot-toast'
@@ -79,7 +79,7 @@ export const Comments = ({ initialComments, id }: Props) => {
   const [deleting, setDeleting] = useState(false)
   const handleDeleteComment = async () => {
     setDeleting(true)
-    const res = await kunFetchDelete<KunResponse<{}>>('/patch/comment', {
+    const res = await kunFetchDelete<KunResponse<{}>>('/user/patch/comment', {
       commentId: deleteCommentId
     })
     useErrorHandler(res, () => {
@@ -111,10 +111,10 @@ export const Comments = ({ initialComments, id }: Props) => {
     }
 
     setUpdating(true)
-    const res = await kunFetchPut<KunResponse<PatchComment>>('/patch/comment', {
-      commentId,
-      content: editContent.trim()
-    })
+    const res = await kunFetchPut<KunResponse<PatchComment>>(
+      '/user/patch/comment',
+      { commentId, content: editContent.trim() }
+    )
     useErrorHandler(res, () => {
       setComments((prev) =>
         prev.map((comment) =>

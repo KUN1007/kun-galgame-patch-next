@@ -5,7 +5,7 @@ export default async function Kun() {
   const { galgames } = await kunFetchPost<{
     galgames: GalgameCard[]
     total: number
-  }>('/galgame', {
+  }>('/public/galgame', {
     selectedTypes: ['全部类型'],
     sortField: 'created',
     sortOrder: 'desc',

@@ -68,7 +68,7 @@ export const PublishResource = ({
   const onSubmit = async (data: ResourceFormData) => {
     setCreating(true)
     const res = await kunFetchPost<KunResponse<PatchResource>>(
-      '/patch/resource',
+      '/user/patch/resource',
       data
     )
     setCreating(false)

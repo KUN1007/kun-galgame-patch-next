@@ -45,7 +45,7 @@ export const TagDetailCOntainer = ({
     const { galgames, total } = await kunFetchGet<{
       galgames: GalgameCard[]
       total: number
-    }>('/tag/galgame', {
+    }>('/public/tag/galgame', {
       tagId: tag.id,
       page,
       limit: 24

@@ -55,7 +55,7 @@ export const UserEdit = ({ initialUser }: Props) => {
     }
 
     setUpdating(true)
-    const res = await kunFetchPut<KunResponse<{}>>('/admin/user', requestData)
+    const res = await kunFetchPut<KunResponse<{}>>('/su/user', requestData)
     useErrorHandler(res, () => {
       toast.success('更新用户信息成功')
     })

@@ -44,10 +44,10 @@ export const StepTwo = ({ name, setStep }: Props) => {
     }
 
     setLoading(true)
-    const res = await kunFetchPost<KunResponse<undefined>>('/forgot/two', {
-      ...data,
-      name
-    })
+    const res = await kunFetchPost<KunResponse<undefined>>(
+      '/public/forgot/two',
+      { ...data, name }
+    )
     useErrorHandler(res, () => {
       reset()
       toast.success('重置密码成功! 正在跳转到登录页')

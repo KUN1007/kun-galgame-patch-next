@@ -48,7 +48,7 @@ export const SearchPage = () => {
     const { galgames, total } = await kunFetchPost<{
       galgames: GalgameCard[]
       total: number
-    }>('/search', {
+    }>('/public/search', {
       query: query.split(' ').filter((term) => term.length > 0),
       page,
       limit: 10

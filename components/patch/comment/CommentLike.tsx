@@ -34,9 +34,10 @@ export const CommentLikeButton = ({ commentId, likedBy, commenter }: Props) => {
     }
 
     setLoading(true)
-    const res = await kunFetchPut<KunResponse<boolean>>('/patch/comment/like', {
-      commentId
-    })
+    const res = await kunFetchPut<KunResponse<boolean>>(
+      '/user/patch/comment/like',
+      { commentId }
+    )
 
     setLoading(false)
     useErrorHandler(res, (value) => {

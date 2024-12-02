@@ -30,7 +30,7 @@ export const CardContainer = ({ initialGalgames }: Props) => {
     const { galgames, total } = await kunFetchPost<{
       galgames: GalgameCard[]
       total: number
-    }>('/galgame', {
+    }>('/public/galgame', {
       selectedTypes,
       sortField,
       sortOrder,

@@ -32,9 +32,10 @@ export const UserFollow = ({ uid, name, follow, fullWidth = true }: Props) => {
 
   const handleUnfollow = async () => {
     setFollowing(true)
-    const res = await kunFetchPost<KunResponse<{}>>('/user/follow/unfollow', {
-      uid
-    })
+    const res = await kunFetchPost<KunResponse<{}>>(
+      '/user/user/follow/unfollow',
+      { uid }
+    )
     useErrorHandler(res, () => {
       setIsFollow(false)
       onClose()
@@ -48,9 +49,10 @@ export const UserFollow = ({ uid, name, follow, fullWidth = true }: Props) => {
     if (isFollow) {
       onOpen()
     } else {
-      const res = await kunFetchPost<KunResponse<{}>>('/user/follow/follow', {
-        uid
-      })
+      const res = await kunFetchPost<KunResponse<{}>>(
+        '/user/user/follow/follow',
+        { uid }
+      )
       useErrorHandler(res, () => {})
       setIsFollow(true)
     }

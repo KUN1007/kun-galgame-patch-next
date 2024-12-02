@@ -54,7 +54,7 @@ export const PublishComment = ({
   const onSubmit = async (data: CommentFormData) => {
     setLoading(true)
     const res = await kunFetchPost<KunResponse<PatchComment>>(
-      '/patch/comment',
+      '/user/patch/comment',
       {
         patchId,
         parentId,

@@ -69,7 +69,7 @@ export const KunMilkdownPluginsMenu = ({
       KunResponse<{
         imageLink: string
       }>
-    >('/user/image', formData)
+    >('/user/user/image', formData)
     if (typeof res === 'string') {
       toast.error(res)
       return

@@ -38,7 +38,7 @@ export const PatchPullRequest = ({ pr }: Props) => {
   const [mergeId, setMergeId] = useState(0)
   const handleMergePR = async () => {
     setMerging(true)
-    const res = await kunFetchPut<KunResponse<{}>>('/patch/pr/merge', {
+    const res = await kunFetchPut<KunResponse<{}>>('/user/patch/pr/merge', {
       prId: mergeId
     })
     useErrorHandler(res, () => {
@@ -58,7 +58,7 @@ export const PatchPullRequest = ({ pr }: Props) => {
     }
 
     setDeclining(true)
-    const res = await kunFetchPut<KunResponse<{}>>('/patch/pr/decline', {
+    const res = await kunFetchPut<KunResponse<{}>>('/user/patch/pr/decline', {
       prId,
       note
     })

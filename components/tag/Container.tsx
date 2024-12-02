@@ -26,7 +26,7 @@ export const Container = ({ initialTags }: Props) => {
     const { tags, total } = await kunFetchGet<{
       tags: TagType[]
       total: number
-    }>('/tag/all', {
+    }>('/public/tag/all', {
       page: 1,
       limit: 100
     })
@@ -60,7 +60,7 @@ export const Container = ({ initialTags }: Props) => {
     }
 
     setSearching(true)
-    const response = await kunFetchPost<TagType[]>('/tag/search', {
+    const response = await kunFetchPost<TagType[]>('/public/tag/search', {
       query: query.split(' ').filter((term) => term.length > 0)
     })
     setTags(response)

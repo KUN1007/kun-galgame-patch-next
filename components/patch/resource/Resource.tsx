@@ -59,7 +59,7 @@ export const Resources = ({ initialResources, id }: Props) => {
   const handleDeleteResource = async () => {
     setDeleting(true)
 
-    await kunFetchDelete<KunResponse<{}>>('/patch/resource', {
+    await kunFetchDelete<KunResponse<{}>>('/user/patch/resource', {
       resourceId: deleteResourceId
     })
 

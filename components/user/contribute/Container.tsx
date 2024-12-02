@@ -26,7 +26,7 @@ export const UserContribute = ({ contributes, total, uid }: Props) => {
     const { contributes } = await kunFetchGet<{
       contributes: UserContributeType[]
       total: number
-    }>('/user/profile/contribute', {
+    }>('/public/user/profile/contribute', {
       uid,
       page,
       limit: 20

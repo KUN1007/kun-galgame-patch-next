@@ -49,7 +49,7 @@ export const EditResourceDialog = ({
   const onSubmit = async (data: EditResourceFormData) => {
     setEditing(true)
     const res = await kunFetchPut<KunResponse<PatchResource>>(
-      '/patch/resource',
+      '/user/patch/resource',
       { resourceId: resource.id, ...data }
     )
     useErrorHandler(res, (value) => {

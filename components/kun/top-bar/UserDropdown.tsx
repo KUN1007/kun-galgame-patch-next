@@ -26,40 +26,22 @@ import {
   Sparkles
 } from 'lucide-react'
 import { useUserStore } from '~/store/providers/user'
-import { useState, useEffect } from 'react'
+import { useState } from 'react'
 import { useRouter } from 'next-nprogress-bar'
-import { kunFetchGet, kunFetchPost } from '~/utils/kunFetch'
+import { kunFetchPost } from '~/utils/kunFetch'
 import toast from 'react-hot-toast'
-import { useMounted } from '~/hooks/useMounted'
 import { showKunSooner } from '~/components/kun/Sooner'
 import { useErrorHandler } from '~/hooks/useErrorHandler'
-import type { UserState } from '~/store/userStore'
 
 export const UserDropdown = () => {
   const router = useRouter()
   const { user, setUser, logout } = useUserStore((state) => state)
-  const isMounted = useMounted()
   const [loading, setLoading] = useState(false)
   const { isOpen, onOpen, onOpenChange } = useDisclosure()
 
-  useEffect(() => {
-    if (!isMounted) {
-      return
-    }
-    if (!user.uid) {
-      return
-    }
-
-    const getUserStatus = async () => {
-      const user = await kunFetchGet<UserState>('/user/status')
-      setUser(user)
-    }
-    getUserStatus()
-  }, [isMounted])
-
   const handleLogOut = async () => {
     setLoading(true)
-    await kunFetchPost<KunResponse<{}>>('/user/status/logout')
+    await kunFetchPost<KunResponse<{}>>('/user/user/status/logout')
     setLoading(false)
     logout()
     router.push('/login')
@@ -77,7 +59,7 @@ export const UserDropdown = () => {
       KunResponse<{
         randomMoemoepoints: number
       }>
-    >('/user/status/check-in')
+    >('/user/user/status/check-in')
     useErrorHandler(res, (value) => {
       showKunSooner(
         value

@@ -28,7 +28,7 @@ export const History = ({ patchId, initialHistories, total }: Props) => {
     const { histories } = await kunFetchGet<{
       histories: PatchHistory[]
       total: number
-    }>('/patch/history', {
+    }>('/public/patch/history', {
       page,
       limit: 30,
       patchId: patchId

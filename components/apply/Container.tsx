@@ -30,7 +30,7 @@ export const ApplyContainer = ({ count }: Props) => {
 
   const handleApply = async () => {
     setApplying(true)
-    const res = await kunFetchPost<KunResponse<{}>>('/apply')
+    const res = await kunFetchPost<KunResponse<{}>>('/user/apply')
     useErrorHandler(res, () => {
       toast.success('恭喜您, 您的申请已成功提交')
       router.push('/apply/pending')

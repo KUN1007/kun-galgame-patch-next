@@ -32,7 +32,9 @@ export const KunTopBarUser = () => {
     }
 
     const getUserStatus = async () => {
-      const res = await kunFetchGet<KunResponse<UserState>>('/user/status')
+      const res = await kunFetchGet<KunResponse<UserState>>(
+        '/public/user/status'
+      )
       if (typeof res === 'string') {
         toast.error(res)
         router.push('/login')
@@ -42,7 +44,7 @@ export const KunTopBarUser = () => {
     }
 
     const getUserUnreadMessage = async () => {
-      const message = await kunFetchGet<Message | null>('/message/unread')
+      const message = await kunFetchGet<Message | null>('/user/message/unread')
       if (message) {
         setHasUnread(true)
       }

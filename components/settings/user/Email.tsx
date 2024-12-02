@@ -12,13 +12,11 @@ import { useUserStore } from '~/store/providers/user'
 import { EmailVerification } from '~/components/kun/verification-code/Code'
 import { resetEmailSchema } from '~/validations/user'
 import { kunFetchPost } from '~/utils/kunFetch'
-import { useErrorHandler } from '~/hooks/useErrorHandler'
 import toast from 'react-hot-toast'
 
 type EmailFormData = z.infer<typeof resetEmailSchema>
 
 export const Email = () => {
-  const { user, setUser } = useUserStore((state) => state)
   const [loading, setLoading] = useState(false)
 
   const {
@@ -38,13 +36,12 @@ export const Email = () => {
   const onSubmit = async (data: EmailFormData) => {
     setLoading(true)
 
-    await kunFetchPost('/user/setting/email', data)
+    await kunFetchPost('/user/user/setting/email', data)
 
     setLoading(false)
 
     reset()
     toast.success('更新邮箱成功!')
-    setUser({ ...user, email: data.email })
   }
 
   return (

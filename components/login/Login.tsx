@@ -28,7 +28,10 @@ export const LoginForm = () => {
 
   const onSubmit = async (data: LoginFormData) => {
     setLoading(true)
-    const res = await kunFetchPost<KunResponse<UserState>>('/auth/login', data)
+    const res = await kunFetchPost<KunResponse<UserState>>(
+      '/public/auth/login',
+      data
+    )
     setLoading(false)
 
     useErrorHandler(res, (value) => {

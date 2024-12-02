@@ -92,7 +92,7 @@ export const PatchTagSelector = ({
     const response = await kunFetchGet<{
       tags: TagType[]
       total: number
-    }>('/tag/all', { page: 1, limit: 100 })
+    }>('/public/tag/all', { page: 1, limit: 100 })
     setTags(response.tags)
 
     const commonIds = initialTags
@@ -120,7 +120,7 @@ export const PatchTagSelector = ({
     if (!query.trim()) return
 
     setSearching(true)
-    const response = await kunFetchPost<TagType[]>('/tag/search', {
+    const response = await kunFetchPost<TagType[]>('/public/tag/search', {
       query: query.split(' ').filter(Boolean)
     })
     setTags(response)
@@ -162,14 +162,14 @@ export const PatchTagSelector = ({
     dispatch({ type: 'SET_LOADING', payload: true })
 
     if (state.removedTags.length) {
-      await kunFetchPut<{}>('/patch/introduction/tag', {
+      await kunFetchPut<{}>('/user/patch/introduction/tag', {
         patchId,
         tagId: state.removedTags
       })
     }
 
     if (state.selectedTags.length) {
-      await kunFetchPost<{}>('/patch/introduction/tag', {
+      await kunFetchPost<{}>('/user/patch/introduction/tag', {
         patchId,
         tagId: state.selectedTags
       })

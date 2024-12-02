@@ -50,7 +50,7 @@ export const RewritePatch = () => {
 
     setRewriting(true)
 
-    const res = kunFetchPut<KunResponse<{}>>('/edit', { ...data })
+    const res = kunFetchPut<KunResponse<{}>>('/user/edit', { ...data })
     useErrorHandler(res, async () => {
       router.push(`/patch/${data.id}/introduction`)
     })

@@ -80,7 +80,7 @@ export const CreateTagModal = ({ isOpen, onClose, onSuccess }: Props) => {
     addTag()
 
     setIsSubmitting(true)
-    const res = await kunFetchPost<KunResponse<Tag>>('/tag', data)
+    const res = await kunFetchPost<KunResponse<Tag>>('/user/tag', data)
     useErrorHandler(res, (value) => {
       reset()
       onSuccess(value)
