@@ -25,12 +25,14 @@ interface EditResourceDialogProps {
   resource: PatchResource | null
   onClose: () => void
   onSuccess: (resource: PatchResource) => void
+  type?: 'patch' | 'admin'
 }
 
 export const EditResourceDialog = ({
   resource,
   onClose,
-  onSuccess
+  onSuccess,
+  type = 'patch'
 }: EditResourceDialogProps) => {
   if (!resource) return null
 
@@ -49,7 +51,7 @@ export const EditResourceDialog = ({
   const onSubmit = async (data: EditResourceFormData) => {
     setEditing(true)
     const res = await kunFetchPut<KunResponse<PatchResource>>(
-      '/patch/resource',
+      `/${type}/resource`,
       { resourceId: resource.id, ...data }
     )
     useErrorHandler(res, (value) => {

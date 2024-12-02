@@ -10,20 +10,13 @@ const resourceIdSchema = z.object({
 })
 
 export const deleteResource = async (
-  input: z.infer<typeof resourceIdSchema>,
-  uid: number
+  input: z.infer<typeof resourceIdSchema>
 ) => {
   const patchResource = await prisma.patch_resource.findUnique({
-    where: {
-      id: input.resourceId,
-      user_id: uid
-    }
+    where: { id: input.resourceId }
   })
   if (!patchResource) {
     return '未找到对应的资源'
-  }
-  if (patchResource.user_id !== uid) {
-    return '您没有权限删除该补丁资源'
   }
 
   if (patchResource.storage === 's3') {

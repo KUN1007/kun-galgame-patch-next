@@ -1,51 +1,23 @@
 import { z } from 'zod'
 import { NextRequest, NextResponse } from 'next/server'
-import { kunParseGetQuery } from '~/app/api/utils/parseQuery'
-import { prisma } from '~/prisma/index'
+import {
+  kunParseGetQuery,
+  kunParsePutBody,
+  kunParseDeleteQuery
+} from '~/app/api/utils/parseQuery'
 import { adminPaginationSchema } from '~/validations/admin'
-import type { AdminResource } from '~/types/api/admin'
+import { getPatchResource } from './get'
+import { verifyHeaderCookie } from '~/middleware/_verifyHeaderCookie'
+import { patchResourceUpdateSchema } from '~/validations/patch'
+import { updatePatchResource } from './update'
+import { deleteResource } from './delete'
 
-export const getPatchResource = async (
-  input: z.infer<typeof adminPaginationSchema>
-) => {
-  const { page, limit } = input
-  const offset = (page - 1) * limit
-
-  const [data, total] = await Promise.all([
-    await prisma.patch_resource.findMany({
-      take: limit,
-      skip: offset,
-      orderBy: { created: 'desc' },
-      include: {
-        patch: {
-          select: {
-            name: true
-          }
-        },
-        user: {
-          select: {
-            id: true,
-            name: true,
-            avatar: true
-          }
-        }
-      }
-    }),
-    await prisma.patch_resource.count()
-  ])
-
-  const resources: AdminResource[] = data.map((resource) => ({
-    id: resource.id,
-    patchId: resource.patch_id,
-    patchName: resource.patch.name,
-    storage: resource.storage,
-    user: resource.user,
-    size: resource.size,
-    created: resource.created
-  }))
-
-  return { resources, total }
-}
+const resourceIdSchema = z.object({
+  resourceId: z.coerce
+    .number({ message: '资源 ID 必须为数字' })
+    .min(1)
+    .max(9999999)
+})
 
 export async function GET(req: NextRequest) {
   const input = kunParseGetQuery(req, adminPaginationSchema)
@@ -55,4 +27,38 @@ export async function GET(req: NextRequest) {
 
   const res = await getPatchResource(input)
   return NextResponse.json(res)
+}
+
+export const PUT = async (req: NextRequest) => {
+  const input = await kunParsePutBody(req, patchResourceUpdateSchema)
+  if (typeof input === 'string') {
+    return NextResponse.json(input)
+  }
+  const payload = await verifyHeaderCookie(req)
+  if (!payload) {
+    return NextResponse.json('用户未登录')
+  }
+  if (payload.role < 3) {
+    return NextResponse.json('本页面仅管理员可访问')
+  }
+
+  const response = await updatePatchResource(input)
+  return NextResponse.json(response)
+}
+
+export const DELETE = async (req: NextRequest) => {
+  const input = kunParseDeleteQuery(req, resourceIdSchema)
+  if (typeof input === 'string') {
+    return NextResponse.json(input)
+  }
+  const payload = await verifyHeaderCookie(req)
+  if (!payload) {
+    return NextResponse.json('用户未登录')
+  }
+  if (payload.role < 3) {
+    return NextResponse.json('本页面仅管理员可访问')
+  }
+
+  const response = await deleteResource(input)
+  return NextResponse.json(response)
 }

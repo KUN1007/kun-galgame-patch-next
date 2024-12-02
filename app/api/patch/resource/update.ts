@@ -8,6 +8,15 @@ export const updatePatchResource = async (
   uid: number
 ) => {
   const { resourceId, patchId, content, ...resourceData } = input
+  const resource = await prisma.patch_resource.findUnique({
+    where: { id: resourceId }
+  })
+  if (!resource) {
+    return '未找到该资源'
+  }
+  if (resource.user_id !== uid) {
+    return '您没有权限更改该补丁资源'
+  }
 
   return await prisma.$transaction(async (prisma) => {
     const newResource = await prisma.patch_resource.update({

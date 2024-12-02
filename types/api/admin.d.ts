@@ -1,3 +1,5 @@
+import type { PatchResource } from '~/types/api/patch'
+
 export interface AdminStats {
   title: string
   value: string
@@ -36,14 +38,8 @@ export interface AdminGalgame {
   created: Date | string
 }
 
-export interface AdminResource {
-  id: number
-  patchId: number
+export interface AdminResource extends PatchResource {
   patchName: string
-  storage: string
-  user: KunUser
-  size: string
-  created: Date | string
 }
 
 export interface AdminComment {

@@ -1,6 +1,5 @@
 'use client'
 
-import { useState } from 'react'
 import {
   Dropdown,
   DropdownTrigger,
@@ -47,10 +46,12 @@ export const FilterBar = ({
             selectedKeys={selectedTypes}
             className="max-w-xs"
             onSelectionChange={(key) => {
-              if (key.currentKey === key.anchorKey) {
-                return
+              const keyArray = Array.from(key) as string[]
+              if (keyArray.length) {
+                setSelectedTypes(Array.from(key) as string[])
+              } else {
+                setSelectedTypes(['all'])
               }
-              setSelectedTypes(Array.from(key) as string[])
             }}
             startContent={<Filter className="w-4 h-4 text-default-400" />}
             classNames={{
