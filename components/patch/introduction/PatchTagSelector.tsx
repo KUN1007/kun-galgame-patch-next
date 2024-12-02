@@ -87,6 +87,10 @@ export const PatchTagSelector = ({
   })
 
   const fetchTags = async () => {
+    if (!isOpen) {
+      return
+    }
+
     dispatch({ type: 'SET_LOADING', payload: true })
 
     const response = await kunFetchGet<{
@@ -103,10 +107,10 @@ export const PatchTagSelector = ({
   }
 
   useEffect(() => {
-    if (isMounted) {
+    if (isMounted && isOpen) {
       fetchTags()
     }
-  }, [isMounted])
+  }, [isMounted, isOpen])
 
   useEffect(() => {
     if (debouncedQuery) {
