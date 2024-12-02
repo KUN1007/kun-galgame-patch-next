@@ -2,7 +2,7 @@ import { z } from 'zod'
 import { prisma } from '~/prisma/index'
 import { generatePatchDiff } from './_helpers'
 import { patchUpdateSchema } from '~/validations/edit'
-import { createDedupMessage } from '../utils/message'
+import { createDedupMessage } from '~/app/api/utils/message'
 import type { PatchUpdate } from '~/types/api/patch'
 
 export const updatePatch = async (

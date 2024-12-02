@@ -12,7 +12,7 @@ export default async function Resource({
   const { resources, total } = await kunServerFetchGet<{
     resources: UserResourceType[]
     total: number
-  }>('/user/profile/resource', {
+  }>('/public/user/profile/resource', {
     uid: Number(id),
     page: 1,
     limit: 20

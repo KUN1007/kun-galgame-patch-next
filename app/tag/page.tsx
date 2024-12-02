@@ -6,7 +6,7 @@ export default async function Kun() {
   const { tags } = await kunServerFetchGet<{
     tags: Tag[]
     total: number
-  }>('/tag/all', {
+  }>('/public/tag/all', {
     page: 1,
     limit: 100
   })

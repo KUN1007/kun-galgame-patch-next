@@ -12,7 +12,7 @@ export default async function PatchIntroduction({ params }: Props) {
   const { id } = await params
 
   const intro = await kunServerFetchGet<KunResponse<PatchIntroduction>>(
-    '/patch/introduction',
+    '/public/patch/introduction',
     { patchId: Number(id) }
   )
   if (!intro || typeof intro === 'string') {
@@ -20,10 +20,8 @@ export default async function PatchIntroduction({ params }: Props) {
   }
 
   const contributors = await kunServerFetchGet<KunUser[]>(
-    '/patch/contributor',
-    {
-      patchId: Number(id)
-    }
+    '/public/patch/contributor',
+    { patchId: Number(id) }
   )
   return (
     <>

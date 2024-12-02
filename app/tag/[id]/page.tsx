@@ -20,7 +20,7 @@ export default async function Kun({ params }: Props) {
   const { galgames, total } = await kunServerFetchGet<{
     galgames: GalgameCard[]
     total: number
-  }>('/tag/galgame', {
+  }>('/public/tag/galgame', {
     tagId: Number(id),
     page: 1,
     limit: 24

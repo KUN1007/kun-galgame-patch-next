@@ -12,7 +12,7 @@ export default async function Kun({
   const { comments, total } = await kunServerFetchGet<{
     comments: UserCommentType[]
     total: number
-  }>('/user/profile/comment', {
+  }>('/public/user/profile/comment', {
     uid: Number(id),
     page: 1,
     limit: 20

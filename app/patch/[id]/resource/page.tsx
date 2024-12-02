@@ -12,7 +12,7 @@ export default async function PatchResource({
   const { id } = await params
 
   const resources = await kunServerFetchGet<PatchResource[]>(
-    '/patch/resource',
+    '/public/patch/resource',
     { patchId: Number(id) }
   )
 

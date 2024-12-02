@@ -10,9 +10,10 @@ interface Props {
 export default async function PatchComment({ params }: Props) {
   const { id } = await params
 
-  const comments = await kunServerFetchGet<PatchComment[]>('/patch/comment', {
-    patchId: Number(id)
-  })
+  const comments = await kunServerFetchGet<PatchComment[]>(
+    '/public/patch/comment',
+    { patchId: Number(id) }
+  )
 
   return (
     <Card>

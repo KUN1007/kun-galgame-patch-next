@@ -16,7 +16,7 @@ export default async function Patch({
     return <ErrorComponent error={'提取页面参数错误'} />
   }
 
-  const res = await kunServerFetchGet<KunResponse<Patch>>('/patch', {
+  const res = await kunServerFetchGet<KunResponse<Patch>>('/public/patch', {
     patchId: Number(id)
   })
   if (!res || typeof res === 'string') {

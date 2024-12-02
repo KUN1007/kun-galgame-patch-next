@@ -12,7 +12,7 @@ export default async function Kun({
   const { contributes, total } = await kunServerFetchGet<{
     contributes: UserContributeType[]
     total: number
-  }>('/user/profile/contribute', {
+  }>('/public/user/profile/contribute', {
     uid: Number(id),
     page: 1,
     limit: 20

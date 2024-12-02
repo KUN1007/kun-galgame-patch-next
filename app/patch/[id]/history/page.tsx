@@ -15,7 +15,7 @@ export default async function PatchHistory({ params }: Props) {
   const { histories, total } = await kunServerFetchGet<{
     histories: PatchHistory[]
     total: number
-  }>('/patch/history', {
+  }>('/public/patch/history', {
     page: 1,
     limit: 30,
     patchId: Number(id)
@@ -25,7 +25,7 @@ export default async function PatchHistory({ params }: Props) {
   }
 
   const contributors = await kunServerFetchGet<KunUser[]>(
-    '/patch/contributor',
+    '/public/patch/contributor',
     { patchId: Number(id) }
   )
 

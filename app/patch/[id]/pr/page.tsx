@@ -9,9 +9,10 @@ interface Props {
 export default async function PatchPR({ params }: Props) {
   const { id } = await params
 
-  const pr = await kunServerFetchGet<PatchPullRequestType[]>('/patch/pr', {
-    patchId: Number(id)
-  })
+  const pr = await kunServerFetchGet<PatchPullRequestType[]>(
+    '/public/patch/pr',
+    { patchId: Number(id) }
+  )
 
   return <PatchPullRequest pr={pr} />
 }

@@ -18,7 +18,7 @@ export default async function Patch({
   }
 
   const user = await kunServerFetchGet<KunResponse<UserInfo>>(
-    '/user/status/info',
+    '/public/user/status/info',
     { id: Number(id) }
   )
   if (!user || typeof user === 'string') {

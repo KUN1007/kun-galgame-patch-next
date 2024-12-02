@@ -9,7 +9,7 @@ export default async function Kun() {
       messages: Message[]
       total: number
     }>
-  >('/message/all', { page: 1, limit: 30 })
+  >('/user/message/all', { page: 1, limit: 30 })
 
   if (typeof response === 'string') {
     return <ErrorComponent error={response} />

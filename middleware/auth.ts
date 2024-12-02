@@ -28,17 +28,17 @@ export const config = {
 }
 
 export const kunAuthMiddleware = async (request: NextRequest) => {
-  const pathname = request.nextUrl.pathname
+  // const pathname = request.nextUrl.pathname
 
-  const requiredRoles = protectedRoutes.get(pathname)
-  if (!requiredRoles) {
-    return NextResponse.next()
-  }
+  // const requiredRoles = protectedRoutes.get(pathname)
+  // if (!requiredRoles) {
+  //   return NextResponse.next()
+  // }
 
-  const payload = await verifyHeaderCookie(request)
-  if (!payload) {
-    return '用户未认证'
-  }
+  // const payload = await verifyHeaderCookie(request)
+  // if (!payload) {
+  //   return '用户未认证'
+  // }
 
   // if (!requiredRoles.includes(userRole)) {
   //   return new NextResponse(

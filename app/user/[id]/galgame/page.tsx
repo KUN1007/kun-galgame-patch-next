@@ -11,7 +11,7 @@ export default async function Galgame({
   const { galgames, total } = await kunServerFetchGet<{
     galgames: GalgameCard[]
     total: number
-  }>('/user/profile/galgame', {
+  }>('/public/user/profile/galgame', {
     uid: Number(id),
     page: 1,
     limit: 20

@@ -9,7 +9,7 @@ export default async function Kun() {
       messages: Message[]
       total: number
     }>
-  >('/message/all', {
+  >('/user/message/all', {
     type: 'follow',
     page: 1,
     limit: 30

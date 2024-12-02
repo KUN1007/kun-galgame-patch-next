@@ -6,7 +6,7 @@ export default async function Kun() {
   const { count, role } = await kunServerFetchGet<{
     count: number
     role: number
-  }>('/apply/status')
+  }>('/user/apply/status')
 
   if (role > 1) {
     redirect('/apply/success')

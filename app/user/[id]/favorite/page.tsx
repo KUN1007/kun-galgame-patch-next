@@ -11,7 +11,7 @@ export default async function Kun({
   const { favorites, total } = await kunServerFetchGet<{
     favorites: GalgameCard[]
     total: number
-  }>('/user/profile/favorite', {
+  }>('/public/user/profile/favorite', {
     uid: Number(id),
     page: 1,
     limit: 20
