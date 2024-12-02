@@ -1,7 +1,6 @@
 import { z } from 'zod'
 import { NextRequest, NextResponse } from 'next/server'
 import {
-  kunParseGetQuery,
   kunParsePostBody,
   kunParsePutBody,
   kunParseDeleteQuery
@@ -11,14 +10,9 @@ import {
   patchResourceCreateSchema,
   patchResourceUpdateSchema
 } from '~/validations/patch'
-import { getPatchResource } from './get'
 import { createPatchResource } from './create'
 import { updatePatchResource } from './update'
 import { deleteResource } from './delete'
-
-const patchIdSchema = z.object({
-  patchId: z.coerce.number().min(1).max(9999999)
-})
 
 const resourceIdSchema = z.object({
   resourceId: z.coerce
@@ -26,17 +20,6 @@ const resourceIdSchema = z.object({
     .min(1)
     .max(9999999)
 })
-
-export const GET = async (req: NextRequest) => {
-  const input = kunParseGetQuery(req, patchIdSchema)
-  if (typeof input === 'string') {
-    return NextResponse.json(input)
-  }
-  const payload = await verifyHeaderCookie(req)
-
-  const response = await getPatchResource(input, payload?.uid ?? 0)
-  return NextResponse.json(response)
-}
 
 export const POST = async (req: NextRequest) => {
   const input = await kunParsePostBody(req, patchResourceCreateSchema)
