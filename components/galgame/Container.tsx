@@ -18,7 +18,7 @@ export const CardContainer = ({ initialGalgames }: Props) => {
   const [galgames, setGalgames] = useState<GalgameCard[]>(initialGalgames)
   const [total, setTotal] = useState(0)
   const [loading, setLoading] = useState(false)
-  const [selectedTypes, setSelectedTypes] = useState<string[]>(['全部类型'])
+  const [selectedTypes, setSelectedTypes] = useState<string[]>(['all'])
   const [sortField, setSortField] = useState<SortOption>('created')
   const [sortOrder, setSortOrder] = useState<SortDirection>('desc')
   const isMounted = useMounted()

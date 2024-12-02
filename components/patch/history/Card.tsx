@@ -4,6 +4,7 @@ import { ScrollShadow } from '@nextui-org/scroll-shadow'
 import { formatDistanceToNow } from '~/utils/formatDistanceToNow'
 import { HighlightedText } from '~/components/patch/DiffContent'
 import { Avatar } from '@nextui-org/avatar'
+import { HISTORY_ACTION_TYPE_MAP, HISTORY_TYPE_MAP } from '~/constants/history'
 import type { PatchHistory } from '~/types/api/patch'
 
 interface Props {
@@ -24,7 +25,8 @@ export const HistoryCard = ({ history }: Props) => {
             <div className="flex items-start justify-between">
               <div>
                 <h4 className="font-semibold">
-                  {history.action} {history.type}
+                  {HISTORY_ACTION_TYPE_MAP[history.action]}{' '}
+                  {HISTORY_TYPE_MAP[history.type]}
                 </h4>
                 <p className="text-sm text-muted-foreground">
                   {history.user.name} • {formatDistanceToNow(history.created)}

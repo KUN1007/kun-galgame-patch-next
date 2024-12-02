@@ -6,7 +6,7 @@ export default async function Kun() {
     galgames: GalgameCard[]
     total: number
   }>('/galgame', {
-    selectedTypes: ['全部类型'],
+    selectedTypes: ['all'],
     sortField: 'created',
     sortOrder: 'desc',
     page: 1,

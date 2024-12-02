@@ -54,8 +54,8 @@ export const createPatch = async (
 
     await prisma.patch_history.create({
       data: {
-        action: '创建了',
-        type: '补丁',
+        action: 'create',
+        type: 'galgame',
         content: name,
         user_id: uid,
         patch_id: patch.id

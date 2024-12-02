@@ -9,8 +9,7 @@ export const getGalgame = async (input: z.infer<typeof galgameSchema>) => {
 
   const offset = (page - 1) * limit
 
-  const isSelectAll =
-    !selectedTypes.length || selectedTypes.includes('全部类型')
+  const isSelectAll = !selectedTypes.length || selectedTypes.includes('all')
   const typeQuery = isSelectAll
     ? {}
     : {

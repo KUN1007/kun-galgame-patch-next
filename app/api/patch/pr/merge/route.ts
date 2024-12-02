@@ -53,8 +53,8 @@ export const mergePullRequest = async (
 
     await prisma.patch_history.create({
       data: {
-        action: '合并了',
-        type: '更新请求',
+        action: 'merge',
+        type: 'pr',
         content: `#${pullRequest.index}`,
         user_id: uid,
         patch_id: pullRequest.patch_id

@@ -33,8 +33,8 @@ export const handleAddPatchTag = async (
 
     await prisma.patch_history.create({
       data: {
-        action: '增加了',
-        type: '标签',
+        action: 'create',
+        type: 'tag',
         content: tagsNameArray.toString(),
         user_id: uid,
         patch_id: patchId
@@ -85,8 +85,8 @@ export const handleRemovePatchTag = async (
 
     await prisma.patch_history.create({
       data: {
-        action: '删除了',
-        type: '标签',
+        action: 'delete',
+        type: 'tag',
         content: tagsNameArray.toString(),
         user_id: uid,
         patch_id: patchId

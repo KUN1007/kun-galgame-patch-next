@@ -20,8 +20,8 @@ export const updatePatchBanner = async (
 
   await prisma.patch_history.create({
     data: {
-      action: '更新了',
-      type: '预览图',
+      action: 'update',
+      type: 'banner',
       content: '',
       user_id: uid,
       patch_id: patchId

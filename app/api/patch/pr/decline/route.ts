@@ -39,8 +39,8 @@ export const declinePullRequest = async (
 
     await prisma.patch_history.create({
       data: {
-        action: '拒绝了',
-        type: '更新请求',
+        action: 'decline',
+        type: 'pr',
         content: `#${pullRequest.index}`,
         user_id: uid,
         patch_id: pullRequest.patch_id

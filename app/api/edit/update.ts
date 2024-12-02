@@ -37,8 +37,8 @@ export const updatePatch = async (
 
       await prisma.patch_history.create({
         data: {
-          action: '更新了',
-          type: '补丁',
+          action: 'update',
+          type: 'galgame',
           content: diffContent,
           user_id: currentUserUid,
           patch_id: patch.id
@@ -63,8 +63,8 @@ export const updatePatch = async (
 
       await prisma.patch_history.create({
         data: {
-          action: '创建了',
-          type: '更新请求',
+          action: 'create',
+          type: 'pr',
           content: diffContent,
           user_id: currentUserUid,
           patch_id: patch.id

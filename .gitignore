@@ -40,3 +40,6 @@ next-env.d.ts
 
 # uploads
 /uploads
+
+# baclup
+/backup
