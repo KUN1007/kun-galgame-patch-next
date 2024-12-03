@@ -6,7 +6,7 @@ interface Props {
   params: Promise<{ id: string }>
 }
 
-export default async function PatchPR({ params }: Props) {
+export default async function Kun({ params }: Props) {
   const { id } = await params
 
   const pr = await kunServerFetchGet<PatchPullRequestType[]>('/patch/pr', {

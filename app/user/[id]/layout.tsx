@@ -5,7 +5,7 @@ import { UserStats } from '~/components/user/Stats'
 import { UserActivity } from '~/components/user/Activity'
 import type { UserInfo } from '~/types/api/user'
 
-export default async function Patch({
+export default async function Kun({
   params,
   children
 }: {

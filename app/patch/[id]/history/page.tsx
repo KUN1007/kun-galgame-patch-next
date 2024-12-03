@@ -9,7 +9,7 @@ interface Props {
   params: Promise<{ id: string }>
 }
 
-export default async function PatchHistory({ params }: Props) {
+export default async function Kun({ params }: Props) {
   const { id } = await params
 
   const { histories, total } = await kunServerFetchGet<{

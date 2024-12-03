@@ -3,7 +3,7 @@ import { ErrorComponent } from '~/components/error/ErrorComponent'
 import { kunServerFetchGet } from '~/utils/kunServerFetch'
 import type { Patch } from '~/types/api/patch'
 
-export default async function Patch({
+export default async function Kun({
   params,
   children
 }: {

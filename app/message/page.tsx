@@ -1,5 +1,5 @@
 import { redirect } from 'next/navigation'
 
-export default async function Page() {
+export default async function Kun() {
   redirect('/message/notice')
 }

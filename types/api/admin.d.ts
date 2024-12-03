@@ -51,3 +51,11 @@ export interface AdminComment {
   like: number
   created: Date | string
 }
+
+export interface AdminLog {
+  id: number
+  type: string
+  user: KunUser
+  content: string
+  created: Date | string
+}

@@ -15,11 +15,7 @@ export const adminUpdateUserSchema = z.object({
   role: z.coerce.number().min(1).max(3),
   status: z.coerce.number().min(0).max(2),
   dailyImageCount: z.coerce.number().min(0).max(50),
-  bio: z
-    .string()
-    .trim()
-    .min(1, { message: '您的签名最少需要 1 个字符' })
-    .max(107, { message: '签名不能超过 107 个字符' })
+  bio: z.string().trim().max(107, { message: '签名不能超过 107 个字符' })
 })
 
 export const approveCreatorSchema = z.object({

@@ -8,7 +8,7 @@ interface Props {
   params: Promise<{ id: string }>
 }
 
-export default async function PatchIntroduction({ params }: Props) {
+export default async function Kun({ params }: Props) {
   const { id } = await params
 
   const intro = await kunServerFetchGet<KunResponse<PatchIntroduction>>(

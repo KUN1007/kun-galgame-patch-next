@@ -4,7 +4,7 @@ import { Resources } from '~/components/patch/resource/Resource'
 import { kunServerFetchGet } from '~/utils/kunServerFetch'
 import type { PatchResource } from '~/types/api/patch'
 
-export default async function PatchResource({
+export default async function Kun({
   params
 }: {
   params: Promise<{ id: string }>

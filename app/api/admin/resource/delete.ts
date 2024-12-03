@@ -44,7 +44,7 @@ export const deleteResource = async (
 
     await prisma.admin_log.create({
       data: {
-        type: 'approve',
+        type: 'delete',
         user_id: uid,
         content: `管理员 ${admin.name} 删除了一个补丁资源\n\nGalgame 名:\n${patchResource.patch.name}\n\n补丁资源信息:\n${JSON.stringify(patchResource)}`
       }

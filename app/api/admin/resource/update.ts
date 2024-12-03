@@ -38,7 +38,7 @@ export const updatePatchResource = async (
 
     await prisma.admin_log.create({
       data: {
-        type: 'approve',
+        type: 'update',
         user_id: uid,
         content: `管理员 ${admin.name} 删除了一个补丁资源信息\n\n原补丁资源信息:\n${JSON.stringify(resource)}}`
       }

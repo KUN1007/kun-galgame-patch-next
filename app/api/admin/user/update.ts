@@ -12,6 +12,7 @@ export const updateUser = async (
   const user = await prisma.user.findUnique({
     where: { id: uid },
     select: {
+      id: true,
       daily_image_count: true,
       name: true,
       bio: true,
@@ -46,9 +47,9 @@ export const updateUser = async (
 
     await prisma.admin_log.create({
       data: {
-        type: 'approve',
-        user_id: uid,
-        content: `管理员 ${admin.name} 更改了一个用户的信息\n\n更改内容:\n${input}\n\n原用户信息:\n${JSON.stringify(user)}}`
+        type: 'update',
+        user_id: adminUid,
+        content: `管理员 ${admin.name} 更改了一个用户的信息\n\n更改内容:\n${JSON.stringify(input)}\n\n原用户信息:\n${JSON.stringify(user)}}`
       }
     })
 

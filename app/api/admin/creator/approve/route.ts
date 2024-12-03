@@ -57,7 +57,7 @@ export const approveCreator = async (
       data: {
         type: 'approve',
         user_id: adminUid,
-        content: `管理员 ${admin.name} 同意了一位创作者申请\n\n创作者信息:\n用户名:${creator.name}\n已发布补丁数:${creator._count.patch_resource}}`
+        content: `管理员 ${admin.name} 同意了一位创作者申请\n\n创作者信息:\n用户名:${creator.name}\n已发布补丁数:${creator._count.patch_resource}`
       }
     })
 

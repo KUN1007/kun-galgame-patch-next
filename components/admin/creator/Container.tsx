@@ -28,7 +28,7 @@ export const Creator = ({ initialCreators, total }: Props) => {
   const [creators, setCreators] = useState<AdminCreator[]>(initialCreators)
 
   return (
-    <div className="p-8">
+    <div className="space-y-6">
       <h1 className="mb-6 text-2xl font-bold">创作者管理</h1>
       <Table aria-label="创作者管理">
         <TableHeader columns={columns}>

@@ -7,8 +7,8 @@ import { usePathname } from 'next/navigation'
 import {
   Users,
   BadgeCheck,
-  BookOpen,
   MessageSquare,
+  FileClock,
   Settings,
   ChevronLeft,
   ChevronRight,
@@ -42,6 +42,11 @@ const menuItems = [
     name: '评论管理',
     href: '/admin/comment',
     icon: MessageSquare
+  },
+  {
+    name: '管理日志',
+    href: '/admin/log',
+    icon: FileClock
   },
   {
     name: '网站设置',

@@ -50,9 +50,9 @@ export const approveCreator = async (
 
     await prisma.admin_log.create({
       data: {
-        type: 'approve',
+        type: 'decline',
         user_id: adminUid,
-        content: `管理员 ${admin.name} 拒绝了一位创作者申请\n\n拒绝原因:${reason}\n创作者信息:\n用户名:${creator.name}\n已发布补丁数:${creator._count.patch_resource}}`
+        content: `管理员 ${admin.name} 拒绝了一位创作者申请\n\n拒绝原因:${reason}\n创作者信息:\n用户名:${creator.name}\n已发布补丁数:${creator._count.patch_resource}`
       }
     })
 

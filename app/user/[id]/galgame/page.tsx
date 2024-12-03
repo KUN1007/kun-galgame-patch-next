@@ -1,7 +1,7 @@
 import { UserGalgame } from '~/components/user/galgame/Container'
 import { kunServerFetchGet } from '~/utils/kunServerFetch'
 
-export default async function Galgame({
+export default async function Kun({
   params
 }: {
   params: Promise<{ id: string }>

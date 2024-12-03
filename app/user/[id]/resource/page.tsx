@@ -2,7 +2,7 @@ import { UserResource } from '~/components/user/resource/Container'
 import { kunServerFetchGet } from '~/utils/kunServerFetch'
 import type { UserResource as UserResourceType } from '~/types/api/user'
 
-export default async function Resource({
+export default async function Kun({
   params
 }: {
   params: Promise<{ id: string }>
