@@ -43,7 +43,7 @@ export const TableOfContents = () => {
   }, [])
 
   return (
-    <nav className="hidden w-64 p-4 lg:block">
+    <nav className="hidden w-64 lg:block">
       <h2 className="mb-4 text-lg font-semibold">本页面索引</h2>
       <ul className="space-y-2">
         {headings.map((heading) => (

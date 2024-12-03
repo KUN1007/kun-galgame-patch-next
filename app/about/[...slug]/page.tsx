@@ -1,7 +1,5 @@
 import { getPostBySlug, getAdjacentPosts } from '~/lib/mdx/getPosts'
-import { getDirectoryTree } from '~/lib/mdx/directoryTree'
 import { MDXRemote } from 'next-mdx-remote/rsc'
-import { KunSidebar } from '~/components/about/Sidebar'
 import { TableOfContents } from '~/components/about/TableOfContents'
 import { KunBottomNavigation } from '~/components/about/Navigation'
 
@@ -15,13 +13,11 @@ export default async function Kun({ params }: PostPageProps) {
   const { slug } = await params
   const url = slug.join('/')
   const { content, frontmatter } = getPostBySlug(url)
-  const tree = getDirectoryTree()
   const { prev, next } = getAdjacentPosts(url)
 
   return (
     <div className="flex w-full">
-      <KunSidebar tree={tree} />
-      <div className="flex-1 max-w-3xl px-4 py-8 mx-auto">
+      <div className="w-full max-w-3xl">
         <article className="mx-auto prose dark:prose-invert">
           <MDXRemote source={content} />
         </article>
