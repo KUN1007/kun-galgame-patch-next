@@ -1,13 +1,13 @@
-export interface PostMetadata {
+export interface KunPostMetadata {
   title: string
   date: string
   slug: string
   path: string
 }
 
-export interface TreeNode {
+export interface KunTreeNode {
   name: string
   path: string
-  children?: TreeNode[]
+  children?: KunTreeNode[]
   type: 'file' | 'directory'
 }

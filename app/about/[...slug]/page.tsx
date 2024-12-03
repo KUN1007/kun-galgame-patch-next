@@ -22,7 +22,7 @@ export default async function Kun({ params }: PostPageProps) {
     <div className="flex w-full">
       <KunSidebar tree={tree} />
       <div className="flex-1 max-w-3xl px-4 py-8 mx-auto">
-        <article className="prose dark:prose-invert max-w-none">
+        <article className="mx-auto prose dark:prose-invert">
           <MDXRemote source={content} />
         </article>
         <KunBottomNavigation prev={prev} next={next} />

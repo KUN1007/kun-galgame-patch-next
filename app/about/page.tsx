@@ -1,32 +1,34 @@
 import { getAllPosts } from '~/lib/mdx/getPosts'
 import { getDirectoryTree } from '~/lib/mdx/directoryTree'
 import { KunSidebar } from '~/components/about/Sidebar'
-import { Card, CardBody } from '@nextui-org/card'
-import Link from 'next/link'
+import { KunAboutHeader } from '~/components/about/Header'
+import { KunAboutCard } from '~/components/about/Card'
 
 export default function Kun() {
   const posts = getAllPosts()
   const tree = getDirectoryTree()
 
+  // const filteredPosts = posts.filter((post) =>
+  //   post.title.toLowerCase().includes(searchQuery.toLowerCase())
+  // )
+
   return (
-    <div className="flex">
+    <div className="flex w-full">
       <KunSidebar tree={tree} />
 
-      <div className="flex-1 max-w-3xl px-4 py-8 mx-auto">
-        <h1 className="mb-8 text-4xl font-bold">About</h1>
+      <div className="flex-1 max-w-4xl px-6 py-8 mx-auto">
+        <KunAboutHeader />
+
         <div className="grid gap-4">
           {posts.map((post) => (
-            <Link key={post.slug} href={`/about/${post.slug}`}>
-              <Card>
-                <CardBody>
-                  <h2 className="mb-2 text-xl font-semibold">{post.title}</h2>
-                  <time className="text-sm text-default-500">
-                    {new Date(post.date).toLocaleDateString()}
-                  </time>
-                </CardBody>
-              </Card>
-            </Link>
+            <KunAboutCard key={post.slug} post={post} />
           ))}
+
+          {/* {filteredPosts.length === 0 && (
+            <div className="py-12 text-center text-default-500">
+              No posts found matching your search criteria.
+            </div>
+          )} */}
         </div>
       </div>
     </div>

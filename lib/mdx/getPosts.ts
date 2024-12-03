@@ -1,12 +1,12 @@
 import fs from 'fs'
 import path from 'path'
 import matter from 'gray-matter'
-import { PostMetadata } from './types'
+import { KunPostMetadata } from './types'
 
 const POSTS_PATH = path.join(process.cwd(), 'posts')
 
 export const getAllPosts = () => {
-  const posts: PostMetadata[] = []
+  const posts: KunPostMetadata[] = []
 
   const traverseDirectory = (currentPath: string, basePath: string = '') => {
     const files = fs.readdirSync(currentPath)

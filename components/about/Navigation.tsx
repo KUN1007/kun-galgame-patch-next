@@ -1,13 +1,13 @@
 'use client'
 
-import { PostMetadata } from '~/lib/mdx/types'
+import { KunPostMetadata } from '~/lib/mdx/types'
 import { Button } from '@nextui-org/react'
 import { ChevronLeft, ChevronRight } from 'lucide-react'
 import Link from 'next/link'
 
 interface NavigationProps {
-  prev: PostMetadata | null
-  next: PostMetadata | null
+  prev: KunPostMetadata | null
+  next: KunPostMetadata | null
 }
 
 export const KunBottomNavigation = ({ prev, next }: NavigationProps) => {

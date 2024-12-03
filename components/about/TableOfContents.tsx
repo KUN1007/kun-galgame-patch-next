@@ -13,13 +13,13 @@ export const TableOfContents = () => {
   const [activeId, setActiveId] = useState('')
 
   useEffect(() => {
-    const elements = Array.from(document.querySelectorAll('h1, h2, h3')).map(
-      (element) => ({
-        id: element.id,
-        text: element.textContent || '',
-        level: Number(element.tagName.charAt(1))
-      })
-    )
+    const elements = Array.from(
+      document.querySelectorAll('article h1, article h2, article h3')
+    ).map((element) => ({
+      id: element.id,
+      text: element.textContent || '',
+      level: Number(element.tagName.charAt(1))
+    }))
     setHeadings(elements)
 
     const observer = new IntersectionObserver(
@@ -33,16 +33,18 @@ export const TableOfContents = () => {
       { rootMargin: '0px 0px -80% 0px' }
     )
 
-    document.querySelectorAll('h1, h2, h3').forEach((heading) => {
-      observer.observe(heading)
-    })
+    document
+      .querySelectorAll('article h1, article h2, article h3')
+      .forEach((heading) => {
+        observer.observe(heading)
+      })
 
     return () => observer.disconnect()
   }, [])
 
   return (
     <nav className="hidden w-64 p-4 lg:block">
-      <h2 className="mb-4 text-lg font-semibold">On this page</h2>
+      <h2 className="mb-4 text-lg font-semibold">本页面索引</h2>
       <ul className="space-y-2">
         {headings.map((heading) => (
           <li

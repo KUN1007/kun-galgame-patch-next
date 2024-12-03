@@ -1,11 +1,14 @@
 import fs from 'fs'
 import path from 'path'
-import { TreeNode } from './types'
+import { KunTreeNode } from './types'
 
 const POSTS_PATH = path.join(process.cwd(), 'posts')
 
-export const getDirectoryTree = (): TreeNode => {
-  function buildTree(currentPath: string, baseName: string): TreeNode | null {
+export const getDirectoryTree = (): KunTreeNode => {
+  function buildTree(
+    currentPath: string,
+    baseName: string
+  ): KunTreeNode | null {
     const stats = fs.statSync(currentPath)
 
     if (stats.isFile() && currentPath.endsWith('.mdx')) {
@@ -23,7 +26,7 @@ export const getDirectoryTree = (): TreeNode => {
       const children = fs
         .readdirSync(currentPath)
         .map((child) => buildTree(path.join(currentPath, child), child))
-        .filter((child): child is TreeNode => child !== null)
+        .filter((child): child is KunTreeNode => child !== null)
 
       return {
         name: baseName,
@@ -36,5 +39,5 @@ export const getDirectoryTree = (): TreeNode => {
     return null
   }
 
-  return buildTree(POSTS_PATH, 'about') as TreeNode
+  return buildTree(POSTS_PATH, 'about') as KunTreeNode
 }
