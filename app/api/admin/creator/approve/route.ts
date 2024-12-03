@@ -7,7 +7,8 @@ import { kunParsePutBody } from '~/app/api/utils/parseQuery'
 import { approveCreatorSchema } from '~/validations/admin'
 
 export const approveCreator = async (
-  input: z.infer<typeof approveCreatorSchema>
+  input: z.infer<typeof approveCreatorSchema>,
+  adminUid: number
 ) => {
   const { messageId, uid } = input
   const message = await prisma.user_message.findUnique({
@@ -15,6 +16,23 @@ export const approveCreator = async (
   })
   if (!message) {
     return '未找到该创作者请求'
+  }
+  const creator = await prisma.user.findUnique({
+    where: { id: message.sender_id ?? 0 },
+    include: {
+      _count: {
+        select: {
+          patch_resource: true
+        }
+      }
+    }
+  })
+  if (!creator) {
+    return '未找到该创作者'
+  }
+  const admin = await prisma.user.findUnique({ where: { id: adminUid } })
+  if (!admin) {
+    return '未找到该管理员'
   }
 
   return prisma.$transaction(async (prisma) => {
@@ -35,6 +53,14 @@ export const approveCreator = async (
       recipient_id: message.sender_id ?? undefined
     })
 
+    await prisma.admin_log.create({
+      data: {
+        type: 'approve',
+        user_id: adminUid,
+        content: `管理员 ${admin.name} 同意了一位创作者申请\n\n创作者信息:\n用户名:${creator.name}\n已发布补丁数:${creator._count.patch_resource}}`
+      }
+    })
+
     return {}
   })
 }
@@ -52,6 +78,6 @@ export const PUT = async (req: NextRequest) => {
     return NextResponse.json('本页面仅管理员可访问')
   }
 
-  const response = await approveCreator(input)
+  const response = await approveCreator(input, payload.uid)
   return NextResponse.json(response)
 }

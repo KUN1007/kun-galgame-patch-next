@@ -3,8 +3,14 @@ import { prisma } from '~/prisma/index'
 import { patchResourceUpdateSchema } from '~/validations/patch'
 
 export const updatePatchResource = async (
-  input: z.infer<typeof patchResourceUpdateSchema>
+  input: z.infer<typeof patchResourceUpdateSchema>,
+  uid: number
 ) => {
+  const admin = await prisma.user.findUnique({ where: { id: uid } })
+  if (!admin) {
+    return '未找到该管理员'
+  }
+
   const { resourceId, patchId, content, ...resourceData } = input
   const resource = await prisma.patch_resource.findUnique({
     where: { id: resourceId }
@@ -27,6 +33,14 @@ export const updatePatchResource = async (
             }
           }
         }
+      }
+    })
+
+    await prisma.admin_log.create({
+      data: {
+        type: 'approve',
+        user_id: uid,
+        content: `管理员 ${admin.name} 删除了一个补丁资源信息\n\n原补丁资源信息:\n${JSON.stringify(resource)}}`
       }
     })
 

@@ -26,6 +26,8 @@ model user {
   daily_upload_size Float  @default(0)
   last_login_time   String @default("")
 
+  admin_log admin_log[]
+
   patch_favorite      user_patch_favorite_relation[]
   patch_contribute    user_patch_contribute_relation[]
   patch_comment_like  user_patch_comment_like_relation[]
@@ -40,6 +42,19 @@ model user {
   patch_pull_request patch_pull_request[]   @relation("user_patch_pull_request")
   send_message       user_message[]         @relation("user_send_message")
   receive_message    user_message[]         @relation("user_receive_message")
+
+  created DateTime @default(now())
+  updated DateTime @updatedAt
+}
+
+model admin_log {
+  id      Int    @id @default(autoincrement())
+  type    String
+  content String @db.VarChar(10007)
+  status  Int    @default(0)
+
+  user_id Int
+  user    user @relation(fields: [user_id], references: [id], onDelete: Cascade)
 
   created DateTime @default(now())
   updated DateTime @updatedAt

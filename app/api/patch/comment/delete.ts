@@ -26,17 +26,17 @@ export const deleteComment = async (
   input: z.infer<typeof commentIdSchema>,
   uid: number
 ) => {
-  return await prisma.$transaction(async (prisma) => {
-    const comment = await prisma.patch_comment.findUnique({
-      where: {
-        id: input.commentId,
-        user_id: uid
-      }
-    })
-    if (!comment) {
-      return '未找到对应的评论'
+  const comment = await prisma.patch_comment.findUnique({
+    where: {
+      id: input.commentId,
+      user_id: uid
     }
+  })
+  if (!comment) {
+    return '未找到对应的评论'
+  }
 
+  return await prisma.$transaction(async (prisma) => {
     await deleteCommentWithReplies(input.commentId)
     return {}
   })

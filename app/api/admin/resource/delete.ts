@@ -10,10 +10,22 @@ const resourceIdSchema = z.object({
 })
 
 export const deleteResource = async (
-  input: z.infer<typeof resourceIdSchema>
+  input: z.infer<typeof resourceIdSchema>,
+  uid: number
 ) => {
+  const admin = await prisma.user.findUnique({ where: { id: uid } })
+  if (!admin) {
+    return '未找到该管理员'
+  }
   const patchResource = await prisma.patch_resource.findUnique({
-    where: { id: input.resourceId }
+    where: { id: input.resourceId },
+    include: {
+      patch: {
+        select: {
+          name: true
+        }
+      }
+    }
   })
   if (!patchResource) {
     return '未找到对应的资源'
@@ -25,8 +37,19 @@ export const deleteResource = async (
     await deleteFileFromS3(s3Key)
   }
 
-  await prisma.patch_resource.delete({
-    where: { id: input.resourceId }
+  return prisma.$transaction(async (prisma) => {
+    await prisma.patch_resource.delete({
+      where: { id: input.resourceId }
+    })
+
+    await prisma.admin_log.create({
+      data: {
+        type: 'approve',
+        user_id: uid,
+        content: `管理员 ${admin.name} 删除了一个补丁资源\n\nGalgame 名:\n${patchResource.patch.name}\n\n补丁资源信息:\n${JSON.stringify(patchResource)}`
+      }
+    })
+
+    return {}
   })
-  return {}
 }

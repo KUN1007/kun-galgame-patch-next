@@ -22,16 +22,33 @@ const deleteCommentWithReplies = async (commentId: number) => {
   })
 }
 
-export const deleteComment = async (input: z.infer<typeof commentIdSchema>) => {
-  return await prisma.$transaction(async (prisma) => {
-    const comment = await prisma.patch_comment.findUnique({
-      where: { id: input.commentId }
-    })
-    if (!comment) {
-      return '未找到对应的评论'
-    }
+export const deleteComment = async (
+  input: z.infer<typeof commentIdSchema>,
+  uid: number
+) => {
+  const comment = await prisma.patch_comment.findUnique({
+    where: { id: input.commentId }
+  })
+  if (!comment) {
+    return '未找到对应的评论'
+  }
 
+  const admin = await prisma.user.findUnique({ where: { id: uid } })
+  if (!admin) {
+    return '未找到该管理员'
+  }
+
+  return await prisma.$transaction(async (prisma) => {
     await deleteCommentWithReplies(input.commentId)
+
+    await prisma.admin_log.create({
+      data: {
+        type: 'delete',
+        user_id: uid,
+        content: `管理员 ${admin.name} 删除了一条评论\n原评论: ${JSON.stringify(comment)}`
+      }
+    })
+
     return {}
   })
 }

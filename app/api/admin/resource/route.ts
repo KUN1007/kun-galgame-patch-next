@@ -42,7 +42,7 @@ export const PUT = async (req: NextRequest) => {
     return NextResponse.json('本页面仅管理员可访问')
   }
 
-  const response = await updatePatchResource(input)
+  const response = await updatePatchResource(input, payload.uid)
   return NextResponse.json(response)
 }
 
@@ -59,6 +59,6 @@ export const DELETE = async (req: NextRequest) => {
     return NextResponse.json('本页面仅管理员可访问')
   }
 
-  const response = await deleteResource(input)
+  const response = await deleteResource(input, payload.uid)
   return NextResponse.json(response)
 }
