@@ -5,11 +5,7 @@ import { Card, CardBody } from '@nextui-org/card'
 import { Image } from '@nextui-org/image'
 import { formatDistanceToNow } from '~/utils/formatDistanceToNow'
 import { useRouter } from 'next-nprogress-bar'
-import {
-  SUPPORTED_TYPE_MAP,
-  SUPPORTED_LANGUAGE_MAP,
-  SUPPORTED_PLATFORM_MAP
-} from '~/constants/resource'
+import { KunPatchAttribute } from '~/components/kun/PatchAttribute'
 
 import type { UserResource as UserResourceType } from '~/types/api/user'
 
@@ -46,41 +42,12 @@ export const UserResourceCard = ({ resource }: Props) => {
               </Chip>
             </div>
 
-            <div className="flex flex-wrap gap-2">
-              {resource.type.map((type) => (
-                <Chip
-                  key={type}
-                  size="sm"
-                  color="primary"
-                  variant="flat"
-                  className="text-xs"
-                >
-                  {SUPPORTED_TYPE_MAP[type]}
-                </Chip>
-              ))}
-              {resource.language.map((lang) => (
-                <Chip
-                  key={lang}
-                  size="sm"
-                  color="secondary"
-                  variant="flat"
-                  className="text-xs"
-                >
-                  {SUPPORTED_LANGUAGE_MAP[lang]}
-                </Chip>
-              ))}
-              {resource.platform.map((platform) => (
-                <Chip
-                  key={platform}
-                  size="sm"
-                  color="success"
-                  variant="flat"
-                  className="text-xs"
-                >
-                  {SUPPORTED_PLATFORM_MAP[platform]}
-                </Chip>
-              ))}
-            </div>
+            <KunPatchAttribute
+              types={resource.type}
+              languages={resource.language}
+              platforms={resource.platform}
+              size="sm"
+            />
           </div>
         </div>
       </CardBody>

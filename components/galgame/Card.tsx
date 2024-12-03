@@ -2,15 +2,10 @@
 
 import { Card, CardHeader, CardBody, CardFooter } from '@nextui-org/card'
 import { Image } from '@nextui-org/image'
-import { Chip } from '@nextui-org/chip'
 import { KunCardStats } from '~/components/kun/CardStats'
 import { useRouter } from 'next-nprogress-bar'
 import { useState } from 'react'
-import {
-  SUPPORTED_TYPE_MAP,
-  SUPPORTED_LANGUAGE_MAP,
-  SUPPORTED_PLATFORM_MAP
-} from '~/constants/resource'
+import { KunPatchAttribute } from '~/components/kun/PatchAttribute'
 
 interface Props {
   patch: GalgameCard
@@ -52,45 +47,12 @@ export const GalgameCard = ({ patch }: Props) => {
         <KunCardStats patch={patch} />
       </CardBody>
       <CardFooter className="flex-col items-start gap-2 px-4 py-3">
-        <div className="flex flex-wrap gap-1.5">
-          {patch.type.map((type) => (
-            <Chip
-              key={type}
-              size="sm"
-              color="primary"
-              variant="flat"
-              className="text-xs"
-            >
-              {SUPPORTED_TYPE_MAP[type]}
-            </Chip>
-          ))}
-        </div>
-        <div className="flex flex-wrap gap-1.5">
-          {patch.language.map((lang) => (
-            <Chip
-              key={lang}
-              size="sm"
-              color="success"
-              variant="flat"
-              className="text-xs"
-            >
-              {SUPPORTED_LANGUAGE_MAP[lang]}
-            </Chip>
-          ))}
-        </div>
-        <div className="flex flex-wrap gap-1.5">
-          {patch.platform.map((platform) => (
-            <Chip
-              key={platform}
-              size="sm"
-              color="secondary"
-              variant="flat"
-              className="text-xs"
-            >
-              {SUPPORTED_PLATFORM_MAP[platform]}
-            </Chip>
-          ))}
-        </div>
+        <KunPatchAttribute
+          types={patch.type}
+          languages={patch.language}
+          platforms={patch.platform}
+          size="sm"
+        />
       </CardFooter>
     </Card>
   )
