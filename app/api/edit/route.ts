@@ -5,6 +5,22 @@ import { patchCreateSchema, patchUpdateSchema } from '~/validations/edit'
 import { createPatch } from './create'
 import { updatePatch } from './update'
 
+const checkAliasValid = (aliasString: string) => {
+  const aliasArray = JSON.parse(aliasString) as string[]
+  if (aliasArray.length > 30) {
+    return '您最多使用 30 个别名'
+  }
+  const maxLength = aliasArray.some((alias) => alias.length > 107)
+  if (maxLength) {
+    return '单个别名的长度不可超过 107 个字符'
+  }
+  const minLength = aliasArray.some((alias) => !alias.trim.length)
+  if (minLength) {
+    return '单个别名至少一个字符'
+  }
+  return aliasArray.map((a) => a.trim())
+}
+
 export const POST = async (req: NextRequest) => {
   const input = await kunParseFormData(req, patchCreateSchema)
   if (typeof input === 'string') {
@@ -15,7 +31,17 @@ export const POST = async (req: NextRequest) => {
     return NextResponse.json('用户未登录')
   }
 
-  const response = await createPatch(input, payload.uid)
+  const { alias, banner, ...rest } = input
+  const res = checkAliasValid(alias)
+  if (typeof res === 'string') {
+    return NextResponse.json(res)
+  }
+  const bannerArrayBuffer = await new Response(banner)?.arrayBuffer()
+
+  const response = await createPatch(
+    { alias: res, banner: bannerArrayBuffer, ...rest },
+    payload.uid
+  )
   return NextResponse.json(response)
 }
 

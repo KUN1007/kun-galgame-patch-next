@@ -4,7 +4,9 @@ import { uploadPatchBanner } from './_upload'
 import { patchCreateSchema } from '~/validations/edit'
 
 export const createPatch = async (
-  input: z.infer<typeof patchCreateSchema>,
+  input: Omit<z.infer<typeof patchCreateSchema>, 'alias'> & {
+    alias: string[]
+  },
   uid: number
 ) => {
   const { name, vndbId, alias, banner, introduction, released } = input

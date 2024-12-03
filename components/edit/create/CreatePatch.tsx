@@ -20,11 +20,12 @@ import { kunFetchGet, kunFetchFormData } from '~/utils/kunFetch'
 import { useErrorHandler } from '~/hooks/useErrorHandler'
 import { patchCreateSchema } from '~/validations/edit'
 import { resizeImage } from '~/utils/resizeImage'
-import { redirect } from 'next/navigation'
+import { useRouter } from 'next-nprogress-bar'
 import type { CreatePatchRequestData } from '~/store/editStore'
 import type { VNDBResponse } from '../VNDB'
 
 export const CreatePatch = () => {
+  const router = useRouter()
   const { data, setData, resetData } = useCreatePatchStore()
   const [banner, setBanner] = useState<Blob | null>(null)
   const [newAlias, setNewAlias] = useState<string>('')
@@ -100,7 +101,8 @@ export const CreatePatch = () => {
 
     const result = patchCreateSchema.safeParse({
       ...data,
-      banner
+      banner,
+      alias: JSON.stringify(data.alias)
     })
     if (!result.success) {
       const newErrors: Partial<Record<keyof CreatePatchRequestData, string>> =
@@ -138,7 +140,7 @@ export const CreatePatch = () => {
       resetData()
       setPreviewUrl('')
       await localforage.removeItem('kun-patch-banner')
-      redirect(`/patch/${value}/introduction`)
+      router.push(`/patch/${value}/introduction`)
     })
     toast.success('发布完成, 正在为您跳转到资源介绍页面')
     setCreating(false)

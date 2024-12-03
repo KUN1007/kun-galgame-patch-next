@@ -45,8 +45,8 @@ export const POST = async (req: NextRequest) => {
     return NextResponse.json('用户未登录')
   }
 
-  const avatar = await new Response(input.image)?.arrayBuffer()
+  const image = await new Response(input.image)?.arrayBuffer()
 
-  const res = await uploadImage(payload.uid, avatar)
+  const res = await uploadImage(payload.uid, image)
   return NextResponse.json(res)
 }
