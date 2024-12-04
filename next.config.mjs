@@ -20,6 +20,7 @@ const nextConfig = {
   }
 }
 
+// Turbopack compatible errors
 const withMDX = createMDX({
   extension: /\.mdx?$/,
   options: {

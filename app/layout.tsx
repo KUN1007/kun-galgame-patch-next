@@ -10,7 +10,7 @@ export default function RootLayout({
   children: React.ReactNode
 }) {
   return (
-    <html lang="zh-CN" suppressHydrationWarning>
+    <html lang="zh-Hans" suppressHydrationWarning>
       <body>
         <Providers>
           <div className="relative flex flex-col items-center justify-center min-h-screen bg-radial">
