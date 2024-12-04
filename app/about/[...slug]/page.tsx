@@ -1,5 +1,5 @@
 import { getPostBySlug, getAdjacentPosts } from '~/lib/mdx/getPosts'
-import { MDXRemote } from 'next-mdx-remote/rsc'
+import { CustomMDX } from '~/lib/mdx/CustomMDX'
 import { TableOfContents } from '~/components/about/TableOfContents'
 import { KunBottomNavigation } from '~/components/about/Navigation'
 
@@ -18,8 +18,8 @@ export default async function Kun({ params }: PostPageProps) {
   return (
     <div className="flex w-full">
       <div className="w-full max-w-3xl px-6">
-        <article className="prose">
-          <MDXRemote source={content} />
+        <article className="kun-prose">
+          <CustomMDX source={content} />
         </article>
         <KunBottomNavigation prev={prev} next={next} />
       </div>

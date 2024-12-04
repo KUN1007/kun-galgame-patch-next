@@ -1,0 +1,75 @@
+/* Base prose styles */
+.kun-prose {
+  @apply max-w-[65ch] text-default-800 leading-7;
+}
+
+.kun-prose p {
+  @apply my-4;
+}
+
+/* Links */
+.kun-prose a {
+  @apply text-primary-500 underline font-medium hover:opacity-80;
+}
+
+.kun-prose .anchor {
+  @apply text-default-800;
+}
+
+/* Headings */
+.kun-prose h1 {
+  @apply text-default-900 font-extrabold text-4xl mt-0 mb-8 leading-tight;
+}
+
+.kun-prose h2 {
+  @apply text-default-900 font-bold text-2xl mt-8 mb-4 leading-tight;
+}
+
+.kun-prose h3 {
+  @apply text-default-900 font-semibold text-xl mt-6 mb-2 leading-snug;
+}
+
+.kun-prose h4 {
+  @apply text-default-900 font-semibold mt-6 mb-2 leading-snug;
+}
+
+/* Lists */
+.kun-prose ul,
+.kun-prose ol {
+  @apply my-6 list-outside;
+}
+
+.kun-prose li {
+  @apply mt-2;
+}
+
+/* Code blocks */
+.kun-prose code {
+  @apply text-default-800 font-semibold text-sm;
+}
+
+.kun-prose pre {
+  @apply bg-default-100 rounded-lg p-4 my-6 overflow-x-auto;
+}
+
+.kun-prose pre code {
+  @apply bg-transparent border-0 p-0 font-normal text-inherit;
+}
+
+/* Quotes */
+.kun-prose blockquote {
+  @apply border-l-4 border-primary-200 pl-4 font-medium text-default-800 my-6;
+}
+
+/* Tables */
+.kun-prose table {
+  @apply w-full my-6;
+}
+
+.kun-prose th {
+  @apply border-b border-default-200 p-2 text-left font-semibold;
+}
+
+.kun-prose td {
+  @apply border-b border-default-200 p-2;
+}
