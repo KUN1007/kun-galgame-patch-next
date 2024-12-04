@@ -17,8 +17,8 @@ export default async function Kun({ params }: PostPageProps) {
 
   return (
     <div className="flex w-full">
-      <div className="w-full max-w-3xl">
-        <article className="mx-auto prose dark:prose-invert">
+      <div className="w-full max-w-3xl px-6">
+        <article className="prose">
           <MDXRemote source={content} />
         </article>
         <KunBottomNavigation prev={prev} next={next} />

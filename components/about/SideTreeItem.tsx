@@ -23,7 +23,7 @@ export const TreeItem = ({ node, level }: TreeItemProps) => {
   }
 
   return (
-    <div className="select-none">
+    <nav className="select-none">
       <div
         className={`flex items-center gap-2 px-3 py-2 rounded-lg cursor-pointer hover:bg-default-100 ${
           level === 0 ? 'mt-0' : 'mt-1'
@@ -49,6 +49,6 @@ export const TreeItem = ({ node, level }: TreeItemProps) => {
         node.children?.map((child, index) => (
           <TreeItem key={index} node={child} level={level + 1} />
         ))}
-    </div>
+    </nav>
   )
 }

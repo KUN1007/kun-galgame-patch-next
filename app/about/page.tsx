@@ -1,6 +1,7 @@
 import { getAllPosts } from '~/lib/mdx/getPosts'
 import { KunAboutHeader } from '~/components/about/Header'
 import { KunAboutCard } from '~/components/about/Card'
+import { KunMasonryGrid } from '~/components/kun/MasonryGrid'
 
 export default function Kun() {
   const posts = getAllPosts()
@@ -10,13 +11,15 @@ export default function Kun() {
   // )
 
   return (
-    <div className="w-full max-w-4xl mx-auto">
+    <div className="w-full px-6">
       <KunAboutHeader />
 
       <div className="grid gap-4">
-        {posts.map((post) => (
-          <KunAboutCard key={post.slug} post={post} />
-        ))}
+        <KunMasonryGrid columnWidth={512} gap={24}>
+          {posts.map((post) => (
+            <KunAboutCard key={post.slug} post={post} />
+          ))}
+        </KunMasonryGrid>
 
         {/* {filteredPosts.length === 0 && (
             <div className="py-12 text-center text-default-500">

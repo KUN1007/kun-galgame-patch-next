@@ -21,15 +21,14 @@ export const getAllPosts = () => {
         const fileContents = fs.readFileSync(filePath, 'utf8')
         const { data } = matter(fileContents)
 
-        const title = data.title ?? '这只笨萝莉没有写文章标题'
-
         const slug = path
           .join(basePath, file.replace(/\.mdx$/, ''))
           .replace(/\\/g, '/')
 
         posts.push({
-          title,
+          title: data.title,
           date: data.date ? new Date(data.date).toISOString() : '',
+          banner: data.banner,
           slug,
           path: slug
         })

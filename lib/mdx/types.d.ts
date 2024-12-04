@@ -1,6 +1,7 @@
 export interface KunPostMetadata {
   title: string
   date: string
+  banner: string
   slug: string
   path: string
 }
