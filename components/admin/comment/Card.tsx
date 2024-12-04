@@ -1,12 +1,5 @@
 import { Card, CardBody } from '@nextui-org/card'
-import { Button } from '@nextui-org/button'
-import {
-  Dropdown,
-  DropdownTrigger,
-  DropdownMenu,
-  DropdownItem
-} from '@nextui-org/dropdown'
-import { MoreVertical, ThumbsUp } from 'lucide-react'
+import { ThumbsUp } from 'lucide-react'
 import { formatDate } from '~/utils/time'
 import Link from 'next/link'
 import { CommentEdit } from './CommentEdit'
