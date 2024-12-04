@@ -8,6 +8,16 @@ interface TOCItem {
   level: number
 }
 
+const scrollToHeading = (id: string) => {
+  const headingElement = document.getElementById(id)
+  if (headingElement) {
+    headingElement.scrollIntoView({
+      behavior: 'smooth',
+      block: 'center'
+    })
+  }
+}
+
 export const TableOfContents = () => {
   const [headings, setHeadings] = useState<TOCItem[]>([])
   const [activeId, setActiveId] = useState('')
@@ -48,11 +58,15 @@ export const TableOfContents = () => {
       <ul className="space-y-2">
         {headings.map((heading) => (
           <li
-            key={Math.random()}
+            key={heading.id}
             style={{ paddingLeft: `${(heading.level - 1) * 1}rem` }}
           >
             <a
               href={`#${heading.id}`}
+              onClick={(e) => {
+                e.preventDefault()
+                scrollToHeading(heading.id)
+              }}
               className={`block text-sm py-1 hover:text-primary-500 ${
                 activeId === heading.id
                   ? 'text-primary-500 font-medium'
