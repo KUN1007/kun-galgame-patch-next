@@ -23,7 +23,12 @@ export default async function Kun({ params }: PostPageProps) {
         </article>
         <KunBottomNavigation prev={prev} next={next} />
       </div>
-      <TableOfContents />
+
+      <div>
+        <div className="fixed">
+          <TableOfContents />
+        </div>
+      </div>
     </div>
   )
 }

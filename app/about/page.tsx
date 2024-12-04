@@ -15,7 +15,7 @@ export default function Kun() {
       <KunAboutHeader />
 
       <div className="grid gap-4">
-        <KunMasonryGrid columnWidth={512} gap={24}>
+        <KunMasonryGrid columnWidth={256} gap={24}>
           {posts.map((post) => (
             <KunAboutCard key={post.slug} post={post} />
           ))}
