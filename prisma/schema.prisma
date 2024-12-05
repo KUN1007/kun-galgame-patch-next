@@ -156,6 +156,7 @@ model patch {
   introduction String   @default("") @db.VarChar(100007)
   released     String   @default("") @db.VarChar(107)
   status       Int      @default(0)
+  download     Int      @default(0)
   view         Int      @default(0)
   type         String[]
   alias        String[]
@@ -247,8 +248,7 @@ model patch_resource {
   type     String[]
   language String[]
   platform String[]
-  like     Int[]
-  time     Int      @default(0)
+  download Int      @default(0)
   status   Int      @default(0)
 
   like_by user_patch_resource_like_relation[]

@@ -39,37 +39,39 @@ export const toggleCommentLike = async (
     }
   )
 
-  if (existingLike) {
-    await prisma.user_patch_comment_like_relation.delete({
-      where: {
-        user_id_comment_id: {
+  return await prisma.$transaction(async (prisma) => {
+    if (existingLike) {
+      await prisma.user_patch_comment_like_relation.delete({
+        where: {
+          user_id_comment_id: {
+            user_id: uid,
+            comment_id: commentId
+          }
+        }
+      })
+    } else {
+      await prisma.user_patch_comment_like_relation.create({
+        data: {
           user_id: uid,
           comment_id: commentId
         }
-      }
+      })
+    }
+
+    await createDedupMessage({
+      type: 'like',
+      content: `点赞了您的评论! -> ${comment.content.slice(0, 107)}`,
+      sender_id: uid,
+      recipient_id: comment.user_id
     })
-  } else {
-    await prisma.user_patch_comment_like_relation.create({
-      data: {
-        user_id: uid,
-        comment_id: commentId
-      }
+
+    await prisma.user.update({
+      where: { id: comment.user_id },
+      data: { moemoepoint: { increment: existingLike ? -1 : 1 } }
     })
-  }
 
-  await createDedupMessage({
-    type: 'like',
-    content: `点赞了您的评论! -> ${comment.content.slice(0, 107)}`,
-    sender_id: uid,
-    recipient_id: comment.user_id
+    return !existingLike
   })
-
-  await prisma.user.update({
-    where: { id: comment.user_id },
-    data: { moemoepoint: { increment: existingLike ? -1 : 1 } }
-  })
-
-  return !existingLike
 }
 
 export const PUT = async (req: NextRequest) => {

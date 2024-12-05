@@ -112,3 +112,14 @@ export const getPatchHistorySchema = z.object({
   page: z.coerce.number().min(1).max(9999999),
   limit: z.coerce.number().min(1).max(30)
 })
+
+export const updatePatchResourceStatsSchema = z.object({
+  patchId: z.coerce
+    .number({ message: '补丁 ID 必须为数字' })
+    .min(1)
+    .max(9999999),
+  resourceId: z.coerce
+    .number({ message: '补丁 ID 必须为数字' })
+    .min(1)
+    .max(9999999)
+})

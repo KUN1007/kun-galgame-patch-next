@@ -36,40 +36,42 @@ export const togglePatchFavorite = async (
     }
   )
 
-  if (existingFavorite) {
-    await prisma.user_patch_favorite_relation.delete({
-      where: {
-        user_id_patch_id: {
+  return await prisma.$transaction(async (prisma) => {
+    if (existingFavorite) {
+      await prisma.user_patch_favorite_relation.delete({
+        where: {
+          user_id_patch_id: {
+            user_id: uid,
+            patch_id: patchId
+          }
+        }
+      })
+    } else {
+      await prisma.user_patch_favorite_relation.create({
+        data: {
           user_id: uid,
           patch_id: patchId
         }
-      }
-    })
-  } else {
-    await prisma.user_patch_favorite_relation.create({
-      data: {
-        user_id: uid,
-        patch_id: patchId
-      }
-    })
-  }
+      })
+    }
 
-  if (patch.user_id !== uid) {
-    await prisma.user.update({
-      where: { id: patch.user_id },
-      data: { moemoepoint: { increment: existingFavorite ? -1 : 1 } }
-    })
+    if (patch.user_id !== uid) {
+      await prisma.user.update({
+        where: { id: patch.user_id },
+        data: { moemoepoint: { increment: existingFavorite ? -1 : 1 } }
+      })
 
-    await createDedupMessage({
-      type: 'favorite',
-      content: patch.name,
-      sender_id: uid,
-      recipient_id: patch.user_id,
-      patch_id: patch.id
-    })
-  }
+      await createDedupMessage({
+        type: 'favorite',
+        content: patch.name,
+        sender_id: uid,
+        recipient_id: patch.user_id,
+        patch_id: patch.id
+      })
+    }
 
-  return !existingFavorite
+    return !existingFavorite
+  })
 }
 
 export const PUT = async (req: NextRequest) => {

@@ -41,38 +41,40 @@ export const toggleResourceLike = async (
       }
     })
 
-  if (existingLike) {
-    await prisma.user_patch_resource_like_relation.delete({
-      where: {
-        user_id_resource_id: {
+  return await prisma.$transaction(async (prisma) => {
+    if (existingLike) {
+      await prisma.user_patch_resource_like_relation.delete({
+        where: {
+          user_id_resource_id: {
+            user_id: uid,
+            resource_id: resourceId
+          }
+        }
+      })
+    } else {
+      await prisma.user_patch_resource_like_relation.create({
+        data: {
           user_id: uid,
           resource_id: resourceId
         }
-      }
+      })
+    }
+
+    await prisma.user.update({
+      where: { id: resource.user_id },
+      data: { moemoepoint: { increment: existingLike ? -1 : 1 } }
     })
-  } else {
-    await prisma.user_patch_resource_like_relation.create({
-      data: {
-        user_id: uid,
-        resource_id: resourceId
-      }
+
+    await createDedupMessage({
+      type: 'like',
+      content: `点赞了您在 ${resource.patch.name} 下发布的补丁资源`,
+      sender_id: uid,
+      recipient_id: resource.user_id,
+      patch_id: resource.patch_id
     })
-  }
 
-  await prisma.user.update({
-    where: { id: resource.user_id },
-    data: { moemoepoint: { increment: existingLike ? -1 : 1 } }
+    return !existingLike
   })
-
-  await createDedupMessage({
-    type: 'like',
-    content: `点赞了您在 ${resource.patch.name} 下发布的补丁资源`,
-    sender_id: uid,
-    recipient_id: resource.user_id,
-    patch_id: resource.patch_id
-  })
-
-  return !existingLike
 }
 
 export const PUT = async (req: NextRequest) => {

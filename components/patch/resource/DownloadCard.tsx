@@ -6,6 +6,7 @@ import { Link } from '@nextui-org/link'
 import { Cloud, Link as LinkIcon } from 'lucide-react'
 import { MicrosoftIcon } from './icons/MicrosoftIcon'
 import { SUPPORTED_RESOURCE_LINK_MAP } from '~/constants/resource'
+import { kunFetchPut } from '~/utils/kunFetch'
 import type { PatchResource } from '~/types/api/patch'
 
 const storageIcons: { [key: string]: JSX.Element } = {
@@ -19,6 +20,13 @@ interface Props {
 }
 
 export const ResourceDownloadCard = ({ resource }: Props) => {
+  const handleClickDownload = async () => {
+    await kunFetchPut<KunResponse<{}>>('/patch/resource/download', {
+      patchId: resource.patchId,
+      resourceId: resource.id
+    })
+  }
+
   return (
     <div className="flex flex-col space-y-2">
       <Chip
@@ -39,6 +47,7 @@ export const ResourceDownloadCard = ({ resource }: Props) => {
         <div key={Math.random()} className="space-y-2">
           <Link
             isExternal
+            onPress={handleClickDownload}
             underline="always"
             className="block overflow-auto whitespace-normal"
             href={link}
