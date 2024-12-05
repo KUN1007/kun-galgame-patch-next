@@ -18,6 +18,7 @@ export const getUserGalgame = async (
         name: true,
         banner: true,
         view: true,
+        download: true,
         type: true,
         language: true,
         platform: true,

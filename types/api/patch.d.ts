@@ -7,6 +7,7 @@ export interface Patch {
   introduction: string
   status: number
   view: number
+  download: number
   alias: string[]
   type: string[]
   language: string[]

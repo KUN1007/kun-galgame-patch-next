@@ -54,6 +54,7 @@ export const getPatchResource = async (
     note: resource.note,
     platform: resource.platform,
     likeCount: resource._count.like_by,
+    download: resource.download,
     patchId: resource.patch_id,
     patchName: resource.patch.name,
     created: String(resource.created),

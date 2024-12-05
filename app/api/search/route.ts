@@ -25,6 +25,7 @@ export const searchGalgame = async (input: z.infer<typeof searchSchema>) => {
           name: true,
           banner: true,
           view: true,
+          download: true,
           type: true,
           language: true,
           platform: true,

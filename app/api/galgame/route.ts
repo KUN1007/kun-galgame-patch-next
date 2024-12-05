@@ -29,6 +29,7 @@ export const getGalgame = async (input: z.infer<typeof galgameSchema>) => {
         name: true,
         banner: true,
         view: true,
+        download: true,
         type: true,
         language: true,
         platform: true,

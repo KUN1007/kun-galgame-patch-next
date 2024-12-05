@@ -3,6 +3,7 @@ interface GalgameCard {
   name: string
   banner: string
   view: number
+  download: number
   type: string[]
   language: string[]
   platform: string[]

@@ -1,2 +1,2 @@
-export type SortOption = 'created' | 'view'
+export type SortOption = 'created' | 'view' | 'download'
 export type SortDirection = 'asc' | 'desc'

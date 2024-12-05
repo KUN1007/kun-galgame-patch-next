@@ -19,6 +19,7 @@ export interface HomeResource {
   platform: string[]
   note: string
   likeCount: number
+  download: number
   patchId: number
   patchName: string
   created: string

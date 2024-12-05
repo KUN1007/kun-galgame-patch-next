@@ -51,6 +51,7 @@ export const getPatchById = async (
     banner: patch.banner,
     status: patch.status,
     view: patch.view,
+    download: patch.download,
     type: patch.type,
     language: patch.language,
     platform: patch.platform,

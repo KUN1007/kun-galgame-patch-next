@@ -1,5 +1,5 @@
 import { Tooltip } from '@nextui-org/tooltip'
-import { Eye, Heart, MessageSquare, Puzzle } from 'lucide-react'
+import { Eye, Download, Heart, MessageSquare, Puzzle } from 'lucide-react'
 
 interface Props {
   patch: GalgameCard
@@ -13,6 +13,13 @@ export const KunCardStats = ({ patch, disableTooltip = true }: Props) => {
         <div className="flex items-center gap-1">
           <Eye className="w-4 h-4" />
           <span>{patch.view}</span>
+        </div>
+      </Tooltip>
+
+      <Tooltip isDisabled={disableTooltip} content="下载数" placement="bottom">
+        <div className="flex items-center gap-1">
+          <Download className="w-4 h-4" />
+          <span>{patch.download}</span>
         </div>
       </Tooltip>
 

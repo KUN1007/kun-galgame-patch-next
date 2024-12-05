@@ -24,7 +24,8 @@ interface Props {
 
 const sortFieldLabelMap: Record<string, string> = {
   created: '创建时间',
-  view: '浏览量'
+  view: '浏览量',
+  download: '下载量'
 }
 
 export const FilterBar = ({
@@ -91,6 +92,9 @@ export const FilterBar = ({
                 </DropdownItem>
                 <DropdownItem key="view" className="text-default-700">
                   浏览量
+                </DropdownItem>
+                <DropdownItem key="download" className="text-default-700">
+                  下载量
                 </DropdownItem>
               </DropdownMenu>
             </Dropdown>

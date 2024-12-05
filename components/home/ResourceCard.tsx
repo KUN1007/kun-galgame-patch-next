@@ -3,7 +3,7 @@
 import { Card, CardBody } from '@nextui-org/card'
 import { Chip } from '@nextui-org/chip'
 import { User } from '@nextui-org/user'
-import { Heart } from 'lucide-react'
+import { Heart, Download } from 'lucide-react'
 import { formatDistanceToNow } from '~/utils/formatDistanceToNow'
 import { KunPatchAttribute } from '~/components/kun/PatchAttribute'
 import { useRouter } from 'next-nprogress-bar'
@@ -23,7 +23,7 @@ export const ResourceCard = ({ resource }: Props) => {
       onPress={() => router.push(`/patch/${resource.patchId}/resource`)}
     >
       <CardBody className="space-y-2">
-        <div className="flex justify-between">
+        <div className="flex">
           <User
             name={resource.user.name}
             description={`${formatDistanceToNow(resource.created)} • 已发布补丁 ${resource.user.patchCount} 个`}
@@ -33,15 +33,6 @@ export const ResourceCard = ({ resource }: Props) => {
               name: resource.user.name.charAt(0).toUpperCase()
             }}
           />
-          <div className="flex items-center gap-2 text-small text-default-500">
-            <div className="flex items-center gap-1">
-              <Heart size={16} />
-              {resource.likeCount}
-            </div>
-            <Chip size="sm" variant="flat">
-              {resource.size}
-            </Chip>
-          </div>
         </div>
 
         <h4 className="font-bold text-large">{resource.patchName}</h4>
@@ -56,6 +47,22 @@ export const ResourceCard = ({ resource }: Props) => {
           platforms={resource.platform}
           size="sm"
         />
+
+        <div className="flex items-center justify-between text-small text-default-500">
+          <div className="flex gap-4">
+            <div className="flex items-center gap-1">
+              <Heart size={16} />
+              {resource.likeCount}
+            </div>
+            <div className="flex items-center gap-1">
+              <Download size={16} />
+              {resource.download}
+            </div>
+          </div>
+          <Chip size="sm" variant="flat">
+            {resource.size}
+          </Chip>
+        </div>
       </CardBody>
     </Card>
   )
