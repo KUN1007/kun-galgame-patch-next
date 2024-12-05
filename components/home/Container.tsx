@@ -1,6 +1,6 @@
 import { PatchCard } from '~/components/home/PatchCard'
-import { ResourceCard } from '~/components/home/ResourceCard'
-import { CommentCard } from '~/components/home/CommentCard'
+import { ResourceCard } from '~/components/resource/ResourceCard'
+import { CommentCard } from '~/components/comment/CommentCard'
 import type { HomeResource, HomeComment } from '~/types/api/home'
 
 interface Props {

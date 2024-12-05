@@ -7,10 +7,10 @@ import { Heart, Download } from 'lucide-react'
 import { formatDistanceToNow } from '~/utils/formatDistanceToNow'
 import { KunPatchAttribute } from '~/components/kun/PatchAttribute'
 import { useRouter } from 'next-nprogress-bar'
-import type { HomeResource } from '~/types/api/home'
+import type { PatchResource } from '~/types/api/resource'
 
 interface Props {
-  resource: HomeResource
+  resource: PatchResource
 }
 
 export const ResourceCard = ({ resource }: Props) => {

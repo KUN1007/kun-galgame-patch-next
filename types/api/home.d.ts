@@ -1,5 +1,5 @@
-import { AdminResource } from './admin'
-import { AdminComment } from './admin'
+import type { PatchComment } from './comment'
+import type { PatchResource } from './resource'
 
 export interface HomeCarousel {
   id: number
@@ -10,22 +10,5 @@ export interface HomeCarousel {
   platform: string[]
 }
 
-export interface HomeResource {
-  id: number
-  storage: string
-  size: string
-  type: string[]
-  language: string[]
-  platform: string[]
-  note: string
-  likeCount: number
-  download: number
-  patchId: number
-  patchName: string
-  created: string
-  user: KunUser & {
-    patchCount: number
-  }
-}
-
-export type HomeComment = AdminComment
+export type HomeResource = PatchResource
+export type HomeComment = PatchComment

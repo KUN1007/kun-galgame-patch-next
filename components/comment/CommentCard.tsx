@@ -2,10 +2,10 @@ import { Card, CardBody } from '@nextui-org/card'
 import { ThumbsUp } from 'lucide-react'
 import { formatDate } from '~/utils/time'
 import Link from 'next/link'
-import type { HomeComment } from '~/types/api/home'
+import type { PatchComment } from '~/types/api/comment'
 
 interface Props {
-  comment: HomeComment
+  comment: PatchComment
 }
 
 export const CommentCard = ({ comment }: Props) => {

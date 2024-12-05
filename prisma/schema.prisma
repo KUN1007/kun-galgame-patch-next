@@ -300,7 +300,6 @@ model patch_comment {
   id      Int    @id @default(autoincrement())
   content String @default("") @db.VarChar(10007)
   edit    String @default("")
-  likes   Int[]
 
   like_by user_patch_comment_like_relation[]
 

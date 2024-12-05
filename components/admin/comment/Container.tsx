@@ -5,7 +5,7 @@ import { useState, useEffect } from 'react'
 import { kunFetchGet } from '~/utils/kunFetch'
 import { KunLoading } from '~/components/kun/Loading'
 import { useMounted } from '~/hooks/useMounted'
-import { CommentCard } from './Card'
+import { CommentCard } from '~/components/comment/CommentCard'
 import type { AdminComment } from '~/types/api/admin'
 
 interface Props {
