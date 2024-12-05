@@ -2,7 +2,7 @@
 
 import { Card, CardBody } from '@nextui-org/card'
 import { Chip } from '@nextui-org/chip'
-import { Avatar } from '@nextui-org/avatar'
+import { User } from '@nextui-org/user'
 import { Heart } from 'lucide-react'
 import { formatDistanceToNow } from '~/utils/formatDistanceToNow'
 import { KunPatchAttribute } from '~/components/kun/PatchAttribute'
@@ -24,21 +24,15 @@ export const ResourceCard = ({ resource }: Props) => {
     >
       <CardBody className="space-y-2">
         <div className="flex justify-between">
-          <div className="flex items-center gap-3">
-            <Avatar
-              src={resource.user.avatar}
-              name={resource.user.name}
-              size="sm"
-              className="flex-shrink-0"
-            />
-            <div className="flex flex-col flex-grow">
-              <p className="font-semibold text-small">{resource.user.name}</p>
-              <p className="text-tiny text-default-500">
-                {formatDistanceToNow(resource.created)}
-              </p>
-            </div>
-          </div>
-
+          <User
+            name={resource.user.name}
+            description={`${formatDistanceToNow(resource.created)} • 已发布补丁 ${resource.user.patchCount} 个`}
+            avatarProps={{
+              showFallback: true,
+              src: resource.user.avatar,
+              name: resource.user.name.charAt(0).toUpperCase()
+            }}
+          />
           <div className="flex items-center gap-2 text-small text-default-500">
             <div className="flex items-center gap-1">
               <Heart size={16} />

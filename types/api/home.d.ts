@@ -22,7 +22,9 @@ export interface HomeResource {
   patchId: number
   patchName: string
   created: string
-  user: KunUser
+  user: KunUser & {
+    patchCount: number
+  }
 }
 
 export type HomeComment = AdminComment

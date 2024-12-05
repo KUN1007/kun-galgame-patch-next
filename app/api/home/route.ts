@@ -36,10 +36,15 @@ export const getHomeData = async () => {
           }
         },
         user: {
+          include: {
+            _count: {
+              select: { patch_resource: true }
+            }
+          }
+        },
+        _count: {
           select: {
-            id: true,
-            name: true,
-            avatar: true
+            like_by: true
           }
         }
       },
@@ -80,11 +85,16 @@ export const getHomeData = async () => {
     language: resource.language,
     note: resource.note,
     platform: resource.platform,
-    likeCount: 0,
+    likeCount: resource._count.like_by,
     patchId: resource.patch_id,
     patchName: resource.patch.name,
     created: String(resource.created),
-    user: resource.user
+    user: {
+      id: resource.user.id,
+      name: resource.user.name,
+      avatar: resource.user.avatar,
+      patchCount: resource.user._count.patch_resource
+    }
   }))
 
   const comments: HomeComment[] = commentsData.map((comment) => ({
