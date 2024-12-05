@@ -58,6 +58,7 @@
     "react-dropzone": "^14.3.5",
     "react-hook-form": "^7.53.2",
     "react-hot-toast": "^2.4.1",
+    "react-hotkeys-hook": "^4.6.1",
     "react-image-crop": "^11.0.7",
     "refractor": "^4.8.1",
     "rehype-prism-plus": "^2.0.0",

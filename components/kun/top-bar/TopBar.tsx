@@ -48,10 +48,6 @@ const kunNavItem: KunNavItem[] = [
   {
     name: '关于我们',
     href: '/about'
-  },
-  {
-    name: '主页',
-    href: '/'
   }
 ]
 

@@ -26,7 +26,12 @@ export const UserMessageBell = ({
   }
 
   return (
-    <Tooltip content={hasUnreadMessages ? '您有新消息!' : '我的消息'}>
+    <Tooltip
+      disableAnimation
+      showArrow
+      closeDelay={0}
+      content={hasUnreadMessages ? '您有新消息!' : '我的消息'}
+    >
       <Button
         isIconOnly
         variant="light"

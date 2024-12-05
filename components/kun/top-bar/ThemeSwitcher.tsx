@@ -2,7 +2,7 @@
 
 import { memo, useCallback, useEffect, useMemo, useState } from 'react'
 import { useTheme } from 'next-themes'
-
+import { Tooltip } from '@nextui-org/tooltip'
 import {
   DropdownItem,
   DropdownMenu,
@@ -62,11 +62,15 @@ export const ThemeSwitcher = memo(() => {
 
   return (
     <Dropdown className="min-w-0">
-      <DropdownTrigger>
-        <Button isIconOnly variant="light" className="text-default-500">
-          {themeIcon}
-        </Button>
-      </DropdownTrigger>
+      <Tooltip disableAnimation showArrow closeDelay={0} content="主题切换">
+        <div className="flex">
+          <DropdownTrigger>
+            <Button isIconOnly variant="light" className="text-default-500">
+              {themeIcon}
+            </Button>
+          </DropdownTrigger>
+        </div>
+      </Tooltip>
       <DropdownMenu
         disallowEmptySelection
         selectedKeys={selectedTheme}

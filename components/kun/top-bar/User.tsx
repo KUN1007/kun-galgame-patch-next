@@ -6,13 +6,13 @@ import { NavbarContent, NavbarItem } from '@nextui-org/navbar'
 import { Link } from '@nextui-org/link'
 import { Button } from '@nextui-org/button'
 import { Skeleton } from '@nextui-org/skeleton'
-import { Search } from 'lucide-react'
 import { useUserStore } from '~/store/providers/user'
 import { useRouter } from 'next-nprogress-bar'
 import { kunFetchGet } from '~/utils/kunFetch'
-import { ThemeSwitcher } from '~/components/kun/ThemeSwitcher'
+import { ThemeSwitcher } from './ThemeSwitcher'
 import { useMounted } from '~/hooks/useMounted'
 import { UserDropdown } from './UserDropdown'
+import { KunSearch } from './Search'
 import { UserMessageBell } from './UserMessageBell'
 import type { UserState } from '~/store/userStore'
 import type { Message } from '~/types/api/message'
@@ -74,13 +74,7 @@ export const KunTopBarUser = () => {
             </NavbarContent>
           )}
 
-          <Button
-            isIconOnly
-            variant="light"
-            onClick={() => router.push('/search')}
-          >
-            <Search className="w-6 h-6 text-default-500" />
-          </Button>
+          <KunSearch />
 
           <ThemeSwitcher />
 
