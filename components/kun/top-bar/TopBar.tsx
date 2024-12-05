@@ -50,7 +50,7 @@ const kunNavItem: KunNavItem[] = [
     href: '/about'
   },
   {
-    name: '主站论坛',
+    name: '主页',
     href: '/'
   }
 ]
