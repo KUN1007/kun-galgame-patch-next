@@ -49,7 +49,7 @@ export const rewriteTag = async (input: z.infer<typeof updateTagSchema>) => {
       OR: [{ name }, { alias: { has: name } }]
     }
   })
-  if (existingTag) {
+  if (existingTag?.id !== tagId) {
     return '这个标签已经存在了'
   }
 

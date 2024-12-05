@@ -39,7 +39,7 @@ export const ApplyContainer = ({ count }: Props) => {
   }
 
   return (
-    <div className="w-full px-4 py-8 mx-auto">
+    <div className="w-full px-4 mx-auto my-4">
       <KunHeader
         name="申请成为创作者"
         description="申请成为创作者以获得使用本站存储的权限"

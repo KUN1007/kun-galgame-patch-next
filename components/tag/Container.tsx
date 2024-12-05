@@ -68,7 +68,7 @@ export const Container = ({ initialTags }: Props) => {
   }
 
   return (
-    <div className="flex flex-col w-full my-8 space-y-8">
+    <div className="flex flex-col w-full my-4 space-y-8">
       <TagHeader setNewTag={(newTag) => setTags([newTag, ...initialTags])} />
 
       <SearchTags

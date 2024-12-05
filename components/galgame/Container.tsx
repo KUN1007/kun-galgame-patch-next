@@ -51,7 +51,7 @@ export const CardContainer = ({ initialGalgames }: Props) => {
   }, [sortField, sortOrder, selectedTypes, page])
 
   return (
-    <div className="container py-8 mx-auto space-y-6">
+    <div className="container mx-auto my-4 space-y-6">
       <FilterBar
         selectedTypes={selectedTypes}
         setSelectedTypes={setSelectedTypes}

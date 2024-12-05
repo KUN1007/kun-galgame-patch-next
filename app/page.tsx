@@ -10,7 +10,7 @@ export default async function Kun() {
   }>('/home')
 
   return (
-    <div className="container mx-auto my-8 space-y-6">
+    <div className="container mx-auto my-4 space-y-6">
       {/* <KunCarousel /> */}
 
       <HomeContainer {...response} />

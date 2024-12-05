@@ -7,7 +7,7 @@ import { Password } from './Password'
 
 export const UserSettings = () => {
   return (
-    <div className="w-full my-8">
+    <div className="w-full my-4">
       <KunHeader name="账户设置" description="您可以在此处设置您的账户信息" />
 
       <div className="max-w-3xl m-auto space-y-8">
