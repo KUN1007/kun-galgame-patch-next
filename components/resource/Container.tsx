@@ -3,7 +3,7 @@
 import { useState, useEffect } from 'react'
 import { Pagination } from '@nextui-org/pagination'
 import { kunFetchGet } from '~/utils/kunFetch'
-import { ResourceCard } from '~/components/home/ResourceCard'
+import { ResourceCard } from './ResourceCard'
 import { KunMasonryGrid } from '~/components/kun/MasonryGrid'
 import { FilterBar } from './FilterBar'
 import { useMounted } from '~/hooks/useMounted'
