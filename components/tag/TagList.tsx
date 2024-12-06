@@ -7,17 +7,11 @@ import type { Tag as TagType } from '~/types/api/tag'
 interface TagListProps {
   tags: TagType[]
   loading: boolean
-  isMounted: boolean
   searching: boolean
 }
 
-export const TagList = ({
-  tags,
-  loading,
-  isMounted,
-  searching
-}: TagListProps) => {
-  if (!isMounted || loading) {
+export const TagList = ({ tags, loading, searching }: TagListProps) => {
+  if (loading) {
     return <KunLoading hint="正在获取标签数据..." />
   }
 

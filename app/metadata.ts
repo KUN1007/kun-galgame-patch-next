@@ -1,7 +1,7 @@
-import type { Metadata, Viewport } from 'next'
 import { kunMoyuMoe } from '~/config/moyu-moe'
+import type { Metadata, Viewport } from 'next'
 
-export const viewport: Viewport = {
+export const kunViewport: Viewport = {
   width: 'device-width',
   initialScale: 1,
   maximumScale: 5,
@@ -12,7 +12,7 @@ export const viewport: Viewport = {
   colorScheme: 'light dark'
 }
 
-export const metadata: Metadata = {
+export const kunMetadata: Metadata = {
   metadataBase: new URL(kunMoyuMoe.domain.main),
   title: {
     default: kunMoyuMoe.title,
@@ -35,14 +35,7 @@ export const metadata: Metadata = {
     title: kunMoyuMoe.title,
     description: kunMoyuMoe.description,
     siteName: kunMoyuMoe.title,
-    images: [
-      {
-        url: kunMoyuMoe.og.image,
-        width: 1920,
-        height: 1080,
-        alt: kunMoyuMoe.title
-      }
-    ]
+    images: kunMoyuMoe.images
   },
   twitter: {
     card: 'summary_large_image',
@@ -67,6 +60,5 @@ export const metadata: Metadata = {
     languages: {
       'zh-Hans': kunMoyuMoe.domain.main
     }
-  },
-  manifest: '/manifest.json'
+  }
 }

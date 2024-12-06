@@ -79,12 +79,7 @@ export const Container = ({ initialTags }: Props) => {
       />
 
       {!searching && (
-        <TagList
-          tags={tags}
-          loading={loading}
-          isMounted={isMounted}
-          searching={searching}
-        />
+        <TagList tags={tags} loading={loading} searching={searching} />
       )}
 
       {total > 24 && !query && (

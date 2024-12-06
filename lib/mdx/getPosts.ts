@@ -27,8 +27,9 @@ export const getAllPosts = () => {
 
         posts.push({
           title: data.title,
-          date: data.date ? new Date(data.date).toISOString() : '',
           banner: data.banner,
+          date: data.date ? new Date(data.date).toISOString() : '',
+          description: data.description || '',
           slug,
           path: slug
         })

@@ -1,10 +1,22 @@
 import { ErrorComponent } from '~/components/error/ErrorComponent'
 import { TagDetailCOntainer } from '~/components/tag/detail/Container'
 import { kunServerFetchGet } from '~/utils/kunServerFetch'
+import { generateKunMetadataTemplate } from './metadata'
+import type { Metadata } from 'next'
 import type { TagDetail } from '~/types/api/tag'
 
 interface Props {
   params: Promise<{ id: string }>
+}
+
+export const generateMetadata = async ({
+  params
+}: Props): Promise<Metadata> => {
+  const { id } = await params
+  const tag = await kunServerFetchGet<TagDetail>('/tag', {
+    tagId: Number(id)
+  })
+  return generateKunMetadataTemplate(tag)
 }
 
 export default async function Kun({ params }: Props) {

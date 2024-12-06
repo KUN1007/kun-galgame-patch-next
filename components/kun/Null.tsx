@@ -30,6 +30,7 @@ export const KunNull = ({ message }: Props) => {
         alt={message}
         width={150}
         height={150}
+        priority
       />
       <span>{message}</span>
     </div>

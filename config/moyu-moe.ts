@@ -23,8 +23,16 @@ interface KunCreator {
   url: string
 }
 
+interface KunImage {
+  url: string
+  width: number
+  height: number
+  alt: string
+}
+
 interface KunSiteConfig {
   title: string
+  titleShort: string
   template: string
   description: string
   keywords: string[]
@@ -34,11 +42,13 @@ interface KunSiteConfig {
   publisher: KunCreator
   domain: KunSiteDomain
   og: KunOpenGraph
+  images: KunImage[]
 }
 
 export const kunMoyuMoe: KunSiteConfig = {
   title: '鲲 Galgame 补丁 - 开源 Galgame 补丁资源下载站',
-  template: '鲲 Galgame 补丁 - %s',
+  titleShort: '鲲 Galgame 补丁',
+  template: '%s - 鲲 Galgame 补丁',
   description:
     '开源, 免费, 零门槛的 Galgame 补丁资源下载站, 提供 Windows, 安卓, KRKR, Tyranor 等各类平台的 Galgame 补丁资源下载。最先进的 Galgame 补丁资源站！永远免费！',
   keywords: [
@@ -77,7 +87,15 @@ export const kunMoyuMoe: KunSiteConfig = {
     title: '鲲 Galgame 补丁 - 开源 Galgame 补丁资源下载站',
     description:
       '开源, 免费, 零门槛的 Galgame 补丁资源下载站, 提供 Windows, 安卓, KRKR, Tyranor 等各类平台的 Galgame 补丁资源下载。最先进的 Galgame 补丁资源站！永远免费！',
-    image: '/kungalgame.webp',
+    image: 'https://moyu.moe/kungalgame.webp',
     url: 'https://www.moyu.moe'
-  }
+  },
+  images: [
+    {
+      url: 'https://moyu.moe/kungalgame.webp',
+      width: 1920,
+      height: 1080,
+      alt: '鲲 Galgame 补丁 - 开源 Galgame 补丁资源下载站'
+    }
+  ]
 }

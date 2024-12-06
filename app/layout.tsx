@@ -3,8 +3,13 @@ import { Providers } from './providers'
 import { KunTopBar } from '~/components/kun/top-bar/TopBar'
 import { KunFooter } from '~/components/kun/Footer'
 import { KunNavigationBreadcrumb } from '~/components/kun/NavigationBreadcrumb'
+import { kunViewport, kunMetadata } from './metadata'
+import type { Metadata, Viewport } from 'next'
 import '~/styles/index.scss'
 import './actions'
+
+export const viewport: Viewport = kunViewport
+export const metadata: Metadata = kunMetadata
 
 export default function RootLayout({
   children
