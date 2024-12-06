@@ -19,7 +19,7 @@ export const UserProfile = ({ user }: { user: UserInfo }) => {
           <div className="flex flex-col items-center gap-3">
             <Avatar
               src={user.avatar.replace('-mini', '')}
-              className="w-32 h-32"
+              className="size-32"
               isBordered
               color="primary"
             />
@@ -39,7 +39,7 @@ export const UserProfile = ({ user }: { user: UserInfo }) => {
           )}
           <div className="flex flex-col gap-4">
             <div className="flex items-center gap-2">
-              <LinkIcon className="w-4 h-4 text-default-400" />
+              <LinkIcon className="size-4 text-default-400" />
               <a
                 href={`https://www.moyu.moe/user/${user.id}`}
                 className="text-small text-primary hover:underline"
@@ -50,7 +50,7 @@ export const UserProfile = ({ user }: { user: UserInfo }) => {
               </a>
             </div>
             <div className="flex items-center gap-2">
-              <Calendar className="w-4 h-4 text-default-400" />
+              <Calendar className="size-4 text-default-400" />
               <span className="text-small text-default-500">
                 加入于 {formatDistanceToNow(user.registerTime)}
               </span>
@@ -59,7 +59,7 @@ export const UserProfile = ({ user }: { user: UserInfo }) => {
           <Divider className="my-4" />
           <div className="flex flex-col gap-4">
             <div>
-              <div className="flex justify-between mb-2">
+              <div className="mb-2 flex justify-between">
                 <span className="text-small">萌萌点</span>
                 <span className="text-small text-default-500">
                   {user.moemoepoint}

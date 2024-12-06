@@ -1,6 +1,6 @@
 'use client'
 
-import { User, Chip } from '@nextui-org/react'
+import { Chip, User } from '@nextui-org/react'
 import { SUPPORTED_RESOURCE_LINK_MAP } from '~/constants/resource'
 import { formatDistanceToNow } from '~/utils/formatDistanceToNow'
 import Link from 'next/link'

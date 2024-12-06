@@ -1,6 +1,6 @@
 'use client'
 
-import { User, Chip } from '@nextui-org/react'
+import { Chip, User } from '@nextui-org/react'
 import { Image } from '@nextui-org/image'
 import Link from 'next/link'
 import { formatDistanceToNow } from '~/utils/formatDistanceToNow'

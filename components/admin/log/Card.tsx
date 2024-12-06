@@ -22,7 +22,7 @@ export const LogCard = ({ log }: Props) => {
           <div className="w-full">
             <pre>{log.content}</pre>
 
-            <div className="flex items-center gap-4 mt-2">
+            <div className="mt-2 flex items-center gap-4">
               <span className="text-small text-default-500">
                 {formatDate(log.created, {
                   isPrecise: true,

@@ -2,11 +2,11 @@
 
 import {
   Navbar,
-  NavbarMenu,
-  NavbarMenuToggle,
-  NavbarMenuItem,
   NavbarContent,
-  NavbarItem
+  NavbarItem,
+  NavbarMenu,
+  NavbarMenuItem,
+  NavbarMenuToggle
 } from '@nextui-org/navbar'
 import Link from 'next/link'
 import { KunTopBarBrand } from './Brand'
@@ -62,7 +62,7 @@ export const KunTopBar = () => {
 
       <NavbarContent className="hidden gap-3 sm:flex">
         <KunTopBarBrand />
-        <ul className="justify-start hidden gap-4 pl-2 md:flex">
+        <ul className="hidden justify-start gap-4 pl-2 md:flex">
           {kunNavItem.map((item) => (
             <NavbarItem key={item.href} isActive={pathname === item.href}>
               <Link

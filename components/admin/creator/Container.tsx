@@ -2,11 +2,11 @@
 
 import {
   Table,
-  TableHeader,
-  TableColumn,
   TableBody,
-  TableRow,
-  TableCell
+  TableCell,
+  TableColumn,
+  TableHeader,
+  TableRow
 } from '@nextui-org/react'
 import { useState } from 'react'
 import { RenderCell } from './RenderCell'

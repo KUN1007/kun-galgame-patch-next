@@ -1,6 +1,6 @@
 import toast from 'react-hot-toast'
 
-export const useErrorHandler = <T>(
+export const kunErrorHandler = <T>(
   res: T | string,
   callback: (res: T) => void
 ) => {

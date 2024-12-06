@@ -7,7 +7,7 @@ import { Tooltip } from '@nextui-org/tooltip'
 import { Heart } from 'lucide-react'
 import { useUserStore } from '~/store/providers/user'
 import toast from 'react-hot-toast'
-import { useErrorHandler } from '~/hooks/useErrorHandler'
+import { kunErrorHandler } from '~/utils/kunErrorHandler'
 import { cn } from '~/utils/cn'
 
 interface Props {
@@ -32,7 +32,7 @@ export const ResourceFavoriteButton = ({ patchId, isFavorite }: Props) => {
     })
 
     setLoading(false)
-    useErrorHandler(res, (value) => {
+    kunErrorHandler(res, (value) => {
       setFavorite(value)
     })
   }

@@ -1,9 +1,9 @@
 'use client'
 
 import { useEffect, useState } from 'react'
-import { Image, Button, Progress, Card, Chip } from '@nextui-org/react'
-import { motion, AnimatePresence } from 'framer-motion'
-import { Play, Download, Heart } from 'lucide-react'
+import { Button, Card, Chip, Image, Progress } from '@nextui-org/react'
+import { AnimatePresence, motion } from 'framer-motion'
+import { Download, Heart, Play } from 'lucide-react'
 
 const carouselItems = [
   {
@@ -43,7 +43,7 @@ export const KunCarousel = () => {
 
   return (
     <div
-      className="relative h-[500px] overflow-hidden group"
+      className="group relative h-[500px] overflow-hidden"
       onMouseEnter={() => setIsHovered(true)}
       onMouseLeave={() => setIsHovered(false)}
     >
@@ -57,18 +57,18 @@ export const KunCarousel = () => {
                 animate={{ opacity: 1 }}
                 exit={{ opacity: 0 }}
                 transition={{ duration: 0.5 }}
-                className="absolute w-full h-full"
+                className="absolute size-full"
               >
                 <img
                   alt={item.title}
-                  className="object-cover w-full h-full brightness-75"
+                  className="size-full object-cover brightness-75"
                   src={item.image}
                 />
                 <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/40 to-transparent" />
 
-                <Card className="absolute border-none bottom-8 left-8 right-8 bg-background/80 backdrop-blur-md">
+                <Card className="absolute inset-x-8 bottom-8 border-none bg-background/80 backdrop-blur-md">
                   <div className="p-6">
-                    <div className="flex items-start justify-between mb-4">
+                    <div className="mb-4 flex items-start justify-between">
                       <div>
                         <h2 className="mb-2 text-3xl font-bold">
                           {item.title}
@@ -105,7 +105,7 @@ export const KunCarousel = () => {
                       </div>
                     </div>
 
-                    <div className="flex gap-2 mt-4">
+                    <div className="mt-4 flex gap-2">
                       {item.tags.map((tag) => (
                         <Chip key={tag} variant="flat" size="sm">
                           {tag}
@@ -119,13 +119,13 @@ export const KunCarousel = () => {
         )}
       </AnimatePresence>
 
-      <div className="absolute flex gap-2 -translate-x-1/2 bottom-4 left-1/2">
+      <div className="absolute bottom-4 left-1/2 flex -translate-x-1/2 gap-2">
         {carouselItems.map((_, index) => (
           <button
             key={index}
-            className={`w-2 h-2 rounded-full transition-all ${
+            className={`size-2 rounded-full transition-all ${
               index === currentSlide
-                ? 'bg-primary w-6'
+                ? 'w-6 bg-primary'
                 : 'bg-foreground/20 hover:bg-foreground/40'
             }`}
             onClick={() => setCurrentSlide(index)}

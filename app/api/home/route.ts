@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { prisma } from '~/prisma/index'
-import { HomeResource, HomeComment } from '~/types/api/home'
+import { HomeComment, HomeResource } from '~/types/api/home'
 
 export const getHomeData = async () => {
   const [galgames, resourcesData, commentsData] = await Promise.all([

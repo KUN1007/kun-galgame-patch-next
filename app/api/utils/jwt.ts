@@ -1,5 +1,5 @@
 import jwt from 'jsonwebtoken'
-import { setKv, getKv, delKv } from '~/lib/redis'
+import { delKv, getKv, setKv } from '~/lib/redis'
 
 export interface KunGalgamePayload {
   iss: string

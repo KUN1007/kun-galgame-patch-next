@@ -1,21 +1,21 @@
-import React, { useState, useRef } from 'react'
+import React, { useRef, useState } from 'react'
 import ReactCrop, { type Crop } from 'react-image-crop'
 import 'react-image-crop/dist/ReactCrop.css'
 import {
   Avatar,
-  Modal,
-  ModalContent,
-  ModalHeader,
-  ModalBody,
-  ModalFooter,
   Button,
+  Modal,
+  ModalBody,
+  ModalContent,
+  ModalFooter,
+  ModalHeader,
   useDisclosure
 } from '@nextui-org/react'
 import { useUserStore } from '~/store/providers/user'
 import { Camera } from 'lucide-react'
 import { dataURItoBlob } from '~/utils/dataURItoBlob'
 import { kunFetchFormData } from '~/utils/kunFetch'
-import { useErrorHandler } from '~/hooks/useErrorHandler'
+import { kunErrorHandler } from '~/utils/kunErrorHandler'
 import toast from 'react-hot-toast'
 
 export const AvatarCrop = () => {
@@ -87,28 +87,28 @@ export const AvatarCrop = () => {
 
   return (
     <div className="flex flex-col items-center gap-4">
-      <div className="relative cursor-pointer group">
-        <div className="relative group">
+      <div className="group relative cursor-pointer">
+        <div className="group relative">
           {croppedImage ? (
             <img
               src={croppedImage}
               alt="Cropped avatar"
-              className="object-cover w-16 h-16 rounded-full"
+              className="size-16 rounded-full object-cover"
             />
           ) : (
             <Avatar
               name={user.name}
               src={user.avatar}
-              className="w-16 h-16"
+              className="size-16"
               color="primary"
             />
           )}
 
           <label
             htmlFor="avatar-upload"
-            className="absolute inset-0 flex items-center justify-center transition-opacity rounded-full opacity-0 cursor-pointer bg-black/50 group-hover:opacity-100"
+            className="absolute inset-0 flex cursor-pointer items-center justify-center rounded-full bg-black/50 opacity-0 transition-opacity group-hover:opacity-100"
           >
-            <Camera className="w-6 h-6 text-white" />
+            <Camera className="size-6 text-white" />
           </label>
           <input
             id="avatar-upload"

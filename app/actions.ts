@@ -1,5 +1,5 @@
 'use server'
 
-import { useKUNGalgameTask } from '~/server/cron'
+import { setKUNGalgameTask } from '~/server/cron'
 
-useKUNGalgameTask()
+setKUNGalgameTask()

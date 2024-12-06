@@ -67,9 +67,9 @@ export const TableOfContents = () => {
                 e.preventDefault()
                 scrollToHeading(heading.id)
               }}
-              className={`block text-sm py-1 hover:text-primary-500 ${
+              className={`block py-1 text-sm hover:text-primary-500 ${
                 activeId === heading.id
-                  ? 'text-primary-500 font-medium'
+                  ? 'font-medium text-primary-500'
                   : 'text-default-600 dark:text-default-400'
               }`}
             >

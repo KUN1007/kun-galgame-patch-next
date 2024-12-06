@@ -1,15 +1,15 @@
 'use client'
 
 import {
+  Button,
   Card,
   CardBody,
   CardHeader,
   Chip,
   Input,
-  Button,
-  Switch,
   Select,
-  SelectItem
+  SelectItem,
+  Switch
 } from '@nextui-org/react'
 
 const languages = [

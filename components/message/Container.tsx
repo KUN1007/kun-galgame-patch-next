@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useEffect } from 'react'
+import { useEffect, useState } from 'react'
 import { useMounted } from '~/hooks/useMounted'
 import { Pagination } from '@nextui-org/pagination'
 import { KunLoading } from '~/components/kun/Loading'
@@ -18,10 +18,6 @@ interface Props {
 }
 
 export const MessageContainer = ({ initialMessages, total, type }: Props) => {
-  if (!initialMessages.length) {
-    return <KunNull message="暂无消息" />
-  }
-
   const [messages, setMessages] = useState<Message[]>(initialMessages)
   const [loading, setLoading] = useState(false)
   const [page, setPage] = useState(1)
@@ -55,6 +51,10 @@ export const MessageContainer = ({ initialMessages, total, type }: Props) => {
     }
     fetchMessages()
   }, [page])
+
+  if (!initialMessages.length) {
+    return <KunNull message="暂无消息" />
+  }
 
   return (
     <>

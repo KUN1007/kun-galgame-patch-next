@@ -9,7 +9,7 @@ import {
   DropdownTrigger
 } from '@nextui-org/dropdown'
 import { Button } from '@nextui-org/button'
-import { Sun, Moon, SunMoon } from 'lucide-react'
+import { Moon, Sun, SunMoon } from 'lucide-react'
 import { Dropdown } from '@nextui-org/dropdown'
 import type { Selection } from '@nextui-org/react'
 
@@ -78,19 +78,19 @@ export const ThemeSwitcher = memo(() => {
         onSelectionChange={onSelectedThemeChange}
       >
         <DropdownItem
-          startContent={<Sun className="w-4 h-4" />}
+          startContent={<Sun className="size-4" />}
           key={Theme.light}
         >
           {ThemeLabel.light}
         </DropdownItem>
         <DropdownItem
-          startContent={<Moon className="w-4 h-4" />}
+          startContent={<Moon className="size-4" />}
           key={Theme.dark}
         >
           {ThemeLabel.dark}
         </DropdownItem>
         <DropdownItem
-          startContent={<SunMoon className="w-4 h-4" />}
+          startContent={<SunMoon className="size-4" />}
           key={Theme.system}
         >
           {ThemeLabel.system}

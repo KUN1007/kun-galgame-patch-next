@@ -2,18 +2,18 @@
 
 import { useState } from 'react'
 import {
-  Modal,
-  ModalContent,
-  ModalHeader,
-  ModalBody,
-  ModalFooter,
-  useDisclosure,
   Button,
-  Textarea
+  Modal,
+  ModalBody,
+  ModalContent,
+  ModalFooter,
+  ModalHeader,
+  Textarea,
+  useDisclosure
 } from '@nextui-org/react'
 import { kunFetchPut } from '~/utils/kunFetch'
 import type { AdminCreator } from '~/types/api/admin'
-import { useErrorHandler } from '~/hooks/useErrorHandler'
+import { kunErrorHandler } from '~/utils/kunErrorHandler'
 import toast from 'react-hot-toast'
 
 interface Props {
@@ -34,7 +34,7 @@ export const ActionButton = ({ creator }: Props) => {
       messageId: creator.id,
       uid: creator.sender?.id
     })
-    useErrorHandler(res, () => {
+    kunErrorHandler(res, () => {
       toast.success('同意申请成功!')
       onCloseApprove()
     })
@@ -55,7 +55,7 @@ export const ActionButton = ({ creator }: Props) => {
       messageId: creator.id,
       reason
     })
-    useErrorHandler(res, () => {
+    kunErrorHandler(res, () => {
       toast.success('拒绝申请成功!')
       onCloseDecline()
     })

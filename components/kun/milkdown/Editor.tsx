@@ -1,4 +1,4 @@
-import { Editor, rootCtx, defaultValueCtx } from '@milkdown/core'
+import { defaultValueCtx, Editor, rootCtx } from '@milkdown/core'
 import { Milkdown, useEditor } from '@milkdown/react'
 import { commonmark } from '@milkdown/preset-commonmark'
 import { gfm } from '@milkdown/preset-gfm'

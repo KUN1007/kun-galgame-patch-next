@@ -6,7 +6,7 @@ import { User } from '@nextui-org/user'
 import { Button } from '@nextui-org/button'
 import { Tooltip } from '@nextui-org/tooltip'
 import { Divider } from '@nextui-org/divider'
-import { Share2, Pencil } from 'lucide-react'
+import { Pencil, Share2 } from 'lucide-react'
 import { ResourceFavoriteButton } from './PatchFavorite'
 import { useRouter } from 'next-nprogress-bar'
 import { useRewritePatchStore } from '~/store/rewriteStore'
@@ -40,37 +40,37 @@ export const PatchHeaderContainer = ({ patch }: PatchHeaderProps) => {
 
   return (
     <>
-      <div className="relative w-full h-[512px]">
+      <div className="relative h-[512px] w-full">
         <img
           src={patch.banner}
           alt={patch.name}
-          className="absolute top-0 left-0 object-cover w-full h-full rounded-2xl"
+          className="absolute left-0 top-0 size-full rounded-2xl object-cover"
         />
         <PatchHeader patch={patch} />
 
-        <Card className="absolute bottom-[-1] w-full shadow-lg bg-background/70 backdrop-blur-xl rounded-none rounded-b-2xl">
+        <Card className="absolute bottom-[-1] w-full rounded-none rounded-b-2xl bg-background/70 shadow-lg backdrop-blur-xl">
           <CardBody>
             <div className="flex flex-col items-start justify-between space-y-2 sm:flex-row">
               <div className="space-y-2">
                 <h1 className="text-3xl font-bold">{patch.name}</h1>
-                <div className="flex-wrap hidden gap-2 sm:flex">
+                <div className="hidden flex-wrap gap-2 sm:flex">
                   <Tags patch={patch} />
                 </div>
               </div>
-              <div className="flex gap-2 ml-auto">
+              <div className="ml-auto flex gap-2">
                 <ResourceFavoriteButton
                   patchId={patch.id}
                   isFavorite={patch.isFavorite}
                 />
                 <Tooltip content="复制分享链接">
                   <Button variant="bordered" isIconOnly>
-                    <Share2 className="w-4 h-4" />
+                    <Share2 className="size-4" />
                   </Button>
                 </Tooltip>
                 <Tooltip
                   content={
                     <div className="px-1 py-2">
-                      <div className="font-bold text-small">编辑游戏信息</div>
+                      <div className="text-small font-bold">编辑游戏信息</div>
                       <div className="text-tiny">任何人都可以编辑游戏信息</div>
                       <div className="text-tiny">但需要提交更新请求</div>
                     </div>
@@ -81,7 +81,7 @@ export const PatchHeaderContainer = ({ patch }: PatchHeaderProps) => {
                     isIconOnly
                     onClick={() => router.push('/edit/rewrite')}
                   >
-                    <Pencil className="w-4 h-4" />
+                    <Pencil className="size-4" />
                   </Button>
                 </Tooltip>
               </div>

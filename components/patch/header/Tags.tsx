@@ -1,8 +1,8 @@
 import { Chip } from '@nextui-org/chip'
 import {
-  SUPPORTED_TYPE_MAP,
   SUPPORTED_LANGUAGE_MAP,
-  SUPPORTED_PLATFORM_MAP
+  SUPPORTED_PLATFORM_MAP,
+  SUPPORTED_TYPE_MAP
 } from '~/constants/resource'
 import type { Patch } from '~/types/api/patch'
 

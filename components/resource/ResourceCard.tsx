@@ -3,7 +3,7 @@
 import { Card, CardBody } from '@nextui-org/card'
 import { Chip } from '@nextui-org/chip'
 import { User } from '@nextui-org/user'
-import { Heart, Download } from 'lucide-react'
+import { Download, Heart } from 'lucide-react'
 import { formatDistanceToNow } from '~/utils/formatDistanceToNow'
 import { KunPatchAttribute } from '~/components/kun/PatchAttribute'
 import { useRouter } from 'next-nprogress-bar'
@@ -35,7 +35,7 @@ export const ResourceCard = ({ resource }: Props) => {
           />
         </div>
 
-        <h4 className="font-bold text-large">{resource.patchName}</h4>
+        <h4 className="text-large font-bold">{resource.patchName}</h4>
 
         {resource.note && (
           <p className="text-small text-default-500">{resource.note}</p>

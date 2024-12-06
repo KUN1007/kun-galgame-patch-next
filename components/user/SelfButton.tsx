@@ -1,7 +1,7 @@
 'use client'
 
 import { Button } from '@nextui-org/button'
-import { Pencil, BadgeCheck, Shield } from 'lucide-react'
+import { BadgeCheck, Pencil, Shield } from 'lucide-react'
 import { useRouter } from 'next-nprogress-bar'
 import type { UserInfo } from '~/types/api/user'
 
@@ -14,10 +14,10 @@ export const SelfButton = ({ user }: Props) => {
   const isShowAdminButton = user.id === user.requestUserUid && user.role > 2
 
   return (
-    <div className="flex-col w-full space-y-3">
+    <div className="w-full flex-col space-y-3">
       <div className="flex space-x-3">
         <Button
-          startContent={<Pencil className="w-4 h-4" />}
+          startContent={<Pencil className="size-4" />}
           color="primary"
           variant="flat"
           fullWidth
@@ -28,7 +28,7 @@ export const SelfButton = ({ user }: Props) => {
 
         {isShowAdminButton && (
           <Button
-            startContent={<Shield className="w-4 h-4" />}
+            startContent={<Shield className="size-4" />}
             color="primary"
             variant="solid"
             fullWidth
@@ -41,7 +41,7 @@ export const SelfButton = ({ user }: Props) => {
 
       {user.role < 2 && (
         <Button
-          startContent={<BadgeCheck className="w-4 h-4" />}
+          startContent={<BadgeCheck className="size-4" />}
           color="primary"
           fullWidth
           onClick={() => router.push('/apply')}

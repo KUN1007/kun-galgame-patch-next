@@ -8,35 +8,35 @@ import { Code } from '@nextui-org/code'
 import { Chip } from '@nextui-org/chip'
 import {
   Dropdown,
-  DropdownTrigger,
+  DropdownItem,
   DropdownMenu,
-  DropdownItem
+  DropdownTrigger
 } from '@nextui-org/dropdown'
 import {
   Modal,
-  ModalContent,
-  ModalHeader,
   ModalBody,
+  ModalContent,
   ModalFooter,
+  ModalHeader,
   useDisclosure
 } from '@nextui-org/modal'
 import { Textarea } from '@nextui-org/input'
 import {
+  Check,
   MessageCircle,
   MoreHorizontal,
+  Pencil,
   Quote,
   Trash2,
-  Pencil,
-  Check,
   X
 } from 'lucide-react'
 import { formatDistanceToNow } from '~/utils/formatDistanceToNow'
-import { kunFetchPut, kunFetchDelete } from '~/utils/kunFetch'
+import { kunFetchDelete, kunFetchPut } from '~/utils/kunFetch'
 import { PublishComment } from './PublishComment'
 import { CommentLikeButton } from './CommentLike'
 import toast from 'react-hot-toast'
 import { useUserStore } from '~/store/providers/user'
-import { useErrorHandler } from '~/hooks/useErrorHandler'
+import { kunErrorHandler } from '~/utils/kunErrorHandler'
 import type { PatchComment } from '~/types/api/patch'
 
 interface Props {
@@ -82,7 +82,7 @@ export const Comments = ({ initialComments, id }: Props) => {
     const res = await kunFetchDelete<KunResponse<{}>>('/patch/comment', {
       commentId: deleteCommentId
     })
-    useErrorHandler(res, () => {
+    kunErrorHandler(res, () => {
       setComments((prev) =>
         prev.filter((comment) => comment.id !== deleteCommentId)
       )
@@ -115,7 +115,7 @@ export const Comments = ({ initialComments, id }: Props) => {
       commentId,
       content: editContent.trim()
     })
-    useErrorHandler(res, () => {
+    kunErrorHandler(res, () => {
       setComments((prev) =>
         prev.map((comment) =>
           comment.id === commentId
@@ -148,7 +148,7 @@ export const Comments = ({ initialComments, id }: Props) => {
                 <div className="flex items-start justify-between">
                   <h4 className="space-x-2">
                     <span className="font-semibold">{comment.user?.name}</span>
-                    <span className="text-sm text-muted-foreground">
+                    <span className="text-muted-foreground text-sm">
                       {formatDistanceToNow(comment.created)}
                     </span>
                   </h4>
@@ -159,7 +159,7 @@ export const Comments = ({ initialComments, id }: Props) => {
                         isIconOnly
                         className="text-default-400"
                       >
-                        <MoreHorizontal className="w-4 h-4" />
+                        <MoreHorizontal className="size-4" />
                       </Button>
                     </DropdownTrigger>
                     <DropdownMenu
@@ -171,7 +171,7 @@ export const Comments = ({ initialComments, id }: Props) => {
                       <DropdownItem
                         key="edit"
                         color="default"
-                        startContent={<Pencil className="w-4 h-4" />}
+                        startContent={<Pencil className="size-4" />}
                         onPress={() => startEditing(comment)}
                       >
                         编辑评论
@@ -180,7 +180,7 @@ export const Comments = ({ initialComments, id }: Props) => {
                         key="delete"
                         className="text-danger"
                         color="danger"
-                        startContent={<Trash2 className="w-4 h-4" />}
+                        startContent={<Trash2 className="size-4" />}
                         onPress={() => {
                           setDeleteCommentId(comment.id)
                           onOpen()
@@ -199,7 +199,7 @@ export const Comments = ({ initialComments, id }: Props) => {
                   >
                     <span>{comment.quotedUsername}</span>
                     <Chip
-                      endContent={<Quote className="w-4 h-4 text-blue-500" />}
+                      endContent={<Quote className="size-4 text-blue-500" />}
                       variant="light"
                     >
                       {comment.quotedContent}
@@ -219,7 +219,7 @@ export const Comments = ({ initialComments, id }: Props) => {
                       <Button
                         size="sm"
                         color="primary"
-                        startContent={<Check className="w-4 h-4" />}
+                        startContent={<Check className="size-4" />}
                         onPress={() => handleUpdateComment(comment.id)}
                         disabled={updating}
                         isLoading={updating}
@@ -229,7 +229,7 @@ export const Comments = ({ initialComments, id }: Props) => {
                       <Button
                         size="sm"
                         variant="light"
-                        startContent={<X className="w-4 h-4" />}
+                        startContent={<X className="size-4" />}
                         onPress={cancelEditing}
                       >
                         取消
@@ -240,7 +240,7 @@ export const Comments = ({ initialComments, id }: Props) => {
                   <p>{comment.content}</p>
                 )}
 
-                <div className="flex gap-2 mt-2">
+                <div className="mt-2 flex gap-2">
                   <CommentLikeButton comment={comment} />
                   <Button
                     variant="ghost"
@@ -250,7 +250,7 @@ export const Comments = ({ initialComments, id }: Props) => {
                       setReplyTo(replyTo === comment.id ? null : comment.id)
                     }
                   >
-                    <MessageCircle className="w-4 h-4" />
+                    <MessageCircle className="size-4" />
                     回复
                   </Button>
                 </div>
@@ -260,7 +260,7 @@ export const Comments = ({ initialComments, id }: Props) => {
         </Card>
 
         {replyTo === comment.id && (
-          <div className="mt-2 ml-8">
+          <div className="ml-8 mt-2">
             <PublishComment
               patchId={id}
               parentId={comment.id}

@@ -4,17 +4,17 @@ import { useState } from 'react'
 import { Button } from '@nextui-org/button'
 import {
   Modal,
-  ModalContent,
-  ModalHeader,
   ModalBody,
+  ModalContent,
   ModalFooter,
+  ModalHeader,
   useDisclosure
 } from '@nextui-org/modal'
 import { kunFetchPost } from '~/utils/kunFetch'
-import { Plus, Check } from 'lucide-react'
+import { Check, Plus } from 'lucide-react'
 import { useRouter } from 'next-nprogress-bar'
 import { useUserStore } from '~/store/providers/user'
-import { useErrorHandler } from '~/hooks/useErrorHandler'
+import { kunErrorHandler } from '~/utils/kunErrorHandler'
 
 interface Props {
   uid: number
@@ -35,7 +35,7 @@ export const UserFollow = ({ uid, name, follow, fullWidth = true }: Props) => {
     const res = await kunFetchPost<KunResponse<{}>>('/user/follow/unfollow', {
       uid
     })
-    useErrorHandler(res, () => {
+    kunErrorHandler(res, () => {
       setIsFollow(false)
       onClose()
     })
@@ -51,7 +51,7 @@ export const UserFollow = ({ uid, name, follow, fullWidth = true }: Props) => {
       const res = await kunFetchPost<KunResponse<{}>>('/user/follow/follow', {
         uid
       })
-      useErrorHandler(res, () => {})
+      kunErrorHandler(res, () => {})
       setIsFollow(true)
     }
 
@@ -63,11 +63,7 @@ export const UserFollow = ({ uid, name, follow, fullWidth = true }: Props) => {
     <>
       <Button
         startContent={
-          isFollow ? (
-            <Check className="w-4 h-4" />
-          ) : (
-            <Plus className="w-4 h-4" />
-          )
+          isFollow ? <Check className="size-4" /> : <Plus className="size-4" />
         }
         color={isFollow ? 'success' : 'primary'}
         variant="flat"

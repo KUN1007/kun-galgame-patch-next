@@ -1,6 +1,6 @@
 'use client'
 
-import { Card, CardHeader, CardBody, CardFooter } from '@nextui-org/card'
+import { Card, CardBody, CardFooter, CardHeader } from '@nextui-org/card'
 import { Image } from '@nextui-org/image'
 import { KunCardStats } from '~/components/kun/CardStats'
 import { useRouter } from 'next-nprogress-bar'
@@ -22,17 +22,17 @@ export const GalgameCard = ({ patch }: Props) => {
       onPress={() => router.push(`/patch/${patch.id}/introduction`)}
     >
       <CardHeader className="p-0">
-        <div className="relative w-full mx-auto overflow-hidden text-center rounded-t-lg">
+        <div className="relative mx-auto w-full overflow-hidden rounded-t-lg text-center">
           <div
-            className={`absolute inset-0 bg-default-100 animate-pulse ${
+            className={`absolute inset-0 animate-pulse bg-default-100 ${
               imageLoaded ? 'opacity-0' : 'opacity-100'
             } transition-opacity duration-300`}
             style={{ aspectRatio: '16/9' }}
           />
           <Image
             alt={patch.name}
-            className={`object-cover w-full h-full transition-all duration-300 ${
-              imageLoaded ? 'opacity-100 scale-100' : 'opacity-0 scale-105'
+            className={`size-full object-cover transition-all duration-300 ${
+              imageLoaded ? 'scale-100 opacity-100' : 'scale-105 opacity-0'
             }`}
             src={patch.banner.replace(/\.avif$/, '-mini.avif')}
             style={{ aspectRatio: '16/9' }}
@@ -40,8 +40,8 @@ export const GalgameCard = ({ patch }: Props) => {
           />
         </div>
       </CardHeader>
-      <CardBody className="px-4 py-2 space-y-3">
-        <h3 className="text-lg font-semibold transition-colors hover:text-primary-500 line-clamp-2">
+      <CardBody className="space-y-3 px-4 py-2">
+        <h3 className="line-clamp-2 text-lg font-semibold transition-colors hover:text-primary-500">
           {patch.name}
         </h3>
         <KunCardStats patch={patch} />

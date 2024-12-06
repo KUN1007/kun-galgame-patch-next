@@ -1,12 +1,12 @@
 import { useState } from 'react'
-import { useForm, Controller } from 'react-hook-form'
+import { Controller, useForm } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { z } from 'zod'
-import { Input, Button, Divider, Link, Checkbox } from '@nextui-org/react'
+import { Button, Checkbox, Divider, Input, Link } from '@nextui-org/react'
 import { kunFetchPost } from '~/utils/kunFetch'
 import { registerSchema } from '~/validations/auth'
 import { useUserStore } from '~/store/providers/user'
-import { useErrorHandler } from '~/hooks/useErrorHandler'
+import { kunErrorHandler } from '~/utils/kunErrorHandler'
 import { redirect } from 'next/navigation'
 import toast from 'react-hot-toast'
 import { EmailVerification } from '~/components/kun/verification-code/Code'
@@ -45,7 +45,7 @@ export const RegisterForm = () => {
 
     setLoading(false)
 
-    useErrorHandler(res, (value) => {
+    kunErrorHandler(res, (value) => {
       setUser(value)
       reset()
       toast.success('注册成功!')
@@ -54,7 +54,7 @@ export const RegisterForm = () => {
   }
 
   return (
-    <form onSubmit={handleSubmit(onSubmit)} className="flex flex-col w-72">
+    <form onSubmit={handleSubmit(onSubmit)} className="flex w-72 flex-col">
       <Controller
         name="name"
         control={control}
@@ -149,7 +149,7 @@ export const RegisterForm = () => {
         注册
       </Button>
 
-      <div className="flex items-center justify-center overflow-hidden w-72">
+      <div className="flex w-72 items-center justify-center overflow-hidden">
         <Divider className="my-8" />
         <span className="mx-4">或</span>
         <Divider className="my-8" />
@@ -158,7 +158,7 @@ export const RegisterForm = () => {
       <Button
         color="primary"
         variant="bordered"
-        className="w-full mb-4"
+        className="mb-4 w-full"
         onClick={() => router.push('/auth/forgot')}
       >
         忘记密码

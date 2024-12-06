@@ -1,6 +1,6 @@
 import path from 'path'
 import { createReadStream, createWriteStream } from 'fs'
-import { writeFile, mkdir } from 'fs/promises'
+import { mkdir, writeFile } from 'fs/promises'
 import { blake3 } from '@noble/hashes/blake3'
 import { bytesToHex } from '@noble/hashes/utils'
 

@@ -2,13 +2,13 @@
 
 import { z } from 'zod'
 import { useState } from 'react'
-import { useForm, Controller } from 'react-hook-form'
+import { Controller, useForm } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
-import { Input, Button } from '@nextui-org/react'
-import { LockKeyhole, KeyRound } from 'lucide-react'
+import { Button, Input } from '@nextui-org/react'
+import { KeyRound, LockKeyhole } from 'lucide-react'
 import { stepTwoSchema } from '~/validations/forgot'
 import { kunFetchPost } from '~/utils/kunFetch'
-import { useErrorHandler } from '~/hooks/useErrorHandler'
+import { kunErrorHandler } from '~/utils/kunErrorHandler'
 import toast from 'react-hot-toast'
 import { redirect } from 'next/navigation'
 
@@ -48,7 +48,7 @@ export const StepTwo = ({ name, setStep }: Props) => {
       ...data,
       name
     })
-    useErrorHandler(res, () => {
+    kunErrorHandler(res, () => {
       reset()
       toast.success('重置密码成功! 正在跳转到登录页')
       redirect('/login')
@@ -77,7 +77,7 @@ export const StepTwo = ({ name, setStep }: Props) => {
             autoComplete="one-time-code"
             isInvalid={!!errors.verificationCode}
             errorMessage={errors.verificationCode?.message}
-            startContent={<KeyRound className="w-4 h-4 text-default-400" />}
+            startContent={<KeyRound className="size-4 text-default-400" />}
           />
         )}
       />
@@ -93,7 +93,7 @@ export const StepTwo = ({ name, setStep }: Props) => {
             autoComplete="new-password"
             isInvalid={!!errors.newPassword}
             errorMessage={errors.newPassword?.message}
-            startContent={<LockKeyhole className="w-4 h-4 text-default-400" />}
+            startContent={<LockKeyhole className="size-4 text-default-400" />}
           />
         )}
       />
@@ -109,7 +109,7 @@ export const StepTwo = ({ name, setStep }: Props) => {
             autoComplete="new-password"
             isInvalid={!!errors.confirmPassword}
             errorMessage={errors.confirmPassword?.message}
-            startContent={<LockKeyhole className="w-4 h-4 text-default-400" />}
+            startContent={<LockKeyhole className="size-4 text-default-400" />}
           />
         )}
       />

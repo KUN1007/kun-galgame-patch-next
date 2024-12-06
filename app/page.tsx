@@ -1,6 +1,6 @@
 import { HomeContainer } from '~/components/home/Container'
 import { kunServerFetchGet } from '~/utils/kunServerFetch'
-import type { HomeResource, HomeComment } from '~/types/api/home'
+import type { HomeComment, HomeResource } from '~/types/api/home'
 
 export default async function Kun() {
   const response = await kunServerFetchGet<{

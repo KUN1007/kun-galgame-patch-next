@@ -1,4 +1,4 @@
-import { Card, CardHeader, CardBody } from '@nextui-org/card'
+import { Card, CardBody, CardHeader } from '@nextui-org/card'
 import { ErrorComponent } from '~/components/error/ErrorComponent'
 import { History } from '~/components/patch/history/History'
 import { PatchContributor } from '~/components/patch/Contributor'

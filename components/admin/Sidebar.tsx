@@ -5,15 +5,15 @@ import { Chip } from '@nextui-org/react'
 import Link from 'next/link'
 import { usePathname } from 'next/navigation'
 import {
-  Users,
   BadgeCheck,
-  MessageSquare,
-  FileClock,
-  Settings,
   ChevronLeft,
   ChevronRight,
+  FileClock,
   Gamepad2,
-  Puzzle
+  MessageSquare,
+  Puzzle,
+  Settings,
+  Users
 } from 'lucide-react'
 import { cn } from '~/utils/cn'
 
@@ -67,7 +67,7 @@ export const Sidebar = () => {
         'flex items-center'
       )}
     >
-      <div className="flex flex-col w-full h-full">
+      <div className="flex size-full flex-col">
         <div className="p-4 pl-0">
           <h1 className="text-2xl font-bold">管理面板</h1>
         </div>
@@ -82,7 +82,7 @@ export const Sidebar = () => {
                 <li key={item.href}>
                   <Link
                     href={item.href}
-                    className={`flex items-center gap-3 px-4 py-2 rounded-medium transition-colors ${
+                    className={`flex items-center gap-3 rounded-medium px-4 py-2 transition-colors ${
                       isActive
                         ? 'bg-primary text-primary-foreground'
                         : 'hover:bg-default-100'
@@ -99,7 +99,7 @@ export const Sidebar = () => {
       </div>
 
       <Chip
-        className="translate-x-3 md:hidden text-default-500"
+        className="translate-x-3 text-default-500 md:hidden"
         variant="light"
         onClick={() => setIsOpen(!isOpen)}
       >

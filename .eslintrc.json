@@ -35,14 +35,16 @@
     "prettier/prettier": [
       "error",
       {
+        "eslintIntegration": true,
         "singleQuote": true,
-        "semi": true,
+        "semi": false,
         "bracketSpacing": true,
         "tabWidth": 2,
         "useTabs": false,
+        "files.insertFinalNewline": true,
         "htmlWhitespaceSensitivity": "strict",
         "trailingComma": "none",
-        "endOfLine": "lf"
+        "endOfLine": "auto"
       }
     ],
     "no-debugger": "off",
@@ -55,7 +57,7 @@
         "ignoreDeclarationSort": true
       }
     ],
-    "@typescript-eslint/no-unused-vars": "error",
+    // "@typescript-eslint/no-unused-vars": "error",
     "tailwindcss/no-custom-classname": "off"
   }
 }

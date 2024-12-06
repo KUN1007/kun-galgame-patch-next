@@ -1,6 +1,6 @@
 'use client'
 
-import { Users, FileText, Download, Eye } from 'lucide-react'
+import { Download, Eye, FileText, Users } from 'lucide-react'
 
 export function Statistics() {
   const stats = [
@@ -11,7 +11,7 @@ export function Statistics() {
   ]
 
   return (
-    <section className="p-8 bg-content1 rounded-xl">
+    <section className="rounded-xl bg-content1 p-8">
       <h2 className="mb-6 text-3xl font-bold">Community Statistics</h2>
       <div className="grid grid-cols-1 gap-6 md:grid-cols-2 lg:grid-cols-4">
         {stats.map(({ icon: Icon, label, value }) => (

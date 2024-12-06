@@ -2,7 +2,7 @@
 
 import { useState } from 'react'
 import { KunTreeNode } from '~/lib/mdx/types'
-import { ChevronRight, FolderOpen, FileText } from 'lucide-react'
+import { ChevronRight, FileText, FolderOpen } from 'lucide-react'
 import { useRouter } from 'next-nprogress-bar'
 
 interface TreeItemProps {
@@ -25,7 +25,7 @@ export const TreeItem = ({ node, level }: TreeItemProps) => {
   return (
     <nav className="select-none">
       <div
-        className={`flex items-center gap-2 px-3 py-2 rounded-lg cursor-pointer hover:bg-default-100 ${
+        className={`flex cursor-pointer items-center gap-2 rounded-lg px-3 py-2 hover:bg-default-100 ${
           level === 0 ? 'mt-0' : 'mt-1'
         }`}
         style={{ paddingLeft: `${level * 12 + 12}px` }}
@@ -35,7 +35,7 @@ export const TreeItem = ({ node, level }: TreeItemProps) => {
           <>
             <ChevronRight
               size={16}
-              className={`transform transition-transform ${isOpen ? 'rotate-90' : ''}`}
+              className={`transition-transform${isOpen ? 'rotate-90' : ''}`}
             />
             <FolderOpen size={16} className="text-warning" />
           </>

@@ -1,23 +1,23 @@
 'use client'
 
-import React, { useState, useEffect } from 'react'
+import React, { useEffect, useState } from 'react'
 import {
   Button,
   Card,
   CardBody,
   CardHeader,
-  Input,
   Chip,
+  Input,
   Link
 } from '@nextui-org/react'
 import localforage from 'localforage'
-import { Upload, Plus } from 'lucide-react'
+import { Plus, Upload } from 'lucide-react'
 import { useCreatePatchStore } from '~/store/editStore'
 import { cn } from '~/utils/cn'
 import { Editor } from '~/components/kun/milkdown/PatchEditor'
 import toast from 'react-hot-toast'
-import { kunFetchGet, kunFetchFormData } from '~/utils/kunFetch'
-import { useErrorHandler } from '~/hooks/useErrorHandler'
+import { kunFetchFormData, kunFetchGet } from '~/utils/kunFetch'
+import { kunErrorHandler } from '~/utils/kunErrorHandler'
 import { patchCreateSchema } from '~/validations/edit'
 import { resizeImage } from '~/utils/resizeImage'
 import { useRouter } from 'next-nprogress-bar'
@@ -136,7 +136,7 @@ export const CreatePatch = () => {
       '/edit',
       formDataToSend
     )
-    useErrorHandler(res, async (value) => {
+    kunErrorHandler(res, async (value) => {
       resetData()
       setPreviewUrl('')
       await localforage.removeItem('kun-patch-banner')
@@ -205,7 +205,7 @@ export const CreatePatch = () => {
   }
 
   return (
-    <form onSubmit={handleSubmit} className="flex-1 w-full p-4 mx-auto">
+    <form onSubmit={handleSubmit} className="mx-auto w-full flex-1 p-4">
       <Card className="w-full">
         <CardHeader className="flex gap-3">
           <div className="flex flex-col">
@@ -215,8 +215,8 @@ export const CreatePatch = () => {
             </p>
           </div>
         </CardHeader>
-        <CardBody className="gap-4 mt-2">
-          <div className="flex flex-col w-full gap-2 mb-4">
+        <CardBody className="mt-2 gap-4">
+          <div className="mb-4 flex w-full flex-col gap-2">
             <Input
               isRequired
               variant="underlined"
@@ -279,21 +279,21 @@ export const CreatePatch = () => {
                 <img
                   src={previewUrl}
                   alt="Banner preview"
-                  className="object-contain w-full h-full max-h-[512px]"
+                  className="size-full max-h-[512px] object-contain"
                 />
                 <Button
                   color="danger"
                   variant="bordered"
                   size="sm"
-                  className="absolute top-2 right-2"
+                  className="absolute right-2 top-2"
                   onClick={removeBanner}
                 >
                   移除
                 </Button>
               </div>
             ) : (
-              <div className="flex flex-col items-center justify-center h-full">
-                <Upload className="w-12 h-12 mb-4 text-default-400" />
+              <div className="flex h-full flex-col items-center justify-center">
+                <Upload className="mb-4 size-12 text-default-400" />
                 <p className="mb-2">拖放图片到此处或</p>
                 <label>
                   <Button color="primary" variant="flat" as="span">
@@ -355,7 +355,7 @@ export const CreatePatch = () => {
                 <Plus size={20} />
               </Button>
             </div>
-            <div className="flex flex-wrap gap-2 mt-2">
+            <div className="mt-2 flex flex-wrap gap-2">
               {data.alias.map((alias, index) => (
                 <Chip
                   key={index}
@@ -372,7 +372,7 @@ export const CreatePatch = () => {
           <Button
             color="primary"
             type="submit"
-            className="w-full mt-4"
+            className="mt-4 w-full"
             isDisabled={creating}
             isLoading={creating}
           >

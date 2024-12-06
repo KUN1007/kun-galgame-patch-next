@@ -9,7 +9,7 @@ import { ModalBody, ModalFooter } from '@nextui-org/modal'
 import { cn } from '~/utils/cn'
 import toast from 'react-hot-toast'
 import { kunFetchFormData } from '~/utils/kunFetch'
-import { useErrorHandler } from '~/hooks/useErrorHandler'
+import { kunErrorHandler } from '~/utils/kunErrorHandler'
 import { resizeImage } from '~/utils/resizeImage'
 
 interface Props {
@@ -67,7 +67,7 @@ export const RewritePatchBanner = ({ patchId, onClose }: Props) => {
       '/patch/banner',
       formData
     )
-    useErrorHandler(res, () => {
+    kunErrorHandler(res, () => {
       setBanner(null)
       setPreviewUrl('')
     })
@@ -97,21 +97,21 @@ export const RewritePatchBanner = ({ patchId, onClose }: Props) => {
               <img
                 src={previewUrl}
                 alt="Banner preview"
-                className="object-contain w-full h-full max-h-[512px]"
+                className="size-full max-h-[512px] object-contain"
               />
               <Button
                 color="danger"
                 variant="bordered"
                 size="sm"
-                className="absolute top-2 right-2"
+                className="absolute right-2 top-2"
                 onClick={removeBanner}
               >
                 移除
               </Button>
             </div>
           ) : (
-            <div className="flex flex-col items-center justify-center h-full">
-              <Upload className="w-12 h-12 mb-4 text-gray-400" />
+            <div className="flex h-full flex-col items-center justify-center">
+              <Upload className="mb-4 size-12 text-gray-400" />
               <p className="mb-2">拖放图片到此处或</p>
               <label>
                 <Button color="primary" variant="flat" as="span">

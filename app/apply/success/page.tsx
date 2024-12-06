@@ -1,9 +1,9 @@
 'use client'
 
 import { useEffect } from 'react'
-import { Card, CardBody, Button } from '@nextui-org/react'
+import { Button, Card, CardBody } from '@nextui-org/react'
 import { motion } from 'framer-motion'
-import { BadgeCheck, Rocket, Home } from 'lucide-react'
+import { BadgeCheck, Home, Rocket } from 'lucide-react'
 import { useRouter } from 'next-nprogress-bar'
 import { useConfetti } from '~/hooks/useConfetti'
 
@@ -16,7 +16,7 @@ export default function Kun() {
   }, [triggerConfetti])
 
   return (
-    <div className="w-full m-auto">
+    <div className="m-auto w-full">
       <motion.div
         initial={{ scale: 0.9, opacity: 0 }}
         animate={{ scale: 1, opacity: 1 }}
@@ -28,10 +28,10 @@ export default function Kun() {
               initial={{ scale: 0 }}
               animate={{ scale: 1 }}
               transition={{ delay: 0.2, type: 'spring', stiffness: 200 }}
-              className="flex items-center justify-center w-20 h-20 rounded-full"
+              className="flex size-20 items-center justify-center rounded-full"
             >
               <BadgeCheck
-                className="w-20 h-20 text-primary-foreground"
+                className="size-20 text-primary-foreground"
                 fill="#006FEE"
               />
             </motion.div>
@@ -62,7 +62,7 @@ export default function Kun() {
               transition={{ delay: 0.5 }}
             >
               <Button
-                startContent={<Rocket className="w-4 h-4" />}
+                startContent={<Rocket className="size-4" />}
                 color="primary"
                 variant="shadow"
                 className="flex-1"
@@ -72,7 +72,7 @@ export default function Kun() {
                 发布补丁
               </Button>
               <Button
-                startContent={<Home className="w-4 h-4" />}
+                startContent={<Home className="size-4" />}
                 variant="bordered"
                 className="flex-1"
                 size="lg"

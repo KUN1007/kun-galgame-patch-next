@@ -5,7 +5,7 @@ import { X } from 'lucide-react'
 import { toast } from 'react-hot-toast'
 import type { Toast } from 'react-hot-toast'
 import { Button } from '@nextui-org/button'
-import { toastVariants, iconVariants, textVariants } from '~/motion/sooner'
+import { iconVariants, textVariants, toastVariants } from '~/motion/sooner'
 import loliImage from './utils/loli'
 import Image from 'next/image'
 import { Chip } from '@nextui-org/react'
@@ -24,16 +24,16 @@ const KunSooner = ({ message, t }: ToastProps) => {
       initial="initial"
       animate="animate"
       exit="exit"
-      className="flex justify-center w-full "
+      className="flex w-full justify-center "
     >
-      <div className="flex w-full max-w-md p-2 shadow-lg pointer-events-auto bg-background rounded-2xl ring-1 ring-foreground/5">
-        <div className="flex-1 w-0 p-4">
+      <div className="pointer-events-auto flex w-full max-w-md rounded-2xl bg-background p-2 shadow-lg ring-1 ring-foreground/5">
+        <div className="w-0 flex-1 p-4">
           <div className="flex items-start">
             <motion.div
               variants={iconVariants}
               initial="initial"
               animate="animate"
-              className="flex-shrink-0"
+              className="shrink-0"
             >
               <Image
                 src={loli}
@@ -48,12 +48,12 @@ const KunSooner = ({ message, t }: ToastProps) => {
               variants={textVariants}
               initial="initial"
               animate="animate"
-              className="relative flex-1 h-full ml-3 space-y-2"
+              className="relative ml-3 h-full flex-1 space-y-2"
             >
               <Chip
                 color="primary"
                 variant="shadow"
-                className="absolute -top-10 -left-12"
+                className="absolute -left-12 -top-10"
                 size="lg"
               >
                 {name}
@@ -73,7 +73,7 @@ const KunSooner = ({ message, t }: ToastProps) => {
               whileHover={{ rotate: 90 }}
               transition={{ duration: 0.2 }}
             >
-              <X className="w-5 h-5" />
+              <X className="size-5" />
             </motion.div>
           </Button>
         </div>

@@ -2,24 +2,24 @@
 
 import { useState } from 'react'
 import toast from 'react-hot-toast'
-import { Card, CardHeader, CardBody, CardFooter } from '@nextui-org/card'
+import { Card, CardBody, CardFooter, CardHeader } from '@nextui-org/card'
 import { User } from '@nextui-org/user'
 import { Button } from '@nextui-org/button'
 import { Textarea } from '@nextui-org/input'
 import { Chip } from '@nextui-org/chip'
 import {
   Modal,
-  ModalContent,
-  ModalHeader,
   ModalBody,
+  ModalContent,
   ModalFooter,
+  ModalHeader,
   useDisclosure
 } from '@nextui-org/modal'
 import { Check, X } from 'lucide-react'
 import { formatDistanceToNow } from '~/utils/formatDistanceToNow'
 import { HighlightedText } from '~/components/patch/DiffContent'
 import { kunFetchPut } from '~/utils/kunFetch'
-import { useErrorHandler } from '~/hooks/useErrorHandler'
+import { kunErrorHandler } from '~/utils/kunErrorHandler'
 import type { PatchPullRequest as PatchPullRequestType } from '~/types/api/patch'
 
 interface Props {
@@ -41,7 +41,7 @@ export const PatchPullRequest = ({ pr }: Props) => {
     const res = await kunFetchPut<KunResponse<{}>>('/patch/pr/merge', {
       prId: mergeId
     })
-    useErrorHandler(res, () => {
+    kunErrorHandler(res, () => {
       toast.success('合并请求成功')
     })
     setMerging(false)
@@ -62,7 +62,7 @@ export const PatchPullRequest = ({ pr }: Props) => {
       prId,
       note
     })
-    useErrorHandler(res, () => {
+    kunErrorHandler(res, () => {
       toast.success('拒绝合并成功')
     })
     setDeclining(false)
@@ -107,7 +107,7 @@ export const PatchPullRequest = ({ pr }: Props) => {
 
                   {p.status === 1 && (
                     <Chip
-                      endContent={<Check className="w-4 h-4" />}
+                      endContent={<Check className="size-4" />}
                       variant="flat"
                       color="success"
                     >
@@ -117,7 +117,7 @@ export const PatchPullRequest = ({ pr }: Props) => {
 
                   {p.status === 2 && (
                     <Chip
-                      endContent={<X className="w-4 h-4" />}
+                      endContent={<X className="size-4" />}
                       variant="flat"
                       color="danger"
                     >
@@ -131,8 +131,8 @@ export const PatchPullRequest = ({ pr }: Props) => {
                       <HighlightedText content={p.content} />
                     </CardBody>
 
-                    <CardFooter className="flex flex-col w-full space-y-2">
-                      <div className="flex justify-end w-full mb-4 space-x-2">
+                    <CardFooter className="flex w-full flex-col space-y-2">
+                      <div className="mb-4 flex w-full justify-end space-x-2">
                         <Button
                           color="danger"
                           variant="flat"
@@ -151,7 +151,7 @@ export const PatchPullRequest = ({ pr }: Props) => {
                         </Button>
                       </div>
                       {showDecline && (
-                        <div className="flex flex-col items-end w-full space-y-2 ">
+                        <div className="flex w-full flex-col items-end space-y-2 ">
                           <Textarea
                             labelPlacement="outside"
                             isRequired

@@ -2,12 +2,12 @@
 
 import { useState } from 'react'
 import { z } from 'zod'
-import { useForm, Controller } from 'react-hook-form'
+import { Controller, useForm } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
-import { Input, Button } from '@nextui-org/react'
+import { Button, Input } from '@nextui-org/react'
 import { User } from 'lucide-react'
 import { kunFetchPost } from '~/utils/kunFetch'
-import { useErrorHandler } from '~/hooks/useErrorHandler'
+import { kunErrorHandler } from '~/utils/kunErrorHandler'
 import toast from 'react-hot-toast'
 import { stepOneSchema } from '~/validations/forgot'
 
@@ -34,7 +34,7 @@ export const StepOne = ({ setStep, setEmail }: Props) => {
     const res = await kunFetchPost<KunResponse<undefined>>('/forgot/one', {
       name: data.name
     })
-    useErrorHandler(res, () => {
+    kunErrorHandler(res, () => {
       setEmail(data.name)
       setStep(2)
       toast.success('重置验证码发送成功!')
@@ -56,7 +56,7 @@ export const StepOne = ({ setStep, setEmail }: Props) => {
             autoComplete="email"
             isInvalid={!!errors.name}
             errorMessage={errors.name?.message}
-            startContent={<User className="w-4 h-4 text-default-400" />}
+            startContent={<User className="size-4 text-default-400" />}
           />
         )}
       />

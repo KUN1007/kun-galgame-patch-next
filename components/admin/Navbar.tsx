@@ -1,9 +1,9 @@
 'use client'
 
 import {
-  Navbar as NextUINavbar,
   NavbarContent,
-  NavbarItem
+  NavbarItem,
+  Navbar as NextUINavbar
 } from '@nextui-org/react'
 
 export const Navbar = () => {

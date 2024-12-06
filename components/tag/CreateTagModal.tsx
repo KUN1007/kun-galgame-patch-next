@@ -6,10 +6,10 @@ import { zodResolver } from '@hookform/resolvers/zod'
 import { z } from 'zod'
 import {
   Modal,
-  ModalContent,
-  ModalHeader,
   ModalBody,
-  ModalFooter
+  ModalContent,
+  ModalFooter,
+  ModalHeader
 } from '@nextui-org/modal'
 import { Button } from '@nextui-org/button'
 import { Input, Textarea } from '@nextui-org/input'
@@ -17,7 +17,7 @@ import { Chip } from '@nextui-org/chip'
 import { Plus } from 'lucide-react'
 import { createTagSchema } from '~/validations/tag'
 import { kunFetchPost } from '~/utils/kunFetch'
-import { useErrorHandler } from '~/hooks/useErrorHandler'
+import { kunErrorHandler } from '~/utils/kunErrorHandler'
 import toast from 'react-hot-toast'
 import type { Tag } from '~/types/api/tag'
 
@@ -81,7 +81,7 @@ export const CreateTagModal = ({ isOpen, onClose, onSuccess }: Props) => {
 
     setIsSubmitting(true)
     const res = await kunFetchPost<KunResponse<Tag>>('/tag', data)
-    useErrorHandler(res, (value) => {
+    kunErrorHandler(res, (value) => {
       reset()
       onSuccess(value)
     })

@@ -28,7 +28,7 @@ export const HistoryCard = ({ history }: Props) => {
                   {HISTORY_ACTION_TYPE_MAP[history.action]}{' '}
                   {HISTORY_TYPE_MAP[history.type]}
                 </h4>
-                <p className="text-sm text-muted-foreground">
+                <p className="text-muted-foreground text-sm">
                   {history.user.name} • {formatDistanceToNow(history.created)}
                 </p>
               </div>

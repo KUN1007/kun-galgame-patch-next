@@ -1,10 +1,10 @@
 'use client'
 
-import { User, Chip } from '@nextui-org/react'
+import { Chip, User } from '@nextui-org/react'
 import {
   USER_ROLE_MAP,
-  USER_STATUS_MAP,
-  USER_STATUS_COLOR_MAP
+  USER_STATUS_COLOR_MAP,
+  USER_STATUS_MAP
 } from '~/constants/user'
 import { UserEdit } from './UserEdit'
 import type { AdminUser as AdminUserType } from '~/types/api/admin'

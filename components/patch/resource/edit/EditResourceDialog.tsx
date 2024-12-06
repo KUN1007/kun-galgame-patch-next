@@ -3,10 +3,10 @@
 import { z } from 'zod'
 import { Button } from '@nextui-org/button'
 import {
-  ModalContent,
-  ModalHeader,
   ModalBody,
-  ModalFooter
+  ModalContent,
+  ModalFooter,
+  ModalHeader
 } from '@nextui-org/react'
 import { useState } from 'react'
 import { useForm } from 'react-hook-form'
@@ -15,7 +15,7 @@ import toast from 'react-hot-toast'
 import { kunFetchPut } from '~/utils/kunFetch'
 import { patchResourceCreateSchema } from '~/validations/patch'
 import { ResourceLinksInput } from '../publish/ResourceLinksInput'
-import { useErrorHandler } from '~/hooks/useErrorHandler'
+import { kunErrorHandler } from '~/utils/kunErrorHandler'
 import { ResourceDetailsForm } from '../publish/ResourceDetailsForm'
 import type { PatchResource } from '~/types/api/patch'
 
@@ -54,7 +54,7 @@ export const EditResourceDialog = ({
       `/${type}/resource`,
       { resourceId: resource.id, ...data }
     )
-    useErrorHandler(res, (value) => {
+    kunErrorHandler(res, (value) => {
       onSuccess(value)
       toast.success('资源更新成功')
     })

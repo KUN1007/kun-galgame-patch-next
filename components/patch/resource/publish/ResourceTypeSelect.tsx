@@ -5,7 +5,7 @@ import { Controller } from 'react-hook-form'
 import { Select, SelectItem } from '@nextui-org/select'
 import { patchResourceCreateSchema } from '~/validations/patch'
 import { useUserStore } from '~/store/providers/user'
-import { ErrorType, ControlType } from '../share'
+import { ControlType, ErrorType } from '../share'
 
 export type ResourceFormData = z.infer<typeof patchResourceCreateSchema>
 

@@ -2,9 +2,9 @@
 
 import { useState } from 'react'
 import { z } from 'zod'
-import { useForm, Controller } from 'react-hook-form'
+import { Controller, useForm } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
-import { Card, CardHeader, CardBody, CardFooter } from '@nextui-org/card'
+import { Card, CardBody, CardFooter, CardHeader } from '@nextui-org/card'
 import { Input } from '@nextui-org/input'
 import { Button } from '@nextui-org/button'
 import { Divider } from '@nextui-org/divider'
@@ -12,8 +12,7 @@ import { Link } from '@nextui-org/link'
 import toast from 'react-hot-toast'
 import { passwordSchema } from '~/validations/user'
 import { kunFetchPost } from '~/utils/kunFetch'
-import { useErrorHandler } from '~/hooks/useErrorHandler'
-
+import { kunErrorHandler } from '~/utils/kunErrorHandler'
 type PasswordFormData = z.infer<typeof passwordSchema>
 
 export const Password = () => {
@@ -35,12 +34,16 @@ export const Password = () => {
   const onSubmit = async (data: PasswordFormData) => {
     setLoading(true)
 
-    await kunFetchPost('/user/setting/password', data)
+    const res = await kunFetchPost<KunResponse<{}>>(
+      '/user/setting/password',
+      data
+    )
+    kunErrorHandler(res, () => {
+      reset()
+      toast.success('更改密码成功!')
+    })
 
     setLoading(false)
-
-    reset()
-    toast.success('更改密码成功!')
   }
 
   return (
@@ -49,7 +52,7 @@ export const Password = () => {
         <CardHeader>
           <h2 className="text-xl font-medium">密码</h2>
         </CardHeader>
-        <CardBody className="py-0 space-y-4">
+        <CardBody className="space-y-4 py-0">
           <div>
             <p>这是您的密码设置, 您需要输入旧密码以更改新密码</p>
           </div>

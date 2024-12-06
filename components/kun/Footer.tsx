@@ -4,8 +4,8 @@ import Link from 'next/link'
 
 export const KunFooter = () => {
   return (
-    <footer className="w-full mt-8 text-sm border-t border-divider">
-      <div className="px-4 mx-auto max-w-7xl">
+    <footer className="mt-8 w-full border-t border-divider text-sm">
+      <div className="mx-auto max-w-7xl px-4">
         <div className="flex flex-wrap justify-center gap-4 py-6 md:justify-between">
           <Link href="/" className="flex items-center space-x-2">
             <img

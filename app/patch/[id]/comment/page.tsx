@@ -1,4 +1,4 @@
-import { Card, CardHeader, CardBody } from '@nextui-org/card'
+import { Card, CardBody, CardHeader } from '@nextui-org/card'
 import { Comments } from '~/components/patch/comment/Comments'
 import { kunServerFetchGet } from '~/utils/kunServerFetch'
 import type { PatchComment } from '~/types/api/patch'

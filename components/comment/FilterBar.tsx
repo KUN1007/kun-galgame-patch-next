@@ -2,14 +2,14 @@
 
 import {
   Dropdown,
-  DropdownTrigger,
+  DropdownItem,
   DropdownMenu,
-  DropdownItem
+  DropdownTrigger
 } from '@nextui-org/dropdown'
 import { Button } from '@nextui-org/button'
 import { Card, CardHeader } from '@nextui-org/card'
 import { ArrowDownAZ, ArrowUpAZ, ChevronDown } from 'lucide-react'
-import type { SortOption, SortDirection } from './_sort'
+import type { SortDirection, SortOption } from './_sort'
 
 interface Props {
   sortField: SortOption
@@ -30,15 +30,15 @@ export const FilterBar = ({
   setSortOrder
 }: Props) => {
   return (
-    <Card className="w-full border bg-content1/50 backdrop-blur-lg border-content2">
+    <Card className="w-full border border-content2 bg-content1/50 backdrop-blur-lg">
       <CardHeader>
         <div className="flex items-center gap-2">
           <Dropdown>
             <DropdownTrigger>
               <Button
                 variant="flat"
-                className="transition-colors bg-content2/50 hover:bg-content2"
-                endContent={<ChevronDown className="w-4 h-4" />}
+                className="bg-content2/50 transition-colors hover:bg-content2"
+                endContent={<ChevronDown className="size-4" />}
                 radius="lg"
               >
                 {sortFieldLabelMap[sortField]}
@@ -60,13 +60,13 @@ export const FilterBar = ({
 
           <Button
             variant="flat"
-            className="transition-colors bg-content2/50 hover:bg-content2"
+            className="bg-content2/50 transition-colors hover:bg-content2"
             onClick={() => setSortOrder(sortOrder === 'asc' ? 'desc' : 'asc')}
             startContent={
               sortOrder === 'asc' ? (
-                <ArrowUpAZ className="w-4 h-4" />
+                <ArrowUpAZ className="size-4" />
               ) : (
-                <ArrowDownAZ className="w-4 h-4" />
+                <ArrowDownAZ className="size-4" />
               )
             }
             radius="lg"

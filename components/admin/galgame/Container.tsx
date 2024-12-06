@@ -1,16 +1,16 @@
 'use client'
 
 import {
-  Table,
-  TableHeader,
-  TableColumn,
-  TableBody,
-  TableRow,
-  TableCell,
+  Chip,
   Pagination,
-  Chip
+  Table,
+  TableBody,
+  TableCell,
+  TableColumn,
+  TableHeader,
+  TableRow
 } from '@nextui-org/react'
-import { useState, useEffect } from 'react'
+import { useEffect, useState } from 'react'
 import { RenderCell } from './RenderCell'
 import { kunFetchGet } from '~/utils/kunFetch'
 import { KunLoading } from '~/components/kun/Loading'
@@ -72,7 +72,7 @@ export const Galgame = ({ initialGalgames, total }: Props) => {
         <Table
           aria-label="Galgame 管理"
           bottomContent={
-            <div className="flex justify-center w-full">
+            <div className="flex w-full justify-center">
               {total >= 100 && (
                 <Pagination
                   showControls

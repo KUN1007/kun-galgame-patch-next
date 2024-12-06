@@ -1,19 +1,19 @@
 'use client'
 
-import { Card, CardHeader, CardBody, CardFooter } from '@nextui-org/card'
+import { Card, CardBody, CardFooter, CardHeader } from '@nextui-org/card'
 import { Input } from '@nextui-org/input'
 import { Button } from '@nextui-org/button'
 import { useUserStore } from '~/store/providers/user'
 import { useState } from 'react'
 import { kunFetchPost } from '~/utils/kunFetch'
-import { useErrorHandler } from '~/hooks/useErrorHandler'
+import { kunErrorHandler } from '~/utils/kunErrorHandler'
 import { usernameSchema } from '~/validations/user'
 import {
   Modal,
-  ModalContent,
-  ModalHeader,
   ModalBody,
+  ModalContent,
   ModalFooter,
+  ModalHeader,
   useDisclosure
 } from '@nextui-org/modal'
 import toast from 'react-hot-toast'
@@ -43,7 +43,7 @@ export const Username = () => {
         '/user/setting/username',
         { username }
       )
-      useErrorHandler(res, () => {
+      kunErrorHandler(res, () => {
         toast.success('更新用户名成功')
         setUser({ ...user, name: username, moemoepoint: user.moemoepoint - 30 })
         setUsername('')
@@ -57,7 +57,7 @@ export const Username = () => {
       <CardHeader>
         <h2 className="text-xl font-medium">用户名</h2>
       </CardHeader>
-      <CardBody className="py-0 space-y-4">
+      <CardBody className="space-y-4 py-0">
         <div>
           <p>这是您的用户名设置, 您的用户名是唯一的</p>
         </div>

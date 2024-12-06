@@ -7,10 +7,10 @@ import { zodResolver } from '@hookform/resolvers/zod'
 import { Button } from '@nextui-org/button'
 import { Link } from '@nextui-org/link'
 import {
-  ModalContent,
-  ModalHeader,
   ModalBody,
+  ModalContent,
   ModalFooter,
+  ModalHeader,
   Progress
 } from '@nextui-org/react'
 import toast from 'react-hot-toast'
@@ -21,7 +21,7 @@ import { ResourceDetailsForm } from './ResourceDetailsForm'
 import { Upload } from 'lucide-react'
 import { FileUploadContainer } from '../upload/FileUploadContainer'
 import { ResourceTypeSelect } from './ResourceTypeSelect'
-import { useErrorHandler } from '~/hooks/useErrorHandler'
+import { kunErrorHandler } from '~/utils/kunErrorHandler'
 import { useUserStore } from '~/store/providers/user'
 import type { PatchResource } from '~/types/api/patch'
 
@@ -72,7 +72,7 @@ export const PublishResource = ({
       data
     )
     setCreating(false)
-    useErrorHandler(res, (value) => {
+    kunErrorHandler(res, (value) => {
       reset()
       onSuccess?.(value)
       toast.success('资源发布成功')
@@ -150,7 +150,7 @@ export const PublishResource = ({
             type="submit"
             disabled={creating}
             isLoading={creating}
-            endContent={<Upload className="w-4 h-4" />}
+            endContent={<Upload className="size-4" />}
             onClick={handleSubmit(onSubmit)}
           >
             发布资源

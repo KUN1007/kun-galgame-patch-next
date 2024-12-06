@@ -26,7 +26,7 @@ export const PatchHeader = ({ patch }: PatchHeaderProps) => {
           color="secondary"
           variant="bordered"
           size="sm"
-          className="absolute top-2 right-2"
+          className="absolute right-2 top-2"
           onClick={onOpen}
         >
           更改图片

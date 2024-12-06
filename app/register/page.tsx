@@ -5,7 +5,7 @@ import { RegisterForm } from '~/components/register/Register'
 
 export default function Login() {
   return (
-    <div className="flex flex-col items-center justify-center mx-auto w-96">
+    <div className="mx-auto flex w-96 flex-col items-center justify-center">
       <Image
         src="/placeholder.webp"
         alt="鲲 Galgame 补丁"

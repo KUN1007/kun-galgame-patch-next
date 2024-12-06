@@ -3,7 +3,7 @@
 import { useEffect } from 'react'
 import { kunFetchPut } from '~/utils/kunFetch'
 import { Button } from '@nextui-org/react'
-import { Bell, UserPlus, Globe } from 'lucide-react'
+import { Bell, Globe, UserPlus } from 'lucide-react'
 import { Card, CardBody } from '@nextui-org/card'
 import { usePathname } from 'next/navigation'
 import Link from 'next/link'
@@ -35,16 +35,16 @@ export const MessageNav = () => {
   }, [])
 
   return (
-    <Card className="w-full lg:w-1/4 max-h-40">
+    <Card className="max-h-40 w-full lg:w-1/4">
       <CardBody className="flex flex-row gap-2 lg:flex-col">
         {notificationTypes.map(({ type, label, icon: Icon, href }) => (
           <Button
             key={label}
             color={lastSegment === type ? 'primary' : 'default'}
             as={Link}
-            className="justify-start w-full"
+            className="w-full justify-start"
             variant={lastSegment === type ? 'solid' : 'light'}
-            startContent={<Icon className="flex-shrink-0 w-4 h-4" />}
+            startContent={<Icon className="size-4 shrink-0" />}
             href={href}
           >
             <span>{label}</span>

@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from 'next/server'
 import { kunParseGetQuery } from '~/app/api/utils/parseQuery'
 import { prisma } from '~/prisma/index'
 import { adminPaginationSchema } from '~/validations/admin'
-import { setKv, getKv } from '~/lib/redis'
+import { getKv, setKv } from '~/lib/redis'
 import type { AdminStats } from '~/types/api/admin'
 
 const CACHE_KEY = 'admin:stats'

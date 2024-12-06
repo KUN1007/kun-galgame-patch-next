@@ -3,22 +3,22 @@
 import { useState } from 'react'
 import toast from 'react-hot-toast'
 import {
-  Modal,
-  ModalContent,
-  ModalHeader,
-  ModalBody,
-  ModalFooter,
   Button,
   Input,
-  Textarea,
+  Modal,
+  ModalBody,
+  ModalContent,
+  ModalFooter,
+  ModalHeader,
   Select,
   SelectItem,
+  Textarea,
   useDisclosure
 } from '@nextui-org/react'
 import { Edit2 } from 'lucide-react'
 import { USER_ROLE_MAP, USER_STATUS_MAP } from '~/constants/user'
 import { kunFetchPut } from '~/utils/kunFetch'
-import { useErrorHandler } from '~/hooks/useErrorHandler'
+import { kunErrorHandler } from '~/utils/kunErrorHandler'
 import { useUserStore } from '~/store/providers/user'
 import type { AdminUser } from '~/types/api/admin'
 
@@ -58,7 +58,7 @@ export const UserEdit = ({ initialUser }: Props) => {
 
     setUpdating(true)
     const res = await kunFetchPut<KunResponse<{}>>('/admin/user', requestData)
-    useErrorHandler(res, () => {
+    kunErrorHandler(res, () => {
       toast.success('更新用户信息成功')
     })
     setUpdating(false)

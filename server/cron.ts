@@ -11,6 +11,6 @@ const resetDailyTask = cron.schedule('0 0 * * *', async () => {
   })
 })
 
-export const useKUNGalgameTask = () => {
+export const setKUNGalgameTask = () => {
   resetDailyTask
 }

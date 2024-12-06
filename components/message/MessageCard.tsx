@@ -5,14 +5,14 @@ import { Avatar } from '@nextui-org/avatar'
 import { Chip } from '@nextui-org/chip'
 import { formatDistanceToNow } from '~/utils/formatDistanceToNow'
 import {
-  MonitorCog,
-  Mail,
   Bell,
-  Heart,
-  MessageCircle,
   GitPullRequestArrow,
-  Users,
-  ThumbsUp
+  Heart,
+  Mail,
+  MessageCircle,
+  MonitorCog,
+  ThumbsUp,
+  Users
 } from 'lucide-react'
 import { useRouter } from 'next-nprogress-bar'
 import { MESSAGE_TYPE_MAP } from '~/constants/message'
@@ -25,21 +25,21 @@ interface Props {
 const getNotificationIcon = (type: string) => {
   switch (type) {
     case 'system':
-      return <MonitorCog className="w-5 h-5 text-secondary-500" />
+      return <MonitorCog className="size-5 text-secondary-500" />
     case 'pm':
-      return <Mail className="w-5 h-5 text-secondary-500" />
+      return <Mail className="size-5 text-secondary-500" />
     case 'like':
-      return <ThumbsUp className="w-5 h-5 text-secondary-500" />
+      return <ThumbsUp className="size-5 text-secondary-500" />
     case 'favorite':
-      return <Heart className="w-5 h-5 text-danger-500" />
+      return <Heart className="size-5 text-danger-500" />
     case 'comment':
-      return <MessageCircle className="w-5 h-5 text-primary-500" />
+      return <MessageCircle className="size-5 text-primary-500" />
     case 'pr':
-      return <GitPullRequestArrow className="w-5 h-5 text-success-500" />
+      return <GitPullRequestArrow className="size-5 text-success-500" />
     case 'follow':
-      return <Users className="w-5 h-5 text-success-500" />
+      return <Users className="size-5 text-success-500" />
     default:
-      return <Bell className="w-5 h-5 text-default-500" />
+      return <Bell className="size-5 text-default-500" />
   }
 }
 

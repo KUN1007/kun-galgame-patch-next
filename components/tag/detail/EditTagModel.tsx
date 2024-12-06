@@ -1,15 +1,15 @@
 'use client'
 
-import { useState, useEffect } from 'react'
+import { useEffect, useState } from 'react'
 import { useForm } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { z } from 'zod'
 import {
   Modal,
-  ModalContent,
-  ModalHeader,
   ModalBody,
-  ModalFooter
+  ModalContent,
+  ModalFooter,
+  ModalHeader
 } from '@nextui-org/modal'
 import { Button } from '@nextui-org/button'
 import { Input, Textarea } from '@nextui-org/input'
@@ -17,7 +17,7 @@ import { Chip } from '@nextui-org/chip'
 import { Plus } from 'lucide-react'
 import { updateTagSchema } from '~/validations/tag'
 import { kunFetchPut } from '~/utils/kunFetch'
-import { useErrorHandler } from '~/hooks/useErrorHandler'
+import { kunErrorHandler } from '~/utils/kunErrorHandler'
 import toast from 'react-hot-toast'
 import type { TagDetail } from '~/types/api/tag'
 
@@ -96,7 +96,7 @@ export const EditTagModal = ({ tag, isOpen, onClose, onSuccess }: Props) => {
 
     const res = await kunFetchPut<KunResponse<TagDetail>>('/tag', data)
 
-    useErrorHandler(res, (value) => {
+    kunErrorHandler(res, (value) => {
       reset()
       toast.success('标签重新编辑成功!')
       onSuccess(value)

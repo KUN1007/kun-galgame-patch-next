@@ -2,13 +2,13 @@
 
 import { useEffect } from 'react'
 import {
+  Button,
   Dropdown,
-  DropdownTrigger,
-  DropdownMenu,
   DropdownItem,
-  Button
+  DropdownMenu,
+  DropdownTrigger
 } from '@nextui-org/react'
-import { Breadcrumbs, BreadcrumbItem } from '@nextui-org/breadcrumbs'
+import { BreadcrumbItem, Breadcrumbs } from '@nextui-org/breadcrumbs'
 import { ChevronRight } from 'lucide-react'
 import { useRouter } from 'next-nprogress-bar'
 import { usePathname } from 'next/navigation'
@@ -47,11 +47,11 @@ export const KunNavigationBreadcrumb = () => {
   }, [pathname])
 
   return (
-    <div className="w-full my-4 bg-background/60 backdrop-blur-lg">
-      <div className="px-6 mx-auto max-w-7xl">
+    <div className="my-4 w-full bg-background/60 backdrop-blur-lg">
+      <div className="mx-auto max-w-7xl px-6">
         <Breadcrumbs
           underline="hover"
-          separator={<ChevronRight className="w-4 h-4" />}
+          separator={<ChevronRight className="size-4" />}
           itemClasses={{
             item: 'text-foreground/60 data-[current=true]:text-foreground'
           }}
@@ -63,7 +63,7 @@ export const KunNavigationBreadcrumb = () => {
                 <DropdownTrigger>
                   <Button
                     isIconOnly
-                    className="w-6 h-6 min-w-6"
+                    className="size-6 min-w-6"
                     size="sm"
                     variant="flat"
                   >

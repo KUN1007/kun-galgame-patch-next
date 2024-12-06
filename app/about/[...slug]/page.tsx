@@ -1,4 +1,4 @@
-import { getPostBySlug, getAdjacentPosts } from '~/lib/mdx/getPosts'
+import { getAdjacentPosts, getPostBySlug } from '~/lib/mdx/getPosts'
 import { CustomMDX } from '~/lib/mdx/CustomMDX'
 import { TableOfContents } from '~/components/about/TableOfContents'
 import { KunBottomNavigation } from '~/components/about/Navigation'
@@ -12,7 +12,7 @@ interface PostPageProps {
 export default async function Kun({ params }: PostPageProps) {
   const { slug } = await params
   const url = slug.join('/')
-  const { content, frontmatter } = getPostBySlug(url)
+  const { content } = getPostBySlug(url)
   const { prev, next } = getAdjacentPosts(url)
 
   return (

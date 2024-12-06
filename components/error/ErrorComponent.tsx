@@ -18,12 +18,12 @@ export const ErrorComponent = ({ error }: ErrorComponentProps) => {
   const router = useRouter()
 
   return (
-    <div className="flex items-center justify-center w-full h-full p-8">
+    <div className="flex size-full items-center justify-center p-8">
       <Card className="w-full max-w-lg shadow-2xl">
         <CardHeader className="flex gap-3 px-8 pt-8">
           <div className="flex items-center gap-4">
-            <div className="p-3 rounded-full bg-danger-50">
-              <AlertTriangle className="w-8 h-8 text-danger" />
+            <div className="rounded-full bg-danger-50 p-3">
+              <AlertTriangle className="size-8 text-danger" />
             </div>
             <div>
               <h1 className="text-2xl font-bold text-foreground">出错了</h1>
@@ -32,13 +32,13 @@ export const ErrorComponent = ({ error }: ErrorComponentProps) => {
           </div>
         </CardHeader>
         <CardBody className="px-8">
-          <div className="p-4 mt-4 rounded-lg bg-danger-50">
+          <div className="mt-4 rounded-lg bg-danger-50 p-4">
             <p className="font-mono text-sm text-danger">{error}</p>
           </div>
         </CardBody>
         <CardFooter className="flex flex-wrap gap-2 px-8 pb-8">
           <Button
-            startContent={<ArrowLeft className="w-4 h-4" />}
+            startContent={<ArrowLeft className="size-4" />}
             variant="flat"
             color="primary"
             onClick={() => router.back()}
@@ -46,7 +46,7 @@ export const ErrorComponent = ({ error }: ErrorComponentProps) => {
             返回上一页
           </Button>
           <Button
-            startContent={<Home className="w-4 h-4" />}
+            startContent={<Home className="size-4" />}
             color="primary"
             onClick={() => router.push('/')}
           >

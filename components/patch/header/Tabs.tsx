@@ -1,6 +1,6 @@
 'use client'
 
-import { Tabs, Tab } from '@nextui-org/tabs'
+import { Tab, Tabs } from '@nextui-org/tabs'
 import { usePathname } from 'next/navigation'
 import Link from 'next/link'
 
@@ -27,7 +27,7 @@ export const PatchHeaderTabs = ({ id }: PatchHeaderProps) => {
   return (
     <Tabs
       aria-label="Options"
-      className="w-full overflow-hidden shadow-medium rounded-large"
+      className="w-full overflow-hidden rounded-large shadow-medium"
       fullWidth
       selectedKey={lastSegment}
     >
@@ -37,7 +37,7 @@ export const PatchHeaderTabs = ({ id }: PatchHeaderProps) => {
           as={Link}
           title={title}
           href={href}
-          className="p-0 min-w-24 rounded-large"
+          className="min-w-24 rounded-large p-0"
         />
       ))}
     </Tabs>

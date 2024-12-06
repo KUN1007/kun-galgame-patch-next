@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useEffect } from 'react'
+import { useEffect, useState } from 'react'
 import { useDebounce } from 'use-debounce'
 import { Pagination } from '@nextui-org/pagination'
 import { TagHeader } from './TagHeader'
@@ -68,7 +68,7 @@ export const Container = ({ initialTags }: Props) => {
   }
 
   return (
-    <div className="flex flex-col w-full my-4 space-y-8">
+    <div className="my-4 flex w-full flex-col space-y-8">
       <TagHeader setNewTag={(newTag) => setTags([newTag, ...initialTags])} />
 
       <SearchTags

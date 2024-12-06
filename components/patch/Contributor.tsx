@@ -1,4 +1,4 @@
-import { Card, CardHeader, CardBody } from '@nextui-org/card'
+import { Card, CardBody, CardHeader } from '@nextui-org/card'
 import { Avatar, AvatarGroup } from '@nextui-org/avatar'
 import { Tooltip } from '@nextui-org/tooltip'
 

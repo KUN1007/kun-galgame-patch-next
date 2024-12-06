@@ -22,13 +22,13 @@ export const KunSidebar = ({ tree }: Props) => {
         'flex items-center'
       )}
     >
-      <div className="fixed flex flex-col w-full h-full">
+      <div className="fixed flex size-full flex-col">
         <h2 className="mb-4 text-lg font-semibold">目录</h2>
         <TreeItem node={tree} level={0} />
       </div>
 
       <Chip
-        className="translate-x-3 md:hidden text-default-500"
+        className="translate-x-3 text-default-500 md:hidden"
         variant="light"
         onClick={() => setIsOpen(!isOpen)}
       >

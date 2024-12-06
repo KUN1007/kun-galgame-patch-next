@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useEffect } from 'react'
+import { useEffect, useState } from 'react'
 import { Pagination } from '@nextui-org/pagination'
 import { kunFetchGet } from '~/utils/kunFetch'
 import { CommentCard } from './CommentCard'
@@ -8,7 +8,7 @@ import { KunMasonryGrid } from '~/components/kun/MasonryGrid'
 import { FilterBar } from './FilterBar'
 import { useMounted } from '~/hooks/useMounted'
 import { KunLoading } from '~/components/kun/Loading'
-import type { SortOption, SortDirection } from './_sort'
+import type { SortDirection, SortOption } from './_sort'
 import type { PatchComment } from '~/types/api/comment'
 
 interface Props {

@@ -63,7 +63,7 @@ export const TagDetailCOntainer = ({
   }, [page])
 
   return (
-    <div className="w-full my-4">
+    <div className="my-4 w-full">
       <KunHeader
         name={tag.name}
         description={tag.introduction}

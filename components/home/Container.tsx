@@ -4,7 +4,7 @@ import { PatchCard } from '~/components/home/PatchCard'
 import { ResourceCard } from '~/components/resource/ResourceCard'
 import { CommentCard } from '~/components/comment/CommentCard'
 import Link from 'next/link'
-import type { HomeResource, HomeComment } from '~/types/api/home'
+import type { HomeComment, HomeResource } from '~/types/api/home'
 
 interface Props {
   galgames: GalgameCard[]
@@ -14,7 +14,7 @@ interface Props {
 
 export const HomeContainer = ({ galgames, resources, comments }: Props) => {
   return (
-    <div className="mx-auto space-y-16 max-w-7xl">
+    <div className="mx-auto max-w-7xl space-y-16">
       <section className="space-y-6">
         <div className="flex items-center space-x-4">
           <h2 className="text-2xl font-bold">最新 Galgame</h2>
@@ -22,7 +22,7 @@ export const HomeContainer = ({ galgames, resources, comments }: Props) => {
             variant="light"
             as={Link}
             color="primary"
-            endContent={<ChevronRight className="w-4 h-4" />}
+            endContent={<ChevronRight className="size-4" />}
             href="/galgame"
           >
             查看更多
@@ -42,7 +42,7 @@ export const HomeContainer = ({ galgames, resources, comments }: Props) => {
             variant="light"
             as={Link}
             color="primary"
-            endContent={<ChevronRight className="w-4 h-4" />}
+            endContent={<ChevronRight className="size-4" />}
             href="/resource"
           >
             查看更多
@@ -63,7 +63,7 @@ export const HomeContainer = ({ galgames, resources, comments }: Props) => {
             variant="light"
             as={Link}
             color="primary"
-            endContent={<ChevronRight className="w-4 h-4" />}
+            endContent={<ChevronRight className="size-4" />}
             href="/comment"
           >
             查看更多

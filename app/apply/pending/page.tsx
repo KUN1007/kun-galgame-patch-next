@@ -5,9 +5,9 @@ import { CheckCircle2 } from 'lucide-react'
 
 export default function Kun() {
   return (
-    <Card className="w-full max-w-md p-8 m-auto text-center max-h-80">
-      <div className="flex justify-center mb-4">
-        <CheckCircle2 className="w-16 h-16 text-success-500" />
+    <Card className="m-auto max-h-80 w-full max-w-md p-8 text-center">
+      <div className="mb-4 flex justify-center">
+        <CheckCircle2 className="size-16 text-success-500" />
       </div>
       <h1 className="mb-4 text-2xl font-bold">申请已经提交</h1>
       <div className="mb-6 text-default-500">

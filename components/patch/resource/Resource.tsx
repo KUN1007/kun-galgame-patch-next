@@ -5,19 +5,19 @@ import { Button } from '@nextui-org/button'
 import { Card, CardBody } from '@nextui-org/card'
 import {
   Dropdown,
-  DropdownTrigger,
+  DropdownItem,
   DropdownMenu,
-  DropdownItem
+  DropdownTrigger
 } from '@nextui-org/dropdown'
 import {
   Modal,
-  ModalContent,
-  ModalHeader,
   ModalBody,
+  ModalContent,
   ModalFooter,
+  ModalHeader,
   useDisclosure
 } from '@nextui-org/modal'
-import { MoreHorizontal, Plus, Edit, Trash2 } from 'lucide-react'
+import { Edit, MoreHorizontal, Plus, Trash2 } from 'lucide-react'
 import { kunFetchDelete } from '~/utils/kunFetch'
 import { PublishResource } from './publish/PublishResource'
 import { EditResourceDialog } from './edit/EditResourceDialog'
@@ -78,7 +78,7 @@ export const Resources = ({ initialResources, id }: Props) => {
         <Button
           color="primary"
           variant="solid"
-          startContent={<Plus className="w-4 h-4" />}
+          startContent={<Plus className="size-4" />}
           onPress={onOpenCreate}
         >
           添加资源
@@ -94,7 +94,7 @@ export const Resources = ({ initialResources, id }: Props) => {
               <Dropdown>
                 <DropdownTrigger>
                   <Button variant="light" isIconOnly>
-                    <MoreHorizontal className="w-4 h-4" />
+                    <MoreHorizontal className="size-4" />
                   </Button>
                 </DropdownTrigger>
                 <DropdownMenu
@@ -105,7 +105,7 @@ export const Resources = ({ initialResources, id }: Props) => {
                 >
                   <DropdownItem
                     key="edit"
-                    startContent={<Edit className="w-4 h-4" />}
+                    startContent={<Edit className="size-4" />}
                     onPress={() => {
                       onOpenEdit()
                       setEditResource(resource)
@@ -117,7 +117,7 @@ export const Resources = ({ initialResources, id }: Props) => {
                     key="delete"
                     className="text-danger"
                     color="danger"
-                    startContent={<Trash2 className="w-4 h-4" />}
+                    startContent={<Trash2 className="size-4" />}
                     onPress={() => {
                       onOpenDelete()
                       setDeleteResourceId(resource.id)

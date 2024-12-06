@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useEffect } from 'react'
+import { useEffect, useState } from 'react'
 import { Pagination } from '@nextui-org/pagination'
 import { kunFetchPost } from '~/utils/kunFetch'
 import { GalgameCard } from './Card'
@@ -8,7 +8,7 @@ import { KunMasonryGrid } from '~/components/kun/MasonryGrid'
 import { FilterBar } from './FilterBar'
 import { useMounted } from '~/hooks/useMounted'
 import { KunLoading } from '~/components/kun/Loading'
-import type { SortOption, SortDirection } from './_sort'
+import type { SortDirection, SortOption } from './_sort'
 
 interface Props {
   initialGalgames: GalgameCard[]

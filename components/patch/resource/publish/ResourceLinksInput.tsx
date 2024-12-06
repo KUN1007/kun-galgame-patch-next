@@ -40,7 +40,7 @@ export const ResourceLinksInput = ({
               }
             </Chip>
 
-            <div className="flex-col w-full">
+            <div className="w-full flex-col">
               <Input
                 isRequired
                 placeholder={
@@ -68,7 +68,7 @@ export const ResourceLinksInput = ({
                     variant="flat"
                     onPress={() => setContent([...links, ''].toString())}
                   >
-                    <Plus className="w-4 h-4" />
+                    <Plus className="size-4" />
                   </Button>
                 ) : (
                   <Button
@@ -80,7 +80,7 @@ export const ResourceLinksInput = ({
                       setContent(newLinks.toString())
                     }}
                   >
-                    <X className="w-4 h-4" />
+                    <X className="size-4" />
                   </Button>
                 )}
               </div>

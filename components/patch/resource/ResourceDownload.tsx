@@ -44,7 +44,7 @@ export const ResourceDownload = ({ resource }: Props) => {
             isIconOnly
             onPress={() => toggleLinks(resource.id)}
           >
-            <Download className="w-4 h-4" />
+            <Download className="size-4" />
           </Button>
         </div>
       </div>

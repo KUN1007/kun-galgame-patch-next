@@ -5,7 +5,7 @@ import { Tooltip } from '@nextui-org/tooltip'
 import { Heart } from 'lucide-react'
 import { useUserStore } from '~/store/providers/user'
 import toast from 'react-hot-toast'
-import { useErrorHandler } from '~/hooks/useErrorHandler'
+import { kunErrorHandler } from '~/utils/kunErrorHandler'
 import { cn } from '~/utils/cn'
 import { PatchResource } from '~/types/api/patch'
 
@@ -39,7 +39,7 @@ export const ResourceLikeButton = ({ resource }: Props) => {
     )
 
     setLoading(false)
-    useErrorHandler(res, (value) => {
+    kunErrorHandler(res, (value) => {
       setLiked(value)
       setLikeCount((prev) => (value ? prev + 1 : prev - 1))
     })

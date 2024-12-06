@@ -3,7 +3,7 @@ import { Upload } from 'lucide-react'
 import { Button, Input } from '@nextui-org/react'
 import { cn } from '~/utils/cn'
 import { useState } from 'react'
-import { ALLOWED_MIME_TYPES, ALLOWED_EXTENSIONS } from '~/constants/resource'
+import { ALLOWED_EXTENSIONS, ALLOWED_MIME_TYPES } from '~/constants/resource'
 
 interface Props {
   onFileUpload: (file: File) => Promise<void>
@@ -82,8 +82,8 @@ export const FileDropZone = ({ onFileUpload }: Props) => {
       onDragLeave={() => setIsDragging(false)}
     >
       <div className="flex flex-col items-center justify-center gap-4">
-        <Upload className="w-12 h-12 text-primary/60" />
-        <p className="text-lg font-medium text-center">
+        <Upload className="size-12 text-primary/60" />
+        <p className="text-center text-lg font-medium">
           {isDragging ? '拖动文件到此处' : '拖动或点击以上传文件'}
         </p>
         <label>

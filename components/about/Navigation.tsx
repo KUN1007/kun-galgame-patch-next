@@ -12,12 +12,12 @@ interface NavigationProps {
 
 export const KunBottomNavigation = ({ prev, next }: NavigationProps) => {
   return (
-    <div className="flex justify-between pt-8 mt-8 border-t border-default-200">
+    <div className="mt-8 flex justify-between border-t border-default-200 pt-8">
       {prev ? (
         <Link href={`/about/${prev.slug}`}>
           <Button
             variant="light"
-            startContent={<ChevronLeft className="w-4 h-4" />}
+            startContent={<ChevronLeft className="size-4" />}
           >
             {prev.title}
           </Button>
@@ -29,7 +29,7 @@ export const KunBottomNavigation = ({ prev, next }: NavigationProps) => {
         <Link href={`/about/${next.slug}`}>
           <Button
             variant="light"
-            endContent={<ChevronRight className="w-4 h-4" />}
+            endContent={<ChevronRight className="size-4" />}
           >
             {next.title}
           </Button>

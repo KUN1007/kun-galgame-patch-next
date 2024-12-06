@@ -1,38 +1,38 @@
 'use client'
 
 import {
-  DropdownItem,
-  DropdownTrigger,
   Dropdown,
-  DropdownMenu
+  DropdownItem,
+  DropdownMenu,
+  DropdownTrigger
 } from '@nextui-org/dropdown'
 import { Avatar } from '@nextui-org/avatar'
 import { Button } from '@nextui-org/button'
 import {
   Modal,
-  ModalContent,
-  ModalHeader,
   ModalBody,
+  ModalContent,
   ModalFooter,
+  ModalHeader,
   useDisclosure
 } from '@nextui-org/modal'
 import {
-  Lollipop,
-  UserRound,
-  Settings,
+  CalendarCheck,
   CircleHelp,
   LogOut,
-  CalendarCheck,
-  Sparkles
+  Lollipop,
+  Settings,
+  Sparkles,
+  UserRound
 } from 'lucide-react'
 import { useUserStore } from '~/store/providers/user'
-import { useState, useEffect } from 'react'
+import { useEffect, useState } from 'react'
 import { useRouter } from 'next-nprogress-bar'
 import { kunFetchGet, kunFetchPost } from '~/utils/kunFetch'
 import toast from 'react-hot-toast'
 import { useMounted } from '~/hooks/useMounted'
 import { showKunSooner } from '~/components/kun/Sooner'
-import { useErrorHandler } from '~/hooks/useErrorHandler'
+import { kunErrorHandler } from '~/utils/kunErrorHandler'
 import type { UserState } from '~/store/userStore'
 
 export const UserDropdown = () => {
@@ -78,7 +78,7 @@ export const UserDropdown = () => {
         randomMoemoepoints: number
       }>
     >('/user/status/check-in')
-    useErrorHandler(res, (value) => {
+    kunErrorHandler(res, (value) => {
       showKunSooner(
         value
           ? `签到成功! 您今天获得了 ${value.randomMoemoepoints} 萌萌点`
@@ -100,7 +100,7 @@ export const UserDropdown = () => {
           <Avatar
             isBordered
             as="button"
-            className="transition-transform shrink-0"
+            className="shrink-0 transition-transform"
             color="secondary"
             name={user.name.charAt(0).toUpperCase()}
             size="sm"
@@ -115,15 +115,15 @@ export const UserDropdown = () => {
           <DropdownItem
             key="username"
             textValue="用户名"
-            className="data-[hover=true]:bg-background cursor-default"
+            className="cursor-default data-[hover=true]:bg-background"
           >
             <p className="font-semibold">{user.name}</p>
           </DropdownItem>
           <DropdownItem
             key="moemoepoint"
             textValue="萌萌点"
-            className="data-[hover=true]:bg-background cursor-default"
-            startContent={<Lollipop className="w-4 h-4" />}
+            className="cursor-default data-[hover=true]:bg-background"
+            startContent={<Lollipop className="size-4" />}
             endContent={user.moemoepoint}
           >
             萌萌点
@@ -131,28 +131,28 @@ export const UserDropdown = () => {
           <DropdownItem
             key="profile"
             onPress={() => router.push(`/user/${user.uid}/resource`)}
-            startContent={<UserRound className="w-4 h-4" />}
+            startContent={<UserRound className="size-4" />}
           >
             用户主页
           </DropdownItem>
           <DropdownItem
             key="settings"
             onPress={() => router.push('/settings/user')}
-            startContent={<Settings className="w-4 h-4" />}
+            startContent={<Settings className="size-4" />}
           >
             信息设置
           </DropdownItem>
           <DropdownItem
             key="help_and_feedback"
             onPress={() => router.push(`/about`)}
-            startContent={<CircleHelp className="w-4 h-4" />}
+            startContent={<CircleHelp className="size-4" />}
           >
             帮助与反馈
           </DropdownItem>
           <DropdownItem
             key="logout"
             color="danger"
-            startContent={<LogOut className="w-4 h-4" />}
+            startContent={<LogOut className="size-4" />}
             onPress={onOpen}
           >
             退出登录
@@ -162,12 +162,12 @@ export const UserDropdown = () => {
             key="check"
             textValue="今日签到"
             color="secondary"
-            startContent={<CalendarCheck className="w-4 h-4" />}
+            startContent={<CalendarCheck className="size-4" />}
             endContent={
               user.dailyCheckIn ? (
                 <span className="text-xs">签到过啦</span>
               ) : (
-                <Sparkles className="w-5 h-5 text-secondary-500" />
+                <Sparkles className="size-5 text-secondary-500" />
               )
             }
             onPress={handleCheckIn}

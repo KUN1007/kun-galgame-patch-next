@@ -1,7 +1,7 @@
 'use client'
 
 import { Pagination } from '@nextui-org/react'
-import { useState, useEffect } from 'react'
+import { useEffect, useState } from 'react'
 import { kunFetchGet } from '~/utils/kunFetch'
 import { KunLoading } from '~/components/kun/Loading'
 import { useMounted } from '~/hooks/useMounted'

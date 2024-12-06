@@ -1,12 +1,12 @@
 import { useState } from 'react'
 import { z } from 'zod'
-import { useForm, Controller } from 'react-hook-form'
+import { Controller, useForm } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
-import { Input, Button, Divider, Link } from '@nextui-org/react'
+import { Button, Divider, Input, Link } from '@nextui-org/react'
 import { kunFetchPost } from '~/utils/kunFetch'
 import { loginSchema } from '~/validations/auth'
 import { useUserStore } from '~/store/providers/user'
-import { useErrorHandler } from '~/hooks/useErrorHandler'
+import { kunErrorHandler } from '~/utils/kunErrorHandler'
 import { useRouter } from 'next-nprogress-bar'
 import toast from 'react-hot-toast'
 import type { UserState } from '~/store/userStore'
@@ -31,7 +31,7 @@ export const LoginForm = () => {
     const res = await kunFetchPost<KunResponse<UserState>>('/auth/login', data)
     setLoading(false)
 
-    useErrorHandler(res, (value) => {
+    kunErrorHandler(res, (value) => {
       setUser(value)
       reset()
       toast.success('登录成功!')
@@ -85,7 +85,7 @@ export const LoginForm = () => {
         登录
       </Button>
 
-      <div className="flex items-center justify-center overflow-hidden w-72">
+      <div className="flex w-72 items-center justify-center overflow-hidden">
         <Divider className="my-8" />
         <span className="mx-4">或</span>
         <Divider className="my-8" />
@@ -94,7 +94,7 @@ export const LoginForm = () => {
       <Button
         color="primary"
         variant="bordered"
-        className="w-full mb-4"
+        className="mb-4 w-full"
         onClick={() => router.push('/auth/forgot')}
       >
         忘记密码

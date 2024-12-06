@@ -2,14 +2,14 @@ import { Controller } from 'react-hook-form'
 import { Input, Textarea } from '@nextui-org/input'
 import { Select, SelectItem } from '@nextui-org/select'
 import {
-  SUPPORTED_TYPE,
-  SUPPORTED_TYPE_MAP,
   SUPPORTED_LANGUAGE,
   SUPPORTED_LANGUAGE_MAP,
   SUPPORTED_PLATFORM,
-  SUPPORTED_PLATFORM_MAP
+  SUPPORTED_PLATFORM_MAP,
+  SUPPORTED_TYPE,
+  SUPPORTED_TYPE_MAP
 } from '~/constants/resource'
-import { ErrorType, ControlType } from '../share'
+import { ControlType, ErrorType } from '../share'
 
 interface ResourceDetailsFormProps {
   control: ControlType

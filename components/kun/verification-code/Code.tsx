@@ -4,7 +4,7 @@ import { useState } from 'react'
 import { Button } from '@nextui-org/button'
 import toast from 'react-hot-toast'
 import { kunFetchPost } from '~/utils/kunFetch'
-import { useErrorHandler } from '~/hooks/useErrorHandler'
+import { kunErrorHandler } from '~/utils/kunErrorHandler'
 
 interface Props {
   username: string
@@ -50,7 +50,7 @@ export const EmailVerification = ({ username, email, type }: Props) => {
       )
     }
 
-    useErrorHandler(res, () => {
+    kunErrorHandler(res, () => {
       toast.success('发送成功, 验证码已发送到您的邮箱')
       startCountdown()
     })

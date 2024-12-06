@@ -15,10 +15,10 @@ export default function RootLayout({
     <html lang="zh-Hans" suppressHydrationWarning>
       <body>
         <Providers>
-          <div className="relative flex flex-col items-center justify-center min-h-screen bg-radial">
+          <div className="bg-radial relative flex min-h-screen flex-col items-center justify-center">
             <KunTopBar />
             <KunNavigationBreadcrumb />
-            <div className="flex px-6 w-full flex-grow max-w-7xl min-h-[calc(100dvh-256px)]">
+            <div className="flex min-h-[calc(100dvh-256px)] w-full max-w-7xl grow px-6">
               {children}
               <Toaster />
             </div>

@@ -2,9 +2,9 @@
 
 import { useState } from 'react'
 import { z } from 'zod'
-import { useForm, Controller } from 'react-hook-form'
+import { Controller, useForm } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
-import { Card, CardHeader, CardBody } from '@nextui-org/card'
+import { Card, CardBody, CardHeader } from '@nextui-org/card'
 import { Avatar } from '@nextui-org/avatar'
 import { Button } from '@nextui-org/button'
 import { Textarea } from '@nextui-org/input'
@@ -13,7 +13,7 @@ import { kunFetchPost } from '~/utils/kunFetch'
 import toast from 'react-hot-toast'
 import { patchCommentCreateSchema } from '~/validations/patch'
 import { useUserStore } from '~/store/providers/user'
-import { useErrorHandler } from '~/hooks/useErrorHandler'
+import { kunErrorHandler } from '~/utils/kunErrorHandler'
 import type { PatchComment } from '~/types/api/patch'
 
 const commentSchema = patchCommentCreateSchema.pick({ content: true })
@@ -61,7 +61,7 @@ export const PublishComment = ({
         content: data.content.trim()
       }
     )
-    useErrorHandler(res, (value) => {
+    kunErrorHandler(res, (value) => {
       setNewComment({
         ...value,
         user: { id: user.uid, name: user.name, avatar: user.avatar }
@@ -76,7 +76,7 @@ export const PublishComment = ({
 
   return (
     <Card>
-      <CardHeader className="pb-0 space-x-4">
+      <CardHeader className="space-x-4 pb-0">
         <Avatar
           showFallback
           name={user.name.charAt(0).toUpperCase()}
@@ -106,7 +106,7 @@ export const PublishComment = ({
             <Button
               type="submit"
               color="primary"
-              startContent={<Send className="w-4 h-4" />}
+              startContent={<Send className="size-4" />}
               isDisabled={!watch().content.trim() || loading}
               isLoading={loading}
             >

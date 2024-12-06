@@ -10,9 +10,9 @@ import { kunFetchPut } from '~/utils/kunFetch'
 import type { PatchResource } from '~/types/api/patch'
 
 const storageIcons: { [key: string]: JSX.Element } = {
-  s3: <Cloud className="w-4 h-4" />,
-  onedrive: <MicrosoftIcon className="w-4 h-4" />,
-  user: <LinkIcon className="w-4 h-4" />
+  s3: <Cloud className="size-4" />,
+  onedrive: <MicrosoftIcon className="size-4" />,
+  user: <LinkIcon className="size-4" />
 }
 
 interface Props {

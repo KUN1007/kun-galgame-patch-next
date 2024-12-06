@@ -1,17 +1,17 @@
 'use client'
 
 import {
-  Table,
-  TableHeader,
-  TableColumn,
-  TableBody,
-  TableRow,
-  TableCell,
   Chip,
-  Pagination
+  Pagination,
+  Table,
+  TableBody,
+  TableCell,
+  TableColumn,
+  TableHeader,
+  TableRow
 } from '@nextui-org/react'
 import { kunFetchGet } from '~/utils/kunFetch'
-import { useState, useEffect } from 'react'
+import { useEffect, useState } from 'react'
 import { useMounted } from '~/hooks/useMounted'
 import { KunLoading } from '~/components/kun/Loading'
 import { RenderCell } from './RenderCell'
@@ -74,7 +74,7 @@ export const Resource = ({ initialResources, total }: Props) => {
         <Table
           aria-label="补丁管理"
           bottomContent={
-            <div className="flex justify-center w-full">
+            <div className="flex w-full justify-center">
               {total >= 100 && (
                 <Pagination
                   showControls

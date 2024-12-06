@@ -52,10 +52,10 @@ export const UserList = ({ userId, type }: UserListProps) => {
           {users.map((user) => (
             <Card key={user.id}>
               <CardBody className="flex flex-row items-center gap-4">
-                <Avatar src={user.avatar} className="w-12 h-12" />
-                <div className="flex-grow space-y-2">
+                <Avatar src={user.avatar} className="size-12" />
+                <div className="grow space-y-2">
                   <h4
-                    className="text-lg font-semibold transition-colors cursor-pointer hover:text-primary-500"
+                    className="cursor-pointer text-lg font-semibold transition-colors hover:text-primary-500"
                     onClick={() => router.push(`/user/${user.id}/resource`)}
                   >
                     {user.name}
@@ -63,7 +63,7 @@ export const UserList = ({ userId, type }: UserListProps) => {
                   <p className="text-small text-default-500">{user.bio}</p>
 
                   <div className="flex items-center gap-2 text-sm text-default-500">
-                    <Users className="w-4 h-4 text-default-400" />
+                    <Users className="size-4 text-default-400" />
                     {
                       user.follower
                     } 人关注 TA - {user.following} 正在关注

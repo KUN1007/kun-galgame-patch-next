@@ -16,7 +16,7 @@ export const CommentCard = ({ comment }: Props) => {
           <img
             src={comment.user.avatar}
             alt={comment.user.name}
-            className="w-10 h-10 rounded-full"
+            className="size-10 rounded-full"
           />
           <div>
             <div className="flex items-center gap-2">
@@ -32,7 +32,7 @@ export const CommentCard = ({ comment }: Props) => {
               </span>
             </div>
             <p className="mt-1">{comment.content}</p>
-            <div className="flex items-center gap-4 mt-2">
+            <div className="mt-2 flex items-center gap-4">
               <div className="flex items-center gap-1 text-small text-default-500">
                 <ThumbsUp size={14} />
                 {comment.like}

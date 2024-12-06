@@ -3,18 +3,18 @@
 import { useState } from 'react'
 import { KunHeader } from '~/components/kun/Header'
 import {
-  Card,
-  CardHeader,
-  CardBody,
   Button,
-  Progress,
+  Card,
+  CardBody,
+  CardHeader,
+  Chip,
   Divider,
-  Chip
+  Progress
 } from '@nextui-org/react'
 import { BadgeCheck, CheckCircle2, CircleSlash, Trophy } from 'lucide-react'
 import { useRouter } from 'next-nprogress-bar'
 import { kunFetchPost } from '~/utils/kunFetch'
-import { useErrorHandler } from '~/hooks/useErrorHandler'
+import { kunErrorHandler } from '~/utils/kunErrorHandler'
 import toast from 'react-hot-toast'
 
 interface Props {
@@ -31,7 +31,7 @@ export const ApplyContainer = ({ count }: Props) => {
   const handleApply = async () => {
     setApplying(true)
     const res = await kunFetchPost<KunResponse<{}>>('/apply')
-    useErrorHandler(res, () => {
+    kunErrorHandler(res, () => {
       toast.success('恭喜您, 您的申请已成功提交')
       router.push('/apply/pending')
     })
@@ -39,13 +39,13 @@ export const ApplyContainer = ({ count }: Props) => {
   }
 
   return (
-    <div className="w-full px-4 mx-auto my-4">
+    <div className="mx-auto my-4 w-full px-4">
       <KunHeader
         name="申请成为创作者"
         description="申请成为创作者以获得使用本站存储的权限"
       />
 
-      <Card className="max-w-xl mx-auto mt-8 ">
+      <Card className="mx-auto mt-8 max-w-xl ">
         <CardHeader>
           <h2 className="flex items-center gap-2 text-xl font-bold">
             <Trophy className="text-warning" />
@@ -60,9 +60,9 @@ export const ApplyContainer = ({ count }: Props) => {
               variant="flat"
               startContent={
                 canApply ? (
-                  <CheckCircle2 className="w-4 h-4" />
+                  <CheckCircle2 className="size-4" />
                 ) : (
-                  <CircleSlash className="w-4 h-4" />
+                  <CircleSlash className="size-4" />
                 )
               }
             >
@@ -103,7 +103,7 @@ export const ApplyContainer = ({ count }: Props) => {
           <Button
             color="primary"
             size="lg"
-            startContent={<BadgeCheck className="w-5 h-5" />}
+            startContent={<BadgeCheck className="size-5" />}
             isLoading={applying}
             isDisabled={!canApply || applying}
             onClick={handleApply}

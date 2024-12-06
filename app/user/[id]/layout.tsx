@@ -26,7 +26,7 @@ export default async function Kun({
   }
 
   return (
-    <div className="w-full py-8 mx-auto">
+    <div className="mx-auto w-full py-8">
       <div className="grid grid-cols-1 gap-6 lg:grid-cols-3">
         <UserProfile user={user} />
 

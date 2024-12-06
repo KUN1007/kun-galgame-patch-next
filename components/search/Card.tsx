@@ -25,12 +25,12 @@ export const SearchCard = ({ patch }: Props) => {
             <Image
               src={patch.banner.replace(/\.avif$/, '-mini.avif')}
               alt={patch.name}
-              className="object-cover w-full h-full rounded-lg"
+              className="size-full rounded-lg object-cover"
               radius="lg"
             />
           </div>
           <div className="flex-1 space-y-3">
-            <h3 className="text-lg font-semibold transition-colors hover:text-primary-500 line-clamp-2">
+            <h3 className="line-clamp-2 text-lg font-semibold transition-colors hover:text-primary-500">
               {patch.name}
             </h3>
 

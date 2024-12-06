@@ -1,7 +1,7 @@
 'use client'
 
 import { useState } from 'react'
-import { Button, Input, Chip } from '@nextui-org/react'
+import { Button, Chip, Input } from '@nextui-org/react'
 import { Plus } from 'lucide-react'
 
 interface Props {
@@ -44,7 +44,7 @@ export const AliasManager = ({
           <Plus size={20} />
         </Button>
       </div>
-      <div className="flex flex-wrap gap-2 mt-2">
+      <div className="mt-2 flex flex-wrap gap-2">
         {aliasList.map((alias, index) => (
           <Chip
             key={index}

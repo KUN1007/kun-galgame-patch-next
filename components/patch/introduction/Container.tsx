@@ -1,4 +1,4 @@
-import { Card, CardHeader, CardBody } from '@nextui-org/card'
+import { Card, CardBody, CardHeader } from '@nextui-org/card'
 import { Info } from './Info'
 import { PatchTag } from './Tag'
 import type { PatchIntroduction } from '~/types/api/patch'

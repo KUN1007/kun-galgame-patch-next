@@ -6,7 +6,7 @@ import { useRewritePatchStore } from '~/store/rewriteStore'
 import { Editor } from '~/components/kun/milkdown/PatchEditor'
 import toast from 'react-hot-toast'
 import { kunFetchPut } from '~/utils/kunFetch'
-import { useErrorHandler } from '~/hooks/useErrorHandler'
+import { kunErrorHandler } from '~/utils/kunErrorHandler'
 import { patchUpdateSchema } from '~/validations/edit'
 import { useRouter } from 'next-nprogress-bar'
 import { GameNameInput } from './GameNameInput'
@@ -51,7 +51,7 @@ export const RewritePatch = () => {
     setRewriting(true)
 
     const res = kunFetchPut<KunResponse<{}>>('/edit', { ...data })
-    useErrorHandler(res, async () => {
+    kunErrorHandler(res, async () => {
       router.push(`/patch/${data.id}/introduction`)
     })
     toast.success('发布编辑成功')
@@ -59,7 +59,7 @@ export const RewritePatch = () => {
   }
 
   return (
-    <form className="flex-1 w-full p-4 mx-auto">
+    <form className="mx-auto w-full flex-1 p-4">
       <Card className="w-full">
         <CardHeader className="flex gap-3">
           <div className="flex flex-col">
@@ -69,7 +69,7 @@ export const RewritePatch = () => {
             </p>
           </div>
         </CardHeader>
-        <CardBody className="gap-4 mt-2">
+        <CardBody className="mt-2 gap-4">
           <GameNameInput
             name={data.name}
             onChange={(name) => setData({ ...data, name })}
@@ -96,7 +96,7 @@ export const RewritePatch = () => {
 
           <Button
             color="primary"
-            className="w-full mt-4"
+            className="mt-4 w-full"
             onClick={handleSubmit}
             isLoading={rewriting}
             isDisabled={rewriting}
