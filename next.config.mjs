@@ -17,6 +17,22 @@ const nextConfig = {
   },
   sassOptions: {
     silenceDeprecations: ['legacy-js-api']
+  },
+  images: {
+    remotePatterns: [
+      {
+        protocol: 'https',
+        hostname: 'sticker.kungal.com',
+        port: '',
+        pathname: '/**'
+      },
+      {
+        protocol: 'https',
+        hostname: 'image.moyu.moe',
+        port: '',
+        pathname: '/**'
+      }
+    ]
   }
 }
 

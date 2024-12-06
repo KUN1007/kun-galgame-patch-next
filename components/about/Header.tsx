@@ -2,11 +2,11 @@ import { Input } from '@nextui-org/react'
 import { Search } from 'lucide-react'
 import { KunHeader } from '../kun/Header'
 
-interface HeaderProps {
-  // onSearch: (value: string) => void
-}
+// interface HeaderProps {
+//   onSearch: (value: string) => void
+// }
 
-export const KunAboutHeader = ({}: HeaderProps) => {
+export const KunAboutHeader = () => {
   return (
     <div className="mb-8 space-y-6">
       <KunHeader name="关于我们" description="开源 Galgame 补丁资源下载站" />

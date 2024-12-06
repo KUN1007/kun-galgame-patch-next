@@ -22,4 +22,4 @@ if (number === 0) {
   loli = getAssetsFile(name)
 }
 
-export default { loli, name }
+export const loliAttribute = { loli, name }

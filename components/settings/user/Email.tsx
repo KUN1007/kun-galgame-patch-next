@@ -51,7 +51,7 @@ export const Email = () => {
         <CardHeader>
           <h2 className="text-xl font-medium">邮箱</h2>
         </CardHeader>
-        <CardBody className="space-y-4 py-0">
+        <CardBody className="py-0 space-y-4">
           <div>
             <p>这是您的邮箱设置, 您的邮箱将会被用于恢复您的密码</p>
             <p>
@@ -68,7 +68,7 @@ export const Email = () => {
                 type="email"
                 placeholder="请输入您的新邮箱"
                 startContent={
-                  <Mail className="pointer-events-none shrink-0 text-2xl text-default-400" />
+                  <Mail className="text-2xl pointer-events-none shrink-0 text-default-400" />
                 }
                 isInvalid={!!errors.email}
                 errorMessage={errors.email?.message}
@@ -84,7 +84,7 @@ export const Email = () => {
                 type="text"
                 placeholder="新邮箱验证码"
                 startContent={
-                  <KeyRound className="pointer-events-none shrink-0 text-2xl text-default-400" />
+                  <KeyRound className="text-2xl pointer-events-none shrink-0 text-default-400" />
                 }
                 endContent={
                   <EmailVerification

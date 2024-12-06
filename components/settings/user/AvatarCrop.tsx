@@ -15,7 +15,6 @@ import { useUserStore } from '~/store/providers/user'
 import { Camera } from 'lucide-react'
 import { dataURItoBlob } from '~/utils/dataURItoBlob'
 import { kunFetchFormData } from '~/utils/kunFetch'
-import { kunErrorHandler } from '~/utils/kunErrorHandler'
 import toast from 'react-hot-toast'
 
 export const AvatarCrop = () => {
@@ -87,13 +86,13 @@ export const AvatarCrop = () => {
 
   return (
     <div className="flex flex-col items-center gap-4">
-      <div className="group relative cursor-pointer">
-        <div className="group relative">
+      <div className="relative cursor-pointer group">
+        <div className="relative group">
           {croppedImage ? (
             <img
               src={croppedImage}
               alt="Cropped avatar"
-              className="size-16 rounded-full object-cover"
+              className="object-cover rounded-full size-16"
             />
           ) : (
             <Avatar
@@ -106,9 +105,9 @@ export const AvatarCrop = () => {
 
           <label
             htmlFor="avatar-upload"
-            className="absolute inset-0 flex cursor-pointer items-center justify-center rounded-full bg-black/50 opacity-0 transition-opacity group-hover:opacity-100"
+            className="absolute inset-0 flex items-center justify-center transition-opacity rounded-full opacity-0 cursor-pointer bg-black/50 group-hover:opacity-100"
           >
-            <Camera className="size-6 text-white" />
+            <Camera className="size-6 text-background" />
           </label>
           <input
             id="avatar-upload"

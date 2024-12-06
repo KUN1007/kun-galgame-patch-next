@@ -6,7 +6,7 @@ interface Props {
 
 export const KunLoading = ({ hint }: Props) => {
   return (
-    <div className="flex h-64 w-full items-center justify-center space-x-2">
+    <div className="flex items-center justify-center w-full h-64 space-x-2">
       <Spinner color="primary" size="lg" />
       <span>{hint}</span>
     </div>

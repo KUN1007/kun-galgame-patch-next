@@ -37,7 +37,7 @@ export const Bio = () => {
       <CardHeader>
         <h2 className="text-xl font-medium">签名</h2>
       </CardHeader>
-      <CardBody className="space-y-4 py-0">
+      <CardBody className="py-0 space-y-4">
         <div>
           <p>这是您的签名设置, 您的签名将会被显示在您的主页上</p>
         </div>

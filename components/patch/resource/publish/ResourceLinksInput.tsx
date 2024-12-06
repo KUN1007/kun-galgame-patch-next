@@ -40,7 +40,7 @@ export const ResourceLinksInput = ({
               }
             </Chip>
 
-            <div className="w-full flex-col">
+            <div className="flex-col w-full">
               <Input
                 isRequired
                 placeholder={

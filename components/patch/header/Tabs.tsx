@@ -37,7 +37,7 @@ export const PatchHeaderTabs = ({ id }: PatchHeaderProps) => {
           as={Link}
           title={title}
           href={href}
-          className="min-w-24 rounded-large p-0"
+          className="p-0 min-w-24 rounded-large"
         />
       ))}
     </Tabs>

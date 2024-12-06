@@ -205,7 +205,7 @@ export const CreatePatch = () => {
   }
 
   return (
-    <form onSubmit={handleSubmit} className="mx-auto w-full flex-1 p-4">
+    <form onSubmit={handleSubmit} className="flex-1 w-full p-4 mx-auto">
       <Card className="w-full">
         <CardHeader className="flex gap-3">
           <div className="flex flex-col">
@@ -215,8 +215,8 @@ export const CreatePatch = () => {
             </p>
           </div>
         </CardHeader>
-        <CardBody className="mt-2 gap-4">
-          <div className="mb-4 flex w-full flex-col gap-2">
+        <CardBody className="gap-4 mt-2">
+          <div className="flex flex-col w-full gap-2 mb-4">
             <Input
               isRequired
               variant="underlined"
@@ -292,7 +292,7 @@ export const CreatePatch = () => {
                 </Button>
               </div>
             ) : (
-              <div className="flex h-full flex-col items-center justify-center">
+              <div className="flex flex-col items-center justify-center h-full">
                 <Upload className="mb-4 size-12 text-default-400" />
                 <p className="mb-2">拖放图片到此处或</p>
                 <label>
@@ -355,7 +355,7 @@ export const CreatePatch = () => {
                 <Plus size={20} />
               </Button>
             </div>
-            <div className="mt-2 flex flex-wrap gap-2">
+            <div className="flex flex-wrap gap-2 mt-2">
               {data.alias.map((alias, index) => (
                 <Chip
                   key={index}
@@ -372,7 +372,7 @@ export const CreatePatch = () => {
           <Button
             color="primary"
             type="submit"
-            className="mt-4 w-full"
+            className="w-full mt-4"
             isDisabled={creating}
             isLoading={creating}
           >

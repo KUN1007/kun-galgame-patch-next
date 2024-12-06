@@ -74,7 +74,7 @@ export const Resource = ({ initialResources, total }: Props) => {
         <Table
           aria-label="补丁管理"
           bottomContent={
-            <div className="flex w-full justify-center">
+            <div className="flex justify-center w-full">
               {total >= 100 && (
                 <Pagination
                   showControls

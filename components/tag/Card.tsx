@@ -19,7 +19,7 @@ export const TagCard = ({ tag }: Props) => {
     >
       <CardBody className="gap-2">
         <div className="flex flex-wrap items-center justify-between gap-2">
-          <h3 className="line-clamp-2 text-lg font-semibold transition-colors hover:text-primary-500">
+          <h3 className="text-lg font-semibold transition-colors line-clamp-2 hover:text-primary-500">
             {tag.name}
           </h3>
           <Chip size="sm" variant="flat">
@@ -27,7 +27,7 @@ export const TagCard = ({ tag }: Props) => {
           </Chip>
         </div>
         {tag.alias.length > 0 && (
-          <div className="mt-2 flex flex-wrap gap-1">
+          <div className="flex flex-wrap gap-1 mt-2">
             {tag.alias.map((alias, index) => (
               <Chip key={index} size="sm" variant="flat" color="secondary">
                 {alias}

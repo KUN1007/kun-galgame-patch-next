@@ -55,8 +55,6 @@ export const calculateFileStreamHash = async (
     await writeFile(finalFilePath, fileBuffer)
 
     return { fileHash, finalFilePath }
-  } catch (error) {
-    throw error
   } finally {
     writeStream.destroy()
   }

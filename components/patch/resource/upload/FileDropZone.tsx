@@ -83,7 +83,7 @@ export const FileDropZone = ({ onFileUpload }: Props) => {
     >
       <div className="flex flex-col items-center justify-center gap-4">
         <Upload className="size-12 text-primary/60" />
-        <p className="text-center text-lg font-medium">
+        <p className="text-lg font-medium text-center">
           {isDragging ? '拖动文件到此处' : '拖动或点击以上传文件'}
         </p>
         <label>

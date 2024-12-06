@@ -9,7 +9,7 @@ export default function AdminLayout({
   children: React.ReactNode
 }) {
   return (
-    <div className="container mx-auto my-8 flex">
+    <div className="container flex mx-auto my-8">
       <Sidebar />
       <div className="flex w-full overflow-y-auto">
         {/* <Navbar /> */}

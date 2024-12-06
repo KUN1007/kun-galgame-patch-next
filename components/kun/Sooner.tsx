@@ -6,7 +6,7 @@ import { toast } from 'react-hot-toast'
 import type { Toast } from 'react-hot-toast'
 import { Button } from '@nextui-org/button'
 import { iconVariants, textVariants, toastVariants } from '~/motion/sooner'
-import loliImage from './utils/loli'
+import { loliAttribute } from './utils/loli'
 import Image from 'next/image'
 import { Chip } from '@nextui-org/react'
 
@@ -15,7 +15,7 @@ interface ToastProps {
   t: Toast
 }
 
-const { loli, name } = loliImage
+const { loli, name } = loliAttribute
 
 const KunSooner = ({ message, t }: ToastProps) => {
   return (
@@ -24,10 +24,10 @@ const KunSooner = ({ message, t }: ToastProps) => {
       initial="initial"
       animate="animate"
       exit="exit"
-      className="flex w-full justify-center "
+      className="flex justify-center w-full "
     >
-      <div className="pointer-events-auto flex w-full max-w-md rounded-2xl bg-background p-2 shadow-lg ring-1 ring-foreground/5">
-        <div className="w-0 flex-1 p-4">
+      <div className="flex w-full max-w-md p-2 shadow-lg pointer-events-auto rounded-2xl bg-background ring-1 ring-foreground/5">
+        <div className="flex-1 w-0 p-4">
           <div className="flex items-start">
             <motion.div
               variants={iconVariants}
@@ -48,7 +48,7 @@ const KunSooner = ({ message, t }: ToastProps) => {
               variants={textVariants}
               initial="initial"
               animate="animate"
-              className="relative ml-3 h-full flex-1 space-y-2"
+              className="relative flex-1 h-full ml-3 space-y-2"
             >
               <Chip
                 color="primary"

@@ -22,7 +22,7 @@ export const GalgameCard = ({ patch }: Props) => {
       onPress={() => router.push(`/patch/${patch.id}/introduction`)}
     >
       <CardHeader className="p-0">
-        <div className="relative mx-auto w-full overflow-hidden rounded-t-lg text-center">
+        <div className="relative w-full mx-auto overflow-hidden text-center rounded-t-lg">
           <div
             className={`absolute inset-0 animate-pulse bg-default-100 ${
               imageLoaded ? 'opacity-0' : 'opacity-100'
@@ -40,8 +40,8 @@ export const GalgameCard = ({ patch }: Props) => {
           />
         </div>
       </CardHeader>
-      <CardBody className="space-y-3 px-4 py-2">
-        <h3 className="line-clamp-2 text-lg font-semibold transition-colors hover:text-primary-500">
+      <CardBody className="px-4 py-2 space-y-3">
+        <h3 className="text-lg font-semibold transition-colors line-clamp-2 hover:text-primary-500">
           {patch.name}
         </h3>
         <KunCardStats patch={patch} />

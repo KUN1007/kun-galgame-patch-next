@@ -15,6 +15,7 @@ import { PatchHeader } from './Header'
 import { PatchHeaderTabs } from './Tabs'
 import { formatDistanceToNow } from '~/utils/formatDistanceToNow'
 import { Tags } from './Tags'
+import Image from 'next/image'
 import type { Patch } from '~/types/api/patch'
 
 interface PatchHeaderProps {
@@ -41,10 +42,13 @@ export const PatchHeaderContainer = ({ patch }: PatchHeaderProps) => {
   return (
     <>
       <div className="relative h-[512px] w-full">
-        <img
+        <Image
           src={patch.banner}
           alt={patch.name}
-          className="absolute left-0 top-0 size-full rounded-2xl object-cover"
+          className="absolute top-0 left-0 object-cover size-full rounded-2xl"
+          fill
+          sizes="100vw"
+          priority
         />
         <PatchHeader patch={patch} />
 
@@ -53,11 +57,11 @@ export const PatchHeaderContainer = ({ patch }: PatchHeaderProps) => {
             <div className="flex flex-col items-start justify-between space-y-2 sm:flex-row">
               <div className="space-y-2">
                 <h1 className="text-3xl font-bold">{patch.name}</h1>
-                <div className="hidden flex-wrap gap-2 sm:flex">
+                <div className="flex-wrap hidden gap-2 sm:flex">
                   <Tags patch={patch} />
                 </div>
               </div>
-              <div className="ml-auto flex gap-2">
+              <div className="flex gap-2 ml-auto">
                 <ResourceFavoriteButton
                   patchId={patch.id}
                   isFavorite={patch.isFavorite}
@@ -70,7 +74,7 @@ export const PatchHeaderContainer = ({ patch }: PatchHeaderProps) => {
                 <Tooltip
                   content={
                     <div className="px-1 py-2">
-                      <div className="text-small font-bold">编辑游戏信息</div>
+                      <div className="font-bold text-small">编辑游戏信息</div>
                       <div className="text-tiny">任何人都可以编辑游戏信息</div>
                       <div className="text-tiny">但需要提交更新请求</div>
                     </div>

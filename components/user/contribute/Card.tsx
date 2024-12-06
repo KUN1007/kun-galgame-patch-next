@@ -18,8 +18,8 @@ export const UserContributeCard = ({ contribute }: Props) => {
       isPressable
       onPress={() => router.push(`/patch/${contribute.patchId}/history`)}
     >
-      <CardBody className="space-y-3 p-4">
-        <h3 className="line-clamp-2 text-lg font-semibold transition-colors hover:text-primary-500">
+      <CardBody className="p-4 space-y-3">
+        <h3 className="text-lg font-semibold transition-colors line-clamp-2 hover:text-primary-500">
           {contribute.patchName}
         </h3>
         <p className="text-sm text-default-500">

@@ -37,7 +37,7 @@ export const FilterBar = ({
             <DropdownTrigger>
               <Button
                 variant="flat"
-                className="bg-content2/50 transition-colors hover:bg-content2"
+                className="transition-colors bg-content2/50 hover:bg-content2"
                 endContent={<ChevronDown className="size-4" />}
                 radius="lg"
               >
@@ -60,7 +60,7 @@ export const FilterBar = ({
 
           <Button
             variant="flat"
-            className="bg-content2/50 transition-colors hover:bg-content2"
+            className="transition-colors bg-content2/50 hover:bg-content2"
             onClick={() => setSortOrder(sortOrder === 'asc' ? 'desc' : 'asc')}
             startContent={
               sortOrder === 'asc' ? (

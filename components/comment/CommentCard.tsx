@@ -1,4 +1,5 @@
 import { Card, CardBody } from '@nextui-org/card'
+import { Avatar } from '@nextui-org/avatar'
 import { ThumbsUp } from 'lucide-react'
 import { formatDate } from '~/utils/time'
 import Link from 'next/link'
@@ -13,11 +14,7 @@ export const CommentCard = ({ comment }: Props) => {
     <Card>
       <CardBody>
         <div className="flex gap-4">
-          <img
-            src={comment.user.avatar}
-            alt={comment.user.name}
-            className="size-10 rounded-full"
-          />
+          <Avatar src={comment.user.avatar} alt={comment.user.name} />
           <div>
             <div className="flex items-center gap-2">
               <h3 className="font-semibold">{comment.user.name}</h3>
@@ -32,7 +29,7 @@ export const CommentCard = ({ comment }: Props) => {
               </span>
             </div>
             <p className="mt-1">{comment.content}</p>
-            <div className="mt-2 flex items-center gap-4">
+            <div className="flex items-center gap-4 mt-2">
               <div className="flex items-center gap-1 text-small text-default-500">
                 <ThumbsUp size={14} />
                 {comment.like}

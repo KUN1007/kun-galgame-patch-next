@@ -6,8 +6,6 @@ interface TableProps {
 }
 
 export const KunTable = ({ data }: TableProps) => {
-  console.log(data)
-
   const headers = data.headers.map((header, index) => (
     <th key={index}>{header}</th>
   ))

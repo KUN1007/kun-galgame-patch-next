@@ -20,7 +20,7 @@ export const CustomMDX = (props: MDXRemoteProps) => {
   return (
     <MDXRemote
       {...props}
-      //@ts-ignore
+      // @ts-expect-error It works fine:)
       components={{ ...components, ...(props.components || {}) }}
     />
   )

@@ -1,6 +1,6 @@
 'use client'
 
-import { memo, useCallback, useEffect, useMemo, useState } from 'react'
+import { useCallback, useEffect, useMemo, useState } from 'react'
 import { useTheme } from 'next-themes'
 import { Tooltip } from '@nextui-org/tooltip'
 import {
@@ -27,7 +27,7 @@ enum ThemeLabel {
 
 type SelectionSet = Exclude<Selection, 'all'>
 
-export const ThemeSwitcher = memo(() => {
+export const ThemeSwitcher = () => {
   const { theme, setTheme } = useTheme()
   const [selectedTheme, setSelectedTheme] = useState(
     new Set([theme]) as SelectionSet
@@ -98,4 +98,4 @@ export const ThemeSwitcher = memo(() => {
       </DropdownMenu>
     </Dropdown>
   )
-})
+}

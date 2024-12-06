@@ -19,7 +19,7 @@ export const UserProfile = ({ user }: { user: UserInfo }) => {
           <div className="flex flex-col items-center gap-3">
             <Avatar
               src={user.avatar.replace('-mini', '')}
-              className="size-32"
+              className="w-32 h-32"
               isBordered
               color="primary"
             />
@@ -59,7 +59,7 @@ export const UserProfile = ({ user }: { user: UserInfo }) => {
           <Divider className="my-4" />
           <div className="flex flex-col gap-4">
             <div>
-              <div className="mb-2 flex justify-between">
+              <div className="flex justify-between mb-2">
                 <span className="text-small">萌萌点</span>
                 <span className="text-small text-default-500">
                   {user.moemoepoint}

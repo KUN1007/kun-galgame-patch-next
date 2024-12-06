@@ -28,13 +28,13 @@ export const UserResourceCard = ({ resource }: Props) => {
             <Image
               src={resource.patchBanner.replace(/\.avif$/, '-mini.avif')}
               alt={resource.patchName}
-              className="size-full max-h-52 rounded-lg object-cover"
+              className="object-cover rounded-lg size-full max-h-52"
               radius="lg"
             />
           </div>
           <div className="flex-1 space-y-3">
             <div className="flex flex-col justify-between gap-2 sm:flex-row sm:items-center">
-              <h3 className="line-clamp-2 text-lg font-semibold transition-colors hover:text-primary-500">
+              <h3 className="text-lg font-semibold transition-colors line-clamp-2 hover:text-primary-500">
                 {resource.patchName}
               </h3>
               <Chip variant="flat">

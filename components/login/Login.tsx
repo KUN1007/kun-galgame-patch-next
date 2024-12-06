@@ -85,7 +85,7 @@ export const LoginForm = () => {
         登录
       </Button>
 
-      <div className="flex w-72 items-center justify-center overflow-hidden">
+      <div className="flex items-center justify-center overflow-hidden w-72">
         <Divider className="my-8" />
         <span className="mx-4">或</span>
         <Divider className="my-8" />
@@ -94,7 +94,7 @@ export const LoginForm = () => {
       <Button
         color="primary"
         variant="bordered"
-        className="mb-4 w-full"
+        className="w-full mb-4"
         onClick={() => router.push('/auth/forgot')}
       >
         忘记密码

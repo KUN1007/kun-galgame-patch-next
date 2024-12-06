@@ -72,7 +72,7 @@ export const User = ({ initialUsers, total }: Props) => {
         <Table
           aria-label="用户管理"
           bottomContent={
-            <div className="flex w-full justify-center">
+            <div className="flex justify-center w-full">
               {total >= 100 && (
                 <Pagination
                   showControls

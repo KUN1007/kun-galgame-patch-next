@@ -35,7 +35,7 @@ export const ResourceCard = ({ resource }: Props) => {
           />
         </div>
 
-        <h4 className="text-large font-bold">{resource.patchName}</h4>
+        <h4 className="font-bold text-large">{resource.patchName}</h4>
 
         {resource.note && (
           <p className="text-small text-default-500">{resource.note}</p>

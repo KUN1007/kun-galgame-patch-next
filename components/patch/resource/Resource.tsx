@@ -107,8 +107,12 @@ export const Resources = ({ initialResources, id }: Props) => {
                     key="edit"
                     startContent={<Edit className="size-4" />}
                     onPress={() => {
-                      onOpenEdit()
                       setEditResource(resource)
+
+                      if (!editResource) {
+                        return
+                      }
+                      onOpenEdit()
                     }}
                   >
                     编辑
@@ -162,7 +166,7 @@ export const Resources = ({ initialResources, id }: Props) => {
       >
         <EditResourceDialog
           onClose={onCloseEdit}
-          resource={editResource}
+          resource={editResource!}
           onSuccess={(res) => {
             setResources((prevResources) =>
               prevResources.map((resource) =>

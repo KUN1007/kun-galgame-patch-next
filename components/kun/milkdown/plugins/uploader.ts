@@ -21,7 +21,7 @@ export const kunUploader: Uploader = async (files, schema) => {
     images.push(file)
   }
 
-  // @ts-expect-error
+  // @ts-expect-error It works fine:)
   const nodes: Node[] = await Promise.all(
     images.map(async (image) => {
       const formData = new FormData()

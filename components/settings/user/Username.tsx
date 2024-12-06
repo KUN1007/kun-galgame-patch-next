@@ -57,7 +57,7 @@ export const Username = () => {
       <CardHeader>
         <h2 className="text-xl font-medium">用户名</h2>
       </CardHeader>
-      <CardBody className="space-y-4 py-0">
+      <CardBody className="py-0 space-y-4">
         <div>
           <p>这是您的用户名设置, 您的用户名是唯一的</p>
         </div>

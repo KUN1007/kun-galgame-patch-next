@@ -84,7 +84,7 @@ export const KunMilkdownPluginsMenu = ({
   }
 
   return (
-    <div className="sticky top-0 flex flex-wrap bg-opacity-80 backdrop-blur-md">
+    <div className="sticky top-0 flex flex-wrap bg-background/80 backdrop-blur-md">
       <Button
         isIconOnly
         variant="light"
@@ -144,12 +144,12 @@ export const KunMilkdownPluginsMenu = ({
           {(titleProps) => (
             <div className="w-full px-1 py-2">
               <p
-                className="text-small font-bold text-foreground"
+                className="font-bold text-small text-foreground"
                 {...titleProps}
               >
                 选中文本以插入链接
               </p>
-              <div className="mt-2 flex w-full flex-col gap-2">
+              <div className="flex flex-col w-full gap-2 mt-2">
                 <Input
                   value={link}
                   onChange={(e) => setLink(e.target.value)}
@@ -168,7 +168,7 @@ export const KunMilkdownPluginsMenu = ({
                   })
                   setLink('')
                 }}
-                className="mt-2 w-full"
+                className="w-full mt-2"
               >
                 确定插入
               </Button>

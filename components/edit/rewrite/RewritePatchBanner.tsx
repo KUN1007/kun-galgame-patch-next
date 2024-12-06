@@ -110,8 +110,8 @@ export const RewritePatchBanner = ({ patchId, onClose }: Props) => {
               </Button>
             </div>
           ) : (
-            <div className="flex h-full flex-col items-center justify-center">
-              <Upload className="mb-4 size-12 text-gray-400" />
+            <div className="flex flex-col items-center justify-center h-full">
+              <Upload className="mb-4 text-gray-400 size-12" />
               <p className="mb-2">拖放图片到此处或</p>
               <label>
                 <Button color="primary" variant="flat" as="span">

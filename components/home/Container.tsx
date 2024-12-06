@@ -14,7 +14,7 @@ interface Props {
 
 export const HomeContainer = ({ galgames, resources, comments }: Props) => {
   return (
-    <div className="mx-auto max-w-7xl space-y-16">
+    <div className="mx-auto space-y-16 max-w-7xl">
       <section className="space-y-6">
         <div className="flex items-center space-x-4">
           <h2 className="text-2xl font-bold">最新 Galgame</h2>

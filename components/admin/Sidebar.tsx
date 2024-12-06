@@ -67,7 +67,7 @@ export const Sidebar = () => {
         'flex items-center'
       )}
     >
-      <div className="flex size-full flex-col">
+      <div className="flex flex-col size-full">
         <div className="p-4 pl-0">
           <h1 className="text-2xl font-bold">管理面板</h1>
         </div>

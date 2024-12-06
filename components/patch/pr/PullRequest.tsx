@@ -131,8 +131,8 @@ export const PatchPullRequest = ({ pr }: Props) => {
                       <HighlightedText content={p.content} />
                     </CardBody>
 
-                    <CardFooter className="flex w-full flex-col space-y-2">
-                      <div className="mb-4 flex w-full justify-end space-x-2">
+                    <CardFooter className="flex flex-col w-full space-y-2">
+                      <div className="flex justify-end w-full mb-4 space-x-2">
                         <Button
                           color="danger"
                           variant="flat"
@@ -151,7 +151,7 @@ export const PatchPullRequest = ({ pr }: Props) => {
                         </Button>
                       </div>
                       {showDecline && (
-                        <div className="flex w-full flex-col items-end space-y-2 ">
+                        <div className="flex flex-col items-end w-full space-y-2 ">
                           <Textarea
                             labelPlacement="outside"
                             isRequired

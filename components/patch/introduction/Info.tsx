@@ -17,7 +17,7 @@ export const Info = ({ intro }: Props) => {
         className="prose max-w-none dark:prose-invert"
       />
 
-      <div className="mt-6 grid grid-cols-2 gap-4">
+      <div className="grid grid-cols-2 gap-4 mt-6">
         <div className="flex items-center gap-2 text-sm text-gray-500">
           <Clock className="size-4" />
           <span>
@@ -43,7 +43,7 @@ export const Info = ({ intro }: Props) => {
       {intro.alias.length > 0 && (
         <div className="mt-4">
           <h3 className="mb-4 text-xl font-medium">游戏别名</h3>
-          <ul className="list-inside list-disc text-sm text-gray-500">
+          <ul className="text-sm text-gray-500 list-disc list-inside">
             {intro.alias.map((alias) => (
               <li key={Math.random()}>{alias}</li>
             ))}

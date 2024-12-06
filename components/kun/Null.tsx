@@ -1,6 +1,7 @@
 import { randomNum } from '~/utils/random'
 import { useEffect, useState } from 'react'
 import { KunLoading } from './Loading'
+import Image from 'next/image'
 
 interface Props {
   message: string
@@ -22,8 +23,8 @@ export const KunNull = ({ message }: Props) => {
   }
 
   return (
-    <div className="flex size-full flex-col items-center justify-center space-y-4">
-      <img
+    <div className="flex flex-col items-center justify-center space-y-4 size-full">
+      <Image
         className="rounded-2xl"
         src={stickerSrc}
         alt={message}

@@ -7,8 +7,8 @@ const slugify = (str: string): string => {
     .trim()
     .replace(/\s+/g, '-')
     .replace(/&/g, '-and-')
-    .replace(/[^\p{L}\p{N}\-]+/gu, '')
-    .replace(/\-\-+/g, '-')
+    .replace(/[^\p{L}\p{N}]+/gu, '')
+    .replace(/--+/g, '-')
     .replace(/^-+|-+$/g, '')
 }
 

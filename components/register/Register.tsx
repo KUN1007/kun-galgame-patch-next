@@ -54,7 +54,7 @@ export const RegisterForm = () => {
   }
 
   return (
-    <form onSubmit={handleSubmit(onSubmit)} className="flex w-72 flex-col">
+    <form onSubmit={handleSubmit(onSubmit)} className="flex flex-col w-72">
       <Controller
         name="name"
         control={control}
@@ -149,7 +149,7 @@ export const RegisterForm = () => {
         注册
       </Button>
 
-      <div className="flex w-72 items-center justify-center overflow-hidden">
+      <div className="flex items-center justify-center overflow-hidden w-72">
         <Divider className="my-8" />
         <span className="mx-4">或</span>
         <Divider className="my-8" />
@@ -158,7 +158,7 @@ export const RegisterForm = () => {
       <Button
         color="primary"
         variant="bordered"
-        className="mb-4 w-full"
+        className="w-full mb-4"
         onClick={() => router.push('/auth/forgot')}
       >
         忘记密码

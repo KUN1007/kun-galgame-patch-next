@@ -22,7 +22,7 @@ export const KunSidebar = ({ tree }: Props) => {
         'flex items-center'
       )}
     >
-      <div className="fixed flex size-full flex-col">
+      <div className="fixed flex flex-col size-full">
         <h2 className="mb-4 text-lg font-semibold">目录</h2>
         <TreeItem node={tree} level={0} />
       </div>

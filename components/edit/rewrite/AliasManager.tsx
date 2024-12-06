@@ -44,7 +44,7 @@ export const AliasManager = ({
           <Plus size={20} />
         </Button>
       </div>
-      <div className="mt-2 flex flex-wrap gap-2">
+      <div className="flex flex-wrap gap-2 mt-2">
         {aliasList.map((alias, index) => (
           <Chip
             key={index}

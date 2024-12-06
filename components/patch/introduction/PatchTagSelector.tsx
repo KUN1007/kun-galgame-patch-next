@@ -227,7 +227,7 @@ export const PatchTagSelector = ({
                     {tags.map((tag) => (
                       <div
                         key={tag.id}
-                        className="flex items-start gap-2 rounded-lg p-2 hover:bg-default-100"
+                        className="flex items-start gap-2 p-2 rounded-lg hover:bg-default-100"
                       >
                         <Checkbox
                           isSelected={

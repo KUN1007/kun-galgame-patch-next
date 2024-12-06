@@ -35,14 +35,14 @@ export const MessageNav = () => {
   }, [])
 
   return (
-    <Card className="max-h-40 w-full lg:w-1/4">
+    <Card className="w-full max-h-40 lg:w-1/4">
       <CardBody className="flex flex-row gap-2 lg:flex-col">
         {notificationTypes.map(({ type, label, icon: Icon, href }) => (
           <Button
             key={label}
             color={lastSegment === type ? 'primary' : 'default'}
             as={Link}
-            className="w-full justify-start"
+            className="justify-start w-full"
             variant={lastSegment === type ? 'solid' : 'light'}
             startContent={<Icon className="size-4 shrink-0" />}
             href={href}

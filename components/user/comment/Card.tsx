@@ -28,7 +28,7 @@ export const UserCommentCard = ({ comment }: Props) => {
         <p>{comment.content}</p>
 
         <div className="flex items-center justify-between text-default-500">
-          <span className="text-muted-foreground text-sm">
+          <span className="text-sm text-muted-foreground">
             发布于 {formatDistanceToNow(comment.created)}
           </span>
 

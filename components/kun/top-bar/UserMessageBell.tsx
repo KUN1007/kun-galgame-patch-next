@@ -54,7 +54,7 @@ export const UserMessageBell = ({
         <AnimatePresence>
           {hasUnreadMessages && (
             <motion.div
-              className="absolute bottom-1 right-1 size-2 rounded-full bg-danger"
+              className="absolute rounded-full bottom-1 right-1 size-2 bg-danger"
               variants={dotVariants}
               initial="initial"
               animate="animate"

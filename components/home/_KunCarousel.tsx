@@ -61,14 +61,14 @@ export const KunCarousel = () => {
               >
                 <img
                   alt={item.title}
-                  className="size-full object-cover brightness-75"
+                  className="object-cover size-full brightness-75"
                   src={item.image}
                 />
                 <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/40 to-transparent" />
 
-                <Card className="absolute inset-x-8 bottom-8 border-none bg-background/80 backdrop-blur-md">
+                <Card className="absolute border-none inset-x-8 bottom-8 bg-background/80 backdrop-blur-md">
                   <div className="p-6">
-                    <div className="mb-4 flex items-start justify-between">
+                    <div className="flex items-start justify-between mb-4">
                       <div>
                         <h2 className="mb-2 text-3xl font-bold">
                           {item.title}
@@ -105,7 +105,7 @@ export const KunCarousel = () => {
                       </div>
                     </div>
 
-                    <div className="mt-4 flex gap-2">
+                    <div className="flex gap-2 mt-4">
                       {item.tags.map((tag) => (
                         <Chip key={tag} variant="flat" size="sm">
                           {tag}
@@ -119,7 +119,7 @@ export const KunCarousel = () => {
         )}
       </AnimatePresence>
 
-      <div className="absolute bottom-4 left-1/2 flex -translate-x-1/2 gap-2">
+      <div className="absolute flex gap-2 -translate-x-1/2 bottom-4 left-1/2">
         {carouselItems.map((_, index) => (
           <button
             key={index}

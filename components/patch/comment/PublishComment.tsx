@@ -76,7 +76,7 @@ export const PublishComment = ({
 
   return (
     <Card>
-      <CardHeader className="space-x-4 pb-0">
+      <CardHeader className="pb-0 space-x-4">
         <Avatar
           showFallback
           name={user.name.charAt(0).toUpperCase()}

@@ -24,7 +24,7 @@ export default async function Kun({
   }
 
   return (
-    <div className="container mx-auto space-y-6 py-6">
+    <div className="container py-6 mx-auto space-y-6">
       <PatchHeaderContainer patch={res} />
       {children}
     </div>

@@ -59,7 +59,7 @@ export const RewritePatch = () => {
   }
 
   return (
-    <form className="mx-auto w-full flex-1 p-4">
+    <form className="flex-1 w-full p-4 mx-auto">
       <Card className="w-full">
         <CardHeader className="flex gap-3">
           <div className="flex flex-col">
@@ -69,7 +69,7 @@ export const RewritePatch = () => {
             </p>
           </div>
         </CardHeader>
-        <CardBody className="mt-2 gap-4">
+        <CardBody className="gap-4 mt-2">
           <GameNameInput
             name={data.name}
             onChange={(name) => setData({ ...data, name })}
@@ -96,7 +96,7 @@ export const RewritePatch = () => {
 
           <Button
             color="primary"
-            className="mt-4 w-full"
+            className="w-full mt-4"
             onClick={handleSubmit}
             isLoading={rewriting}
             isDisabled={rewriting}

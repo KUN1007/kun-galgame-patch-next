@@ -14,7 +14,7 @@ export const SelfButton = ({ user }: Props) => {
   const isShowAdminButton = user.id === user.requestUserUid && user.role > 2
 
   return (
-    <div className="w-full flex-col space-y-3">
+    <div className="flex-col w-full space-y-3">
       <div className="flex space-x-3">
         <Button
           startContent={<Pencil className="size-4" />}

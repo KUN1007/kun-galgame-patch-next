@@ -19,6 +19,7 @@
     "jsxliterals",
     "katex",
     "kibibytes",
+    "kungal",
     "kungalgame",
     "localforage",
     "loli",
@@ -27,6 +28,7 @@
     "Moemoepoints",
     "moyu",
     "nextui",
+    "nocheck",
     "nord",
     "onedrive",
     "opendal",
@@ -52,5 +54,11 @@
     "vndb",
     "webp",
     "zustand"
-  ]
+  ],
+  "eslint.alwaysShowStatus": true,
+  "eslint.autoFixOnSave": true,
+  "eslint.enable": true,
+  "eslint.format.enable": true,
+  "editor.formatOnSave": true,
+  "prettier.requireConfig": true
 }

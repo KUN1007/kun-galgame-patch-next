@@ -39,13 +39,13 @@ export const ApplyContainer = ({ count }: Props) => {
   }
 
   return (
-    <div className="mx-auto my-4 w-full px-4">
+    <div className="w-full px-4 mx-auto my-4">
       <KunHeader
         name="申请成为创作者"
         description="申请成为创作者以获得使用本站存储的权限"
       />
 
-      <Card className="mx-auto mt-8 max-w-xl ">
+      <Card className="max-w-xl mx-auto mt-8 ">
         <CardHeader>
           <h2 className="flex items-center gap-2 text-xl font-bold">
             <Trophy className="text-warning" />

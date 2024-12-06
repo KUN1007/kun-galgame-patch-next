@@ -100,7 +100,7 @@ export const UserDropdown = () => {
           <Avatar
             isBordered
             as="button"
-            className="shrink-0 transition-transform"
+            className="transition-transform shrink-0"
             color="secondary"
             name={user.name.charAt(0).toUpperCase()}
             size="sm"

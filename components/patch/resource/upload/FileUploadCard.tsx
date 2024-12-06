@@ -14,12 +14,12 @@ const calcFileSizeMB = (byteNumber: number) => {
 
 export const FileUploadCard = ({ fileData, onRemove }: Props) => {
   return (
-    <Card className="mt-6 p-4">
+    <Card className="p-4 mt-6">
       <div className="flex flex-wrap items-center justify-between gap-2">
         <div className="flex items-center gap-2">
           <FileIcon className="size-6 text-primary/60" />
           <div className="flex-1">
-            <p className="truncate font-medium">
+            <p className="font-medium truncate">
               {fileData.file.name.slice(0, 20)}
             </p>
             <p className="text-sm text-default-500">
@@ -28,7 +28,7 @@ export const FileUploadCard = ({ fileData, onRemove }: Props) => {
           </div>
         </div>
         {fileData.hash ? (
-          <div className="ml-auto flex items-center gap-2">
+          <div className="flex items-center gap-2 ml-auto">
             <span className="text-sm text-default-500">文件上传成功</span>
             <Button color="danger" variant="flat" onClick={onRemove}>
               移除

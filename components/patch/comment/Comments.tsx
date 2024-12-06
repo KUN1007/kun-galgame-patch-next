@@ -148,7 +148,7 @@ export const Comments = ({ initialComments, id }: Props) => {
                 <div className="flex items-start justify-between">
                   <h4 className="space-x-2">
                     <span className="font-semibold">{comment.user?.name}</span>
-                    <span className="text-muted-foreground text-sm">
+                    <span className="text-sm text-muted-foreground">
                       {formatDistanceToNow(comment.created)}
                     </span>
                   </h4>
@@ -199,7 +199,7 @@ export const Comments = ({ initialComments, id }: Props) => {
                   >
                     <span>{comment.quotedUsername}</span>
                     <Chip
-                      endContent={<Quote className="size-4 text-blue-500" />}
+                      endContent={<Quote className="text-blue-500 size-4" />}
                       variant="light"
                     >
                       {comment.quotedContent}
@@ -240,7 +240,7 @@ export const Comments = ({ initialComments, id }: Props) => {
                   <p>{comment.content}</p>
                 )}
 
-                <div className="mt-2 flex gap-2">
+                <div className="flex gap-2 mt-2">
                   <CommentLikeButton comment={comment} />
                   <Button
                     variant="ghost"
@@ -260,7 +260,7 @@ export const Comments = ({ initialComments, id }: Props) => {
         </Card>
 
         {replyTo === comment.id && (
-          <div className="ml-8 mt-2">
+          <div className="mt-2 ml-8">
             <PublishComment
               patchId={id}
               parentId={comment.id}

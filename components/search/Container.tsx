@@ -67,7 +67,7 @@ export const SearchPage = () => {
   }
 
   return (
-    <div className="my-4 w-full">
+    <div className="w-full my-4">
       <KunHeader name="搜索 Galgame" description="输入内容以自动搜索 Galgame" />
 
       <div className="mb-8">

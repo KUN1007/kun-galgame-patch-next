@@ -22,7 +22,7 @@ import type { PatchResource } from '~/types/api/patch'
 type EditResourceFormData = z.infer<typeof patchResourceCreateSchema>
 
 interface EditResourceDialogProps {
-  resource: PatchResource | null
+  resource: PatchResource
   onClose: () => void
   onSuccess: (resource: PatchResource) => void
   type?: 'patch' | 'admin'
@@ -34,9 +34,8 @@ export const EditResourceDialog = ({
   onSuccess,
   type = 'patch'
 }: EditResourceDialogProps) => {
-  if (!resource) return null
-
   const [editing, setEditing] = useState(false)
+
   const {
     control,
     handleSubmit,

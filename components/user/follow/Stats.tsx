@@ -31,7 +31,7 @@ export const Stats = ({ user }: { user: UserInfo }) => {
 
   return (
     <>
-      <div className="mt-2 flex gap-4">
+      <div className="flex gap-4 mt-2">
         <Button
           variant="light"
           onClick={showFollowers}
