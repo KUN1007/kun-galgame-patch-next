@@ -11,7 +11,9 @@ interface Props {
   }>
 }
 
-export async function generateMetadata({ params }: Props): Promise<Metadata> {
+export const generateMetadata = async ({
+  params
+}: Props): Promise<Metadata> => {
   const { slug } = await params
   const url = slug.join('/')
   const blog = getPostBySlug(url)

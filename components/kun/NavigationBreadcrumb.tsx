@@ -12,18 +12,18 @@ import { BreadcrumbItem, Breadcrumbs } from '@nextui-org/breadcrumbs'
 import { ChevronRight } from 'lucide-react'
 import { useRouter } from 'next-nprogress-bar'
 import { usePathname } from 'next/navigation'
-import { getPathLabel } from './utils/routes'
+import { getKunPathLabel } from '~/constants/routes'
 import { useBreadcrumbStore } from '~/store/breadcrumb'
-import type { BreadcrumbItemType } from './utils/routes'
+import type { KunBreadcrumbItem } from '~/constants/routes'
 
 export const KunNavigationBreadcrumb = () => {
   const { items, setItems } = useBreadcrumbStore()
   const pathname = usePathname()
-  const label = getPathLabel(pathname)
+  const label = getKunPathLabel(pathname)
   const router = useRouter()
 
   useEffect(() => {
-    const newItem: BreadcrumbItemType = {
+    const newItem: KunBreadcrumbItem = {
       key: pathname,
       label,
       href: pathname

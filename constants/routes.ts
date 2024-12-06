@@ -1,4 +1,4 @@
-export interface BreadcrumbItemType {
+export interface KunBreadcrumbItem {
   key: string
   label: string
   href: string
@@ -45,7 +45,7 @@ const keyLabelMap: Record<string, string> = {
   '/user/[id]/resource': '用户资源'
 }
 
-export const getPathLabel = (pathname: string): string => {
+export const getKunPathLabel = (pathname: string): string => {
   for (const key in keyLabelMap) {
     const regex = new RegExp(`^${key.replace(/\[id\]/g, '\\d+')}$`)
     if (regex.test(pathname)) {

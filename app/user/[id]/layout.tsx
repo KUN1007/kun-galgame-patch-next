@@ -3,15 +3,26 @@ import { kunServerFetchGet } from '~/utils/kunServerFetch'
 import { UserProfile } from '~/components/user/Profile'
 import { UserStats } from '~/components/user/Stats'
 import { UserActivity } from '~/components/user/Activity'
+import { generateKunMetadataTemplate } from './metadata'
+import type { Metadata } from 'next'
 import type { UserInfo } from '~/types/api/user'
 
-export default async function Kun({
-  params,
-  children
-}: {
+interface Props {
   children: React.ReactNode
   params: Promise<{ id: string }>
-}) {
+}
+
+export const generateMetadata = async ({
+  params
+}: Props): Promise<Metadata> => {
+  const { id } = await params
+  const user = await kunServerFetchGet<UserInfo>('/user/status/info', {
+    id: Number(id)
+  })
+  return generateKunMetadataTemplate(user)
+}
+
+export default async function Kun({ params, children }: Props) {
   const { id } = await params
   if (isNaN(Number(1))) {
     return <ErrorComponent error={'提取页面参数错误'} />
