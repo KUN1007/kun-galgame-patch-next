@@ -13,3 +13,19 @@ export interface KunTreeNode {
   children?: KunTreeNode[]
   type: 'file' | 'directory'
 }
+
+export interface KunFrontmatter {
+  title: string
+  banner: string
+  description: string
+  date: string
+  authorName: string
+  authorAvatar: string
+  authorHomepage: string
+}
+
+export interface KunBlog {
+  slug: string
+  content: string
+  frontmatter: KunFrontmatter
+}

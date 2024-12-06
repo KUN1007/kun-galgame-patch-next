@@ -1,49 +1,5 @@
-interface KunSiteDomain {
-  main: string
-  imageBed: string
-  storage: string
-  kungal: string
-}
-
-interface KunSiteAuthor {
-  name: string
-  url: string
-}
-
-interface KunOpenGraph {
-  title: string
-  description: string
-  image: string
-  url: string
-}
-
-interface KunCreator {
-  name: string
-  mention: string
-  url: string
-}
-
-interface KunImage {
-  url: string
-  width: number
-  height: number
-  alt: string
-}
-
-interface KunSiteConfig {
-  title: string
-  titleShort: string
-  template: string
-  description: string
-  keywords: string[]
-  canonical: string
-  author: KunSiteAuthor[]
-  creator: KunCreator
-  publisher: KunCreator
-  domain: KunSiteDomain
-  og: KunOpenGraph
-  images: KunImage[]
-}
+import { SUPPORTED_TYPE_MAP } from '~/constants/resource'
+import type { KunSiteConfig } from './config'
 
 export const kunMoyuMoe: KunSiteConfig = {
   title: '鲲 Galgame 补丁 - 开源 Galgame 补丁资源下载站',
@@ -59,7 +15,8 @@ export const kunMoyuMoe: KunSiteConfig = {
     '网站',
     '免费',
     '开源',
-    'Next.js'
+    'Next.js',
+    ...Object.values(SUPPORTED_TYPE_MAP)
   ],
   canonical: 'https://www.kungal.com',
   author: [

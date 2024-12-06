@@ -1,7 +1,8 @@
 import fs from 'fs'
 import path from 'path'
 import matter from 'gray-matter'
-import { KunPostMetadata } from './types'
+import type { KunPostMetadata } from './types'
+import type { KunFrontmatter, KunBlog } from './types'
 
 const POSTS_PATH = path.join(process.cwd(), 'posts')
 
@@ -41,7 +42,7 @@ export const getAllPosts = () => {
   return posts.sort((a, b) => (a.date > b.date ? -1 : 1))
 }
 
-export const getPostBySlug = (slug: string) => {
+export const getPostBySlug = (slug: string): KunBlog => {
   const realSlug = slug.replace(/\.mdx$/, '')
   const fullPath = path.join(POSTS_PATH, `${realSlug}.mdx`)
   const fileContents = fs.readFileSync(fullPath, 'utf8')
@@ -49,8 +50,8 @@ export const getPostBySlug = (slug: string) => {
 
   return {
     slug: realSlug,
-    frontmatter: data,
-    content
+    content,
+    frontmatter: data as KunFrontmatter
   }
 }
 

@@ -2,6 +2,10 @@ import { getAllPosts } from '~/lib/mdx/getPosts'
 import { KunAboutHeader } from '~/components/about/Header'
 import { KunAboutCard } from '~/components/about/Card'
 import { KunMasonryGrid } from '~/components/kun/MasonryGrid'
+import { kunMetadata } from './metadata'
+import type { Metadata } from 'next'
+
+export const metadata: Metadata = kunMetadata
 
 export default function Kun() {
   const posts = getAllPosts()
