@@ -1,9 +1,11 @@
-'use client'
-
 import Image from 'next/image'
 import { LoginForm } from '~/components/login/Login'
+import { kunMetadata } from './metadata'
+import type { Metadata } from 'next'
 
-export default function Login() {
+export const metadata: Metadata = kunMetadata
+
+export default function Kun() {
   return (
     <div className="flex flex-col items-center justify-center mx-auto w-96">
       <Image

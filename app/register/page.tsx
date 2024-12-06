@@ -1,9 +1,7 @@
-'use client'
-
 import Image from 'next/image'
 import { RegisterForm } from '~/components/register/Register'
 
-export default function Login() {
+export default function Kun() {
   return (
     <div className="flex flex-col items-center justify-center mx-auto w-96">
       <Image
