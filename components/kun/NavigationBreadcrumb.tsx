@@ -1,6 +1,13 @@
 'use client'
 
-import { useEffect, useState } from 'react'
+import { useEffect } from 'react'
+import {
+  Dropdown,
+  DropdownTrigger,
+  DropdownMenu,
+  DropdownItem,
+  Button
+} from '@nextui-org/react'
 import { Breadcrumbs, BreadcrumbItem } from '@nextui-org/breadcrumbs'
 import { ChevronRight } from 'lucide-react'
 import { useRouter } from 'next-nprogress-bar'
@@ -50,37 +57,37 @@ export const KunNavigationBreadcrumb = () => {
           }}
           variant="light"
           radius="lg"
-          // TODO: https://github.com/nextui-org/nextui/issues/4230
-          // renderEllipsis={({ items, ellipsisIcon, separator }) => (
-          //   <div className="flex items-center">
-          //     <Dropdown>
-          //       <DropdownTrigger>
-          //         <Button
-          //           isIconOnly
-          //           className="w-6 h-6 min-w-6"
-          //           size="sm"
-          //           variant="flat"
-          //         >
-          //           {ellipsisIcon}
-          //         </Button>
-          //       </DropdownTrigger>
-          //       <DropdownMenu aria-label="Routes">
-          //         {items.map((item, index) => (
-          //           <DropdownItem key={index} href={item.href}>
-          //             {item.children}
-          //             {index}
-          //           </DropdownItem>
-          //         ))}
-          //       </DropdownMenu>
-          //     </Dropdown>
-          //     {separator}
-          //   </div>
-          // )}
+          renderEllipsis={({ items, ellipsisIcon, separator }) => (
+            <div key="id" className="flex items-center">
+              <Dropdown>
+                <DropdownTrigger>
+                  <Button
+                    isIconOnly
+                    className="w-6 h-6 min-w-6"
+                    size="sm"
+                    variant="flat"
+                  >
+                    {ellipsisIcon}
+                  </Button>
+                </DropdownTrigger>
+                <DropdownMenu aria-label="Routes">
+                  {items.map((item, index) => (
+                    <DropdownItem key={index} href={item.href}>
+                      {item.children}
+                    </DropdownItem>
+                  ))}
+                </DropdownMenu>
+              </Dropdown>
+              {separator}
+            </div>
+          )}
         >
           {items.map((item, index) => (
             <BreadcrumbItem
               key={item.key}
               isCurrent={index === items.length - 1}
+              href={item.href}
+              onClick={(event) => event.preventDefault()}
               onPress={() => router.push(item.href)}
             >
               {item.label}
