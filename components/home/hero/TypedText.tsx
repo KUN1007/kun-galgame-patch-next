@@ -5,10 +5,10 @@ import Typed from 'typed.js'
 import { kunTypedStrings } from '~/constants/home-typed-js'
 
 export const KunTypedText = () => {
-  const el = useRef(null)
+  const kun = useRef(null)
 
   useEffect(() => {
-    const typed = new Typed(el.current, {
+    const typed = new Typed(kun.current, {
       strings: kunTypedStrings,
       typeSpeed: 50,
       backSpeed: 50,
@@ -21,5 +21,5 @@ export const KunTypedText = () => {
     }
   }, [])
 
-  return <span ref={el} className="font-bold text-primary" />
+  return <span ref={kun} className="font-bold text-primary" />
 }

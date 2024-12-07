@@ -1,8 +1,11 @@
+'use client'
+
 import { Card, CardBody } from '@nextui-org/card'
 import { Avatar } from '@nextui-org/avatar'
 import { ThumbsUp } from 'lucide-react'
 import { formatDate } from '~/utils/time'
 import Link from 'next/link'
+import { useRouter } from 'next-nprogress-bar'
 import type { PatchComment } from '~/types/api/comment'
 
 interface Props {
@@ -10,8 +13,14 @@ interface Props {
 }
 
 export const CommentCard = ({ comment }: Props) => {
+  const router = useRouter()
+
   return (
-    <Card>
+    <Card
+      isPressable
+      onPress={() => router.push(`/patch/${comment.patchId}/comment`)}
+      className="w-full"
+    >
       <CardBody>
         <div className="flex gap-4">
           <Avatar src={comment.user.avatar} alt={comment.user.name} />

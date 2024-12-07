@@ -7,7 +7,9 @@ import { GitHub } from '~/components/kun/icons/GitHub'
 export const HeroContainer = () => {
   return (
     <div className="flex flex-col items-center text-center">
-      <h1 className="mb-6 text-3xl font-bold md:text-4xl">鲲 Galgame 补丁</h1>
+      <h1 className="mb-6 text-3xl font-bold md:text-4xl">
+        {kunMoyuMoe.titleShort}
+      </h1>
       <div className="h-8 mb-8 text-xl md:text-2xl">
         <KunTypedText />
       </div>

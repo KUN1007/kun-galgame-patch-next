@@ -35,7 +35,9 @@ export const ResourceCard = ({ resource }: Props) => {
           />
         </div>
 
-        <h4 className="font-bold text-large">{resource.patchName}</h4>
+        <h3 className="text-lg font-semibold transition-colors line-clamp-2 hover:text-primary-500">
+          {resource.patchName}
+        </h3>
 
         {resource.note && (
           <p className="text-small text-default-500">{resource.note}</p>
