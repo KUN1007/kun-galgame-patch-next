@@ -1,7 +1,11 @@
 import { kunServerFetchGet } from '~/utils/kunServerFetch'
 import { MessageContainer } from '~/components/message/Container'
 import { ErrorComponent } from '~/components/error/ErrorComponent'
+import { kunMetadata } from './metadata'
 import type { Message } from '~/types/api/message'
+import type { Metadata } from 'next'
+
+export const metadata: Metadata = kunMetadata
 
 export default async function Kun() {
   const response = await kunServerFetchGet<
