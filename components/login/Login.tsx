@@ -4,23 +4,25 @@ import { useState } from 'react'
 import { z } from 'zod'
 import { Controller, useForm } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
-import { Button, Divider, Input, Link } from '@nextui-org/react'
+import { Button, Divider, Input, Link, useDisclosure } from '@nextui-org/react'
 import { kunFetchPost } from '~/utils/kunFetch'
 import { loginSchema } from '~/validations/auth'
 import { useUserStore } from '~/store/providers/user'
 import { kunErrorHandler } from '~/utils/kunErrorHandler'
 import { useRouter } from 'next-nprogress-bar'
 import toast from 'react-hot-toast'
+import { KunCaptchaModal } from '~/components/kun/auth/CaptchaModal'
 import type { UserState } from '~/store/userStore'
 
 type LoginFormData = z.infer<typeof loginSchema>
 
 export const LoginForm = () => {
+  const { isOpen, onOpen, onClose } = useDisclosure()
   const { setUser } = useUserStore((state) => state)
   const router = useRouter()
   const [loading, setLoading] = useState(false)
 
-  const { control, handleSubmit, reset } = useForm<LoginFormData>({
+  const { control, watch, reset } = useForm<LoginFormData>({
     resolver: zodResolver(loginSchema),
     defaultValues: {
       name: '',
@@ -28,9 +30,14 @@ export const LoginForm = () => {
     }
   })
 
-  const onSubmit = async (data: LoginFormData) => {
+  const handleCaptchaSuccess = async (code: string) => {
+    onClose()
+
     setLoading(true)
-    const res = await kunFetchPost<KunResponse<UserState>>('/auth/login', data)
+    const res = await kunFetchPost<KunResponse<UserState>>('/auth/login', {
+      ...watch(),
+      captcha: code
+    })
     setLoading(false)
 
     kunErrorHandler(res, (value) => {
@@ -42,7 +49,7 @@ export const LoginForm = () => {
   }
 
   return (
-    <form onSubmit={handleSubmit(onSubmit)} className="w-72">
+    <form className="w-72">
       <Controller
         name="name"
         control={control}
@@ -78,14 +85,20 @@ export const LoginForm = () => {
         )}
       />
       <Button
-        type="submit"
         color="primary"
         className="w-full"
         isDisabled={loading}
         isLoading={loading}
+        onPress={onOpen}
       >
         登录
       </Button>
+
+      <KunCaptchaModal
+        isOpen={isOpen}
+        onClose={onClose}
+        onSuccess={handleCaptchaSuccess}
+      />
 
       <div className="flex items-center justify-center overflow-hidden w-72">
         <Divider className="my-8" />

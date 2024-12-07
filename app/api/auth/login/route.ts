@@ -6,10 +6,15 @@ import { verifyPassword } from '~/app/api/utils/algorithm'
 import { generateKunToken } from '~/app/api/utils/jwt'
 import { loginSchema } from '~/validations/auth'
 import { prisma } from '~/prisma/index'
+import { checkCaptchaExist } from '../captcha/verify'
 import type { UserState } from '~/store/userStore'
 
 export const login = async (input: z.infer<typeof loginSchema>) => {
-  const { name, password } = input
+  const { name, password, captcha } = input
+  const res = await checkCaptchaExist(captcha)
+  if (!res) {
+    return '人机验证无效, 请完成人机验证'
+  }
 
   const user = await prisma.user.findFirst({
     where: {
