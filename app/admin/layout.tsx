@@ -11,7 +11,7 @@ interface Props {
 
 export default function AdminLayout({ children }: Props) {
   return (
-    <div className="container flex mx-auto my-8">
+    <div className="container flex mx-auto my-4">
       <Sidebar />
       <div className="flex w-full overflow-y-auto">
         {/* <Navbar /> */}

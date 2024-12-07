@@ -11,7 +11,7 @@ export default function Layout({ children }: LayoutProps) {
 
   return (
     <div className="container flex mx-auto my-4">
-      <div className="fixed">
+      <div className="fixed z-50">
         <KunSidebar tree={tree} />
       </div>
 

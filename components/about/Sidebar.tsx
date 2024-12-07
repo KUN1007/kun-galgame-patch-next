@@ -17,12 +17,12 @@ export const KunSidebar = ({ tree }: Props) => {
   return (
     <aside
       className={cn(
-        'fixed md:static w-64 h-full bg-background border-r border-divider transition-transform duration-300 ease-in-out',
+        'fixed z-50 md:static w-64 h-full bg-background border-r border-divider transition-transform duration-300 ease-in-out',
         isOpen ? 'translate-x-0' : '-translate-x-full md:translate-x-0',
         'flex items-center'
       )}
     >
-      <div className="fixed flex flex-col size-full">
+      <div className="flex flex-col size-full">
         <h2 className="mb-4 text-lg font-semibold">目录</h2>
         <TreeItem node={tree} level={0} />
       </div>
