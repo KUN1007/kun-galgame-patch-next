@@ -63,6 +63,7 @@ export const getPatchById = async (
       avatar: patch.user.avatar
     },
     created: String(patch.created),
+    updated: String(patch.updated),
     _count: patch._count
   }
 

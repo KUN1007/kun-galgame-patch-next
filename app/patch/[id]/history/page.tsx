@@ -3,10 +3,30 @@ import { ErrorComponent } from '~/components/error/ErrorComponent'
 import { History } from '~/components/patch/history/History'
 import { PatchContributor } from '~/components/patch/Contributor'
 import { kunServerFetchGet } from '~/utils/kunServerFetch'
-import type { PatchHistory } from '~/types/api/patch'
+import { generateKunMetadataTemplate } from './metadata'
+import type { Metadata } from 'next'
+import type { Patch, PatchHistory } from '~/types/api/patch'
 
 interface Props {
   params: Promise<{ id: string }>
+}
+
+export const generateMetadata = async ({
+  params
+}: Props): Promise<Metadata> => {
+  const { id } = await params
+  const patch = await kunServerFetchGet<Patch>('/patch', {
+    patchId: Number(id)
+  })
+  const { histories } = await kunServerFetchGet<{
+    histories: PatchHistory[]
+    total: number
+  }>('/patch/history', {
+    page: 1,
+    limit: 30,
+    patchId: Number(id)
+  })
+  return generateKunMetadataTemplate(patch, histories)
 }
 
 export default async function Kun({ params }: Props) {

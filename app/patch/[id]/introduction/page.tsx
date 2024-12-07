@@ -2,10 +2,31 @@ import { ErrorComponent } from '~/components/error/ErrorComponent'
 import { InfoContainer } from '~/components/patch/introduction/Container'
 import { PatchContributor } from '~/components/patch/Contributor'
 import { kunServerFetchGet } from '~/utils/kunServerFetch'
-import type { PatchIntroduction } from '~/types/api/patch'
+import { generateKunMetadataTemplate } from './metadata'
+import type { Metadata } from 'next'
+import type { Patch, PatchIntroduction } from '~/types/api/patch'
 
 interface Props {
   params: Promise<{ id: string }>
+}
+
+export const generateMetadata = async ({
+  params
+}: Props): Promise<Metadata> => {
+  const { id } = await params
+  const patch = await kunServerFetchGet<Patch>('/patch', {
+    patchId: Number(id)
+  })
+  const intro = await kunServerFetchGet<PatchIntroduction>(
+    '/patch/introduction',
+    { patchId: Number(id) }
+  )
+  const contributors = await kunServerFetchGet<KunUser[]>(
+    '/patch/contributor',
+    { patchId: Number(id) }
+  )
+
+  return generateKunMetadataTemplate(patch, intro, contributors)
 }
 
 export default async function Kun({ params }: Props) {
@@ -21,10 +42,9 @@ export default async function Kun({ params }: Props) {
 
   const contributors = await kunServerFetchGet<KunUser[]>(
     '/patch/contributor',
-    {
-      patchId: Number(id)
-    }
+    { patchId: Number(id) }
   )
+
   return (
     <>
       <InfoContainer intro={intro} patchId={Number(id)} />

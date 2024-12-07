@@ -1,15 +1,26 @@
 import { PatchHeaderContainer } from '~/components/patch/header/Container'
 import { ErrorComponent } from '~/components/error/ErrorComponent'
 import { kunServerFetchGet } from '~/utils/kunServerFetch'
+import { generateKunMetadataTemplate } from './metadata'
+import type { Metadata } from 'next'
 import type { Patch } from '~/types/api/patch'
 
-export default async function Kun({
-  params,
-  children
-}: {
+interface Props {
   children: React.ReactNode
   params: Promise<{ id: string }>
-}) {
+}
+
+export const generateMetadata = async ({
+  params
+}: Props): Promise<Metadata> => {
+  const { id } = await params
+  const patch = await kunServerFetchGet<Patch>('/patch', {
+    patchId: Number(id)
+  })
+  return generateKunMetadataTemplate(patch)
+}
+
+export default async function Kun({ params, children }: Props) {
   const { id } = await params
 
   if (isNaN(Number(id))) {

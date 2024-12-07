@@ -1,3 +1,4 @@
+import { kunMoyuMoe } from '~/config/moyu-moe'
 import type { Metadata } from 'next'
 import type { KunBlog } from '~/lib/mdx/types'
 
@@ -29,7 +30,7 @@ export const generateKunMetadataTemplate = (blog: KunBlog): Metadata => {
       images: [frontmatter.banner]
     },
     alternates: {
-      canonical: `https://www.moyu.moe/about/${slug}`
+      canonical: `${kunMoyuMoe.domain.main}/about/${slug}`
     }
   }
 }
