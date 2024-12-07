@@ -4,14 +4,15 @@ import { Snippet } from '@nextui-org/snippet'
 import { Chip } from '@nextui-org/chip'
 import { Link } from '@nextui-org/link'
 import { Cloud, Link as LinkIcon } from 'lucide-react'
-import { MicrosoftIcon } from './icons/MicrosoftIcon'
+import { Microsoft } from '~/components/kun/icons/Microsoft'
 import { SUPPORTED_RESOURCE_LINK_MAP } from '~/constants/resource'
 import { kunFetchPut } from '~/utils/kunFetch'
+import type { JSX } from 'react'
 import type { PatchResource } from '~/types/api/patch'
 
 const storageIcons: { [key: string]: JSX.Element } = {
   s3: <Cloud className="size-4" />,
-  onedrive: <MicrosoftIcon className="size-4" />,
+  onedrive: <Microsoft className="size-4" />,
   user: <LinkIcon className="size-4" />
 }
 

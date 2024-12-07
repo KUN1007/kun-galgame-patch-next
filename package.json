@@ -74,6 +74,7 @@
     "sharp": "^0.33.5",
     "sugar-high": "^0.7.5",
     "tailwind-merge": "^2.5.5",
+    "typed.js": "^2.1.0",
     "unified": "^11.0.5",
     "use-debounce": "^10.0.4",
     "zod": "^3.23.8",

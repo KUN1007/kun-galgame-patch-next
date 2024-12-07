@@ -179,6 +179,9 @@ importers:
       tailwind-merge:
         specifier: ^2.5.5
         version: 2.5.5
+      typed.js:
+        specifier: ^2.1.0
+        version: 2.1.0
       unified:
         specifier: ^11.0.5
         version: 11.0.5
@@ -5990,6 +5993,9 @@ packages:
   typed-array-length@1.0.7:
     resolution: {integrity: sha512-3KS2b+kL7fsuk/eJZ7EQdnEmQoaho/r6KUef7hxvltNA5DR8NAUM+8wJMbJyZ4G9/7i3v5zPBIMN5aybAh2/Jg==}
     engines: {node: '>= 0.4'}
+
+  typed.js@2.1.0:
+    resolution: {integrity: sha512-bDuXEf7YcaKN4g08NMTUM6G90XU25CK3bh6U0THC/Mod/QPKlEt9g/EjvbYB8x2Qwr2p6J6I3NrsoYaVnY6wsQ==}
 
   typescript@5.7.2:
     resolution: {integrity: sha512-i5t66RHxDvVN40HfDd1PsEThGNnlMCMT3jMUuoh9/0TaqWevNontacunWyN02LA9/fIbEWlcHZcgTKb9QoaLfg==}
@@ -14495,6 +14501,8 @@ snapshots:
       is-typed-array: 1.1.13
       possible-typed-array-names: 1.0.0
       reflect.getprototypeof: 1.0.7
+
+  typed.js@2.1.0: {}
 
   typescript@5.7.2: {}
 

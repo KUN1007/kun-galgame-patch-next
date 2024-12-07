@@ -6,7 +6,7 @@ export const kunMoyuMoe: KunSiteConfig = {
   titleShort: '鲲 Galgame 补丁',
   template: '%s - 鲲 Galgame 补丁',
   description:
-    '开源, 免费, 零门槛的 Galgame 补丁资源下载站, 提供 Windows, 安卓, KRKR, Tyranor 等各类平台的 Galgame 补丁资源下载。最先进的 Galgame 补丁资源站！永远免费！',
+    '开源, 免费, 零门槛, 纯手写, 最先进的 Galgame 补丁资源下载站, 提供 Windows, 安卓, KRKR, Tyranor 等各类平台的 Galgame 补丁资源下载。永远免费！',
   keywords: [
     'Galgame',
     '资源',
