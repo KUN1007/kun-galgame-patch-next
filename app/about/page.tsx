@@ -15,7 +15,7 @@ export default function Kun() {
   // )
 
   return (
-    <div className="w-full px-6">
+    <div className="w-full px-6 pb-6">
       <KunAboutHeader />
 
       <div className="grid gap-4">
