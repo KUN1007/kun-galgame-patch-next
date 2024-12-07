@@ -31,6 +31,9 @@ export const generateKunMetadataTemplate = (
         ? `查看 ${resourceString} 等 ${resourceList.length}+ 个补丁资源`
         : `用户 ${user.name} 还没有发布过补丁资源哦`,
       images: [user.avatar]
+    },
+    alternates: {
+      canonical: `${kunMoyuMoe.domain.main}/user/${user.id}/resource`
     }
   }
 }

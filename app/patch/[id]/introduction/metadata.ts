@@ -50,7 +50,7 @@ export const generateKunMetadataTemplate = (
       images: [patch.banner]
     },
     alternates: {
-      canonical: `${kunMoyuMoe.domain.main}/patch/${patch.id}/pr`
+      canonical: `${kunMoyuMoe.domain.main}/patch/${patch.id}/introduction`
     }
   }
 }

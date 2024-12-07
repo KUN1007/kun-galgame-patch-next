@@ -31,6 +31,9 @@ export const generateKunMetadataTemplate = (
         ? `${user.name} 为 ${contributeString} 等 ${contributeList.length} 个 Galgame 提出了 pull request`
         : `用户 ${user.name} 暂无 pull request`,
       images: [user.avatar]
+    },
+    alternates: {
+      canonical: `${kunMoyuMoe.domain.main}/user/${user.id}/contribute`
     }
   }
 }

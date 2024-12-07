@@ -98,7 +98,7 @@ export const AvatarCrop = () => {
             <Avatar
               name={user.name}
               src={user.avatar}
-              className="size-16"
+              className="w-16 h-16"
               color="primary"
             />
           )}

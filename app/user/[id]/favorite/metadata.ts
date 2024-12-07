@@ -30,6 +30,9 @@ export const generateKunMetadataTemplate = (
         ? `${user.name} 十分喜欢 ${favoriteString} 等 ${favoriteList.length} 个 Galgame 游戏!`
         : `用户 ${user.name} 没有收藏过 Galgame 游戏`,
       images: [user.avatar]
+    },
+    alternates: {
+      canonical: `${kunMoyuMoe.domain.main}/user/${user.id}/favorite`
     }
   }
 }

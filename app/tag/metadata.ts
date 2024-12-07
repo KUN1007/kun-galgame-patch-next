@@ -15,5 +15,8 @@ export const kunMetadata: Metadata = {
     card: 'summary_large_image',
     title: `Galgame 补丁标签`,
     description: `所有的 Galgame 补丁标签, ${Object.values(SUPPORTED_TYPE_MAP).toString()} 下载`
+  },
+  alternates: {
+    canonical: `${kunMoyuMoe.domain.main}/tag`
   }
 }

@@ -30,6 +30,9 @@ export const generateKunMetadataTemplate = (
         ? `用户已经发布了 ${resourceString}`
         : `用户 ${user.name} 还没有发布过 Galgame 哦`,
       images: [user.avatar]
+    },
+    alternates: {
+      canonical: `${kunMoyuMoe.domain.main}/user/${user.id}/galgame`
     }
   }
 }

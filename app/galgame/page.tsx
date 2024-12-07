@@ -1,5 +1,9 @@
 import { CardContainer } from '~/components/galgame/Container'
 import { kunFetchPost } from '~/utils/kunFetch'
+import { kunMetadata } from './metadata'
+import type { Metadata } from 'next'
+
+export const metadata: Metadata = kunMetadata
 
 export default async function Kun() {
   const { galgames } = await kunFetchPost<{

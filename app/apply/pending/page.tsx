@@ -2,11 +2,15 @@ import { Card } from '@nextui-org/card'
 import { Button } from '@nextui-org/button'
 import Link from 'next/link'
 import { CheckCircle2 } from 'lucide-react'
+import { kunMetadata } from './metadata'
+import type { Metadata } from 'next'
+
+export const metadata: Metadata = kunMetadata
 
 export default function Kun() {
   return (
-    <Card className="m-auto max-h-80 w-full max-w-md p-8 text-center">
-      <div className="mb-4 flex justify-center">
+    <Card className="w-full max-w-md p-8 m-auto text-center max-h-80">
+      <div className="flex justify-center mb-4">
         <CheckCircle2 className="size-16 text-success-500" />
       </div>
       <h1 className="mb-4 text-2xl font-bold">申请已经提交</h1>

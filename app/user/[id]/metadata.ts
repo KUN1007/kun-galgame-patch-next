@@ -1,3 +1,4 @@
+import { kunMoyuMoe } from '~/config/moyu-moe'
 import type { Metadata } from 'next'
 import type { UserInfo } from '~/types/api/user'
 
@@ -23,6 +24,9 @@ export const generateKunMetadataTemplate = (user: UserInfo): Metadata => {
         user.bio ||
         `查看用户 ${user.name} 的主页, Galgame 补丁资源, Galgame, 贡献历史, 评论, 收藏和关注`,
       images: [user.avatar]
+    },
+    alternates: {
+      canonical: `${kunMoyuMoe.domain.main}/user/${user.id}/resource`
     }
   }
 }

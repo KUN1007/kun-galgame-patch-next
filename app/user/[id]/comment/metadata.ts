@@ -30,6 +30,9 @@ export const generateKunMetadataTemplate = (
         ? `${user.name} 最近在 ${comments[0].patchName} 发布了 ${commentList[0]}, 查看 ${user.name} 发布的 ${commentList.length} 条评论`
         : `用户 ${user.name} 最近没有发布评论`,
       images: [user.avatar]
+    },
+    alternates: {
+      canonical: `${kunMoyuMoe.domain.main}/user/${user.id}/comment`
     }
   }
 }
