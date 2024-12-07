@@ -48,7 +48,7 @@ export const KunAboutCard = ({ post }: Props) => {
           </div>
           <div className="flex items-center gap-1">
             <Type size={16} />
-            <span>1007 字</span>
+            <span>{post.textCount} 字</span>
           </div>
         </div>
       </CardBody>
