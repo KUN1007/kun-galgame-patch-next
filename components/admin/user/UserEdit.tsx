@@ -81,6 +81,7 @@ export const UserEdit = ({ initialUser }: Props) => {
         <ModalContent>
           <ModalHeader>编辑用户: {user.name}</ModalHeader>
           <ModalBody>
+            <p>请注意, 您的任何更改都会导致该用户重新登录</p>
             <div className="grid grid-cols-2 gap-4">
               <Input
                 label="用户名"
@@ -102,6 +103,7 @@ export const UserEdit = ({ initialUser }: Props) => {
                 label="状态"
                 selectedKeys={[String(user.status)]}
                 onChange={(e) => handleChange('status', Number(e.target.value))}
+                disabledKeys={['1']}
               >
                 {statusOptions.map((status) => (
                   <SelectItem key={status.value} value={status.value}>

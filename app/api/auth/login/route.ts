@@ -19,6 +19,9 @@ export const login = async (input: z.infer<typeof loginSchema>) => {
   if (!user) {
     return '用户未找到'
   }
+  if (user.status === 2) {
+    return '该用户已被封禁, 如果您觉得有任何问题, 请联系我们'
+  }
 
   const isPasswordValid = await verifyPassword(password, user.password)
   if (!isPasswordValid) {

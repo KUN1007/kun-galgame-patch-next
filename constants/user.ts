@@ -7,7 +7,7 @@ export const USER_ROLE_MAP: Record<number, string> = {
 
 export const USER_STATUS_MAP: Record<number, string> = {
   0: '正常',
-  1: '限制',
+  1: '限制（正在开发中）',
   2: '封禁'
 }
 
