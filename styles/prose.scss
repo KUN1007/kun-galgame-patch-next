@@ -22,7 +22,7 @@
 }
 
 .kun-prose h2 {
-  @apply text-default-900 font-bold text-2xl mt-8 mb-4 leading-tight;
+  @apply text-default-900 font-bold text-2xl mt-16 border-t border-default-200 pt-8 mb-4 leading-tight;
 }
 
 .kun-prose h3 {
@@ -45,7 +45,7 @@
 
 /* Code blocks */
 .kun-prose code {
-  @apply text-default-800 font-semibold text-sm;
+  @apply text-sm bg-default-100 px-2 py-1 rounded-lg;
 }
 
 .kun-prose pre {
