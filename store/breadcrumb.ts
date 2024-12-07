@@ -1,22 +1,16 @@
 import { create } from 'zustand'
 import { persist, createJSONStorage } from 'zustand/middleware'
-
-export type BreadcrumbItem = {
-  key: string
-  label: string
-  href: string
-  icon?: string
-}
+import type { KunBreadcrumbItem } from '~/constants/routes'
 
 type BreadcrumbStore = {
-  items: BreadcrumbItem[]
-  setItems: (items: BreadcrumbItem[]) => void
-  addItem: (item: BreadcrumbItem) => void
+  items: KunBreadcrumbItem[]
+  setItems: (items: KunBreadcrumbItem[]) => void
+  addItem: (item: KunBreadcrumbItem) => void
   removeItem: (key: string) => void
   clearItems: () => void
 }
 
-export const initialItem: BreadcrumbItem[] = [
+export const initialItem: KunBreadcrumbItem[] = [
   {
     key: 'resource',
     label: '资源下载',

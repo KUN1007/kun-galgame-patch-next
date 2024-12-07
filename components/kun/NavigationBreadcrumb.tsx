@@ -23,6 +23,10 @@ export const KunNavigationBreadcrumb = () => {
   const router = useRouter()
 
   useEffect(() => {
+    if (!label) {
+      return
+    }
+
     const newItem: KunBreadcrumbItem = {
       key: pathname,
       label,
@@ -30,13 +34,13 @@ export const KunNavigationBreadcrumb = () => {
     }
 
     const mergedItems = [...items, newItem]
-    const itemMap = new Map()
+    const itemMap = new Map<string, KunBreadcrumbItem>()
 
     mergedItems.forEach((item) => {
       if (itemMap.has(item.key)) {
         const existingItem = itemMap.get(item.key)
         itemMap.delete(item.key)
-        itemMap.set(item.key, existingItem)
+        itemMap.set(item.key, existingItem!)
       } else {
         itemMap.set(item.key, item)
       }
