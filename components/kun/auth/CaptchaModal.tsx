@@ -9,11 +9,12 @@ import {
   ModalBody,
   ModalFooter,
   Button,
-  Spinner
+  Link
 } from '@nextui-org/react'
 import { kunFetchGet, kunFetchPost } from '~/utils/kunFetch'
 import { KunCaptchaCanvas } from './CaptchaCanvas'
 import { KunLoading } from '../Loading'
+import { kunCaptchaErrorMessageMap } from '~/constants/captcha'
 import type { KunCaptchaImage } from './captcha'
 
 interface CaptchaModalProps {
@@ -31,6 +32,7 @@ export const KunCaptchaModal = ({
   const [images, setImages] = useState<KunCaptchaImage[]>([])
   const [sessionId, setSessionId] = useState<string>('')
   const [loading, setLoading] = useState(true)
+  const [errorCount, setErrorCount] = useState(0)
 
   useEffect(() => {
     if (isOpen) {
@@ -39,6 +41,10 @@ export const KunCaptchaModal = ({
   }, [isOpen])
 
   const loadCaptcha = async () => {
+    if (errorCount < 6) {
+      setErrorCount((prev) => prev + 1)
+    }
+
     setLoading(true)
     const { images, sessionId } = await kunFetchGet<{
       images: KunCaptchaImage[]
@@ -68,7 +74,7 @@ export const KunCaptchaModal = ({
       { sessionId, selectedIds: Array.from(selectedImages) }
     )
     if (typeof response === 'string') {
-      toast.error('验证错误, 请重试')
+      toast.error(kunCaptchaErrorMessageMap[errorCount])
       loadCaptcha()
     } else {
       onSuccess(response.code)
@@ -78,7 +84,10 @@ export const KunCaptchaModal = ({
   return (
     <Modal isOpen={isOpen} onClose={onClose}>
       <ModalContent>
-        <ModalHeader>请选择下面所有的白毛女孩子</ModalHeader>
+        <ModalHeader className="flex-col">
+          <h3 className="text-lg">验证</h3>
+          <p className="font-medium">请选择下面所有的 白毛 女孩子</p>
+        </ModalHeader>
         <ModalBody>
           {loading ? (
             <KunLoading hint="正在加载验证..." />
@@ -96,17 +105,32 @@ export const KunCaptchaModal = ({
             </div>
           )}
         </ModalBody>
-        <ModalFooter>
-          <Button color="danger" variant="light" onPress={onClose}>
-            取消
-          </Button>
-          <Button
-            color="primary"
-            onPress={handleVerify}
-            isDisabled={selectedImages.size === 0}
-          >
-            确定
-          </Button>
+        <ModalFooter className="flex-col">
+          <p className="text-sm">
+            由{' '}
+            <Link
+              size="sm"
+              isExternal
+              showAnchorIcon
+              href="https://sticker.kungal.com"
+            >
+              鲲 Galgame 表情包
+            </Link>{' '}
+            提供技术支持
+          </p>
+
+          <div className="ml-auto space-x-2">
+            <Button color="danger" variant="light" onPress={onClose}>
+              取消
+            </Button>
+            <Button
+              color="primary"
+              onPress={handleVerify}
+              isDisabled={selectedImages.size === 0}
+            >
+              确定
+            </Button>
+          </div>
         </ModalFooter>
       </ModalContent>
     </Modal>
