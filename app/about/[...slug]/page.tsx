@@ -3,6 +3,7 @@ import { CustomMDX } from '~/lib/mdx/CustomMDX'
 import { TableOfContents } from '~/components/about/TableOfContents'
 import { KunBottomNavigation } from '~/components/about/Navigation'
 import { generateKunMetadataTemplate } from './metadata'
+import { BlogHeader } from '~/components/about/BlogHeader'
 import type { Metadata } from 'next'
 
 interface Props {
@@ -23,12 +24,13 @@ export const generateMetadata = async ({
 export default async function Kun({ params }: Props) {
   const { slug } = await params
   const url = slug.join('/')
-  const { content } = getPostBySlug(url)
+  const { content, frontmatter } = getPostBySlug(url)
   const { prev, next } = getAdjacentPosts(url)
 
   return (
     <div className="flex w-full">
       <div className="w-full max-w-3xl px-6">
+        <BlogHeader frontmatter={frontmatter} />
         <article className="kun-prose">
           <CustomMDX source={content} />
         </article>
