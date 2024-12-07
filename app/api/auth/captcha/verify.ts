@@ -5,9 +5,9 @@ export const verifyCaptcha = async (
   sessionId: string,
   selectedIds: string[]
 ) => {
-  const session = await getKv(sessionId)
+  const session = await getKv(`captcha:generate:${sessionId}`)
 
-  await delKv(sessionId)
+  await delKv(`captcha:generate:${sessionId}`)
 
   if (!session) {
     return '未找到您的验证请求, 请重新验证'
@@ -22,18 +22,16 @@ export const verifyCaptcha = async (
     return '您选择的白毛女孩子不正确, 请重试'
   }
 
-  await delKv(sessionId)
-
   const randomCode = generateRandomCode(10)
-  await setKv(`captcha:${randomCode}`, 'captcha', 5 * 60)
+  await setKv(`captcha:verify:${randomCode}`, 'captcha', 60 * 60)
 
   return { code: randomCode }
 }
 
 export const checkCaptchaExist = async (sessionId: string) => {
-  const captcha = await getKv(`captcha:${sessionId}`)
+  const captcha = await getKv(`captcha:verify:${sessionId}`)
   if (captcha) {
-    await delKv(`captcha:${sessionId}`)
+    await delKv(`captcha:verify:${sessionId}`)
     return captcha
   }
 }

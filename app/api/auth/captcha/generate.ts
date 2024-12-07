@@ -48,7 +48,11 @@ export const generateCaptcha = async () => {
     .filter((img) => img.isWhiteHair)
     .map((img) => img.id)
 
-  await setKv(sessionId, JSON.stringify(correctIds), 5 * 60)
+  await setKv(
+    `captcha:generate:${sessionId}`,
+    JSON.stringify(correctIds),
+    5 * 60
+  )
 
   return {
     images: shuffledImages.map((img) => ({

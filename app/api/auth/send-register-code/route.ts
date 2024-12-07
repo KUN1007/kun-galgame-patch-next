@@ -5,11 +5,17 @@ import { getRemoteIp } from '~/app/api/utils/getRemoteIp'
 import { sendVerificationCodeEmail } from '~/app/api/utils/sendVerificationCodeEmail'
 import { sendRegisterEmailVerificationCodeSchema } from '~/validations/auth'
 import { prisma } from '~/prisma/index'
+import { checkCaptchaExist } from '../captcha/verify'
 
 export const sendRegisterCode = async (
   input: z.infer<typeof sendRegisterEmailVerificationCodeSchema>,
   headers: Headers
 ) => {
+  const res = await checkCaptchaExist(input.captcha)
+  if (!res) {
+    return '人机验证无效, 请完成人机验证'
+  }
+
   const sameUsernameUser = await prisma.user.findUnique({
     where: { name: input.name }
   })

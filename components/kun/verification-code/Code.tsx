@@ -2,8 +2,10 @@
 
 import { useState } from 'react'
 import { Button } from '@nextui-org/button'
+import { useDisclosure } from '@nextui-org/modal'
 import toast from 'react-hot-toast'
 import { kunFetchPost } from '~/utils/kunFetch'
+import { KunCaptchaModal } from '~/components/kun/auth/CaptchaModal'
 import { kunErrorHandler } from '~/utils/kunErrorHandler'
 
 interface Props {
@@ -13,6 +15,7 @@ interface Props {
 }
 
 export const EmailVerification = ({ username, email, type }: Props) => {
+  const { isOpen, onOpen, onClose } = useDisclosure()
   const [countdown, setCountdown] = useState(0)
   const [loading, setLoading] = useState(false)
 
@@ -29,7 +32,7 @@ export const EmailVerification = ({ username, email, type }: Props) => {
     }, 1000)
   }
 
-  const handleSendCode = async () => {
+  const handleSendCode = async (code: string) => {
     if (!email) {
       toast.error('请输入合法的邮箱格式')
       return
@@ -39,14 +42,19 @@ export const EmailVerification = ({ username, email, type }: Props) => {
     let res
 
     if (type === 'register') {
+      if (!username) {
+        toast.error('用户名不可为空')
+        return
+      }
       res = await kunFetchPost<KunResponse<{}>>('/auth/send-register-code', {
         name: username,
-        email
+        email,
+        captcha: code
       })
     } else {
       res = await kunFetchPost<KunResponse<{}>>(
         '/user/setting/send-reset-email-code',
-        { email }
+        { email, captcha: code }
       )
     }
 
@@ -58,18 +66,31 @@ export const EmailVerification = ({ username, email, type }: Props) => {
     setLoading(false)
   }
 
+  const handleCaptchaSuccess = async (code: string) => {
+    onClose()
+    await handleSendCode(code)
+  }
+
   return (
-    <Button
-      onClick={handleSendCode}
-      isDisabled={countdown > 0 || loading}
-      size="sm"
-      variant="light"
-    >
-      {loading
-        ? '发送中...'
-        : countdown > 0
-          ? `${countdown}秒后重试`
-          : '发送验证码'}
-    </Button>
+    <>
+      <Button
+        onClick={onOpen}
+        isDisabled={countdown > 0 || loading}
+        size="sm"
+        variant="light"
+      >
+        {loading
+          ? '发送中...'
+          : countdown > 0
+            ? `${countdown}秒后重试`
+            : '发送验证码'}
+      </Button>
+
+      <KunCaptchaModal
+        isOpen={isOpen}
+        onClose={onClose}
+        onSuccess={handleCaptchaSuccess}
+      />
+    </>
   )
 }
