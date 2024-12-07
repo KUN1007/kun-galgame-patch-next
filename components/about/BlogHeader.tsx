@@ -15,6 +15,7 @@ export const BlogHeader = ({ frontmatter }: BlogHeaderProps) => {
       <CardHeader className="flex flex-col items-start px-0 pb-0">
         <div className="relative w-full overflow-hidden rounded-xl">
           <Image
+            isZoomed
             alt={frontmatter.title}
             className="object-cover"
             src={frontmatter.banner}
