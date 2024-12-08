@@ -21,7 +21,7 @@ export const CreatePatch = () => {
       <Card className="w-full">
         <CardHeader className="flex gap-3">
           <div className="flex flex-col">
-            <p className="text-2xl">创建新游戏</p>
+            <h1 className="text-2xl">创建新游戏</h1>
             <p className="text-small text-default-500">
               您需要创建一个新游戏, 稍后在游戏页面添加补丁资源
             </p>
