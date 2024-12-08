@@ -18,15 +18,23 @@ export const generateKunMetadataTemplate = (
   const uniqueAuthorsName = uniqueAuthors.map((u) => u.name)
 
   return {
-    title: `${patch.name} | ${patch.alias[0]} 的 pull request`,
+    title: patch.alias[0]
+      ? `${patch.name} | ${patch.alias[0]} 的 pull request`
+      : `${patch.name}`,
     keywords: [...patch.alias, '更新请求'],
     authors: uniqueAuthors,
     creator: patch.user.name,
     publisher: patch.user.name,
-    description: `${uniqueAuthorsName} 在 ${patch.name} 下提出了 ${pr[0].content} 等 ${pr.length} 个 pull request`,
+    description: pr[0].content
+      ? `${uniqueAuthorsName} 在 ${patch.name} 下提出了 ${pr[0].content} 等 ${pr.length} 个 pull request`
+      : `查看 ${patch.name} 的 pull request`,
     openGraph: {
-      title: `${patch.name} | ${patch.alias[0]} 的 pull request`,
-      description: `${uniqueAuthorsName} 在 ${patch.name} 下提出了 ${pr[0].content} 等 ${pr.length} 个 pull request`,
+      title: patch.alias[0]
+        ? `${patch.name} | ${patch.alias[0]} 的 pull request`
+        : `${patch.name}`,
+      description: pr[0].content
+        ? `${uniqueAuthorsName} 在 ${patch.name} 下提出了 ${pr[0].content} 等 ${pr.length} 个 pull request`
+        : `查看 ${patch.name} 的 pull request`,
       type: 'article',
       publishedTime: patch.created,
       modifiedTime: patch.updated,
@@ -41,8 +49,12 @@ export const generateKunMetadataTemplate = (
     },
     twitter: {
       card: 'summary',
-      title: `${patch.name} | ${patch.alias[0]} 的 pull request`,
-      description: `${uniqueAuthorsName} 在 ${patch.name} 下提出了 ${pr[0].content} 等 ${pr.length} 个 pull request`,
+      title: patch.alias[0]
+        ? `${patch.name} | ${patch.alias[0]} 的 pull request`
+        : `${patch.name}`,
+      description: pr[0].content
+        ? `${uniqueAuthorsName} 在 ${patch.name} 下提出了 ${pr[0].content} 等 ${pr.length} 个 pull request`
+        : `查看 ${patch.name} 的 pull request`,
       images: [patch.banner]
     },
     alternates: {

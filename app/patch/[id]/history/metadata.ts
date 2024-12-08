@@ -18,15 +18,23 @@ export const generateKunMetadataTemplate = (
   const uniqueAuthorsName = uniqueAuthors.map((u) => u.name)
 
   return {
-    title: `${patch.name} | ${patch.alias[0]} 的 贡献历史`,
+    title: patch.alias[0]
+      ? `${patch.name} | ${patch.alias[0]} 的 贡献历史`
+      : `${patch.name} 的 贡献历史`,
     keywords: [...patch.alias, '贡献历史'],
     authors: uniqueAuthors,
     creator: patch.user.name,
     publisher: patch.user.name,
-    description: `${uniqueAuthorsName} 为 ${patch.name} 做出了 ${histories[0].content} 等贡献!`,
+    description: histories.length
+      ? `${uniqueAuthorsName} 为 ${patch.name} 做出了 ${histories[0].content} 等贡献!`
+      : `查看更多 ${patch.name} 的贡献历史`,
     openGraph: {
-      title: `${patch.name} | ${patch.alias[0]} 的 贡献历史`,
-      description: `${uniqueAuthorsName} 为 ${patch.name} 做出了 ${histories[0].content} 等贡献!`,
+      title: patch.alias[0]
+        ? `${patch.name} | ${patch.alias[0]} 的 贡献历史`
+        : `${patch.name} 的 贡献历史`,
+      description: histories.length
+        ? `${uniqueAuthorsName} 为 ${patch.name} 做出了 ${histories[0].content} 等贡献!`
+        : `查看更多 ${patch.name} 的贡献历史`,
       type: 'article',
       publishedTime: patch.created,
       modifiedTime: patch.updated,
@@ -41,8 +49,12 @@ export const generateKunMetadataTemplate = (
     },
     twitter: {
       card: 'summary',
-      title: `${patch.name} | ${patch.alias[0]} 的 贡献历史`,
-      description: `${uniqueAuthorsName} 为 ${patch.name} 做出了 ${histories[0].content} 等贡献!`,
+      title: patch.alias[0]
+        ? `${patch.name} | ${patch.alias[0]} 的 贡献历史`
+        : `${patch.name} 的 贡献历史`,
+      description: histories.length
+        ? `${uniqueAuthorsName} 为 ${patch.name} 做出了 ${histories[0].content} 等贡献!`
+        : `查看更多 ${patch.name} 的贡献历史`,
       images: [patch.banner]
     },
     alternates: {

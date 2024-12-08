@@ -19,7 +19,9 @@ export const generateKunMetadataTemplate = (
   )
 
   return {
-    title: `${patch.name} | ${patch.alias[0]}`,
+    title: patch.alias[0]
+      ? `${patch.name} | ${patch.alias[0]}`
+      : `${patch.name}`,
     keywords: [patch.name, ...patch.alias],
     authors: uniqueAuthors,
     creator: patch.user.name,
@@ -29,7 +31,9 @@ export const generateKunMetadataTemplate = (
       selectors: [{ selector: 'p', format: 'inline' }]
     }).slice(0, 170),
     openGraph: {
-      title: `${patch.name} | ${patch.alias[0]}`,
+      title: patch.alias[0]
+        ? `${patch.name} | ${patch.alias[0]}`
+        : `${patch.name}`,
       description: convert(intro.introduction).slice(0, 170),
       type: 'article',
       publishedTime: patch.created,
@@ -45,7 +49,9 @@ export const generateKunMetadataTemplate = (
     },
     twitter: {
       card: 'summary',
-      title: `${patch.name} | ${patch.alias[0]}`,
+      title: patch.alias[0]
+        ? `${patch.name} | ${patch.alias[0]}`
+        : `${patch.name}`,
       description: convert(intro.introduction).slice(0, 170),
       images: [patch.banner]
     },

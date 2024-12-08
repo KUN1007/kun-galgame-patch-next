@@ -24,14 +24,18 @@ export const generateKunMetadataTemplate = (
   const uniqueAuthorsName = uniqueAuthors.map((u) => u.name)
 
   return {
-    title: `${patch.name} | ${patch.alias[0]} 的 下载资源`,
+    title: patch.alias[0]
+      ? `${patch.name} | ${patch.alias[0]} 的 下载资源`
+      : `${patch.name} 的 下载资源`,
     keywords: [...patch.alias, ...dedupeType, ...dedupeLang, ...dedupePlatform],
     authors: uniqueAuthors,
     creator: patch.user.name,
     publisher: patch.user.name,
     description: `${uniqueAuthorsName} 在 ${patch.name} 下发布了 ${dedupeType} 下载资源`,
     openGraph: {
-      title: `${patch.name} | ${patch.alias[0]} 的 下载资源`,
+      title: patch.alias[0]
+        ? `${patch.name} | ${patch.alias[0]} 的 下载资源`
+        : `${patch.name} 的 下载资源`,
       description: `${uniqueAuthorsName} 在 ${patch.name} 下发布了 ${dedupeType} 下载资源`,
       type: 'article',
       publishedTime: patch.created,
@@ -47,7 +51,9 @@ export const generateKunMetadataTemplate = (
     },
     twitter: {
       card: 'summary',
-      title: `${patch.name} | ${patch.alias[0]} 的 下载资源`,
+      title: patch.alias[0]
+        ? `${patch.name} | ${patch.alias[0]} 的 下载资源`
+        : `${patch.name} 的 下载资源`,
       description: `${uniqueAuthorsName} 在 ${patch.name} 下发布了 ${dedupeType} 下载资源`,
       images: [patch.banner]
     },

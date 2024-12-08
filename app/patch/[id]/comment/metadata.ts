@@ -18,15 +18,23 @@ export const generateKunMetadataTemplate = (
   const uniqueAuthorsName = uniqueAuthors.map((u) => u.name)
 
   return {
-    title: `${patch.name} | ${patch.alias[0]} 的 评论`,
+    title: patch.alias[0]
+      ? `${patch.name} | ${patch.alias[0]} 的 评论`
+      : `${patch.name} 的 评论`,
     keywords: [...patch.alias, '评论'],
     authors: uniqueAuthors,
     creator: patch.user.name,
     publisher: patch.user.name,
-    description: `${uniqueAuthorsName} 在 ${patch.name} 下发布了 ${comments[0].content} 等评论, 查看更多`,
+    description: comments.length
+      ? `${uniqueAuthorsName} 在 ${patch.name} 下发布了 ${comments[0].content} 等评论, 查看更多`
+      : `点击查看 ${patch.name} 下的评论`,
     openGraph: {
-      title: `${patch.name} | ${patch.alias[0]} 的 评论`,
-      description: `${uniqueAuthorsName} 在 ${patch.name} 下发布了 ${comments[0].content} 等评论, 查看更多`,
+      title: patch.alias[0]
+        ? `${patch.name} | ${patch.alias[0]} 的 评论`
+        : `${patch.name} 的 评论`,
+      description: comments.length
+        ? `${uniqueAuthorsName} 在 ${patch.name} 下发布了 ${comments[0].content} 等评论, 查看更多`
+        : `点击查看 ${patch.name} 下的评论`,
       type: 'article',
       publishedTime: patch.created,
       modifiedTime: patch.updated,
@@ -41,8 +49,12 @@ export const generateKunMetadataTemplate = (
     },
     twitter: {
       card: 'summary',
-      title: `${patch.name} | ${patch.alias[0]} 的 评论`,
-      description: `${uniqueAuthorsName} 在 ${patch.name} 下发布了 ${comments[0].content} 等评论, 查看更多`,
+      title: patch.alias[0]
+        ? `${patch.name} | ${patch.alias[0]} 的 评论`
+        : `${patch.name} 的 评论`,
+      description: comments.length
+        ? `${uniqueAuthorsName} 在 ${patch.name} 下发布了 ${comments[0].content} 等评论, 查看更多`
+        : `点击查看 ${patch.name} 下的评论`,
       images: [patch.banner]
     },
     alternates: {

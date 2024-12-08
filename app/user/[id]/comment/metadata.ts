@@ -7,17 +7,21 @@ export const generateKunMetadataTemplate = (
   user: UserInfo,
   comments: UserComment[]
 ): Metadata => {
-  const commentList = comments.map((com) => com.content)
+  const commentList = comments.map((com) => com.content).slice(0, 2)
+  const patchNameLint = comments
+    .map((com) => com.patchName)
+    .slice(0, 2)
+    .toString()
 
   return {
     title: `${user.name} 发布的评论 - ${kunMoyuMoe.titleShort}`,
     description: commentList.length
-      ? `${user.name} 最近在 ${comments[0].patchName} 发布了 ${commentList[0]}, 查看 ${user.name} 发布的 ${commentList.length} 条评论`
+      ? `${user.name} 最近在 ${patchNameLint} 发布了 ${commentList}, 查看 ${user.name} 发布的 ${commentList.length} 条评论`
       : `用户 ${user.name} 最近没有发布评论`,
     openGraph: {
       title: `${user.name} 发起的 pull request`,
       description: commentList.length
-        ? `${user.name} 最近在 ${comments[0].patchName} 发布了 ${commentList[0]}, 查看 ${user.name} 发布的 ${commentList.length} 条评论`
+        ? `${user.name} 最近在 ${patchNameLint} 发布了 ${commentList}, 查看 ${user.name} 发布的 ${commentList.length} 条评论`
         : `用户 ${user.name} 最近没有发布评论`,
       images: [{ url: user.avatar }],
       type: 'profile',
@@ -27,7 +31,7 @@ export const generateKunMetadataTemplate = (
       card: 'summary',
       title: `${user.name} 发起的 pull request`,
       description: commentList.length
-        ? `${user.name} 最近在 ${comments[0].patchName} 发布了 ${commentList[0]}, 查看 ${user.name} 发布的 ${commentList.length} 条评论`
+        ? `${user.name} 最近在 ${patchNameLint} 发布了 ${commentList}, 查看 ${user.name} 发布的 ${commentList.length} 条评论`
         : `用户 ${user.name} 最近没有发布评论`,
       images: [user.avatar]
     },
