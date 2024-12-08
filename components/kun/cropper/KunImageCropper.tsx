@@ -1,17 +1,24 @@
 'use client'
 
 import { useState } from 'react'
-import { Card, CardBody, Image } from '@nextui-org/react'
+import { Card, CardBody, Image, Button } from '@nextui-org/react'
 import { KunImageUploader } from './KunImageUploader'
 import { KunImageCropperModal } from './KunImageCropperModal'
 import type { KunAspect } from './types'
 
 interface Props {
   aspect?: KunAspect
+  initialImage?: string
   onCropComplete?: (croppedImage: string) => void
+  removeImage?: () => void
 }
 
-export const KunImageCropper = ({ aspect, onCropComplete }: Props) => {
+export const KunImageCropper = ({
+  aspect,
+  initialImage,
+  onCropComplete,
+  removeImage
+}: Props) => {
   const [imgSrc, setImgSrc] = useState('')
   const [isModalOpen, setIsModalOpen] = useState(false)
   const [croppedImage, setCroppedImage] = useState<string>()
@@ -21,8 +28,10 @@ export const KunImageCropper = ({ aspect, onCropComplete }: Props) => {
     onCropComplete?.(image)
   }
 
+  const previewImage = croppedImage ? croppedImage : initialImage
+
   return (
-    <div className="flex flex-col items-center gap-6">
+    <div className="gap-6 size-full">
       <KunImageUploader
         onImageSelect={(dataUrl: string) => {
           setImgSrc(dataUrl)
@@ -30,14 +39,27 @@ export const KunImageCropper = ({ aspect, onCropComplete }: Props) => {
         }}
       />
 
-      {croppedImage && (
-        <Card className="w-full max-w-md">
+      {previewImage && (
+        <Card className="w-full max-w-md mx-auto">
           <CardBody>
             <Image
-              src={croppedImage}
+              src={croppedImage || initialImage}
               alt="Cropped image"
               className="object-contain w-full h-auto"
             />
+
+            <Button
+              color="danger"
+              variant="bordered"
+              size="sm"
+              className="absolute z-10 right-2 top-2"
+              onClick={() => {
+                setCroppedImage('')
+                removeImage?.()
+              }}
+            >
+              移除
+            </Button>
           </CardBody>
         </Card>
       )}
