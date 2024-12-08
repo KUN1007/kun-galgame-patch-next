@@ -21,6 +21,7 @@ import { kunErrorHandler } from '~/utils/kunErrorHandler'
 import { patchCreateSchema } from '~/validations/edit'
 import { resizeImage } from '~/utils/resizeImage'
 import { useRouter } from 'next-nprogress-bar'
+import { KunImageCropper } from '~/components/kun/cropper/KunImageCropper'
 import type { CreatePatchRequestData } from '~/store/editStore'
 import type { VNDBResponse } from '../VNDB'
 
@@ -206,7 +207,8 @@ export const CreatePatch = () => {
 
   return (
     <form onSubmit={handleSubmit} className="flex-1 w-full p-4 mx-auto">
-      <Card className="w-full">
+      <KunImageCropper aspect={{ x: 16, y: 9 }} />
+      {/* <Card className="w-full">
         <CardHeader className="flex gap-3">
           <div className="flex flex-col">
             <p className="text-2xl">创建新游戏</p>
@@ -379,7 +381,7 @@ export const CreatePatch = () => {
             提交
           </Button>
         </CardBody>
-      </Card>
+      </Card> */}
     </form>
   )
 }

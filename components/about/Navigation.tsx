@@ -12,7 +12,7 @@ interface NavigationProps {
 
 export const KunBottomNavigation = ({ prev, next }: NavigationProps) => {
   return (
-    <div className="flex justify-between pt-8 mt-8 border-t border-default-200">
+    <div className="flex flex-wrap justify-between gap-4 pt-8 mt-8 border-t border-default-200">
       {prev ? (
         <Button
           variant="light"
