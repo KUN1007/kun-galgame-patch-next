@@ -9,6 +9,7 @@ import type { KunAspect } from './types'
 interface Props {
   aspect?: KunAspect
   initialImage?: string
+  description?: string
   onCropComplete?: (croppedImage: string) => void
   removeImage?: () => void
 }
@@ -16,6 +17,7 @@ interface Props {
 export const KunImageCropper = ({
   aspect,
   initialImage,
+  description,
   onCropComplete,
   removeImage
 }: Props) => {
@@ -67,9 +69,10 @@ export const KunImageCropper = ({
       <KunImageCropperModal
         isOpen={isModalOpen}
         imgSrc={imgSrc}
-        onClose={() => setIsModalOpen(false)}
         initialAspect={aspect}
+        description={description}
         onCropComplete={handleCropComplete}
+        onClose={() => setIsModalOpen(false)}
       />
     </div>
   )

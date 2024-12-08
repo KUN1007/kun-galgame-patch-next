@@ -40,12 +40,13 @@ export const BannerImage = ({ errors }: Props) => {
 
   return (
     <>
-      <p className="text-sm">预览图片 (必须, 宽度大于高度为好)</p>
+      <p className="text-sm">预览图片 (必须)</p>
       {errors && <p className="text-xs text-danger-500">{errors}</p>}
 
       <KunImageCropper
         aspect={{ x: 16, y: 9 }}
         initialImage={initialUrl}
+        description="您的预览图片将会被固定为 1920 × 1080 分辨率"
         onCropComplete={onCropComplete}
         removeImage={removeBanner}
       />

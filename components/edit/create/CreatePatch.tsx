@@ -17,7 +17,7 @@ export const CreatePatch = () => {
   >({})
 
   return (
-    <form className="flex-1 w-full p-4 mx-auto">
+    <form className="flex-1 w-full mx-auto">
       <Card className="w-full">
         <CardHeader className="flex gap-3">
           <div className="flex flex-col">

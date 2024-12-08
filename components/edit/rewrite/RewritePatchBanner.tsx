@@ -1,16 +1,13 @@
 'use client'
 
-import React, { useState } from 'react'
-import { Button } from '@nextui-org/button'
-import { Input } from '@nextui-org/input'
-import localforage from 'localforage'
-import { Upload } from 'lucide-react'
-import { ModalBody, ModalFooter } from '@nextui-org/modal'
-import { cn } from '~/utils/cn'
 import toast from 'react-hot-toast'
+import { useState } from 'react'
+import { Button } from '@nextui-org/button'
+import { ModalBody, ModalFooter } from '@nextui-org/modal'
 import { kunFetchFormData } from '~/utils/kunFetch'
 import { kunErrorHandler } from '~/utils/kunErrorHandler'
-import { resizeImage } from '~/utils/resizeImage'
+import { KunImageCropper } from '~/components/kun/cropper/KunImageCropper'
+import { dataURItoBlob } from '~/utils/dataURItoBlob'
 
 interface Props {
   patchId: number
@@ -19,35 +16,11 @@ interface Props {
 
 export const RewritePatchBanner = ({ patchId, onClose }: Props) => {
   const [banner, setBanner] = useState<Blob | null>(null)
-  const [isDragging, setIsDragging] = useState(false)
   const [previewUrl, setPreviewUrl] = useState<string>('')
 
-  const setBannerFile = async (file: File | undefined) => {
-    if (!file) {
-      toast.error('未检测到图片文件输入')
-      return
-    }
-    if (!file.type.startsWith('image/')) {
-      toast.error('您输入的文件不是图片格式')
-      return
-    }
-
-    const miniImage = await resizeImage(file, 1920, 1080)
-    setPreviewUrl(URL.createObjectURL(miniImage))
-    setBanner(miniImage)
-  }
-
   const removeBanner = async () => {
-    await localforage.removeItem('kun-patch-banner')
     setPreviewUrl('')
     setBanner(null)
-  }
-
-  const handleDrop = async (e: React.DragEvent) => {
-    e.preventDefault()
-    setIsDragging(false)
-    const file = e.dataTransfer.files[0]
-    await setBannerFile(file)
   }
 
   const [updating, setUpdating] = useState(false)
@@ -76,59 +49,22 @@ export const RewritePatchBanner = ({ patchId, onClose }: Props) => {
     onClose()
   }
 
+  const onCropComplete = async (croppedImage: string) => {
+    const imageBlob = dataURItoBlob(croppedImage)
+    setPreviewUrl(URL.createObjectURL(imageBlob))
+    setBanner(imageBlob)
+  }
+
   return (
     <>
       <ModalBody>
-        <div
-          className={cn(
-            'border-2 border-dashed rounded-lg p-4 text-center transition-colors  mb-4',
-            isDragging ? 'border-primary bg-primary/10' : 'border-gray-300',
-            previewUrl ? 'h-full' : 'h-[200px]'
-          )}
-          onDrop={handleDrop}
-          onDragOver={(event) => {
-            event.preventDefault()
-            setIsDragging(true)
-          }}
-          onDragLeave={() => setIsDragging(false)}
-        >
-          {previewUrl ? (
-            <div className="relative h-full">
-              <img
-                src={previewUrl}
-                alt="Banner preview"
-                className="size-full max-h-[512px] object-contain"
-              />
-              <Button
-                color="danger"
-                variant="bordered"
-                size="sm"
-                className="absolute right-2 top-2"
-                onClick={removeBanner}
-              >
-                移除
-              </Button>
-            </div>
-          ) : (
-            <div className="flex flex-col items-center justify-center h-full">
-              <Upload className="mb-4 text-gray-400 size-12" />
-              <p className="mb-2">拖放图片到此处或</p>
-              <label>
-                <Button color="primary" variant="flat" as="span">
-                  选择文件
-                </Button>
-                <Input
-                  type="file"
-                  className="hidden"
-                  accept="image/*"
-                  onChange={async (event) => {
-                    await setBannerFile(event.target.files?.[0])
-                  }}
-                />
-              </label>
-            </div>
-          )}
-        </div>
+        <KunImageCropper
+          aspect={{ x: 16, y: 9 }}
+          initialImage={previewUrl}
+          description="您的预览图片将会被固定为 1920 × 1080 分辨率"
+          onCropComplete={onCropComplete}
+          removeImage={removeBanner}
+        />
 
         <p>
           更改图片后, 由于缓存的原因, 更改不会立即生效。您可以尝试使用 Ctrl + F5

@@ -19,6 +19,7 @@ interface Props {
   isOpen: boolean
   imgSrc: string
   initialAspect?: KunAspect
+  description?: string
   onCropComplete?: (croppedImage: string) => void
   onClose: () => void
 }
@@ -26,9 +27,10 @@ interface Props {
 export const KunImageCropperModal = ({
   isOpen,
   imgSrc,
-  onClose,
   initialAspect = { x: 16, y: 9 },
-  onCropComplete
+  description,
+  onCropComplete,
+  onClose
 }: Props) => {
   const imgRef = useRef<HTMLImageElement>(null)
   const [crop, setCrop] = useState<Crop>()
@@ -64,7 +66,10 @@ export const KunImageCropperModal = ({
   return (
     <Modal isOpen={isOpen} onClose={onClose} size="3xl" scrollBehavior="inside">
       <ModalContent>
-        <ModalHeader>裁剪图片</ModalHeader>
+        <ModalHeader className="flex-col">
+          <h2>裁剪图片</h2>
+          <p className="font-medium text-medium">{description}</p>
+        </ModalHeader>
         <ModalBody>
           <div className="flex flex-col items-center gap-4">
             {!!imgSrc && (
