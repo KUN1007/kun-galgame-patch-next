@@ -32,8 +32,15 @@ export const deleteResource = async (
     await deleteFileFromS3(s3Key)
   }
 
-  await prisma.patch_resource.delete({
-    where: { id: input.resourceId }
+  return await prisma.$transaction(async (prisma) => {
+    await prisma.user.update({
+      where: { id: uid },
+      data: { moemoepoint: { increment: -3 } }
+    })
+
+    await prisma.patch_resource.delete({
+      where: { id: input.resourceId }
+    })
+    return {}
   })
-  return {}
 }

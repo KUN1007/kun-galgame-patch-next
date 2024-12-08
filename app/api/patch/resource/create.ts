@@ -76,6 +76,11 @@ export const createPatchResource = async (
       }
     })
 
+    await prisma.user.update({
+      where: { id: uid },
+      data: { moemoepoint: { increment: 3 } }
+    })
+
     if (currentPatch) {
       const updatedTypes = [...new Set(currentPatch.type.concat(type))]
       const updatedLanguages = [

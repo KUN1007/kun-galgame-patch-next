@@ -26,7 +26,7 @@ const handleFileInput = (file: File | undefined) => {
   }
 
   if (!validateFileType(file)) {
-    toast.error('文件类型不被支持，仅接受 .zip, .rar, .7z, .lz4 格式')
+    toast.error('文件类型不被支持，仅接受 .zip, .rar, .7z 格式')
     return
   }
 
@@ -98,7 +98,7 @@ export const FileDropZone = ({ onFileUpload }: Props) => {
           />
         </label>
         <p className="text-sm text-default-500">
-          我们支持 .zip .7z .rar .lz4 压缩格式, 由于不会发生资源失效,
+          我们支持 .zip .7z .rar 压缩格式, 由于不会发生资源失效,
           请您根据自身需求设置解压密码
         </p>
       </div>
