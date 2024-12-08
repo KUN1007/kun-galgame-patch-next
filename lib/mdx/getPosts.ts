@@ -32,7 +32,7 @@ export const getAllPosts = () => {
           banner: data.banner,
           date: data.date ? new Date(data.date).toISOString() : '',
           description: data.description || '',
-          textCount: markdownToText(fileContents).length,
+          textCount: markdownToText(fileContents).length - 300,
           slug,
           path: slug
         })
