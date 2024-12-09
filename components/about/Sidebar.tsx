@@ -1,11 +1,12 @@
 'use client'
 
 import { useState } from 'react'
-import { Chip } from '@nextui-org/chip'
+import { Button } from '@nextui-org/react'
 import { KunTreeNode } from '~/lib/mdx/types'
 import { TreeItem } from './SideTreeItem'
 import { ChevronLeft, ChevronRight } from 'lucide-react'
 import { cn } from '~/utils/cn'
+import './nav.scss'
 
 interface Props {
   tree: KunTreeNode
@@ -15,25 +16,31 @@ export const KunSidebar = ({ tree }: Props) => {
   const [isOpen, setIsOpen] = useState(false)
 
   return (
-    <aside
-      className={cn(
-        'fixed z-50 md:static w-64 h-full bg-background border-r border-divider transition-transform duration-300 ease-in-out',
-        isOpen ? 'translate-x-0' : '-translate-x-full md:translate-x-0',
-        'flex items-center'
-      )}
-    >
-      <div className="flex flex-col size-full">
-        <h2 className="mb-4 text-lg font-semibold">目录</h2>
-        <TreeItem node={tree} level={0} />
-      </div>
+    <div className="kun-scroll-nav">
+      <aside
+        className={cn(
+          'fixed top-32 z-50 h-[calc(100dvh-256px)] w-64 transform bg-background transition-transform duration-300 ease-in-out',
+          isOpen ? 'translate-x-0' : '-translate-x-full md:translate-x-0'
+        )}
+      >
+        <div className="flex flex-col h-full px-4 py-6 overflow-hidden border-r bg-background">
+          <h2 className="px-2 mb-4 text-lg font-semibold">目录</h2>
+          <TreeItem node={tree} level={0} />
+        </div>
+      </aside>
 
-      <Chip
-        className="translate-x-3 text-default-500 md:hidden"
-        variant="light"
+      <Button
+        isIconOnly
+        variant="flat"
+        className="fixed left-0 z-50 transform -translate-y-1/2 top-1/2 md:hidden"
         onClick={() => setIsOpen(!isOpen)}
       >
-        {isOpen ? <ChevronLeft size={24} /> : <ChevronRight size={24} />}
-      </Chip>
-    </aside>
+        {isOpen ? (
+          <ChevronLeft className="w-4 h-4" />
+        ) : (
+          <ChevronRight className="w-4 h-4" />
+        )}
+      </Button>
+    </div>
   )
 }

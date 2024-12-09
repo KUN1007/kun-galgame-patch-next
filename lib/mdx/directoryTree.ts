@@ -1,19 +1,25 @@
 import fs from 'fs'
 import path from 'path'
-import { KunTreeNode } from './types'
+import matter from 'gray-matter'
+import { aboutDirectoryLabelMap } from '~/constants/about'
+import type { KunTreeNode } from './types'
 
 const POSTS_PATH = path.join(process.cwd(), 'posts')
 
 export const getDirectoryTree = (): KunTreeNode => {
-  function buildTree(
+  const buildTree = (
     currentPath: string,
     baseName: string
-  ): KunTreeNode | null {
+  ): KunTreeNode | null => {
     const stats = fs.statSync(currentPath)
 
     if (stats.isFile() && currentPath.endsWith('.mdx')) {
+      const fileContents = fs.readFileSync(currentPath, 'utf8')
+      const { data } = matter(fileContents)
+
       return {
         name: baseName.replace(/\.mdx$/, ''),
+        label: data.title,
         path: path
           .relative(POSTS_PATH, currentPath)
           .replace(/\.mdx$/, '')
@@ -30,6 +36,7 @@ export const getDirectoryTree = (): KunTreeNode => {
 
       return {
         name: baseName,
+        label: aboutDirectoryLabelMap[baseName],
         path: path.relative(POSTS_PATH, currentPath).replace(/\\/g, '/'),
         children,
         type: 'directory'

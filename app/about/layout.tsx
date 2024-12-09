@@ -11,11 +11,8 @@ export default function Layout({ children }: LayoutProps) {
 
   return (
     <div className="container flex mx-auto my-4">
-      <div className="fixed z-50">
-        <KunSidebar tree={tree} />
-      </div>
-
-      <div className="flex w-full overflow-y-auto md:ml-64">{children}</div>
+      <KunSidebar tree={tree} />
+      <main className="flex-1 pl-0 overflow-y-auto md:pl-64">{children}</main>
     </div>
   )
 }
