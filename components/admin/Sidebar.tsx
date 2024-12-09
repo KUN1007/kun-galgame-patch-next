@@ -69,7 +69,7 @@ export const Sidebar = () => {
     >
       <div className="flex flex-col size-full">
         <div className="p-4 pl-0">
-          <h1 className="text-2xl font-bold">管理面板</h1>
+          <h2 className="text-xl font-bold">管理面板</h2>
         </div>
 
         <nav className="flex-1 p-4 pl-0">
