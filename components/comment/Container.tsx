@@ -8,6 +8,7 @@ import { KunMasonryGrid } from '~/components/kun/MasonryGrid'
 import { FilterBar } from './FilterBar'
 import { useMounted } from '~/hooks/useMounted'
 import { KunLoading } from '~/components/kun/Loading'
+import { KunHeader } from '../kun/Header'
 import type { SortDirection, SortOption } from './_sort'
 import type { PatchComment } from '~/types/api/comment'
 
@@ -51,6 +52,11 @@ export const CardContainer = ({ initialComments }: Props) => {
 
   return (
     <div className="container mx-auto my-4 space-y-6">
+      <KunHeader
+        name="Galgame 评论"
+        description="这里展示了所有的 Galgame 评论"
+      />
+
       <FilterBar
         sortField={sortField}
         setSortField={setSortField}

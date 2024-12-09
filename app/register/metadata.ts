@@ -1,7 +1,7 @@
 import { kunMoyuMoe } from '~/config/moyu-moe'
 import type { Metadata } from 'next'
 
-export const metadata: Metadata = {
+export const kunMetadata: Metadata = {
   title: '注册',
   description: `注册成为 ${kunMoyuMoe.titleShort} 网站用户, 无门槛下载任何 Galgame 补丁资源。希望明天对您来说又是美好的一天！`,
   keywords: [

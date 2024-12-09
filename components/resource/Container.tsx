@@ -8,6 +8,7 @@ import { KunMasonryGrid } from '~/components/kun/MasonryGrid'
 import { FilterBar } from './FilterBar'
 import { useMounted } from '~/hooks/useMounted'
 import { KunLoading } from '~/components/kun/Loading'
+import { KunHeader } from '../kun/Header'
 import type { SortDirection, SortOption } from './_sort'
 import type { PatchResource } from '~/types/api/resource'
 
@@ -51,6 +52,11 @@ export const CardContainer = ({ initialResources }: Props) => {
 
   return (
     <div className="container mx-auto my-4 space-y-6">
+      <KunHeader
+        name="Galgame 补丁资源"
+        description="这里展示了所有的 Galgame 补丁资源列表"
+      />
+
       <FilterBar
         sortField={sortField}
         setSortField={setSortField}

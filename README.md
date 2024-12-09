@@ -1,4 +1,4 @@
-![kun-galgame-patch-next](./public/kungalgame.webp)
+![kun-galgame-patch-next](./public/kungalgame.avif)
 
 **Contact us：[Telegram](https://t.me/kungalgame) | [Discord](https://discord.com/invite/5F4FS2cXhX)**
 

@@ -44,12 +44,12 @@ export const kunMoyuMoe: KunSiteConfig = {
     title: '鲲 Galgame 补丁 - 开源 Galgame 补丁资源下载站',
     description:
       '开源, 免费, 零门槛的 Galgame 补丁资源下载站, 提供 Windows, 安卓, KRKR, Tyranor 等各类平台的 Galgame 补丁资源下载。最先进的 Galgame 补丁资源站！永远免费！',
-    image: 'https://moyu.moe/kungalgame.webp',
+    image: 'https://moyu.moe/kungalgame.avif',
     url: 'https://www.moyu.moe'
   },
   images: [
     {
-      url: 'https://moyu.moe/kungalgame.webp',
+      url: 'https://moyu.moe/kungalgame.avif',
       width: 1920,
       height: 1080,
       alt: '鲲 Galgame 补丁 - 开源 Galgame 补丁资源下载站'

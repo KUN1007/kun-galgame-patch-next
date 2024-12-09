@@ -8,6 +8,7 @@ import { KunMasonryGrid } from '~/components/kun/MasonryGrid'
 import { FilterBar } from './FilterBar'
 import { useMounted } from '~/hooks/useMounted'
 import { KunLoading } from '~/components/kun/Loading'
+import { KunHeader } from '../kun/Header'
 import type { SortDirection, SortOption } from './_sort'
 
 interface Props {
@@ -52,6 +53,11 @@ export const CardContainer = ({ initialGalgames }: Props) => {
 
   return (
     <div className="container mx-auto my-4 space-y-6">
+      <KunHeader
+        name="Galgame"
+        description="这里展示了本站所有的 Galgame, 您可以浏览 Galgame 以确认您要下载的补丁"
+      />
+
       <FilterBar
         selectedTypes={selectedTypes}
         setSelectedTypes={setSelectedTypes}
