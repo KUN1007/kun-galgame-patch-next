@@ -23,7 +23,7 @@ export const KunSidebar = ({ tree }: Props) => {
           isOpen ? 'translate-x-0' : '-translate-x-full md:translate-x-0'
         )}
       >
-        <div className="flex flex-col h-full px-4 py-6 overflow-hidden border-r bg-background">
+        <div className="flex flex-col h-full px-4 py-6 overflow-scroll border-r bg-background">
           <h2 className="px-2 mb-4 text-lg font-semibold">目录</h2>
           <TreeItem node={tree} level={0} />
         </div>

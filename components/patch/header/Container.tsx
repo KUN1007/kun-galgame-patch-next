@@ -16,6 +16,7 @@ import { PatchHeaderTabs } from './Tabs'
 import { formatDistanceToNow } from '~/utils/formatDistanceToNow'
 import { Tags } from './Tags'
 import Image from 'next/image'
+import { KunUser } from '~/components/kun/floating-card/KunUser'
 import type { Patch } from '~/types/api/patch'
 
 interface PatchHeaderProps {
@@ -94,7 +95,21 @@ export const PatchHeaderContainer = ({ patch }: PatchHeaderProps) => {
             <Divider className="my-4" />
 
             <div className="flex gap-6 text-sm">
-              <User
+              <KunUser
+                user={patch.user}
+                userProps={{
+                  name: `${patch.user.name} - ${formatDistanceToNow(patch.created)}`,
+                  description: (
+                    <KunCardStats patch={patch} disableTooltip={false} />
+                  ),
+                  avatarProps: {
+                    showFallback: true,
+                    name: patch.user.name.charAt(0).toUpperCase(),
+                    src: patch.user.avatar
+                  }
+                }}
+              />
+              {/* <User
                 name={
                   <div className="space-x-2">
                     <span>{patch.user.name}</span>
@@ -112,7 +127,7 @@ export const PatchHeaderContainer = ({ patch }: PatchHeaderProps) => {
                   name: patch.user.name.charAt(0).toUpperCase(),
                   src: patch.user.avatar
                 }}
-              />
+              /> */}
             </div>
           </CardBody>
         </Card>

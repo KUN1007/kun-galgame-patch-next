@@ -60,3 +60,18 @@ export interface UserComment {
   quotedUserUid?: number | null
   quotedUsername?: string | null
 }
+
+export interface FloatingCardUser {
+  id: number
+  name: string
+  avatar: string
+  bio: string
+  moemoepoint: number
+  role: number
+  isFollow: boolean
+  _count: {
+    follower: number
+    patch: number
+    patch_resource: number
+  }
+}
