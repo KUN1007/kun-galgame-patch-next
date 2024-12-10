@@ -75,5 +75,11 @@
   "eslint.enable": true,
   "eslint.format.enable": true,
   "editor.formatOnSave": true,
-  "prettier.requireConfig": true
+  "prettier.requireConfig": true,
+  "explorer.fileNesting.enabled": true,
+  "explorer.fileNesting.expand": false,
+  "explorer.fileNesting.patterns": {
+    "next.config.ts": "*.config.cjs, *.config.mjs, *.config.js, *.config.ts, next-env.d.ts",
+    "package.json": ".*cache, .*ignore, .*rc, .editorConfig, .env*, .git*, pnpm-lock.yaml, tsconfig.json, .eslintrc.json, .prettierrc.json, LICENSE"
+  }
 }
