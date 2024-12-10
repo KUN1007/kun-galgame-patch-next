@@ -1,4 +1,4 @@
-import { Card, CardHeader, CardBody } from '@nextui-org/card'
+import { Card, CardBody, CardHeader } from '@nextui-org/card'
 import { Image } from '@nextui-org/image'
 import { CalendarDays } from 'lucide-react'
 import { formatDate } from '~/utils/time'

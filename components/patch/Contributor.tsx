@@ -1,5 +1,5 @@
 import { Card, CardBody, CardHeader } from '@nextui-org/card'
-import {  AvatarGroup } from '@nextui-org/avatar'
+import { AvatarGroup } from '@nextui-org/avatar'
 import { KunAvatar } from '~/components/kun/floating-card/KunAvatar'
 
 interface Props {

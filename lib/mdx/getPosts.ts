@@ -3,7 +3,7 @@ import path from 'path'
 import matter from 'gray-matter'
 import { markdownToText } from '~/utils/markdownToText'
 import type { KunPostMetadata } from './types'
-import type { KunFrontmatter, KunBlog } from './types'
+import type { KunBlog, KunFrontmatter } from './types'
 
 const POSTS_PATH = path.join(process.cwd(), 'posts')
 

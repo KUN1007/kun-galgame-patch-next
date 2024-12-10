@@ -1,7 +1,7 @@
 import { kunMoyuMoe } from '~/config/moyu-moe'
 import type { Metadata } from 'next'
 import type { KunSiteAuthor } from '~/config/config'
-import type { PatchPullRequest, Patch } from '~/types/api/patch'
+import type { Patch, PatchPullRequest } from '~/types/api/patch'
 
 export const generateKunMetadataTemplate = (
   patch: Patch,

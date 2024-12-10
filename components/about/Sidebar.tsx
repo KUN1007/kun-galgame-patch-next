@@ -32,7 +32,7 @@ export const KunSidebar = ({ tree }: Props) => {
       <Button
         isIconOnly
         variant="flat"
-        className="fixed left-0 z-50 transform -translate-y-1/2 top-1/2 md:hidden"
+        className="fixed left-0 z-50 -translate-y-1/2 top-1/2 md:hidden"
         onClick={() => setIsOpen(!isOpen)}
       >
         {isOpen ? (

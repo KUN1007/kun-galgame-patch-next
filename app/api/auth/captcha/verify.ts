@@ -1,4 +1,4 @@
-import { getKv, delKv, setKv } from '~/lib/redis'
+import { delKv, getKv, setKv } from '~/lib/redis'
 import { generateRandomCode } from '~/app/api/utils/generateRandomCode'
 
 export const verifyCaptcha = async (

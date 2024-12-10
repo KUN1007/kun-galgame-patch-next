@@ -1,4 +1,8 @@
-import { getAdjacentPosts, getPostBySlug } from '~/lib/mdx/getPosts'
+import {
+  getAdjacentPosts,
+  getAllPosts,
+  getPostBySlug
+} from '~/lib/mdx/getPosts'
 import { CustomMDX } from '~/lib/mdx/CustomMDX'
 import { TableOfContents } from '~/components/about/TableOfContents'
 import { KunBottomNavigation } from '~/components/about/Navigation'
@@ -10,6 +14,13 @@ interface Props {
   params: Promise<{
     slug: string[]
   }>
+}
+
+export const generateStaticParams = async () => {
+  const posts = getAllPosts()
+  return posts.map((post) => ({
+    slug: post.slug.split('/')
+  }))
 }
 
 export const generateMetadata = async ({

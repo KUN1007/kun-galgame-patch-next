@@ -1,5 +1,5 @@
 import { Card, CardBody } from '@nextui-org/card'
-import { Activity, MessageSquare, Puzzle, Gamepad2, Users } from 'lucide-react'
+import { Activity, Gamepad2, MessageSquare, Puzzle, Users } from 'lucide-react'
 import type { AdminStats } from '~/types/api/admin'
 
 interface Props {

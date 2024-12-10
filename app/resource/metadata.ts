@@ -1,8 +1,8 @@
 import { kunMoyuMoe } from '~/config/moyu-moe'
 import {
-  SUPPORTED_TYPE_MAP,
   SUPPORTED_LANGUAGE_MAP,
-  SUPPORTED_PLATFORM
+  SUPPORTED_PLATFORM,
+  SUPPORTED_TYPE_MAP
 } from '~/constants/resource'
 import type { Metadata } from 'next'
 

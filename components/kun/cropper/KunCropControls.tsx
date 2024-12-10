@@ -1,7 +1,7 @@
 'use client'
 
-import { Slider, Button } from '@nextui-org/react'
-import { RotateCw, InspectionPanel } from 'lucide-react'
+import { Button, Slider } from '@nextui-org/react'
+import { InspectionPanel, RotateCw } from 'lucide-react'
 import type { KunAspect } from './types'
 
 interface CropControlsProps {

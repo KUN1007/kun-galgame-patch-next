@@ -4,7 +4,7 @@ import { Resources } from '~/components/patch/resource/Resource'
 import { kunServerFetchGet } from '~/utils/kunServerFetch'
 import { generateKunMetadataTemplate } from './metadata'
 import type { Metadata } from 'next'
-import type { PatchResource, Patch } from '~/types/api/patch'
+import type { Patch, PatchResource } from '~/types/api/patch'
 
 interface Props {
   children: React.ReactNode

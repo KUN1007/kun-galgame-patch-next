@@ -2,10 +2,10 @@ import { NextRequest, NextResponse } from 'next/server'
 import { getKv, setKv } from '~/lib/redis'
 import type { AdminStats } from '~/types/api/admin'
 import {
-  getUserStats,
+  getCommentStats,
   getGalgameStats,
   getPatchResourceStats,
-  getCommentStats
+  getUserStats
 } from './stats'
 
 const CACHE_KEY = 'admin:stats'

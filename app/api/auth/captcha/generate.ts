@@ -2,7 +2,7 @@ import fs from 'fs/promises'
 import path from 'path'
 import crypto from 'crypto'
 import { setKv } from '~/lib/redis'
-import { shuffleKunArray, readImageBase64 } from './_utils'
+import { readImageBase64, shuffleKunArray } from './_utils'
 
 const IMAGES_PER_CAPTCHA = 4
 const MIN_WHITE_HAIR_IMAGES = 1

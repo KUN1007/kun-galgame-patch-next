@@ -64,9 +64,7 @@ export const UserList = ({ userId, type }: UserListProps) => {
 
                   <div className="flex items-center gap-2 text-sm text-default-500">
                     <Users className="size-4 text-default-400" />
-                    {
-                      user.follower
-                    } 人关注 TA - {user.following} 正在关注
+                    {user.follower} 人关注 TA - {user.following} 正在关注
                   </div>
                 </div>
 
