@@ -5,12 +5,13 @@
     "dev": "next dev --turbo --hostname=127.0.0.1 --port=2333",
     "build": "next build",
     "postbuild": "next-sitemap --config next-sitemap.config.js",
-    "start": "next start",
     "format": "prettier . --write",
     "lint": "next lint",
     "lint:fix": "next lint --fix",
     "prisma:push": "pnpx prisma db push",
-    "prisma:generate": "pnpx prisma generate"
+    "prisma:generate": "pnpx prisma generate",
+    "start": "pm2 start ecosystem.config.js",
+    "stop": "pm2 delete kun-visual-novel-patch"
   },
   "browserslist": [
     "> 1%",
