@@ -72,7 +72,7 @@ export const VNDBInput = ({ errors }: Props) => {
   }
 
   return (
-    <div className="flex flex-col w-full gap-2 mb-4">
+    <div className="flex flex-col w-full space-y-2">
       <Input
         isRequired
         variant="underlined"
@@ -100,17 +100,18 @@ export const VNDBInput = ({ errors }: Props) => {
             检查重复
           </Button>
         )}
-
-        <p>VNDB 官网为</p>
-        <Link
-          href="http://vndb.org"
-          target="_blank"
-          rel="noopener noreferrer"
-          className="ml-2"
-        >
-          vndb.org
-        </Link>
       </div>
+
+      <Link
+        isExternal
+        target="_blank"
+        className="flex"
+        underline="hover"
+        href="https://www.kungal.com/zh-cn/topic/1040"
+        size="sm"
+      >
+        如何通过 VNDB 检索 Galgame?
+      </Link>
     </div>
   )
 }

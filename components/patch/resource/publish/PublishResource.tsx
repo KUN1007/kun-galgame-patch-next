@@ -100,6 +100,20 @@ export const PublishResource = ({
         <div className="text-sm font-medium text-default-500">
           {user.role > 1 ? (
             <div className="space-y-1">
+              <Link
+                className="flex"
+                underline="hover"
+                href="/about/notice/patch-tutorial"
+              >
+                鲲 Galgame 补丁资源系统介绍
+              </Link>
+              <Link
+                className="flex"
+                underline="hover"
+                href="/about/notice/paradigm"
+              >
+                鲲 Galgame 补丁资源发布规范
+              </Link>
               <p>
                 作为创作者, 您每天有 5GB (5120MB) 的上传额度, 该额度每天早上 8
                 点重置

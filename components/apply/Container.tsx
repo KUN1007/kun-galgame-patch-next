@@ -15,6 +15,7 @@ import { BadgeCheck, CheckCircle2, CircleSlash, Trophy } from 'lucide-react'
 import { useRouter } from 'next-nprogress-bar'
 import { kunFetchPost } from '~/utils/kunFetch'
 import { kunErrorHandler } from '~/utils/kunErrorHandler'
+import { Link } from '@nextui-org/react'
 import toast from 'react-hot-toast'
 
 interface Props {
@@ -88,6 +89,12 @@ export const ApplyContainer = ({ count }: Props) => {
             <div>
               <h3 className="mb-2 text-lg font-semibold">申请条件</h3>
               <p className="text-default-500">在本站合法发布三个补丁</p>
+              <p className="text-default-500">
+                详细信息请查看文档{' '}
+                <Link href="/about/notice/creator">
+                  关于鲲 Galgame 补丁创作者
+                </Link>
+              </p>
             </div>
 
             <div>
