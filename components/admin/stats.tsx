@@ -61,10 +61,16 @@ export const Stats = ({ stats }: Props) => {
                   <div>
                     <p className="text-small text-default-500">{stat.title}</p>
                     <p className="text-2xl font-semibold">{stat.value}</p>
-                    <p className="text-small text-success">
-                      {stat.change > 0 ? '+' : '-'}
-                      {stat.change}
-                    </p>
+                    {stat.change ? (
+                      <p className="text-small text-success">
+                        {stat.change > 0 ? '+' : '-'}
+                        {stat.change}
+                      </p>
+                    ) : (
+                      <p className="text-sm text-default-500">
+                        今日与昨日数据无变化
+                      </p>
+                    )}
                   </div>
                   {Icon && <Icon size={24} className="text-default-400" />}
                 </div>
