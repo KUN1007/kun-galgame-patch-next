@@ -20,7 +20,12 @@ export const KunSearch = () => {
       closeDelay={0}
       content="您可以按下 Ctrl + K 快速搜索"
     >
-      <Button isIconOnly variant="light" onClick={() => router.push('/search')}>
+      <Button
+        isIconOnly
+        variant="light"
+        aria-label="搜索"
+        onClick={() => router.push('/search')}
+      >
         <Search className="size-6 text-default-500" />
       </Button>
     </Tooltip>

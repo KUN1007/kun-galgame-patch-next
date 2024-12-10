@@ -65,7 +65,12 @@ export const ThemeSwitcher = () => {
       <Tooltip disableAnimation showArrow closeDelay={0} content="主题切换">
         <div className="flex">
           <DropdownTrigger>
-            <Button isIconOnly variant="light" className="text-default-500">
+            <Button
+              isIconOnly
+              variant="light"
+              aria-label="主题切换"
+              className="text-default-500"
+            >
               {themeIcon}
             </Button>
           </DropdownTrigger>

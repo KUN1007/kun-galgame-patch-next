@@ -37,6 +37,7 @@ export const UserMessageBell = ({
         variant="light"
         onClick={handleClickButton}
         className="relative"
+        aria-label="我的消息"
       >
         <motion.div
           initial="initial"

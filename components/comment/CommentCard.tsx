@@ -32,7 +32,7 @@ export const CommentCard = ({ comment }: Props) => {
           />
           <div>
             <div className="flex items-center gap-2">
-              <h3 className="font-semibold">{comment.user.name}</h3>
+              <h2 className="font-semibold">{comment.user.name}</h2>
               <span className="text-small text-default-500">
                 评论在{' '}
                 <Link

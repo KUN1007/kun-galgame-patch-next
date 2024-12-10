@@ -44,9 +44,9 @@ export const BlogHeader = ({ frontmatter }: BlogHeaderProps) => {
               }}
             />
             <div className="flex flex-col gap-1">
-              <h3 className="font-semibold leading-none text-small">
+              <h2 className="font-semibold leading-none text-small">
                 {frontmatter.authorName}
-              </h3>
+              </h2>
               <div className="flex items-center gap-2">
                 <CalendarDays className="w-4 h-4 text-default-400" />
                 <p className="text-small text-default-400">

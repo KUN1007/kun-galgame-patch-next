@@ -15,7 +15,7 @@ interface Props {
   isFavorite: boolean
 }
 
-export const ResourceFavoriteButton = ({ patchId, isFavorite }: Props) => {
+export const FavoriteButton = ({ patchId, isFavorite }: Props) => {
   const { user } = useUserStore((state) => state)
   const [favorite, setFavorite] = useState(isFavorite)
   const [loading, setLoading] = useState(false)
@@ -46,6 +46,7 @@ export const ResourceFavoriteButton = ({ patchId, isFavorite }: Props) => {
         isLoading={loading}
         onClick={toggleLike}
         className="min-w-0 px-2"
+        aria-label="收藏"
       >
         <Heart
           fill={favorite ? '#f31260' : '#00000000'}

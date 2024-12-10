@@ -19,9 +19,9 @@ export const UserContributeCard = ({ contribute }: Props) => {
       onPress={() => router.push(`/patch/${contribute.patchId}/history`)}
     >
       <CardBody className="p-4 space-y-3">
-        <h3 className="text-lg font-semibold transition-colors line-clamp-2 hover:text-primary-500">
+        <h2 className="text-lg font-semibold transition-colors line-clamp-2 hover:text-primary-500">
           {contribute.patchName}
-        </h3>
+        </h2>
         <p className="text-sm text-default-500">
           贡献于{' '}
           {formatDate(contribute.created, {

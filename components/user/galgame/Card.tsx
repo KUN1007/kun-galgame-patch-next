@@ -33,9 +33,9 @@ export const UserGalgameCard = ({ galgame }: Props) => {
           </div>
           <div className="flex-1 space-y-3">
             <div className="flex flex-col justify-between gap-2 sm:flex-row sm:items-center">
-              <h3 className="text-lg font-semibold transition-colors line-clamp-2 hover:text-primary-500">
+              <h2 className="text-lg font-semibold transition-colors line-clamp-2 hover:text-primary-500">
                 {galgame.name}
-              </h3>
+              </h2>
               <Chip variant="flat">{formatDistanceToNow(galgame.created)}</Chip>
             </div>
 

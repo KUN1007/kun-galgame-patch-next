@@ -17,7 +17,7 @@ export const PatchTag = ({ patchId, initialTags }: Props) => {
 
   return (
     <div className="mt-4 space-y-4">
-      <h3 className="text-xl font-medium">游戏标签</h3>
+      <h2 className="text-xl font-medium">游戏标签</h2>
 
       <div className="space-x-2">
         {selectedTags.map((tag) => (
