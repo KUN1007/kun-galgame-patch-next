@@ -19,25 +19,26 @@ export const KunTopBar = () => {
   return (
     <Navbar maxWidth="xl">
       <NavbarContent className="sm:hidden" justify="start">
-        <NavbarMenuToggle />
+        <li>
+          <NavbarMenuToggle />
+        </li>
       </NavbarContent>
 
+      <KunTopBarBrand />
+
       <NavbarContent className="hidden gap-3 sm:flex">
-        <KunTopBarBrand />
-        <ul className="justify-start hidden gap-4 pl-2 md:flex">
-          {kunNavItem.map((item) => (
-            <NavbarItem key={item.href} isActive={pathname === item.href}>
-              <Link
-                className={
-                  pathname === item.href ? 'text-primary' : 'text-foreground'
-                }
-                href={item.href}
-              >
-                {item.name}
-              </Link>
-            </NavbarItem>
-          ))}
-        </ul>
+        {kunNavItem.map((item) => (
+          <NavbarItem key={item.href} isActive={pathname === item.href}>
+            <Link
+              className={
+                pathname === item.href ? 'text-primary' : 'text-foreground'
+              }
+              href={item.href}
+            >
+              {item.name}
+            </Link>
+          </NavbarItem>
+        ))}
       </NavbarContent>
 
       <KunTopBarUser />

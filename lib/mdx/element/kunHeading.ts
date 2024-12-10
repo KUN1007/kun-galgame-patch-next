@@ -22,7 +22,8 @@ export const createKunHeading = (level: number) => {
         React.createElement('a', {
           href: `#${slug}`,
           key: `kun-link-${slug}`,
-          className: 'kun-anchor'
+          className: 'kun-anchor',
+          'aria-label': slug
         })
       ],
       children

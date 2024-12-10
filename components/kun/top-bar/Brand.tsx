@@ -1,6 +1,7 @@
 import { NavbarBrand } from '@nextui-org/navbar'
 import { Tooltip } from '@nextui-org/tooltip'
 import { Chip } from '@nextui-org/chip'
+import { kunMoyuMoe } from '~/config/moyu-moe'
 import Image from 'next/image'
 import Link from 'next/link'
 
@@ -28,7 +29,9 @@ export const KunTopBarBrand = () => {
             height={50}
             priority
           />
-          <p className="ml-4 mr-2 font-bold text-inherit">ACME</p>
+          <p className="ml-4 mr-2 font-bold text-inherit">
+            {kunMoyuMoe.creator.name}
+          </p>
           <Chip size="sm" variant="flat" color="primary">
             补丁
           </Chip>

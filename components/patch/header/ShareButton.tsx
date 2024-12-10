@@ -12,7 +12,7 @@ interface Props {
 
 export const ShareButton = ({ patch }: Props) => {
   const handleCopyShareLink = () => {
-    const text = `${patch.name} - ${kunMoyuMoe.domain.main}/patch/${patch.id}/resource`
+    const text = `${patch.name} - ${kunMoyuMoe.domain.main}/patch/${patch.id}/introduction`
     kunCopy(text)
   }
 

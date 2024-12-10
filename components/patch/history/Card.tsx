@@ -28,10 +28,10 @@ export const HistoryCard = ({ history }: Props) => {
           <div className="flex-1">
             <div className="flex items-start justify-between">
               <div>
-                <h4 className="font-semibold">
+                <h2 className="font-semibold">
                   {HISTORY_ACTION_TYPE_MAP[history.action]}{' '}
                   {HISTORY_TYPE_MAP[history.type]}
-                </h4>
+                </h2>
                 <p className="text-sm text-muted-foreground">
                   {history.user.name} • {formatDistanceToNow(history.created)}
                 </p>

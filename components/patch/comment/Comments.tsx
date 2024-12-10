@@ -150,12 +150,12 @@ export const Comments = ({ initialComments, id }: Props) => {
               </div>
               <div className="flex-1 space-y-2">
                 <div className="flex items-start justify-between">
-                  <h4 className="space-x-2">
+                  <p className="space-x-2">
                     <span className="font-semibold">{comment.user?.name}</span>
                     <span className="text-sm text-muted-foreground">
                       {formatDistanceToNow(comment.created)}
                     </span>
-                  </h4>
+                  </p>
                   <Dropdown>
                     <DropdownTrigger>
                       <Button
@@ -163,7 +163,10 @@ export const Comments = ({ initialComments, id }: Props) => {
                         isIconOnly
                         className="text-default-400"
                       >
-                        <MoreHorizontal className="size-4" />
+                        <MoreHorizontal
+                          aria-label="Galgame 评论操作"
+                          className="size-4"
+                        />
                       </Button>
                     </DropdownTrigger>
                     <DropdownMenu

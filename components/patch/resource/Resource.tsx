@@ -94,7 +94,10 @@ export const Resources = ({ initialResources, id }: Props) => {
               <Dropdown>
                 <DropdownTrigger>
                   <Button variant="light" isIconOnly>
-                    <MoreHorizontal className="size-4" />
+                    <MoreHorizontal
+                      aria-label="补丁资源操作"
+                      className="size-4"
+                    />
                   </Button>
                 </DropdownTrigger>
                 <DropdownMenu

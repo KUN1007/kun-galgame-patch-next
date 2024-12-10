@@ -6,38 +6,18 @@ import {
   PopoverContent,
   PopoverTrigger
 } from '@nextui-org/react'
-import {
-  Bold,
-  Code,
-  Code2,
-  ImagePlus,
-  Italic,
-  Link,
-  List,
-  ListOrdered,
-  Minus,
-  Quote,
-  SmilePlus,
-  Strikethrough
-} from 'lucide-react'
+import { ImagePlus, Link } from 'lucide-react'
 import { callCommand } from '@milkdown/utils'
-import { CmdKey } from '@milkdown/core'
 import {
-  createCodeBlockCommand,
-  insertHrCommand,
   insertImageCommand,
-  toggleEmphasisCommand,
-  toggleInlineCodeCommand,
-  toggleLinkCommand,
-  toggleStrongCommand,
-  wrapInBlockquoteCommand,
-  wrapInBulletListCommand,
-  wrapInOrderedListCommand
+  toggleLinkCommand
 } from '@milkdown/preset-commonmark'
-import { toggleStrikethroughCommand } from '@milkdown/preset-gfm'
 import toast from 'react-hot-toast'
 import { resizeImage } from '~/utils/resizeImage'
 import { kunFetchFormData } from '~/utils/kunFetch'
+import { MenuButton } from './MenuButton'
+import { createButtons } from './_buttonList'
+import type { CmdKey } from '@milkdown/core'
 import type { UseEditorReturn } from '@milkdown/react'
 
 export const KunMilkdownPluginsMenu = ({
@@ -83,62 +63,28 @@ export const KunMilkdownPluginsMenu = ({
     }
   }
 
+  const buttonList = createButtons(call)
+
   return (
     <div className="sticky top-0 flex flex-wrap bg-background/80 backdrop-blur-md">
-      <Button
-        isIconOnly
-        variant="light"
-        onClick={() => call(toggleStrongCommand.key)}
-      >
-        <Bold className="size-6" />
-      </Button>
-      <Button
-        isIconOnly
-        variant="light"
-        onClick={() => call(toggleEmphasisCommand.key)}
-      >
-        <Italic className="size-6" />
-      </Button>
-      <Button
-        isIconOnly
-        variant="light"
-        onClick={() => call(toggleStrikethroughCommand.key)}
-      >
-        <Strikethrough className="size-6" />
-      </Button>
-      <Button
-        isIconOnly
-        variant="light"
-        onClick={() => call(wrapInBulletListCommand.key)}
-      >
-        <List className="size-6" />
-      </Button>
-      <Button
-        isIconOnly
-        variant="light"
-        onClick={() => call(wrapInOrderedListCommand.key)}
-      >
-        <ListOrdered className="size-6" />
-      </Button>
-      <Button
-        isIconOnly
-        variant="light"
-        onClick={() => call(wrapInBlockquoteCommand.key)}
-      >
-        <Quote className="size-6" />
-      </Button>
-      <Button
-        isIconOnly
-        variant="light"
-        onClick={() => call(insertHrCommand.key)}
-      >
-        <Minus className="size-6" />
-      </Button>
+      {buttonList.map(({ tooltip, icon, onClick, ariaLabel }, index) => (
+        <MenuButton
+          key={index}
+          tooltip={tooltip}
+          icon={icon}
+          onClick={onClick}
+          ariaLabel={ariaLabel}
+        />
+      ))}
+
       <Popover placement="bottom" offset={10}>
         <PopoverTrigger>
-          <Button isIconOnly variant="light">
-            <Link className="size-6" />
-          </Button>
+          <MenuButton
+            tooltip="插入链接"
+            icon={Link}
+            onClick={() => {}}
+            ariaLabel="插入链接"
+          />
         </PopoverTrigger>
         <PopoverContent className="w-[240px]">
           {(titleProps) => (
@@ -158,14 +104,11 @@ export const KunMilkdownPluginsMenu = ({
                   variant="bordered"
                 />
               </div>
-
               <Button
                 variant="flat"
                 color="primary"
                 onClick={() => {
-                  call(toggleLinkCommand.key, {
-                    href: link
-                  })
+                  call(toggleLinkCommand.key, { href: link })
                   setLink('')
                 }}
                 className="w-full mt-2"
@@ -177,37 +120,19 @@ export const KunMilkdownPluginsMenu = ({
         </PopoverContent>
       </Popover>
 
-      <Button
-        isIconOnly
-        variant="light"
-        onClick={() => call(createCodeBlockCommand.key, 'javascript')}
-      >
-        <Code2 className="size-6" />
-      </Button>
-      <Button
-        isIconOnly
-        variant="light"
-        onClick={() => call(toggleInlineCodeCommand.key)}
-      >
-        <Code className="size-6" />
-      </Button>
-      <Button
-        isIconOnly
-        variant="light"
+      <MenuButton
+        tooltip="上传图片"
+        icon={ImagePlus}
         onClick={() => uploadImageInputRef.current?.click()}
-      >
-        <ImagePlus className="size-6" />
-        <input
-          ref={uploadImageInputRef}
-          type="file"
-          accept=".jpg, .jpeg, .png, .webp"
-          className="hidden"
-          onChange={handleFileChange}
-        />
-      </Button>
-      <Button isIconOnly variant="light">
-        <SmilePlus className="size-6" />
-      </Button>
+        ariaLabel="上传图片"
+      />
+      <input
+        ref={uploadImageInputRef}
+        type="file"
+        accept=".jpg, .jpeg, .png, .webp"
+        className="hidden"
+        onChange={handleFileChange}
+      />
     </div>
   )
 }

@@ -78,7 +78,12 @@ export const SearchPage = () => {
           size="lg"
           radius="lg"
           endContent={
-            <Button isIconOnly variant="light" onClick={() => handleSearch()}>
+            <Button
+              isIconOnly
+              variant="light"
+              aria-label="搜索 Galgame"
+              onClick={() => handleSearch()}
+            >
               <Search />
             </Button>
           }
