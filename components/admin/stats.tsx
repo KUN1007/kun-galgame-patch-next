@@ -67,7 +67,7 @@ export const Stats = ({ stats }: Props) => {
                     <p className="text-2xl font-semibold">{stat.value}</p>
                     {stat.change ? (
                       <p className="text-small text-success">
-                        {stat.change > 0 ? '+' : '-'}
+                        {stat.change > 0 ? '+' : ''}
                         {stat.change}
                       </p>
                     ) : (
