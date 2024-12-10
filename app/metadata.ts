@@ -21,6 +21,10 @@ export const kunMetadata: Metadata = {
   description: kunMoyuMoe.description,
   keywords: kunMoyuMoe.keywords,
   authors: kunMoyuMoe.author,
+  icons: {
+    apple: '/apple-touch-icon.avif',
+    icon: '/favicon.ico'
+  },
   creator: kunMoyuMoe.creator.name,
   publisher: kunMoyuMoe.publisher.name,
   formatDetection: {

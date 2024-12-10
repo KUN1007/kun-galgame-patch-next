@@ -4,7 +4,7 @@
     "dev:webpack": "next dev --hostname=127.0.0.1 --port=2333",
     "dev": "next dev --turbo --hostname=127.0.0.1 --port=2333",
     "build": "next build",
-    "postbuild": "next-sitemap --config next-sitemap.config.js",
+    "postbuild": "node scripts/postbuild.mjs",
     "format": "prettier . --write",
     "lint": "next lint",
     "lint:fix": "next lint --fix",
