@@ -144,7 +144,7 @@ export const UserDropdown = () => {
           </DropdownItem>
           <DropdownItem
             key="help_and_feedback"
-            onPress={() => router.push(`/about`)}
+            onPress={() => router.push(`/about/notice/feedback`)}
             startContent={<CircleHelp className="size-4" />}
           >
             帮助与反馈

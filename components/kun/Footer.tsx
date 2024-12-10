@@ -30,7 +30,10 @@ export const KunFooter = () => {
               网站集群
             </Link>
 
-            <Link href="/about" className="flex items-center">
+            <Link
+              href="/about/notice/open-source"
+              className="flex items-center"
+            >
               开源声明
             </Link>
 
