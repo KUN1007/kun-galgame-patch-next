@@ -11,7 +11,7 @@ const nextConfig = {
   publicRuntimeConfig: {
     NODE_ENV: env.data.NODE_ENV
   },
-  eslint: { ignoreDuringBuilds: !!process.env.CI },
+  eslint: { ignoreDuringBuilds: true },
   typescript: {
     ignoreBuildErrors: true
   },

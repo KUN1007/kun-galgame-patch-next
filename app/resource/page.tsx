@@ -1,5 +1,5 @@
 import { CardContainer } from '~/components/resource/Container'
-import { kunFetchGet } from '~/utils/kunFetch'
+import { kunServerFetchGet } from '~/utils/kunServerFetch'
 import { kunMetadata } from './metadata'
 import type { Metadata } from 'next'
 import type { PatchResource } from '~/types/api/resource'
@@ -7,7 +7,7 @@ import type { PatchResource } from '~/types/api/resource'
 export const metadata: Metadata = kunMetadata
 
 export default async function Kun() {
-  const { resources } = await kunFetchGet<{
+  const { resources } = await kunServerFetchGet<{
     resources: PatchResource[]
     total: number
   }>('/resource', {

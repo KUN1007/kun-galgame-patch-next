@@ -1,5 +1,5 @@
 import { CardContainer } from '~/components/comment/Container'
-import { kunFetchGet } from '~/utils/kunFetch'
+import { kunServerFetchGet } from '~/utils/kunServerFetch'
 import { kunMetadata } from './metadata'
 import type { PatchComment } from '~/types/api/comment'
 import type { Metadata } from 'next'
@@ -7,7 +7,7 @@ import type { Metadata } from 'next'
 export const metadata: Metadata = kunMetadata
 
 export default async function Kun() {
-  const { comments } = await kunFetchGet<{
+  const { comments } = await kunServerFetchGet<{
     comments: PatchComment[]
     total: number
   }>('/comment', {

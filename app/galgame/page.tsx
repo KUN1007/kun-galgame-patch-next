@@ -1,16 +1,16 @@
 import { CardContainer } from '~/components/galgame/Container'
-import { kunFetchPost } from '~/utils/kunFetch'
+import { kunServerFetchGet } from '~/utils/kunServerFetch'
 import { kunMetadata } from './metadata'
 import type { Metadata } from 'next'
 
 export const metadata: Metadata = kunMetadata
 
 export default async function Kun() {
-  const { galgames } = await kunFetchPost<{
+  const { galgames } = await kunServerFetchGet<{
     galgames: GalgameCard[]
     total: number
   }>('/galgame', {
-    selectedTypes: ['all'],
+    selectedType: 'all',
     sortField: 'created',
     sortOrder: 'desc',
     page: 1,

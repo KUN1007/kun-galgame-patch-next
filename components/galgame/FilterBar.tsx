@@ -14,8 +14,8 @@ import { ALL_SUPPORTED_TYPE, SUPPORTED_TYPE_MAP } from '~/constants/resource'
 import type { SortDirection, SortOption } from './_sort'
 
 interface Props {
-  selectedTypes: string[]
-  setSelectedTypes: (types: string[]) => void
+  selectedType: string
+  setSelectedType: (types: string) => void
   sortField: SortOption
   setSortField: (option: SortOption) => void
   sortOrder: SortDirection
@@ -29,8 +29,8 @@ const sortFieldLabelMap: Record<string, string> = {
 }
 
 export const FilterBar = ({
-  selectedTypes,
-  setSelectedTypes,
+  selectedType,
+  setSelectedType,
   sortField,
   setSortField,
   sortOrder,
@@ -42,18 +42,10 @@ export const FilterBar = ({
         <div className="flex flex-col w-full gap-4 sm:flex-row sm:items-center sm:justify-between">
           <Select
             label="类型筛选"
-            // selectionMode="multiple"
             placeholder="选择类型"
-            selectedKeys={selectedTypes}
+            selectedKeys={[selectedType]}
             className="max-w-xs"
-            onSelectionChange={(key) => {
-              const keyArray = Array.from(key) as string[]
-              if (keyArray.length) {
-                setSelectedTypes(Array.from(key) as string[])
-              } else {
-                setSelectedTypes(['all'])
-              }
-            }}
+            onChange={(event) => setSelectedType(event.target.value)}
             startContent={<Filter className="size-4 text-default-400" />}
             classNames={{
               trigger: 'bg-content2/50 hover:bg-content2 transition-colors',

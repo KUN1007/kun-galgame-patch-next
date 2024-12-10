@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from 'react'
 import { Pagination } from '@nextui-org/pagination'
-import { kunFetchPost } from '~/utils/kunFetch'
+import { kunFetchGet } from '~/utils/kunFetch'
 import { GalgameCard } from './Card'
 import { KunMasonryGrid } from '~/components/kun/MasonryGrid'
 import { FilterBar } from './FilterBar'
@@ -19,7 +19,7 @@ export const CardContainer = ({ initialGalgames }: Props) => {
   const [galgames, setGalgames] = useState<GalgameCard[]>(initialGalgames)
   const [total, setTotal] = useState(0)
   const [loading, setLoading] = useState(false)
-  const [selectedTypes, setSelectedTypes] = useState<string[]>(['all'])
+  const [selectedType, setSelectedType] = useState<string>('all')
   const [sortField, setSortField] = useState<SortOption>('created')
   const [sortOrder, setSortOrder] = useState<SortDirection>('desc')
   const isMounted = useMounted()
@@ -28,11 +28,11 @@ export const CardContainer = ({ initialGalgames }: Props) => {
   const fetchPatches = async () => {
     setLoading(true)
 
-    const { galgames, total } = await kunFetchPost<{
+    const { galgames, total } = await kunFetchGet<{
       galgames: GalgameCard[]
       total: number
     }>('/galgame', {
-      selectedTypes,
+      selectedType,
       sortField,
       sortOrder,
       page,
@@ -49,7 +49,7 @@ export const CardContainer = ({ initialGalgames }: Props) => {
       return
     }
     fetchPatches()
-  }, [sortField, sortOrder, selectedTypes, page])
+  }, [sortField, sortOrder, selectedType, page])
 
   return (
     <div className="container mx-auto my-4 space-y-6">
@@ -59,8 +59,8 @@ export const CardContainer = ({ initialGalgames }: Props) => {
       />
 
       <FilterBar
-        selectedTypes={selectedTypes}
-        setSelectedTypes={setSelectedTypes}
+        selectedType={selectedType}
+        setSelectedType={setSelectedType}
         sortField={sortField}
         setSortField={setSortField}
         sortOrder={sortOrder}
