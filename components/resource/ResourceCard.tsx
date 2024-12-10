@@ -2,11 +2,11 @@
 
 import { Card, CardBody } from '@nextui-org/card'
 import { Chip } from '@nextui-org/chip'
-import { User } from '@nextui-org/user'
 import { Download, Heart } from 'lucide-react'
 import { formatDistanceToNow } from '~/utils/formatDistanceToNow'
 import { KunPatchAttribute } from '~/components/kun/PatchAttribute'
 import { useRouter } from 'next-nprogress-bar'
+import { KunUser } from '../kun/floating-card/KunUser'
 import type { PatchResource } from '~/types/api/resource'
 
 interface Props {
@@ -24,13 +24,16 @@ export const ResourceCard = ({ resource }: Props) => {
     >
       <CardBody className="space-y-2">
         <div className="flex">
-          <User
-            name={resource.user.name}
-            description={`${formatDistanceToNow(resource.created)} • 已发布补丁 ${resource.user.patchCount} 个`}
-            avatarProps={{
-              showFallback: true,
-              src: resource.user.avatar,
-              name: resource.user.name.charAt(0).toUpperCase()
+          <KunUser
+            user={resource.user}
+            userProps={{
+              name: resource.user.name,
+              description: `${formatDistanceToNow(resource.created)} • 已发布补丁 ${resource.user.patchCount} 个`,
+              avatarProps: {
+                showFallback: true,
+                src: resource.user.avatar,
+                name: resource.user.name.charAt(0).toUpperCase()
+              }
             }}
           />
         </div>

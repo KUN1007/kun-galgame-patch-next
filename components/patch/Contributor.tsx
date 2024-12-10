@@ -1,6 +1,6 @@
 import { Card, CardBody, CardHeader } from '@nextui-org/card'
-import { Avatar, AvatarGroup } from '@nextui-org/avatar'
-import { Tooltip } from '@nextui-org/tooltip'
+import {  AvatarGroup } from '@nextui-org/avatar'
+import { KunAvatar } from '~/components/kun/floating-card/KunAvatar'
 
 interface Props {
   users: KunUser[]
@@ -16,13 +16,15 @@ export const PatchContributor = ({ users }: Props) => {
         <p>感谢下面的朋友们为本补丁信息做出的贡献</p>
         <AvatarGroup isBordered className="pl-3">
           {users.map((user) => (
-            <Tooltip key={user.id} content={user.name}>
-              <Avatar
-                showFallback
-                name={user.name.charAt(0).toUpperCase()}
-                src={user.avatar}
-              />
-            </Tooltip>
+            <KunAvatar
+              key={user.id}
+              uid={user.id}
+              avatarProps={{
+                showFallback: true,
+                name: user.name,
+                src: user.avatar
+              }}
+            />
           ))}
         </AvatarGroup>
       </CardBody>

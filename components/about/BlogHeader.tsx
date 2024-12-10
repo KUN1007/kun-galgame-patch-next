@@ -1,8 +1,8 @@
 import { Card, CardHeader, CardBody } from '@nextui-org/card'
-import { Avatar } from '@nextui-org/avatar'
 import { Image } from '@nextui-org/image'
 import { CalendarDays } from 'lucide-react'
 import { formatDate } from '~/utils/time'
+import { KunAvatar } from '~/components/kun/floating-card/KunAvatar'
 import type { KunFrontmatter } from '~/lib/mdx/types'
 
 interface BlogHeaderProps {
@@ -32,13 +32,16 @@ export const BlogHeader = ({ frontmatter }: BlogHeaderProps) => {
           </h1>
 
           <div className="flex items-center gap-3">
-            <Avatar
-              isBordered
-              radius="full"
-              size="md"
-              src={frontmatter.authorAvatar}
-              alt={frontmatter.authorName}
-              className="shrink-0"
+            <KunAvatar
+              uid={frontmatter.authorUid}
+              avatarProps={{
+                isBordered: true,
+                radius: 'full',
+                size: 'md',
+                name: frontmatter.authorName,
+                src: frontmatter.authorAvatar,
+                className: 'shrink-0'
+              }}
             />
             <div className="flex flex-col gap-1">
               <h3 className="font-semibold leading-none text-small">

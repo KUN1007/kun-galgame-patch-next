@@ -25,7 +25,7 @@ export const KunNull = ({ message }: Props) => {
   return (
     <div className="flex flex-col items-center justify-center space-y-4 size-full">
       <Image
-        className="rounded-2xl"
+        className="rounded-2xl size-auto"
         src={stickerSrc}
         alt={message}
         width={150}

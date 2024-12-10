@@ -1,7 +1,7 @@
 'use client'
 
 import { Card, CardBody } from '@nextui-org/card'
-import { Avatar } from '@nextui-org/avatar'
+import { KunAvatar } from '~/components/kun/floating-card/KunAvatar'
 import { ThumbsUp } from 'lucide-react'
 import { formatDate } from '~/utils/time'
 import Link from 'next/link'
@@ -23,7 +23,13 @@ export const CommentCard = ({ comment }: Props) => {
     >
       <CardBody>
         <div className="flex gap-4">
-          <Avatar src={comment.user.avatar} alt={comment.user.name} />
+          <KunAvatar
+            uid={comment.user.id}
+            avatarProps={{
+              name: comment.user.name,
+              src: comment.user.avatar
+            }}
+          />
           <div>
             <div className="flex items-center gap-2">
               <h3 className="font-semibold">{comment.user.name}</h3>

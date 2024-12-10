@@ -10,6 +10,11 @@ interface KunUserProps {
 }
 
 export const KunUser = ({ user, userProps }: KunUserProps) => {
+  const { avatarProps, ...restUser } = userProps
+  const { alt, name, ...restAvatar } = avatarProps!
+  const username = name?.charAt(0).toUpperCase() ?? '杂鱼'
+  const altString = alt ? alt : username
+
   return (
     <Tooltip
       showArrow
@@ -21,7 +26,16 @@ export const KunUser = ({ user, userProps }: KunUserProps) => {
       }}
     >
       <Link href={`/user/${user.id}/resource`} className="block w-fit">
-        <User {...userProps} className="cursor-pointer" />
+        <User
+          {...restUser}
+          avatarProps={{
+            name: username,
+            alt: altString,
+            className: 'shrink-0',
+            ...restAvatar
+          }}
+          className="cursor-pointer"
+        />
       </Link>
     </Tooltip>
   )

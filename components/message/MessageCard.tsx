@@ -16,6 +16,7 @@ import {
 } from 'lucide-react'
 import { useRouter } from 'next-nprogress-bar'
 import { MESSAGE_TYPE_MAP } from '~/constants/message'
+import { KunAvatar } from '~/components/kun/floating-card/KunAvatar'
 import type { Message } from '~/types/api/message'
 
 interface Props {
@@ -72,7 +73,13 @@ export const MessageCard = ({ msg }: Props) => {
     >
       <CardBody className="flex flex-row items-center gap-4">
         {msg.sender ? (
-          <Avatar src={msg.sender?.avatar} name={msg.sender?.name} />
+          <KunAvatar
+            uid={msg.sender.id}
+            avatarProps={{
+              src: msg.sender.avatar,
+              name: msg.sender.name
+            }}
+          />
         ) : (
           <Avatar src="/favicon.webp" name="系统消息" />
         )}

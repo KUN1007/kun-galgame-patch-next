@@ -21,6 +21,7 @@ export interface KunFrontmatter {
   banner: string
   description: string
   date: string
+  authorUid: number
   authorName: string
   authorAvatar: string
   authorHomepage: string

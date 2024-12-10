@@ -5,6 +5,7 @@ import { formatDistanceToNow } from '~/utils/formatDistanceToNow'
 import { HighlightedText } from '~/components/patch/DiffContent'
 import { Avatar } from '@nextui-org/avatar'
 import { HISTORY_ACTION_TYPE_MAP, HISTORY_TYPE_MAP } from '~/constants/history'
+import { KunAvatar } from '~/components/kun/floating-card/KunAvatar'
 import type { PatchHistory } from '~/types/api/patch'
 
 interface Props {
@@ -16,10 +17,13 @@ export const HistoryCard = ({ history }: Props) => {
     <Card>
       <CardBody className="p-6">
         <div className="flex items-start gap-4">
-          <Avatar
-            showFallback
-            name={history.user.name.charAt(0).toUpperCase()}
-            src={history.user.avatar}
+          <KunAvatar
+            uid={history.user.id}
+            avatarProps={{
+              showFallback: true,
+              name: history.user.name.charAt(0).toUpperCase(),
+              src: history.user.avatar
+            }}
           />
           <div className="flex-1">
             <div className="flex items-start justify-between">

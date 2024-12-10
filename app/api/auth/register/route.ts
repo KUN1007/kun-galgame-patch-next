@@ -70,7 +70,12 @@ export const POST = async (req: NextRequest) => {
     return NextResponse.json(input)
   }
 
-  if (!req.headers || !req.headers.get('x-forwarded-for')) {
+  if (
+    !req.headers ||
+    (!req.headers.get('x-forwarded-for') &&
+      !req.headers.get('x-real-ip') &&
+      !req.headers.get('CF-Connecting-IP'))
+  ) {
     return NextResponse.json('读取请求头失败')
   }
 

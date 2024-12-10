@@ -1,4 +1,4 @@
-import { Avatar } from '@nextui-org/avatar'
+import { KunAvatar } from '~/components/kun/floating-card/KunAvatar'
 import { Card, CardBody } from '@nextui-org/card'
 import { Chip } from '@nextui-org/chip'
 import { formatDate } from '~/utils/time'
@@ -14,10 +14,12 @@ export const LogCard = ({ log }: Props) => {
     <Card>
       <CardBody>
         <div className="flex gap-4">
-          <Avatar
-            src={log.user.avatar}
-            alt={log.user.name}
-            className="shrink-0"
+          <KunAvatar
+            uid={log.user.id}
+            avatarProps={{
+              name: log.user.name,
+              src: log.user.avatar
+            }}
           />
           <div className="w-full">
             <pre>{log.content}</pre>

@@ -38,6 +38,7 @@ export const sendRegisterCode = async (
   if (result) {
     return result
   }
+  return {}
 }
 
 export const POST = async (req: NextRequest) => {
@@ -52,8 +53,6 @@ export const POST = async (req: NextRequest) => {
   if (!req.headers || !req.headers.get('x-forwarded-for')) {
     return NextResponse.json('读取请求头失败')
   }
-
-  const ip = getRemoteIp(req.headers)
 
   const response = await sendRegisterCode(input, req.headers)
   return NextResponse.json(response)

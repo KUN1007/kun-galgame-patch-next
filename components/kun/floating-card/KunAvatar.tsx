@@ -4,26 +4,34 @@ import Link from 'next/link'
 import { KunUserCard } from './KunUserCard'
 import type { AvatarProps } from '@nextui-org/avatar'
 
-interface KunAvatarProps {
-  user: KunUser
+interface KunAvatarProps extends AvatarProps {
+  name: string
+  src: string
 }
 
-export const KunAvatar = ({ user }: KunAvatarProps) => {
+interface Props {
+  uid: number
+  avatarProps: KunAvatarProps
+}
+
+export const KunAvatar = ({ uid, avatarProps }: Props) => {
+  const { alt, name, ...rest } = avatarProps
+  const username = name?.charAt(0).toUpperCase() ?? '杂鱼'
+  const altString = alt ? alt : username
+
   return (
     <Tooltip
       showArrow
-      placement="right"
       delay={500}
       closeDelay={0}
-      content={<KunUserCard uid={user.id} />}
+      content={<KunUserCard uid={uid} />}
     >
-      <Link href={`/users/${user.id}`} className="block w-fit">
+      <Link href={`/user/${uid}/resource`} className="block w-fit">
         <Avatar
-          src={user.avatar}
-          className="w-10 h-10 transition-transform cursor-pointer hover:scale-105"
-          isBordered
-          showFallback
-          name={user.name}
+          name={username}
+          alt={altString}
+          className="cursor-pointer shrink-0"
+          {...rest}
         />
       </Link>
     </Tooltip>

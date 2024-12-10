@@ -37,6 +37,7 @@ import { CommentLikeButton } from './CommentLike'
 import toast from 'react-hot-toast'
 import { useUserStore } from '~/store/providers/user'
 import { kunErrorHandler } from '~/utils/kunErrorHandler'
+import { KunAvatar } from '~/components/kun/floating-card/KunAvatar'
 import type { PatchComment } from '~/types/api/patch'
 
 interface Props {
@@ -137,10 +138,13 @@ export const Comments = ({ initialComments, id }: Props) => {
           <CardBody className="px-0">
             <div className="flex gap-4">
               <div className="flex flex-col items-center">
-                <Avatar
-                  showFallback
-                  name={comment.user.name.charAt(0).toUpperCase()}
-                  src={comment.user.avatar}
+                <KunAvatar
+                  uid={comment.user.id}
+                  avatarProps={{
+                    showFallback: true,
+                    name: comment.user.name,
+                    src: comment.user.avatar
+                  }}
                 />
                 <span className="text-default-300">{index + 1}</span>
               </div>

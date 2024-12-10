@@ -3,7 +3,7 @@
 import { useState } from 'react'
 import toast from 'react-hot-toast'
 import { Card, CardBody, CardFooter, CardHeader } from '@nextui-org/card'
-import { User } from '@nextui-org/user'
+import { KunUser } from '~/components/kun/floating-card/KunUser'
 import { Button } from '@nextui-org/button'
 import { Textarea } from '@nextui-org/input'
 import { Chip } from '@nextui-org/chip'
@@ -87,13 +87,16 @@ export const PatchPullRequest = ({ pr }: Props) => {
             pr.map((p) => (
               <Card key={p.index}>
                 <CardHeader className="flex justify-between">
-                  <User
-                    name={p.user.name}
-                    description={`${formatDistanceToNow(p.created)} • 提出更新 #${p.index}`}
-                    avatarProps={{
-                      showFallback: true,
-                      src: p.user.avatar,
-                      name: p.user.name.charAt(0).toUpperCase()
+                  <KunUser
+                    user={p.user}
+                    userProps={{
+                      name: p.user.name,
+                      description: `${formatDistanceToNow(p.created)} • 提出更新 #${p.index}`,
+                      avatarProps: {
+                        showFallback: true,
+                        src: p.user.avatar,
+                        name: p.user.name.charAt(0).toUpperCase()
+                      }
                     }}
                   />
                   {!p.status && (

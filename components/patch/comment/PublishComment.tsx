@@ -5,7 +5,6 @@ import { z } from 'zod'
 import { Controller, useForm } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { Card, CardBody, CardHeader } from '@nextui-org/card'
-import { Avatar } from '@nextui-org/avatar'
 import { Button } from '@nextui-org/button'
 import { Textarea } from '@nextui-org/input'
 import { Send } from 'lucide-react'
@@ -14,6 +13,7 @@ import toast from 'react-hot-toast'
 import { patchCommentCreateSchema } from '~/validations/patch'
 import { useUserStore } from '~/store/providers/user'
 import { kunErrorHandler } from '~/utils/kunErrorHandler'
+import { KunAvatar } from '~/components/kun/floating-card/KunAvatar'
 import type { PatchComment } from '~/types/api/patch'
 
 const commentSchema = patchCommentCreateSchema.pick({ content: true })
@@ -77,10 +77,13 @@ export const PublishComment = ({
   return (
     <Card>
       <CardHeader className="pb-0 space-x-4">
-        <Avatar
-          showFallback
-          name={user.name.charAt(0).toUpperCase()}
-          src={user.avatar}
+        <KunAvatar
+          uid={user.uid}
+          avatarProps={{
+            showFallback: true,
+            name: user.name,
+            src: user.avatar
+          }}
         />
         <div className="flex flex-col">
           <span className="font-semibold">{user.name}</span>

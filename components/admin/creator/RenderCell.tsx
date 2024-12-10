@@ -4,6 +4,7 @@ import { Chip, User } from '@nextui-org/react'
 import { formatDistanceToNow } from '~/utils/formatDistanceToNow'
 import { APPLICANT_STATUS_MAP } from '~/constants/admin'
 import { ActionButton } from './ActionButton'
+import { KunUser } from '~/components/kun/floating-card/KunUser'
 import type { AdminCreator } from '~/types/api/admin'
 
 interface RenderCellProps {
@@ -26,13 +27,20 @@ export const RenderCell = ({ creator, columnKey }: RenderCellProps) => {
   switch (columnKey) {
     case 'sender':
       return (
-        <User
-          name={creator.sender?.name}
-          description={`已发布 ${creator.patchResourceCount} 个补丁资源`}
-          avatarProps={{
-            src: creator.sender?.avatar
-          }}
-        />
+        <>
+          {creator.sender && (
+            <KunUser
+              user={creator.sender}
+              userProps={{
+                name: creator.sender.name,
+                description: `已发布 ${creator.patchResourceCount} 个补丁资源`,
+                avatarProps: {
+                  src: creator.sender?.avatar
+                }
+              }}
+            />
+          )}
+        </>
       )
     case 'status':
       return (

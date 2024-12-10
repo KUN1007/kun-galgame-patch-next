@@ -109,25 +109,6 @@ export const PatchHeaderContainer = ({ patch }: PatchHeaderProps) => {
                   }
                 }}
               />
-              {/* <User
-                name={
-                  <div className="space-x-2">
-                    <span>{patch.user.name}</span>
-                    <span className="text-default-500">-</span>
-                    <span className="text-default-500">
-                      {formatDistanceToNow(patch.created)}
-                    </span>
-                  </div>
-                }
-                description={
-                  <KunCardStats patch={patch} disableTooltip={false} />
-                }
-                avatarProps={{
-                  showFallback: true,
-                  name: patch.user.name.charAt(0).toUpperCase(),
-                  src: patch.user.avatar
-                }}
-              /> */}
             </div>
           </CardBody>
         </Card>
