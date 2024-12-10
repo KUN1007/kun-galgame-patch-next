@@ -1,7 +1,12 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { getKv, setKv } from '~/lib/redis'
 import type { AdminStats } from '~/types/api/admin'
-import { getUserStats, getPatchStats, getCommentStats } from './stats'
+import {
+  getUserStats,
+  getGalgameStats,
+  getPatchResourceStats,
+  getCommentStats
+} from './stats'
 
 const CACHE_KEY = 'admin:stats'
 
@@ -19,13 +24,15 @@ export const getAdminStats = async () => {
   const [
     todayUserStats,
     yesterdayUserStats,
-    todayPatchStats,
+    todayGalgameStats,
+    todayPatchResourceStats,
     todayComments,
     yesterdayComments
   ] = await Promise.all([
     getUserStats(today),
     getUserStats(yesterday),
-    getPatchStats(today),
+    getGalgameStats(today),
+    getPatchResourceStats(today),
     getCommentStats(today),
     getCommentStats(yesterday)
   ])
@@ -37,19 +44,24 @@ export const getAdminStats = async () => {
       change: todayUserStats.newUsers
     },
     {
+      title: 'active',
+      value: todayUserStats.activeUsers.toString(),
+      change: todayUserStats.activeUsers - yesterdayUserStats.activeUsers
+    },
+    {
+      title: 'galgame',
+      value: todayGalgameStats.totalGalgames.toString(),
+      change: todayGalgameStats.newGalgames
+    },
+    {
       title: 'patch',
-      value: todayPatchStats.totalPatches.toString(),
-      change: todayPatchStats.newPatches
+      value: todayPatchResourceStats.totalPatches.toString(),
+      change: todayPatchResourceStats.newPatches
     },
     {
       title: 'comment',
       value: todayComments.toString(),
       change: todayComments - yesterdayComments
-    },
-    {
-      title: 'active',
-      value: todayUserStats.activeUsers.toString(),
-      change: todayUserStats.activeUsers - yesterdayUserStats.activeUsers
     }
   ]
 

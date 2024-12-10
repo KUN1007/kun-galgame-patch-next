@@ -1,5 +1,5 @@
 import { Card, CardBody } from '@nextui-org/card'
-import { Activity, MessageSquare, Puzzle, Users } from 'lucide-react'
+import { Activity, MessageSquare, Puzzle, Gamepad2, Users } from 'lucide-react'
 import type { AdminStats } from '~/types/api/admin'
 
 interface Props {
@@ -16,6 +16,14 @@ const formatStats = (stats: AdminStats[]) => {
         title = '用户总数量'
         icon = Users
         break
+      case 'active':
+        title = '日活跃用户'
+        icon = Activity
+        break
+      case 'galgame':
+        title = 'Galgame 总数'
+        icon = Gamepad2
+        break
       case 'patch':
         title = '补丁总数量'
         icon = Puzzle
@@ -23,10 +31,6 @@ const formatStats = (stats: AdminStats[]) => {
       case 'comment':
         title = '今日评论数'
         icon = MessageSquare
-        break
-      case 'active':
-        title = '日活跃用户'
-        icon = Activity
         break
       default:
         title = item.title

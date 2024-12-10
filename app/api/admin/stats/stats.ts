@@ -40,18 +40,40 @@ export const getUserStats = async (date: Date) => {
   }
 }
 
-export const getPatchStats = async (date: Date) => {
+export const getGalgameStats = async (date: Date) => {
   const { startOfDay, endOfDay } = getDateRange(date)
 
   return {
-    totalPatches: await prisma.patch.count({
+    totalGalgames: await prisma.patch.count({
       where: {
         created: {
           lte: endOfDay
         }
       }
     }),
-    newPatches: await prisma.patch.count({
+    newGalgames: await prisma.patch.count({
+      where: {
+        created: {
+          gte: startOfDay,
+          lte: endOfDay
+        }
+      }
+    })
+  }
+}
+
+export const getPatchResourceStats = async (date: Date) => {
+  const { startOfDay, endOfDay } = getDateRange(date)
+
+  return {
+    totalPatches: await prisma.patch_resource.count({
+      where: {
+        created: {
+          lte: endOfDay
+        }
+      }
+    }),
+    newPatches: await prisma.patch_resource.count({
       where: {
         created: {
           gte: startOfDay,
