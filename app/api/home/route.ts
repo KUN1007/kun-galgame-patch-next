@@ -6,6 +6,7 @@ import { HomeComment, HomeResource } from '~/types/api/home'
 export const getHomeData = async () => {
   const [galgames, resourcesData, commentsData] = await Promise.all([
     await prisma.patch.findMany({
+      orderBy: { created: 'desc' },
       select: {
         id: true,
         name: true,
@@ -25,9 +26,7 @@ export const getHomeData = async () => {
           }
         }
       },
-      orderBy: { created: 'desc' },
-      take: 6,
-      skip: 1
+      take: 6
     }),
     await prisma.patch_resource.findMany({
       orderBy: { created: 'desc' },
@@ -50,8 +49,7 @@ export const getHomeData = async () => {
           }
         }
       },
-      take: 6,
-      skip: 1
+      take: 6
     }),
     await prisma.patch_comment.findMany({
       orderBy: { created: 'desc' },
@@ -74,8 +72,7 @@ export const getHomeData = async () => {
           }
         }
       },
-      take: 6,
-      skip: 1
+      take: 6
     })
   ])
 
