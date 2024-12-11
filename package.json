@@ -16,7 +16,7 @@
     "start": "pm2 start ecosystem.config.js",
     "stop": "pm2 delete kun-visual-novel-patch",
     "deploy:install": "pnpm install && pnpx prisma db push && mkdir uploads && chmod 777 uploads",
-    "deploy": "git pull && pnpm build && pnpm stop && pnpm start"
+    "deploy:run": "git pull && pnpm build && pnpm stop && pnpm start"
   },
   "author": {
     "name": "KUN1007",
