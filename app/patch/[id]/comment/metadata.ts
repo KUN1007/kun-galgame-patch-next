@@ -18,7 +18,7 @@ export const generateKunMetadataTemplate = (
   const uniqueAuthorsName = uniqueAuthors.map((u) => u.name)
 
   return {
-    title: patch.alias[0]
+    title: patch.alias.length
       ? `${patch.name} | ${patch.alias[0]} 的 评论`
       : `${patch.name} 的 评论`,
     keywords: [...patch.alias, '评论'],
@@ -29,7 +29,7 @@ export const generateKunMetadataTemplate = (
       ? `${uniqueAuthorsName} 在 ${patch.name} 下发布了 ${comments[0].content} 等评论, 查看更多`
       : `点击查看 ${patch.name} 下的评论`,
     openGraph: {
-      title: patch.alias[0]
+      title: patch.alias.length
         ? `${patch.name} | ${patch.alias[0]} 的 评论`
         : `${patch.name} 的 评论`,
       description: comments.length
@@ -49,7 +49,7 @@ export const generateKunMetadataTemplate = (
     },
     twitter: {
       card: 'summary',
-      title: patch.alias[0]
+      title: patch.alias.length
         ? `${patch.name} | ${patch.alias[0]} 的 评论`
         : `${patch.name} 的 评论`,
       description: comments.length

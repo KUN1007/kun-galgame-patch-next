@@ -18,7 +18,7 @@ export const generateKunMetadataTemplate = (
   const uniqueAuthorsName = uniqueAuthors.map((u) => u.name)
 
   return {
-    title: patch.alias[0]
+    title: patch.alias.length
       ? `${patch.name} | ${patch.alias[0]} 的 贡献历史`
       : `${patch.name} 的 贡献历史`,
     keywords: [...patch.alias, '贡献历史'],
@@ -29,7 +29,7 @@ export const generateKunMetadataTemplate = (
       ? `${uniqueAuthorsName} 为 ${patch.name} 做出了 ${histories[0].content} 等贡献!`
       : `查看更多 ${patch.name} 的贡献历史`,
     openGraph: {
-      title: patch.alias[0]
+      title: patch.alias.length
         ? `${patch.name} | ${patch.alias[0]} 的 贡献历史`
         : `${patch.name} 的 贡献历史`,
       description: histories.length
@@ -49,7 +49,7 @@ export const generateKunMetadataTemplate = (
     },
     twitter: {
       card: 'summary',
-      title: patch.alias[0]
+      title: patch.alias.length
         ? `${patch.name} | ${patch.alias[0]} 的 贡献历史`
         : `${patch.name} 的 贡献历史`,
       description: histories.length

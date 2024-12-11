@@ -24,7 +24,7 @@ export const generateKunMetadataTemplate = (
   const uniqueAuthorsName = uniqueAuthors.map((u) => u.name)
 
   return {
-    title: patch.alias[0]
+    title: patch.alias.length
       ? `${patch.name} | ${patch.alias[0]} 的 下载资源`
       : `${patch.name} 的 下载资源`,
     keywords: [...patch.alias, ...dedupeType, ...dedupeLang, ...dedupePlatform],
@@ -33,7 +33,7 @@ export const generateKunMetadataTemplate = (
     publisher: patch.user.name,
     description: `${uniqueAuthorsName} 在 ${patch.name} 下发布了 ${dedupeType} 下载资源`,
     openGraph: {
-      title: patch.alias[0]
+      title: patch.alias.length
         ? `${patch.name} | ${patch.alias[0]} 的 下载资源`
         : `${patch.name} 的 下载资源`,
       description: `${uniqueAuthorsName} 在 ${patch.name} 下发布了 ${dedupeType} 下载资源`,
@@ -51,7 +51,7 @@ export const generateKunMetadataTemplate = (
     },
     twitter: {
       card: 'summary',
-      title: patch.alias[0]
+      title: patch.alias.length
         ? `${patch.name} | ${patch.alias[0]} 的 下载资源`
         : `${patch.name} 的 下载资源`,
       description: `${uniqueAuthorsName} 在 ${patch.name} 下发布了 ${dedupeType} 下载资源`,
