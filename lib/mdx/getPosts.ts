@@ -1,7 +1,7 @@
 import fs from 'fs'
 import path from 'path'
 import matter from 'gray-matter'
-import { markdownToText } from '~/utils/markdownToText'
+import markdownToTxt from 'markdown-to-txt'
 import type { KunPostMetadata } from './types'
 import type { KunBlog, KunFrontmatter } from './types'
 
@@ -32,7 +32,7 @@ export const getAllPosts = () => {
           banner: data.banner,
           date: data.date ? new Date(data.date).toISOString() : '',
           description: data.description || '',
-          textCount: markdownToText(fileContents).length - 300,
+          textCount: markdownToTxt(fileContents).length - 300,
           slug,
           path: slug
         })

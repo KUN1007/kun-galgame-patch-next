@@ -85,6 +85,7 @@
     "localforage": "^1.10.0",
     "lucide-react": "^0.468.0",
     "lz-string": "^1.5.0",
+    "markdown-to-txt": "^2.0.1",
     "next": "15.0.4",
     "next-mdx-remote": "^5.0.0",
     "next-nprogress-bar": "^2.3.15",
