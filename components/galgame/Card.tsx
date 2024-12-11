@@ -22,17 +22,17 @@ export const GalgameCard = ({ patch }: Props) => {
       onPress={() => router.push(`/patch/${patch.id}/introduction`)}
     >
       <CardHeader className="p-0">
-        <div className="relative w-full mx-auto overflow-hidden text-center rounded-t-lg">
+        <div className="relative w-full mx-auto overflow-hidden text-center rounded-t-lg opacity-90">
           <div
             className={`absolute inset-0 animate-pulse bg-default-100 ${
-              imageLoaded ? 'opacity-0' : 'opacity-100'
+              imageLoaded ? 'opacity-0' : 'opacity-90'
             } transition-opacity duration-300`}
             style={{ aspectRatio: '16/9' }}
           />
           <Image
             alt={patch.name}
             className={`size-full object-cover transition-all duration-300 ${
-              imageLoaded ? 'scale-100 opacity-100' : 'scale-105 opacity-0'
+              imageLoaded ? 'scale-100 opacity-90' : 'scale-105 opacity-0'
             }`}
             src={patch.banner.replace(/\.avif$/, '-mini.avif')}
             style={{ aspectRatio: '16/9' }}
