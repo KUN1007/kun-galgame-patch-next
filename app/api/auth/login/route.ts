@@ -16,9 +16,13 @@ export const login = async (input: z.infer<typeof loginSchema>) => {
     return '人机验证无效, 请完成人机验证'
   }
 
+  const normalizedName = name.toLowerCase()
   const user = await prisma.user.findFirst({
     where: {
-      OR: [{ email: name }, { name }]
+      OR: [
+        { email: normalizedName },
+        { name: { equals: normalizedName, mode: 'insensitive' } } // 大小写不敏感用户名匹配
+      ]
     }
   })
   if (!user) {

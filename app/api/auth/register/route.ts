@@ -21,7 +21,10 @@ export const register = async (
     return '您的验证码无效, 请重新输入'
   }
 
-  const sameUsernameUser = await prisma.user.findUnique({ where: { name } })
+  const normalizedName = name.toLowerCase()
+  const sameUsernameUser = await prisma.user.findFirst({
+    where: { name: { equals: normalizedName, mode: 'insensitive' } }
+  })
   if (sameUsernameUser) {
     return '您的用户名已经有人注册了, 请修改'
   }

@@ -16,8 +16,9 @@ export const sendRegisterCode = async (
     return '人机验证无效, 请完成人机验证'
   }
 
-  const sameUsernameUser = await prisma.user.findUnique({
-    where: { name: input.name }
+  const normalizedName = input.name.toLowerCase()
+  const sameUsernameUser = await prisma.user.findFirst({
+    where: { name: { equals: normalizedName, mode: 'insensitive' } }
   })
   if (sameUsernameUser) {
     return '您的用户名已经有人注册了, 请修改'

@@ -13,6 +13,14 @@ const updateUsername = async (username: string, uid: number) => {
     return '更改用户名最少需要 30 萌萌点, 您的萌萌点不足'
   }
 
+  const normalizedName = username.toLowerCase()
+  const sameUsernameUser = await prisma.user.findFirst({
+    where: { name: { equals: normalizedName, mode: 'insensitive' } }
+  })
+  if (sameUsernameUser) {
+    return '您的用户名已经有人注册了, 请修改'
+  }
+
   await prisma.user.update({
     where: { id: uid },
     data: { name: username, moemoepoint: { increment: -30 } }
