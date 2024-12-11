@@ -43,3 +43,6 @@ next-env.d.ts
 
 # baclup
 /backup
+
+# sitemap
+/public/**/*.xml
