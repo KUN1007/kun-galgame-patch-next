@@ -23,6 +23,8 @@ const kunFetchRequest = async <T>(
 
     const fetchOptions: RequestInit = {
       method,
+      credentials: 'include',
+      mode: 'cors',
       headers: {
         ...headers
       }

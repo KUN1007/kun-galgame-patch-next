@@ -17,6 +17,8 @@ export const kunServerFetchGet = async <T>(
   const cookieStore = await cookies()
   const fetchOptions: RequestInit = {
     method: 'GET',
+    credentials: 'include',
+    mode: 'cors',
     headers: {
       Cookie: cookieStore.toString(),
       'Content-Type': 'application/json'
