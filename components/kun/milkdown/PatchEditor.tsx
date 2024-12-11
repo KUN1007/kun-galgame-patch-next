@@ -35,7 +35,7 @@ export const Editor = ({ storeName }: Props) => {
   }
 
   if (!isMounted) {
-    return <KunLoading hint="正在加载编辑器" />
+    return <KunLoading className="min-h-64" hint="正在加载编辑器" />
   }
 
   return (

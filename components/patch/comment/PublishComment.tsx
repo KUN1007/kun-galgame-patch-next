@@ -1,22 +1,20 @@
 'use client'
 
 import { useState } from 'react'
-import { z } from 'zod'
-import { Controller, useForm } from 'react-hook-form'
-import { zodResolver } from '@hookform/resolvers/zod'
 import { Card, CardBody, CardHeader } from '@nextui-org/card'
 import { Button } from '@nextui-org/button'
-import { Textarea } from '@nextui-org/input'
+import { Chip } from '@nextui-org/chip'
 import { Send } from 'lucide-react'
 import { kunFetchPost } from '~/utils/kunFetch'
 import toast from 'react-hot-toast'
-import { patchCommentCreateSchema } from '~/validations/patch'
 import { useUserStore } from '~/store/providers/user'
 import { kunErrorHandler } from '~/utils/kunErrorHandler'
 import { KunAvatar } from '~/components/kun/floating-card/KunAvatar'
+import { MilkdownProvider } from '@milkdown/react'
+import { usePatchCommentStore } from '~/store/commentStore'
+import { KunEditor } from '~/components/kun/milkdown/Editor'
+import { Markdown } from '~/components/kun/icons/Markdown'
 import type { PatchComment } from '~/types/api/patch'
-
-const commentSchema = patchCommentCreateSchema.pick({ content: true })
 
 interface CreateCommentProps {
   patchId: number
@@ -25,8 +23,6 @@ interface CreateCommentProps {
   setNewComment: (newComment: PatchComment) => void
   onSuccess?: () => void
 }
-
-type CommentFormData = z.infer<typeof commentSchema>
 
 export const PublishComment = ({
   patchId,
@@ -37,21 +33,9 @@ export const PublishComment = ({
 }: CreateCommentProps) => {
   const [loading, setLoading] = useState(false)
   const { user } = useUserStore((state) => state)
+  const { data, getData, setData } = usePatchCommentStore()
 
-  const {
-    control,
-    handleSubmit,
-    reset,
-    formState: { errors },
-    watch
-  } = useForm<CommentFormData>({
-    resolver: zodResolver(commentSchema),
-    defaultValues: {
-      content: ''
-    }
-  })
-
-  const onSubmit = async (data: CommentFormData) => {
+  const handlePublishComment = async () => {
     setLoading(true)
     const res = await kunFetchPost<KunResponse<PatchComment>>(
       '/patch/comment',
@@ -67,7 +51,7 @@ export const PublishComment = ({
         user: { id: user.uid, name: user.name, avatar: user.avatar }
       })
       toast.success('评论发布成功')
-      reset()
+      setData({ content: '' })
       onSuccess?.()
     })
 
@@ -91,32 +75,34 @@ export const PublishComment = ({
         </div>
       </CardHeader>
       <CardBody className="space-y-4">
-        <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
-          <Controller
-            name="content"
-            control={control}
-            render={({ field }) => (
-              <Textarea
-                {...field}
-                placeholder="请编写您的评论 ..."
-                minRows={3}
-                isInvalid={!!errors.content}
-                errorMessage={errors.content?.message}
-              />
-            )}
+        <MilkdownProvider>
+          <KunEditor
+            valueMarkdown={getData().content}
+            saveMarkdown={(markdown: string) => setData({ content: markdown })}
           />
-          <div className="flex justify-end">
-            <Button
-              type="submit"
-              color="primary"
-              startContent={<Send className="size-4" />}
-              isDisabled={!watch().content.trim() || loading}
-              isLoading={loading}
-            >
-              发布评论
-            </Button>
-          </div>
-        </form>
+        </MilkdownProvider>
+
+        <div className="flex items-center justify-between">
+          <Chip
+            variant="light"
+            color="secondary"
+            size="sm"
+            endContent={<Markdown />}
+            className="select-none"
+          >
+            评论支持 Markdown
+          </Chip>
+
+          <Button
+            color="primary"
+            startContent={<Send className="size-4" />}
+            isDisabled={!data.content.trim() || loading}
+            isLoading={loading}
+            onPress={handlePublishComment}
+          >
+            发布评论
+          </Button>
+        </div>
       </CardBody>
     </Card>
   )

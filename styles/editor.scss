@@ -1,5 +1,7 @@
 .milkdown {
-  max-width: 60rem;
+  .ProseMirror {
+    min-height: 200px;
+  }
 
   * {
     white-space: pre-wrap;
