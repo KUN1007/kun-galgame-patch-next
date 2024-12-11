@@ -3,6 +3,7 @@ import { NextRequest, NextResponse } from 'next/server'
 import { kunParseGetQuery } from '~/app/api/utils/parseQuery'
 import { prisma } from '~/prisma/index'
 import { getUserInfoSchema } from '~/validations/user'
+import { markdownToText } from '~/utils/markdownToText'
 import type { UserComment } from '~/types/api/user'
 
 export const getUserComment = async (
@@ -39,7 +40,7 @@ export const getUserComment = async (
 
   const comments: UserComment[] = data.map((comment) => ({
     id: comment.id,
-    content: comment.content,
+    content: markdownToText(comment.content).slice(0, 233),
     like: comment.like_by.length,
     userId: comment.user_id,
     patchId: comment.patch_id,

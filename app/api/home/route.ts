@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { prisma } from '~/prisma/index'
+import { markdownToText } from '~/utils/markdownToText'
 import { HomeComment, HomeResource } from '~/types/api/home'
 
 export const getHomeData = async () => {
@@ -102,7 +103,7 @@ export const getHomeData = async () => {
   const comments: HomeComment[] = commentsData.map((comment) => ({
     id: comment.id,
     user: comment.user,
-    content: comment.content,
+    content: markdownToText(comment.content).slice(0, 233),
     patchName: comment.patch.name,
     patchId: comment.patch_id,
     like: comment._count.like_by,

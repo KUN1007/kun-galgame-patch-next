@@ -1,6 +1,7 @@
 import { z } from 'zod'
 import { prisma } from '~/prisma/index'
 import { adminPaginationSchema } from '~/validations/admin'
+import { markdownToText } from '~/utils/markdownToText'
 import type { AdminComment } from '~/types/api/admin'
 
 export const getComment = async (
@@ -40,7 +41,7 @@ export const getComment = async (
   const comments: AdminComment[] = data.map((comment) => ({
     id: comment.id,
     user: comment.user,
-    content: comment.content,
+    content: markdownToText(comment.content).slice(0, 233),
     patchName: comment.patch.name,
     patchId: comment.patch_id,
     like: comment._count.like_by,
