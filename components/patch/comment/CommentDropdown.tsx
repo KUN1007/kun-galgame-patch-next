@@ -14,7 +14,7 @@ import {
   useDisclosure
 } from '@nextui-org/modal'
 import { Textarea } from '@nextui-org/input'
-import { kunFetchPut, kunFetchDelete } from '~/utils/kunFetch'
+import { kunFetchPut, kunFetchDelete, kunFetchGet } from '~/utils/kunFetch'
 import toast from 'react-hot-toast'
 import { kunErrorHandler } from '~/utils/kunErrorHandler'
 import { useUserStore } from '~/store/providers/user'
@@ -35,7 +35,19 @@ export const CommentDropdown = ({ comment, setComments }: Props) => {
     onOpen: onOpenEdit,
     onClose: onCloseEdit
   } = useDisclosure()
-
+  const handleStartEdit = async () => {
+    const res = await kunFetchGet<KunResponse<{ content: string }>>(
+      '/patch/comment/markdown',
+      { commentId: comment.id }
+    )
+    if (typeof res === 'string') {
+      toast.error(res)
+      return
+    } else {
+      setEditContent(res.content)
+      onOpenEdit()
+    }
+  }
   const handleUpdateComment = async (commentId: number) => {
     if (!editContent.trim()) {
       toast.error('评论内容不可为空')
@@ -98,10 +110,7 @@ export const CommentDropdown = ({ comment, setComments }: Props) => {
             key="edit"
             color="default"
             startContent={<Pencil className="size-4" />}
-            onPress={() => {
-              setEditContent(comment.content)
-              onOpenEdit()
-            }}
+            onPress={handleStartEdit}
           >
             编辑评论
           </DropdownItem>
@@ -119,7 +128,7 @@ export const CommentDropdown = ({ comment, setComments }: Props) => {
         </DropdownMenu>
       </Dropdown>
 
-      <Modal isOpen={isOpenEdit} onClose={onCloseEdit} placement="center">
+      <Modal isOpen={isOpenEdit} onClose={onCloseEdit}>
         <ModalContent>
           <ModalHeader className="flex flex-col gap-1">
             重新编辑评论
@@ -137,7 +146,7 @@ export const CommentDropdown = ({ comment, setComments }: Props) => {
               取消
             </Button>
             <Button
-              color="danger"
+              color="primary"
               onPress={() => handleUpdateComment(comment.id)}
               isDisabled={updating}
               isLoading={updating}

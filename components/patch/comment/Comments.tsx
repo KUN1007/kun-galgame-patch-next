@@ -3,36 +3,19 @@
 import { useState } from 'react'
 import { Card, CardBody } from '@nextui-org/card'
 import { Button } from '@nextui-org/button'
-import { Code } from '@nextui-org/code'
-import { Chip } from '@nextui-org/chip'
 import { KunUser } from '~/components/kun/floating-card/KunUser'
-import { MessageCircle, Quote } from 'lucide-react'
+import { MessageCircle } from 'lucide-react'
 import { formatDistanceToNow } from '~/utils/formatDistanceToNow'
 import { PublishComment } from './PublishComment'
 import { CommentLikeButton } from './CommentLike'
 import { CommentDropdown } from './CommentDropdown'
+import { CommentContent } from './CommentContent'
+import { scrollIntoComment } from './_scrollIntoComment'
 import type { PatchComment } from '~/types/api/patch'
 
 interface Props {
   initialComments: PatchComment[]
   id: number
-}
-
-const scrollIntoComment = (id: number | null) => {
-  if (id === null) {
-    return
-  }
-
-  const targetComment = document.getElementById(`comment-${id}`)
-  if (targetComment) {
-    targetComment.scrollIntoView({ behavior: 'smooth', block: 'center' })
-    targetComment.classList.add('bg-default-100')
-    targetComment.classList.add('px-2')
-    setTimeout(() => {
-      targetComment.classList.remove('bg-default-100')
-      targetComment.classList.remove('px-2')
-    }, 2000)
-  }
 }
 
 export const Comments = ({ initialComments, id }: Props) => {
@@ -69,23 +52,7 @@ export const Comments = ({ initialComments, id }: Props) => {
                 <CommentDropdown comment={comment} setComments={setComments} />
               </div>
 
-              {comment.quotedContent && (
-                <Code
-                  color="primary"
-                  onClick={() => scrollIntoComment(comment.parentId)}
-                  className="cursor-pointer"
-                >
-                  <span>{comment.quotedUsername}</span>
-                  <Chip
-                    endContent={<Quote className="text-blue-500 size-4" />}
-                    variant="light"
-                  >
-                    {comment.quotedContent}
-                  </Chip>
-                </Code>
-              )}
-
-              <p>{comment.content}</p>
+              <CommentContent comment={comment} />
 
               <div className="flex gap-2 mt-2">
                 <CommentLikeButton comment={comment} />

@@ -1,6 +1,7 @@
 import { z } from 'zod'
 import { prisma } from '~/prisma/index'
 import { formatComments } from './_helpers'
+import { markdownToHtml } from '~/app/api/utils/markdownToHtml'
 import type { PatchComment } from '~/types/api/patch'
 
 const patchIdSchema = z.object({
@@ -28,22 +29,24 @@ export const getPatchComment = async (
     }
   })
 
-  const flatComments: PatchComment[] = data.map((comment) => ({
-    id: comment.id,
-    content: comment.content,
-    isLike: comment.like_by.length > 0,
-    likeCount: comment._count.like_by,
-    parentId: comment.parent_id,
-    userId: comment.user_id,
-    patchId: comment.patch_id,
-    created: String(comment.created),
-    updated: String(comment.updated),
-    user: {
-      id: comment.user.id,
-      name: comment.user.name,
-      avatar: comment.user.avatar
-    }
-  }))
+  const flatComments: PatchComment[] = await Promise.all(
+    data.map(async (comment) => ({
+      id: comment.id,
+      content: await markdownToHtml(comment.content),
+      isLike: comment.like_by.length > 0,
+      likeCount: comment._count.like_by,
+      parentId: comment.parent_id,
+      userId: comment.user_id,
+      patchId: comment.patch_id,
+      created: String(comment.created),
+      updated: String(comment.updated),
+      user: {
+        id: comment.user.id,
+        name: comment.user.name,
+        avatar: comment.user.avatar
+      }
+    }))
+  )
 
   const nestedComments = formatComments(flatComments)
 
