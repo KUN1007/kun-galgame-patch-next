@@ -191,7 +191,7 @@ model patch_tag {
   alias        String[]
 
   patch_relation patch_tag_relation[]
-  user_id        Int                  @default(2)
+  user_id        Int
   user           user                 @relation(fields: [user_id], references: [id], onDelete: Cascade)
 
   created DateTime @default(now())
