@@ -98,6 +98,10 @@
 
 [Bilibili (中国大陆支持)](https://space.bilibili.com/1748455574)
 
+## 开发联系
+
+如果有对 Web 开发技术 (Node.js, Nuxt, Next.js, SvelteKit, SolidStart 等) 感兴趣的朋友们, 可以加入我们的 Telegram 开发群组: [https://t.me/KUNForum](https://t.me/KUNForum)
+
 ## 开源声明 / 开源协议
 
 本项目遵从 `AGPL-3.0` 开源协议
