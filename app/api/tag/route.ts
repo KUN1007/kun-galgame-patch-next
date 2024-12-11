@@ -21,7 +21,14 @@ export const getTagById = async (input: z.infer<typeof getTagByIdSchema>) => {
       count: true,
       alias: true,
       introduction: true,
-      created: true
+      created: true,
+      user: {
+        select: {
+          id: true,
+          name: true,
+          avatar: true
+        }
+      }
     }
   })
   if (!tag) {
@@ -59,6 +66,15 @@ export const rewriteTag = async (input: z.infer<typeof updateTagSchema>) => {
       name,
       introduction,
       alias
+    },
+    include: {
+      user: {
+        select: {
+          id: true,
+          name: true,
+          avatar: true
+        }
+      }
     }
   })
 
@@ -79,7 +95,10 @@ export const PUT = async (req: NextRequest) => {
   return NextResponse.json(response)
 }
 
-export const createTag = async (input: z.infer<typeof createTagSchema>) => {
+export const createTag = async (
+  input: z.infer<typeof createTagSchema>,
+  uid: number
+) => {
   const { name, introduction = '', alias = [] } = input
 
   const existingTag = await prisma.patch_tag.findFirst({
@@ -93,6 +112,7 @@ export const createTag = async (input: z.infer<typeof createTagSchema>) => {
 
   const newTag = await prisma.patch_tag.create({
     data: {
+      user_id: uid,
       name,
       introduction,
       alias
@@ -118,6 +138,6 @@ export const POST = async (req: NextRequest) => {
     return NextResponse.json('用户未登录')
   }
 
-  const response = await createTag(input)
+  const response = await createTag(input, payload.uid)
   return NextResponse.json(response)
 }

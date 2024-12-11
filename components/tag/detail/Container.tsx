@@ -18,6 +18,8 @@ import { cardContainer, cardItem } from '~/motion/card'
 import { KunNull } from '~/components/kun/Null'
 import { EditTagModal } from './EditTagModel'
 import { useRouter } from 'next-nprogress-bar'
+import { KunUser } from '~/components/kun/floating-card/KunUser'
+import { formatDistanceToNow } from '~/utils/formatDistanceToNow'
 
 interface Props {
   initialTag: TagDetail
@@ -42,7 +44,7 @@ export const TagDetailCOntainer = ({
   const fetchPatches = async () => {
     setLoading(true)
 
-    const { galgames, total } = await kunFetchGet<{
+    const { galgames } = await kunFetchGet<{
       galgames: GalgameCard[]
       total: number
     }>('/tag/galgame', {
@@ -73,7 +75,18 @@ export const TagDetailCOntainer = ({
           </Chip>
         }
         endContent={
-          <>
+          <div className="flex justify-between">
+            <KunUser
+              user={tag.user}
+              userProps={{
+                name: tag.user.name,
+                description: `创建于 ${formatDistanceToNow(tag.created)}`,
+                avatarProps: {
+                  src: tag.user?.avatar
+                }
+              }}
+            />
+
             <Button
               variant="flat"
               color="primary"
@@ -92,13 +105,13 @@ export const TagDetailCOntainer = ({
                 router.refresh()
               }}
             />
-          </>
+          </div>
         }
       />
 
       {tag.alias.length > 0 && (
-        <div>
-          <h2 className="mb-2 text-lg font-semibold">别名</h2>
+        <div className="mb-4">
+          <h2 className="mb-4 text-lg font-semibold">别名</h2>
           <div className="flex flex-wrap gap-2">
             {tag.alias.map((alias, index) => (
               <Chip key={index} variant="flat" color="secondary">

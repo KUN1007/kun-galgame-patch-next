@@ -15,7 +15,7 @@ export const KunHeader = ({
 }: Props) => {
   return (
     <>
-      <div className="space-y-1">
+      <div className="space-y-2">
         <h1 className="flex justify-between text-2xl font-medium">
           <span>{name}</span>
           {headerEndContent}

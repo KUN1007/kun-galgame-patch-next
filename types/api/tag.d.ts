@@ -8,4 +8,5 @@ export interface Tag {
 export interface TagDetail extends Tag {
   introduction: string
   created: string | Date
+  user: KunUser
 }
