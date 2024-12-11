@@ -2,7 +2,8 @@ import { z } from 'zod'
 
 const envSchema = z.object({
   KUN_DATABASE_URL: z.string().url(),
-  NEXT_PUBLIC_KUN_PATCH_ADDRESS: z.string(),
+  NEXT_PUBLIC_KUN_PATCH_ADDRESS_DEV: z.string(),
+  NEXT_PUBLIC_KUN_PATCH_ADDRESS_PROD: z.string(),
   REDIS_HOST: z.string(),
   REDIS_PORT: z.string(),
   JWT_ISS: z.string(),
