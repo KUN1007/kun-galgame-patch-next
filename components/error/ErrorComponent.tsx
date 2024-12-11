@@ -7,14 +7,20 @@ import {
   CardFooter,
   CardHeader
 } from '@nextui-org/react'
-import { AlertTriangle, ArrowLeft, Home } from 'lucide-react'
+import { AlertTriangle, RefreshCw, ArrowLeft, Home } from 'lucide-react'
 import { useRouter } from 'next-nprogress-bar'
 
 interface ErrorComponentProps {
   error: string
+  showReset?: boolean
+  reset?: () => void
 }
 
-export const ErrorComponent = ({ error }: ErrorComponentProps) => {
+export const ErrorComponent = ({
+  error,
+  showReset = false,
+  reset
+}: ErrorComponentProps) => {
   const router = useRouter()
 
   return (
@@ -45,6 +51,16 @@ export const ErrorComponent = ({ error }: ErrorComponentProps) => {
           >
             返回上一页
           </Button>
+          {showReset && (
+            <Button
+              startContent={<RefreshCw className="size-4" />}
+              variant="flat"
+              color="primary"
+              onClick={() => reset?.()}
+            >
+              重试
+            </Button>
+          )}
           <Button
             startContent={<Home className="size-4" />}
             color="primary"

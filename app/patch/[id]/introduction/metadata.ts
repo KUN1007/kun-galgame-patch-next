@@ -19,7 +19,7 @@ export const generateKunMetadataTemplate = (
   )
 
   return {
-    title: patch.alias[0]
+    title: patch.alias.length
       ? `${patch.name} | ${patch.alias[0]}`
       : `${patch.name}`,
     keywords: [patch.name, ...patch.alias],
@@ -31,7 +31,7 @@ export const generateKunMetadataTemplate = (
       selectors: [{ selector: 'p', format: 'inline' }]
     }).slice(0, 170),
     openGraph: {
-      title: patch.alias[0]
+      title: patch.alias.length
         ? `${patch.name} | ${patch.alias[0]}`
         : `${patch.name}`,
       description: convert(intro.introduction).slice(0, 170),
@@ -49,7 +49,7 @@ export const generateKunMetadataTemplate = (
     },
     twitter: {
       card: 'summary',
-      title: patch.alias[0]
+      title: patch.alias.length
         ? `${patch.name} | ${patch.alias[0]}`
         : `${patch.name}`,
       description: convert(intro.introduction).slice(0, 170),

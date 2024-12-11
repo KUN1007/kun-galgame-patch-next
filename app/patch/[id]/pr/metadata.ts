@@ -18,21 +18,21 @@ export const generateKunMetadataTemplate = (
   const uniqueAuthorsName = uniqueAuthors.map((u) => u.name)
 
   return {
-    title: patch.alias[0]
+    title: patch.alias.length
       ? `${patch.name} | ${patch.alias[0]} 的 pull request`
       : `${patch.name}`,
     keywords: [...patch.alias, '更新请求'],
     authors: uniqueAuthors,
     creator: patch.user.name,
     publisher: patch.user.name,
-    description: pr[0].content
+    description: pr.length
       ? `${uniqueAuthorsName} 在 ${patch.name} 下提出了 ${pr[0].content} 等 ${pr.length} 个 pull request`
       : `查看 ${patch.name} 的 pull request`,
     openGraph: {
-      title: patch.alias[0]
+      title: patch.alias.length
         ? `${patch.name} | ${patch.alias[0]} 的 pull request`
         : `${patch.name}`,
-      description: pr[0].content
+      description: pr.length
         ? `${uniqueAuthorsName} 在 ${patch.name} 下提出了 ${pr[0].content} 等 ${pr.length} 个 pull request`
         : `查看 ${patch.name} 的 pull request`,
       type: 'article',
@@ -49,10 +49,10 @@ export const generateKunMetadataTemplate = (
     },
     twitter: {
       card: 'summary',
-      title: patch.alias[0]
+      title: patch.alias.length
         ? `${patch.name} | ${patch.alias[0]} 的 pull request`
         : `${patch.name}`,
-      description: pr[0].content
+      description: pr.length
         ? `${uniqueAuthorsName} 在 ${patch.name} 下提出了 ${pr[0].content} 等 ${pr.length} 个 pull request`
         : `查看 ${patch.name} 的 pull request`,
       images: [patch.banner]
