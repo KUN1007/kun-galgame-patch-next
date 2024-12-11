@@ -17,7 +17,7 @@ export const kunServerFetchGet = async <T>(
     process.env.NODE_ENV === 'development'
       ? process.env.NEXT_PUBLIC_KUN_PATCH_ADDRESS_DEV
       : process.env.NEXT_PUBLIC_KUN_PATCH_ADDRESS_PROD
-  const fullUrl = `http://${fetchAddress}/api${url}${queryString}`
+  const fullUrl = `${fetchAddress}/api${url}${queryString}`
 
   const cookieStore = await cookies()
   const fetchOptions: RequestInit = {
