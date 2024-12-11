@@ -1,75 +1,143 @@
-/* Base prose styles */
 .kun-prose {
   @apply text-default-800 leading-7;
 }
 
+/* Paragraphs */
 .kun-prose p {
-  @apply my-4;
+  @apply my-6 leading-relaxed;
 }
 
 /* Links */
 .kun-prose a {
-  @apply text-primary-500 underline font-medium hover:opacity-80;
+  @apply text-primary-500 underline decoration-primary-200 underline-offset-2 font-medium
+         transition-colors duration-200 hover:text-primary-600 hover:decoration-primary-400;
 }
 
 .kun-prose .anchor {
-  @apply text-default-800;
+  @apply text-default-800 no-underline hover:text-primary-500;
 }
 
-/* Headings */
+/* Headings with improved spacing and refined typography */
 .kun-prose h1 {
-  @apply text-default-900 font-extrabold text-4xl mt-0 mb-8 leading-tight;
+  @apply text-default-900 font-extrabold text-4xl mt-0 mb-8 leading-tight
+         tracking-tight scroll-m-20;
 }
 
 .kun-prose h2 {
-  @apply text-default-900 font-bold text-2xl mt-16 border-t border-default-200 pt-8 mb-4 leading-tight;
+  @apply text-default-900 font-bold text-2xl mt-16 border-t border-default-200
+         pt-8 mb-4 leading-tight tracking-tight scroll-m-20;
 }
 
 .kun-prose h3 {
-  @apply text-default-900 font-semibold text-xl mt-6 mb-2 leading-snug;
+  @apply text-default-900 font-semibold text-xl mt-8 mb-4 leading-snug
+         tracking-tight scroll-m-20;
 }
 
 .kun-prose h4 {
-  @apply text-default-900 font-semibold mt-6 mb-2 leading-snug;
+  @apply text-default-900 font-semibold text-lg mt-6 mb-4 leading-snug
+         tracking-tight scroll-m-20;
 }
 
-/* Lists */
-.kun-prose ul,
+/* Lists with improved spacing and bullets */
+.kun-prose ul {
+  @apply my-6 list-outside list-disc pl-8 space-y-3 marker:text-default-400;
+}
+
 .kun-prose ol {
-  @apply my-6 list-outside;
+  @apply my-6 list-outside list-decimal pl-8 space-y-3 marker:text-default-400;
 }
 
 .kun-prose li {
-  @apply mt-2;
+  @apply mt-2 leading-relaxed;
 }
 
-/* Code blocks */
+/* Nested lists */
+.kun-prose li > ul,
+.kun-prose li > ol {
+  @apply my-2 space-y-2;
+}
+
+/* Code blocks with improved styling */
 .kun-prose code {
-  @apply text-sm bg-default-100 px-2 py-1 rounded-lg;
+  @apply text-sm bg-default-100 px-1.5 py-0.5 rounded-md font-mono
+         text-default-800 border border-default-200;
 }
 
 .kun-prose pre {
-  @apply bg-default-100 rounded-lg p-4 my-6 overflow-x-auto;
+  @apply bg-default-50 rounded-xl p-4 my-6 overflow-x-auto border border-default-200
+         ring-1 ring-default-200/50 shadow-sm;
 }
 
 .kun-prose pre code {
-  @apply bg-transparent border-0 p-0 font-normal text-inherit;
+  @apply bg-transparent border-0 p-0 text-default-800 shadow-none;
 }
 
-/* Quotes */
+/* Quotes with refined styling */
 .kun-prose blockquote {
-  @apply border-l-4 border-primary-200 pl-4 font-medium text-default-800 my-6;
+  @apply border-l-4 border-primary-200 pl-6 pr-4 py-1 my-8
+         bg-primary-50/50 rounded-r-lg font-medium text-default-800 shadow-sm;
 }
 
-/* Tables */
+/* Tables with NextUI-inspired design */
 .kun-prose table {
-  @apply w-full my-6;
+  @apply w-full my-8 border border-default-200 rounded-lg overflow-hidden
+         shadow-sm bg-content1;
+}
+
+.kun-prose thead {
+  @apply bg-default-50;
 }
 
 .kun-prose th {
-  @apply border-b border-default-200 p-2 text-left font-semibold;
+  @apply border-b border-default-200 px-4 py-3 text-left font-semibold
+         text-default-700 text-sm tracking-wide uppercase;
 }
 
 .kun-prose td {
-  @apply border-b border-default-200 p-2;
+  @apply border-b border-default-200 px-4 py-3 text-default-600;
+}
+
+.kun-prose tr:last-child td {
+  @apply border-b-0;
+}
+
+.kun-prose tr:hover {
+  @apply bg-default-50/50 transition-colors duration-200;
+}
+
+/* Additional refinements */
+.kun-prose hr {
+  @apply my-12 border-default-200;
+}
+
+.kun-prose img {
+  @apply rounded-lg shadow-md my-8 border border-default-200;
+}
+
+.kun-prose figure {
+  @apply my-8;
+}
+
+.kun-prose figcaption {
+  @apply text-sm text-default-500 text-center mt-3;
+}
+
+/* Definition lists */
+.kun-prose dt {
+  @apply font-semibold text-default-900 mt-4;
+}
+
+.kun-prose dd {
+  @apply mt-2 pl-4 border-l-2 border-default-200;
+}
+
+/* Keyboard shortcuts */
+.kun-prose kbd {
+  @apply px-2 py-1 text-sm font-mono bg-default-100 border border-default-300
+         rounded shadow-sm text-default-700;
+}
+
+/* Mark text */
+.kun-prose mark {
+  @apply bg-warning-100 text-warning-800 px-1 rounded;
 }

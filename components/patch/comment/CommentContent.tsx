@@ -33,7 +33,7 @@ export const CommentContent = ({ comment }: Props) => {
         dangerouslySetInnerHTML={{
           __html: DOMPurify.sanitize(comment.content)
         }}
-        className="prose max-w-none dark:prose-invert"
+        className="kun-prose max-w-none"
       />
     </>
   )

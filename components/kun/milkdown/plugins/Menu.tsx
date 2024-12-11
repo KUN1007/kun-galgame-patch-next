@@ -43,7 +43,7 @@ export const KunMilkdownPluginsMenu = ({
     const miniImage = await resizeImage(file, 1920, 1080)
     formData.append('image', miniImage)
 
-    toast.loading('正在上传图片...')
+    toast('正在上传图片...')
 
     const res = await kunFetchFormData<
       KunResponse<{

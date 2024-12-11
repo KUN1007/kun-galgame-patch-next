@@ -14,7 +14,7 @@ export const Info = ({ intro }: Props) => {
         dangerouslySetInnerHTML={{
           __html: DOMPurify.sanitize(intro.introduction)
         }}
-        className="prose max-w-none dark:prose-invert"
+        className="kun-prose max-w-none"
       />
 
       <div className="grid gap-4 mt-6 sm:grid-cols-2">

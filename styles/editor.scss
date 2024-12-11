@@ -1,158 +1,141 @@
 .milkdown {
+  @apply text-default-800 leading-7;
+
   .ProseMirror {
-    min-height: 200px;
-  }
-
-  * {
-    white-space: pre-wrap;
-
-    &:focus {
-      outline: none;
-    }
+    @apply m-2 min-h-[200px] p-4 rounded-lg bg-content1 border border-default-200
+    transition-colors duration-200 focus:outline-none focus:ring-2
+    focus:ring-primary-200 focus:border-primary-500;
   }
 
   h1,
   h2 {
-    padding-top: 16px;
-    margin-bottom: 24px;
-    margin-top: 48px;
-    border-top: 1px solid #e4e4e7;
+    @apply pt-8 mb-6 mt-12 border-t border-default-200 text-default-900
+    font-bold tracking-tight;
+  }
+
+  h1 {
+    @apply text-4xl;
+  }
+
+  h2 {
+    @apply text-3xl;
   }
 
   h3,
   h4 {
-    margin-top: 32px;
-    margin-bottom: 16px;
+    @apply mt-8 mb-4 text-default-900 font-semibold tracking-tight;
+  }
+
+  h3 {
+    @apply text-2xl;
+  }
+
+  h4 {
+    @apply text-xl;
   }
 
   h5,
   h6 {
-    margin: 8px 0;
+    @apply my-3 text-default-800 font-medium;
+  }
+
+  p {
+    @apply my-4 leading-7 text-default-700 break-words;
+
+    code {
+      @apply font-mono text-sm px-1.5 py-0.5 bg-default-100
+      text-default-800 rounded-md border border-default-200 mx-1;
+    }
   }
 
   ul,
   ol {
-    line-height: 2rem;
+    @apply my-6 pl-8 space-y-3;
   }
 
-  img {
-    max-width: 100%;
+  ul {
+    @apply list-disc marker:text-default-400;
   }
 
-  del {
-    text-decoration: line-through;
-  }
-
-  p {
-    margin: 17px 0;
-    word-break: break-all;
-
-    code {
-      font-family:
-        SF Mono,
-        Menlo,
-        Consolas,
-        Liberation Mono,
-        monospace;
-      margin: 0 4px;
-      background-color: #e4e4e7;
-      padding: 2px 4px;
-      border-radius: 8px;
-    }
+  ol {
+    @apply list-decimal marker:text-default-400;
   }
 
   blockquote {
-    margin: 8px 0;
-    padding: 4px 12px;
-    border-left: 5px solid #e4e4e7;
-    color: #71717a;
-    line-height: 2rem;
+    @apply my-6 pl-6 pr-4 py-2 border-l-4 border-primary-200
+    bg-primary-50/30 rounded-r-lg text-default-700 shadow-sm;
 
     p {
-      margin: 0;
+      @apply m-0;
     }
   }
 
   pre {
-    margin: 17px 0;
-    border-radius: 10px;
-    padding: 17px;
-    background-color: #f4f4f5;
-    position: relative;
-    box-shadow: var(--shadow);
-    overflow-x: auto;
+    @apply my-6 p-4 rounded-xl bg-default-50 border border-default-200
+    shadow-sm overflow-x-auto;
 
     code {
-      font-size: 15px;
-      font-family:
-        SF Mono,
-        Menlo,
-        Consolas,
-        Liberation Mono,
-        monospace;
-      float: left;
-      min-width: 100%;
-
-      .code-line {
-        display: block;
-        padding-left: 16px;
-        padding-right: 16px;
-        margin-left: -16px;
-        margin-right: -16px;
-        border-left: 4px solid transparent;
-      }
-
-      .code-line.inserted {
-        color: #fff;
-        background-color: #17c964;
-      }
-
-      .code-line.deleted {
-        color: #fff;
-        background-color: #f31260;
-      }
-
-      .highlight-line {
-        margin-left: -16px;
-        margin-right: -16px;
-        background-color: #99c7fb;
-        border-left: 4px solid #006fee;
-      }
-
-      .line-number::before {
-        display: inline-block;
-        width: 1rem;
-        text-align: right;
-        margin-right: 16px;
-        margin-left: -8px;
-        color: #71717a;
-        content: attr(line);
-      }
+      @apply font-mono text-sm text-default-800 min-w-full float-left
+      bg-transparent border-0;
     }
   }
 
   a {
-    cursor: pointer;
-    font-weight: bold;
-    color: #006fee;
-    text-decoration: underline;
-    text-underline-offset: 3px;
-    word-break: break-word;
+    @apply font-medium text-primary-600 underline decoration-primary-200
+    underline-offset-2 cursor-pointer transition-colors duration-200
+    hover:text-primary-700 hover:decoration-primary-400 break-words;
+  }
+
+  img {
+    @apply max-w-full rounded-lg shadow-md my-6 border border-default-200;
   }
 
   table {
-    white-space: pre-wrap;
-    margin: 8px 0;
+    @apply w-full my-6 border border-default-200 rounded-lg overflow-hidden
+    shadow-sm;
 
     th,
     td {
-      border: 1px solid #e4e4e7;
-      padding: 4px 16px;
+      @apply border-b border-default-200 px-4 py-2 text-left;
+    }
+
+    th {
+      @apply bg-default-50 font-semibold text-default-700;
     }
 
     tr:nth-child(even) {
-      background-color: #f4f4f5;
-      overflow-y: scroll;
+      @apply bg-default-50/50;
     }
+
+    tr:hover {
+      @apply bg-default-100/50 transition-colors duration-200;
+    }
+
+    tr:last-child td {
+      @apply border-b-0;
+    }
+  }
+
+  del {
+    @apply line-through text-default-500;
+  }
+
+  hr {
+    @apply my-8 border-default-200;
+  }
+
+  /* Additional refinements */
+  :not(pre) > code {
+    @apply text-sm bg-default-100 px-1.5 py-0.5 rounded-md font-mono
+    text-default-800 border border-default-200;
+  }
+
+  mark {
+    @apply bg-warning-100 text-warning-800 px-1 rounded;
+  }
+
+  kbd {
+    @apply px-2 py-1 text-sm font-mono bg-default-100 border border-default-300
+    rounded shadow-sm text-default-700;
   }
 }
