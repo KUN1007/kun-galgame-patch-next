@@ -6,6 +6,7 @@ import { Divider } from '@nextui-org/divider'
 import { FavoriteButton } from './FavoriteButton'
 import { ShareButton } from './ShareButton'
 import { EditButton } from './EditButton'
+import { DownloadButton } from './DownloadButton'
 import { useRewritePatchStore } from '~/store/rewriteStore'
 import { KunCardStats } from '~/components/kun/CardStats'
 import { PatchHeader } from './Header'
@@ -58,6 +59,7 @@ export const PatchHeaderContainer = ({ patch }: PatchHeaderProps) => {
                 </div>
               </div>
               <div className="flex gap-2 ml-auto">
+                <DownloadButton patch={patch} />
                 <FavoriteButton
                   patchId={patch.id}
                   isFavorite={patch.isFavorite}

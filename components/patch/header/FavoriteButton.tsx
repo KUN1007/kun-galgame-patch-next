@@ -50,7 +50,7 @@ export const FavoriteButton = ({ patchId, isFavorite }: Props) => {
       >
         <Heart
           fill={favorite ? '#f31260' : '#00000000'}
-          className={cn('w-4 h-4', favorite ? 'text-danger-500' : '')}
+          className={cn('size-4', favorite ? 'text-danger-500' : '')}
         />
       </Button>
     </Tooltip>
