@@ -1,5 +1,6 @@
 import { Button, Card, Progress } from '@nextui-org/react'
 import { File as FileIcon } from 'lucide-react'
+import { sanitizeFileName } from '~/utils/sanitizeFileName'
 import type { FileStatus } from '../share'
 
 interface Props {
@@ -13,15 +14,15 @@ const calcFileSizeMB = (byteNumber: number) => {
 }
 
 export const FileUploadCard = ({ fileData, onRemove }: Props) => {
+  const fileName = sanitizeFileName(fileData.file.name).slice(0, 20)
+
   return (
     <Card className="p-4 mt-6">
       <div className="flex flex-wrap items-center justify-between gap-2">
         <div className="flex items-center gap-2">
           <FileIcon className="size-6 text-primary/60" />
           <div className="flex-1">
-            <p className="font-medium truncate">
-              {fileData.file.name.slice(0, 20)}
-            </p>
+            <p className="font-medium truncate">{fileName}</p>
             <p className="text-sm text-default-500">
               {calcFileSizeMB(fileData.file.size)}
             </p>

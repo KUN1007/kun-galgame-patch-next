@@ -3,6 +3,7 @@ import { setKv } from '~/lib/redis'
 import { calculateFileStreamHash } from '../fs'
 import { verifyHeaderCookie } from '~/middleware/_verifyHeaderCookie'
 import { ALLOWED_EXTENSIONS } from '~/constants/resource'
+import { sanitizeFileName } from '~/utils/sanitizeFileName'
 import { prisma } from '~/prisma'
 
 const getFileExtension = (filename: string) => {
@@ -65,7 +66,8 @@ export async function POST(req: NextRequest) {
 
   const { buffer, file, fileSizeInMB } = validData
 
-  const res = await calculateFileStreamHash(buffer, 'uploads', file.name)
+  const fileName = sanitizeFileName(file.name)
+  const res = await calculateFileStreamHash(buffer, 'uploads', fileName)
 
   await setKv(res.fileHash, res.finalFilePath, 24 * 60 * 60)
 
