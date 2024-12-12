@@ -19,7 +19,7 @@ export const KunTopBar = () => {
   return (
     <Navbar maxWidth="xl">
       <NavbarContent className="sm:hidden" justify="start">
-        <li>
+        <li className="h-full">
           <NavbarMenuToggle />
         </li>
       </NavbarContent>

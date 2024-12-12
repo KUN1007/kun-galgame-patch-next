@@ -22,6 +22,7 @@ export const PatchCard = ({ patch }: Props) => {
         <div className="flex flex-col gap-4 sm:flex-row">
           <div className="relative w-full sm:w-40">
             <Image
+              removeWrapper
               src={patch.banner.replace(/\.avif$/, '-mini.avif')}
               alt={patch.name}
               className="object-cover rounded-lg size-full"
