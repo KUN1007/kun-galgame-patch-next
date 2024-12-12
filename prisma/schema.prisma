@@ -269,7 +269,7 @@ model patch_history {
   id      Int    @id @default(autoincrement())
   action  String @default("")
   type    String @default("")
-  content String @default("") @db.VarChar(1007)
+  content String @default("") @db.VarChar(10007)
 
   user_id  Int
   user     user  @relation("user_patch_history", fields: [user_id], references: [id])

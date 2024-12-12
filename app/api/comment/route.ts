@@ -41,7 +41,7 @@ export const getComment = async (input: z.infer<typeof commentSchema>) => {
         }
       }
     }),
-    await prisma.patch_resource.count()
+    await prisma.patch_comment.count()
   ])
 
   const comments: PatchComment[] = commentsData.map((comment) => ({

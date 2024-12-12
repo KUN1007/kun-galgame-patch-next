@@ -75,10 +75,10 @@ export const CardContainer = ({ initialResources, initialTotal }: Props) => {
         </KunMasonryGrid>
       )}
 
-      {total > 24 && (
+      {total > 50 && (
         <div className="flex justify-center">
           <Pagination
-            total={Math.ceil(total / 24)}
+            total={Math.ceil(total / 50)}
             page={page}
             onChange={(newPage: number) => setPage(newPage)}
             showControls

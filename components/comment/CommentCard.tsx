@@ -30,8 +30,8 @@ export const CommentCard = ({ comment }: Props) => {
               src: comment.user.avatar
             }}
           />
-          <div>
-            <div className="flex items-center gap-2">
+          <div className="space-y-2">
+            <div className="flex flex-wrap items-center gap-2">
               <h2 className="font-semibold">{comment.user.name}</h2>
               <span className="text-small text-default-500">
                 评论在{' '}
