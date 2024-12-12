@@ -20,7 +20,9 @@ export const KunHeader = ({
           <span>{name}</span>
           {headerEndContent}
         </h1>
-        {description && <p className="text-default-500">{description}</p>}
+        {description && (
+          <p className="whitespace-pre-wrap text-default-500">{description}</p>
+        )}
         {endContent}
       </div>
       <Divider className="my-8" />

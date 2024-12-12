@@ -45,7 +45,9 @@ export const ResourceInfo = ({ resource }: Props) => {
         )}
       </div>
 
-      {resource.note && <p className="mt-2">{resource.note}</p>}
+      {resource.note && (
+        <p className="mt-2 whitespace-pre-wrap">{resource.note}</p>
+      )}
     </div>
   )
 }
