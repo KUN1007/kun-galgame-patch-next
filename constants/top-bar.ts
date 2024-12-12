@@ -35,5 +35,9 @@ export const kunMobileNavItem: KunNavItem[] = [
   {
     name: '管理系统',
     href: '/admin'
+  },
+  {
+    name: '联系我们',
+    href: '/about/notice/feedback'
   }
 ]

@@ -24,7 +24,7 @@ export const KunTopBarBrand = () => {
         <Link className="flex items-center" href="/">
           <Image
             src="/favicon.webp"
-            alt="鲲 Galgame 补丁"
+            alt={kunMoyuMoe.titleShort}
             width={50}
             height={50}
             priority
