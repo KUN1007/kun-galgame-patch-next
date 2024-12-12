@@ -10,10 +10,11 @@ interface Props {
 }
 
 export const Editor = ({ storeName }: Props) => {
-  const { getData: getCreatePatchData, setData: setCreatePatchData } =
-    useCreatePatchStore()
-  const { getData: getRewritePatchData, setData: setRewritePatchData } =
-    useRewritePatchStore()
+  const getCreatePatchData = useCreatePatchStore((state) => state.getData)
+  const setCreatePatchData = useCreatePatchStore((state) => state.setData)
+  const getRewritePatchData = useRewritePatchStore((state) => state.getData)
+  const setRewritePatchData = useRewritePatchStore((state) => state.setData)
+
   const isMounted = useMounted()
 
   const saveMarkdown = (markdown: string) => {

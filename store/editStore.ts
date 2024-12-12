@@ -5,6 +5,7 @@ export interface CreatePatchData {
   name: string
   introduction: string
   vndbId: string
+  vndbFetchStatus: boolean
   alias: string[]
   released: string
 }
@@ -24,6 +25,7 @@ const initialState: CreatePatchData = {
   name: '',
   introduction: '',
   vndbId: '',
+  vndbFetchStatus: false,
   alias: [],
   released: ''
 }

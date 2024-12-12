@@ -9,11 +9,13 @@ export interface VNDBData {
   aliases: string[]
   languages: string[]
   platforms: string[]
+  description: string
 }
 
 export interface VNDB {
   title: string
   titles: Title[]
+  description: string
   aliases: string[]
   released: string
 }

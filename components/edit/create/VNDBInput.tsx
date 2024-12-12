@@ -30,45 +30,41 @@ export const VNDBInput = ({ errors }: Props) => {
       toast.success('检测完成, 该游戏并未重复!')
     }
 
-    toast.promise(
-      (async () => {
-        const vndbResponse = await fetch(`https://api.vndb.org/kana/vn`, {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json'
-          },
-          body: JSON.stringify({
-            filters: ['id', '=', data.vndbId],
-            fields: 'title, titles.title, aliases, released'
-          })
-        })
+    toast('正在从 VNDB 获取数据...')
+    const vndbResponse = await fetch(`https://api.vndb.org/kana/vn`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json'
+      },
+      body: JSON.stringify({
+        filters: ['id', '=', data.vndbId],
+        fields: 'title, titles.title, description, aliases, released'
+      })
+    })
 
-        if (!vndbResponse.ok) {
-          throw new Error('Failed to fetch data')
-        }
+    if (!vndbResponse.ok) {
+      throw new Error('Failed to fetch data')
+    }
 
-        const vndbData: VNDBResponse = await vndbResponse.json()
-        const allTitles = vndbData.results.flatMap((vn) => {
-          const titlesArray = [
-            vn.title,
-            ...vn.titles.map((t) => t.title),
-            ...vn.aliases
-          ]
-          return titlesArray
-        })
+    const vndbData: VNDBResponse = await vndbResponse.json()
+    const allTitles = vndbData.results.flatMap((vn) => {
+      const titlesArray = [
+        vn.title,
+        ...vn.titles.map((t) => t.title),
+        ...vn.aliases
+      ]
+      return titlesArray
+    })
 
-        setData({
-          ...data,
-          alias: allTitles,
-          released: vndbData.results[0].released
-        })
-      })(),
-      {
-        loading: '正在从 VNDB 获取数据',
-        success: '获取数据成功! 已为您自动添加游戏别名!',
-        error: '从 VNDB 获取数据错误'
-      }
-    )
+    setData({
+      ...data,
+      alias: allTitles,
+      introduction: vndbData.results[0].description,
+      released: vndbData.results[0].released,
+      vndbFetchStatus: !data.vndbFetchStatus
+    })
+
+    toast.success('获取数据成功! 已为您自动添加游戏别名')
   }
 
   return (

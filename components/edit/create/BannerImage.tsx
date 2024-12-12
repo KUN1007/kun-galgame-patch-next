@@ -41,6 +41,10 @@ export const BannerImage = ({ errors }: Props) => {
   return (
     <div className="space-y-2">
       <p className="text-sm">预览图片 (必须)</p>
+      <p className="text-sm text-default-500">
+        注意, <b>您不可以使用 R18 图片作为封面</b>, 如果有, 请更换图片, 打码,
+        或者裁剪
+      </p>
       {errors && <p className="text-xs text-danger-500">{errors}</p>}
 
       <KunImageCropper

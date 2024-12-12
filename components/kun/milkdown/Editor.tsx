@@ -1,3 +1,7 @@
+'use client'
+
+import { useEffect } from 'react'
+
 import { defaultValueCtx, Editor, rootCtx } from '@milkdown/core'
 import { Milkdown, useEditor } from '@milkdown/react'
 import { commonmark } from '@milkdown/preset-commonmark'
@@ -10,10 +14,12 @@ import { indent } from '@milkdown/plugin-indent'
 import { trailing } from '@milkdown/plugin-trailing'
 import { upload, uploadConfig } from '@milkdown/plugin-upload'
 import { kunUploader, kunUploadWidgetFactory } from './plugins/uploader'
+import { replaceAll } from '@milkdown/utils'
 import { automd } from '@milkdown/plugin-automd'
 
 import { KunMilkdownPluginsMenu } from './plugins/Menu'
 import { KunLoading } from '../Loading'
+import { useCreatePatchStore } from '~/store/editStore'
 import '~/styles/editor.scss'
 
 import bash from 'refractor/lang/bash'
@@ -43,6 +49,10 @@ type Props = {
 }
 
 export const KunEditor = ({ valueMarkdown, saveMarkdown }: Props) => {
+  const vndbFetchStatus = useCreatePatchStore(
+    (state) => state.getData().vndbFetchStatus
+  )
+
   const editor = useEditor((root) =>
     Editor.make()
       .config((ctx) => {
@@ -96,6 +106,10 @@ export const KunEditor = ({ valueMarkdown, saveMarkdown }: Props) => {
       .use(upload)
       .use(automd)
   )
+
+  useEffect(() => {
+    editor.get()?.action(replaceAll(valueMarkdown))
+  }, [vndbFetchStatus])
 
   return (
     <div className="min-h-64" onClick={(e) => e.stopPropagation()}>
