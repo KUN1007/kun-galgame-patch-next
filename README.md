@@ -8,7 +8,7 @@
 
 ## 网站简介
 
-鲲 Galgame 补丁是一个开源, 免费, 零门槛, 纯手写, 最先进的 Galgame 补丁资源下载站
+鲲 Galgame 补丁是一个开源, 免费, 零门槛, 纯手写, 最先进的 Galgame 补丁资源下载站, 她为全体 Galgame 玩家提供 Galgame 补丁资源下载服务
 
 下面是它的 GitHub 开源地址, 可以给我们点一个 star 支持哦
 
@@ -30,7 +30,7 @@
 
 以及对现代 Web 开发技术的研究, 例如 Next.js 15, React 19, Node.js, AWS S3 API, S3 Object Storage, Microsoft Graph, NextUI, Prisma ORM, Argon2, BLACK3, Framer Motion, Redis, Sharp, Unified.js, Milkdown, Zod, Zustand, PM2, Cloudflare R2, Cloudflare Worker, Cloudflare CDN, Cloudflare Tunnel 等等
 
-对以上 Web 开发技术感兴趣的朋友们, 可以加入我们的 Telegram 开发群组: [https://t.me/KUNForum](https://t.me/KUNForum)
+对以上 Web 开发技术感兴趣的朋友们, 可以加入本文末尾的 Telegram 开发群组
 
 ### 免费
 
