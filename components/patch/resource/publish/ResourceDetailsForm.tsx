@@ -6,8 +6,7 @@ import {
   SUPPORTED_LANGUAGE_MAP,
   SUPPORTED_PLATFORM,
   SUPPORTED_PLATFORM_MAP,
-  SUPPORTED_TYPE,
-  SUPPORTED_TYPE_MAP
+  resourceTypes
 } from '~/constants/resource'
 import { ControlType, ErrorType } from '../share'
 
@@ -39,9 +38,14 @@ export const ResourceDetailsForm = ({
             isInvalid={!!errors.type}
             errorMessage={errors.type?.message}
           >
-            {SUPPORTED_TYPE.map((type) => (
-              <SelectItem key={type} value={type}>
-                {SUPPORTED_TYPE_MAP[type]}
+            {resourceTypes.map((type) => (
+              <SelectItem key={type.value} textValue={type.label}>
+                <div className="flex flex-col">
+                  <span className="text">{type.label}</span>
+                  <span className="text-small text-default-500">
+                    {type.description}
+                  </span>
+                </div>
               </SelectItem>
             ))}
           </Select>

@@ -5,7 +5,8 @@ import { Controller } from 'react-hook-form'
 import { Select, SelectItem } from '@nextui-org/select'
 import { patchResourceCreateSchema } from '~/validations/patch'
 import { useUserStore } from '~/store/providers/user'
-import { ControlType, ErrorType } from '../share'
+import { storageTypes } from '~/constants/resource'
+import type { ControlType, ErrorType } from '../share'
 
 export type ResourceFormData = z.infer<typeof patchResourceCreateSchema>
 
@@ -13,24 +14,6 @@ interface Props {
   control: ControlType
   errors: ErrorType
 }
-
-const storageTypes = [
-  {
-    value: 's3',
-    label: '对象存储 (<100MB, 创作者可用)',
-    description: '此选项适合 <100MB 的补丁, 稳定, 永远不会失效过期'
-  },
-  {
-    value: 'onedrive',
-    label: 'OneDrive (>100MB, <1GB, 创作者可用)',
-    description: '此选项适合 >100MB 且 <1GB 的补丁, 较稳定, 我们还在开发中...'
-  },
-  {
-    value: 'user',
-    label: '自定义链接 (>100MB)',
-    description: '此选项适合 >100MB 的补丁, 这需要您自行提供下载链接'
-  }
-]
 
 export const ResourceTypeSelect = ({ control, errors }: Props) => {
   const user = useUserStore((state) => state.user)
