@@ -139,7 +139,9 @@ export const RegisterForm = () => {
         onValueChange={setIsAgree}
       >
         <span>我同意</span>
-        <Link className="ml-1">鲲 Galgame 补丁用户协议</Link>
+        <Link className="ml-1" href="/about/notice/privacy">
+          鲲 Galgame 补丁用户协议
+        </Link>
       </Checkbox>
 
       <Button
