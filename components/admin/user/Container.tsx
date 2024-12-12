@@ -78,7 +78,7 @@ export const User = ({ initialUsers, total }: Props) => {
                   showControls
                   color="primary"
                   page={page}
-                  total={total}
+                  total={Math.ceil(total / 100)}
                   onChange={(page) => setPage(page)}
                 />
               )}
