@@ -20,7 +20,13 @@ import toast from 'react-hot-toast'
 export const AvatarCrop = () => {
   const { user, setUser } = useUserStore((state) => state)
   const { isOpen, onOpen, onClose } = useDisclosure()
-  const [crop, setCrop] = useState<Crop>()
+  const [crop, setCrop] = useState<Crop>({
+    unit: '%',
+    width: 50,
+    height: 50,
+    x: 25,
+    y: 25
+  })
   const [image, setImage] = useState<string | null>(null)
   const [croppedImage, setCroppedImage] = useState<string | null>(null)
   const [loading, setLoading] = useState(false)
