@@ -14,11 +14,12 @@ import type { PatchComment } from '~/types/api/comment'
 
 interface Props {
   initialComments: PatchComment[]
+  initialTotal: number
 }
 
-export const CardContainer = ({ initialComments }: Props) => {
+export const CardContainer = ({ initialComments, initialTotal }: Props) => {
   const [comments, setComments] = useState<PatchComment[]>(initialComments)
-  const [total, setTotal] = useState(0)
+  const [total, setTotal] = useState(initialTotal)
   const [loading, setLoading] = useState(false)
   const [sortField, setSortField] = useState<SortOption>('created')
   const [sortOrder, setSortOrder] = useState<SortDirection>('desc')

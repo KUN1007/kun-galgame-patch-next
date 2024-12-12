@@ -82,7 +82,7 @@ export const getHomeData = async () => {
     size: resource.size,
     type: resource.type,
     language: resource.language,
-    note: resource.note,
+    note: resource.note.slice(0, 233),
     platform: resource.platform,
     likeCount: resource._count.like_by,
     download: resource.download,

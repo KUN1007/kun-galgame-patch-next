@@ -14,11 +14,12 @@ import type { PatchResource } from '~/types/api/resource'
 
 interface Props {
   initialResources: PatchResource[]
+  initialTotal: number
 }
 
-export const CardContainer = ({ initialResources }: Props) => {
+export const CardContainer = ({ initialResources, initialTotal }: Props) => {
   const [resources, setResources] = useState<PatchResource[]>(initialResources)
-  const [total, setTotal] = useState(0)
+  const [total, setTotal] = useState(initialTotal)
   const [loading, setLoading] = useState(false)
   const [sortField, setSortField] = useState<SortOption>('created')
   const [sortOrder, setSortOrder] = useState<SortDirection>('desc')

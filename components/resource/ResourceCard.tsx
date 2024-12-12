@@ -43,7 +43,9 @@ export const ResourceCard = ({ resource }: Props) => {
         </h2>
 
         {resource.note && (
-          <p className="text-small text-default-500">{resource.note}</p>
+          <p className="break-all whitespace-pre-wrap text-small text-default-500">
+            {resource.note}
+          </p>
         )}
 
         <KunPatchAttribute

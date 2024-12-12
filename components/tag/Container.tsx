@@ -12,12 +12,13 @@ import type { Tag as TagType } from '~/types/api/tag'
 
 interface Props {
   initialTags: TagType[]
+  initialTotal: number
 }
 
-export const Container = ({ initialTags }: Props) => {
+export const Container = ({ initialTags, initialTotal }: Props) => {
   const [tags, setTags] = useState<TagType[]>(initialTags)
   const [page, setPage] = useState(1)
-  const [total, setTotal] = useState(0)
+  const [total, setTotal] = useState(initialTotal)
   const [loading, setLoading] = useState(false)
   const isMounted = useMounted()
 

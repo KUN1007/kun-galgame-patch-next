@@ -7,7 +7,7 @@ import type { Metadata } from 'next'
 export const metadata: Metadata = kunMetadata
 
 export default async function Kun() {
-  const { comments } = await kunServerFetchGet<{
+  const { comments, total } = await kunServerFetchGet<{
     comments: PatchComment[]
     total: number
   }>('/comment', {
@@ -17,5 +17,5 @@ export default async function Kun() {
     limit: 50
   })
 
-  return <CardContainer initialComments={comments} />
+  return <CardContainer initialComments={comments} initialTotal={total} />
 }

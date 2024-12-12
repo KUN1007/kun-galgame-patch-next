@@ -13,11 +13,12 @@ import type { SortDirection, SortOption } from './_sort'
 
 interface Props {
   initialGalgames: GalgameCard[]
+  initialTotal: number
 }
 
-export const CardContainer = ({ initialGalgames }: Props) => {
+export const CardContainer = ({ initialGalgames, initialTotal }: Props) => {
   const [galgames, setGalgames] = useState<GalgameCard[]>(initialGalgames)
-  const [total, setTotal] = useState(0)
+  const [total, setTotal] = useState(initialTotal)
   const [loading, setLoading] = useState(false)
   const [selectedType, setSelectedType] = useState<string>('all')
   const [sortField, setSortField] = useState<SortOption>('created')
@@ -60,7 +61,11 @@ export const CardContainer = ({ initialGalgames }: Props) => {
 
       <FilterBar
         selectedType={selectedType}
-        setSelectedType={setSelectedType}
+        setSelectedType={(key) => {
+          if (key) {
+            setSelectedType(key)
+          }
+        }}
         sortField={sortField}
         setSortField={setSortField}
         sortOrder={sortOrder}

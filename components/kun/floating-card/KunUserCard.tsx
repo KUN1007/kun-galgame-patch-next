@@ -38,7 +38,7 @@ export const KunUserCard = ({ uid }: UserCardProps) => {
                 src: user.avatar,
                 isBordered: true,
                 color: 'secondary',
-                className: 'w-12 h-12'
+                className: 'w-12 h-12 shrink-0'
               }}
               className="mb-2"
             />

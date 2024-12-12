@@ -7,7 +7,7 @@ import type { PatchResource } from '~/types/api/resource'
 export const metadata: Metadata = kunMetadata
 
 export default async function Kun() {
-  const { resources } = await kunServerFetchGet<{
+  const { resources, total } = await kunServerFetchGet<{
     resources: PatchResource[]
     total: number
   }>('/resource', {
@@ -17,5 +17,5 @@ export default async function Kun() {
     limit: 50
   })
 
-  return <CardContainer initialResources={resources} />
+  return <CardContainer initialResources={resources} initialTotal={total} />
 }

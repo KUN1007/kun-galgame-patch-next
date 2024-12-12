@@ -6,7 +6,7 @@ import type { Metadata } from 'next'
 export const metadata: Metadata = kunMetadata
 
 export default async function Kun() {
-  const { galgames } = await kunServerFetchGet<{
+  const { galgames, total } = await kunServerFetchGet<{
     galgames: GalgameCard[]
     total: number
   }>('/galgame', {
@@ -17,5 +17,5 @@ export default async function Kun() {
     limit: 24
   })
 
-  return <CardContainer initialGalgames={galgames} />
+  return <CardContainer initialGalgames={galgames} initialTotal={total} />
 }
