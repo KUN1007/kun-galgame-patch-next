@@ -8,8 +8,20 @@ import { uploadPatchBanner } from './_upload'
 export const updatePatchBanner = async (
   image: ArrayBuffer,
   patchId: number,
-  uid: number
+  currentUserUid: number,
+  currentUserRole: number
 ) => {
+  const patch = await prisma.patch.findUnique({
+    where: { id: patchId }
+  })
+  if (!patch) {
+    return '这个 Galgame 不存在'
+  }
+
+  if (currentUserUid !== patch.user_id && currentUserRole < 3) {
+    return '您没有权限更改 Galgame 的预览图片, 仅限 Galgame 发布者或管理员可以更改'
+  }
+
   const res = await uploadPatchBanner(image, patchId)
   if (!res) {
     return '上传图片错误, 未知错误'
@@ -23,7 +35,7 @@ export const updatePatchBanner = async (
       action: 'update',
       type: 'banner',
       content: '',
-      user_id: uid,
+      user_id: currentUserUid,
       patch_id: patchId
     }
   })
@@ -43,6 +55,11 @@ export const POST = async (req: NextRequest) => {
 
   const image = await new Response(input.image)?.arrayBuffer()
 
-  const response = await updatePatchBanner(image, input.patchId, payload.uid)
+  const response = await updatePatchBanner(
+    image,
+    input.patchId,
+    payload.uid,
+    payload.role
+  )
   return NextResponse.json(response)
 }

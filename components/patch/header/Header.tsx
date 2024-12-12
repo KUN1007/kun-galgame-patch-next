@@ -21,7 +21,7 @@ export const PatchHeader = ({ patch }: PatchHeaderProps) => {
 
   return (
     <>
-      {user.uid === patch.user.id && (
+      {(user.uid === patch.user.id || user.role > 2) && (
         <Button
           color="secondary"
           variant="bordered"

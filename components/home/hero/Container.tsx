@@ -3,6 +3,7 @@ import { KunTypedText } from './TypedText'
 import { Download } from 'lucide-react'
 import { kunMoyuMoe } from '~/config/moyu-moe'
 import { GitHub } from '~/components/kun/icons/GitHub'
+import Link from 'next/link'
 
 export const HeroContainer = () => {
   return (
@@ -15,14 +16,14 @@ export const HeroContainer = () => {
       </div>
       <div className="flex gap-4">
         <Button
-          as="a"
-          href="/galgame"
+          as={Link}
+          href="/about"
           color="primary"
           variant="shadow"
           size="lg"
           startContent={<Download />}
         >
-          开始下载
+          下载方式
         </Button>
         <Button
           as="a"
