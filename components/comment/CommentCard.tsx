@@ -1,11 +1,8 @@
-'use client'
-
 import { Card, CardBody } from '@nextui-org/card'
 import { KunAvatar } from '~/components/kun/floating-card/KunAvatar'
 import { ThumbsUp } from 'lucide-react'
 import { formatDate } from '~/utils/time'
 import Link from 'next/link'
-import { useRouter } from 'next-nprogress-bar'
 import type { PatchComment } from '~/types/api/comment'
 
 interface Props {
@@ -13,12 +10,11 @@ interface Props {
 }
 
 export const CommentCard = ({ comment }: Props) => {
-  const router = useRouter()
-
   return (
     <Card
       isPressable
-      onPress={() => router.push(`/patch/${comment.patchId}/comment`)}
+      as={Link}
+      href={`/patch/${comment.patchId}/comment`}
       className="w-full"
     >
       <CardBody>
@@ -35,12 +31,7 @@ export const CommentCard = ({ comment }: Props) => {
               <h2 className="font-semibold">{comment.user.name}</h2>
               <span className="text-small text-default-500">
                 评论在{' '}
-                <Link
-                  className="text-primary-500"
-                  href={`/patch/${comment.patchId}/comment`}
-                >
-                  {comment.patchName}
-                </Link>
+                <span className="text-primary-500">{comment.patchName}</span>
               </span>
             </div>
             <p className="mt-1">{comment.content}</p>

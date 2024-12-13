@@ -1,11 +1,9 @@
-'use client'
-
+import Link from 'next/link'
 import { Card, CardBody } from '@nextui-org/card'
 import { Chip } from '@nextui-org/chip'
 import { Download, Heart } from 'lucide-react'
 import { formatDistanceToNow } from '~/utils/formatDistanceToNow'
 import { KunPatchAttribute } from '~/components/kun/PatchAttribute'
-import { useRouter } from 'next-nprogress-bar'
 import { KunUser } from '../kun/floating-card/KunUser'
 import type { PatchResource } from '~/types/api/resource'
 
@@ -14,13 +12,12 @@ interface Props {
 }
 
 export const ResourceCard = ({ resource }: Props) => {
-  const router = useRouter()
-
   return (
     <Card
-      className="w-full"
       isPressable
-      onPress={() => router.push(`/patch/${resource.patchId}/resource`)}
+      as={Link}
+      href={`/patch/${resource.patchId}/resource`}
+      className="w-full"
     >
       <CardBody className="space-y-2">
         <div className="flex">

@@ -1,6 +1,8 @@
+'use client'
+
 import { Tooltip } from '@nextui-org/tooltip'
 import { User } from '@nextui-org/user'
-import Link from 'next/link'
+import { useRouter } from 'next-nprogress-bar'
 import { KunUserCard } from './KunUserCard'
 import type { UserProps } from '@nextui-org/user'
 
@@ -10,6 +12,8 @@ interface KunUserProps {
 }
 
 export const KunUser = ({ user, userProps }: KunUserProps) => {
+  const router = useRouter()
+
   const { avatarProps, ...restUser } = userProps
   const { alt, name, ...restAvatar } = avatarProps!
   const username = name?.charAt(0).toUpperCase() ?? '杂鱼'
@@ -25,18 +29,22 @@ export const KunUser = ({ user, userProps }: KunUserProps) => {
         content: ['bg-background/70 backdrop-blur-md']
       }}
     >
-      <Link href={`/user/${user.id}/resource`} className="block w-fit">
-        <User
-          {...restUser}
-          avatarProps={{
-            name: username,
-            alt: altString,
-            className: 'shrink-0',
-            ...restAvatar
-          }}
-          className="cursor-pointer"
-        />
-      </Link>
+      <User
+        {...restUser}
+        onClick={(event) => {
+          event.preventDefault()
+          event.stopPropagation()
+          router.push(`/user/${user.id}/resource`)
+        }}
+        avatarProps={{
+          name: username,
+          alt: altString,
+          className:
+            'transition-transform duration-200 cursor-pointer shrink-0 hover:scale-110',
+          ...restAvatar
+        }}
+        className="cursor-pointer"
+      />
     </Tooltip>
   )
 }

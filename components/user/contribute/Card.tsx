@@ -1,8 +1,6 @@
-'use client'
-
 import { Card, CardBody } from '@nextui-org/card'
 import { formatDate } from '~/utils/time'
-import { useRouter } from 'next-nprogress-bar'
+import Link from 'next/link'
 import type { UserContribute } from '~/types/api/user'
 
 interface Props {
@@ -10,13 +8,12 @@ interface Props {
 }
 
 export const UserContributeCard = ({ contribute }: Props) => {
-  const router = useRouter()
-
   return (
     <Card
-      className="w-full"
       isPressable
-      onPress={() => router.push(`/patch/${contribute.patchId}/history`)}
+      as={Link}
+      href={`/patch/${contribute.patchId}/history`}
+      className="w-full"
     >
       <CardBody className="p-4 space-y-3">
         <h2 className="text-lg font-semibold transition-colors line-clamp-2 hover:text-primary-500">

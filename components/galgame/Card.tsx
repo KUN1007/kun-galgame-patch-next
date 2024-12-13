@@ -1,10 +1,10 @@
 'use client'
 
+import { useState } from 'react'
 import { Card, CardBody, CardFooter, CardHeader } from '@nextui-org/card'
 import { Image } from '@nextui-org/image'
 import { KunCardStats } from '~/components/kun/CardStats'
-import { useRouter } from 'next-nprogress-bar'
-import { useState } from 'react'
+import Link from 'next/link'
 import { KunPatchAttribute } from '~/components/kun/PatchAttribute'
 
 interface Props {
@@ -13,13 +13,13 @@ interface Props {
 
 export const GalgameCard = ({ patch }: Props) => {
   const [imageLoaded, setImageLoaded] = useState(false)
-  const router = useRouter()
 
   return (
     <Card
-      className="w-full"
       isPressable
-      onPress={() => router.push(`/patch/${patch.id}/introduction`)}
+      as={Link}
+      href={`/patch/${patch.id}/introduction`}
+      className="w-full"
     >
       <CardHeader className="p-0">
         <div className="relative w-full mx-auto overflow-hidden text-center rounded-t-lg opacity-90">

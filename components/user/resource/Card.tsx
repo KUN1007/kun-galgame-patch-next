@@ -1,10 +1,8 @@
-'use client'
-
 import { Chip } from '@nextui-org/chip'
 import { Card, CardBody } from '@nextui-org/card'
 import { Image } from '@nextui-org/image'
 import { formatDistanceToNow } from '~/utils/formatDistanceToNow'
-import { useRouter } from 'next-nprogress-bar'
+import Link from 'next/link'
 import { KunPatchAttribute } from '~/components/kun/PatchAttribute'
 
 import type { UserResource as UserResourceType } from '~/types/api/user'
@@ -14,13 +12,12 @@ interface Props {
 }
 
 export const UserResourceCard = ({ resource }: Props) => {
-  const router = useRouter()
-
   return (
     <Card
-      className="w-full"
       isPressable
-      onPress={() => router.push(`/patch/${resource.patchId}/resource`)}
+      as={Link}
+      href={`/patch/${resource.patchId}/resource`}
+      className="w-full"
     >
       <CardBody className="p-4">
         <div className="flex flex-col gap-4 sm:flex-row">

@@ -1,5 +1,4 @@
-'use client'
-
+import Link from 'next/link'
 import { Card, CardBody } from '@nextui-org/card'
 import { Avatar } from '@nextui-org/avatar'
 import { Chip } from '@nextui-org/chip'
@@ -14,7 +13,6 @@ import {
   ThumbsUp,
   Users
 } from 'lucide-react'
-import { useRouter } from 'next-nprogress-bar'
 import { MESSAGE_TYPE_MAP } from '~/constants/message'
 import { KunAvatar } from '~/components/kun/floating-card/KunAvatar'
 import type { Message } from '~/types/api/message'
@@ -61,16 +59,10 @@ const getCardRoute = (msg: Message) => {
 }
 
 export const MessageCard = ({ msg }: Props) => {
-  const router = useRouter()
   const href = getCardRoute(msg)
 
   return (
-    <Card
-      key={msg.id}
-      isPressable
-      onPress={() => router.push(href)}
-      className="w-full"
-    >
+    <Card isPressable as={Link} href={href} className="w-full">
       <CardBody className="flex flex-row items-center gap-4">
         {msg.sender ? (
           <KunAvatar

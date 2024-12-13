@@ -1,25 +1,25 @@
 'use client'
 
 import { useState } from 'react'
-import { useRouter } from 'next-nprogress-bar'
 import { Card, CardBody, CardFooter } from '@nextui-org/react'
 import { Calendar, Type } from 'lucide-react'
 import { Image } from '@nextui-org/image'
 import { KunPostMetadata } from '~/lib/mdx/types'
 import { formatDistanceToNow } from '~/utils/formatDistanceToNow'
+import Link from 'next/link'
 
 interface Props {
   post: KunPostMetadata
 }
 
 export const KunAboutCard = ({ post }: Props) => {
-  const router = useRouter()
   const [imageLoaded, setImageLoaded] = useState(false)
 
   return (
     <Card
       isPressable
-      onPress={() => router.push(`/about/${post.slug}`)}
+      as={Link}
+      href={`/about/${post.slug}`}
       className="w-full transition-transform duration-200 hover:scale-[1.02]"
     >
       <CardBody className="p-4 space-y-3">
