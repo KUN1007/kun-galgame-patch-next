@@ -59,7 +59,11 @@ export const searchGalgame = async (input: z.infer<typeof searchSchema>) => {
     }
   })
 
-  return { galgames: patches.flat(), total }
+  const uniqueGalgames = Array.from(
+    new Set(patches.flat().map((patch) => patch.id))
+  ).map((id) => patches.flat().find((patch) => patch.id === id))
+
+  return { galgames: uniqueGalgames, total }
 }
 
 export const POST = async (req: NextRequest) => {
