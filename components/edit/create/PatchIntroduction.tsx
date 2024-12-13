@@ -13,7 +13,7 @@ export const PatchIntroduction = ({ errors }: Props) => {
 
   return (
     <div className="space-y-2">
-      <p className="text-sm">游戏介绍 (必须, 十个字符以上)</p>
+      <h2 className="text-xl">四、游戏介绍</h2>
       {errors && <p className="text-xs text-danger-500">{errors}</p>}
       <p className="text-sm text-default-500">
         自动获取的英语介绍仅供参考, 如果您通过搜索获取到游戏的简体中文介绍,

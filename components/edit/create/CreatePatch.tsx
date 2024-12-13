@@ -8,7 +8,6 @@ import { AliasInput } from './AliasInput'
 import { BannerImage } from './BannerImage'
 import { PublishButton } from './PublishButton'
 import { PatchIntroduction } from './PatchIntroduction'
-import { KunTextDivider } from '~/components/kun/TextDivider'
 import type { CreatePatchRequestData } from '~/store/editStore'
 
 export const CreatePatch = () => {
@@ -36,25 +35,25 @@ export const CreatePatch = () => {
           </div>
         </CardHeader>
         <CardBody className="mt-4 space-y-12">
-          <Input
-            isRequired
-            variant="underlined"
-            labelPlacement="outside"
-            label="游戏名称"
-            placeholder="输入游戏名称, 这会作为游戏的标题"
-            value={data.name}
-            onChange={(e) => setData({ ...data, name: e.target.value })}
-            isInvalid={!!errors.name}
-            errorMessage={errors.name}
-          />
-
-          <PatchIntroduction errors={errors.banner} />
+          <VNDBInput errors={errors.vndbId} />
 
           <BannerImage errors={errors.banner} />
 
-          <KunTextDivider text="非必须字段" />
+          <div>
+            <h2 className="text-xl">三、游戏名称</h2>
+            <Input
+              isRequired
+              variant="underlined"
+              labelPlacement="outside"
+              placeholder="输入游戏名称, 这会作为游戏的标题"
+              value={data.name}
+              onChange={(e) => setData({ ...data, name: e.target.value })}
+              isInvalid={!!errors.name}
+              errorMessage={errors.name}
+            />
+          </div>
 
-          <VNDBInput errors={errors.vndbId} />
+          <PatchIntroduction errors={errors.banner} />
 
           <AliasInput errors={errors.alias} />
 

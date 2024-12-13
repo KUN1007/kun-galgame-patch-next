@@ -35,3 +35,5 @@ export const isValidMailConfirmCode = (code: string) => {
 }
 
 export const ResourceSizeRegex: RegExp = /^.{0,107}(mb|gb)$/i
+
+export const VNDBRegex: RegExp = /^v\d{1,6}$/

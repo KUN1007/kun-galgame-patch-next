@@ -4,6 +4,7 @@ import { Button, Input, Link } from '@nextui-org/react'
 import { useCreatePatchStore } from '~/store/editStore'
 import toast from 'react-hot-toast'
 import { kunFetchGet } from '~/utils/kunFetch'
+import { VNDBRegex } from '~/utils/validate'
 import type { VNDBResponse } from '../VNDB'
 
 interface Props {
@@ -14,8 +15,7 @@ export const VNDBInput = ({ errors }: Props) => {
   const { data, setData } = useCreatePatchStore()
 
   const handleCheckDuplicate = async () => {
-    const regex = new RegExp(/^v\d{1,6}$/)
-    if (!regex.test(data.vndbId)) {
+    if (!VNDBRegex.test(data.vndbId)) {
       toast.error('您输入的 VNDB ID 格式无效')
       return
     }
@@ -69,10 +69,10 @@ export const VNDBInput = ({ errors }: Props) => {
 
   return (
     <div className="flex flex-col w-full space-y-2">
+      <h2 className="text-xl">一、VNDB ID</h2>
       <Input
         variant="underlined"
         labelPlacement="outside"
-        label="VNDB ID"
         placeholder="请输入 VNDB ID, 例如 v19658"
         value={data.vndbId}
         onChange={(e) => setData({ ...data, vndbId: e.target.value })}
@@ -94,6 +94,16 @@ export const VNDBInput = ({ errors }: Props) => {
           (如果游戏发生重复, 我们会通知您自行删除)
         </b>
       </p>
+      <Link
+        isExternal
+        target="_blank"
+        className="flex"
+        underline="hover"
+        href="https://www.kungal.com/zh-cn/topic/1040"
+        size="sm"
+      >
+        如何通过 VNDB 检索 Galgame?
+      </Link>
       <div className="flex items-center text-sm">
         {data.vndbId && (
           <Button
@@ -106,17 +116,6 @@ export const VNDBInput = ({ errors }: Props) => {
           </Button>
         )}
       </div>
-
-      <Link
-        isExternal
-        target="_blank"
-        className="flex"
-        underline="hover"
-        href="https://www.kungal.com/zh-cn/topic/1040"
-        size="sm"
-      >
-        如何通过 VNDB 检索 Galgame?
-      </Link>
     </div>
   )
 }

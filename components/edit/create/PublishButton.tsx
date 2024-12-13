@@ -4,11 +4,13 @@ import { useState } from 'react'
 import { Button } from '@nextui-org/react'
 import localforage from 'localforage'
 import { useCreatePatchStore } from '~/store/editStore'
+import { useUserStore } from '~/store/providers/user'
 import toast from 'react-hot-toast'
 import { kunFetchFormData } from '~/utils/kunFetch'
 import { kunErrorHandler } from '~/utils/kunErrorHandler'
 import { patchCreateSchema } from '~/validations/edit'
 import { useRouter } from 'next-nprogress-bar'
+import { VNDBRegex } from '~/utils/validate'
 import type { Dispatch, SetStateAction } from 'react'
 import type { CreatePatchRequestData } from '~/store/editStore'
 
@@ -21,6 +23,7 @@ interface Props {
 export const PublishButton = ({ setErrors }: Props) => {
   const router = useRouter()
   const { data, resetData } = useCreatePatchStore()
+  const user = useUserStore((state) => state.user)
 
   const [creating, setCreating] = useState(false)
   const handleSubmit = async () => {
@@ -28,6 +31,10 @@ export const PublishButton = ({ setErrors }: Props) => {
       await localforage.getItem('kun-patch-banner')
     if (!localeBannerBlob) {
       toast.error('未检测到预览图片')
+      return
+    }
+    if (user.role < 2 && !VNDBRegex.test(data.vndbId)) {
+      toast.error('为防止恶意发布, 仅限创作者可以不填写 VNDB ID 发布游戏')
       return
     }
 

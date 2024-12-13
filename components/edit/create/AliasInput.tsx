@@ -35,10 +35,10 @@ export const AliasInput = ({ errors }: Props) => {
 
   return (
     <div className="space-y-2">
+      <h2 className="text-xl">五、游戏别名</h2>
       <div className="flex gap-2">
         <Input
           labelPlacement="outside"
-          label="别名"
           placeholder="输入后点击加号添加"
           value={newAlias}
           onChange={(e) => setNewAlias(e.target.value)}

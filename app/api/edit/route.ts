@@ -4,6 +4,7 @@ import { verifyHeaderCookie } from '~/middleware/_verifyHeaderCookie'
 import { patchCreateSchema, patchUpdateSchema } from '~/validations/edit'
 import { createPatch } from './create'
 import { updatePatch } from './update'
+import { VNDBRegex } from '~/utils/validate'
 
 const checkAliasValid = (aliasString: string) => {
   const aliasArray = JSON.parse(aliasString) as string[]
@@ -29,6 +30,11 @@ export const POST = async (req: NextRequest) => {
   const payload = await verifyHeaderCookie(req)
   if (!payload) {
     return NextResponse.json('用户未登录')
+  }
+  if (payload.role < 2 && !VNDBRegex.test(input.vndbId ?? '')) {
+    return NextResponse.json(
+      '为防止恶意发布, 仅限创作者可以不填写 VNDB ID 发布游戏'
+    )
   }
 
   const { alias, banner, ...rest } = input

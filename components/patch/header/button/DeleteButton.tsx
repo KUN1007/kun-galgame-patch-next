@@ -39,7 +39,7 @@ export const DeleteButton = ({ patch }: Props) => {
       toast.success('删除 Galgame 成功')
       router.push('/')
     }
-
+    onClose()
     setDeleting(false)
   }
 
