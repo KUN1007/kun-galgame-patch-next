@@ -9,6 +9,7 @@ import { FilterBar } from './FilterBar'
 import { useMounted } from '~/hooks/useMounted'
 import { KunLoading } from '~/components/kun/Loading'
 import { KunHeader } from '../kun/Header'
+import { useRouter, useSearchParams } from 'next/navigation'
 import type { SortDirection, SortOption } from './_sort'
 
 interface Props {
@@ -24,7 +25,9 @@ export const CardContainer = ({ initialGalgames, initialTotal }: Props) => {
   const [sortField, setSortField] = useState<SortOption>('created')
   const [sortOrder, setSortOrder] = useState<SortDirection>('desc')
   const isMounted = useMounted()
-  const [page, setPage] = useState(1)
+  const router = useRouter()
+  const searchParams = useSearchParams()
+  const [page, setPage] = useState(Number(searchParams.get('page')) || 1)
 
   const fetchPatches = async () => {
     setLoading(true)
@@ -51,6 +54,14 @@ export const CardContainer = ({ initialGalgames, initialTotal }: Props) => {
     }
     fetchPatches()
   }, [sortField, sortOrder, selectedType, page])
+
+  const handlePageChange = (newPage: number) => {
+    setPage(newPage)
+    window.scrollTo(0, 0)
+    const params = new URLSearchParams(window.location.search)
+    params.set('page', newPage.toString())
+    router.push(`?${params.toString()}`)
+  }
 
   return (
     <div className="container mx-auto my-4 space-y-6">
@@ -87,7 +98,7 @@ export const CardContainer = ({ initialGalgames, initialTotal }: Props) => {
           <Pagination
             total={Math.ceil(total / 24)}
             page={page}
-            onChange={(newPage: number) => setPage(newPage)}
+            onChange={handlePageChange}
             showControls
             color="primary"
             size="lg"
