@@ -11,7 +11,7 @@ export const patchCreateSchema = z.object({
     .max(100007, { message: '游戏介绍最多 100007 字' }),
   alias: z
     .string()
-    .max(2333, { message: '别名字符串长度不可超过 3000 个字符' }),
+    .max(2333, { message: '别名字符串总长度不可超过 3000 个字符' }),
   released: z
     .string({ message: '发售日期为空, 请点击 检查重复 以从 VNDB 获取数据' })
     .optional()
@@ -31,7 +31,7 @@ export const patchUpdateSchema = z.object({
         .string()
         .trim()
         .min(1, { message: '单个别名至少一个字符' })
-        .max(107, { message: '单个别名至多 107 个字符' })
+        .max(500, { message: '单个别名至多 500 个字符' })
     )
     .max(30, { message: '您最多使用 30 个别名' })
     .optional()

@@ -11,9 +11,9 @@ const checkAliasValid = (aliasString: string) => {
   if (aliasArray.length > 30) {
     return '您最多使用 30 个别名'
   }
-  const maxLength = aliasArray.some((alias) => alias.length > 107)
+  const maxLength = aliasArray.some((alias) => alias.length > 500)
   if (maxLength) {
-    return '单个别名的长度不可超过 107 个字符'
+    return '单个别名的长度不可超过 500 个字符'
   }
   const minLength = aliasArray.some((alias) => alias.trim.length)
   if (minLength) {
