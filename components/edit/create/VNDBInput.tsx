@@ -70,7 +70,6 @@ export const VNDBInput = ({ errors }: Props) => {
   return (
     <div className="flex flex-col w-full space-y-2">
       <Input
-        isRequired
         variant="underlined"
         labelPlacement="outside"
         label="VNDB ID"
@@ -84,6 +83,16 @@ export const VNDBInput = ({ errors }: Props) => {
         提示: VNDB ID 需要 VNDB 官网 (vndb.org)
         获取，当进入对应游戏的页面，游戏页面的 URL (形如
         https://vndb.org/v19658) 中的 v19658 就是 VNDB ID
+      </p>
+      <p className="text-sm text-default-500">
+        我们强烈建议您填写 VNDB ID 以确保游戏不重复, 获取 VNDB ID 将会{' '}
+        <b>覆盖您当前编写的介绍</b>, 并且自动生成游戏发售日期与游戏别名
+      </p>
+      <p className="text-sm text-default-500">
+        <b>
+          您可以不填写 VNDB ID 发布游戏, 但是您需要自行检查游戏是否重复
+          (如果游戏发生重复, 我们会通知您自行删除)
+        </b>
       </p>
       <div className="flex items-center text-sm">
         {data.vndbId && (

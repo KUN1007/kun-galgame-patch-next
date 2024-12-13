@@ -12,6 +12,7 @@ import { kunErrorHandler } from '~/utils/kunErrorHandler'
 import { useRouter } from 'next-nprogress-bar'
 import toast from 'react-hot-toast'
 import { KunCaptchaModal } from '~/components/kun/auth/CaptchaModal'
+import { KunTextDivider } from '~/components/kun/TextDivider'
 import type { UserState } from '~/store/userStore'
 
 type LoginFormData = z.infer<typeof loginSchema>
@@ -100,11 +101,7 @@ export const LoginForm = () => {
         onSuccess={handleCaptchaSuccess}
       />
 
-      <div className="flex items-center justify-center overflow-hidden w-72">
-        <Divider className="my-8" />
-        <span className="mx-4">或</span>
-        <Divider className="my-8" />
-      </div>
+      <KunTextDivider text="或" />
 
       <Button
         color="primary"

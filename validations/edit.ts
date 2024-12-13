@@ -3,11 +3,11 @@ import { z } from 'zod'
 export const patchCreateSchema = z.object({
   banner: z.any(),
   name: z.string().trim().min(1, { message: '游戏名称是必填项' }),
-  vndbId: z.string().regex(/^v\d{1,6}$/, { message: 'VNDB ID 格式无效' }),
+  vndbId: z.string().max(10).optional(),
   introduction: z
     .string()
     .trim()
-    .min(30, { message: '游戏介绍是必填项, 最少 30 个字符' })
+    .min(10, { message: '游戏介绍是必填项, 最少 10 个字符' })
     .max(100007, { message: '游戏介绍最多 100007 字' }),
   alias: z
     .string()
@@ -23,7 +23,7 @@ export const patchUpdateSchema = z.object({
   introduction: z
     .string()
     .trim()
-    .min(30, { message: '游戏介绍是必填项, 最少 30 个字符' })
+    .min(10, { message: '游戏介绍是必填项, 最少 10 个字符' })
     .max(100007, { message: '游戏介绍最多 100007 字' }),
   alias: z
     .array(

@@ -18,7 +18,7 @@ export const createPatch = async (
       const patch = await prisma.patch.create({
         data: {
           name,
-          vndb_id: vndbId,
+          vndb_id: vndbId ?? '',
           alias: alias ? alias : [],
           introduction,
           user_id: uid,
@@ -29,13 +29,13 @@ export const createPatch = async (
 
       const newId = patch.id
 
-      const res = await uploadPatchBanner(bannerArrayBuffer, newId)
-      if (!res) {
-        return '上传图片错误, 未知错误'
-      }
-      if (typeof res === 'string') {
-        return res
-      }
+      // const res = await uploadPatchBanner(bannerArrayBuffer, newId)
+      // if (!res) {
+      //   return '上传图片错误, 未知错误'
+      // }
+      // if (typeof res === 'string') {
+      //   return res
+      // }
 
       const imageLink = `${process.env.KUN_VISUAL_NOVEL_IMAGE_BED_URL}/patch/${newId}/banner/banner.avif`
 

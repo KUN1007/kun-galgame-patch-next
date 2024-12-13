@@ -13,6 +13,7 @@ import { redirect } from 'next/navigation'
 import toast from 'react-hot-toast'
 import { EmailVerification } from '~/components/kun/verification-code/Code'
 import { useRouter } from 'next-nprogress-bar'
+import { KunTextDivider } from '~/components/kun/TextDivider'
 import type { UserState } from '~/store/userStore'
 
 type RegisterFormData = z.infer<typeof registerSchema>
@@ -153,11 +154,7 @@ export const RegisterForm = () => {
         注册
       </Button>
 
-      <div className="flex items-center justify-center overflow-hidden w-72">
-        <Divider className="my-8" />
-        <span className="mx-4">或</span>
-        <Divider className="my-8" />
-      </div>
+      <KunTextDivider text="或" />
 
       <Button
         color="primary"

@@ -30,14 +30,18 @@ export const Info = ({ intro }: Props) => {
             更新时间: {formatDate(intro.updated, { isShowYear: true })}
           </span>
         </div>
-        <div className="flex items-center gap-2 text-sm text-gray-500">
-          <Calendar className="size-4" />
-          <span>发售时间: {intro.released}</span>
-        </div>
-        <div className="flex items-center gap-2 text-sm text-gray-500">
-          <Link className="size-4" />
-          <span>VNDB ID: {intro.vndbId}</span>
-        </div>
+        {intro.released && (
+          <div className="flex items-center gap-2 text-sm text-gray-500">
+            <Calendar className="size-4" />
+            <span>发售时间: {intro.released}</span>
+          </div>
+        )}
+        {intro.vndbId && (
+          <div className="flex items-center gap-2 text-sm text-gray-500">
+            <Link className="size-4" />
+            <span>VNDB ID: {intro.vndbId}</span>
+          </div>
+        )}
       </div>
 
       {intro.alias.length > 0 && (
