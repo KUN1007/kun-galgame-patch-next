@@ -2,6 +2,7 @@ import { Tag } from './tag'
 
 export interface Patch {
   id: number
+  vndbId: string | null
   name: string
   banner: string
   introduction: string
@@ -29,7 +30,7 @@ export interface Patch {
 }
 
 export interface PatchIntroduction {
-  vndbId: string
+  vndbId: string | null
   introduction: string
   released: string
   alias: string[]

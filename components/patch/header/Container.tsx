@@ -3,10 +3,11 @@
 import { useEffect } from 'react'
 import { Card, CardBody } from '@nextui-org/card'
 import { Divider } from '@nextui-org/divider'
-import { FavoriteButton } from './FavoriteButton'
-import { ShareButton } from './ShareButton'
-import { EditButton } from './EditButton'
-import { DownloadButton } from './DownloadButton'
+import { FavoriteButton } from './button/FavoriteButton'
+import { ShareButton } from './button/ShareButton'
+import { EditButton } from './button/EditButton'
+import { DownloadButton } from './button/DownloadButton'
+import { DeleteButton } from './button/DeleteButton'
 import { useRewritePatchStore } from '~/store/rewriteStore'
 import { KunCardStats } from '~/components/kun/CardStats'
 import { PatchHeader } from './Header'
@@ -66,6 +67,7 @@ export const PatchHeaderContainer = ({ patch }: PatchHeaderProps) => {
                 />
                 <ShareButton patch={patch} />
                 <EditButton />
+                <DeleteButton patch={patch} />
               </div>
             </div>
 
