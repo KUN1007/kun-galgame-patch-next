@@ -15,7 +15,7 @@ export const getTag = async (input: z.infer<typeof getTagSchema>) => {
       skip: offset,
       orderBy: { count: 'desc' }
     }),
-    await prisma.patch.count()
+    await prisma.patch_tag.count()
   ])
 
   const tags: Tag[] = data.map((tag) => ({

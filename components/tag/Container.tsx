@@ -83,10 +83,10 @@ export const Container = ({ initialTags, initialTotal }: Props) => {
         <TagList tags={tags} loading={loading} searching={searching} />
       )}
 
-      {total > 24 && !query && (
+      {total > 100 && !query && (
         <div className="flex justify-center">
           <Pagination
-            total={Math.ceil(total / 24)}
+            total={Math.ceil(total / 100)}
             page={page}
             onChange={(newPage: number) => setPage(newPage)}
             showControls
