@@ -55,3 +55,15 @@ export const getKunPathLabel = (pathname: string): string => {
 
   return keyLabelMap[pathname]
 }
+
+export const isPatchPath = (pathname: string): boolean => {
+  return /^\/patch\/\d+/.test(pathname)
+}
+
+export const isTagPath = (pathname: string): boolean => {
+  return /^\/tag\/\d+/.test(pathname)
+}
+
+export const isUserPath = (pathname: string): boolean => {
+  return /^\/user\/\d+/.test(pathname)
+}
