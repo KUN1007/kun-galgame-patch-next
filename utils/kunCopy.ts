@@ -14,6 +14,13 @@ export const kunCopy = (originText: string) => {
 
   navigator.clipboard
     .writeText(text)
-    .then(() => toast.success(`${text} 复制成功`))
+    .then(() =>
+      toast.success(`${text} 复制成功`, {
+        style: {
+          whiteSpace: 'pre-wrap',
+          wordBreak: 'break-all'
+        }
+      })
+    )
     .catch(() => toast.error('复制失败! 请更换更现代的浏览器!'))
 }
