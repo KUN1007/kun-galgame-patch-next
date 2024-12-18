@@ -52,7 +52,7 @@ export const PatchHeaderContainer = ({ patch }: PatchHeaderProps) => {
 
         <Card className="absolute bottom-0 w-full rounded-none shadow-lg rounded-b-2xl bg-background/70 backdrop-blur-xl">
           <CardBody>
-            <div className="flex flex-col items-start justify-between space-y-2 sm:flex-row">
+            <div className="flex flex-col items-start justify-between space-y-2 sm:space-y-0 sm:flex-row">
               <div className="space-y-2">
                 <h1 className="text-3xl font-bold">{patch.name}</h1>
                 <div className="flex-wrap hidden gap-2 sm:flex">

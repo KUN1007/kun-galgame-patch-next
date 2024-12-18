@@ -27,7 +27,7 @@ export const KunUserCard = ({ uid }: UserCardProps) => {
   }, [])
 
   return (
-    <div className="p-2 w-[300px] h-36">
+    <div className="p-2 w-[300px]">
       {user ? (
         <>
           <div className="flex items-center justify-between">
@@ -61,7 +61,9 @@ export const KunUserCard = ({ uid }: UserCardProps) => {
           </div>
         </>
       ) : (
-        <KunLoading hint="正在加载用户信息..." />
+        <div className="flex items-center justify-center min-h-36">
+          <KunLoading hint="正在加载用户信息..." />
+        </div>
       )}
     </div>
   )
