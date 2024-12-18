@@ -56,7 +56,9 @@ export const CardContainer = ({ initialResources, initialTotal }: Props) => {
 
   const handlePageChange = (newPage: number) => {
     setPage(newPage)
-    window.scrollTo(0, 0)
+    setTimeout(() => {
+      window.scrollTo(0, 0)
+    })
     const params = new URLSearchParams(window.location.search)
     params.set('page', newPage.toString())
     router.push(`?${params.toString()}`)
