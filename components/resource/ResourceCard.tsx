@@ -5,13 +5,15 @@ import { Download, Heart } from 'lucide-react'
 import { formatDistanceToNow } from '~/utils/formatDistanceToNow'
 import { KunPatchAttribute } from '~/components/kun/PatchAttribute'
 import { KunUser } from '../kun/floating-card/KunUser'
+import { cn } from '~/utils/cn'
 import type { PatchResource } from '~/types/api/resource'
 
 interface Props {
   resource: PatchResource
+  type?: 'resource' | 'home'
 }
 
-export const ResourceCard = ({ resource }: Props) => {
+export const ResourceCard = ({ resource, type = 'resource' }: Props) => {
   return (
     <Card
       isPressable
@@ -40,7 +42,12 @@ export const ResourceCard = ({ resource }: Props) => {
         </h2>
 
         {resource.note && (
-          <p className="break-all whitespace-pre-wrap text-small text-default-500">
+          <p
+            className={cn(
+              'break-all whitespace-pre-wrap text-small text-default-500',
+              type === 'resource' ? '' : 'truncate line-clamp-2'
+            )}
+          >
             {resource.note}
           </p>
         )}
