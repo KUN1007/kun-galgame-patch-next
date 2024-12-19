@@ -14,7 +14,7 @@ import { PatchHeader } from './Header'
 import { PatchHeaderTabs } from './Tabs'
 import { formatDistanceToNow } from '~/utils/formatDistanceToNow'
 import { Tags } from './Tags'
-import Image from 'next/image'
+import { Image } from '@nextui-org/image'
 import { KunUser } from '~/components/kun/floating-card/KunUser'
 import type { Patch } from '~/types/api/patch'
 
@@ -39,18 +39,19 @@ export const PatchHeaderContainer = ({ patch }: PatchHeaderProps) => {
 
   return (
     <>
-      <div className="relative h-[512px] w-full">
+      <div className="relative w-full sm:h-[512px]">
         <Image
           src={patch.banner}
           alt={patch.name}
-          className="absolute top-0 left-0 object-cover size-full rounded-2xl"
-          fill
           sizes="100vw"
-          priority
+          classNames={{
+            wrapper:
+              '-z-10 size-full overflow-hidden sm:absolute sm:top-0 sm:left-0',
+            img: 'w-full'
+          }}
         />
         <PatchHeader patch={patch} />
-
-        <Card className="absolute bottom-0 w-full rounded-none shadow-lg rounded-b-2xl bg-background/70 backdrop-blur-xl">
+        <Card className="w-full rounded-none shadow-lg rounded-b-2xl bg-background/70 backdrop-blur-xl sm:absolute sm:bottom-0">
           <CardBody>
             <div className="flex flex-col items-start justify-between space-y-2 sm:space-y-0 sm:flex-row">
               <div className="space-y-2">
