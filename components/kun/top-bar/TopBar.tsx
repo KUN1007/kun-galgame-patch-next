@@ -12,12 +12,22 @@ import { KunTopBarUser } from './User'
 import { usePathname } from 'next/navigation'
 import { kunNavItem } from '~/constants/top-bar'
 import { KunMobileMenu } from './KunMobileMenu'
+import { useEffect, useState } from 'react'
 
 export const KunTopBar = () => {
   const pathname = usePathname()
+  const [isMenuOpen, setIsMenuOpen] = useState(false)
+
+  useEffect(() => {
+    setIsMenuOpen(false)
+  }, [pathname])
 
   return (
-    <Navbar maxWidth="xl">
+    <Navbar
+      maxWidth="xl"
+      isMenuOpen={isMenuOpen}
+      onMenuOpenChange={setIsMenuOpen}
+    >
       <NavbarContent className="sm:hidden" justify="start">
         <li className="h-full">
           <NavbarMenuToggle />
