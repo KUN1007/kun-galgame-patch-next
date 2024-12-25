@@ -245,7 +245,7 @@ model patch_resource {
   size     String   @default("") @db.VarChar(107)
   code     String   @default("") @db.VarChar(1007)
   password String   @default("") @db.VarChar(1007)
-  note     String   @default("") @db.VarChar(1007)
+  note     String   @default("") @db.VarChar(10007)
   hash     String   @default("")
   content  String   @default("")
   type     String[]
