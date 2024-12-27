@@ -72,3 +72,48 @@ export const createCroppedImage = async (
 
   return canvas.toDataURL('image/webp')
 }
+
+export const mosaicImg = (
+  imageData: ImageData,
+  width: number,
+  height: number,
+  mosaicSize: number
+) => {
+  const data = imageData.data
+
+  for (let i = 0; i < height; i += mosaicSize) {
+    for (let j = 0; j < width; j += mosaicSize) {
+      let totalR = 0
+      let totalG = 0
+      let totalB = 0
+      let totalA = 0
+      const pixelIndices: number[] = []
+
+      for (let y = i; y < i + mosaicSize && y < height; y++) {
+        for (let x = j; x < j + mosaicSize && x < width; x++) {
+          const pixelIndex = (y * width + x) * 4
+          pixelIndices.push(pixelIndex)
+          totalR += data[pixelIndex]
+          totalG += data[pixelIndex + 1]
+          totalB += data[pixelIndex + 2]
+          totalA += data[pixelIndex + 3]
+        }
+      }
+
+      const count = pixelIndices.length
+      const avgR = totalR / count
+      const avgG = totalG / count
+      const avgB = totalB / count
+      const avgA = totalA / count
+
+      for (const pixelIndex of pixelIndices) {
+        data[pixelIndex] = avgR
+        data[pixelIndex + 1] = avgG
+        data[pixelIndex + 2] = avgB
+        data[pixelIndex + 3] = avgA
+      }
+    }
+  }
+
+  return imageData
+}
