@@ -49,7 +49,7 @@ export const RewritePatchBanner = ({ patchId, onClose }: Props) => {
     onClose()
   }
 
-  const onCropComplete = async (croppedImage: string) => {
+  const onImageComplete = async (croppedImage: string) => {
     const imageBlob = dataURItoBlob(croppedImage)
     setPreviewUrl(URL.createObjectURL(imageBlob))
     setBanner(imageBlob)
@@ -62,7 +62,7 @@ export const RewritePatchBanner = ({ patchId, onClose }: Props) => {
           aspect={{ x: 16, y: 9 }}
           initialImage={previewUrl}
           description="您的预览图片将会被固定为 1920 × 1080 分辨率"
-          onCropComplete={onCropComplete}
+          onImageComplete={onImageComplete}
           removeImage={removeBanner}
         />
 

@@ -29,7 +29,7 @@ export const BannerImage = ({ errors }: Props) => {
     setInitialUrl('')
   }
 
-  const onCropComplete = async (croppedImage: string) => {
+  const onImageComplete = async (croppedImage: string) => {
     const imageBlob = dataURItoBlob(croppedImage)
     // const imageFile = new File([imageBlob], 'banner.webp', {
     //   type: imageBlob.type
@@ -51,7 +51,7 @@ export const BannerImage = ({ errors }: Props) => {
         aspect={{ x: 16, y: 9 }}
         initialImage={initialUrl}
         description="您的预览图片将会被固定为 1920 × 1080 分辨率"
-        onCropComplete={onCropComplete}
+        onImageComplete={onImageComplete}
         removeImage={removeBanner}
       />
     </div>
