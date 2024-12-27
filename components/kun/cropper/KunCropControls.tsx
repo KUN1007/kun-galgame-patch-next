@@ -1,6 +1,6 @@
 'use client'
 
-import { Button, Checkbox, Slider } from '@nextui-org/react'
+import { Button, Slider } from '@nextui-org/react'
 import { InspectionPanel, RotateCw } from 'lucide-react'
 import type { KunAspect } from './types'
 
@@ -11,7 +11,7 @@ interface CropControlsProps {
   onScaleChange: (value: number) => void
   onRotateChange: (value: number) => void
   onAspectToggle: () => void
-  onToggleNeedMosaic: (status: boolean) => void
+  onOpenMosaic: () => void
 }
 
 export const KunCropControls = ({
@@ -21,7 +21,7 @@ export const KunCropControls = ({
   onScaleChange,
   onRotateChange,
   onAspectToggle,
-  onToggleNeedMosaic
+  onOpenMosaic
 }: CropControlsProps) => {
   return (
     <div className="flex flex-col w-full max-w-md gap-4 p-4">
@@ -54,10 +54,10 @@ export const KunCropControls = ({
       </div>
 
       <div className="flex flex-col gap-2">
-        <label className="text-sm text-default-700">开启马赛克</label>
-        <Checkbox onValueChange={onToggleNeedMosaic} className="max-w-md">
-          开启马赛克
-        </Checkbox>
+        <label className="text-sm text-default-700">马赛克</label>
+        <Button color="secondary" variant="flat" onClick={onOpenMosaic}>
+          点击使用马赛克工具
+        </Button>
       </div>
 
       <Button

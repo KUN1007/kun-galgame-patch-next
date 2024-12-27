@@ -21,7 +21,7 @@ interface Props {
   initialAspect?: KunAspect
   description?: string
   onCropComplete?: (croppedImage: string) => void
-  onToggleNeedMosaic: (status: boolean) => void
+  onOpenMosaic: () => void
   onClose: () => void
 }
 
@@ -31,7 +31,7 @@ export const KunImageCropperModal = ({
   initialAspect = { x: 16, y: 9 },
   description,
   onCropComplete,
-  onToggleNeedMosaic,
+  onOpenMosaic,
   onClose
 }: Props) => {
   const imgRef = useRef<HTMLImageElement>(null)
@@ -100,7 +100,7 @@ export const KunImageCropperModal = ({
               onScaleChange={setScale}
               onRotateChange={setRotate}
               onAspectToggle={handleToggleAspect}
-              onToggleNeedMosaic={onToggleNeedMosaic}
+              onOpenMosaic={onOpenMosaic}
             />
           </div>
         </ModalBody>

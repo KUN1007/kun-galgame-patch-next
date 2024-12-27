@@ -12,18 +12,16 @@ import { FC, useEffect, useMemo, useRef, useState } from 'react'
 import { mosaicImg } from './utils'
 import { KunMosaicController } from './KunMosaicController'
 
-interface KunImageMosaicToolProps {
+interface Props {
   isOpen: boolean
   imgSrc: string | undefined
-  description?: string
   onMosaicComplete: (mosaicImage: string) => void
   onClose: () => void
 }
 
-export const KunImageMosaicTool: FC<KunImageMosaicToolProps> = ({
+export const KunImageMosaicModal: FC<Props> = ({
   isOpen,
   imgSrc,
-  description,
   onMosaicComplete,
   onClose
 }) => {
@@ -48,27 +46,31 @@ export const KunImageMosaicTool: FC<KunImageMosaicToolProps> = ({
   const [mosaicSize, setMosaicSize] = useState(10)
 
   const image = useMemo(() => {
-    if (typeof Image === 'undefined' || typeof imgSrc === 'undefined') return
+    if (typeof Image === 'undefined' || typeof imgSrc === 'undefined') {
+      return
+    }
     const img = new Image()
     img.src = imgSrc
     return img
   }, [imgSrc])
 
   useEffect(() => {
-    if (!image) return
-    image.onload = () => {
-      const container = containerRef.current
-      if (!container) return
-
-      const containerWidth = container.getBoundingClientRect().width
-
-      const aspectRatio = image.width / image.height
-      const targetHeight = containerWidth / aspectRatio
-
-      setCanvasSize({ width: containerWidth, height: targetHeight })
-      setImageLoaded(true)
+    if (!image) {
+      return
     }
-  }, [image])
+
+    const container = containerRef.current
+    if (!container) {
+      return
+    }
+
+    const containerWidth = container.getBoundingClientRect().width
+    const aspectRatio = image.width / image.height
+    const targetHeight = containerWidth / aspectRatio
+
+    setCanvasSize({ width: containerWidth, height: targetHeight })
+    setImageLoaded(true)
+  }, [image, isOpen])
 
   const resetOriginalImage = (
     canvas: HTMLCanvasElement,
@@ -167,17 +169,21 @@ export const KunImageMosaicTool: FC<KunImageMosaicToolProps> = ({
   }
 
   const resetCanvas = () => {
-    if (!image || !imageLoaded || !canvasSize.width || !canvasSize.height)
+    if (!image || !imageLoaded || !canvasSize.width || !canvasSize.height) {
       return
-
+    }
     const canvas = canvasRef.current
-    if (!canvas) return
-
+    if (!canvas) {
+      return
+    }
     const ctx = canvas.getContext('2d')
-    if (!ctx) return
-
+    if (!ctx) {
+      return
+    }
     const { mosaicCanvas, mosaicCtx } = generateMosaicCanvas(canvas)
-    if (!mosaicCtx) return
+    if (!mosaicCtx) {
+      return
+    }
 
     resetOriginalImage(canvas, ctx, image)
 
@@ -211,7 +217,9 @@ export const KunImageMosaicTool: FC<KunImageMosaicToolProps> = ({
 
   const handleMosaicComplete = () => {
     const canvas = canvasRef.current
-    if (!canvas) return
+    if (!canvas) {
+      return
+    }
 
     onMosaicComplete(canvas.toDataURL('image/webp'))
     onClose()
@@ -222,7 +230,9 @@ export const KunImageMosaicTool: FC<KunImageMosaicToolProps> = ({
       <ModalContent>
         <ModalHeader className="flex-col">
           <h2>图片打码</h2>
-          <p className="font-medium text-medium">{description}</p>
+          <p className="font-medium text-medium">
+            使用 光标涂抹 来为图片添加马赛克
+          </p>
         </ModalHeader>
         <ModalBody>
           <div ref={containerRef} className="flex flex-col items-center gap-4">
@@ -230,6 +240,7 @@ export const KunImageMosaicTool: FC<KunImageMosaicToolProps> = ({
               ref={canvasRef}
               width={canvasSize.width}
               height={canvasSize.height}
+              className="cursor-wait"
             />
             <KunMosaicController
               mosaicSize={mosaicSize}
