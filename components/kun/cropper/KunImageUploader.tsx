@@ -36,6 +36,7 @@ export const KunImageUploader = ({ onImageSelect }: ImageUploaderProps) => {
     if (e.target.files && e.target.files.length > 0) {
       handleFileSelect(e.target.files[0])
     }
+    e.target.value = ''
   }
 
   const handleDrop = (e: React.DragEvent) => {

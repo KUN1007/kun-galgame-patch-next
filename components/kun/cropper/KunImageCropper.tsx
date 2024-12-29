@@ -1,7 +1,7 @@
 'use client'
 
 import { useState } from 'react'
-import { Button, Card, CardBody, Image } from '@nextui-org/react'
+import { Button, Card, CardBody, Image, useDisclosure } from '@nextui-org/react'
 import { KunImageUploader } from './KunImageUploader'
 import { KunImageCropperModal } from './KunImageCropperModal'
 import { KunImageMosaicModal } from './KunImageMosaicModal'
@@ -23,8 +23,17 @@ export const KunImageCropper = ({
   removeImage
 }: Props) => {
   const [imgSrc, setImgSrc] = useState(initialImage ?? '')
-  const [isCropperModalOpen, setIsCropperModalOpen] = useState(false)
-  const [isMosaicToolOpen, setIsMosaicToolOpen] = useState(false)
+  const [croppedImage, setCroppedImage] = useState<string>()
+  const {
+    isOpen: isOpenCropper,
+    onOpen: onOpenCropper,
+    onClose: onCloseCropper
+  } = useDisclosure()
+  const {
+    isOpen: isOpenMosaic,
+    onOpen: onOpenMosaic,
+    onClose: onCloseMosaic
+  } = useDisclosure()
 
   const handleCropComplete = (image: string) => {
     setImgSrc(image)
@@ -36,14 +45,14 @@ export const KunImageCropper = ({
     onImageComplete?.(mosaicImage)
   }
 
-  const previewImage = imgSrc || initialImage
+  const previewImage = croppedImage ? croppedImage : initialImage
 
   return (
     <div className="gap-6 size-full">
       <KunImageUploader
         onImageSelect={(dataUrl: string) => {
           setImgSrc(dataUrl)
-          setIsCropperModalOpen(true)
+          onOpenCropper()
         }}
       />
 
@@ -62,7 +71,7 @@ export const KunImageCropper = ({
               size="sm"
               className="absolute z-10 right-2 top-2"
               onClick={() => {
-                setImgSrc('')
+                setCroppedImage('')
                 removeImage?.()
               }}
             >
@@ -73,22 +82,20 @@ export const KunImageCropper = ({
       )}
 
       <KunImageCropperModal
-        isOpen={isCropperModalOpen}
+        isOpen={isOpenCropper}
         imgSrc={imgSrc}
         initialAspect={aspect}
         description={description}
         onCropComplete={handleCropComplete}
-        onOpenMosaic={() => {
-          setIsMosaicToolOpen(true)
-        }}
-        onClose={() => setIsCropperModalOpen(false)}
+        onOpenMosaic={onOpenMosaic}
+        onClose={onCloseCropper}
       />
 
       <KunImageMosaicModal
-        isOpen={isMosaicToolOpen}
+        isOpen={isOpenMosaic}
         imgSrc={imgSrc}
         onMosaicComplete={handleMosaicComplete}
-        onClose={() => setIsMosaicToolOpen(false)}
+        onClose={onCloseMosaic}
       />
     </div>
   )
