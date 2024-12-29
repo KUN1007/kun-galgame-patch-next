@@ -46,37 +46,36 @@ export const KunImageMosaicModal: FC<Props> = ({
   const [mosaicSize, setMosaicSize] = useState(10)
 
   const image = useMemo(() => {
-    if (typeof Image === 'undefined' || typeof imgSrc === 'undefined') {
-      return
-    }
+    if (typeof window === 'undefined' || !imgSrc) return undefined
     const img = new Image()
+    img.onload = () => {
+      setImageLoaded(true)
+    }
     img.src = imgSrc
     return img
   }, [imgSrc])
 
   useEffect(() => {
-    if (!image) {
+    if (!image || !isOpen || !imageLoaded) {
       return
     }
 
     const container = containerRef.current
-    if (!container) {
-      return
-    }
+    if (!container) return
 
     const containerWidth = container.getBoundingClientRect().width
     const aspectRatio = image.width / image.height
     const targetHeight = containerWidth / aspectRatio
 
     setCanvasSize({ width: containerWidth, height: targetHeight })
-    setImageLoaded(true)
-  }, [image, isOpen])
+  }, [isOpen, imageLoaded, image])
 
   const resetOriginalImage = (
     canvas: HTMLCanvasElement,
     ctx: CanvasRenderingContext2D,
     image: HTMLImageElement
   ) => {
+    ctx.clearRect(0, 0, canvas.width, canvas.height)
     ctx.drawImage(
       image,
       0,
@@ -92,12 +91,11 @@ export const KunImageMosaicModal: FC<Props> = ({
 
   const generateMosaicCanvas = (originalCanvas: HTMLCanvasElement) => {
     const mosaicCanvas = document.createElement('canvas')
-
     mosaicCanvas.width = originalCanvas.width
     mosaicCanvas.height = originalCanvas.height
-
-    const mosaicCtx = mosaicCanvas.getContext('2d')
-
+    const mosaicCtx = mosaicCanvas.getContext('2d', {
+      willReadFrequently: true
+    })
     return { mosaicCanvas, mosaicCtx }
   }
 
@@ -172,14 +170,17 @@ export const KunImageMosaicModal: FC<Props> = ({
     if (!image || !imageLoaded || !canvasSize.width || !canvasSize.height) {
       return
     }
+
     const canvas = canvasRef.current
     if (!canvas) {
       return
     }
-    const ctx = canvas.getContext('2d')
+
+    const ctx = canvas.getContext('2d', { willReadFrequently: true })
     if (!ctx) {
       return
     }
+
     const { mosaicCanvas, mosaicCtx } = generateMosaicCanvas(canvas)
     if (!mosaicCtx) {
       return
@@ -211,9 +212,18 @@ export const KunImageMosaicModal: FC<Props> = ({
   }
 
   useEffect(() => {
+    if (!isOpen || !imageLoaded) {
+      return
+    }
+
     resetCanvas()
-    return () => removeMosaicEventListeners(canvasRef.current!)
-  }, [imageLoaded, mosaicSize])
+
+    return () => {
+      if (canvasRef.current) {
+        removeMosaicEventListeners(canvasRef.current)
+      }
+    }
+  }, [mosaicSize, isOpen, imageLoaded, canvasSize])
 
   const handleMosaicComplete = () => {
     const canvas = canvasRef.current
@@ -240,7 +250,7 @@ export const KunImageMosaicModal: FC<Props> = ({
               ref={canvasRef}
               width={canvasSize.width}
               height={canvasSize.height}
-              className="cursor-wait"
+              className="cursor-crosshair"
             />
             <KunMosaicController
               mosaicSize={mosaicSize}
