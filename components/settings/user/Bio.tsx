@@ -59,7 +59,7 @@ export const Bio = () => {
           color="primary"
           variant="solid"
           className="ml-auto"
-          onClick={handleSave}
+          onPress={handleSave}
           isLoading={loading}
           disabled={loading}
         >

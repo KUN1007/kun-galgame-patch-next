@@ -89,7 +89,7 @@ export const EditResourceDialog = ({
           color="primary"
           disabled={editing}
           isLoading={editing}
-          onClick={handleSubmit(onSubmit)}
+          onPress={() => handleSubmit(onSubmit)}
         >
           保存
         </Button>

@@ -27,7 +27,7 @@ export const PatchHeader = ({ patch }: PatchHeaderProps) => {
           variant="bordered"
           size="sm"
           className="absolute right-2 top-2"
-          onClick={onOpen}
+          onPress={onOpen}
         >
           更改图片
         </Button>

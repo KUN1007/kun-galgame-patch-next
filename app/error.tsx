@@ -2,6 +2,7 @@
 
 import { useEffect } from 'react'
 import { ErrorComponent } from '~/components/error/ErrorComponent'
+import toast from 'react-hot-toast'
 
 export default function Error({
   error,
@@ -11,7 +12,7 @@ export default function Error({
   reset: () => void
 }) {
   useEffect(() => {
-    console.error(error)
+    toast.error(error)
   }, [error])
 
   return <ErrorComponent showReset={true} error={error.message} reset={reset} />

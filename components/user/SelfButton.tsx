@@ -21,7 +21,7 @@ export const SelfButton = ({ user }: Props) => {
           color="primary"
           variant="flat"
           fullWidth
-          onClick={() => router.push('/settings/user')}
+          onPress={() => router.push('/settings/user')}
         >
           编辑信息
         </Button>
@@ -32,7 +32,7 @@ export const SelfButton = ({ user }: Props) => {
             color="primary"
             variant="solid"
             fullWidth
-            onClick={() => router.push('/admin')}
+            onPress={() => router.push('/admin')}
           >
             管理面板
           </Button>
@@ -44,7 +44,7 @@ export const SelfButton = ({ user }: Props) => {
           startContent={<BadgeCheck className="size-4" />}
           color="primary"
           fullWidth
-          onClick={() => router.push('/apply')}
+          onPress={() => router.push('/apply')}
         >
           申请成为创作者
         </Button>

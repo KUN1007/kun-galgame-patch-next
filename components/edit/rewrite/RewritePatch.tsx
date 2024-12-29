@@ -97,7 +97,7 @@ export const RewritePatch = () => {
           <Button
             color="primary"
             className="w-full mt-4"
-            onClick={handleSubmit}
+            onPress={handleSubmit}
             isLoading={rewriting}
             isDisabled={rewriting}
           >

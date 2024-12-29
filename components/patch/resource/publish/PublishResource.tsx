@@ -165,7 +165,7 @@ export const PublishResource = ({
             disabled={creating}
             isLoading={creating}
             endContent={<Upload className="size-4" />}
-            onClick={handleSubmit(onSubmit)}
+            onPress={() => handleSubmit(onSubmit)}
           >
             发布资源
           </Button>

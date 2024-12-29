@@ -82,7 +82,7 @@ export const SearchPage = () => {
               isIconOnly
               variant="light"
               aria-label="搜索 Galgame"
-              onClick={() => handleSearch()}
+              onPress={() => handleSearch()}
             >
               <Search />
             </Button>

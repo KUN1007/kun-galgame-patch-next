@@ -74,7 +74,7 @@ export const EmailVerification = ({ username, email, type }: Props) => {
   return (
     <>
       <Button
-        onClick={onOpen}
+        onPress={onOpen}
         isDisabled={countdown > 0 || loading}
         size="sm"
         variant="light"

@@ -21,7 +21,7 @@ export const EditButton = () => {
         variant="bordered"
         isIconOnly
         aria-label="编辑游戏信息"
-        onClick={() => router.push('/edit/rewrite')}
+        onPress={() => router.push('/edit/rewrite')}
       >
         <Pencil className="size-4" />
       </Button>

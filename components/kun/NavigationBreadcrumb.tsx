@@ -11,7 +11,7 @@ import {
 import { BreadcrumbItem, Breadcrumbs } from '@nextui-org/breadcrumbs'
 import { ChevronRight } from 'lucide-react'
 import { useRouter } from 'next-nprogress-bar'
-import { usePathname, useParams } from 'next/navigation'
+import { useParams, usePathname } from 'next/navigation'
 import {
   getKunPathLabel,
   isPatchPath,

@@ -2,11 +2,11 @@ import { Controller } from 'react-hook-form'
 import { Input, Textarea } from '@nextui-org/input'
 import { Select, SelectItem } from '@nextui-org/select'
 import {
+  resourceTypes,
   SUPPORTED_LANGUAGE,
   SUPPORTED_LANGUAGE_MAP,
   SUPPORTED_PLATFORM,
-  SUPPORTED_PLATFORM_MAP,
-  resourceTypes
+  SUPPORTED_PLATFORM_MAP
 } from '~/constants/resource'
 import { ControlType, ErrorType } from '../share'
 

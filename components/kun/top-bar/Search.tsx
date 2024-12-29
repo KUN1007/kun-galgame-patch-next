@@ -24,7 +24,7 @@ export const KunSearch = () => {
         isIconOnly
         variant="light"
         aria-label="搜索"
-        onClick={() => router.push('/search')}
+        onPress={() => router.push('/search')}
       >
         <Search className="size-6 text-default-500" />
       </Button>

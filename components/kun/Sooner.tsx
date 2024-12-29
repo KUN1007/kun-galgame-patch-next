@@ -1,14 +1,14 @@
 'use client'
 
+import { toast } from 'react-hot-toast'
 import { motion } from 'framer-motion'
 import { X } from 'lucide-react'
-import { toast } from 'react-hot-toast'
-import type { Toast } from 'react-hot-toast'
 import { Button } from '@nextui-org/button'
+import { Chip } from '@nextui-org/chip'
 import { iconVariants, textVariants, toastVariants } from '~/motion/sooner'
 import { loliAttribute } from './utils/loli'
 import Image from 'next/image'
-import { Chip } from '@nextui-org/react'
+import type { Toast } from 'react-hot-toast'
 
 interface ToastProps {
   message: string
@@ -67,7 +67,7 @@ const KunSooner = ({ message, t }: ToastProps) => {
             isIconOnly
             variant="light"
             className="flex items-center justify-center"
-            onClick={() => toast.remove(t.id)}
+            onPress={() => toast.remove(t.id)}
           >
             <motion.div
               whileHover={{ rotate: 90 }}
@@ -83,7 +83,7 @@ const KunSooner = ({ message, t }: ToastProps) => {
 }
 
 export const showKunSooner = (message: string) => {
-  toast.custom((t) => <KunSooner message={message} t={t} />, {
+  toast.custom((t: Toast) => <KunSooner message={message} t={t} />, {
     position: 'bottom-center',
     duration: 5000
   })

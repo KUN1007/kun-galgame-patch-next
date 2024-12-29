@@ -70,7 +70,7 @@ export const KunImageCropper = ({
               variant="bordered"
               size="sm"
               className="absolute z-10 right-2 top-2"
-              onClick={() => {
+              onPress={() => {
                 setCroppedImage('')
                 removeImage?.()
               }}

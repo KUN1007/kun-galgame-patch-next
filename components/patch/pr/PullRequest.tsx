@@ -102,7 +102,7 @@ export const PatchPullRequest = ({ pr }: Props) => {
                   {!p.status && (
                     <Button
                       color="primary"
-                      onClick={() => handleToggleExpand(p.index)}
+                      onPress={() => handleToggleExpand(p.index)}
                     >
                       {expandedId === p.index ? '收起' : '详情'}
                     </Button>
@@ -139,13 +139,13 @@ export const PatchPullRequest = ({ pr }: Props) => {
                         <Button
                           color="danger"
                           variant="flat"
-                          onClick={() => setShowDecline((prev) => !prev)}
+                          onPress={() => setShowDecline((prev) => !prev)}
                         >
                           拒绝
                         </Button>
                         <Button
                           color="primary"
-                          onClick={() => {
+                          onPress={() => {
                             onOpen()
                             setMergeId(p.id)
                           }}
@@ -166,7 +166,7 @@ export const PatchPullRequest = ({ pr }: Props) => {
                           />
                           <Button
                             color="danger"
-                            onClick={() => handleDeclinePR(p.id)}
+                            onPress={() => handleDeclinePR(p.id)}
                             disabled={declining}
                             isLoading={declining}
                           >

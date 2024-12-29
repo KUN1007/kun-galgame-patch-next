@@ -31,14 +31,14 @@ export const FileUploadCard = ({ fileData, onRemove }: Props) => {
         {fileData.hash ? (
           <div className="flex items-center gap-2 ml-auto">
             <span className="text-sm text-default-500">文件上传成功</span>
-            <Button color="danger" variant="flat" onClick={onRemove}>
+            <Button color="danger" variant="flat" onPress={onRemove}>
               移除
             </Button>
           </div>
         ) : fileData.error ? (
           <div className="flex items-center gap-2">
             <p className="text-sm text-danger-500">{fileData.error}</p>
-            <Button color="danger" variant="light" onClick={onRemove}>
+            <Button color="danger" variant="light" onPress={onRemove}>
               移除
             </Button>
           </div>

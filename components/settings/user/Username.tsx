@@ -81,7 +81,7 @@ export const Username = () => {
           color="primary"
           variant="solid"
           className="ml-auto"
-          onClick={onOpen}
+          onPress={onOpen}
         >
           保存
         </Button>

@@ -49,7 +49,7 @@ export const DeleteButton = ({ patch }: Props) => {
         <Button
           isIconOnly
           variant="bordered"
-          onClick={() => {
+          onPress={() => {
             if (user.uid !== patch.user.id) {
               toast.error('仅游戏发布者可删除该游戏')
               return

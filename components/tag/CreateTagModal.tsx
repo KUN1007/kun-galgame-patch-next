@@ -136,7 +136,7 @@ export const CreateTagModal = ({ isOpen, onClose, onSuccess }: Props) => {
                   />
                   <Button
                     color="primary"
-                    onClick={addTag}
+                    onPress={addTag}
                     className="self-end"
                     isIconOnly
                   >

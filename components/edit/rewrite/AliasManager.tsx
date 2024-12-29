@@ -40,7 +40,7 @@ export const AliasManager = ({
             if (event.key === 'Enter') handleAddAlias()
           }}
         />
-        <Button color="primary" onClick={handleAddAlias} isIconOnly>
+        <Button color="primary" onPress={handleAddAlias} isIconOnly>
           <Plus size={20} />
         </Button>
       </div>

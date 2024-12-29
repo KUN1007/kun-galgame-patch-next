@@ -110,7 +110,7 @@ export const VNDBInput = ({ errors }: Props) => {
             className="mr-4"
             color="primary"
             size="sm"
-            onClick={handleCheckDuplicate}
+            onPress={handleCheckDuplicate}
           >
             检查重复
           </Button>

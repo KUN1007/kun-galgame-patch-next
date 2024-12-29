@@ -68,7 +68,7 @@ export const UserFollow = ({ uid, name, follow, fullWidth = true }: Props) => {
         color={isFollow ? 'success' : 'primary'}
         variant="flat"
         fullWidth={fullWidth}
-        onClick={handleFollow}
+        onPress={handleFollow}
         isDisabled={following || user.uid === uid || !user.uid}
         isLoading={following}
       >

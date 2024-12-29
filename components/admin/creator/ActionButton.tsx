@@ -64,10 +64,10 @@ export const ActionButton = ({ creator }: Props) => {
 
   return (
     <div className="flex gap-2">
-      <Button size="sm" color="success" onClick={onOpenApprove}>
+      <Button size="sm" color="success" onPress={onOpenApprove}>
         同意该申请
       </Button>
-      <Button size="sm" color="danger" onClick={onOpenDecline}>
+      <Button size="sm" color="danger" onPress={onOpenDecline}>
         拒绝该申请
       </Button>
 

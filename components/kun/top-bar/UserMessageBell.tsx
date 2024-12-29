@@ -35,7 +35,7 @@ export const UserMessageBell = ({
       <Button
         isIconOnly
         variant="light"
-        onClick={handleClickButton}
+        onPress={handleClickButton}
         className="relative"
         aria-label="我的消息"
       >

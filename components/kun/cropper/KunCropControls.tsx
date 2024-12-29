@@ -55,7 +55,7 @@ export const KunCropControls = ({
 
       <div className="flex flex-col gap-2">
         <label className="text-sm text-default-700">马赛克</label>
-        <Button color="secondary" variant="flat" onClick={onOpenMosaic}>
+        <Button color="secondary" variant="flat" onPress={onOpenMosaic}>
           点击使用马赛克工具
         </Button>
       </div>
@@ -71,7 +71,7 @@ export const KunCropControls = ({
             <RotateCw className="w-4 h-4" />
           )
         }
-        onClick={onAspectToggle}
+        onPress={onAspectToggle}
       >
         {aspect ? `比例: ${aspect.x} / ${aspect.y}` : '自由尺寸'}
       </Button>

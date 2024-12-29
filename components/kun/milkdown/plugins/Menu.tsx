@@ -67,12 +67,12 @@ export const KunMilkdownPluginsMenu = ({
 
   return (
     <div className="sticky top-0 flex flex-wrap bg-background/80 backdrop-blur-md">
-      {buttonList.map(({ tooltip, icon, onClick, ariaLabel }, index) => (
+      {buttonList.map(({ tooltip, icon, onPress, ariaLabel }, index) => (
         <MenuButton
           key={index}
           tooltip={tooltip}
           icon={icon}
-          onClick={onClick}
+          onPress={onPress}
           ariaLabel={ariaLabel}
         />
       ))}
@@ -82,7 +82,7 @@ export const KunMilkdownPluginsMenu = ({
           <MenuButton
             tooltip="插入链接"
             icon={Link}
-            onClick={() => {}}
+            onPress={() => {}}
             ariaLabel="插入链接"
           />
         </PopoverTrigger>
@@ -107,7 +107,7 @@ export const KunMilkdownPluginsMenu = ({
               <Button
                 variant="flat"
                 color="primary"
-                onClick={() => {
+                onPress={() => {
                   call(toggleLinkCommand.key, { href: link })
                   setLink('')
                 }}
@@ -123,7 +123,7 @@ export const KunMilkdownPluginsMenu = ({
       <MenuButton
         tooltip="上传图片"
         icon={ImagePlus}
-        onClick={() => uploadImageInputRef.current?.click()}
+        onPress={() => uploadImageInputRef.current?.click()}
         ariaLabel="上传图片"
       />
       <input

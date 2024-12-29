@@ -122,7 +122,7 @@ export const StepTwo = ({ name, setStep }: Props) => {
         >
           确认重置密码
         </Button>
-        <Button variant="light" className="w-full" onClick={() => setStep(1)}>
+        <Button variant="light" className="w-full" onPress={() => setStep(1)}>
           返回
         </Button>
       </div>

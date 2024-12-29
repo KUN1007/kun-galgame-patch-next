@@ -34,7 +34,7 @@ export const Stats = ({ user }: { user: UserInfo }) => {
       <div className="flex gap-4 mt-2">
         <Button
           variant="light"
-          onClick={showFollowers}
+          onPress={showFollowers}
           startContent={<Users className="size-4 text-default-400" />}
         >
           {user.follower}
@@ -42,7 +42,7 @@ export const Stats = ({ user }: { user: UserInfo }) => {
         </Button>
         <Button
           variant="light"
-          onClick={showFollowing}
+          onPress={showFollowing}
           startContent={<Telescope className="size-4 text-default-400" />}
         >
           {user.following}

@@ -107,7 +107,7 @@ export const LoginForm = () => {
         color="primary"
         variant="bordered"
         className="w-full mb-4"
-        onClick={() => router.push('/auth/forgot')}
+        onPress={() => router.push('/auth/forgot')}
       >
         忘记密码
       </Button>

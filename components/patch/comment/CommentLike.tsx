@@ -50,7 +50,7 @@ export const CommentLikeButton = ({ comment }: Props) => {
         className="gap-2"
         disabled={loading}
         isLoading={loading}
-        onClick={toggleLike}
+        onPress={toggleLike}
       >
         <ThumbsUp className={cn('w-4 h-4', liked ? 'text-danger-500' : '')} />
         {likeCount}

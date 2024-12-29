@@ -33,7 +33,7 @@ export const KunSidebar = ({ tree }: Props) => {
         isIconOnly
         variant="flat"
         className="fixed left-0 z-50 -translate-y-1/2 top-1/2 md:hidden"
-        onClick={() => setIsOpen(!isOpen)}
+        onPress={() => setIsOpen(!isOpen)}
       >
         {isOpen ? (
           <ChevronLeft className="w-4 h-4" />

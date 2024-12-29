@@ -3,7 +3,7 @@
 import { SetStateAction, useState } from 'react'
 import { Button } from '@nextui-org/button'
 import { Dropdown, DropdownMenu, DropdownTrigger } from '@nextui-org/dropdown'
-import { Pencil, Trash2, MoreHorizontal } from 'lucide-react'
+import { MoreHorizontal, Pencil, Trash2 } from 'lucide-react'
 import { DropdownItem } from '@nextui-org/dropdown'
 import {
   Modal,
@@ -14,7 +14,7 @@ import {
   useDisclosure
 } from '@nextui-org/modal'
 import { Textarea } from '@nextui-org/input'
-import { kunFetchPut, kunFetchDelete, kunFetchGet } from '~/utils/kunFetch'
+import { kunFetchDelete, kunFetchGet, kunFetchPut } from '~/utils/kunFetch'
 import toast from 'react-hot-toast'
 import { kunErrorHandler } from '~/utils/kunErrorHandler'
 import { useUserStore } from '~/store/providers/user'

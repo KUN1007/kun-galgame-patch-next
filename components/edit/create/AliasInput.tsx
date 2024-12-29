@@ -51,7 +51,7 @@ export const AliasInput = ({ errors }: Props) => {
         />
         <Button
           color="primary"
-          onClick={addAlias}
+          onPress={addAlias}
           className="self-end"
           isIconOnly
           aria-label="添加 Galgame 别名"

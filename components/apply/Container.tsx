@@ -113,7 +113,7 @@ export const ApplyContainer = ({ count }: Props) => {
             startContent={<BadgeCheck className="size-5" />}
             isLoading={applying}
             isDisabled={!canApply || applying}
-            onClick={handleApply}
+            onPress={handleApply}
             className="w-full"
           >
             {applying ? '申请处理中...' : '申请成为创作者'}

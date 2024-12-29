@@ -50,7 +50,7 @@ export const ResourceLikeButton = ({ resource }: Props) => {
       <Button
         variant="light"
         disabled={loading}
-        onClick={toggleLike}
+        onPress={toggleLike}
         className="min-w-0 px-2"
       >
         <Heart

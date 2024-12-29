@@ -44,7 +44,7 @@ export const FavoriteButton = ({ patchId, isFavorite }: Props) => {
         variant="bordered"
         disabled={loading}
         isLoading={loading}
-        onClick={toggleLike}
+        onPress={toggleLike}
         className="min-w-0 px-2"
         aria-label="收藏"
       >

@@ -65,7 +65,7 @@ export const FilterBar = ({
           <Button
             variant="flat"
             className="transition-colors bg-content2/50 hover:bg-content2"
-            onClick={() => setSortOrder(sortOrder === 'asc' ? 'desc' : 'asc')}
+            onPress={() => setSortOrder(sortOrder === 'asc' ? 'desc' : 'asc')}
             startContent={
               sortOrder === 'asc' ? (
                 <ArrowUpAZ className="size-4" />

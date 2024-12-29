@@ -71,7 +71,7 @@ export const UserEdit = ({ initialUser }: Props) => {
         isIconOnly
         size="sm"
         variant="light"
-        onClick={onOpen}
+        onPress={onOpen}
         isDisabled={currentUser.role < 3}
       >
         <Edit2 size={16} />

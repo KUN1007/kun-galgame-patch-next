@@ -5,18 +5,18 @@ import { LucideIcon } from 'lucide-react'
 interface MenuButtonProps {
   tooltip: string
   icon: LucideIcon
-  onClick: () => void
+  onPress: () => void
   ariaLabel: string
 }
 
 export const MenuButton: FC<MenuButtonProps> = ({
   tooltip,
   icon: Icon,
-  onClick,
+  onPress,
   ariaLabel
 }) => (
   <Tooltip content={tooltip}>
-    <Button isIconOnly variant="light" onClick={onClick} aria-label={ariaLabel}>
+    <Button isIconOnly variant="light" onPress={onPress} aria-label={ariaLabel}>
       <Icon className="size-6" />
     </Button>
   </Tooltip>

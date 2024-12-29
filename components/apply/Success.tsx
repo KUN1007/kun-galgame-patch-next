@@ -66,7 +66,7 @@ export const ApplySuccess = () => {
               variant="shadow"
               className="flex-1"
               size="lg"
-              onClick={() => router.push('/edit/create')}
+              onPress={() => router.push('/edit/create')}
             >
               发布补丁
             </Button>
@@ -75,7 +75,7 @@ export const ApplySuccess = () => {
               variant="bordered"
               className="flex-1"
               size="lg"
-              onClick={() => router.push('/')}
+              onPress={() => router.push('/')}
             >
               返回首页
             </Button>

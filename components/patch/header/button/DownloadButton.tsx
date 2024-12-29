@@ -19,7 +19,7 @@ export const DownloadButton = ({ patch }: Props) => {
         variant="shadow"
         isIconOnly
         aria-label="下载游戏补丁"
-        onClick={() => router.push(`/patch/${patch.id}/resource`)}
+        onPress={() => router.push(`/patch/${patch.id}/resource`)}
       >
         <Download className="size-5" />
       </Button>
