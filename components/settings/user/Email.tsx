@@ -21,7 +21,6 @@ export const Email = () => {
 
   const {
     control,
-    handleSubmit,
     formState: { errors },
     watch,
     reset
@@ -33,10 +32,13 @@ export const Email = () => {
     }
   })
 
-  const onSubmit = async (data: EmailFormData) => {
+  const handleUpdateEmail = async () => {
     setLoading(true)
 
-    const res = await kunFetchPost<KunResponse<{}>>('/user/setting/email', data)
+    const res = await kunFetchPost<KunResponse<{}>>(
+      '/user/setting/email',
+      watch()
+    )
     kunErrorHandler(res, () => {
       reset()
       toast.success('更新邮箱成功!')
@@ -47,7 +49,7 @@ export const Email = () => {
 
   return (
     <Card className="w-full text-sm">
-      <form onSubmit={handleSubmit(onSubmit)}>
+      <form>
         <CardHeader>
           <h2 className="text-xl font-medium">邮箱</h2>
         </CardHeader>
@@ -104,11 +106,11 @@ export const Email = () => {
             如果您的新邮箱未收到验证码, 请检查垃圾邮件或者全部邮件
           </p>
           <Button
-            type="submit"
             color="primary"
             variant="solid"
             className="ml-auto"
             isLoading={loading}
+            onPress={handleUpdateEmail}
           >
             保存
           </Button>

@@ -11,6 +11,7 @@ import { kunFetchPost } from '~/utils/kunFetch'
 import { kunErrorHandler } from '~/utils/kunErrorHandler'
 import toast from 'react-hot-toast'
 import { redirect } from 'next/navigation'
+import { watch } from 'fs'
 
 type StepTwoFormData = z.infer<typeof stepTwoSchema>
 
@@ -24,7 +25,7 @@ export const StepTwo = ({ name, setStep }: Props) => {
 
   const {
     control,
-    handleSubmit,
+    watch,
     reset,
     formState: { errors }
   } = useForm<StepTwoFormData>({
@@ -57,7 +58,7 @@ export const StepTwo = ({ name, setStep }: Props) => {
   }
 
   return (
-    <form onSubmit={handleSubmit(handleResetPassword)} className="space-y-4">
+    <form className="space-y-4">
       <Input
         isDisabled
         label="用户名"
@@ -115,10 +116,10 @@ export const StepTwo = ({ name, setStep }: Props) => {
       />
       <div className="space-y-2">
         <Button
-          type="submit"
           color="primary"
           className="w-full"
           isLoading={loading}
+          onPress={() => handleResetPassword(watch())}
         >
           确认重置密码
         </Button>

@@ -21,7 +21,7 @@ interface Props {
 export const StepOne = ({ setStep, setEmail }: Props) => {
   const [loading, setLoading] = useState(false)
 
-  const { control, handleSubmit } = useForm<StepOneFormData>({
+  const { control, watch } = useForm<StepOneFormData>({
     resolver: zodResolver(stepOneSchema),
     defaultValues: {
       name: ''
@@ -44,7 +44,7 @@ export const StepOne = ({ setStep, setEmail }: Props) => {
   }
 
   return (
-    <form onSubmit={handleSubmit(handleSendCode)} className="w-full space-y-4">
+    <form className="w-full space-y-4">
       <Controller
         name="name"
         control={control}
@@ -61,10 +61,10 @@ export const StepOne = ({ setStep, setEmail }: Props) => {
         )}
       />
       <Button
-        type="submit"
         color="primary"
         className="w-full"
         isLoading={loading}
+        onPress={() => handleSendCode(watch())}
       >
         发送验证码
       </Button>

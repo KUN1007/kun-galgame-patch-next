@@ -35,7 +35,6 @@ export const CreateTagModal = ({ isOpen, onClose, onSuccess }: Props) => {
 
   const {
     register,
-    handleSubmit,
     formState: { errors },
     getValues,
     watch,
@@ -73,14 +72,14 @@ export const CreateTagModal = ({ isOpen, onClose, onSuccess }: Props) => {
     )
   }
 
-  const onSubmit = async (data: FormData) => {
-    if (!data.alias) {
+  const handleCreateTag = async () => {
+    if (!watch().alias) {
       return
     }
     addTag()
 
     setIsSubmitting(true)
-    const res = await kunFetchPost<KunResponse<Tag>>('/tag', data)
+    const res = await kunFetchPost<KunResponse<Tag>>('/tag', watch())
     kunErrorHandler(res, (value) => {
       reset()
       onSuccess(value)
@@ -96,7 +95,7 @@ export const CreateTagModal = ({ isOpen, onClose, onSuccess }: Props) => {
   return (
     <Modal isOpen={isOpen} onClose={handleClose} size="2xl">
       <ModalContent>
-        <form onSubmit={handleSubmit(onSubmit)}>
+        <form>
           <ModalHeader>创建新标签</ModalHeader>
           <ModalBody>
             <div className="space-y-6">
@@ -164,9 +163,9 @@ export const CreateTagModal = ({ isOpen, onClose, onSuccess }: Props) => {
             </Button>
             <Button
               color="primary"
-              type="submit"
               isDisabled={isSubmitting}
               isLoading={isSubmitting}
+              onPress={handleCreateTag}
             >
               创建
             </Button>

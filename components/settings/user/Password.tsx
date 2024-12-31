@@ -20,7 +20,7 @@ export const Password = () => {
 
   const {
     control,
-    handleSubmit,
+    watch,
     formState: { errors },
     reset
   } = useForm<PasswordFormData>({
@@ -31,12 +31,12 @@ export const Password = () => {
     }
   })
 
-  const onSubmit = async (data: PasswordFormData) => {
+  const handleUpdatePassword = async () => {
     setLoading(true)
 
     const res = await kunFetchPost<KunResponse<{}>>(
       '/user/setting/password',
-      data
+      watch()
     )
     kunErrorHandler(res, () => {
       reset()
@@ -48,7 +48,7 @@ export const Password = () => {
 
   return (
     <Card className="w-full text-sm">
-      <form onSubmit={handleSubmit(onSubmit)}>
+      <form>
         <CardHeader>
           <h2 className="text-xl font-medium">密码</h2>
         </CardHeader>
@@ -92,11 +92,11 @@ export const Password = () => {
             至少包含数字和英语字母
           </p>
           <Button
-            type="submit"
             color="primary"
             variant="solid"
             className="ml-auto"
             isLoading={loading}
+            onPress={handleUpdatePassword}
           >
             保存
           </Button>

@@ -38,7 +38,6 @@ export const EditResourceDialog = ({
 
   const {
     control,
-    handleSubmit,
     setValue,
     watch,
     formState: { errors }
@@ -47,11 +46,11 @@ export const EditResourceDialog = ({
     defaultValues: resource
   })
 
-  const onSubmit = async (data: EditResourceFormData) => {
+  const handleUpdateResource = async () => {
     setEditing(true)
     const res = await kunFetchPut<KunResponse<PatchResource>>(
       `/${type}/resource`,
-      { resourceId: resource.id, ...data }
+      { resourceId: resource.id, ...watch() }
     )
     kunErrorHandler(res, (value) => {
       onSuccess(value)
@@ -89,7 +88,7 @@ export const EditResourceDialog = ({
           color="primary"
           disabled={editing}
           isLoading={editing}
-          onPress={() => handleSubmit(onSubmit)}
+          onPress={handleUpdateResource}
         >
           保存
         </Button>

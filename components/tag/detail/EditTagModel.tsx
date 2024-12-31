@@ -36,7 +36,6 @@ export const EditTagModal = ({ tag, isOpen, onClose, onSuccess }: Props) => {
 
   const {
     register,
-    handleSubmit,
     formState: { errors },
     getValues,
     watch,
@@ -86,15 +85,15 @@ export const EditTagModal = ({ tag, isOpen, onClose, onSuccess }: Props) => {
     )
   }
 
-  const onSubmit = async (data: UpdateTagData) => {
-    if (!data.alias) {
+  const handleUpdateTag = async () => {
+    if (!watch().alias) {
       return
     }
     addTag()
 
     setIsSubmitting(true)
 
-    const res = await kunFetchPut<KunResponse<TagDetail>>('/tag', data)
+    const res = await kunFetchPut<KunResponse<TagDetail>>('/tag', watch())
 
     kunErrorHandler(res, (value) => {
       reset()
@@ -112,7 +111,7 @@ export const EditTagModal = ({ tag, isOpen, onClose, onSuccess }: Props) => {
   return (
     <Modal isOpen={isOpen} onClose={handleClose} size="2xl">
       <ModalContent>
-        <form onSubmit={handleSubmit(onSubmit)}>
+        <form>
           <ModalHeader>编辑标签</ModalHeader>
           <ModalBody>
             <div className="space-y-6">
@@ -180,9 +179,9 @@ export const EditTagModal = ({ tag, isOpen, onClose, onSuccess }: Props) => {
             </Button>
             <Button
               color="primary"
-              type="submit"
               isDisabled={isSubmitting}
               isLoading={isSubmitting}
+              onPress={handleUpdateTag}
             >
               保存
             </Button>
