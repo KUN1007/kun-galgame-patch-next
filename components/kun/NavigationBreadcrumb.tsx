@@ -10,7 +10,6 @@ import {
 } from '@nextui-org/react'
 import { BreadcrumbItem, Breadcrumbs } from '@nextui-org/breadcrumbs'
 import { ChevronRight } from 'lucide-react'
-import { useRouter } from 'next-nprogress-bar'
 import { useParams, usePathname } from 'next/navigation'
 import {
   getKunPathLabel,
@@ -32,7 +31,6 @@ export const KunNavigationBreadcrumb = () => {
   const pathname = usePathname()
   const params = useParams()
   const label = getKunPathLabel(pathname)
-  const router = useRouter()
 
   const fetchPatch = async (id: number) =>
     await kunFetchGet<Patch>('/patch', { patchId: id })
@@ -141,8 +139,6 @@ export const KunNavigationBreadcrumb = () => {
               key={item.key}
               isCurrent={index === items.length - 1}
               href={item.href}
-              onClick={(event) => event.preventDefault()}
-              onPress={() => router.push(item.href)}
             >
               {item.label}
             </BreadcrumbItem>

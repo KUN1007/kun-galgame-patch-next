@@ -3,7 +3,7 @@
 import toast from 'react-hot-toast'
 import { useEffect, useState } from 'react'
 import { NavbarContent, NavbarItem } from '@nextui-org/navbar'
-import { Link } from '@nextui-org/link'
+import Link from 'next/link'
 import { Button } from '@nextui-org/button'
 import { Skeleton } from '@nextui-org/skeleton'
 import { useUserStore } from '~/store/providers/user'
