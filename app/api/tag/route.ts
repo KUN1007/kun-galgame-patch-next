@@ -1,6 +1,10 @@
 import { z } from 'zod'
 import { NextRequest, NextResponse } from 'next/server'
-import { kunParseGetQuery, kunParsePutBody } from '~/app/api/utils/parseQuery'
+import {
+  kunParseGetQuery,
+  kunParsePostBody,
+  kunParsePutBody
+} from '~/app/api/utils/parseQuery'
 import { prisma } from '~/prisma/index'
 import { verifyHeaderCookie } from '~/middleware/_verifyHeaderCookie'
 import {
@@ -129,7 +133,7 @@ export const createTag = async (
 }
 
 export const POST = async (req: NextRequest) => {
-  const input = await kunParsePutBody(req, createTagSchema)
+  const input = await kunParsePostBody(req, createTagSchema)
   if (typeof input === 'string') {
     return NextResponse.json(input)
   }
