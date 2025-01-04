@@ -25,7 +25,14 @@ export const KunSidebar = ({ tree }: Props) => {
       >
         <div className="flex flex-col h-full px-4 py-6 overflow-scroll border-r bg-background">
           <h2 className="px-2 mb-4 text-lg font-semibold">目录</h2>
-          <TreeItem node={tree} level={0} />
+
+          <div>
+            {tree.type === 'directory' &&
+              tree.children?.map((child, index) => (
+                <TreeItem key={index} node={child} level={0} />
+              ))}
+          </div>
+          {/* <TreeItem node={tree} level={0} /> */}
         </div>
       </aside>
 

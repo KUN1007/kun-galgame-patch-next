@@ -3,7 +3,7 @@
 import { Snippet } from '@nextui-org/snippet'
 import { Chip } from '@nextui-org/chip'
 import { Link } from '@nextui-org/link'
-import { Cloud, Link as LinkIcon } from 'lucide-react'
+import { Cloud, Link as LinkIcon, Database } from 'lucide-react'
 import { Microsoft } from '~/components/kun/icons/Microsoft'
 import { SUPPORTED_RESOURCE_LINK_MAP } from '~/constants/resource'
 import { kunFetchPut } from '~/utils/kunFetch'
@@ -30,17 +30,22 @@ export const ResourceDownloadCard = ({ resource }: Props) => {
 
   return (
     <div className="flex flex-col space-y-2">
-      <Chip
-        color="secondary"
-        variant="flat"
-        startContent={storageIcons[resource.storage]}
-      >
-        {
-          SUPPORTED_RESOURCE_LINK_MAP[
-            resource.storage as 's3' | 'onedrive' | 'user'
-          ]
-        }
-      </Chip>
+      <div className="flex items-center gap-2">
+        <Chip
+          color="secondary"
+          variant="flat"
+          startContent={storageIcons[resource.storage]}
+        >
+          {
+            SUPPORTED_RESOURCE_LINK_MAP[
+              resource.storage as 's3' | 'onedrive' | 'user'
+            ]
+          }
+        </Chip>
+        <Chip variant="flat" startContent={<Database className="w-4 h-4" />}>
+          {resource.size}
+        </Chip>
+      </div>
 
       <p className="text-sm text-default-500">点击下面的链接以下载</p>
 

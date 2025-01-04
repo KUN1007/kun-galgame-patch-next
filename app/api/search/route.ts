@@ -59,9 +59,15 @@ export const searchGalgame = async (input: z.infer<typeof searchSchema>) => {
     }
   })
 
-  const uniqueGalgames = Array.from(
-    new Set(patches.flat().map((patch) => patch.id))
-  ).map((id) => patches.flat().find((patch) => patch.id === id))
+  const uniqueGalgames: GalgameCard[] = Array.from(
+    patches
+      .flat()
+      .reduce(
+        (map, gal) => map.set(gal.id, gal),
+        new Map<number, GalgameCard>()
+      )
+      .values()
+  )
 
   return { galgames: uniqueGalgames, total }
 }

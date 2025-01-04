@@ -111,10 +111,6 @@ export const Resources = ({ initialResources, id }: Props) => {
                     startContent={<Edit className="size-4" />}
                     onPress={() => {
                       setEditResource(resource)
-
-                      if (!editResource) {
-                        return
-                      }
                       onOpenEdit()
                     }}
                   >
