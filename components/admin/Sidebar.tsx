@@ -58,14 +58,52 @@ const menuItems = [
   }
 ]
 
+const SidebarContent = ({ pathname }: { pathname: string }) => {
+  return (
+    <nav className="flex-1 p-4 pl-0">
+      <ul className="space-y-2">
+        {menuItems.map((item) => {
+          const Icon = item.icon
+          const isActive = pathname === item.href
+
+          return (
+            <li key={item.href}>
+              <Link
+                href={item.href}
+                className={`flex items-center gap-3 rounded-medium px-4 py-2 transition-colors ${
+                  isActive
+                    ? 'bg-primary text-primary-foreground'
+                    : 'hover:bg-default-100'
+                }`}
+              >
+                <Icon size={20} />
+                <span>{item.name}</span>
+              </Link>
+            </li>
+          )
+        })}
+      </ul>
+    </nav>
+  )
+}
+
 export const Sidebar = () => {
   const pathname = usePathname()
   const { isOpen, onOpen, onOpenChange } = useDisclosure()
 
   return (
     <>
+      <aside className="fixed z-50 hidden w-64 h-full border-r md:block md:static bg-background border-divider">
+        <div className="flex flex-col size-full">
+          <div className="p-4 pl-0">
+            <h2 className="text-xl font-bold">管理面板</h2>
+          </div>
+          {SidebarContent({ pathname })}
+        </div>
+      </aside>
+
       <div
-        className="fixed top-0 left-0 flex items-center h-full text-default-500 md:hidden"
+        className="fixed top-0 left-0 flex items-center h-full cursor-pointer text-default-500 md:hidden"
         onClick={() => onOpen()}
       >
         <ChevronRight size={24} />
@@ -79,32 +117,7 @@ export const Sidebar = () => {
       >
         <DrawerContent>
           <DrawerHeader className="flex flex-col gap-1">管理面板</DrawerHeader>
-          <DrawerBody>
-            <nav className="flex-1 p-4 pl-0">
-              <ul className="space-y-2">
-                {menuItems.map((item) => {
-                  const Icon = item.icon
-                  const isActive = pathname === item.href
-
-                  return (
-                    <li key={item.href}>
-                      <Link
-                        href={item.href}
-                        className={`flex items-center gap-3 rounded-medium px-4 py-2 transition-colors ${
-                          isActive
-                            ? 'bg-primary text-primary-foreground'
-                            : 'hover:bg-default-100'
-                        }`}
-                      >
-                        <Icon size={20} />
-                        <span>{item.name}</span>
-                      </Link>
-                    </li>
-                  )
-                })}
-              </ul>
-            </nav>
-          </DrawerBody>
+          <DrawerBody>{SidebarContent({ pathname })}</DrawerBody>
         </DrawerContent>
       </Drawer>
     </>
