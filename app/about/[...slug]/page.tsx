@@ -40,7 +40,7 @@ export default async function Kun({ params }: Props) {
 
   return (
     <div className="flex w-full">
-      <div className="w-full max-w-3xl px-6">
+      <div className="w-full lg:w-[calc(100%-16rem)] px-6">
         <BlogHeader frontmatter={frontmatter} />
         <article className="kun-prose">
           <CustomMDX source={content} />
