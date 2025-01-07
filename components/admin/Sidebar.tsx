@@ -1,12 +1,16 @@
 'use client'
 
-import { useState } from 'react'
-import { Chip } from '@nextui-org/react'
+import {
+  Drawer,
+  DrawerContent,
+  DrawerHeader,
+  DrawerBody,
+  useDisclosure
+} from '@nextui-org/react'
 import Link from 'next/link'
 import { usePathname } from 'next/navigation'
 import {
   BadgeCheck,
-  ChevronLeft,
   ChevronRight,
   FileClock,
   Gamepad2,
@@ -15,7 +19,6 @@ import {
   Settings,
   Users
 } from 'lucide-react'
-import { cn } from '~/utils/cn'
 
 const menuItems = [
   {
@@ -57,54 +60,53 @@ const menuItems = [
 
 export const Sidebar = () => {
   const pathname = usePathname()
-  const [isOpen, setIsOpen] = useState(false)
+  const { isOpen, onOpen, onOpenChange } = useDisclosure()
 
   return (
-    <aside
-      className={cn(
-        'fixed z-50 md:static w-64 h-full bg-background border-r border-divider transition-transform duration-300 ease-in-out',
-        isOpen ? 'translate-x-0' : '-translate-x-full md:translate-x-0',
-        'flex items-center'
-      )}
-    >
-      <div className="flex flex-col size-full">
-        <div className="p-4 pl-0">
-          <h2 className="text-xl font-bold">管理面板</h2>
-        </div>
-
-        <nav className="flex-1 p-4 pl-0">
-          <ul className="space-y-2">
-            {menuItems.map((item) => {
-              const Icon = item.icon
-              const isActive = pathname === item.href
-
-              return (
-                <li key={item.href}>
-                  <Link
-                    href={item.href}
-                    className={`flex items-center gap-3 rounded-medium px-4 py-2 transition-colors ${
-                      isActive
-                        ? 'bg-primary text-primary-foreground'
-                        : 'hover:bg-default-100'
-                    }`}
-                  >
-                    <Icon size={20} />
-                    <span>{item.name}</span>
-                  </Link>
-                </li>
-              )
-            })}
-          </ul>
-        </nav>
+    <>
+      <div
+        className="fixed top-0 left-0 flex items-center h-full text-default-500 md:hidden"
+        onClick={() => onOpen()}
+      >
+        <ChevronRight size={24} />
       </div>
 
-      <Chip
-        className="translate-x-3 text-default-500 md:hidden"
-        variant="light"
-        onClick={() => setIsOpen(!isOpen)}
+      <Drawer
+        isOpen={isOpen}
+        onOpenChange={onOpenChange}
+        placement="left"
+        size="xs"
       >
-        {isOpen ? <ChevronLeft size={24} /> : <ChevronRight size={24} />}
-      </Chip>
-    </aside>
+        <DrawerContent>
+          <DrawerHeader className="flex flex-col gap-1">管理面板</DrawerHeader>
+          <DrawerBody>
+            <nav className="flex-1 p-4 pl-0">
+              <ul className="space-y-2">
+                {menuItems.map((item) => {
+                  const Icon = item.icon
+                  const isActive = pathname === item.href
+
+                  return (
+                    <li key={item.href}>
+                      <Link
+                        href={item.href}
+                        className={`flex items-center gap-3 rounded-medium px-4 py-2 transition-colors ${
+                          isActive
+                            ? 'bg-primary text-primary-foreground'
+                            : 'hover:bg-default-100'
+                        }`}
+                      >
+                        <Icon size={20} />
+                        <span>{item.name}</span>
+                      </Link>
+                    </li>
+                  )
+                })}
+              </ul>
+            </nav>
+          </DrawerBody>
+        </DrawerContent>
+      </Drawer>
+    </>
   )
 }

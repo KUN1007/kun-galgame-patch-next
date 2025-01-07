@@ -1,11 +1,15 @@
 'use client'
 
-import { useState } from 'react'
-import { Button } from '@nextui-org/react'
+import {
+  Drawer,
+  DrawerContent,
+  DrawerHeader,
+  DrawerBody,
+  useDisclosure
+} from '@nextui-org/react'
 import { KunTreeNode } from '~/lib/mdx/types'
 import { TreeItem } from './SideTreeItem'
-import { ChevronLeft, ChevronRight } from 'lucide-react'
-import { cn } from '~/utils/cn'
+import { ChevronRight } from 'lucide-react'
 import './nav.scss'
 
 interface Props {
@@ -13,41 +17,39 @@ interface Props {
 }
 
 export const KunSidebar = ({ tree }: Props) => {
-  const [isOpen, setIsOpen] = useState(false)
+  const { isOpen, onOpen, onOpenChange } = useDisclosure()
 
   return (
     <div className="kun-scroll-nav">
-      <aside
-        className={cn(
-          'fixed top-32 z-50 h-[calc(100dvh-256px)] w-64 transform bg-background transition-transform duration-300 ease-in-out',
-          isOpen ? 'translate-x-0' : '-translate-x-full md:translate-x-0'
-        )}
+      <div
+        className="fixed top-0 left-0 flex items-center h-full text-default-500 md:hidden"
+        onClick={() => onOpen()}
       >
-        <div className="flex flex-col h-full px-4 py-6 overflow-scroll border-r bg-background">
-          <h2 className="px-2 mb-4 text-lg font-semibold">目录</h2>
+        <ChevronRight size={24} />
+      </div>
 
-          <div>
-            {tree.type === 'directory' &&
-              tree.children?.map((child, index) => (
-                <TreeItem key={index} node={child} level={0} />
-              ))}
-          </div>
-          {/* <TreeItem node={tree} level={0} /> */}
-        </div>
-      </aside>
-
-      <Button
-        isIconOnly
-        variant="flat"
-        className="fixed left-0 z-50 -translate-y-1/2 top-1/2 md:hidden"
-        onPress={() => setIsOpen(!isOpen)}
+      <Drawer
+        isOpen={isOpen}
+        onOpenChange={onOpenChange}
+        placement="left"
+        size="xs"
       >
-        {isOpen ? (
-          <ChevronLeft className="w-4 h-4" />
-        ) : (
-          <ChevronRight className="w-4 h-4" />
-        )}
-      </Button>
+        <DrawerContent>
+          <DrawerHeader className="flex flex-col gap-1">文档目录</DrawerHeader>
+          <DrawerBody>
+            <div className="flex flex-col h-full px-4 py-6 overflow-scroll border-r bg-background">
+              <h2 className="px-2 mb-4 text-lg font-semibold">目录</h2>
+
+              <div>
+                {tree.type === 'directory' &&
+                  tree.children?.map((child, index) => (
+                    <TreeItem key={index} node={child} level={0} />
+                  ))}
+              </div>
+            </div>
+          </DrawerBody>
+        </DrawerContent>
+      </Drawer>
     </div>
   )
 }
