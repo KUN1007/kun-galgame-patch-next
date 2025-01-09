@@ -17,6 +17,10 @@ export const kunNavItem: KunNavItem[] = [
     href: '/tag'
   },
   {
+    name: '会社分类',
+    href: '/company'
+  },
+  {
     name: '关于我们',
     href: '/about'
   }
