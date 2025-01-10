@@ -26,8 +26,9 @@ model user {
   daily_upload_size Float  @default(0)
   last_login_time   String @default("")
 
-  admin_log admin_log[]
-  patch_tag patch_tag[]
+  admin_log     admin_log[]
+  patch_tag     patch_tag[]
+  patch_company patch_company[]
 
   patch_favorite      user_patch_favorite_relation[]
   patch_contribute    user_patch_contribute_relation[]
@@ -215,14 +216,19 @@ model patch_company {
   id Int @id @default(autoincrement())
 
   name             String   @db.VarChar(107)
+  introduction     String   @default("") @db.VarChar(10007)
+  count            Int      @default(0)
   primary_language String[]
   official_website String[]
   parent_brand     String[]
   alias            String[]
 
   patch_relations patch_company_relation[]
-  created         DateTime                 @default(now())
-  updated         DateTime                 @updatedAt
+  user_id         Int
+  user            user                     @relation(fields: [user_id], references: [id], onDelete: Cascade)
+
+  created DateTime @default(now())
+  updated DateTime @updatedAt
 }
 
 model patch_company_relation {
