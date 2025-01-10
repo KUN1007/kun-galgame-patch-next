@@ -3,11 +3,6 @@
 import { useEffect } from 'react'
 import { Card, CardBody } from '@nextui-org/card'
 import { Divider } from '@nextui-org/divider'
-import { FavoriteButton } from './button/FavoriteButton'
-import { ShareButton } from './button/ShareButton'
-import { EditButton } from './button/EditButton'
-import { DownloadButton } from './button/DownloadButton'
-import { DeleteButton } from './button/DeleteButton'
 import { useRewritePatchStore } from '~/store/rewriteStore'
 import { KunCardStats } from '~/components/kun/CardStats'
 import { PatchHeader } from './Header'
@@ -16,6 +11,7 @@ import { formatDistanceToNow } from '~/utils/formatDistanceToNow'
 import { Tags } from './Tags'
 import { Image } from '@nextui-org/image'
 import { KunUser } from '~/components/kun/floating-card/KunUser'
+import { ButtonList } from './ButtonList'
 import type { Patch } from '~/types/api/patch'
 
 interface PatchHeaderProps {
@@ -53,24 +49,7 @@ export const PatchHeaderContainer = ({ patch }: PatchHeaderProps) => {
         <PatchHeader patch={patch} />
         <Card className="w-full rounded-none shadow-lg rounded-b-2xl bg-background/70 backdrop-blur-xl sm:absolute sm:bottom-0">
           <CardBody>
-            <div className="flex flex-col items-start justify-between space-y-2 sm:space-y-0 sm:flex-row">
-              <div className="space-y-2">
-                <h1 className="text-3xl font-bold">{patch.name}</h1>
-                <div className="flex-wrap hidden gap-2 sm:flex">
-                  <Tags patch={patch} />
-                </div>
-              </div>
-              <div className="flex gap-2 ml-auto">
-                <DownloadButton patch={patch} />
-                <FavoriteButton
-                  patchId={patch.id}
-                  isFavorite={patch.isFavorite}
-                />
-                <ShareButton patch={patch} />
-                <EditButton />
-                <DeleteButton patch={patch} />
-              </div>
-            </div>
+            <ButtonList patch={patch} />
 
             <Divider className="my-4" />
 

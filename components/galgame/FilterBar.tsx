@@ -76,7 +76,9 @@ export const FilterBar = ({
               </DropdownTrigger>
               <DropdownMenu
                 aria-label="排序选项"
+                selectedKeys={new Set([sortField])}
                 onAction={(key) => setSortField(key as SortOption)}
+                selectionMode="single"
                 className="min-w-[120px]"
               >
                 <DropdownItem key="created" className="text-default-700">

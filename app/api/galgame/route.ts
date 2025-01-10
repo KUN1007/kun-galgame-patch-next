@@ -53,7 +53,7 @@ export const GET = async (req: NextRequest) => {
     return NextResponse.json(input)
   }
   if (!ALL_SUPPORTED_TYPE.includes(input.selectedType)) {
-    return '请选择我们支持的补丁类型'
+    return NextResponse.json('请选择我们支持的 Galgame 类型')
   }
 
   const response = await getGalgame(input)
