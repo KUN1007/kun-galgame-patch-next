@@ -16,7 +16,7 @@ import { SearchCard } from '~/components/search/Card'
 import { motion } from 'framer-motion'
 import { cardContainer, cardItem } from '~/motion/card'
 import { KunNull } from '~/components/kun/Null'
-import { EditTagModal } from './EditTagModel'
+import { EditTagModal } from './EditTagModal'
 import { useRouter } from 'next-nprogress-bar'
 import { KunUser } from '~/components/kun/floating-card/KunUser'
 import { formatDistanceToNow } from '~/utils/formatDistanceToNow'
@@ -27,7 +27,7 @@ interface Props {
   total: number
 }
 
-export const TagDetailCOntainer = ({
+export const TagDetailContainer = ({
   initialTag,
   initialPatches,
   total

@@ -1,5 +1,5 @@
 import { ErrorComponent } from '~/components/error/ErrorComponent'
-import { TagDetailCOntainer } from '~/components/tag/detail/Container'
+import { TagDetailContainer } from '~/components/tag/detail/Container'
 import { kunServerFetchGet } from '~/utils/kunServerFetch'
 import { generateKunMetadataTemplate } from './metadata'
 import type { Metadata } from 'next'
@@ -39,7 +39,7 @@ export default async function Kun({ params }: Props) {
   })
 
   return (
-    <TagDetailCOntainer
+    <TagDetailContainer
       initialTag={tag}
       initialPatches={galgames}
       total={total}

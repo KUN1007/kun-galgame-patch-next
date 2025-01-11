@@ -10,12 +10,12 @@ export const getTag = async (input: z.infer<typeof getTagSchema>) => {
   const offset = (page - 1) * limit
 
   const [data, total] = await Promise.all([
-    await prisma.patch_tag.findMany({
+    prisma.patch_tag.findMany({
       take: limit,
       skip: offset,
       orderBy: { count: 'desc' }
     }),
-    await prisma.patch_tag.count()
+    prisma.patch_tag.count()
   ])
 
   const tags: Tag[] = data.map((tag) => ({

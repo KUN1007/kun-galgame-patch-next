@@ -9,7 +9,7 @@ interface ArrayAdderProps {
   setInput: (value: string) => void
   addItem: () => void
   removeItem: (index: number) => void
-  watchDataSource: string[]
+  dataSource: string[]
 }
 
 export const ArrayAdder: FC<ArrayAdderProps> = ({
@@ -19,7 +19,7 @@ export const ArrayAdder: FC<ArrayAdderProps> = ({
   setInput,
   addItem,
   removeItem,
-  watchDataSource
+  dataSource
 }) => {
   return (
     <div className="space-y-2">
@@ -51,7 +51,7 @@ export const ArrayAdder: FC<ArrayAdderProps> = ({
       </div>
 
       <div className="flex flex-wrap gap-2">
-        {watchDataSource.map((item, index) => (
+        {dataSource.map((item, index) => (
           <Chip key={index} onClose={() => removeItem(index)} variant="flat">
             {item}
           </Chip>
