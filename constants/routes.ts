@@ -38,6 +38,8 @@ const keyLabelMap: Record<string, string> = {
   '/settings/user': '用户设置',
   '/tag': '补丁标签',
   '/tag/[id]': '标签详情',
+  '/company': '会社分类',
+  '/company/[id]': '会社详情',
   '/user/[id]/comment': '用户评论',
   '/user/[id]/contribute': '用户贡献',
   '/user/[id]/favorite': '用户收藏',
@@ -62,6 +64,10 @@ export const isPatchPath = (pathname: string): boolean => {
 
 export const isTagPath = (pathname: string): boolean => {
   return /^\/tag\/\d+/.test(pathname)
+}
+
+export const isCompanyPath = (pathname: string): boolean => {
+  return /^\/company\/\d+/.test(pathname)
 }
 
 export const isUserPath = (pathname: string): boolean => {
