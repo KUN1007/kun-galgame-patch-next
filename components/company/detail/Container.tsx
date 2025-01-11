@@ -2,7 +2,7 @@
 
 import { type FC, useState, useTransition, useEffect } from 'react'
 import { useRouter } from 'next-nprogress-bar'
-import { Button, Chip, Divider } from '@nextui-org/react'
+import { Button, Chip } from '@nextui-org/react'
 import { useDisclosure } from '@nextui-org/modal'
 import { Link } from '@nextui-org/link'
 import { Pagination } from '@nextui-org/pagination'
