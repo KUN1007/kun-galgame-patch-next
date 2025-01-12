@@ -2,7 +2,7 @@ import { z } from 'zod'
 import { NextRequest, NextResponse } from 'next/server'
 import { prisma } from '~/prisma/index'
 import { getCompanySchema } from '~/validations/company'
-import { kunParseGetQuery } from '../../utils/parseQuery'
+import { kunParseGetQuery } from '~/app/api/utils/parseQuery'
 
 export const getCompany = async (input: z.infer<typeof getCompanySchema>) => {
   const { page, limit } = input
@@ -15,6 +15,7 @@ export const getCompany = async (input: z.infer<typeof getCompanySchema>) => {
       select: {
         id: true,
         name: true,
+        banner: true,
         count: true,
         alias: true
       },

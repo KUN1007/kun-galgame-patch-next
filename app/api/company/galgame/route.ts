@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from 'next/server'
 import { z } from 'zod'
 import { prisma } from '~/prisma'
 import { getPatchByCompanySchema } from '~/validations/company'
-import { kunParseGetQuery } from '../../utils/parseQuery'
+import { kunParseGetQuery } from '~/app/api/utils/parseQuery'
 
 export const getPatchByCompany = async (
   input: z.infer<typeof getPatchByCompanySchema>
