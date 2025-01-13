@@ -29,7 +29,9 @@ export const getPatchContributor = async (
         }
       }
     }),
-    await prisma.user_message.count()
+    await prisma.user_message.count({
+      where: { type: 'apply', sender_id: { not: null } }
+    })
   ])
 
   const creators: AdminCreator[] = data.map((creator) => ({

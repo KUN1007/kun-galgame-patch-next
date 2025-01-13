@@ -4,6 +4,6 @@ import type { Metadata } from 'next'
 
 export const metadata: Metadata = kunMetadata
 
-export default function ResetPassword() {
+export default function Kun() {
   return <ForgotPassword />
 }

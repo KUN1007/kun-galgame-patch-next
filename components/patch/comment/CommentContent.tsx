@@ -22,7 +22,7 @@ export const CommentContent = ({ comment }: Props) => {
         >
           <span>{comment.quotedUsername}</span>
           <Chip
-            endContent={<Quote className="text-blue-500 size-4" />}
+            endContent={<Quote className="text-primary-500 size-4" />}
             variant="light"
           >
             {comment.quotedContent}
