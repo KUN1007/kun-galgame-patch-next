@@ -1,18 +1,18 @@
-import { z } from 'zod'
 import { NextRequest, NextResponse } from 'next/server'
+import { z } from 'zod'
+import { prisma } from '~/prisma'
+import { getPatchByCompanySchema } from '~/validations/company'
 import { kunParseGetQuery } from '~/app/api/utils/parseQuery'
-import { prisma } from '~/prisma/index'
-import { getPatchByTagSchema } from '~/validations/tag'
 
-export const getPatchByTag = async (
-  input: z.infer<typeof getPatchByTagSchema>
+export const getPatchByCompany = async (
+  input: z.infer<typeof getPatchByCompanySchema>
 ) => {
-  const { tagId, page, limit } = input
+  const { companyId, page, limit } = input
   const offset = (page - 1) * limit
 
   const [data, total] = await Promise.all([
-    prisma.patch_tag_relation.findMany({
-      where: { tag_id: tagId },
+    prisma.patch_company_relation.findMany({
+      where: { company_id: companyId },
       select: {
         patch: {
           select: {
@@ -40,8 +40,8 @@ export const getPatchByTag = async (
       take: limit,
       skip: offset
     }),
-    prisma.patch_tag_relation.count({
-      where: { tag_id: tagId }
+    prisma.patch_company_relation.count({
+      where: { company_id: companyId }
     })
   ])
 
@@ -51,11 +51,11 @@ export const getPatchByTag = async (
 }
 
 export const GET = async (req: NextRequest) => {
-  const input = kunParseGetQuery(req, getPatchByTagSchema)
+  const input = kunParseGetQuery(req, getPatchByCompanySchema)
   if (typeof input === 'string') {
     return NextResponse.json(input)
   }
 
-  const response = await getPatchByTag(input)
+  const response = await getPatchByCompany(input)
   return NextResponse.json(response)
 }

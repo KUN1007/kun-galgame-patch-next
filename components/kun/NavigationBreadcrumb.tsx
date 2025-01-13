@@ -15,6 +15,7 @@ import {
   getKunPathLabel,
   isPatchPath,
   isTagPath,
+  isCompanyPath,
   isUserPath
 } from '~/constants/routes'
 import { useBreadcrumbStore } from '~/store/breadcrumb'
@@ -22,9 +23,10 @@ import type { KunBreadcrumbItem } from '~/constants/routes'
 import type { Patch } from '~/types/api/patch'
 import { kunFetchGet } from '~/utils/kunFetch'
 import type { TagDetail } from '~/types/api/tag'
+import type { CompanyDetail } from '~/types/api/company'
 import type { UserInfo } from '~/types/api/user'
 
-const dynamicRoutes = ['patch', 'tag', 'user']
+const dynamicRoutes = ['patch', 'tag', 'company', 'user']
 
 export const KunNavigationBreadcrumb = () => {
   const { items, setItems } = useBreadcrumbStore()
@@ -37,6 +39,9 @@ export const KunNavigationBreadcrumb = () => {
 
   const fetchTag = async (id: number) =>
     await kunFetchGet<TagDetail>('/tag', { tagId: id })
+
+  const fetchCompany = async (id: number) =>
+    await kunFetchGet<CompanyDetail>('/company', { companyId: id })
 
   const fetchUser = async (id: number) =>
     await kunFetchGet<UserInfo>('/user/status/info', { id })
@@ -66,9 +71,16 @@ export const KunNavigationBreadcrumb = () => {
       newItem.href = `/tag/${tag.id}`
     }
 
+    if (isCompanyPath(pathname)) {
+      const company = await fetchCompany(Number(params.id))
+      newItem.key = dynamicRoutes[2]
+      newItem.label = `会社：${company.name}`
+      newItem.href = `/company/${company.id}`
+    }
+
     if (isUserPath(pathname)) {
       const user = await fetchUser(Number(params.id))
-      newItem.key = dynamicRoutes[2]
+      newItem.key = dynamicRoutes[3]
       newItem.label = `用户：${user.name}`
       newItem.href = `/user/${user.id}/resource`
     }

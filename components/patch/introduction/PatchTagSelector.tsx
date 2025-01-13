@@ -270,7 +270,7 @@ export const PatchTagSelector = ({
               </Button>
             </div>
             <div>
-              没有您想要的标签?{' '}
+              没有您想要的标签?&nbsp;
               <Link color="primary" showAnchorIcon href="/tag">
                 去创建标签
               </Link>

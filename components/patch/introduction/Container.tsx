@@ -1,6 +1,7 @@
 import { Card, CardBody, CardHeader } from '@nextui-org/card'
 import { Info } from './Info'
 import { PatchTag } from './Tag'
+import { PatchCompany } from './Company'
 import type { PatchIntroduction } from '~/types/api/patch'
 
 interface Props {
@@ -22,6 +23,8 @@ export const InfoContainer = ({ intro, patchId }: Props) => {
         </div> */}
 
         <PatchTag patchId={patchId} initialTags={intro.tag} />
+
+        <PatchCompany patchId={patchId} initialCompanies={intro.company} />
       </CardBody>
     </Card>
   )

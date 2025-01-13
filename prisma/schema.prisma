@@ -216,6 +216,7 @@ model patch_company {
   id Int @id @default(autoincrement())
 
   name             String   @db.VarChar(107)
+  banner           String   @default("") @db.VarChar(1007)
   introduction     String   @default("") @db.VarChar(10007)
   count            Int      @default(0)
   primary_language String[]

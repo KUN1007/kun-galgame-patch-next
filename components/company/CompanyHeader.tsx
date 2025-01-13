@@ -5,7 +5,7 @@ import { Button } from '@nextui-org/button'
 import { useDisclosure } from '@nextui-org/modal'
 import { Plus } from 'lucide-react'
 import { KunHeader } from '../kun/Header'
-import { CreateCompanyModal } from './form/CreateCompanyModal'
+import { CompanyFormModal } from './form/CompanyFormModal'
 import type { Company as CompanyType } from '~/types/api/company'
 
 interface Props {
@@ -27,7 +27,8 @@ export const CompanyHeader: FC<Props> = ({ setNewCompany }) => {
         }
       />
 
-      <CreateCompanyModal
+      <CompanyFormModal
+        type="create"
         isOpen={isOpen}
         onClose={onClose}
         onSuccess={(newCompany) => {

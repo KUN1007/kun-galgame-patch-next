@@ -1,4 +1,5 @@
 import { Tag } from './tag'
+import { Company } from './company'
 
 export interface Patch {
   id: number
@@ -35,6 +36,7 @@ export interface PatchIntroduction {
   released: string
   alias: string[]
   tag: Tag[]
+  company: Company[]
   created: string
   updated: string
 }

@@ -1,11 +1,11 @@
 'use client'
 
-import { type FC, useState } from 'react'
+import { type FC, useState, useMemo, useEffect } from 'react'
 import { useForm } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { z } from 'zod'
-import type { Company } from '~/types/api/company'
-import { createCompanySchema } from '~/validations/company'
+import type { Company, CompanyDetail } from '~/types/api/company'
+import { createCompanySchema, updateCompanySchema } from '~/validations/company'
 import toast from 'react-hot-toast'
 import {
   Button,
@@ -21,28 +21,57 @@ import {
 } from '@nextui-org/react'
 import { ArrayAdder } from './ArrayAdder'
 import { SUPPORTED_LANGUAGE_MAP } from '~/constants/resource'
+import { kunFetchPost, kunFetchPut } from '~/utils/kunFetch'
+import { kunErrorHandler } from '~/utils/kunErrorHandler'
 
-type FormData = z.infer<typeof createCompanySchema>
+type Condition<T, X, Y> = T extends 'create' ? X : Y
+
+type createFormData = z.infer<typeof createCompanySchema>
+type updateFormData = z.infer<typeof updateCompanySchema>
+type FormData<T> = Condition<T, createFormData, updateFormData>
 
 interface Props {
+  type: 'create' | 'edit'
   isOpen: boolean
   onClose: () => void
-  onSuccess: (company: Company) => void
+  onSuccess: <T>(company: Condition<T, Company, CompanyDetail>) => void
+  company?: CompanyDetail
 }
 
 const languages = Object.entries(SUPPORTED_LANGUAGE_MAP).map(
   ([key, value]) => ({ key, value })
 )
 
-export const CreateCompanyModal: FC<Props> = ({
+export const CompanyFormModal: FC<Props> = ({
+  type,
   isOpen,
   onClose,
-  onSuccess
+  onSuccess,
+  company
 }) => {
+  const isEdit = type === 'edit'
+
   const [aliasInput, setAliasInput] = useState('')
   const [websiteInput, setWebsiteInput] = useState('')
   const [brandInput, setBrandInput] = useState('')
   const [isSubmitting, setIsSubmitting] = useState(false)
+
+  const formDefaultValue = useMemo(() => {
+    const defaultValue: FormData<typeof type> = {
+      name: isEdit ? (company?.name ?? '') : '',
+      introduction: isEdit ? (company?.introduction ?? '') : '',
+      alias: isEdit ? (company?.alias ?? []) : [],
+      primary_language: isEdit ? (company?.primary_language ?? []) : [],
+      official_website: isEdit ? (company?.official_website ?? []) : [],
+      parent_brand: isEdit ? (company?.parent_brand ?? []) : []
+    }
+
+    if (isEdit && company) {
+      ;(defaultValue as updateFormData).companyId = company.id
+    }
+
+    return defaultValue
+  }, [isEdit, company])
 
   const {
     register,
@@ -51,17 +80,24 @@ export const CreateCompanyModal: FC<Props> = ({
     watch,
     setValue,
     reset
-  } = useForm<FormData>({
-    resolver: zodResolver(createCompanySchema),
-    defaultValues: {
-      name: '',
-      introduction: '',
-      alias: [],
-      primary_language: [],
-      official_website: [],
-      parent_brand: []
-    }
+  } = useForm<FormData<typeof type>>({
+    resolver: zodResolver(isEdit ? updateCompanySchema : createCompanySchema),
+    defaultValues: formDefaultValue
   })
+
+  useEffect(() => {
+    if (isEdit && isOpen) {
+      reset({
+        companyId: company?.id ?? 0,
+        name: company?.name ?? '',
+        introduction: company?.introduction ?? '',
+        alias: company?.alias ?? [],
+        primary_language: company?.primary_language ?? [],
+        official_website: company?.official_website ?? [],
+        parent_brand: company?.parent_brand ?? []
+      })
+    }
+  }, [isOpen, company, reset, isEdit])
 
   const addAlias = () => {
     const lowerCompany = aliasInput.trim().toLowerCase()
@@ -132,24 +168,19 @@ export const CreateCompanyModal: FC<Props> = ({
     )
   }
 
-  const handleCreateCompany = async () => {
-    if (!watch().alias) {
-      return
-    }
-    addAlias()
-
-    setIsSubmitting(true)
-    // 模拟请求
-    async function mock(): Promise<Omit<Company, 'id' | 'count'>> {
-      return new Promise((resolve) => {
-        setTimeout(() => {
-          resolve(watch())
-        }, 1000)
+  const handleSubmit = (type: 'create' | 'edit') => {
+    return async () => {
+      setIsSubmitting(true)
+      const res = isEdit
+        ? await kunFetchPut<KunResponse<CompanyDetail>>('/company', watch())
+        : await kunFetchPost<KunResponse<Company>>('/company', watch())
+      kunErrorHandler(res, (value) => {
+        isEdit && toast.success('会社重新编辑成功!')
+        onSuccess<typeof type>(value)
+        reset()
       })
+      setIsSubmitting(false)
     }
-    const res = await mock()
-    console.log(res)
-    setIsSubmitting(false)
   }
 
   const handleClose = () => {
@@ -161,7 +192,7 @@ export const CreateCompanyModal: FC<Props> = ({
     <Modal isOpen={isOpen} onClose={handleClose} size="2xl">
       <ModalContent>
         <form>
-          <ModalHeader>创建新会社</ModalHeader>
+          <ModalHeader>{isEdit ? '编辑会社信息' : '创建新会社'}</ModalHeader>
           <ModalBody>
             <div className="space-y-6">
               <Input
@@ -187,7 +218,7 @@ export const CreateCompanyModal: FC<Props> = ({
                 setInput={setAliasInput}
                 addItem={addAlias}
                 removeItem={handleRemoveAlias}
-                watchDataSource={watch().alias}
+                dataSource={watch().alias}
               />
 
               <ArrayAdder
@@ -197,7 +228,7 @@ export const CreateCompanyModal: FC<Props> = ({
                 setInput={setWebsiteInput}
                 addItem={addWebsite}
                 removeItem={handleRemoveWebsite}
-                watchDataSource={watch().official_website}
+                dataSource={watch().official_website}
               />
 
               <ArrayAdder
@@ -207,14 +238,19 @@ export const CreateCompanyModal: FC<Props> = ({
                 setInput={setBrandInput}
                 addItem={addParentBrand}
                 removeItem={handleRemoveParentBrand}
-                watchDataSource={watch().parent_brand}
+                dataSource={watch().parent_brand}
               />
 
               <Select
-                {...register('primary_language')}
                 label="主要语言"
                 placeholder="请选择主要语言"
                 selectionMode="multiple"
+                defaultSelectedKeys={formDefaultValue.primary_language}
+                onSelectionChange={(key) => {
+                  setValue('primary_language', [...key] as string[])
+                }}
+                isInvalid={!!errors.primary_language}
+                errorMessage={errors.primary_language?.message}
               >
                 {languages.map((language) => (
                   <SelectItem key={language.key}>{language.value}</SelectItem>
@@ -230,9 +266,9 @@ export const CreateCompanyModal: FC<Props> = ({
               color="primary"
               isDisabled={isSubmitting}
               isLoading={isSubmitting}
-              onPress={handleCreateCompany}
+              onPress={handleSubmit(type)}
             >
-              创建
+              {isEdit ? '保存' : '创建'}
             </Button>
           </ModalFooter>
         </form>

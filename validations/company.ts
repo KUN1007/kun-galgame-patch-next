@@ -18,18 +18,28 @@ export const createCompanySchema = z.object({
       .min(1, { message: '会社别名不可为空' })
       .max(17, { message: '单个会社的别名最大 17 个字符' })
   ),
-  primary_language: z.array(
+  primary_language: z
+    .array(
+      z
+        .string()
+        .trim()
+        .min(1, { message: '主要语言不可为空' })
+        .max(17, { message: '单个主要语言最大 17 个字符' })
+    )
+    .min(1, { message: '至少需要一个主要语言' }),
+  official_website: z.array(
     z
       .string()
       .trim()
-      .min(1, { message: '主要语言不可为空' })
-      .max(17, { message: '单个主要语言最大 17 个字符' })
-  ),
-  official_website: z.array(
-    z.string().trim().max(10007, { message: '单个官方网站最大 10007 个字符' })
+      .min(1, { message: '会社别名不可为空' })
+      .max(10007, { message: '单个官方网站最大 10007 个字符' })
   ),
   parent_brand: z.array(
-    z.string().trim().max(17, { message: '单个母公司最大 17 个字符' })
+    z
+      .string()
+      .trim()
+      .min(1, { message: '会社别名不可为空' })
+      .max(17, { message: '单个母公司最大 17 个字符' })
   )
 })
 

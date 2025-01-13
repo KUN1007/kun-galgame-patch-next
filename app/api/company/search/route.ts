@@ -1,24 +1,30 @@
-import { z } from 'zod'
 import { NextRequest, NextResponse } from 'next/server'
+import { z } from 'zod'
+import { prisma } from '~/prisma'
+import { searchCompanySchema } from '~/validations/company'
 import { kunParsePostBody } from '~/app/api/utils/parseQuery'
-import { prisma } from '~/prisma/index'
-import { searchTagSchema } from '~/validations/tag'
 
-export const searchTag = async (input: z.infer<typeof searchTagSchema>) => {
+export const searchCompany = async (
+  input: z.infer<typeof searchCompanySchema>
+) => {
   const { query } = input
 
-  const tags = await prisma.patch_tag.findMany({
+  const companies = await prisma.patch_company.findMany({
     where: {
       OR: query.map((q) => ({
         OR: [
           { name: { contains: q, mode: 'insensitive' } },
-          { alias: { has: q } }
+          { alias: { has: q } },
+          { primary_language: { has: q } },
+          { official_website: { has: q } },
+          { parent_brand: { has: q } }
         ]
       }))
     },
     select: {
       id: true,
       name: true,
+      banner: true,
       count: true,
       alias: true
     },
@@ -26,15 +32,15 @@ export const searchTag = async (input: z.infer<typeof searchTagSchema>) => {
     take: 100
   })
 
-  return tags
+  return companies.flat()
 }
 
 export const POST = async (req: NextRequest) => {
-  const input = await kunParsePostBody(req, searchTagSchema)
+  const input = await kunParsePostBody(req, searchCompanySchema)
   if (typeof input === 'string') {
     return NextResponse.json(input)
   }
 
-  const response = await searchTag(input)
+  const response = await searchCompany(input)
   return NextResponse.json(response)
 }

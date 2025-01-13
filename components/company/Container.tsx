@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useEffect, FC } from 'react'
+import { useState, useEffect, FC, useTransition } from 'react'
 import { useDebounce } from 'use-debounce'
 import { Pagination } from '@nextui-org/pagination'
 import { CompanyHeader } from './CompanyHeader'
@@ -8,6 +8,7 @@ import { SearchCompanies } from './SearchCompanies'
 import { CompanyList } from './CompanyList'
 import { useMounted } from '~/hooks/useMounted'
 import type { Company as CompanyType } from '~/types/api/company'
+import { kunFetchGet, kunFetchPost } from '~/utils/kunFetch'
 
 interface Props {
   initialCompanies: CompanyType[]
@@ -18,16 +19,21 @@ export const Container: FC<Props> = ({ initialCompanies, initialTotal }) => {
   const [companies, setCompanies] = useState<CompanyType[]>(initialCompanies)
   const [page, setPage] = useState(1)
   const [total, setTotal] = useState(initialTotal)
-  const [loading, setLoading] = useState(false)
+  const [loading, startTransition] = useTransition()
   const isMounted = useMounted()
 
-  const fetchCompanies = async () => {
-    setLoading(true)
-    // 模拟延时请求
-    await new Promise((resolve) => setTimeout(resolve, 1000))
-    setCompanies([])
-    setTotal(0)
-    setLoading(false)
+  const fetchCompanies = () => {
+    startTransition(async () => {
+      const { companies, total } = await kunFetchGet<{
+        companies: CompanyType[]
+        total: number
+      }>('/company/all', {
+        page: 1,
+        limit: 100
+      })
+      setCompanies(companies)
+      setTotal(total)
+    })
   }
 
   useEffect(() => {
@@ -47,9 +53,10 @@ export const Container: FC<Props> = ({ initialCompanies, initialTotal }) => {
     }
 
     setSearching(true)
-    // 模拟延时请求
-    await new Promise((resolve) => setTimeout(resolve, 1000))
-    setCompanies([])
+    const res = await kunFetchPost<CompanyType[]>('/company/search', {
+      query: query.split('').filter((term) => term.length > 0)
+    })
+    setCompanies(res)
     setSearching(false)
   }
 
