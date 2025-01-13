@@ -11,78 +11,20 @@ import {
 import { BreadcrumbItem, Breadcrumbs } from '@nextui-org/breadcrumbs'
 import { ChevronRight } from 'lucide-react'
 import { useParams, usePathname } from 'next/navigation'
-import {
-  getKunPathLabel,
-  isPatchPath,
-  isTagPath,
-  isCompanyPath,
-  isUserPath
-} from '~/constants/routes'
 import { useBreadcrumbStore } from '~/store/breadcrumb'
-import type { KunBreadcrumbItem } from '~/constants/routes'
-import type { Patch } from '~/types/api/patch'
-import { kunFetchGet } from '~/utils/kunFetch'
-import type { TagDetail } from '~/types/api/tag'
-import type { CompanyDetail } from '~/types/api/company'
-import type { UserInfo } from '~/types/api/user'
-
-const dynamicRoutes = ['patch', 'tag', 'company', 'user']
+import { createBreadcrumbItem } from '~/constants/routes/routes'
+import { dynamicRoutes } from '~/constants/routes/constants'
+import type { KunBreadcrumbItem } from '~/constants/routes/constants'
 
 export const KunNavigationBreadcrumb = () => {
   const { items, setItems } = useBreadcrumbStore()
   const pathname = usePathname()
   const params = useParams()
-  const label = getKunPathLabel(pathname)
-
-  const fetchPatch = async (id: number) =>
-    await kunFetchGet<Patch>('/patch', { patchId: id })
-
-  const fetchTag = async (id: number) =>
-    await kunFetchGet<TagDetail>('/tag', { tagId: id })
-
-  const fetchCompany = async (id: number) =>
-    await kunFetchGet<CompanyDetail>('/company', { companyId: id })
-
-  const fetchUser = async (id: number) =>
-    await kunFetchGet<UserInfo>('/user/status/info', { id })
 
   const handleRoutes = async () => {
-    if (!label) {
+    const newItem = createBreadcrumbItem(pathname, params)
+    if (!newItem) {
       return
-    }
-
-    const newItem: KunBreadcrumbItem = {
-      key: pathname,
-      label,
-      href: pathname
-    }
-
-    if (isPatchPath(pathname)) {
-      const patch = await fetchPatch(Number(params.id))
-      newItem.key = dynamicRoutes[0]
-      newItem.label = `补丁：${patch.name}`
-      newItem.href = `/patch/${patch.id}/introduction`
-    }
-
-    if (isTagPath(pathname)) {
-      const tag = await fetchTag(Number(params.id))
-      newItem.key = dynamicRoutes[1]
-      newItem.label = `标签：${tag.name}`
-      newItem.href = `/tag/${tag.id}`
-    }
-
-    if (isCompanyPath(pathname)) {
-      const company = await fetchCompany(Number(params.id))
-      newItem.key = dynamicRoutes[2]
-      newItem.label = `会社：${company.name}`
-      newItem.href = `/company/${company.id}`
-    }
-
-    if (isUserPath(pathname)) {
-      const user = await fetchUser(Number(params.id))
-      newItem.key = dynamicRoutes[3]
-      newItem.label = `用户：${user.name}`
-      newItem.href = `/user/${user.id}/resource`
     }
 
     const mergedItems = [...items, newItem]
@@ -136,8 +78,12 @@ export const KunNavigationBreadcrumb = () => {
                 </DropdownTrigger>
                 <DropdownMenu aria-label="Routes">
                   {items.map((item, index) => (
-                    <DropdownItem key={index} href={item.href}>
-                      {item.children}
+                    <DropdownItem
+                      key={index}
+                      textValue={index.toString()}
+                      href={item.href}
+                    >
+                      <p className="break-all">{item.children}</p>
                     </DropdownItem>
                   ))}
                 </DropdownMenu>

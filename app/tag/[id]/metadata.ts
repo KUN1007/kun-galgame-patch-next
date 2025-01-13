@@ -4,10 +4,10 @@ import type { TagDetail } from '~/types/api/tag'
 
 export const generateKunMetadataTemplate = (tag: TagDetail): Metadata => {
   return {
-    title: `拥有标签 ${tag.name} 的 Galgame`,
+    title: `标签 - ${tag.name}`,
     description: tag.introduction,
     openGraph: {
-      title: `拥有标签 ${tag.name} 的 Galgame`,
+      title: `标签 - ${tag.name}`,
       description: tag.introduction,
       type: 'article',
       publishedTime: new Date(tag.created).toISOString(),
@@ -16,7 +16,7 @@ export const generateKunMetadataTemplate = (tag: TagDetail): Metadata => {
     },
     twitter: {
       card: 'summary',
-      title: `拥有标签 ${tag.name} 的 Galgame`,
+      title: `标签 - ${tag.name}`,
       description: tag.introduction
     },
     alternates: {

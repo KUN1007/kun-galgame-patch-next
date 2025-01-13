@@ -5,7 +5,7 @@ export interface KunBreadcrumbItem {
   icon?: string
 }
 
-const keyLabelMap: Record<string, string> = {
+export const keyLabelMap: Record<string, string> = {
   '/': '主页',
   '/about': '关于我们',
   '/admin/comment': '评论管理',
@@ -47,29 +47,4 @@ const keyLabelMap: Record<string, string> = {
   '/user/[id]/resource': '用户资源'
 }
 
-export const getKunPathLabel = (pathname: string): string => {
-  for (const key in keyLabelMap) {
-    const regex = new RegExp(`^${key.replace(/\[id\]/g, '\\d+')}$`)
-    if (regex.test(pathname)) {
-      return keyLabelMap[key]
-    }
-  }
-
-  return keyLabelMap[pathname]
-}
-
-export const isPatchPath = (pathname: string): boolean => {
-  return /^\/patch\/\d+/.test(pathname)
-}
-
-export const isTagPath = (pathname: string): boolean => {
-  return /^\/tag\/\d+/.test(pathname)
-}
-
-export const isCompanyPath = (pathname: string): boolean => {
-  return /^\/company\/\d+/.test(pathname)
-}
-
-export const isUserPath = (pathname: string): boolean => {
-  return /^\/user\/\d+/.test(pathname)
-}
+export const dynamicRoutes = ['patch', 'tag', 'company', 'user']

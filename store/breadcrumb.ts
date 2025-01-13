@@ -1,6 +1,6 @@
 import { create } from 'zustand'
 import { persist, createJSONStorage } from 'zustand/middleware'
-import type { KunBreadcrumbItem } from '~/constants/routes'
+import type { KunBreadcrumbItem } from '~/constants/routes/constants'
 
 type BreadcrumbStore = {
   items: KunBreadcrumbItem[]
