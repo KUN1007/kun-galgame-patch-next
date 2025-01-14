@@ -1,47 +1,60 @@
 'use client'
 
 import { useEffect, useRef, useState } from 'react'
-import { useWindowSize } from '~/hooks/useWindowSize'
-import { useMounted } from '~/hooks/useMounted'
+import { useResizeObserver } from '~/hooks/useResizeObserver'
 import { cn } from '~/utils/cn'
 
 interface KunMasonryGridProps {
   children: React.ReactNode[]
   columnWidth?: number
   gap?: number
+  className?: string
 }
 
 export const KunMasonryGrid = ({
   children,
   columnWidth = 256,
-  gap = 24
+  gap = 24,
+  className
 }: KunMasonryGridProps) => {
   const containerRef = useRef<HTMLDivElement>(null)
   const [columns, setColumns] = useState(1)
-  const isMounted = useMounted()
-  const { width: windowWidth } = useWindowSize()
+  const [isLoaded, setIsLoaded] = useState(false)
+
+  const { width: containerWidth } = useResizeObserver(containerRef)
 
   useEffect(() => {
     const calculateColumns = () => {
-      if (!containerRef.current) return
-      const containerWidth = containerRef.current.offsetWidth
+      if (!containerWidth) {
+        return
+      }
+
       const newColumns = Math.max(
         1,
-        Math.floor(containerWidth / (columnWidth + gap))
+        Math.floor((containerWidth + gap) / (columnWidth + gap))
       )
+
       setColumns(newColumns)
+      if (!isLoaded) setIsLoaded(true)
     }
 
     calculateColumns()
-  }, [columnWidth, gap, windowWidth])
+  }, [containerWidth, columnWidth, gap, isLoaded])
 
   const distributeItems = () => {
+    if (!Array.isArray(children)) {
+      return []
+    }
+
     const columnHeights = Array(columns).fill(0)
     const columnItems: React.ReactNode[][] = Array(columns)
       .fill(null)
       .map(() => [])
 
-    children.forEach((child, index) => {
+    children.forEach((child) => {
+      if (!child) {
+        return
+      }
       const shortestColumn = columnHeights.indexOf(Math.min(...columnHeights))
       columnItems[shortestColumn].push(child)
       columnHeights[shortestColumn]++
@@ -53,19 +66,28 @@ export const KunMasonryGrid = ({
   return (
     <div
       ref={containerRef}
-      className={`w-full transition-opacity duration-300 ${isMounted ? 'opacity-100' : 'opacity-0'}`}
+      className={cn(
+        'w-full grid transition-opacity duration-300',
+        isLoaded ? 'opacity-100' : 'opacity-0',
+        className
+      )}
       style={{
-        display: 'grid',
-        gridTemplateColumns: `repeat(${columns}, 1fr)`,
-        gap: `${gap}px`
+        gridTemplateColumns: `repeat(${columns}, minmax(0, 1fr))`,
+        gap: `${gap}px`,
+        maxWidth: '100%'
       }}
     >
       {distributeItems().map((column, columnIndex) => (
         <div
           key={columnIndex}
-          className={cn('flex flex-col', `gap-${gap / 4}`)}
+          className="flex flex-col"
+          style={{ gap: `${gap}px` }}
         >
-          {column}
+          {column.map((item, itemIndex) => (
+            <div key={itemIndex} className="w-full">
+              {item}
+            </div>
+          ))}
         </div>
       ))}
     </div>
