@@ -22,7 +22,7 @@ export const KunSidebar = ({ tree }: Props) => {
   return (
     <div className="kun-scroll-nav">
       <aside className="fixed hidden md:block top-32 h-[calc(100dvh-256px)] w-64 bg-background">
-        <div className="flex flex-col h-full px-4 overflow-scroll border-r scrollbar-hide bg-background">
+        <div className="flex flex-col h-full px-4 overflow-scroll border-r border-default-200 scrollbar-hide bg-background">
           <Link color="foreground" href="/about" className="my-3 text-xl">
             目录
           </Link>

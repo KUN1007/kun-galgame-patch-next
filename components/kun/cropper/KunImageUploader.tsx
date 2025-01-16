@@ -1,7 +1,7 @@
 'use client'
 
+import { useRef, useState } from 'react'
 import toast from 'react-hot-toast'
-import { useState } from 'react'
 import { Button } from '@nextui-org/react'
 import { Upload } from 'lucide-react'
 import { cn } from '~/utils/cn'
@@ -12,6 +12,7 @@ interface ImageUploaderProps {
 
 export const KunImageUploader = ({ onImageSelect }: ImageUploaderProps) => {
   const [isDragging, setIsDragging] = useState(false)
+  const fileInputRef = useRef<HTMLInputElement>(null)
 
   const handleFileSelect = (file: File) => {
     if (!file) {
@@ -61,33 +62,30 @@ export const KunImageUploader = ({ onImageSelect }: ImageUploaderProps) => {
   return (
     <div
       className={cn(
-        'border-2 border-dashed rounded-lg p-4 text-center transition-colors  mb-4',
-        isDragging ? 'border-primary bg-primary/10' : 'border-gray-300'
+        'border-2 border-dashed rounded-lg p-4 text-center transition-colors mb-4',
+        isDragging ? 'border-primary bg-primary/10' : 'border-default-300'
       )}
       onDrop={handleDrop}
       onDragOver={handleDragOver}
       onDragLeave={handleDragLeave}
     >
       <div className="flex flex-col items-center justify-center">
-        <Upload className="w-12 h-12 mb-4 text-gray-400" />
+        <Upload className="w-12 h-12 mb-4 text-default-400" />
         <p className="mb-2">拖放图片到此处或</p>
-        <label htmlFor="image-upload">
-          <Button
-            as="span"
-            color="primary"
-            variant="flat"
-            className="cursor-pointer"
-          >
-            选择文件
-          </Button>
-          <input
-            type="file"
-            id="image-upload"
-            accept="image/*"
-            onChange={handleFileChange}
-            className="hidden"
-          />
-        </label>
+        <Button
+          color="primary"
+          variant="flat"
+          onPress={() => fileInputRef.current?.click()}
+        >
+          选择文件
+        </Button>
+        <input
+          ref={fileInputRef}
+          type="file"
+          accept="image/*"
+          onChange={handleFileChange}
+          className="hidden"
+        />
       </div>
     </div>
   )
