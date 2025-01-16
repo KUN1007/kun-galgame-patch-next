@@ -4,6 +4,7 @@ import { KunTopBar } from '~/components/kun/top-bar/TopBar'
 import { KunFooter } from '~/components/kun/Footer'
 import { KunNavigationBreadcrumb } from '~/components/kun/NavigationBreadcrumb'
 import { kunMetadata, kunViewport } from './metadata'
+import { KunBackToTop } from '~/components/kun/BackToTop'
 import type { Metadata, Viewport } from 'next'
 import '~/styles/index.scss'
 import './actions'
@@ -27,6 +28,7 @@ export default function RootLayout({
               {children}
               <Toaster />
             </div>
+            <KunBackToTop />
             <KunFooter />
           </div>
         </Providers>
