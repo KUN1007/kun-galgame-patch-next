@@ -97,6 +97,9 @@ export const KunNavigationBreadcrumb = () => {
               key={item.key}
               isCurrent={index === items.length - 1}
               href={item.href}
+              classNames={{
+                item: 'break-all whitespace-normal'
+              }}
             >
               {item.label}
             </BreadcrumbItem>
