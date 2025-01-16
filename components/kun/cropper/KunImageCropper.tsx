@@ -11,7 +11,7 @@ interface Props {
   aspect?: KunAspect
   initialImage?: string
   description?: string
-  onImageComplete?: (croppedImage: string) => void
+  onImageComplete?: (image: string) => void
   removeImage?: () => void
 }
 
@@ -23,7 +23,6 @@ export const KunImageCropper = ({
   removeImage
 }: Props) => {
   const [imgSrc, setImgSrc] = useState(initialImage ?? '')
-  const [croppedImage, setCroppedImage] = useState<string>()
   const {
     isOpen: isOpenCropper,
     onOpen: onOpenCropper,
@@ -45,7 +44,7 @@ export const KunImageCropper = ({
     onImageComplete?.(mosaicImage)
   }
 
-  const previewImage = croppedImage ? croppedImage : initialImage
+  const previewImage = imgSrc ? imgSrc : initialImage
 
   return (
     <div className="gap-6 size-full">
@@ -71,7 +70,7 @@ export const KunImageCropper = ({
               size="sm"
               className="absolute z-10 right-2 top-2"
               onPress={() => {
-                setCroppedImage('')
+                setImgSrc('')
                 removeImage?.()
               }}
             >

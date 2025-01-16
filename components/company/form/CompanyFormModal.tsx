@@ -23,6 +23,7 @@ import { ArrayAdder } from './ArrayAdder'
 import { SUPPORTED_LANGUAGE_MAP } from '~/constants/resource'
 import { kunFetchPost, kunFetchPut } from '~/utils/kunFetch'
 import { kunErrorHandler } from '~/utils/kunErrorHandler'
+import { LogoImage } from './LogoImage'
 
 type Condition<T, X, Y> = T extends 'create' ? X : Y
 
@@ -210,6 +211,8 @@ export const CompanyFormModal: FC<Props> = ({
                 isInvalid={!!errors.introduction}
                 errorMessage={errors.introduction?.message}
               />
+
+              <LogoImage />
 
               <ArrayAdder
                 label="别名"

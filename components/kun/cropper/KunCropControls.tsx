@@ -7,7 +7,7 @@ import type { KunAspect } from './types'
 interface CropControlsProps {
   scale: number
   rotate: number
-  aspect: KunAspect
+  aspect?: KunAspect
   onScaleChange: (value: number) => void
   onRotateChange: (value: number) => void
   onAspectToggle: () => void

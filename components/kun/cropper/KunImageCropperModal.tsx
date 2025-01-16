@@ -28,7 +28,7 @@ interface Props {
 export const KunImageCropperModal = ({
   isOpen,
   imgSrc,
-  initialAspect = { x: 16, y: 9 },
+  initialAspect,
   description,
   onCropComplete,
   onOpenMosaic,
@@ -39,7 +39,7 @@ export const KunImageCropperModal = ({
   const [completedCrop, setCompletedCrop] = useState<PixelCrop>()
   const [scale, setScale] = useState(1)
   const [rotate, setRotate] = useState(0)
-  const [aspect, setAspect] = useState<{ x: number; y: number }>(initialAspect)
+  const [aspect, setAspect] = useState<KunAspect | undefined>(initialAspect)
 
   const onImageLoad = (e: React.SyntheticEvent<HTMLImageElement>) => {
     if (aspect) {
@@ -79,7 +79,7 @@ export const KunImageCropperModal = ({
                 crop={crop}
                 onChange={(_, percentCrop) => setCrop(percentCrop)}
                 onComplete={(c) => setCompletedCrop(c)}
-                aspect={aspect.x / aspect.y}
+                aspect={aspect ? aspect.x / aspect.y : undefined}
                 minHeight={100}
               >
                 <img
@@ -96,7 +96,7 @@ export const KunImageCropperModal = ({
             <KunCropControls
               scale={scale}
               rotate={rotate}
-              aspect={aspect}
+              aspect={initialAspect}
               onScaleChange={setScale}
               onRotateChange={setRotate}
               onAspectToggle={handleToggleAspect}

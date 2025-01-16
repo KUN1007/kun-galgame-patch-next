@@ -4,4 +4,4 @@ export const aboutDirectoryLabelMap: Record<string, string> = {
   galgame: 'Galgame',
   kun: '关于鲲',
   notice: '公告'
-} as const
+}
