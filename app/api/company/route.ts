@@ -23,7 +23,7 @@ export const getCompanyById = async (
     select: {
       id: true,
       name: true,
-      banner: true,
+      logo: true,
       count: true,
       alias: true,
       introduction: true,
@@ -65,6 +65,7 @@ export const rewriteCompany = async (
     name,
     primary_language,
     introduction = '',
+    logoLink = '',
     alias = [],
     official_website = [],
     parent_brand = []
@@ -84,6 +85,7 @@ export const rewriteCompany = async (
     data: {
       name,
       introduction,
+      logo: logoLink,
       alias,
       primary_language,
       official_website,

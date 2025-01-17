@@ -2,6 +2,7 @@ import sharp from 'sharp'
 
 import { uploadObject } from '~/app/api/utils/uploadImage'
 import { checkBufferSize } from '~/app/api/utils/checkBufferSize'
+import { MAX_SIZE, COMPRESS_QUALITY } from '~/app/api/utils/constants'
 
 export const uploadPatchBanner = async (image: ArrayBuffer, id: number) => {
   const banner = await sharp(image)
@@ -9,17 +10,17 @@ export const uploadPatchBanner = async (image: ArrayBuffer, id: number) => {
       fit: 'inside',
       withoutEnlargement: true
     })
-    .avif({ quality: 60 })
+    .avif({ quality: COMPRESS_QUALITY })
     .toBuffer()
   const miniBanner = await sharp(image)
     .resize(460, 259, {
       fit: 'inside',
       withoutEnlargement: true
     })
-    .avif({ quality: 60 })
+    .avif({ quality: COMPRESS_QUALITY })
     .toBuffer()
 
-  if (!checkBufferSize(miniBanner, 1.007)) {
+  if (!checkBufferSize(miniBanner, MAX_SIZE)) {
     return '图片体积过大'
   }
 

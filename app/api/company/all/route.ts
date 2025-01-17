@@ -15,7 +15,7 @@ export const getCompany = async (input: z.infer<typeof getCompanySchema>) => {
       select: {
         id: true,
         name: true,
-        banner: true,
+        logo: true,
         count: true,
         alias: true
       },

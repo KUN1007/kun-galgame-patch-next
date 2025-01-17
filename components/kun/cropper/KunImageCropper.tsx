@@ -44,8 +44,6 @@ export const KunImageCropper = ({
     onImageComplete?.(mosaicImage)
   }
 
-  const previewImage = imgSrc ? imgSrc : initialImage
-
   return (
     <div className="gap-6 size-full">
       <KunImageUploader
@@ -55,11 +53,11 @@ export const KunImageCropper = ({
         }}
       />
 
-      {previewImage && (
+      {imgSrc && (
         <Card className="w-full max-w-md mx-auto">
           <CardBody>
             <Image
-              src={previewImage}
+              src={imgSrc}
               alt="Cropped image"
               className="object-contain w-full h-auto"
             />
