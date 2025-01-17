@@ -22,7 +22,7 @@ import {
 import { ArrayAdder } from './ArrayAdder'
 import { SUPPORTED_LANGUAGE_MAP } from '~/constants/resource'
 import { kunFetchFormData, kunFetchPost, kunFetchPut } from '~/utils/kunFetch'
-import { kunErrorHandler } from '~/utils/kunErrorHandler'
+import { errorReporter, kunErrorHandlerAsync } from '~/utils/kunErrorHandler'
 import { LogoImage } from './LogoImage'
 
 type Condition<T, X, Y> = T extends 'create' ? X : Y
@@ -173,7 +173,10 @@ export const CompanyFormModal: FC<Props> = ({
     )
   }
 
-  const uploadLogo = async (companyId: number): Promise<string> => {
+  const uploadLogo = async (
+    companyId: number,
+    logoBlob: Blob | null
+  ): Promise<string> => {
     if (!logoBlob) return logoLink
     const formData = new FormData()
     formData.append('logo', logoBlob)
@@ -204,34 +207,40 @@ export const CompanyFormModal: FC<Props> = ({
 
   const handleSubmit = () => {
     startSubmit(async () => {
-      let logoLink = ''
+      try {
+        let logoLink = ''
 
-      if (isEdit) {
-        const companyId = company!.id
-        logoLink = await uploadLogo(companyId)
-        const res = await updateCompany(companyId, logoLink)
-        kunErrorHandler(res, (value) => {
+        if (isEdit) {
+          const companyId = company!.id
+          logoLink = await uploadLogo(companyId, logoBlob)
+
+          const res = await updateCompany(companyId, logoLink)
+          const result = await kunErrorHandlerAsync(res)
+
           toast.success('会社信息更新成功')
-          onSuccess<typeof type>(value)
+          onSuccess<typeof type>(result)
           reset()
-        })
-      } else {
-        const res = await createCompany()
-        kunErrorHandler(res, async (value) => {
+        } else {
+          const res = await createCompany()
+          const result = await kunErrorHandlerAsync(res)
+
           if (!logoBlob) {
             toast.success('会社创建成功')
-            onSuccess<typeof type>(value)
+            onSuccess<typeof type>(result)
             reset()
             return
           }
-          logoLink = await uploadLogo(value.id)
-          const updateRes = await updateCompany(value.id, logoLink)
-          kunErrorHandler(updateRes, (updateValue) => {
-            toast.success('会社创建成功')
-            onSuccess<typeof type>(updateValue)
-            reset()
-          })
-        })
+
+          logoLink = await uploadLogo(result.id, logoBlob)
+          const updateRes = await updateCompany(result.id, logoLink)
+          const updateResult = await kunErrorHandlerAsync(updateRes)
+
+          toast.success('会社创建成功')
+          onSuccess<typeof type>(updateResult)
+          reset()
+        }
+      } catch (err) {
+        errorReporter(err)
       }
     })
   }
