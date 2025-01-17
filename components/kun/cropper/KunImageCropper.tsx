@@ -8,6 +8,7 @@ import { KunImageMosaicModal } from './KunImageMosaicModal'
 import type { KunAspect } from './types'
 
 interface Props {
+  tip?: string
   aspect?: KunAspect
   initialImage?: string
   description?: string
@@ -16,6 +17,7 @@ interface Props {
 }
 
 export const KunImageCropper = ({
+  tip,
   aspect,
   initialImage,
   description,
@@ -47,6 +49,7 @@ export const KunImageCropper = ({
   return (
     <div className="gap-6 size-full">
       <KunImageUploader
+        tip={tip}
         onImageSelect={(dataUrl: string) => {
           setImgSrc(dataUrl)
           onOpenCropper()

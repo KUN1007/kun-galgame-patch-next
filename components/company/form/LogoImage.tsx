@@ -28,6 +28,7 @@ export const LogoImage: FC<Props> = ({
 
   return (
     <KunImageCropper
+      tip="拖放会社 logo 到此处"
       initialImage={initialUrl}
       description="请选择对应会社的 logo 图标"
       onImageComplete={handleImageComplete}

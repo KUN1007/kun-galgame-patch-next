@@ -248,6 +248,12 @@ export const CompanyFormModal: FC<Props> = ({
           <ModalHeader>{isEdit ? '编辑会社信息' : '创建新会社'}</ModalHeader>
           <ModalBody>
             <div className="space-y-6 overflow-y-auto max-h-[calc(100dvh-20rem)]">
+              <LogoImage
+                initialUrl={logoLink}
+                setInitialUrl={setLogoLink}
+                setImageBlob={setLogoBlob}
+              />
+
               <Input
                 {...register('name')}
                 label="会社名"
@@ -256,18 +262,28 @@ export const CompanyFormModal: FC<Props> = ({
                 errorMessage={errors.name?.message}
               />
 
+              <Select
+                label="主要语言"
+                placeholder="请选择主要语言"
+                selectionMode="multiple"
+                defaultSelectedKeys={formDefaultValue.primary_language}
+                onSelectionChange={(key) => {
+                  setValue('primary_language', [...key] as string[])
+                }}
+                isInvalid={!!errors.primary_language}
+                errorMessage={errors.primary_language?.message}
+              >
+                {languages.map((language) => (
+                  <SelectItem key={language.key}>{language.value}</SelectItem>
+                ))}
+              </Select>
+
               <Textarea
                 {...register('introduction')}
                 label="会社简介"
                 placeholder="输入会社简介"
                 isInvalid={!!errors.introduction}
                 errorMessage={errors.introduction?.message}
-              />
-
-              <LogoImage
-                initialUrl={logoLink}
-                setInitialUrl={setLogoLink}
-                setImageBlob={setLogoBlob}
               />
 
               <ArrayAdder
@@ -299,22 +315,6 @@ export const CompanyFormModal: FC<Props> = ({
                 removeItem={handleRemoveParentBrand}
                 dataSource={watch().parent_brand}
               />
-
-              <Select
-                label="主要语言"
-                placeholder="请选择主要语言"
-                selectionMode="multiple"
-                defaultSelectedKeys={formDefaultValue.primary_language}
-                onSelectionChange={(key) => {
-                  setValue('primary_language', [...key] as string[])
-                }}
-                isInvalid={!!errors.primary_language}
-                errorMessage={errors.primary_language?.message}
-              >
-                {languages.map((language) => (
-                  <SelectItem key={language.key}>{language.value}</SelectItem>
-                ))}
-              </Select>
             </div>
           </ModalBody>
           <ModalFooter>

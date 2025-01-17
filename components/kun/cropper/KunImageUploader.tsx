@@ -1,16 +1,20 @@
 'use client'
 
-import { useRef, useState } from 'react'
+import { type FC, useRef, useState } from 'react'
 import toast from 'react-hot-toast'
 import { Button } from '@nextui-org/react'
 import { Upload } from 'lucide-react'
 import { cn } from '~/utils/cn'
 
 interface ImageUploaderProps {
+  tip?: string
   onImageSelect: (dataUrl: string) => void
 }
 
-export const KunImageUploader = ({ onImageSelect }: ImageUploaderProps) => {
+export const KunImageUploader: FC<ImageUploaderProps> = ({
+  tip = '拖放图片到此处',
+  onImageSelect
+}) => {
   const [isDragging, setIsDragging] = useState(false)
   const fileInputRef = useRef<HTMLInputElement>(null)
 
@@ -71,7 +75,7 @@ export const KunImageUploader = ({ onImageSelect }: ImageUploaderProps) => {
     >
       <div className="flex flex-col items-center justify-center">
         <Upload className="w-12 h-12 mb-4 text-default-400" />
-        <p className="mb-2">拖放图片到此处或</p>
+        <p className="mb-2">{tip + '或'}</p>
         <Button
           color="primary"
           variant="flat"
