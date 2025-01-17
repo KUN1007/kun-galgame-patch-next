@@ -68,6 +68,7 @@ export const CompanyDetailContainer: FC<Props> = ({
     <div className="w-full my-4">
       <KunHeader
         name={company.name}
+        image={company.logo}
         description={company.introduction}
         headerEndContent={
           <Chip size="lg" color="primary">
