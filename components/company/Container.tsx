@@ -1,14 +1,15 @@
 'use client'
 
-import { useState, useEffect, FC, useTransition } from 'react'
+import { useState, useEffect, useTransition } from 'react'
 import { useDebounce } from 'use-debounce'
 import { Pagination } from '@nextui-org/pagination'
 import { CompanyHeader } from './CompanyHeader'
 import { SearchCompanies } from './SearchCompanies'
 import { CompanyList } from './CompanyList'
 import { useMounted } from '~/hooks/useMounted'
-import type { Company as CompanyType } from '~/types/api/company'
 import { kunFetchGet, kunFetchPost } from '~/utils/kunFetch'
+import type { FC } from 'react'
+import type { Company as CompanyType } from '~/types/api/company'
 
 interface Props {
   initialCompanies: CompanyType[]

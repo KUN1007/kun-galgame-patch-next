@@ -1,6 +1,6 @@
 'use client'
 
-import { type FC, useState, useTransition, useEffect } from 'react'
+import { useState, useTransition, useEffect } from 'react'
 import { useRouter } from 'next-nprogress-bar'
 import { Button, Chip } from '@nextui-org/react'
 import { useDisclosure } from '@nextui-org/modal'
@@ -10,7 +10,6 @@ import { Pencil } from 'lucide-react'
 import { motion } from 'framer-motion'
 import { cardContainer, cardItem } from '~/motion/card'
 import { useMounted } from '~/hooks/useMounted'
-import type { CompanyDetail } from '~/types/api/company'
 import { KunHeader } from '~/components/kun/Header'
 import { KunUser } from '~/components/kun/floating-card/KunUser'
 import { KunLoading } from '~/components/kun/Loading'
@@ -21,6 +20,8 @@ import { CompanyFormModal } from '../form/CompanyFormModal'
 import { formatDistanceToNow } from '~/utils/formatDistanceToNow'
 import { kunFetchGet } from '~/utils/kunFetch'
 import { SUPPORTED_LANGUAGE_MAP } from '~/constants/resource'
+import type { CompanyDetail } from '~/types/api/company'
+import type { FC } from 'react'
 
 interface Props {
   initialCompany: CompanyDetail

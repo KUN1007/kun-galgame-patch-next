@@ -1,10 +1,9 @@
 'use client'
 
-import { type FC, useState, useMemo, useEffect, useTransition } from 'react'
+import { useState, useMemo, useEffect, useTransition } from 'react'
 import { useForm } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { z } from 'zod'
-import type { Company, CompanyDetail } from '~/types/api/company'
 import { createCompanySchema, updateCompanySchema } from '~/validations/company'
 import toast from 'react-hot-toast'
 import {
@@ -24,6 +23,8 @@ import { SUPPORTED_LANGUAGE_MAP } from '~/constants/resource'
 import { kunFetchFormData, kunFetchPost, kunFetchPut } from '~/utils/kunFetch'
 import { errorReporter, kunErrorHandlerAsync } from '~/utils/kunErrorHandler'
 import { LogoImage } from './LogoImage'
+import type { Company, CompanyDetail } from '~/types/api/company'
+import type { FC } from 'react'
 
 type Condition<T, X, Y> = T extends 'create' ? X : Y
 
@@ -251,12 +252,19 @@ export const CompanyFormModal: FC<Props> = ({
   }
 
   return (
-    <Modal isOpen={isOpen} onClose={handleClose} size="2xl">
+    <Modal
+      size="2xl"
+      isOpen={isOpen}
+      onClose={handleClose}
+      scrollBehavior="outside"
+      isDismissable={false}
+      isKeyboardDismissDisabled={true}
+    >
       <ModalContent>
         <form>
           <ModalHeader>{isEdit ? '编辑会社信息' : '创建新会社'}</ModalHeader>
           <ModalBody>
-            <div className="space-y-6 overflow-y-auto max-h-[calc(100dvh-20rem)]">
+            <div className="space-y-6">
               <LogoImage
                 initialUrl={logoLink}
                 setInitialUrl={setLogoLink}

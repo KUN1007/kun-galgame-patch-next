@@ -42,6 +42,7 @@ export const ArrayAdder: FC<ArrayAdderProps> = ({
         />
         <Button
           color="primary"
+          variant="flat"
           onPress={addItem}
           className="self-end"
           isIconOnly

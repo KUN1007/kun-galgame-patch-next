@@ -7,11 +7,11 @@ import { uploadLogoSchema } from '~/validations/company'
 import { verifyHeaderCookie } from '~/middleware/_verifyHeaderCookie'
 
 const getBucketName = (id: number) => {
-  return `kun-galgame-patch/company/${id}/logo`
+  return `kun-galgame-patch/company/logo/${id}`
 }
 
 const getLink = (id: number) => {
-  return `${process.env.KUN_VISUAL_NOVEL_IMAGE_BED_URL}/company/${id}/logo/logo.avif`
+  return `${process.env.KUN_VISUAL_NOVEL_IMAGE_BED_URL}/company/logo/${id}/logo.avif`
 }
 
 export const uploadCompanyLogo = async (image: ArrayBuffer, id: number) => {

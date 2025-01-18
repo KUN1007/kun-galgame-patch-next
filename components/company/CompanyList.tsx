@@ -1,8 +1,8 @@
-import { FC } from 'react'
 import { KunMasonryGrid } from '~/components/kun/MasonryGrid'
 import { KunLoading } from '~/components/kun/Loading'
 import { KunNull } from '~/components/kun/Null'
 import { CompanyCard } from './Card'
+import type { FC } from 'react'
 import type { Company as CompanyType } from '~/types/api/company'
 
 interface CompanyListProps {

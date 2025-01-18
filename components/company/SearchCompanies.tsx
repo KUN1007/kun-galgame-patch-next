@@ -1,8 +1,8 @@
 import { Input } from '@nextui-org/input'
 import { Button } from '@nextui-org/react'
 import { Search } from 'lucide-react'
-import { FC } from 'react'
 import { KunLoading } from '~/components/kun/Loading'
+import type { FC } from 'react'
 
 interface SearchCompaniesProps {
   query: string

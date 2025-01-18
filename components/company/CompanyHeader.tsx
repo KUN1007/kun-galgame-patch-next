@@ -1,11 +1,11 @@
 'use client'
 
-import type { FC } from 'react'
 import { Button } from '@nextui-org/button'
 import { useDisclosure } from '@nextui-org/modal'
 import { Plus } from 'lucide-react'
 import { KunHeader } from '../kun/Header'
 import { CompanyFormModal } from './form/CompanyFormModal'
+import type { FC } from 'react'
 import type { Company as CompanyType } from '~/types/api/company'
 
 interface Props {
