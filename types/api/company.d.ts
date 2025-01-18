@@ -1,7 +1,7 @@
 export interface Company {
   id: number
   name: string
-  banner: string
+  logo: string
   count: number
   alias: string[]
 }

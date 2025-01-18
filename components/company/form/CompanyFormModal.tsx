@@ -1,6 +1,6 @@
 'use client'
 
-import { type FC, useState, useMemo, useEffect } from 'react'
+import { type FC, useState, useMemo, useEffect, useTransition } from 'react'
 import { useForm } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { z } from 'zod'
@@ -21,8 +21,8 @@ import {
 } from '@nextui-org/react'
 import { ArrayAdder } from './ArrayAdder'
 import { SUPPORTED_LANGUAGE_MAP } from '~/constants/resource'
-import { kunFetchPost, kunFetchPut } from '~/utils/kunFetch'
-import { kunErrorHandler } from '~/utils/kunErrorHandler'
+import { kunFetchFormData, kunFetchPost, kunFetchPut } from '~/utils/kunFetch'
+import { errorReporter, kunErrorHandlerAsync } from '~/utils/kunErrorHandler'
 import { LogoImage } from './LogoImage'
 
 type Condition<T, X, Y> = T extends 'create' ? X : Y
@@ -55,20 +55,24 @@ export const CompanyFormModal: FC<Props> = ({
   const [aliasInput, setAliasInput] = useState('')
   const [websiteInput, setWebsiteInput] = useState('')
   const [brandInput, setBrandInput] = useState('')
-  const [isSubmitting, setIsSubmitting] = useState(false)
+  const [isSubmitting, startSubmit] = useTransition()
+
+  const [logoLink, setLogoLink] = useState<string>(company?.logo ?? '')
+  const [logoBlob, setLogoBlob] = useState<Blob | null>(null)
 
   const formDefaultValue = useMemo(() => {
-    const defaultValue: FormData<typeof type> = {
+    const defaultValue = {
       name: isEdit ? (company?.name ?? '') : '',
       introduction: isEdit ? (company?.introduction ?? '') : '',
       alias: isEdit ? (company?.alias ?? []) : [],
       primary_language: isEdit ? (company?.primary_language ?? []) : [],
       official_website: isEdit ? (company?.official_website ?? []) : [],
       parent_brand: isEdit ? (company?.parent_brand ?? []) : []
-    }
+    } as FormData<typeof type>
 
     if (isEdit && company) {
       ;(defaultValue as updateFormData).companyId = company.id
+      ;(defaultValue as updateFormData).logoLink = company.logo
     }
 
     return defaultValue
@@ -169,19 +173,76 @@ export const CompanyFormModal: FC<Props> = ({
     )
   }
 
-  const handleSubmit = (type: 'create' | 'edit') => {
-    return async () => {
-      setIsSubmitting(true)
-      const res = isEdit
-        ? await kunFetchPut<KunResponse<CompanyDetail>>('/company', watch())
-        : await kunFetchPost<KunResponse<Company>>('/company', watch())
-      kunErrorHandler(res, (value) => {
-        isEdit && toast.success('会社重新编辑成功!')
-        onSuccess<typeof type>(value)
-        reset()
-      })
-      setIsSubmitting(false)
-    }
+  const uploadLogo = async (
+    companyId: number,
+    logoBlob: Blob | null
+  ): Promise<string> => {
+    if (!logoBlob) return logoLink
+    const formData = new FormData()
+    formData.append('logo', logoBlob)
+    formData.append('companyId', companyId.toString())
+    const res = await kunFetchFormData<KunResponse<string>>(
+      '/company/upload-logo',
+      formData
+    )
+    return res
+  }
+
+  const updateCompany = async (
+    companyId: number,
+    logoLink: string
+  ): Promise<KunResponse<CompanyDetail>> => {
+    const res = await kunFetchPut<KunResponse<CompanyDetail>>('/company', {
+      ...watch(),
+      companyId,
+      logoLink
+    })
+    return res
+  }
+
+  const createCompany = async (): Promise<KunResponse<Company>> => {
+    const res = await kunFetchPost<KunResponse<Company>>('/company', watch())
+    return res
+  }
+
+  const handleSubmit = () => {
+    startSubmit(async () => {
+      try {
+        let logoLink = ''
+
+        if (isEdit) {
+          const companyId = company!.id
+          logoLink = await uploadLogo(companyId, logoBlob)
+
+          const res = await updateCompany(companyId, logoLink)
+          const result = await kunErrorHandlerAsync(res)
+
+          toast.success('会社信息更新成功')
+          onSuccess<typeof type>(result)
+          reset()
+        } else {
+          const res = await createCompany()
+          const result = await kunErrorHandlerAsync(res)
+
+          if (!logoBlob) {
+            toast.success('会社创建成功')
+            onSuccess<typeof type>(result)
+            reset()
+            return
+          }
+
+          logoLink = await uploadLogo(result.id, logoBlob)
+          const updateRes = await updateCompany(result.id, logoLink)
+          const updateResult = await kunErrorHandlerAsync(updateRes)
+
+          toast.success('会社创建成功')
+          onSuccess<typeof type>(updateResult)
+          reset()
+        }
+      } catch (err) {
+        errorReporter(err)
+      }
+    })
   }
 
   const handleClose = () => {
@@ -195,7 +256,13 @@ export const CompanyFormModal: FC<Props> = ({
         <form>
           <ModalHeader>{isEdit ? '编辑会社信息' : '创建新会社'}</ModalHeader>
           <ModalBody>
-            <div className="space-y-6">
+            <div className="space-y-6 overflow-y-auto max-h-[calc(100dvh-20rem)]">
+              <LogoImage
+                initialUrl={logoLink}
+                setInitialUrl={setLogoLink}
+                setImageBlob={setLogoBlob}
+              />
+
               <Input
                 {...register('name')}
                 label="会社名"
@@ -204,6 +271,22 @@ export const CompanyFormModal: FC<Props> = ({
                 errorMessage={errors.name?.message}
               />
 
+              <Select
+                label="主要语言"
+                placeholder="请选择主要语言"
+                selectionMode="multiple"
+                defaultSelectedKeys={formDefaultValue.primary_language}
+                onSelectionChange={(key) => {
+                  setValue('primary_language', [...key] as string[])
+                }}
+                isInvalid={!!errors.primary_language}
+                errorMessage={errors.primary_language?.message}
+              >
+                {languages.map((language) => (
+                  <SelectItem key={language.key}>{language.value}</SelectItem>
+                ))}
+              </Select>
+
               <Textarea
                 {...register('introduction')}
                 label="会社简介"
@@ -211,8 +294,6 @@ export const CompanyFormModal: FC<Props> = ({
                 isInvalid={!!errors.introduction}
                 errorMessage={errors.introduction?.message}
               />
-
-              <LogoImage />
 
               <ArrayAdder
                 label="别名"
@@ -243,22 +324,6 @@ export const CompanyFormModal: FC<Props> = ({
                 removeItem={handleRemoveParentBrand}
                 dataSource={watch().parent_brand}
               />
-
-              <Select
-                label="主要语言"
-                placeholder="请选择主要语言"
-                selectionMode="multiple"
-                defaultSelectedKeys={formDefaultValue.primary_language}
-                onSelectionChange={(key) => {
-                  setValue('primary_language', [...key] as string[])
-                }}
-                isInvalid={!!errors.primary_language}
-                errorMessage={errors.primary_language?.message}
-              >
-                {languages.map((language) => (
-                  <SelectItem key={language.key}>{language.value}</SelectItem>
-                ))}
-              </Select>
             </div>
           </ModalBody>
           <ModalFooter>
@@ -269,7 +334,7 @@ export const CompanyFormModal: FC<Props> = ({
               color="primary"
               isDisabled={isSubmitting}
               isLoading={isSubmitting}
-              onPress={handleSubmit(type)}
+              onPress={handleSubmit}
             >
               {isEdit ? '保存' : '创建'}
             </Button>

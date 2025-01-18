@@ -8,6 +8,7 @@ import { KunImageMosaicModal } from './KunImageMosaicModal'
 import type { KunAspect } from './types'
 
 interface Props {
+  tip?: string
   aspect?: KunAspect
   initialImage?: string
   description?: string
@@ -16,6 +17,7 @@ interface Props {
 }
 
 export const KunImageCropper = ({
+  tip,
   aspect,
   initialImage,
   description,
@@ -44,22 +46,21 @@ export const KunImageCropper = ({
     onImageComplete?.(mosaicImage)
   }
 
-  const previewImage = imgSrc ? imgSrc : initialImage
-
   return (
     <div className="gap-6 size-full">
       <KunImageUploader
+        tip={tip}
         onImageSelect={(dataUrl: string) => {
           setImgSrc(dataUrl)
           onOpenCropper()
         }}
       />
 
-      {previewImage && (
+      {imgSrc && (
         <Card className="w-full max-w-md mx-auto">
           <CardBody>
             <Image
-              src={previewImage}
+              src={imgSrc}
               alt="Cropped image"
               className="object-contain w-full h-auto"
             />

@@ -45,9 +45,15 @@ export const createCompanySchema = z.object({
 
 export const updateCompanySchema = createCompanySchema.merge(
   z.object({
-    companyId: z.coerce.number().min(1).max(9999999)
+    companyId: z.coerce.number().min(1).max(9999999),
+    logoLink: z.string().optional()
   })
 )
+
+export const uploadLogoSchema = z.object({
+  companyId: z.coerce.number().min(1).max(9999999),
+  logo: z.any()
+})
 
 export const getCompanySchema = z.object({
   page: z.coerce.number().min(1).max(9999999),
