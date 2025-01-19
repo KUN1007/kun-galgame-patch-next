@@ -20,8 +20,8 @@ export const login = async (input: z.infer<typeof loginSchema>) => {
   const user = await prisma.user.findFirst({
     where: {
       OR: [
-        { email: normalizedName },
-        { name: { equals: normalizedName, mode: 'insensitive' } } // 大小写不敏感用户名匹配
+        { email: { equals: normalizedName, mode: 'insensitive' } },
+        { name: { equals: normalizedName, mode: 'insensitive' } }
       ]
     }
   })
