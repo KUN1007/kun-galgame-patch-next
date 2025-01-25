@@ -1,0 +1,34 @@
+{
+  "friends": [
+    {
+      "name": "鲲 Galgame 补丁",
+      "avatar": "https://www.moyu.moe/favicon.webp",
+      "label": "开源, 免费, 零门槛, 纯手写, 最先进的 Galgame 补丁资源下载站, 提供 Windows, 安卓, KRKR, Tyranor 等各类平台的 Galgame 补丁资源下载。永远免费！",
+      "link": "https://www.moyu.moe"
+    },
+    {
+      "name": "鲲 Galgame 论坛",
+      "avatar": "https://www.kungal.com/favicon.webp",
+      "label": "世界上最萌的 Galgame 论坛! 现阶段世界上最先进的 Galgame 资源发布网站! 永远不会有广告! 永远免费! Galgame 下载, Galgame 资源网站",
+      "link": "https://www.kungal.com/zh-cn"
+    },
+    {
+      "name": "鲲 Galgame 表情包",
+      "avatar": "https://sticker.kungal.com/favicon.webp",
+      "label": "Galgame 表情包网站, 鲲 Galgame, Galgame 表情包下载, Galgame, 表情包, 下载",
+      "link": "https://sticker.kungal.com/"
+    },
+    {
+      "name": "鲲 Galgame 导航",
+      "avatar": "https://nav.kungal.org/favicon.webp",
+      "label": "鲲 Galgame 导航页, 指明鲲 Galgame 网站集群的所有网站",
+      "link": "https://nav.kungal.org/"
+    },
+    {
+      "name": "TouchGal",
+      "avatar": "https://img.touchgalstatic.org/2024/06/8b9411844520240614204452.webp",
+      "label": "TouchGal 是一个一站式 Galgame 文化社区。提供Galgame 论坛、Galgame 下载等服务。承诺永久免费, 高质量。为Galgame 爱好者提供一片净土！",
+      "link": "https://touchgal.io"
+    }
+  ]
+}
