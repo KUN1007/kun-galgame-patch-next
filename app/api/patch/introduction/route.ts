@@ -38,6 +38,7 @@ export const getPatchIntroduction = async (
             select: {
               id: true,
               name: true,
+              logo: true,
               count: true,
               alias: true
             }
