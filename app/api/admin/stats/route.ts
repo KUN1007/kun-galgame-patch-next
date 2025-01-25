@@ -1,76 +1,68 @@
+import { z } from 'zod'
 import { NextRequest, NextResponse } from 'next/server'
-import { getKv, setKv } from '~/lib/redis'
-import type { AdminStats } from '~/types/api/admin'
-import {
-  getCommentStats,
-  getGalgameStats,
-  getPatchResourceStats,
-  getUserStats
-} from './stats'
+import { kunParseGetQuery } from '~/app/api/utils/parseQuery'
+import { prisma } from '~/prisma/index'
+import type { OverviewData } from '~/types/api/admin'
 
-const CACHE_KEY = 'admin:stats'
+const daysSchema = z.object({
+  days: z.coerce
+    .number({ message: '天数必须为数字' })
+    .min(1)
+    .max(60, { message: '最多展示 60 天的数据' })
+})
 
-export const getAdminStats = async () => {
-  const cachedStats = await getKv(CACHE_KEY)
+export const getOverviewData = async (days: number): Promise<OverviewData> => {
+  const time = new Date()
+  time.setDate(time.getDate() - days)
 
-  if (cachedStats) {
-    return JSON.parse(cachedStats)
-  }
+  const [newUser, newActiveUser, newGalgame, newPatchResource, newComment] =
+    await Promise.all([
+      prisma.user.count({
+        where: {
+          created: {
+            gte: time
+          }
+        }
+      }),
+      prisma.user.count({
+        where: {
+          last_login_time: {
+            gte: time.getTime().toString()
+          }
+        }
+      }),
+      prisma.patch.count({
+        where: {
+          created: {
+            gte: time
+          }
+        }
+      }),
+      prisma.patch_resource.count({
+        where: {
+          created: {
+            gte: time
+          }
+        }
+      }),
+      prisma.patch_comment.count({
+        where: {
+          created: {
+            gte: time
+          }
+        }
+      })
+    ])
 
-  const today = new Date()
-  const yesterday = new Date(today)
-  yesterday.setDate(yesterday.getDate() - 1)
-
-  const [
-    todayUserStats,
-    yesterdayUserStats,
-    todayGalgameStats,
-    todayPatchResourceStats,
-    todayComments,
-    yesterdayComments
-  ] = await Promise.all([
-    getUserStats(today),
-    getUserStats(yesterday),
-    getGalgameStats(today),
-    getPatchResourceStats(today),
-    getCommentStats(today),
-    getCommentStats(yesterday)
-  ])
-
-  const stats: AdminStats[] = [
-    {
-      title: 'user',
-      value: todayUserStats.totalUsers.toString(),
-      change: todayUserStats.newUsers
-    },
-    {
-      title: 'active',
-      value: todayUserStats.activeUsers.toString(),
-      change: todayUserStats.activeUsers - yesterdayUserStats.activeUsers
-    },
-    {
-      title: 'galgame',
-      value: todayGalgameStats.totalGalgames.toString(),
-      change: todayGalgameStats.newGalgames
-    },
-    {
-      title: 'patch',
-      value: todayPatchResourceStats.totalPatches.toString(),
-      change: todayPatchResourceStats.newPatches
-    },
-    {
-      title: 'comment',
-      value: todayComments.toString(),
-      change: todayComments - yesterdayComments
-    }
-  ]
-
-  await setKv(CACHE_KEY, JSON.stringify(stats), 60 * 60)
-
-  return stats
+  return { newUser, newActiveUser, newGalgame, newPatchResource, newComment }
 }
 
-export async function GET(req: NextRequest) {
-  const stats = await getAdminStats()
-  return NextResponse.json(stats)
+export const GET = async (req: NextRequest) => {
+  const input = kunParseGetQuery(req, daysSchema)
+  if (typeof input === 'string') {
+    return NextResponse.json(input)
+  }
+
+  const data = await getOverviewData(input.days)
+  return NextResponse.json(data)
 }
