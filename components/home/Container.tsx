@@ -4,7 +4,8 @@ import { PatchCard } from '~/components/home/PatchCard'
 import { ResourceCard } from '~/components/resource/ResourceCard'
 import { CommentCard } from '~/components/comment/CommentCard'
 import Link from 'next/link'
-import { HeroContainer } from './hero/Container'
+import { KunCarousel } from './carousel/KunCarousel'
+import { getKunPosts } from './carousel/mdx'
 import type { HomeComment, HomeResource } from '~/types/api/home'
 
 interface Props {
@@ -14,9 +15,11 @@ interface Props {
 }
 
 export const HomeContainer = ({ galgames, resources, comments }: Props) => {
+  const posts = getKunPosts()
+
   return (
     <div className="mx-auto space-y-16 max-w-7xl">
-      <HeroContainer />
+      <KunCarousel posts={posts} />
 
       <section className="space-y-6">
         <div className="flex items-center space-x-4">

@@ -38,7 +38,9 @@ export const kunMoyuMoe: KunSiteConfig = {
     main: 'https://www.moyu.moe',
     imageBed: 'https://image.moyu.moe',
     storage: 'https://oss.moyu.moe',
-    kungal: 'https://www.kungal.com'
+    kungal: 'https://www.kungal.com',
+    telegram_group: 'https://t.me/kungalgame',
+    cluster: 'https://nav.kungal.org'
   },
   og: {
     title: '鲲 Galgame 补丁 - 开源 Galgame 补丁资源下载站',
