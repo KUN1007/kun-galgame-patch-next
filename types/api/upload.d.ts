@@ -5,3 +5,14 @@ export interface UploadFileResponse {
   fileHash: string
   fileSize: string
 }
+
+export interface KunChunkMetadata {
+  chunkIndex: number
+  totalChunks: number
+  fileId: string
+  fileName: string
+  fileSize: number
+  mimeType: string
+  filepath: string
+  fileHash: string
+}

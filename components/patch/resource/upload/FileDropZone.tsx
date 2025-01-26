@@ -1,51 +1,16 @@
-import toast from 'react-hot-toast'
 import { Upload } from 'lucide-react'
 import { Button, Input } from '@nextui-org/react'
 import { cn } from '~/utils/cn'
 import { useState } from 'react'
-import { ALLOWED_EXTENSIONS, ALLOWED_MIME_TYPES } from '~/constants/resource'
+import { useUserStore } from '~/store/providers/user'
+import { handleFileInput } from './utils'
 
 interface Props {
   onFileUpload: (file: File) => Promise<void>
 }
 
-const validateFileType = (file: File): boolean => {
-  const fileExtension = file.name
-    .slice(file.name.lastIndexOf('.'))
-    .toLowerCase()
-  return (
-    ALLOWED_MIME_TYPES.includes(file.type) ||
-    ALLOWED_EXTENSIONS.includes(fileExtension)
-  )
-}
-
-const handleFileInput = (file: File | undefined) => {
-  if (!file) {
-    toast.error('未选择文件')
-    return
-  }
-
-  if (!validateFileType(file)) {
-    toast.error('文件类型不被支持，仅接受 .zip, .rar, .7z 格式')
-    return
-  }
-
-  const fileSizeMB = file.size / (1024 * 1024)
-  if (fileSizeMB < 0.001) {
-    toast.error('文件过小, 您的文件小于 0.001 MB')
-    return
-  }
-  if (fileSizeMB > 100) {
-    toast.error(
-      `文件大小超出限制: ${fileSizeMB.toFixed(3)} MB, 最大允许大小为 100 MB`
-    )
-    return
-  }
-
-  return file
-}
-
 export const FileDropZone = ({ onFileUpload }: Props) => {
+  const user = useUserStore((state) => state.user)
   const [isDragging, setIsDragging] = useState(false)
 
   const handleDrop = async (e: React.DragEvent) => {
@@ -53,7 +18,7 @@ export const FileDropZone = ({ onFileUpload }: Props) => {
     setIsDragging(false)
     const file = e.dataTransfer.files[0]
 
-    const res = handleFileInput(file)
+    const res = handleFileInput(file, user.role)
 
     if (res) {
       await onFileUpload(res)
@@ -62,7 +27,7 @@ export const FileDropZone = ({ onFileUpload }: Props) => {
 
   const handleClickUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0]
-    const res = handleFileInput(file)
+    const res = handleFileInput(file, user.role)
     if (res) {
       await onFileUpload(res)
     }
@@ -72,7 +37,7 @@ export const FileDropZone = ({ onFileUpload }: Props) => {
     <div
       className={cn(
         'border-2 border-dashed rounded-lg p-8 transition-colors',
-        isDragging ? 'border-primary bg-primary/10' : 'border-gray-300'
+        isDragging ? 'border-primary bg-primary/10' : 'border-default-300'
       )}
       onDrop={handleDrop}
       onDragOver={(e) => {

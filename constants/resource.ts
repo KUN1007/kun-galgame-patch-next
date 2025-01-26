@@ -142,3 +142,10 @@ export const ALLOWED_MIME_TYPES = [
 ]
 
 export const ALLOWED_EXTENSIONS = ['.zip', '.rar', '.7z']
+
+export const RESOURCE_UPLOAD_STATUS_MAP: Record<number, string> = {
+  1: '正在上传中...',
+  2: '合并文件中...',
+  3: '上传文件成功~',
+  4: '上传文件失败!'
+}

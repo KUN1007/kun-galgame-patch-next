@@ -1,6 +1,7 @@
 import { Button, Card, Progress } from '@nextui-org/react'
 import { File as FileIcon } from 'lucide-react'
 import { sanitizeFileName } from '~/utils/sanitizeFileName'
+import { RESOURCE_UPLOAD_STATUS_MAP } from '~/constants/resource'
 import type { FileStatus } from '../share'
 
 interface Props {
@@ -30,7 +31,9 @@ export const FileUploadCard = ({ fileData, onRemove }: Props) => {
         </div>
         {fileData.hash ? (
           <div className="flex items-center gap-2 ml-auto">
-            <span className="text-sm text-default-500">文件上传成功</span>
+            <span className="text-sm text-default-500">
+              {RESOURCE_UPLOAD_STATUS_MAP[fileData.uploadStatus]}
+            </span>
             <Button color="danger" variant="flat" onPress={onRemove}>
               移除
             </Button>
@@ -44,10 +47,13 @@ export const FileUploadCard = ({ fileData, onRemove }: Props) => {
           </div>
         ) : (
           <div className="space-y-2">
-            <p className="text-sm text-default-500">正在上传中...</p>
+            <p className="text-sm text-default-500">
+              <span>{RESOURCE_UPLOAD_STATUS_MAP[fileData.uploadStatus]}</span>
+              <span>{` ${fileData.progress}%`}</span>
+            </p>
             <Progress
               value={fileData.progress}
-              className="w-24"
+              className="w-28"
               size="sm"
               color="primary"
               aria-label={`上传进度: ${fileData.progress}%`}

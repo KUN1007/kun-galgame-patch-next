@@ -52,7 +52,7 @@ export const getKunPosts = (): HomeCarouselMetadata[] => {
           authorAvatar: data.authorAvatar,
           pin: data.pin,
           directory: parentDirectory,
-          link: `/doc/${parentDirectory}/${fileName}`
+          link: `/about/${parentDirectory}/${fileName}`
         })
       }
     })

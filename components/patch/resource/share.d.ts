@@ -15,9 +15,11 @@ interface Fields {
   platform: string[]
 }
 
+// uploadStatus: 1 - uploading, 2 - merging, 3 - complete, 4 - error
 export interface FileStatus {
   file: File
   progress: number
+  uploadStatus: number
   error?: string
   hash?: string
   filetype?: string
