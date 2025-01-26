@@ -70,7 +70,7 @@ export const FileUploadContainer = ({ onSuccess, handleRemoveFile }: Props) => {
   }
 
   return (
-    <div className="space-y-2">
+    <div className="space-y-4">
       <h3 className="text-lg font-medium">上传资源</h3>
       <p className="text-sm text-default-500">
         您的文件在上传后将会被去除特殊字符, 仅保留下划线 ( _ ) 或连字符 ( - ),
