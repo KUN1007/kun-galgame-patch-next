@@ -81,12 +81,18 @@ export const FileUploadContainer: React.FC<Props> = ({
   }
 
   return (
-    <div className="space-y-4">
+    <div className="space-y-2">
       <h3 className="text-lg font-medium">上传资源</h3>
-      <p className="text-sm text-default-500">
-        您的文件在上传后将会被去除特殊字符, 仅保留下划线 ( _ ) 或连字符 ( - ),
-        以及后缀
-      </p>
+      <div>
+        <p className="text-sm text-default-500">
+          您的文件在上传后将会被去除特殊字符, 仅保留下划线 ( _ ) 或连字符 ( - ),
+          以及后缀
+        </p>
+        <p className="text-sm text-default-500">
+          为保证上传速度, 我们将文件分为 {CHUNK_SIZE / (1024 * 1024)}MB 的块,
+          如果您的文件较大, 请耐心等待上传, 其中合并文件阶段可能会耗费较长时间
+        </p>
+      </div>
 
       {!fileData ? (
         <FileDropZone onFileUpload={handleFileUpload} />
