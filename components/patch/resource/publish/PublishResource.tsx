@@ -100,17 +100,13 @@ export const PublishResource = ({
           {user.role > 1 ? (
             <div className="space-y-1">
               <Link
-                className="flex"
+                className="mr-4"
                 underline="hover"
                 href="/about/notice/patch-tutorial"
               >
                 鲲 Galgame 补丁资源系统介绍
               </Link>
-              <Link
-                className="flex"
-                underline="hover"
-                href="/about/notice/paradigm"
-              >
+              <Link underline="hover" href="/about/notice/paradigm">
                 鲲 Galgame 补丁资源发布规范
               </Link>
               <p>

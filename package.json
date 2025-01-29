@@ -72,7 +72,6 @@
     "@types/nodemailer": "^6.4.17",
     "@types/nodemailer-smtp-transport": "^2.7.8",
     "aws-sdk": "^2.1692.0",
-    "axios": "^1.7.9",
     "canvas-confetti": "^1.9.3",
     "clsx": "^2.1.1",
     "dayjs": "^1.11.13",

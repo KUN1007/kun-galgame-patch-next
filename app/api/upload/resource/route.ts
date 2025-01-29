@@ -11,7 +11,12 @@ import {
   mergeChunks,
   cleanupChunks
 } from '../utils'
-import { MAX_FILE_SIZE } from '~/config/upload'
+import {
+  CHUNK_SIZE,
+  MAX_FILE_SIZE,
+  USER_DAILY_UPLOAD_LIMIT,
+  CREATOR_DAILY_UPLOAD_LIMIT
+} from '~/config/upload'
 import type { KunChunkMetadata } from '~/types/api/upload'
 
 const getFileExtension = (filename: string) => {
@@ -27,7 +32,6 @@ const processResourceChunk = async (
   await ensureUploadDir()
   const chunkBuffer = Buffer.from(await chunk.arrayBuffer())
   await writeChunk(metadata.fileId, chunkBuffer, metadata.chunkIndex)
-  const fileSizeInMB = chunkBuffer.length / (1024 * 1024)
 
   if (metadata.chunkIndex === metadata.totalChunks - 1) {
     try {
@@ -39,7 +43,7 @@ const processResourceChunk = async (
 
       const hash = await generateFileHash(mergedFilePath)
       const totalChunkSize =
-        Number(fileSizeInMB.toFixed(3)) * metadata.totalChunks
+        CHUNK_SIZE * (metadata.totalChunks - 1) + chunkBuffer.length
       metadata.fileHash = hash
       metadata.filepath = mergedFilePath
       metadata.fileName = fileName
@@ -50,8 +54,6 @@ const processResourceChunk = async (
         where: { id: uid },
         data: { daily_upload_size: { increment: totalChunkSize } }
       })
-
-      console.log(metadata)
 
       return metadata
     } catch (error) {
@@ -92,10 +94,10 @@ const checkRequestValid = async (req: NextRequest) => {
   if (user.role < 2) {
     return '您的权限不足, 创作者或者管理员才可以上传文件到对象存储'
   }
-  if (user.role === 1 && user.daily_upload_size >= 100) {
+  if (user.role === 1 && user.daily_upload_size >= USER_DAILY_UPLOAD_LIMIT) {
     return '您今日的上传大小已达到 100MB 限额'
   }
-  if (user.role === 2 && user.daily_upload_size >= 5120) {
+  if (user.role === 2 && user.daily_upload_size >= CREATOR_DAILY_UPLOAD_LIMIT) {
     return '您今日的上传大小已达到 5GB 限额'
   }
 
