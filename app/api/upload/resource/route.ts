@@ -49,7 +49,7 @@ const processResourceChunk = async (
       metadata.fileName = fileName
       metadata.fileSize = totalChunkSize
 
-      await setKv(metadata.fileId, JSON.stringify(metadata), 24 * 60 * 60)
+      await setKv(hash, mergedFilePath, 24 * 60 * 60)
       await prisma.user.update({
         where: { id: uid },
         data: { daily_upload_size: { increment: totalChunkSize } }
@@ -90,9 +90,6 @@ const checkRequestValid = async (req: NextRequest) => {
   const user = await prisma.user.findUnique({ where: { id: payload.uid } })
   if (!user) {
     return '用户未找到'
-  }
-  if (user.role < 2) {
-    return '您的权限不足, 创作者或者管理员才可以上传文件到对象存储'
   }
   if (user.role === 1 && user.daily_upload_size >= USER_DAILY_UPLOAD_LIMIT) {
     return '您今日的上传大小已达到 100MB 限额'

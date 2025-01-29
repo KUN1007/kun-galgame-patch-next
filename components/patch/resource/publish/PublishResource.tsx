@@ -23,6 +23,10 @@ import { FileUploadContainer } from '../upload/FileUploadContainer'
 import { ResourceTypeSelect } from './ResourceTypeSelect'
 import { kunErrorHandler } from '~/utils/kunErrorHandler'
 import { useUserStore } from '~/store/providers/user'
+import {
+  USER_DAILY_UPLOAD_LIMIT,
+  CREATOR_DAILY_UPLOAD_LIMIT
+} from '~/config/upload'
 import type { PatchResource } from '~/types/api/patch'
 
 export type ResourceFormData = z.infer<typeof patchResourceCreateSchema>
@@ -51,7 +55,7 @@ export const PublishResource = ({
     resolver: zodResolver(patchResourceCreateSchema),
     defaultValues: {
       patchId,
-      storage: user.role > 1 ? 's3' : 'user',
+      storage: 's3',
       hash: '',
       content: '',
       code: '',
@@ -90,38 +94,51 @@ export const PublishResource = ({
     setValue('size', size)
   }
 
-  const progress = Math.min((user.dailyUploadLimit / 5120) * 100, 100)
+  const progress = () => {
+    const uploadSizeRate =
+      user.dailyUploadLimit /
+      (user.role > 1 ? CREATOR_DAILY_UPLOAD_LIMIT : USER_DAILY_UPLOAD_LIMIT)
+    return Math.min(uploadSizeRate * 100, 100)
+  }
+
+  const userDailyStorageMB = (user.dailyUploadLimit / (1024 * 1024)).toFixed(3)
 
   return (
     <ModalContent>
       <ModalHeader className="flex-col space-y-2">
         <h3 className="text-lg">创建补丁资源</h3>
-        <div className="text-sm font-medium text-default-500">
-          {user.role > 1 ? (
-            <div className="space-y-1">
-              <Link
-                className="mr-4"
-                underline="hover"
-                href="/about/notice/patch-tutorial"
-              >
-                鲲 Galgame 补丁资源系统介绍
+        <div className="space-y-2 text-sm font-medium text-default-500">
+          <div className="space-y-1">
+            <Link
+              className="mr-4"
+              underline="hover"
+              href="/about/notice/patch-tutorial"
+            >
+              鲲 Galgame 补丁资源系统介绍
+            </Link>
+            <Link underline="hover" href="/about/notice/paradigm">
+              鲲 Galgame 补丁资源发布规范
+            </Link>
+            <p>
+              作为创作者, 您每天有 5GB (5120MB) 的上传额度, 该额度每天早上 8
+              点重置
+            </p>
+            <p>{`您今日已使用存储 ${userDailyStorageMB} MB`}</p>
+            <Progress size="sm" value={progress()} aria-label="已使用存储" />
+          </div>
+          <div>
+            <p>上传配额</p>
+            <ul>
+              <li>1. 普通用户每天拥有 100MB 的补丁资源上传额度</li>
+              <li>2. 创作者每天拥有 5GB 的补丁资源上传额度</li>
+            </ul>
+            <p>
+              您需要发布 3 个符合规定的 Galgame 补丁以{' '}
+              <Link href="/apply" size="sm">
+                申请成为创作者
               </Link>
-              <Link underline="hover" href="/about/notice/paradigm">
-                鲲 Galgame 补丁资源发布规范
-              </Link>
-              <p>
-                作为创作者, 您每天有 5GB (5120MB) 的上传额度, 该额度每天早上 8
-                点重置
-              </p>
-              <p>{`您今日已使用存储 ${user.dailyUploadLimit} MB`}</p>
-              <Progress size="sm" value={progress} aria-label="已使用存储" />
-            </div>
-          ) : (
-            <>
-              您需要先自行发布 3 个补丁资源以使用我们的对象存储, 当您发布完成 3
-              个合法补丁后, 您可以 <Link href="/apply">申请成为创作者</Link>
-            </>
-          )}
+            </p>
+          </div>
         </div>
       </ModalHeader>
 

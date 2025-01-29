@@ -64,7 +64,7 @@ export const EditResourceDialog = ({
       <ModalHeader className="flex-col space-y-2">
         <h3 className="text-lg">资源链接</h3>
         <p className="text-sm font-medium text-default-500">
-          对象存储和 OneDrive 资源链接不可更换, 若要更换请您删除资源并重新发布
+          对象存储链接不可更换, 若要更换请您删除资源并重新发布
         </p>
       </ModalHeader>
 

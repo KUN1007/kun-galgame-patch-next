@@ -33,11 +33,7 @@ export const ResourceLinksInput = ({
         return (
           <div key={index} className="flex items-center gap-2">
             <Chip color="primary" variant="flat">
-              {
-                SUPPORTED_RESOURCE_LINK_MAP[
-                  storage as 's3' | 'onedrive' | 'user'
-                ]
-              }
+              {SUPPORTED_RESOURCE_LINK_MAP[storage as 's3' | 'user']}
             </Chip>
 
             <div className="flex-col w-full">

@@ -14,7 +14,7 @@ export const writeChunk = async (
   chunkData: Buffer,
   chunkIndex: number
 ) => {
-  const chunkPath = path.join(UPLOAD_DIR, `${fileId}-${chunkIndex}`)
+  const chunkPath = path.posix.join(UPLOAD_DIR, `${fileId}-${chunkIndex}`)
   await writeFile(chunkPath, chunkData)
   return chunkPath
 }
@@ -24,11 +24,11 @@ export const mergeChunks = async (
   totalChunks: number,
   fileName: string
 ) => {
-  const finalPath = path.join(UPLOAD_DIR, fileName)
+  const finalPath = path.posix.join(UPLOAD_DIR, fileName)
   const writeStream = createWriteStream(finalPath)
 
   for (let i = 0; i < totalChunks; i++) {
-    const chunkPath = path.join(UPLOAD_DIR, `${fileId}-${i}`)
+    const chunkPath = path.posix.join(UPLOAD_DIR, `${fileId}-${i}`)
     const chunkBuffer = await readFile(chunkPath)
     writeStream.write(chunkBuffer)
     await unlink(chunkPath)
@@ -43,7 +43,7 @@ export const mergeChunks = async (
 
 export const cleanupChunks = async (fileId: string, totalChunks: number) => {
   for (let i = 0; i < totalChunks; i++) {
-    const chunkPath = path.join(UPLOAD_DIR, `${fileId}-${i}`)
+    const chunkPath = path.posix.join(UPLOAD_DIR, `${fileId}-${i}`)
     if (existsSync(chunkPath)) {
       await unlink(chunkPath)
     }

@@ -69,7 +69,7 @@ export const FileUploadContainer: React.FC<Props> = ({
           's3',
           response.fileHash,
           `${kunMoyuMoe.domain.storage}/${response.fileHash}`,
-          fileSizeMB.toString()
+          `${fileSizeMB.toFixed(3).toString()} MB`
         )
       }
     }

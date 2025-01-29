@@ -1,6 +1,10 @@
 import toast from 'react-hot-toast'
 import { kunFetchFormData } from '~/utils/kunFetch'
 import { ALLOWED_EXTENSIONS, ALLOWED_MIME_TYPES } from '~/constants/resource'
+import {
+  USER_DAILY_UPLOAD_LIMIT,
+  CREATOR_DAILY_UPLOAD_LIMIT
+} from '~/config/upload'
 import type { KunChunkMetadata } from '~/types/api/upload'
 
 const validateFileType = (file: File): boolean => {
@@ -25,17 +29,17 @@ export const handleFileInput = (file: File | undefined, role: number) => {
   }
 
   const fileSizeMB = file.size / (1024 * 1024)
-  if (fileSizeMB < 0.001) {
-    toast.error('文件过小, 您的文件小于 0.001 MB')
+  if (file.size < 1024) {
+    toast.error('文件过小, 您的文件小于 1KB')
     return
   }
-  if (role === 1 && fileSizeMB > 100) {
+  if (role === 1 && file.size > USER_DAILY_UPLOAD_LIMIT) {
     toast.error(
       `文件大小超出限制: ${fileSizeMB.toFixed(3)} MB, 普通用户上传最大允许大小为 100 MB`
     )
     return
   }
-  if (role >= 2 && fileSizeMB > 1024) {
+  if (role >= 2 && file.size > CREATOR_DAILY_UPLOAD_LIMIT) {
     toast.error(
       `文件大小超出限制: ${fileSizeMB.toFixed(3)} MB, 创作者或管理员上传最大允许大小为 1GB`
     )

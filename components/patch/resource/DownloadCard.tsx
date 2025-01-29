@@ -4,7 +4,6 @@ import { Snippet } from '@nextui-org/snippet'
 import { Chip } from '@nextui-org/chip'
 import { Link } from '@nextui-org/link'
 import { Cloud, Link as LinkIcon, Database } from 'lucide-react'
-import { Microsoft } from '~/components/kun/icons/Microsoft'
 import { SUPPORTED_RESOURCE_LINK_MAP } from '~/constants/resource'
 import { kunFetchPut } from '~/utils/kunFetch'
 import type { JSX } from 'react'
@@ -12,7 +11,6 @@ import type { PatchResource } from '~/types/api/patch'
 
 const storageIcons: { [key: string]: JSX.Element } = {
   s3: <Cloud className="size-4" />,
-  onedrive: <Microsoft className="size-4" />,
   user: <LinkIcon className="size-4" />
 }
 
@@ -36,11 +34,7 @@ export const ResourceDownloadCard = ({ resource }: Props) => {
           variant="flat"
           startContent={storageIcons[resource.storage]}
         >
-          {
-            SUPPORTED_RESOURCE_LINK_MAP[
-              resource.storage as 's3' | 'onedrive' | 'user'
-            ]
-          }
+          {SUPPORTED_RESOURCE_LINK_MAP[resource.storage as 's3' | 'user']}
         </Chip>
         <Chip variant="flat" startContent={<Database className="w-4 h-4" />}>
           {resource.size}

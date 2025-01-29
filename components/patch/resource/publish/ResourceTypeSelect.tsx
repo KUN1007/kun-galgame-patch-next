@@ -6,6 +6,10 @@ import { Select, SelectItem } from '@nextui-org/select'
 import { patchResourceCreateSchema } from '~/validations/patch'
 import { useUserStore } from '~/store/providers/user'
 import { storageTypes } from '~/constants/resource'
+import {
+  USER_DAILY_UPLOAD_LIMIT,
+  CREATOR_DAILY_UPLOAD_LIMIT
+} from '~/config/upload'
 import type { ControlType, ErrorType } from '../share'
 
 export type ResourceFormData = z.infer<typeof patchResourceCreateSchema>
@@ -17,6 +21,18 @@ interface Props {
 
 export const ResourceTypeSelect = ({ control, errors }: Props) => {
   const user = useUserStore((state) => state.user)
+  const isReachLimit = () => {
+    if (user.role === 1 && user.dailyUploadLimit >= USER_DAILY_UPLOAD_LIMIT) {
+      return true
+    }
+    if (
+      user.role === 2 &&
+      user.dailyUploadLimit >= CREATOR_DAILY_UPLOAD_LIMIT
+    ) {
+      return true
+    }
+    return false
+  }
 
   return (
     <div className="space-y-2">
@@ -35,7 +51,7 @@ export const ResourceTypeSelect = ({ control, errors }: Props) => {
             onSelectionChange={(key) => {
               field.onChange(Array.from(key).join(''))
             }}
-            disabledKeys={user.role > 1 ? ['onedrive'] : ['onedrive', 's3']}
+            disabledKeys={isReachLimit() ? ['s3'] : []}
             isInvalid={!!errors.storage}
             errorMessage={errors.storage?.message}
           >
