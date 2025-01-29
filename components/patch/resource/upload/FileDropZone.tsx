@@ -1,7 +1,7 @@
 import { Upload } from 'lucide-react'
 import { Button, Input } from '@nextui-org/react'
 import { cn } from '~/utils/cn'
-import { useState } from 'react'
+import { useState, useRef } from 'react'
 import { useUserStore } from '~/store/providers/user'
 import { handleFileInput } from './utils'
 
@@ -10,6 +10,7 @@ interface Props {
 }
 
 export const FileDropZone = ({ onFileUpload }: Props) => {
+  const fileInputRef = useRef<HTMLInputElement>(null)
   const user = useUserStore((state) => state.user)
   const [isDragging, setIsDragging] = useState(false)
 
@@ -52,10 +53,15 @@ export const FileDropZone = ({ onFileUpload }: Props) => {
           {isDragging ? '拖动文件到此处' : '拖动或点击以上传文件'}
         </p>
         <label>
-          <Button color="primary" variant="flat" as="span">
+          <Button
+            color="primary"
+            variant="flat"
+            onPress={() => fileInputRef.current?.click()}
+          >
             选择文件
           </Button>
           <Input
+            ref={fileInputRef}
             type="file"
             className="hidden"
             onChange={handleClickUpload}
