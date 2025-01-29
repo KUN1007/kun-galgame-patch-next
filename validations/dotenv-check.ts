@@ -1,6 +1,17 @@
 import { z } from 'zod'
+import { config } from 'dotenv'
+import * as fs from 'fs'
+import * as path from 'path'
 
-const envSchema = z.object({
+const envPath = path.resolve(__dirname, '..', '.env')
+if (!fs.existsSync(envPath)) {
+  console.error('.env file not found in the project root.')
+  process.exit(1)
+}
+
+config({ path: envPath })
+
+export const envSchema = z.object({
   KUN_DATABASE_URL: z.string().url(),
   NEXT_PUBLIC_KUN_PATCH_ADDRESS_DEV: z.string(),
   NEXT_PUBLIC_KUN_PATCH_ADDRESS_PROD: z.string(),

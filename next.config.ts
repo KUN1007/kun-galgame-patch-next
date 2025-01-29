@@ -1,6 +1,6 @@
 // import path from 'path'
 // import { fileURLToPath } from 'url'
-import { env } from './validations/dotenv-check.mjs'
+import { env } from './validations/dotenv-check'
 import createMDX from '@next/mdx'
 import type { NextConfig } from 'next'
 // import remarkGfm from 'remark-gfm'

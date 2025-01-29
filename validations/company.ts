@@ -5,7 +5,7 @@ export const createCompanySchema = z.object({
     .string()
     .trim()
     .min(1, { message: '会社名不可为空' })
-    .max(17, { message: '单个会社名最大 17 个字符' }),
+    .max(107, { message: '单个会社名最大 107 个字符' }),
   introduction: z
     .string()
     .trim()
