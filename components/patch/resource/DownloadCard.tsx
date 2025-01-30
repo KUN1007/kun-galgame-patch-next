@@ -58,8 +58,17 @@ export const ResourceDownloadCard = ({ resource }: Props) => {
           {resource.storage !== 'user' && (
             <>
               <p className="text-sm">
-                BLACK3 校验码 (您可以根据此校验码校验下载文件完整性)
+                BLACK3 校验码 (您可以根据此校验码校验下载文件完整性{' '}
+                <Link
+                  size="sm"
+                  underline="always"
+                  href={`/check-hash?hash=${resource.hash}&content=${resource.content}`}
+                >
+                  前往校验页面
+                </Link>
+                )
               </p>
+
               <Snippet
                 symbol=""
                 className="flex overflow-auto whitespace-normal"
