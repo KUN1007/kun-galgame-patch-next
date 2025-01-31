@@ -18,7 +18,7 @@ export const createPatch = async (
       const patch = await prisma.patch.create({
         data: {
           name,
-          vndb_id: vndbId ?? '',
+          vndb_id: vndbId ? vndbId : null,
           alias: alias ? alias : [],
           introduction,
           user_id: uid,
