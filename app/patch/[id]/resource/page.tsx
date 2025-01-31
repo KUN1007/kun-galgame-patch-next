@@ -1,10 +1,11 @@
 import { Card, CardBody, CardHeader } from '@nextui-org/card'
 import { Link } from '@nextui-org/link'
 import { Resources } from '~/components/patch/resource/Resource'
-import { kunServerFetchGet } from '~/utils/kunServerFetch'
 import { generateKunMetadataTemplate } from './metadata'
+import { kunGetPatchActions } from '../actions'
+import { kunGetActions } from './actions'
+import { ErrorComponent } from '~/components/error/ErrorComponent'
 import type { Metadata } from 'next'
-import type { Patch, PatchResource } from '~/types/api/patch'
 
 interface Props {
   children: React.ReactNode
@@ -15,14 +16,13 @@ export const generateMetadata = async ({
   params
 }: Props): Promise<Metadata> => {
   const { id } = await params
-  const patch = await kunServerFetchGet<Patch>('/patch', {
-    patchId: Number(id)
-  })
-  const resources = await kunServerFetchGet<PatchResource[]>(
-    '/patch/resource',
-    { patchId: Number(id) }
-  )
-  return generateKunMetadataTemplate(patch, resources)
+  const patch = await kunGetPatchActions({ patchId: Number(id) })
+  const response = await kunGetActions({ patchId: Number(id) })
+  if (typeof patch === 'string' || typeof response === 'string') {
+    return {}
+  }
+
+  return generateKunMetadataTemplate(patch, response)
 }
 
 export default async function Kun({
@@ -32,10 +32,10 @@ export default async function Kun({
 }) {
   const { id } = await params
 
-  const resources = await kunServerFetchGet<PatchResource[]>(
-    '/patch/resource',
-    { patchId: Number(id) }
-  )
+  const response = await kunGetActions({ patchId: Number(id) })
+  if (typeof response === 'string') {
+    return <ErrorComponent error={response} />
+  }
 
   return (
     <Card>
@@ -62,7 +62,7 @@ export default async function Kun({
           </p>
         </div>
 
-        <Resources initialResources={resources} id={Number(id)} />
+        <Resources initialResources={response} id={Number(id)} />
       </CardBody>
     </Card>
   )

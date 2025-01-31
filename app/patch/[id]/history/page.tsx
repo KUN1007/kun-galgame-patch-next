@@ -1,11 +1,11 @@
 import { Card, CardBody, CardHeader } from '@nextui-org/card'
-import { ErrorComponent } from '~/components/error/ErrorComponent'
 import { History } from '~/components/patch/history/History'
 import { PatchContributor } from '~/components/patch/Contributor'
-import { kunServerFetchGet } from '~/utils/kunServerFetch'
+import { kunGetActions } from './actions'
+import { kunGetPatchActions, kunGetContributorActions } from '../actions'
+import { ErrorComponent } from '~/components/error/ErrorComponent'
 import { generateKunMetadataTemplate } from './metadata'
 import type { Metadata } from 'next'
-import type { Patch, PatchHistory } from '~/types/api/patch'
 
 interface Props {
   params: Promise<{ id: string }>
@@ -15,39 +15,35 @@ export const generateMetadata = async ({
   params
 }: Props): Promise<Metadata> => {
   const { id } = await params
-  const patch = await kunServerFetchGet<Patch>('/patch', {
-    patchId: Number(id)
-  })
-  const { histories } = await kunServerFetchGet<{
-    histories: PatchHistory[]
-    total: number
-  }>('/patch/history', {
+  const patch = await kunGetPatchActions({ patchId: Number(id) })
+  const response = await kunGetActions({
     page: 1,
     limit: 30,
     patchId: Number(id)
   })
-  return generateKunMetadataTemplate(patch, histories)
+  if (typeof patch === 'string' || typeof response === 'string') {
+    return {}
+  }
+
+  return generateKunMetadataTemplate(patch, response.histories)
 }
 
 export default async function Kun({ params }: Props) {
   const { id } = await params
 
-  const { histories, total } = await kunServerFetchGet<{
-    histories: PatchHistory[]
-    total: number
-  }>('/patch/history', {
+  const response = await kunGetActions({
     page: 1,
     limit: 30,
     patchId: Number(id)
   })
-  if (!histories || typeof histories === 'string') {
-    return <ErrorComponent error={histories} />
+  if (typeof response === 'string') {
+    return <ErrorComponent error={response} />
   }
 
-  const contributors = await kunServerFetchGet<KunUser[]>(
-    '/patch/contributor',
-    { patchId: Number(id) }
-  )
+  const contributors = await kunGetContributorActions({ patchId: Number(id) })
+  if (typeof contributors === 'string') {
+    return <ErrorComponent error={contributors} />
+  }
 
   return (
     <>
@@ -63,8 +59,8 @@ export default async function Kun({ params }: Props) {
 
           <History
             patchId={Number(id)}
-            initialHistories={histories}
-            total={total}
+            initialHistories={response.histories}
+            total={response.total}
           />
         </CardBody>
       </Card>
