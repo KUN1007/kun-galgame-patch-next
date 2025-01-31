@@ -11,7 +11,6 @@ import { useUserStore } from '~/store/providers/user'
 import { kunErrorHandler } from '~/utils/kunErrorHandler'
 import { KunAvatar } from '~/components/kun/floating-card/KunAvatar'
 import { MilkdownProvider } from '@milkdown/react'
-import { usePatchCommentStore } from '~/store/commentStore'
 import { KunEditor } from '~/components/kun/milkdown/Editor'
 import { Markdown } from '~/components/kun/icons/Markdown'
 import type { PatchComment } from '~/types/api/patch'
@@ -33,7 +32,7 @@ export const PublishComment = ({
 }: CreateCommentProps) => {
   const [loading, setLoading] = useState(false)
   const { user } = useUserStore((state) => state)
-  const { data, getData, setData } = usePatchCommentStore()
+  const [content, setContent] = useState('')
 
   const handlePublishComment = async () => {
     setLoading(true)
@@ -42,7 +41,7 @@ export const PublishComment = ({
       {
         patchId,
         parentId,
-        content: data.content.trim()
+        content: content.trim()
       }
     )
     kunErrorHandler(res, (value) => {
@@ -51,7 +50,7 @@ export const PublishComment = ({
         user: { id: user.uid, name: user.name, avatar: user.avatar }
       })
       toast.success('评论发布成功')
-      setData({ content: '' })
+      setContent(() => '')
       onSuccess?.()
     })
 
@@ -76,10 +75,7 @@ export const PublishComment = ({
       </CardHeader>
       <CardBody className="space-y-4">
         <MilkdownProvider>
-          <KunEditor
-            valueMarkdown={getData().content}
-            saveMarkdown={(markdown: string) => setData({ content: markdown })}
-          />
+          <KunEditor valueMarkdown={content} saveMarkdown={setContent} />
         </MilkdownProvider>
 
         <div className="flex items-center justify-between">
@@ -96,7 +92,7 @@ export const PublishComment = ({
           <Button
             color="primary"
             startContent={<Send className="size-4" />}
-            isDisabled={!data.content.trim() || loading}
+            isDisabled={!content.trim() || loading}
             isLoading={loading}
             onPress={handlePublishComment}
           >
