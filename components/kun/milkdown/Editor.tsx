@@ -107,9 +107,13 @@ export const KunEditor = ({ valueMarkdown, saveMarkdown }: Props) => {
       .use(automd)
   )
 
+  const fresh = () => editor.get()?.action(replaceAll(valueMarkdown, true))
+
+  useEffect(fresh, [vndbFetchStatus])
+
   useEffect(() => {
-    editor.get()?.action(replaceAll(valueMarkdown))
-  }, [vndbFetchStatus])
+    if (valueMarkdown === '') fresh()
+  }, [valueMarkdown])
 
   return (
     <div className="min-h-64" onClick={(e) => e.stopPropagation()}>
