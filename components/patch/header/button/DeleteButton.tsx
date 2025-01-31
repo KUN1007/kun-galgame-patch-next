@@ -79,7 +79,7 @@ export const DeleteButton = ({ patch }: Props) => {
             <Button
               color="danger"
               onPress={handleDelete}
-              isDisabled={deleting || patch.vndbId !== ''}
+              isDisabled={deleting || !!patch.vndbId}
               isLoading={deleting}
             >
               删除
