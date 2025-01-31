@@ -2,7 +2,7 @@ import { z } from 'zod'
 
 export const patchCreateSchema = z.object({
   banner: z.any(),
-  name: z.string().trim().min(1, { message: '游戏名称是必填项' }),
+  name: z.string().trim().min(1, { message: '游戏名称是必填项' }).max(1007),
   vndbId: z.string().max(10).optional(),
   introduction: z
     .string()
@@ -14,12 +14,13 @@ export const patchCreateSchema = z.object({
     .max(2333, { message: '别名字符串总长度不可超过 3000 个字符' }),
   released: z
     .string({ message: '发售日期为空, 请点击 检查重复 以从 VNDB 获取数据' })
+    .max(30)
     .optional()
 })
 
 export const patchUpdateSchema = z.object({
   id: z.coerce.number().min(1).max(9999999),
-  name: z.string().trim().min(1, { message: '游戏名称是必填项' }),
+  name: z.string().trim().min(1, { message: '游戏名称是必填项' }).max(1007),
   vndbId: z.string().max(10).optional(),
   introduction: z
     .string()
@@ -38,6 +39,7 @@ export const patchUpdateSchema = z.object({
     .optional(),
   released: z
     .string({ message: '发售日期为空, 请点击 检查重复 以从 VNDB 获取数据' })
+    .max(30)
     .optional()
 })
 

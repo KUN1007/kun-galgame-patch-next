@@ -26,10 +26,10 @@ export const AliasManager = ({
 
   return (
     <div className="space-y-2">
+      <h2 className="text-xl">游戏别名 (可选)</h2>
       <div className="flex gap-2">
         <Input
           labelPlacement="outside"
-          label="别名"
           placeholder="输入后点击加号添加, 建议填写游戏的日语原名以便搜索"
           value={newAlias}
           onChange={(e) => setNewAlias(e.target.value)}

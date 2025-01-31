@@ -10,6 +10,8 @@ import { kunErrorHandler } from '~/utils/kunErrorHandler'
 import { patchUpdateSchema } from '~/validations/edit'
 import { useRouter } from 'next-nprogress-bar'
 import { GameNameInput } from './GameNameInput'
+import { VNDBInput } from './VNDBInput'
+import { ReleaseDateInput } from '../components/ReleaseDateInput'
 import { AliasManager } from './AliasManager'
 import type { RewritePatchData } from '~/store/rewriteStore'
 
@@ -69,18 +71,39 @@ export const RewritePatch = () => {
             </p>
           </div>
         </CardHeader>
-        <CardBody className="gap-4 mt-2">
+        <CardBody className="mt-4 space-y-12">
+          <VNDBInput
+            vndbId={data.vndbId}
+            setVNDBId={(id) =>
+              setData({
+                ...data,
+                vndbId: id
+              })
+            }
+            errors={errors.vndbId}
+          />
+
           <GameNameInput
             name={data.name}
             onChange={(name) => setData({ ...data, name })}
             error={errors.name}
           />
 
-          <p className="text-sm">游戏介绍 (必须, 十个字符以上)</p>
-          {errors.introduction && (
-            <p className="text-xs text-danger-500">{errors.introduction}</p>
-          )}
-          <Editor storeName="patchRewrite" />
+          <div className="space-y-2">
+            <h2 className="text-xl">游戏介绍 (必须, 十个字符以上)</h2>
+            {errors.introduction && (
+              <p className="text-xs text-danger-500">{errors.introduction}</p>
+            )}
+            <Editor storeName="patchRewrite" />
+          </div>
+
+          <ReleaseDateInput
+            date={data.released}
+            setDate={(date) => {
+              setData({ ...data, released: date })
+            }}
+            errors={errors.released}
+          />
 
           <AliasManager
             aliasList={data.alias}

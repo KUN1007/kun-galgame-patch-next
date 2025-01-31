@@ -9,7 +9,7 @@ export const updatePatch = async (
   input: z.infer<typeof patchUpdateSchema>,
   currentUserUid: number
 ) => {
-  const { id, name, alias, introduction } = input
+  const { id, name, vndbId, alias, introduction, released } = input
 
   const patch = await prisma.patch.findUnique({ where: { id } })
   if (!patch) {
@@ -30,8 +30,10 @@ export const updatePatch = async (
         where: { id },
         data: {
           name,
+          vndb_id: vndbId ? vndbId : null,
           alias: alias ? alias : [],
-          introduction
+          introduction,
+          released
         }
       })
 
