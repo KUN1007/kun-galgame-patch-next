@@ -1,9 +1,9 @@
 import { UserComment } from '~/components/user/comment/Container'
-import { kunServerFetchGet } from '~/utils/kunServerFetch'
+import { kunGetActions } from './actions'
+import { kunGetUserStatusActions } from '../actions'
+import { ErrorComponent } from '~/components/error/ErrorComponent'
 import { generateKunMetadataTemplate } from './metadata'
 import type { Metadata } from 'next'
-import type { UserInfo } from '~/types/api/user'
-import type { UserComment as UserCommentType } from '~/types/api/user'
 
 interface Props {
   params: Promise<{ id: string }>
@@ -13,32 +13,35 @@ export const generateMetadata = async ({
   params
 }: Props): Promise<Metadata> => {
   const { id } = await params
-  const user = await kunServerFetchGet<UserInfo>('/user/status/info', {
-    id: Number(id)
-  })
-  const { comments } = await kunServerFetchGet<{
-    comments: UserCommentType[]
-    total: number
-  }>('/user/profile/comment', {
+  const user = await kunGetUserStatusActions(Number(id))
+  const response = await kunGetActions({
     uid: Number(id),
     page: 1,
     limit: 20
   })
-
-  return generateKunMetadataTemplate(user, comments)
+  if (typeof user === 'string' || typeof response === 'string') {
+    return {}
+  }
+  return generateKunMetadataTemplate(user, response.comments)
 }
 
 export default async function Kun({ params }: Props) {
   const { id } = await params
 
-  const { comments, total } = await kunServerFetchGet<{
-    comments: UserCommentType[]
-    total: number
-  }>('/user/profile/comment', {
+  const response = await kunGetActions({
     uid: Number(id),
     page: 1,
     limit: 20
   })
+  if (typeof response === 'string') {
+    return <ErrorComponent error={response} />
+  }
 
-  return <UserComment initComments={comments} total={total} uid={Number(id)} />
+  return (
+    <UserComment
+      initComments={response.comments}
+      total={response.total}
+      uid={Number(id)}
+    />
+  )
 }

@@ -1,6 +1,8 @@
 import { UserGalgame } from '~/components/user/galgame/Container'
-import { kunServerFetchGet } from '~/utils/kunServerFetch'
+import { kunGetActions } from './actions'
+import { ErrorComponent } from '~/components/error/ErrorComponent'
 import { generateKunMetadataTemplate } from './metadata'
+import { kunGetUserStatusActions } from '../actions'
 import type { Metadata } from 'next'
 import type { UserInfo } from '~/types/api/user'
 
@@ -12,32 +14,35 @@ export const generateMetadata = async ({
   params
 }: Props): Promise<Metadata> => {
   const { id } = await params
-  const user = await kunServerFetchGet<UserInfo>('/user/status/info', {
-    id: Number(id)
-  })
-  const { galgames } = await kunServerFetchGet<{
-    galgames: GalgameCard[]
-    total: number
-  }>('/user/profile/galgame', {
+  const user = await kunGetUserStatusActions(Number(id))
+  const response = await kunGetActions({
     uid: Number(id),
     page: 1,
     limit: 20
   })
-
-  return generateKunMetadataTemplate(user, galgames)
+  if (typeof user === 'string' || typeof response === 'string') {
+    return {}
+  }
+  return generateKunMetadataTemplate(user, response.galgames)
 }
 
 export default async function Kun({ params }: Props) {
   const { id } = await params
 
-  const { galgames, total } = await kunServerFetchGet<{
-    galgames: GalgameCard[]
-    total: number
-  }>('/user/profile/galgame', {
+  const response = await kunGetActions({
     uid: Number(id),
     page: 1,
     limit: 20
   })
+  if (typeof response === 'string') {
+    return <ErrorComponent error={response} />
+  }
 
-  return <UserGalgame galgames={galgames} total={total} uid={Number(id)} />
+  return (
+    <UserGalgame
+      galgames={response.galgames}
+      total={response.total}
+      uid={Number(id)}
+    />
+  )
 }

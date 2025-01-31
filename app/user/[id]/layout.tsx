@@ -1,11 +1,10 @@
 import { ErrorComponent } from '~/components/error/ErrorComponent'
-import { kunServerFetchGet } from '~/utils/kunServerFetch'
 import { UserProfile } from '~/components/user/Profile'
 import { UserStats } from '~/components/user/Stats'
 import { UserActivity } from '~/components/user/Activity'
 import { generateKunMetadataTemplate } from './metadata'
+import { kunGetUserStatusActions } from './actions'
 import type { Metadata } from 'next'
-import type { UserInfo } from '~/types/api/user'
 
 interface Props {
   children: React.ReactNode
@@ -16,9 +15,10 @@ export const generateMetadata = async ({
   params
 }: Props): Promise<Metadata> => {
   const { id } = await params
-  const user = await kunServerFetchGet<UserInfo>('/user/status/info', {
-    id: Number(id)
-  })
+  const user = await kunGetUserStatusActions(Number(id))
+  if (typeof user === 'string') {
+    return {}
+  }
   return generateKunMetadataTemplate(user)
 }
 
@@ -28,10 +28,7 @@ export default async function Kun({ params, children }: Props) {
     return <ErrorComponent error={'提取页面参数错误'} />
   }
 
-  const user = await kunServerFetchGet<KunResponse<UserInfo>>(
-    '/user/status/info',
-    { id: Number(id) }
-  )
+  const user = await kunGetUserStatusActions(Number(id))
   if (!user || typeof user === 'string') {
     return <ErrorComponent error={user} />
   }

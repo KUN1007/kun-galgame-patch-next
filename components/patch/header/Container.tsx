@@ -13,21 +13,24 @@ import { Tags } from './Tags'
 import Image from 'next/image'
 import { KunUser } from '~/components/kun/floating-card/KunUser'
 import { ButtonList } from './ButtonList'
-import type { Patch } from '~/types/api/patch'
+import type { Patch, PatchIntroduction } from '~/types/api/patch'
 
 interface PatchHeaderProps {
   patch: Patch
+  intro: PatchIntroduction
 }
 
-export const PatchHeaderContainer = ({ patch }: PatchHeaderProps) => {
+export const PatchHeaderContainer = ({ patch, intro }: PatchHeaderProps) => {
   const { setData } = useRewritePatchStore()
 
   useEffect(() => {
     setData({
       id: patch.id,
+      vndbId: patch.vndbId ?? '',
       name: patch.name,
       introduction: patch.introduction,
-      alias: patch.alias
+      alias: patch.alias,
+      released: intro.released
     })
 
     // TODO:

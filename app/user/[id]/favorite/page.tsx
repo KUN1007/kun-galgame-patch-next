@@ -1,8 +1,9 @@
 import { UserFavorite } from '~/components/user/favorite/Container'
-import { kunServerFetchGet } from '~/utils/kunServerFetch'
+import { kunGetActions } from './actions'
+import { ErrorComponent } from '~/components/error/ErrorComponent'
 import { generateKunMetadataTemplate } from './metadata'
+import { kunGetUserStatusActions } from '../actions'
 import type { Metadata } from 'next'
-import type { UserInfo } from '~/types/api/user'
 
 interface Props {
   params: Promise<{ id: string }>
@@ -12,32 +13,35 @@ export const generateMetadata = async ({
   params
 }: Props): Promise<Metadata> => {
   const { id } = await params
-  const user = await kunServerFetchGet<UserInfo>('/user/status/info', {
-    id: Number(id)
-  })
-  const { favorites } = await kunServerFetchGet<{
-    favorites: GalgameCard[]
-    total: number
-  }>('/user/profile/favorite', {
+  const user = await kunGetUserStatusActions(Number(id))
+  const response = await kunGetActions({
     uid: Number(id),
     page: 1,
     limit: 20
   })
-
-  return generateKunMetadataTemplate(user, favorites)
+  if (typeof user === 'string' || typeof response === 'string') {
+    return {}
+  }
+  return generateKunMetadataTemplate(user, response.favorites)
 }
 
 export default async function Kun({ params }: Props) {
   const { id } = await params
 
-  const { favorites, total } = await kunServerFetchGet<{
-    favorites: GalgameCard[]
-    total: number
-  }>('/user/profile/favorite', {
+  const response = await kunGetActions({
     uid: Number(id),
     page: 1,
     limit: 20
   })
+  if (typeof response === 'string') {
+    return <ErrorComponent error={response} />
+  }
 
-  return <UserFavorite favorites={favorites} total={total} uid={Number(id)} />
+  return (
+    <UserFavorite
+      favorites={response.favorites}
+      total={response.total}
+      uid={Number(id)}
+    />
+  )
 }

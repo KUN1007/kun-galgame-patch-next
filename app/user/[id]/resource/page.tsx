@@ -1,9 +1,9 @@
 import { UserResource } from '~/components/user/resource/Container'
-import { kunServerFetchGet } from '~/utils/kunServerFetch'
+import { kunGetActions } from './actions'
+import { kunGetUserStatusActions } from '../actions'
+import { ErrorComponent } from '~/components/error/ErrorComponent'
 import { generateKunMetadataTemplate } from './metadata'
 import type { Metadata } from 'next'
-import type { UserInfo } from '~/types/api/user'
-import type { UserResource as UserResourceType } from '~/types/api/user'
 
 interface Props {
   params: Promise<{ id: string }>
@@ -13,32 +13,36 @@ export const generateMetadata = async ({
   params
 }: Props): Promise<Metadata> => {
   const { id } = await params
-  const user = await kunServerFetchGet<UserInfo>('/user/status/info', {
-    id: Number(id)
-  })
-  const { resources } = await kunServerFetchGet<{
-    resources: UserResourceType[]
-    total: number
-  }>('/user/profile/resource', {
+  const user = await kunGetUserStatusActions(Number(id))
+  const response = await kunGetActions({
     uid: Number(id),
     page: 1,
     limit: 20
   })
+  if (typeof user === 'string' || typeof response === 'string') {
+    return {}
+  }
 
-  return generateKunMetadataTemplate(user, resources)
+  return generateKunMetadataTemplate(user, response.resources)
 }
 
 export default async function Kun({ params }: Props) {
   const { id } = await params
 
-  const { resources, total } = await kunServerFetchGet<{
-    resources: UserResourceType[]
-    total: number
-  }>('/user/profile/resource', {
+  const response = await kunGetActions({
     uid: Number(id),
     page: 1,
     limit: 20
   })
+  if (typeof response === 'string') {
+    return <ErrorComponent error={response} />
+  }
 
-  return <UserResource resources={resources} total={total} uid={Number(id)} />
+  return (
+    <UserResource
+      resources={response.resources}
+      total={response.total}
+      uid={Number(id)}
+    />
+  )
 }

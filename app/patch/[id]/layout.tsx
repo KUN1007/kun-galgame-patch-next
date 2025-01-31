@@ -1,9 +1,8 @@
 import { PatchHeaderContainer } from '~/components/patch/header/Container'
 import { ErrorComponent } from '~/components/error/ErrorComponent'
-import { kunServerFetchGet } from '~/utils/kunServerFetch'
+import { kunGetPatchActions, kunGetPatchIntroductionActions } from './actions'
 import { generateKunMetadataTemplate } from './metadata'
 import type { Metadata } from 'next'
-import type { Patch } from '~/types/api/patch'
 
 interface Props {
   children: React.ReactNode
@@ -14,9 +13,12 @@ export const generateMetadata = async ({
   params
 }: Props): Promise<Metadata> => {
   const { id } = await params
-  const patch = await kunServerFetchGet<Patch>('/patch', {
+  const patch = await kunGetPatchActions({
     patchId: Number(id)
   })
+  if (typeof patch === 'string') {
+    return {}
+  }
   return generateKunMetadataTemplate(patch)
 }
 
@@ -27,16 +29,21 @@ export default async function Kun({ params, children }: Props) {
     return <ErrorComponent error={'提取页面参数错误'} />
   }
 
-  const res = await kunServerFetchGet<KunResponse<Patch>>('/patch', {
+  const patch = await kunGetPatchActions({
     patchId: Number(id)
   })
-  if (!res || typeof res === 'string') {
-    return <ErrorComponent error={res} />
+  if (typeof patch === 'string') {
+    return <ErrorComponent error={patch} />
+  }
+
+  const intro = await kunGetPatchIntroductionActions({ patchId: Number(id) })
+  if (typeof intro === 'string') {
+    return <ErrorComponent error={intro} />
   }
 
   return (
     <div className="container py-6 mx-auto space-y-6">
-      <PatchHeaderContainer patch={res} />
+      <PatchHeaderContainer patch={patch} intro={intro} />
       {children}
     </div>
   )
