@@ -1,21 +1,16 @@
 import { Log } from '~/components/admin/log/Container'
-import { kunServerFetchGet } from '~/utils/kunServerFetch'
-import { ErrorComponent } from '~/components/error/ErrorComponent'
 import { kunMetadata } from './metadata'
-import type { AdminLog } from '~/types/api/admin'
+import { kunGetActions } from './actions'
+import { ErrorComponent } from '~/components/error/ErrorComponent'
 import type { Metadata } from 'next'
 
 export const metadata: Metadata = kunMetadata
 
 export default async function Kun() {
-  const response = await kunServerFetchGet<{
-    logs: AdminLog[]
-    total: number
-  }>('/admin/log', {
+  const response = await kunGetActions({
     page: 1,
-    limit: 100
+    limit: 30
   })
-
   if (typeof response === 'string') {
     return <ErrorComponent error={response} />
   }

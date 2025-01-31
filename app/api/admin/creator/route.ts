@@ -5,7 +5,7 @@ import { prisma } from '~/prisma/index'
 import { adminPaginationSchema } from '~/validations/admin'
 import type { AdminCreator } from '~/types/api/admin'
 
-export const getPatchContributor = async (
+export const getAdminCreator = async (
   input: z.infer<typeof adminPaginationSchema>
 ) => {
   const { page, limit } = input
@@ -56,6 +56,6 @@ export const GET = async (req: NextRequest) => {
     return NextResponse.json(input)
   }
 
-  const response = await getPatchContributor(input)
+  const response = await getAdminCreator(input)
   return NextResponse.json(response)
 }

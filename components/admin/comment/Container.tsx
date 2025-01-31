@@ -27,7 +27,7 @@ export const Comment = ({ initialComments, total }: Props) => {
       total: number
     }>('/admin/resource', {
       page,
-      limit: 100
+      limit: 30
     })
 
     setLoading(false)
@@ -59,7 +59,7 @@ export const Comment = ({ initialComments, total }: Props) => {
 
       <div className="flex justify-center">
         <Pagination
-          total={Math.ceil(total / 100)}
+          total={Math.ceil(total / 30)}
           page={page}
           onChange={setPage}
           color="primary"

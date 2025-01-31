@@ -30,7 +30,7 @@ export const Log = ({ initialLogs, total }: Props) => {
       }>
     >('/admin/log', {
       page,
-      limit: 100
+      limit: 30
     })
     if (typeof response === 'string') {
       toast.error(response)
@@ -66,7 +66,7 @@ export const Log = ({ initialLogs, total }: Props) => {
 
       <div className="flex justify-center">
         <Pagination
-          total={Math.ceil(total / 100)}
+          total={Math.ceil(total / 30)}
           page={page}
           onChange={setPage}
           color="primary"

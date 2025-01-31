@@ -43,7 +43,7 @@ export const Galgame = ({ initialGalgames, total }: Props) => {
       total: number
     }>('/admin/galgame', {
       page,
-      limit: 100
+      limit: 30
     })
 
     setLoading(false)
@@ -73,15 +73,13 @@ export const Galgame = ({ initialGalgames, total }: Props) => {
           aria-label="Galgame 管理"
           bottomContent={
             <div className="flex justify-center w-full">
-              {total >= 100 && (
-                <Pagination
-                  showControls
-                  color="primary"
-                  page={page}
-                  total={Math.ceil(total / 100)}
-                  onChange={(page) => setPage(page)}
-                />
-              )}
+              <Pagination
+                showControls
+                color="primary"
+                page={page}
+                total={Math.ceil(total / 30)}
+                onChange={(page) => setPage(page)}
+              />
             </div>
           }
         >

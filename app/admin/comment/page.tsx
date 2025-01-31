@@ -1,19 +1,19 @@
 import { Comment } from '~/components/admin/comment/Container'
-import { kunServerFetchGet } from '~/utils/kunServerFetch'
 import { kunMetadata } from './metadata'
+import { kunGetActions } from './actions'
+import { ErrorComponent } from '~/components/error/ErrorComponent'
 import type { Metadata } from 'next'
-import type { AdminComment } from '~/types/api/admin'
 
 export const metadata: Metadata = kunMetadata
 
 export default async function Kun() {
-  const { comments, total } = await kunServerFetchGet<{
-    comments: AdminComment[]
-    total: number
-  }>('/admin/comment', {
+  const response = await kunGetActions({
     page: 1,
-    limit: 100
+    limit: 30
   })
+  if (typeof response === 'string') {
+    return <ErrorComponent error={response} />
+  }
 
-  return <Comment initialComments={comments} total={total} />
+  return <Comment initialComments={response.comments} total={response.total} />
 }

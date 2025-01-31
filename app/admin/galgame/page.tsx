@@ -1,19 +1,19 @@
 import { Galgame } from '~/components/admin/galgame/Container'
-import { kunServerFetchGet } from '~/utils/kunServerFetch'
 import { kunMetadata } from './metadata'
+import { kunGetActions } from './actions'
+import { ErrorComponent } from '~/components/error/ErrorComponent'
 import type { Metadata } from 'next'
-import type { AdminGalgame } from '~/types/api/admin'
 
 export const metadata: Metadata = kunMetadata
 
 export default async function Kun() {
-  const { galgames, total } = await kunServerFetchGet<{
-    galgames: AdminGalgame[]
-    total: number
-  }>('/admin/galgame', {
+  const response = await kunGetActions({
     page: 1,
-    limit: 100
+    limit: 30
   })
+  if (typeof response === 'string') {
+    return <ErrorComponent error={response} />
+  }
 
-  return <Galgame initialGalgames={galgames} total={total} />
+  return <Galgame initialGalgames={response.galgames} total={response.total} />
 }

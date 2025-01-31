@@ -1,19 +1,19 @@
-import { kunServerFetchGet } from '~/utils/kunServerFetch'
 import { User } from '~/components/admin/user/Container'
 import { kunMetadata } from './metadata'
+import { kunGetActions } from './actions'
+import { ErrorComponent } from '~/components/error/ErrorComponent'
 import type { Metadata } from 'next'
-import type { AdminUser } from '~/types/api/admin'
 
 export const metadata: Metadata = kunMetadata
 
 export default async function Kun() {
-  const { users, total } = await kunServerFetchGet<{
-    users: AdminUser[]
-    total: number
-  }>('/admin/user', {
+  const response = await kunGetActions({
     page: 1,
-    limit: 100
+    limit: 30
   })
+  if (typeof response === 'string') {
+    return <ErrorComponent error={response} />
+  }
 
-  return <User initialUsers={users} total={total} />
+  return <User initialUsers={response.users} total={response.total} />
 }
