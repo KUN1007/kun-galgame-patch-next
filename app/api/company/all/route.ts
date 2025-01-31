@@ -8,7 +8,7 @@ export const getCompany = async (input: z.infer<typeof getCompanySchema>) => {
   const { page, limit } = input
   const offset = (page - 1) * limit
 
-  const [companies, count] = await Promise.all([
+  const [companies, total] = await Promise.all([
     prisma.patch_company.findMany({
       take: limit,
       skip: offset,
@@ -24,7 +24,7 @@ export const getCompany = async (input: z.infer<typeof getCompanySchema>) => {
     prisma.patch_company.count()
   ])
 
-  return { companies, count }
+  return { companies, total }
 }
 
 export const GET = async (req: NextRequest) => {
