@@ -2,6 +2,7 @@
 
 import { Button, Input, Link } from '@nextui-org/react'
 import { useCreatePatchStore } from '~/store/editStore'
+import { useKunMilkdownStore } from '~/store/milkdownStore'
 import toast from 'react-hot-toast'
 import { kunFetchGet } from '~/utils/kunFetch'
 import { VNDBRegex } from '~/utils/validate'
@@ -13,6 +14,9 @@ interface Props {
 
 export const VNDBInput = ({ errors }: Props) => {
   const { data, setData } = useCreatePatchStore()
+  const refreshMilkdownContent = useKunMilkdownStore(
+    (state) => state.refreshMilkdownContent
+  )
 
   const handleCheckDuplicate = async () => {
     if (!VNDBRegex.test(data.vndbId)) {
@@ -60,10 +64,10 @@ export const VNDBInput = ({ errors }: Props) => {
       ...data,
       alias: allTitles,
       introduction: vndbData.results[0].description,
-      released: vndbData.results[0].released,
-      vndbFetchStatus: !data.vndbFetchStatus
+      released: vndbData.results[0].released
     })
 
+    refreshMilkdownContent()
     toast.success('获取数据成功! 已为您自动添加游戏别名')
   }
 

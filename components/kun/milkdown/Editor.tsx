@@ -19,7 +19,7 @@ import { automd } from '@milkdown/plugin-automd'
 
 import { KunMilkdownPluginsMenu } from './plugins/Menu'
 import { KunLoading } from '../Loading'
-import { useCreatePatchStore } from '~/store/editStore'
+import { useKunMilkdownStore } from '~/store/milkdownStore'
 import '~/styles/editor.scss'
 
 import bash from 'refractor/lang/bash'
@@ -49,8 +49,8 @@ type Props = {
 }
 
 export const KunEditor = ({ valueMarkdown, saveMarkdown }: Props) => {
-  const vndbFetchStatus = useCreatePatchStore(
-    (state) => state.getData().vndbFetchStatus
+  const refreshContentStatus = useKunMilkdownStore(
+    (state) => state.data.refreshContentStatus
   )
 
   const editor = useEditor((root) =>
@@ -107,13 +107,10 @@ export const KunEditor = ({ valueMarkdown, saveMarkdown }: Props) => {
       .use(automd)
   )
 
-  const fresh = () => editor.get()?.action(replaceAll(valueMarkdown, true))
-
-  useEffect(fresh, [vndbFetchStatus])
-
-  useEffect(() => {
-    if (valueMarkdown === '') fresh()
-  }, [valueMarkdown])
+  useEffect(
+    () => editor.get()?.action(replaceAll(valueMarkdown, true)),
+    [refreshContentStatus]
+  )
 
   return (
     <div className="min-h-64" onClick={(e) => e.stopPropagation()}>

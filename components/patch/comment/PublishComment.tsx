@@ -13,6 +13,7 @@ import { KunAvatar } from '~/components/kun/floating-card/KunAvatar'
 import { MilkdownProvider } from '@milkdown/react'
 import { KunEditor } from '~/components/kun/milkdown/Editor'
 import { Markdown } from '~/components/kun/icons/Markdown'
+import { useKunMilkdownStore } from '~/store/milkdownStore'
 import type { PatchComment } from '~/types/api/patch'
 
 interface CreateCommentProps {
@@ -32,6 +33,9 @@ export const PublishComment = ({
 }: CreateCommentProps) => {
   const [loading, setLoading] = useState(false)
   const { user } = useUserStore((state) => state)
+  const refreshMilkdownContent = useKunMilkdownStore(
+    (state) => state.refreshMilkdownContent
+  )
   const [content, setContent] = useState('')
 
   const handlePublishComment = async () => {
@@ -50,7 +54,8 @@ export const PublishComment = ({
         user: { id: user.uid, name: user.name, avatar: user.avatar }
       })
       toast.success('评论发布成功')
-      setContent(() => '')
+      setContent('')
+      refreshMilkdownContent()
       onSuccess?.()
     })
 
