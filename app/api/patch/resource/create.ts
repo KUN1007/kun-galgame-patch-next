@@ -1,7 +1,7 @@
 import { z } from 'zod'
 import { prisma } from '~/prisma/index'
 import { patchResourceCreateSchema } from '~/validations/patch'
-import { uploadFileToS3 } from '~/lib/s3'
+import { uploadLargeFileToS3 } from '~/lib/s3'
 import { getKv } from '~/lib/redis'
 import type { PatchResource } from '~/types/api/patch'
 
@@ -13,7 +13,10 @@ const uploadPatchResource = async (patchId: number, hash: string) => {
   const fileName = filePath.split('/').pop()
 
   const s3Key = `patch/${patchId}/${hash}/${fileName}`
-  await uploadFileToS3(s3Key, filePath)
+  const res = await uploadLargeFileToS3(s3Key, filePath)
+  if (typeof res === 'string') {
+    return res
+  }
 
   const downloadLink = `${process.env.KUN_VISUAL_NOVEL_S3_STORAGE_URL!}/${s3Key}`
   return { downloadLink }
@@ -129,6 +132,6 @@ export const createPatchResource = async (
 
       return resource
     },
-    { timeout: 600000 }
+    { timeout: 60000 }
   )
 }
