@@ -12,7 +12,7 @@ export const getUserContribute = async (
   const offset = (page - 1) * limit
 
   const [data, total] = await Promise.all([
-    await prisma.user_patch_contribute_relation.findMany({
+    prisma.user_patch_contribute_relation.findMany({
       where: { user_id: uid },
       include: {
         patch: {
@@ -25,7 +25,7 @@ export const getUserContribute = async (
       take: limit,
       skip: offset
     }),
-    await prisma.user_patch_contribute_relation.count({
+    prisma.user_patch_contribute_relation.count({
       where: { user_id: uid }
     })
   ])

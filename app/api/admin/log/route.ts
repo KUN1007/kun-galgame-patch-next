@@ -11,7 +11,7 @@ export const getLog = async (input: z.infer<typeof adminPaginationSchema>) => {
   const offset = (page - 1) * limit
 
   const [data, total] = await Promise.all([
-    await prisma.admin_log.findMany({
+    prisma.admin_log.findMany({
       take: limit,
       skip: offset,
       orderBy: { created: 'desc' },
@@ -25,7 +25,7 @@ export const getLog = async (input: z.infer<typeof adminPaginationSchema>) => {
         }
       }
     }),
-    await prisma.patch.count()
+    prisma.patch.count()
   ])
 
   const logs: AdminLog[] = data.map((log) => ({

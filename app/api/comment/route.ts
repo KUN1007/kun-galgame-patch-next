@@ -17,7 +17,7 @@ export const getComment = async (input: z.infer<typeof commentSchema>) => {
       : { [sortField]: sortOrder }
 
   const [commentsData, total] = await Promise.all([
-    await prisma.patch_comment.findMany({
+    prisma.patch_comment.findMany({
       take: limit,
       skip: offset,
       orderBy: orderByField,
@@ -41,7 +41,7 @@ export const getComment = async (input: z.infer<typeof commentSchema>) => {
         }
       }
     }),
-    await prisma.patch_comment.count()
+    prisma.patch_comment.count()
   ])
 
   const comments: PatchComment[] = commentsData.map((comment) => ({

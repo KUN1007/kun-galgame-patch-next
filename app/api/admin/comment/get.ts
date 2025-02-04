@@ -11,7 +11,7 @@ export const getComment = async (
   const offset = (page - 1) * limit
 
   const [data, total] = await Promise.all([
-    await prisma.patch_comment.findMany({
+    prisma.patch_comment.findMany({
       take: limit,
       skip: offset,
       orderBy: { created: 'desc' },
@@ -35,7 +35,7 @@ export const getComment = async (
         }
       }
     }),
-    await prisma.patch.count()
+    prisma.patch.count()
   ])
 
   const comments: AdminComment[] = data.map((comment) => ({

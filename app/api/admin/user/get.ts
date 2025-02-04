@@ -10,7 +10,7 @@ export const getUserInfo = async (
   const offset = (page - 1) * limit
 
   const [data, total] = await Promise.all([
-    await prisma.user.findMany({
+    prisma.user.findMany({
       take: limit,
       skip: offset,
       orderBy: { created: 'desc' },
@@ -23,7 +23,7 @@ export const getUserInfo = async (
         }
       }
     }),
-    await prisma.user.count()
+    prisma.user.count()
   ])
 
   const users: AdminUser[] = data.map((user) => ({

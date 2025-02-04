@@ -11,7 +11,7 @@ export const getUserGalgame = async (
   const offset = (page - 1) * limit
 
   const [galgames, total] = await Promise.all([
-    await prisma.patch.findMany({
+    prisma.patch.findMany({
       where: { user_id: uid },
       select: {
         id: true,
@@ -36,7 +36,7 @@ export const getUserGalgame = async (
       take: limit,
       skip: offset
     }),
-    await prisma.patch.count({
+    prisma.patch.count({
       where: { user_id: uid }
     })
   ])

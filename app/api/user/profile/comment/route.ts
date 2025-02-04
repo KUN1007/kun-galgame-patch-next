@@ -13,7 +13,7 @@ export const getUserComment = async (
   const offset = (page - 1) * limit
 
   const [data, total] = await Promise.all([
-    await prisma.patch_comment.findMany({
+    prisma.patch_comment.findMany({
       where: { user_id: uid },
       include: {
         user: true,
@@ -33,7 +33,7 @@ export const getUserComment = async (
       take: limit,
       skip: offset
     }),
-    await prisma.patch_comment.count({
+    prisma.patch_comment.count({
       where: { user_id: uid }
     })
   ])

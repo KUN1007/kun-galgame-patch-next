@@ -63,8 +63,6 @@ export const uploadLargeFileToS3 = async (key: string, filePath: string) => {
         })
 
         const response = await s3.send(uploadPartCommand)
-        console.log(response)
-
         return {
           PartNumber: partNumber,
           ETag: response.ETag!

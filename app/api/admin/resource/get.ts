@@ -10,7 +10,7 @@ export const getPatchResource = async (
   const offset = (page - 1) * limit
 
   const [data, total] = await Promise.all([
-    await prisma.patch_resource.findMany({
+    prisma.patch_resource.findMany({
       take: limit,
       skip: offset,
       orderBy: { created: 'desc' },
@@ -29,7 +29,7 @@ export const getPatchResource = async (
         }
       }
     }),
-    await prisma.patch_resource.count()
+    prisma.patch_resource.count()
   ])
 
   const resources: AdminResource[] = data.map((resource) => ({

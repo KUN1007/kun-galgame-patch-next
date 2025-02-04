@@ -12,7 +12,7 @@ export const getAdminCreator = async (
   const offset = (page - 1) * limit
 
   const [data, total] = await Promise.all([
-    await prisma.user_message.findMany({
+    prisma.user_message.findMany({
       where: { type: 'apply', sender_id: { not: null } },
       take: limit,
       skip: offset,
@@ -29,7 +29,7 @@ export const getAdminCreator = async (
         }
       }
     }),
-    await prisma.user_message.count({
+    prisma.user_message.count({
       where: { type: 'apply', sender_id: { not: null } }
     })
   ])

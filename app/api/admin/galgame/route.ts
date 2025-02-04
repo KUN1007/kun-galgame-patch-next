@@ -12,7 +12,7 @@ export const getGalgame = async (
   const offset = (page - 1) * limit
 
   const [data, total] = await Promise.all([
-    await prisma.patch.findMany({
+    prisma.patch.findMany({
       take: limit,
       skip: offset,
       orderBy: { created: 'desc' },
@@ -26,7 +26,7 @@ export const getGalgame = async (
         }
       }
     }),
-    await prisma.patch.count()
+    prisma.patch.count()
   ])
 
   const galgames: AdminGalgame[] = data.map((galgame) => ({

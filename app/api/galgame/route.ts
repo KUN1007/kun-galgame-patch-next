@@ -14,7 +14,7 @@ export const getGalgame = async (input: z.infer<typeof galgameSchema>) => {
     selectedType === 'all' ? {} : { type: { has: selectedType } }
 
   const [galgames, total] = await Promise.all([
-    await prisma.patch.findMany({
+    prisma.patch.findMany({
       take: limit,
       skip: offset,
       orderBy: { [sortField]: sortOrder },
@@ -39,7 +39,7 @@ export const getGalgame = async (input: z.infer<typeof galgameSchema>) => {
         }
       }
     }),
-    await prisma.patch.count({
+    prisma.patch.count({
       where: typeQuery
     })
   ])

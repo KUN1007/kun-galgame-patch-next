@@ -12,7 +12,7 @@ export const getUserPatchResource = async (
   const offset = (page - 1) * limit
 
   const [data, total] = await Promise.all([
-    await prisma.patch_resource.findMany({
+    prisma.patch_resource.findMany({
       where: { user_id: uid },
       include: {
         patch: true
@@ -21,7 +21,7 @@ export const getUserPatchResource = async (
       skip: offset,
       take: limit
     }),
-    await prisma.patch_resource.count({
+    prisma.patch_resource.count({
       where: { user_id: uid }
     })
   ])
