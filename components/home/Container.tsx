@@ -4,8 +4,7 @@ import { GalgameCard } from '~/components/galgame/Card'
 import { ResourceCard } from '~/components/resource/ResourceCard'
 import { CommentCard } from '~/components/comment/CommentCard'
 import Link from 'next/link'
-import { KunCarousel } from './carousel/KunCarousel'
-import { getKunPosts } from './carousel/mdx'
+import { HomeHero } from './Hero'
 import type { HomeComment, HomeResource } from '~/types/api/home'
 
 interface Props {
@@ -15,11 +14,9 @@ interface Props {
 }
 
 export const HomeContainer = ({ galgames, resources, comments }: Props) => {
-  const posts = getKunPosts()
-
   return (
     <div className="mx-auto space-y-16 max-w-7xl">
-      <KunCarousel posts={posts} />
+      <HomeHero />
 
       <section className="space-y-6">
         <div className="flex items-center space-x-4">

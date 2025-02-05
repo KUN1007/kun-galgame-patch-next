@@ -7,7 +7,7 @@ import { kunMetadata, kunViewport } from './metadata'
 import { KunBackToTop } from '~/components/kun/BackToTop'
 import type { Metadata, Viewport } from 'next'
 import '~/styles/index.scss'
-import './actions'
+import './cron'
 
 export const viewport: Viewport = kunViewport
 export const metadata: Metadata = kunMetadata
