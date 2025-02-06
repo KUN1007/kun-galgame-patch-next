@@ -1,0 +1,37 @@
+version: '3.8'
+
+services:
+  app:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    volumes:
+      - ..:/workspace:cached
+    command: sleep infinity
+    network_mode: service:db
+    environment:
+      - NODE_ENV=development
+      - KUN_DATABASE_URL=postgresql://postgres:kunloveren@localhost:5432/kungalgame_patch?schema=public
+      - REDIS_HOST=localhost
+      - REDIS_PORT=6379
+
+  db:
+    image: postgres:latest
+    restart: unless-stopped
+    volumes:
+      - postgres-data:/var/lib/postgresql/data
+    environment:
+      POSTGRES_PASSWORD: kunloveren
+      POSTGRES_USER: postgres
+      POSTGRES_DB: kungalgame_patch
+
+  redis:
+    image: redis:latest
+    restart: unless-stopped
+    volumes:
+      - redis-data:/data
+    network_mode: service:db
+
+volumes:
+  postgres-data:
+  redis-data:

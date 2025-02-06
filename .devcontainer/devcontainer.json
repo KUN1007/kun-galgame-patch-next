@@ -1,0 +1,27 @@
+{
+  "name": "Kungalgame Patch Development Environment",
+  "dockerComposeFile": "docker-compose.yml",
+  "service": "app",
+  "workspaceFolder": "/workspace",
+  "customizations": {
+    "vscode": {
+      "settings": {
+        "eslint.alwaysShowStatus": true,
+        "eslint.codeActionsOnSave.mode": "all",
+        "eslint.enable": true,
+        "eslint.format.enable": true,
+        "editor.formatOnSave": true,
+        "prettier.requireConfig": true
+      }
+    }
+  },
+  "features": {
+    "ghcr.io/devcontainers/features/node:1": {
+      "version": "22"
+    },
+    "ghcr.io/devcontainers/features/git:1": {},
+    "ghcr.io/devcontainers/features/docker-in-docker:2": {}
+  },
+  "forwardPorts": [3000, 5432, 6379],
+  "postCreateCommand": "pnpm install && pnpm prisma:push"
+}
