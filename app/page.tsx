@@ -1,8 +1,8 @@
 import { HomeContainer } from '~/components/home/Container'
 import { getHomeData } from '~/app/api/home/route'
+import { KUN_PATCH_REVALIDATE_TIME } from '~/config/revalidate'
 
-// invalidate every 5 minutes
-export const revalidate = 60 * 5
+export const revalidate = KUN_PATCH_REVALIDATE_TIME
 
 export default async function Kun() {
   const response = await getHomeData()

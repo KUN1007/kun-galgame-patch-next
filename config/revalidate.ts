@@ -1,0 +1,1 @@
+export const KUN_PATCH_REVALIDATE_TIME = 10
