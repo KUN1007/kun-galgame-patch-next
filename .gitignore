@@ -46,3 +46,6 @@ next-env.d.ts
 
 # sitemap
 /public/**/*.xml
+
+# IDX
+.idx/.data
