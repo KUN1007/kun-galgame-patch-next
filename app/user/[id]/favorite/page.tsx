@@ -5,6 +5,8 @@ import { generateKunMetadataTemplate } from './metadata'
 import { kunGetUserStatusActions } from '../actions'
 import type { Metadata } from 'next'
 
+export const revalidate = 5
+
 interface Props {
   params: Promise<{ id: string }>
 }

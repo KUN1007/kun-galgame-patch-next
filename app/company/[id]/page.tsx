@@ -1,9 +1,10 @@
 import { generateKunMetadataTemplate } from './metadata'
 import { CompanyDetailContainer } from '~/components/company/detail/Container'
 import { kunGetCompanyByIdActions, kunCompanyGalgameActions } from './actions'
-import { CompanyDetail } from '~/types/api/company'
 import { ErrorComponent } from '~/components/error/ErrorComponent'
 import type { Metadata } from 'next'
+
+export const revalidate = 5
 
 interface Props {
   params: Promise<{ id: string }>

@@ -4,6 +4,8 @@ import { kunMetadata } from './metadata'
 import { kunGetActions } from './actions'
 import type { Metadata } from 'next'
 
+export const revalidate = 5
+
 export const metadata: Metadata = kunMetadata
 
 export default async function Kun() {

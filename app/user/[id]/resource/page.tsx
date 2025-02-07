@@ -5,6 +5,8 @@ import { ErrorComponent } from '~/components/error/ErrorComponent'
 import { generateKunMetadataTemplate } from './metadata'
 import type { Metadata } from 'next'
 
+export const revalidate = 5
+
 interface Props {
   params: Promise<{ id: string }>
 }

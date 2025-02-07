@@ -5,6 +5,8 @@ import { kunMetadata } from './metadata'
 import { Suspense } from 'react'
 import type { Metadata } from 'next'
 
+export const revalidate = 5
+
 export const metadata: Metadata = kunMetadata
 
 interface Props {

@@ -5,7 +5,8 @@ import { kunGetPatchActions, kunGetContributorActions } from '../actions'
 import { ErrorComponent } from '~/components/error/ErrorComponent'
 import { generateKunMetadataTemplate } from './metadata'
 import type { Metadata } from 'next'
-import type { Patch, PatchComment } from '~/types/api/patch'
+
+export const revalidate = 5
 
 interface Props {
   params: Promise<{ id: string }>
