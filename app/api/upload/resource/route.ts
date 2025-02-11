@@ -13,7 +13,7 @@ import {
 } from '../utils'
 import {
   CHUNK_SIZE,
-  MAX_FILE_SIZE,
+  MAX_SMALL_FILE_SIZE,
   USER_DAILY_UPLOAD_LIMIT,
   CREATOR_DAILY_UPLOAD_LIMIT
 } from '~/config/upload'
@@ -72,7 +72,7 @@ const checkRequestValid = async (req: NextRequest) => {
   const metadata = JSON.parse(
     formData.get('metadata') as string
   ) as KunChunkMetadata
-  if (metadata.fileSize > MAX_FILE_SIZE) {
+  if (metadata.fileSize > MAX_SMALL_FILE_SIZE) {
     return '补丁资源大小超过最大大小 2GB'
   }
   if (!chunk) {

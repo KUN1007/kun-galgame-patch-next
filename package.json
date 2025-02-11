@@ -57,7 +57,8 @@
     "not op_mini all"
   ],
   "dependencies": {
-    "@aws-sdk/client-s3": "^3.726.1",
+    "@aws-sdk/client-s3": "^3.743.0",
+    "@aws-sdk/s3-presigned-post": "^3.743.0",
     "@hookform/resolvers": "^3.10.0",
     "@mdx-js/loader": "^3.1.0",
     "@mdx-js/react": "^3.1.0",
