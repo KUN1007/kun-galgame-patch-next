@@ -23,6 +23,10 @@ export const getGalgame = async (input: z.infer<typeof galgameSchema>) => {
       dateConditions.push({ released: 'future' })
     }
 
+    if (years.includes('unknown')) {
+      dateConditions.push({ released: 'unknown' })
+    }
+
     const nonFutureYears = years.filter((year) => year !== 'future')
     if (nonFutureYears.length > 0) {
       if (!months.includes('all')) {

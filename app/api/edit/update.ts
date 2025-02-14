@@ -33,7 +33,7 @@ export const updatePatch = async (
           vndb_id: vndbId ? vndbId : null,
           alias: alias ? alias : [],
           introduction,
-          released
+          released: released ? released : 'unknown'
         }
       })
 

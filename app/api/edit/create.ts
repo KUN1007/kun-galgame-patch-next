@@ -23,7 +23,7 @@ export const createPatch = async (
           introduction,
           user_id: uid,
           banner: '',
-          released
+          released: released ? released : 'unknown'
         }
       })
 

@@ -3,7 +3,7 @@
 import { useEffect, useState } from 'react'
 import localforage from 'localforage'
 import { dataURItoBlob } from '~/utils/dataURItoBlob'
-import { resizeImage } from '~/utils/resizeImage'
+// import { resizeImage } from '~/utils/resizeImage'
 import { KunImageCropper } from '~/components/kun/cropper/KunImageCropper'
 
 interface Props {

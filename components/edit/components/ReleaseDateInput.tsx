@@ -60,6 +60,7 @@ export const ReleaseDateInput = ({ date, setDate, errors }: Props) => {
   return (
     <div className="space-y-2">
       <h2 className="text-xl">游戏发售日期 (可选)</h2>
+      {errors && <p className="text-xs text-danger-500">{errors}</p>}
       <Input
         label="发售日期"
         placeholder="请输入游戏的发售日期"

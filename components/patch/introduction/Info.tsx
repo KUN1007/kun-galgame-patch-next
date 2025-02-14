@@ -3,6 +3,7 @@
 import DOMPurify from 'isomorphic-dompurify'
 import { Calendar, Clock, Link, RefreshCw } from 'lucide-react'
 import { formatDate } from '~/utils/time'
+import { GALGAME_SORT_YEARS_MAP } from '~/constants/galgame'
 import type { PatchIntroduction } from '~/types/api/patch'
 
 interface Props {
@@ -35,7 +36,10 @@ export const Info = ({ intro }: Props) => {
         {intro.released && (
           <div className="flex items-center gap-2 text-sm text-default-500">
             <Calendar className="size-4" />
-            <span>发售时间: {intro.released}</span>
+            <span>
+              发售时间:{' '}
+              {GALGAME_SORT_YEARS_MAP[intro.released] ?? intro.released}
+            </span>
           </div>
         )}
         {intro.vndbId && (

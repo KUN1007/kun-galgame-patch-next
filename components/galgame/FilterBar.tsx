@@ -17,6 +17,12 @@ import {
   Calendar
 } from 'lucide-react'
 import { ALL_SUPPORTED_TYPE, SUPPORTED_TYPE_MAP } from '~/constants/resource'
+import {
+  GALGAME_SORT_FIELD_LABEL_MAP,
+  GALGAME_SORT_YEARS,
+  GALGAME_SORT_YEARS_MAP,
+  GALGAME_SORT_MONTHS
+} from '~/constants/galgame'
 import type { SortDirection, SortOption } from './_sort'
 
 interface Props {
@@ -31,37 +37,6 @@ interface Props {
   selectedMonths: string[]
   setSelectedMonths: (months: string[]) => void
 }
-
-const sortFieldLabelMap: Record<string, string> = {
-  created: '创建时间',
-  view: '浏览量',
-  download: '下载量'
-}
-
-const currentYear = new Date().getFullYear()
-const years = [
-  'all',
-  'future',
-  ...Array.from({ length: currentYear - 1979 }, (_, i) =>
-    String(currentYear - i)
-  )
-]
-
-const months = [
-  'all',
-  '01',
-  '02',
-  '03',
-  '04',
-  '05',
-  '06',
-  '07',
-  '08',
-  '09',
-  '10',
-  '11',
-  '12'
-]
 
 export const FilterBar = ({
   selectedType,
@@ -119,9 +94,9 @@ export const FilterBar = ({
             radius="lg"
             size="sm"
           >
-            {years.map((year) => (
+            {GALGAME_SORT_YEARS.map((year) => (
               <SelectItem key={year} value={year} className="text-default-700">
-                {year === 'all' ? '全部' : year === 'future' ? '未发售' : year}
+                {GALGAME_SORT_YEARS_MAP[year] ?? year}
               </SelectItem>
             ))}
           </Select>
@@ -151,7 +126,7 @@ export const FilterBar = ({
               selectedYears.includes('all') || selectedYears.includes('future')
             }
           >
-            {months.map((month) => (
+            {GALGAME_SORT_MONTHS.map((month) => (
               <SelectItem
                 key={month}
                 value={month}
@@ -174,7 +149,7 @@ export const FilterBar = ({
                   radius="lg"
                   size="lg"
                 >
-                  {sortFieldLabelMap[sortField]}
+                  {GALGAME_SORT_FIELD_LABEL_MAP[sortField]}
                 </Button>
               </DropdownTrigger>
               <DropdownMenu
