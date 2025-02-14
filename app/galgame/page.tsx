@@ -23,8 +23,8 @@ export default async function Kun({ searchParams }: Props) {
     sortOrder: 'desc',
     page: currentPage,
     limit: 24,
-    year: 'all',
-    month: 'all'
+    yearString: JSON.stringify(['all']),
+    monthString: JSON.stringify(['all'])
   })
   if (typeof response === 'string') {
     return <ErrorComponent error={response} />

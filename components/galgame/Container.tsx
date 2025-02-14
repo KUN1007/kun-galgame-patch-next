@@ -23,8 +23,8 @@ export const CardContainer = ({ initialGalgames, initialTotal }: Props) => {
   const [selectedType, setSelectedType] = useState<string>('all')
   const [sortField, setSortField] = useState<SortOption>('created')
   const [sortOrder, setSortOrder] = useState<SortDirection>('desc')
-  const [selectedYear, setSelectedYear] = useState<string>('all')
-  const [selectedMonth, setSelectedMonth] = useState<string>('all')
+  const [selectedYears, setSelectedYears] = useState<string[]>(['all'])
+  const [selectedMonths, setSelectedMonths] = useState<string[]>(['all'])
   const isMounted = useMounted()
   const router = useRouter()
   const searchParams = useSearchParams()
@@ -42,8 +42,8 @@ export const CardContainer = ({ initialGalgames, initialTotal }: Props) => {
       sortOrder,
       page,
       limit: 24,
-      year: selectedYear,
-      month: selectedMonth
+      yearString: JSON.stringify(selectedYears),
+      monthString: JSON.stringify(selectedMonths)
     })
 
     setGalgames(galgames)
@@ -56,7 +56,7 @@ export const CardContainer = ({ initialGalgames, initialTotal }: Props) => {
       return
     }
     fetchPatches()
-  }, [sortField, sortOrder, selectedType, page, selectedYear, selectedMonth])
+  }, [sortField, sortOrder, selectedType, page, selectedYears, selectedMonths])
 
   const handlePageChange = (newPage: number) => {
     setPage(newPage)
@@ -86,10 +86,10 @@ export const CardContainer = ({ initialGalgames, initialTotal }: Props) => {
         setSortField={setSortField}
         sortOrder={sortOrder}
         setSortOrder={setSortOrder}
-        selectedYear={selectedYear}
-        setSelectedYear={setSelectedYear}
-        selectedMonth={selectedMonth}
-        setSelectedMonth={setSelectedMonth}
+        selectedYears={selectedYears}
+        setSelectedYears={setSelectedYears}
+        selectedMonths={selectedMonths}
+        setSelectedMonths={setSelectedMonths}
       />
 
       {loading ? (

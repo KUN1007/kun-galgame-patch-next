@@ -26,10 +26,10 @@ interface Props {
   setSortField: (option: SortOption) => void
   sortOrder: SortDirection
   setSortOrder: (direction: SortDirection) => void
-  selectedYear: string
-  setSelectedYear: (year: string) => void
-  selectedMonth: string
-  setSelectedMonth: (month: string) => void
+  selectedYears: string[]
+  setSelectedYears: (years: string[]) => void
+  selectedMonths: string[]
+  setSelectedMonths: (months: string[]) => void
 }
 
 const sortFieldLabelMap: Record<string, string> = {
@@ -38,16 +38,15 @@ const sortFieldLabelMap: Record<string, string> = {
   download: '下载量'
 }
 
-// Generate years from 1980 to current year
 const currentYear = new Date().getFullYear()
 const years = [
   'all',
+  'future',
   ...Array.from({ length: currentYear - 1979 }, (_, i) =>
     String(currentYear - i)
   )
 ]
 
-// Months 1-12
 const months = [
   'all',
   '01',
@@ -71,16 +70,17 @@ export const FilterBar = ({
   setSortField,
   sortOrder,
   setSortOrder,
-  selectedYear,
-  setSelectedYear,
-  selectedMonth,
-  setSelectedMonth
+  selectedYears,
+  setSelectedYears,
+  selectedMonths,
+  setSelectedMonths
 }: Props) => {
   return (
     <Card className="w-full border border-content2 bg-content1/50 backdrop-blur-lg">
       <CardHeader>
         <div className="flex flex-col w-full gap-4 sm:flex-row sm:items-center sm:justify-between">
           <Select
+            disallowEmptySelection
             label="类型筛选"
             placeholder="选择类型"
             selectedKeys={[selectedType]}
@@ -97,29 +97,59 @@ export const FilterBar = ({
           </Select>
 
           <Select
+            disallowEmptySelection
             label="发售年份"
             placeholder="选择年份"
-            selectedKeys={[selectedYear]}
-            onChange={(event) => setSelectedYear(event.target.value)}
+            selectedKeys={selectedYears}
+            className="max-w-xs"
+            onSelectionChange={(keys) => {
+              if (keys.anchorKey === 'all') {
+                setSelectedYears(['all'])
+                setSelectedMonths(['all'])
+              } else {
+                setSelectedYears(
+                  Array.from(keys as Set<string>).filter(
+                    (item) => item !== 'all'
+                  )
+                )
+              }
+            }}
             startContent={<Calendar className="size-4 text-default-400" />}
+            selectionMode="multiple"
             radius="lg"
             size="sm"
           >
             {years.map((year) => (
               <SelectItem key={year} value={year} className="text-default-700">
-                {year === 'all' ? '全部年份' : year}
+                {year === 'all' ? '全部' : year === 'future' ? '未发售' : year}
               </SelectItem>
             ))}
           </Select>
 
           <Select
+            disallowEmptySelection
             label="发售月份"
             placeholder="选择月份"
-            selectedKeys={[selectedMonth]}
-            onChange={(event) => setSelectedMonth(event.target.value)}
+            selectedKeys={selectedMonths}
+            className="max-w-xs"
+            onSelectionChange={(keys) => {
+              if (keys.anchorKey === 'all') {
+                setSelectedMonths(['all'])
+              } else {
+                setSelectedMonths(
+                  Array.from(keys as Set<string>).filter(
+                    (item) => item !== 'all'
+                  )
+                )
+              }
+            }}
             startContent={<Calendar className="size-4 text-default-400" />}
+            selectionMode="multiple"
             radius="lg"
             size="sm"
+            isDisabled={
+              selectedYears.includes('all') || selectedYears.includes('future')
+            }
           >
             {months.map((month) => (
               <SelectItem

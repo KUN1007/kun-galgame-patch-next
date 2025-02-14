@@ -6,7 +6,9 @@ import { galgameSchema } from '~/validations/galgame'
 import { ALL_SUPPORTED_TYPE } from '~/constants/resource'
 
 export const getGalgame = async (input: z.infer<typeof galgameSchema>) => {
-  const { selectedType, sortField, sortOrder, page, limit, year, month } = input
+  const { selectedType, sortField, sortOrder, page, limit } = input
+  const years = JSON.parse(input.yearString) as string[]
+  const months = JSON.parse(input.monthString) as string[]
 
   const offset = (page - 1) * limit
 
@@ -14,21 +16,36 @@ export const getGalgame = async (input: z.infer<typeof galgameSchema>) => {
     selectedType === 'all' ? {} : { type: { has: selectedType } }
 
   let dateFilter = {}
-  if (year !== 'all' && year) {
-    if (month !== 'all' && month) {
-      dateFilter = {
-        AND: [
-          { released: { startsWith: `${year}-${month}` } },
-          { released: { not: 'future' } }
-        ]
+  if (!years.includes('all')) {
+    const dateConditions = []
+
+    if (years.includes('future')) {
+      dateConditions.push({ released: 'future' })
+    }
+
+    const nonFutureYears = years.filter((year) => year !== 'future')
+    if (nonFutureYears.length > 0) {
+      if (!months.includes('all')) {
+        const yearMonthConditions = nonFutureYears.flatMap((year) =>
+          months.map((month) => ({
+            released: {
+              startsWith: `${year}-${month}`
+            }
+          }))
+        )
+        dateConditions.push(...yearMonthConditions)
+      } else {
+        const yearConditions = nonFutureYears.map((year) => ({
+          released: {
+            startsWith: year
+          }
+        }))
+        dateConditions.push(...yearConditions)
       }
-    } else {
-      dateFilter = {
-        AND: [
-          { released: { startsWith: year } },
-          { released: { not: 'future' } }
-        ]
-      }
+    }
+
+    if (dateConditions.length > 0) {
+      dateFilter = { OR: dateConditions }
     }
   }
 
