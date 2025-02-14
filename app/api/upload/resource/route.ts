@@ -35,18 +35,20 @@ const processResourceChunk = async (
 
   if (metadata.chunkIndex === metadata.totalChunks - 1) {
     try {
+      // IMPORTANT, ensure the filename is valid
+      metadata.fileName = fileName
+
       const mergedFilePath = await mergeChunks(
         metadata.fileId,
         metadata.totalChunks,
         metadata.fileName
       )
+      metadata.filepath = mergedFilePath
 
       const hash = await generateFileHash(mergedFilePath)
       const totalChunkSize =
         CHUNK_SIZE * (metadata.totalChunks - 1) + chunkBuffer.length
       metadata.fileHash = hash
-      metadata.filepath = mergedFilePath
-      metadata.fileName = fileName
       metadata.fileSize = totalChunkSize
 
       await setKv(hash, mergedFilePath, 24 * 60 * 60)

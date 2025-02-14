@@ -7,8 +7,6 @@ import {
 } from '@aws-sdk/client-s3'
 import { createReadStream } from 'fs'
 import { stat } from 'fs/promises'
-import { rm } from 'fs/promises'
-import { dirname } from 'path'
 import { DeleteObjectCommand } from '@aws-sdk/client-s3'
 
 export const s3 = new S3Client({
@@ -91,9 +89,6 @@ export const uploadLargeFileToS3 = async (key: string, filePath: string) => {
         }
       })
     )
-
-    const folderPath = dirname(filePath)
-    await rm(folderPath, { recursive: true, force: true })
 
     return {}
   } catch (error) {
