@@ -1,10 +1,10 @@
 'use client'
 
 import { Button } from '@nextui-org/button'
+import { Link } from '@nextui-org/link'
 import { Tooltip } from '@nextui-org/tooltip'
 import { Bell, BellRing } from 'lucide-react'
 import { AnimatePresence, motion } from 'framer-motion'
-import { useRouter } from 'next-nprogress-bar'
 import { bellShakeVariants, dotVariants } from '~/motion/bell'
 
 interface AnimatedNotificationBellProps {
@@ -16,10 +16,7 @@ export const UserMessageBell = ({
   hasUnreadMessages,
   setReadMessage
 }: AnimatedNotificationBellProps) => {
-  const router = useRouter()
-
   const handleClickButton = () => {
-    router.push('/message/notice')
     if (hasUnreadMessages) {
       setReadMessage()
     }
@@ -38,6 +35,8 @@ export const UserMessageBell = ({
         onPress={handleClickButton}
         className="relative"
         aria-label="我的消息"
+        as={Link}
+        href="/message/notice"
       >
         <motion.div
           initial="initial"

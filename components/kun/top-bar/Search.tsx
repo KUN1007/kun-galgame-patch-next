@@ -1,7 +1,7 @@
 'use client'
 
 import { Tooltip } from '@nextui-org/tooltip'
-import { Button } from '@nextui-org/button'
+import { Button, Link } from '@nextui-org/react'
 import { Search } from 'lucide-react'
 import { useRouter } from 'next-nprogress-bar'
 import { useHotkeys } from 'react-hotkeys-hook'
@@ -24,7 +24,8 @@ export const KunSearch = () => {
         isIconOnly
         variant="light"
         aria-label="搜索"
-        onPress={() => router.push('/search')}
+        as={Link}
+        href="/search"
       >
         <Search className="size-6 text-default-500" />
       </Button>
