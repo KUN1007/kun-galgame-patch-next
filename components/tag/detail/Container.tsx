@@ -10,11 +10,8 @@ import { Pencil } from 'lucide-react'
 import { TagDetail } from '~/types/api/tag'
 import { KunLoading } from '~/components/kun/Loading'
 import { KunHeader } from '~/components/kun/Header'
-import { KunMasonryGrid } from '~/components/kun/MasonryGrid'
 import { useMounted } from '~/hooks/useMounted'
-import { SearchCard } from '~/components/search/Card'
-import { motion } from 'framer-motion'
-import { cardContainer, cardItem } from '~/motion/card'
+import { GalgameCard } from '~/components/galgame/Card'
 import { KunNull } from '~/components/kun/Null'
 import { EditTagModal } from './EditTagModal'
 import { useRouter } from 'next-nprogress-bar'
@@ -125,14 +122,12 @@ export const TagDetailContainer = ({
       {loading ? (
         <KunLoading hint="正在获取 Galgame 中..." />
       ) : (
-        <motion.div variants={cardContainer} initial="hidden" animate="show">
-          <KunMasonryGrid columnWidth={512} gap={24}>
+        <>
+          <div className="grid grid-cols-2 gap-2 mx-auto mb-8 sm:gap-6 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
             {patches.map((patch) => (
-              <motion.div key={patch.id} variants={cardItem}>
-                <SearchCard patch={patch} />
-              </motion.div>
+              <GalgameCard key={patch.id} patch={patch} />
             ))}
-          </KunMasonryGrid>
+          </div>
 
           {total > 24 && (
             <div className="flex justify-center">
@@ -155,7 +150,7 @@ export const TagDetailContainer = ({
           )}
 
           {!total && <KunNull message="这个标签暂无补丁使用" />}
-        </motion.div>
+        </>
       )}
     </div>
   )

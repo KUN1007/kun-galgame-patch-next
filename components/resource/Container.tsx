@@ -4,7 +4,6 @@ import { useEffect, useState } from 'react'
 import { Pagination } from '@nextui-org/pagination'
 import { kunFetchGet } from '~/utils/kunFetch'
 import { ResourceCard } from './ResourceCard'
-import { KunMasonryGrid } from '~/components/kun/MasonryGrid'
 import { FilterBar } from './FilterBar'
 import { useMounted } from '~/hooks/useMounted'
 import { KunLoading } from '~/components/kun/Loading'
@@ -81,11 +80,11 @@ export const CardContainer = ({ initialResources, initialTotal }: Props) => {
       {loading ? (
         <KunLoading hint="正在获取补丁资源数据..." />
       ) : (
-        <KunMasonryGrid columnWidth={256} gap={24}>
+        <div className="grid grid-cols-1 gap-3 sm:gap-6 md:grid-cols-2">
           {resources.map((resource) => (
             <ResourceCard key={resource.id} resource={resource} />
           ))}
-        </KunMasonryGrid>
+        </div>
       )}
 
       {total > 50 && (

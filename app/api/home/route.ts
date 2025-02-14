@@ -1,4 +1,4 @@
-import { NextRequest, NextResponse } from 'next/server'
+import { NextResponse } from 'next/server'
 import { prisma } from '~/prisma/index'
 import { markdownToText } from '~/utils/markdownToText'
 import { HomeComment, HomeResource } from '~/types/api/home'
@@ -110,7 +110,7 @@ export const getHomeData = async () => {
   return { galgames, resources, comments }
 }
 
-export const GET = async (req: NextRequest) => {
+export const GET = async () => {
   const response = await getHomeData()
   return NextResponse.json(response)
 }

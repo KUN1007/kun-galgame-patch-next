@@ -3,18 +3,14 @@
 import { useEffect, useState } from 'react'
 import { useRouter, useSearchParams } from 'next/navigation'
 import { Input } from '@nextui-org/input'
-import { Button } from '@nextui-org/react'
 import { Pagination } from '@nextui-org/pagination'
 import { KunLoading } from '~/components/kun/Loading'
-import { KunMasonryGrid } from '~/components/kun/MasonryGrid'
 import { Search } from 'lucide-react'
 import { useDebounce } from 'use-debounce'
 import { kunFetchPost } from '~/utils/kunFetch'
 import { KunHeader } from '~/components/kun/Header'
 import { KunNull } from '~/components/kun/Null'
-import { SearchCard } from './Card'
-import { motion } from 'framer-motion'
-import { cardContainer, cardItem } from '~/motion/card'
+import { GalgameCard } from '~/components/galgame/Card'
 
 export const SearchPage = () => {
   const searchParams = useSearchParams()
@@ -31,7 +27,8 @@ export const SearchPage = () => {
 
   useEffect(() => {
     if (debouncedQuery) {
-      handleSearch()
+      setPage(1)
+      handleSearch(1)
     } else {
       setPatches([])
       setTotal(0)
@@ -39,7 +36,13 @@ export const SearchPage = () => {
     }
   }, [debouncedQuery])
 
-  const handleSearch = async () => {
+  useEffect(() => {
+    if (debouncedQuery) {
+      handleSearch()
+    }
+  }, [page])
+
+  const handleSearch = async (currentPage = page) => {
     if (!query.trim()) {
       return
     }
@@ -50,8 +53,8 @@ export const SearchPage = () => {
       total: number
     }>('/search', {
       query: query.split(' ').filter((term) => term.length > 0),
-      page,
-      limit: 10
+      page: currentPage,
+      limit: 24
     })
 
     setPatches(galgames)
@@ -60,7 +63,7 @@ export const SearchPage = () => {
 
     const params = new URLSearchParams()
     params.set('q', query)
-    params.set('page', page.toString())
+    params.set('page', currentPage.toString())
     router.push(`/search?${params.toString()}`)
 
     setLoading(false)
@@ -77,48 +80,26 @@ export const SearchPage = () => {
           placeholder="可以用空格分隔您的搜索关键字"
           size="lg"
           radius="lg"
-          endContent={
-            <Button
-              isIconOnly
-              variant="light"
-              aria-label="搜索 Galgame"
-              onPress={() => handleSearch()}
-            >
-              <Search />
-            </Button>
-          }
-          onKeyDown={(e) => {
-            if (e.key === 'Enter') handleSearch()
-          }}
+          startContent={<Search className="text-default-400" />}
         />
       </div>
 
       {loading ? (
         <KunLoading hint="正在搜索中..." />
       ) : (
-        <motion.div
-          variants={cardContainer}
-          initial="hidden"
-          animate="show"
-          className="space-y-6"
-        >
-          <KunMasonryGrid columnWidth={512} gap={24}>
+        <>
+          <div className="grid grid-cols-2 gap-2 mx-auto mb-8 sm:gap-6 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
             {patches.map((patch) => (
-              <motion.div key={patch.id} variants={cardItem}>
-                <SearchCard patch={patch} />
-              </motion.div>
+              <GalgameCard key={patch.id} patch={patch} />
             ))}
-          </KunMasonryGrid>
+          </div>
 
-          {total > 10 && (
+          {total > 24 && (
             <div className="flex justify-center">
               <Pagination
-                total={Math.ceil(total / 10)}
+                total={Math.ceil(total / 24)}
                 page={page}
-                onChange={(newPage: number) => {
-                  setPage(newPage)
-                  handleSearch()
-                }}
+                onChange={setPage}
                 showControls
                 size="lg"
                 radius="lg"
@@ -133,7 +114,7 @@ export const SearchPage = () => {
           {hasSearched && patches.length === 0 && (
             <KunNull message="未找到相关内容, 请尝试使用游戏的日文原名搜索" />
           )}
-        </motion.div>
+        </>
       )}
     </div>
   )

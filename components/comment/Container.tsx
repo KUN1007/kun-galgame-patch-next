@@ -4,7 +4,6 @@ import { useEffect, useState } from 'react'
 import { Pagination } from '@nextui-org/pagination'
 import { kunFetchGet } from '~/utils/kunFetch'
 import { CommentCard } from './CommentCard'
-import { KunMasonryGrid } from '~/components/kun/MasonryGrid'
 import { FilterBar } from './FilterBar'
 import { useMounted } from '~/hooks/useMounted'
 import { KunLoading } from '~/components/kun/Loading'
@@ -81,11 +80,11 @@ export const CardContainer = ({ initialComments, initialTotal }: Props) => {
       {loading ? (
         <KunLoading hint="正在获取评论数据..." />
       ) : (
-        <KunMasonryGrid columnWidth={256} gap={24}>
+        <div className="space-y-4">
           {comments.map((comment) => (
             <CommentCard key={comment.id} comment={comment} />
           ))}
-        </KunMasonryGrid>
+        </div>
       )}
 
       {total > 50 && (

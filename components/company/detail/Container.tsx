@@ -7,14 +7,11 @@ import { useDisclosure } from '@nextui-org/modal'
 import { Link } from '@nextui-org/link'
 import { Pagination } from '@nextui-org/pagination'
 import { Pencil } from 'lucide-react'
-import { motion } from 'framer-motion'
-import { cardContainer, cardItem } from '~/motion/card'
 import { useMounted } from '~/hooks/useMounted'
 import { KunHeader } from '~/components/kun/Header'
 import { KunUser } from '~/components/kun/floating-card/KunUser'
 import { KunLoading } from '~/components/kun/Loading'
-import { KunMasonryGrid } from '~/components/kun/MasonryGrid'
-import { SearchCard } from '~/components/search/Card'
+import { GalgameCard } from '~/components/galgame/Card'
 import { KunNull } from '~/components/kun/Null'
 import { CompanyFormModal } from '../form/CompanyFormModal'
 import { formatDistanceToNow } from '~/utils/formatDistanceToNow'
@@ -167,14 +164,12 @@ export const CompanyDetailContainer: FC<Props> = ({
       {loading ? (
         <KunLoading hint="正在获取 Galgame 中..." />
       ) : (
-        <motion.div variants={cardContainer} initial="hidden" animate="show">
-          <KunMasonryGrid columnWidth={512} gap={24}>
+        <>
+          <div className="grid grid-cols-2 gap-2 mx-auto mb-8 sm:gap-6 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
             {patches.map((patch) => (
-              <motion.div key={patch.id} variants={cardItem}>
-                <SearchCard patch={patch} />
-              </motion.div>
+              <GalgameCard key={patch.id} patch={patch} />
             ))}
-          </KunMasonryGrid>
+          </div>
 
           {total > 24 && (
             <div className="flex justify-center">
@@ -197,7 +192,7 @@ export const CompanyDetailContainer: FC<Props> = ({
           )}
 
           {!total && <KunNull message="暂无补丁游戏属于这个会社哦" />}
-        </motion.div>
+        </>
       )}
     </div>
   )
