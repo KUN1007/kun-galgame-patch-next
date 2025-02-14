@@ -27,6 +27,7 @@ export const KunTopBar = () => {
       maxWidth="xl"
       isMenuOpen={isMenuOpen}
       onMenuOpenChange={setIsMenuOpen}
+      classNames={{ wrapper: 'px-3' }}
     >
       <NavbarContent className="sm:hidden" justify="start">
         <li className="h-full">

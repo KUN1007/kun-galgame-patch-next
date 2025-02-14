@@ -54,7 +54,7 @@ export const KunNavigationBreadcrumb = () => {
 
   return (
     <div className="w-full my-4 bg-background/60 backdrop-blur-lg">
-      <div className="px-6 mx-auto max-w-7xl">
+      <div className="px-3 mx-auto max-w-7xl">
         <Breadcrumbs
           underline="hover"
           separator={<ChevronRight className="size-4" />}

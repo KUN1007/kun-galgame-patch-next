@@ -65,7 +65,11 @@ export const PatchHeaderContainer = ({ patch, intro }: PatchHeaderProps) => {
                 userProps={{
                   name: `${patch.user.name} - ${formatDistanceToNow(patch.created)}`,
                   description: (
-                    <KunCardStats patch={patch} disableTooltip={false} />
+                    <KunCardStats
+                      patch={patch}
+                      disableTooltip={false}
+                      isMobile={false}
+                    />
                   ),
                   avatarProps: {
                     showFallback: true,

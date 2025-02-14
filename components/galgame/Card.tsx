@@ -51,7 +51,7 @@ export const GalgameCard = ({ patch }: Props) => {
         </div>
       </CardHeader>
       <CardBody className="justify-between space-y-2">
-        <h2 className="text-lg font-semibold transition-colors line-clamp-2 hover:text-primary-500">
+        <h2 className="font-semibold transition-colors text-medium sm:text-lg line-clamp-2 hover:text-primary-500">
           {patch.name}
         </h2>
         <KunCardStats patch={patch} />

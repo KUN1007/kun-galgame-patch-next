@@ -26,7 +26,7 @@ export const getHomeData = async () => {
           }
         }
       },
-      take: 6
+      take: 12
     }),
     prisma.patch_resource.findMany({
       orderBy: { created: 'desc' },

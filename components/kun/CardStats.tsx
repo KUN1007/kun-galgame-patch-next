@@ -1,14 +1,25 @@
 import { Tooltip } from '@nextui-org/tooltip'
 import { Download, Eye, Heart, MessageSquare, Puzzle } from 'lucide-react'
+import { cn } from '~/utils/cn'
 
 interface Props {
   patch: GalgameCard
   disableTooltip?: boolean
+  isMobile?: boolean
 }
 
-export const KunCardStats = ({ patch, disableTooltip = true }: Props) => {
+export const KunCardStats = ({
+  patch,
+  disableTooltip = true,
+  isMobile = true
+}: Props) => {
   return (
-    <div className="flex space-x-4 text-sm text-default-500">
+    <div
+      className={cn(
+        'flex space-x-4 text-sm text-default-500',
+        isMobile ? 'sm:justify-start' : ''
+      )}
+    >
       <Tooltip isDisabled={disableTooltip} content="浏览数" placement="bottom">
         <div className="flex items-center gap-1">
           <Eye className="size-4" />
@@ -24,7 +35,12 @@ export const KunCardStats = ({ patch, disableTooltip = true }: Props) => {
       </Tooltip>
 
       <Tooltip isDisabled={disableTooltip} content="收藏数" placement="bottom">
-        <div className="flex items-center gap-1">
+        <div
+          className={cn(
+            'items-center hidden gap-1',
+            isMobile ? 'hidden sm:flex' : 'flex'
+          )}
+        >
           <Heart className="size-4" />
           <span>{patch._count.favorite_by || 0}</span>
         </div>
@@ -42,7 +58,12 @@ export const KunCardStats = ({ patch, disableTooltip = true }: Props) => {
       </Tooltip>
 
       <Tooltip isDisabled={disableTooltip} content="评论数" placement="bottom">
-        <div className="flex items-center gap-1">
+        <div
+          className={cn(
+            'items-center hidden gap-1',
+            isMobile ? 'hidden sm:flex' : 'flex'
+          )}
+        >
           <MessageSquare className="size-4" />
           <span>{patch._count.comment || 0}</span>
         </div>
