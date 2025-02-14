@@ -9,7 +9,13 @@ import {
 import { Button } from '@nextui-org/button'
 import { Card, CardHeader } from '@nextui-org/card'
 import { Select, SelectItem } from '@nextui-org/select'
-import { ArrowDownAZ, ArrowUpAZ, ChevronDown, Filter } from 'lucide-react'
+import {
+  ArrowDownAZ,
+  ArrowUpAZ,
+  ChevronDown,
+  Filter,
+  Calendar
+} from 'lucide-react'
 import { ALL_SUPPORTED_TYPE, SUPPORTED_TYPE_MAP } from '~/constants/resource'
 import type { SortDirection, SortOption } from './_sort'
 
@@ -20,6 +26,10 @@ interface Props {
   setSortField: (option: SortOption) => void
   sortOrder: SortDirection
   setSortOrder: (direction: SortDirection) => void
+  selectedYear: string
+  setSelectedYear: (year: string) => void
+  selectedMonth: string
+  setSelectedMonth: (month: string) => void
 }
 
 const sortFieldLabelMap: Record<string, string> = {
@@ -28,13 +38,43 @@ const sortFieldLabelMap: Record<string, string> = {
   download: '下载量'
 }
 
+// Generate years from 1980 to current year
+const currentYear = new Date().getFullYear()
+const years = [
+  'all',
+  ...Array.from({ length: currentYear - 1979 }, (_, i) =>
+    String(currentYear - i)
+  )
+]
+
+// Months 1-12
+const months = [
+  'all',
+  '01',
+  '02',
+  '03',
+  '04',
+  '05',
+  '06',
+  '07',
+  '08',
+  '09',
+  '10',
+  '11',
+  '12'
+]
+
 export const FilterBar = ({
   selectedType,
   setSelectedType,
   sortField,
   setSortField,
   sortOrder,
-  setSortOrder
+  setSortOrder,
+  selectedYear,
+  setSelectedYear,
+  selectedMonth,
+  setSelectedMonth
 }: Props) => {
   return (
     <Card className="w-full border border-content2 bg-content1/50 backdrop-blur-lg">
@@ -44,14 +84,8 @@ export const FilterBar = ({
             label="类型筛选"
             placeholder="选择类型"
             selectedKeys={[selectedType]}
-            className="max-w-xs"
             onChange={(event) => setSelectedType(event.target.value)}
             startContent={<Filter className="size-4 text-default-400" />}
-            classNames={{
-              trigger: 'bg-content2/50 hover:bg-content2 transition-colors',
-              value: 'text-default-700',
-              label: 'text-default-600'
-            }}
             radius="lg"
             size="sm"
           >
@@ -62,14 +96,53 @@ export const FilterBar = ({
             ))}
           </Select>
 
+          <Select
+            label="发售年份"
+            placeholder="选择年份"
+            selectedKeys={[selectedYear]}
+            onChange={(event) => setSelectedYear(event.target.value)}
+            startContent={<Calendar className="size-4 text-default-400" />}
+            radius="lg"
+            size="sm"
+          >
+            {years.map((year) => (
+              <SelectItem key={year} value={year} className="text-default-700">
+                {year === 'all' ? '全部年份' : year}
+              </SelectItem>
+            ))}
+          </Select>
+
+          <Select
+            label="发售月份"
+            placeholder="选择月份"
+            selectedKeys={[selectedMonth]}
+            onChange={(event) => setSelectedMonth(event.target.value)}
+            startContent={<Calendar className="size-4 text-default-400" />}
+            radius="lg"
+            size="sm"
+          >
+            {months.map((month) => (
+              <SelectItem
+                key={month}
+                value={month}
+                className="text-default-700"
+              >
+                {month === 'all' ? '全部月份' : month}
+              </SelectItem>
+            ))}
+          </Select>
+
           <div className="flex items-center gap-2">
             <Dropdown>
               <DropdownTrigger>
                 <Button
                   variant="flat"
-                  className="transition-colors bg-content2/50 hover:bg-content2"
+                  style={{
+                    fontSize: '0.875rem'
+                  }}
                   endContent={<ChevronDown className="size-4" />}
                   radius="lg"
+                  size="lg"
                 >
                   {sortFieldLabelMap[sortField]}
                 </Button>
@@ -95,7 +168,9 @@ export const FilterBar = ({
 
             <Button
               variant="flat"
-              className="transition-colors bg-content2/50 hover:bg-content2"
+              style={{
+                fontSize: '0.875rem'
+              }}
               onPress={() => setSortOrder(sortOrder === 'asc' ? 'desc' : 'asc')}
               startContent={
                 sortOrder === 'asc' ? (
@@ -105,6 +180,7 @@ export const FilterBar = ({
                 )
               }
               radius="lg"
+              size="lg"
             >
               {sortOrder === 'asc' ? '升序' : '降序'}
             </Button>

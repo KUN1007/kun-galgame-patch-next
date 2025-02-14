@@ -9,5 +9,7 @@ export const galgameSchema = z.object({
   ]),
   sortOrder: z.union([z.literal('asc'), z.literal('desc')]),
   page: z.coerce.number().min(1).max(9999999),
-  limit: z.coerce.number().min(1).max(24)
+  limit: z.coerce.number().min(1).max(24),
+  year: z.string().max(9999),
+  month: z.string().max(12)
 })

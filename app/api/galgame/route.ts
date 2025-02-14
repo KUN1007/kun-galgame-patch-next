@@ -6,19 +6,41 @@ import { galgameSchema } from '~/validations/galgame'
 import { ALL_SUPPORTED_TYPE } from '~/constants/resource'
 
 export const getGalgame = async (input: z.infer<typeof galgameSchema>) => {
-  const { selectedType, sortField, sortOrder, page, limit } = input
+  const { selectedType, sortField, sortOrder, page, limit, year, month } = input
 
   const offset = (page - 1) * limit
 
   const typeQuery =
     selectedType === 'all' ? {} : { type: { has: selectedType } }
 
+  let dateFilter = {}
+  if (year !== 'all' && year) {
+    if (month !== 'all' && month) {
+      dateFilter = {
+        AND: [
+          { released: { startsWith: `${year}-${month}` } },
+          { released: { not: 'future' } }
+        ]
+      }
+    } else {
+      dateFilter = {
+        AND: [
+          { released: { startsWith: year } },
+          { released: { not: 'future' } }
+        ]
+      }
+    }
+  }
+
   const [galgames, total] = await Promise.all([
     prisma.patch.findMany({
       take: limit,
       skip: offset,
       orderBy: { [sortField]: sortOrder },
-      where: typeQuery,
+      where: {
+        ...typeQuery,
+        ...dateFilter
+      },
       select: {
         id: true,
         name: true,
@@ -40,7 +62,10 @@ export const getGalgame = async (input: z.infer<typeof galgameSchema>) => {
       }
     }),
     prisma.patch.count({
-      where: typeQuery
+      where: {
+        ...typeQuery,
+        ...dateFilter
+      }
     })
   ])
 
