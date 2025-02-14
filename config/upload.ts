@@ -1,3 +1,6 @@
+export const UPLOAD_IMAGE_COMPRESS_QUALITY = 60
+export const UPLOAD_IMAGE_MAX_SIZE = 1.007
+
 export const CHUNK_SIZE = 20 * 1024 * 1024
 export const UPLOAD_DIR = 'uploads/resource'
 export const MAX_FILE_SIZE = 1 * 1024 * 1024 * 1024

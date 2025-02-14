@@ -1,6 +1,6 @@
 import { z } from 'zod'
 import { prisma } from '~/prisma/index'
-import { uploadPatchBanner } from './_upload'
+import { uploadPatchBanner } from '~/app/api/utils/uploadPatchBanner'
 import { patchCreateSchema } from '~/validations/edit'
 
 export const createPatch = async (
@@ -30,13 +30,9 @@ export const createPatch = async (
       const newId = patch.id
 
       const res = await uploadPatchBanner(bannerArrayBuffer, newId)
-      if (!res) {
-        return '上传图片错误, 未知错误'
-      }
       if (typeof res === 'string') {
         return res
       }
-
       const imageLink = `${process.env.KUN_VISUAL_NOVEL_IMAGE_BED_URL}/patch/${newId}/banner/banner.avif`
 
       await prisma.patch.update({

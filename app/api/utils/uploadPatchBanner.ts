@@ -1,7 +1,8 @@
 import sharp from 'sharp'
 
-import { uploadObject } from '~/app/api/utils/uploadImage'
 import { checkBufferSize } from '~/app/api/utils/checkBufferSize'
+import { MAX_SIZE, COMPRESS_QUALITY } from '~/app/api/utils/constants'
+import { uploadImageToS3 } from '~/lib/s3/uploadImageToS3'
 
 export const uploadPatchBanner = async (image: ArrayBuffer, id: number) => {
   const banner = await sharp(image)
@@ -9,23 +10,22 @@ export const uploadPatchBanner = async (image: ArrayBuffer, id: number) => {
       fit: 'inside',
       withoutEnlargement: true
     })
-    .avif({ quality: 60 })
+    .avif({ quality: COMPRESS_QUALITY })
     .toBuffer()
   const miniBanner = await sharp(image)
     .resize(460, 259, {
       fit: 'inside',
       withoutEnlargement: true
     })
-    .avif({ quality: 60 })
+    .avif({ quality: COMPRESS_QUALITY })
     .toBuffer()
 
-  if (!checkBufferSize(miniBanner, 1.007)) {
+  if (!checkBufferSize(miniBanner, MAX_SIZE)) {
     return '图片体积过大'
   }
 
-  const bucketName = `kun-galgame-patch/patch/${id}/banner`
-  const res1 = await uploadObject(banner, 'banner.avif', bucketName)
-  const res2 = await uploadObject(miniBanner, 'banner-mini.avif', bucketName)
+  const bucketName = `patch/${id}/banner`
 
-  return !!(res1 && res2)
+  await uploadImageToS3(`${bucketName}/banner.avif`, banner)
+  await uploadImageToS3(`${bucketName}/banner-mini.avif`, miniBanner)
 }

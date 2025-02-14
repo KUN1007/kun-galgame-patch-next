@@ -17,9 +17,6 @@ export const updateUserAvatar = async (uid: number, avatar: ArrayBuffer) => {
   }
 
   const res = await uploadUserAvatar(avatar, uid)
-  if (!res) {
-    return '上传图片错误, 未知错误'
-  }
   if (typeof res === 'string') {
     return res
   }

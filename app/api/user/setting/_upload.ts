@@ -1,6 +1,7 @@
 import sharp from 'sharp'
 
-import { uploadObject } from '~/app/api/utils/uploadImage'
+import { MAX_SIZE, COMPRESS_QUALITY } from '~/app/api/utils/constants'
+import { uploadImageToS3 } from '~/lib/s3/uploadImageToS3'
 import { checkBufferSize } from '~/app/api/utils/checkBufferSize'
 
 export const uploadUserAvatar = async (image: ArrayBuffer, uid: number) => {
@@ -9,24 +10,22 @@ export const uploadUserAvatar = async (image: ArrayBuffer, uid: number) => {
       fit: 'inside',
       withoutEnlargement: true
     })
-    .avif({ quality: 60 })
+    .avif({ quality: COMPRESS_QUALITY })
     .toBuffer()
   const miniAvatar = await sharp(image)
     .resize(100, 100, {
       fit: 'inside',
       withoutEnlargement: true
     })
-    .avif({ quality: 50 })
+    .avif({ quality: COMPRESS_QUALITY })
     .toBuffer()
 
-  if (!checkBufferSize(avatar, 1.007)) {
+  if (!checkBufferSize(avatar, MAX_SIZE)) {
     return '图片体积过大'
   }
 
-  const bucketName = `kun-galgame-patch/user/avatar/user_${uid}`
+  const bucketName = `user/avatar/user_${uid}`
 
-  const res1 = await uploadObject(avatar, 'avatar.avif', bucketName)
-  const res2 = await uploadObject(miniAvatar, 'avatar-mini.avif', bucketName)
-
-  return !!(res1 && res2)
+  await uploadImageToS3(`${bucketName}/avatar.avif`, avatar)
+  await uploadImageToS3(`${bucketName}/avatar-mini.avif`, miniAvatar)
 }

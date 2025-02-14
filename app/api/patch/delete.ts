@@ -1,5 +1,5 @@
 import { z } from 'zod'
-import { deleteFileFromS3 } from '~/lib/s3'
+import { deleteFileFromS3 } from '~/lib/s3/deleteFileFromS3'
 import { prisma } from '~/prisma/index'
 
 const patchIdSchema = z.object({

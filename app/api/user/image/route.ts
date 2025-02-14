@@ -19,9 +19,6 @@ export const uploadImage = async (uid: number, image: ArrayBuffer) => {
   const newFileName = `${uid}-${Date.now()}`
 
   const res = await uploadIntroductionImage(newFileName, image, uid)
-  if (!res) {
-    return '上传图片错误, 未知错误'
-  }
   if (typeof res === 'string') {
     return res
   }

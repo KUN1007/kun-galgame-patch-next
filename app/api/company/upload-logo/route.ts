@@ -1,30 +1,19 @@
 import sharp from 'sharp'
-import { uploadObject } from '~/app/api/utils/uploadImage'
+import { uploadImageToS3 } from '~/lib/s3/uploadImageToS3'
 import { checkBufferSize } from '~/app/api/utils/checkBufferSize'
 import { NextRequest, NextResponse } from 'next/server'
 import { kunParseFormData } from '~/app/api/utils/parseQuery'
 import { uploadLogoSchema } from '~/validations/company'
 import { verifyHeaderCookie } from '~/middleware/_verifyHeaderCookie'
 
-const getBucketName = (id: number) => {
-  return `kun-galgame-patch/company/logo/${id}`
-}
-
-const getLink = (id: number) => {
-  return `${process.env.KUN_VISUAL_NOVEL_IMAGE_BED_URL}/company/logo/${id}/logo.avif`
-}
-
 export const uploadCompanyLogo = async (image: ArrayBuffer, id: number) => {
-  const logo = await sharp(image).avif({ quality: 60 }).toBuffer()
-
-  if (!checkBufferSize(logo, 1.007)) {
+  const logoBuffer = await sharp(image).avif({ quality: 60 }).toBuffer()
+  if (!checkBufferSize(logoBuffer, 1.007)) {
     return '图片体积过大'
   }
 
-  const bucketName = getBucketName(id)
-  const res = await uploadObject(logo, 'logo.avif', bucketName)
-
-  return !!res
+  const bucketName = `company/logo/${id}`
+  await uploadImageToS3(`${bucketName}/logo.avif`, logoBuffer)
 }
 
 export const POST = async (req: NextRequest) => {
@@ -41,13 +30,10 @@ export const POST = async (req: NextRequest) => {
   const logoArrayBuffer = await new Response(logo)?.arrayBuffer()
 
   const res = await uploadCompanyLogo(logoArrayBuffer, companyId)
-  if (!res) {
-    return NextResponse.json('上传图片错误, 未知错误')
-  }
   if (typeof res === 'string') {
     return NextResponse.json(res)
   }
 
-  const logoLink = getLink(companyId)
+  const logoLink = `${process.env.KUN_VISUAL_NOVEL_IMAGE_BED_URL}/company/logo/${companyId}/logo.avif`
   return NextResponse.json(logoLink)
 }

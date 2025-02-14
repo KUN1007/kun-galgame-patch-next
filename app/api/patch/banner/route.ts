@@ -3,7 +3,7 @@ import { kunParseFormData } from '~/app/api/utils/parseQuery'
 import { prisma } from '~/prisma/index'
 import { verifyHeaderCookie } from '~/middleware/_verifyHeaderCookie'
 import { updatePatchBannerSchema } from '~/validations/patch'
-import { uploadPatchBanner } from './_upload'
+import { uploadPatchBanner } from '~/app/api/utils/uploadPatchBanner'
 
 export const updatePatchBanner = async (
   image: ArrayBuffer,
@@ -23,9 +23,6 @@ export const updatePatchBanner = async (
   }
 
   const res = await uploadPatchBanner(image, patchId)
-  if (!res) {
-    return '上传图片错误, 未知错误'
-  }
   if (typeof res === 'string') {
     return res
   }
