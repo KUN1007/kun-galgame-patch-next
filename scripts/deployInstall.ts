@@ -5,7 +5,7 @@ const runCommand = (command: string) => {
     console.log(`Running command: ${command}`)
     execSync(command, { stdio: 'inherit' })
   } catch (error) {
-    console.error(`Error running command: ${command}`)
+    console.error(`Error running command: ${command}`, error)
     process.exit(1)
   }
 }

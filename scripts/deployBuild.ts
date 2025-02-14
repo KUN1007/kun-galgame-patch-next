@@ -22,7 +22,7 @@ try {
     'git pull && pnpm prisma:push && pnpm build && pnpm stop && pnpm start',
     { stdio: 'inherit' }
   )
-} catch (e) {
-  console.error('Invalid environment variables')
+} catch (error) {
+  console.error('Invalid environment variables', error)
   process.exit(1)
 }

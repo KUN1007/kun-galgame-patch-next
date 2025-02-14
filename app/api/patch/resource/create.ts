@@ -1,19 +1,28 @@
 import { z } from 'zod'
 import { prisma } from '~/prisma/index'
 import { patchResourceCreateSchema } from '~/validations/patch'
-import { uploadLargeFileToS3 } from '~/lib/s3'
+import { uploadLargeFileToS3 } from '~/lib/s3/uploadLargeFileToS3'
+import { uploadSmallFileToS3 } from '~/lib/s3/uploadSmallFileToS3'
 import { getKv } from '~/lib/redis'
+import { MAX_SMALL_FILE_SIZE } from '~/config/upload'
 import type { PatchResource } from '~/types/api/patch'
+import type { KunChunkMetadata } from '~/types/api/upload'
 
 const uploadPatchResource = async (patchId: number, hash: string) => {
-  const filePath = await getKv(hash)
-  if (!filePath) {
-    return '本地临时文件存储未找到, 请重新上传补丁文件'
+  const fileMetadataString = await getKv(hash)
+  if (!fileMetadataString) {
+    return '本地临时文件元数据未找到, 请重新上传补丁文件'
   }
-  const fileName = filePath.split('/').pop()
+  const fileMetadata = JSON.parse(fileMetadataString) as KunChunkMetadata
+  const fileName = fileMetadata.filepath.split('/').pop()
 
   const s3Key = `patch/${patchId}/${hash}/${fileName}`
-  const res = await uploadLargeFileToS3(s3Key, filePath)
+  let res
+  if (fileMetadata.fileSize < MAX_SMALL_FILE_SIZE) {
+    res = await uploadSmallFileToS3(s3Key, fileMetadata.filepath)
+  } else {
+    res = await uploadLargeFileToS3(s3Key, fileMetadata.filepath)
+  }
   if (typeof res === 'string') {
     return res
   }

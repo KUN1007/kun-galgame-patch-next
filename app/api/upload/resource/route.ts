@@ -13,7 +13,7 @@ import {
 } from '../utils'
 import {
   CHUNK_SIZE,
-  MAX_FILE_SIZE,
+  MAX_LARGE_FILE_SIZE,
   USER_DAILY_UPLOAD_LIMIT,
   CREATOR_DAILY_UPLOAD_LIMIT
 } from '~/config/upload'
@@ -51,7 +51,7 @@ const processResourceChunk = async (
       metadata.fileHash = hash
       metadata.fileSize = totalChunkSize
 
-      await setKv(hash, mergedFilePath, 24 * 60 * 60)
+      await setKv(hash, JSON.stringify(metadata), 24 * 60 * 60)
       await prisma.user.update({
         where: { id: uid },
         data: { daily_upload_size: { increment: totalChunkSize } }
@@ -74,8 +74,8 @@ const checkRequestValid = async (req: NextRequest) => {
   const metadata = JSON.parse(
     formData.get('metadata') as string
   ) as KunChunkMetadata
-  if (metadata.fileSize > MAX_FILE_SIZE) {
-    return '补丁资源大小超过最大大小 2GB'
+  if (metadata.fileSize > MAX_LARGE_FILE_SIZE) {
+    return '补丁资源大小超过最大大小 1GB'
   }
   if (!chunk) {
     return '错误的资源分片'
