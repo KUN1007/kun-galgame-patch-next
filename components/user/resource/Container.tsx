@@ -58,10 +58,10 @@ export const UserResource = ({ resources, total, uid }: Props) => {
 
       {!total && <KunNull message="这个孩子还没有发布过补丁资源哦" />}
 
-      {total > 24 && (
+      {total > 20 && (
         <div className="flex justify-center">
           <Pagination
-            total={Math.ceil(total / 24)}
+            total={Math.ceil(total / 20)}
             page={page}
             onChange={(newPage: number) => setPage(newPage)}
             showControls

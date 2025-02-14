@@ -57,10 +57,10 @@ export const UserGalgame = ({ galgames, total, uid }: Props) => {
 
       {!total && <KunNull message="这个孩子还没有发布过 Galgame 哦" />}
 
-      {total > 24 && (
+      {total > 20 && (
         <div className="flex justify-center">
           <Pagination
-            total={Math.ceil(total / 24)}
+            total={Math.ceil(total / 20)}
             page={page}
             onChange={(newPage: number) => setPage(newPage)}
             showControls
