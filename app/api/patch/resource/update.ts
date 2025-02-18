@@ -18,10 +18,13 @@ export const updatePatchResource = async (
     return '您没有权限更改该补丁资源'
   }
 
+  const newContent = resource.storage === 's3' ? resource.content : content
+
   return await prisma.$transaction(async (prisma) => {
     const newResource = await prisma.patch_resource.update({
       where: { id: resourceId, user_id: uid },
       data: {
+        content: newContent,
         ...resourceData
       },
       include: {

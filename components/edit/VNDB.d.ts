@@ -1,5 +1,6 @@
 export interface Title {
   title: string
+  lang: 'ja' | 'zh-Hans' | 'en'
 }
 
 export interface VNDBData {

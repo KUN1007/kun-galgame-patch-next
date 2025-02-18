@@ -107,3 +107,14 @@ export interface PatchHistory {
   updated: string
   user: KunUser
 }
+
+export interface PatchWalkthrough {
+  id: number
+  name: string
+  content: string
+  created: string | Date
+  user: KunUser
+  _count: {
+    patch_walkthrough: number
+  }
+}

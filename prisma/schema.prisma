@@ -26,9 +26,10 @@ model user {
   daily_upload_size Int    @default(0)
   last_login_time   String @default("")
 
-  admin_log     admin_log[]
-  patch_tag     patch_tag[]
-  patch_company patch_company[]
+  admin_log         admin_log[]
+  patch_tag         patch_tag[]
+  patch_company     patch_company[]
+  patch_walkthrough patch_walkthrough[]
 
   patch_favorite      user_patch_favorite_relation[]
   patch_contribute    user_patch_contribute_relation[]
@@ -166,8 +167,9 @@ model patch {
   engine       String[]
   platform     String[]
 
-  company patch_company_relation[]
-  tag     patch_tag_relation[]
+  walkthrough patch_walkthrough[]
+  company     patch_company_relation[]
+  tag         patch_tag_relation[]
 
   user_id Int
   user    user @relation("user_patch", fields: [user_id], references: [id])
@@ -182,6 +184,23 @@ model patch {
 
   created DateTime @default(now())
   updated DateTime @updatedAt
+}
+
+model patch_walkthrough {
+  id      Int    @id @default(autoincrement())
+  name    String @db.VarChar(1007)
+  content String @default("") @db.VarChar(100007)
+
+  user_id  Int
+  user     user  @relation(fields: [user_id], references: [id], onDelete: Cascade)
+  patch_id Int
+  patch    patch @relation(fields: [patch_id], references: [id], onDelete: Cascade)
+
+  created DateTime @default(now())
+  updated DateTime @updatedAt
+
+  @@index([patch_id])
+  @@index([name])
 }
 
 model patch_tag {
