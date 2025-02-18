@@ -40,6 +40,7 @@ export const updateWalkthrough = async (
     name: data.name,
     content: data.content,
     created: data.created,
+    updated: data.updated,
     user: data.user,
     _count: {
       patch_walkthrough: data.user._count.patch_walkthrough

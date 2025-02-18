@@ -113,6 +113,7 @@ export interface PatchWalkthrough {
   name: string
   content: string
   created: string | Date
+  updated: string | Date
   user: KunUser
   _count: {
     patch_walkthrough: number

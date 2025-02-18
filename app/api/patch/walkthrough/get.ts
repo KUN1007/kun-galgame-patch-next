@@ -27,6 +27,7 @@ export const getWalkthrough = async (input: z.infer<typeof patchIdSchema>) => {
     name: wt.name,
     content: wt.content,
     created: wt.created,
+    updated: wt.updated,
     user: wt.user,
     _count: {
       patch_walkthrough: wt.user._count.patch_walkthrough

@@ -20,6 +20,7 @@ export const PatchHeaderTabs = ({ id }: PatchHeaderProps) => {
     },
     { key: 'resource', title: '资源链接', href: `/patch/${id}/resource` },
     { key: 'comment', title: '游戏评论', href: `/patch/${id}/comment` },
+    { key: 'walkthrough', title: '游戏攻略', href: `/patch/${id}/walkthrough` },
     { key: 'history', title: '贡献历史', href: `/patch/${id}/history` },
     { key: 'pr', title: '更新请求', href: `/patch/${id}/pr` }
   ]
