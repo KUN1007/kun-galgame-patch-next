@@ -31,12 +31,12 @@ export const deleteUser = async (
   await setKv(
     `${ADMIN_DELETE_EMAIL_CACHE_KEY}:${user.email}`,
     user.email,
-    60 * 24 * 60 * 60
+    10 * 365 * 24 * 60 * 60
   )
   await setKv(
     `${ADMIN_DELETE_IP_CACHE_KEY}:${user.ip}`,
     user.ip,
-    60 * 24 * 60 * 60
+    10 * 365 * 24 * 60 * 60
   )
 
   return prisma.$transaction(async (prisma) => {
