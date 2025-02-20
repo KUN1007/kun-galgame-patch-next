@@ -336,7 +336,7 @@ model patch_comment {
   parent_id Int?
   parent    patch_comment?  @relation("comment_reply", fields: [parent_id], references: [id], onDelete: Cascade, onUpdate: NoAction)
   user_id   Int
-  user      user            @relation("user_patch_comment", fields: [user_id], references: [id])
+  user      user            @relation("user_patch_comment", fields: [user_id], references: [id], onDelete: Cascade, onUpdate: NoAction)
   patch_id  Int
   patch     patch           @relation("patch_comment", fields: [patch_id], references: [id], onDelete: Cascade, onUpdate: NoAction)
 
