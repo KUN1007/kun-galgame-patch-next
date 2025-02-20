@@ -1,7 +1,7 @@
 import { z } from 'zod'
 import { NextRequest, NextResponse } from 'next/server'
 import { kunParsePostBody } from '~/app/api/utils/parseQuery'
-import { getRemoteIp } from '~/app/api/utils/getRemoteIp'
+import { KUN_ALLOW_REGISTER_EMAIL } from '~/config/email-whitelist'
 import { sendVerificationCodeEmail } from '~/app/api/utils/sendVerificationCodeEmail'
 import { sendRegisterEmailVerificationCodeSchema } from '~/validations/auth'
 import { prisma } from '~/prisma/index'
@@ -14,6 +14,14 @@ export const sendRegisterCode = async (
   const res = await checkCaptchaExist(input.captcha)
   if (!res) {
     return '人机验证无效, 请完成人机验证'
+  }
+
+  const emailDomain = input.email.split('@')[1]
+  const isEmailAllowed = KUN_ALLOW_REGISTER_EMAIL.some(
+    (whitelistedDomain) => whitelistedDomain === emailDomain
+  )
+  if (!isEmailAllowed) {
+    return '您的邮箱已被封禁, 请换一个试试, 如果您有任何问题, 欢迎联系我们'
   }
 
   const normalizedName = input.name.toLowerCase()
