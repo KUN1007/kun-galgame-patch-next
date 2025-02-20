@@ -1,12 +1,14 @@
 import { z } from 'zod'
 import { setKv } from '~/lib/redis'
 import { prisma } from '~/prisma/index'
+import {
+  ADMIN_DELETE_EMAIL_CACHE_KEY,
+  ADMIN_DELETE_IP_CACHE_KEY
+} from '~/config/admin'
 
 const userIdSchema = z.object({
   uid: z.coerce.number({ message: '用户 ID 必须为数字' }).min(1).max(9999999)
 })
-
-const REDIS_DELETE_CACHE_KEY = 'admin:delete:user'
 
 export const deleteUser = async (
   input: z.infer<typeof userIdSchema>,
@@ -27,8 +29,13 @@ export const deleteUser = async (
   }
 
   await setKv(
-    `${REDIS_DELETE_CACHE_KEY}:${user.email}`,
+    `${ADMIN_DELETE_EMAIL_CACHE_KEY}:${user.email}`,
     user.email,
+    60 * 24 * 60 * 60
+  )
+  await setKv(
+    `${ADMIN_DELETE_IP_CACHE_KEY}:${user.email}`,
+    user.ip,
     60 * 24 * 60 * 60
   )
 

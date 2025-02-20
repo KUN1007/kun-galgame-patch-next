@@ -6,6 +6,11 @@ import { sendVerificationCodeEmail } from '~/app/api/utils/sendVerificationCodeE
 import { sendRegisterEmailVerificationCodeSchema } from '~/validations/auth'
 import { prisma } from '~/prisma/index'
 import { checkCaptchaExist } from '../captcha/verify'
+import { getKv } from '~/lib/redis'
+import {
+  ADMIN_DELETE_EMAIL_CACHE_KEY,
+  ADMIN_DELETE_IP_CACHE_KEY
+} from '~/config/admin'
 
 export const sendRegisterCode = async (
   input: z.infer<typeof sendRegisterEmailVerificationCodeSchema>,
@@ -22,6 +27,19 @@ export const sendRegisterCode = async (
   )
   if (!isEmailAllowed) {
     return '您的邮箱已被封禁, 请换一个试试, 如果您有任何问题, 欢迎联系我们'
+  }
+
+  const isDeletedUserEmail = await getKv(
+    `${ADMIN_DELETE_EMAIL_CACHE_KEY}:${input.email}`
+  )
+  if (isDeletedUserEmail) {
+    return '您的邮箱已被永久封禁'
+  }
+  const isDeletedUserIp = await getKv(
+    `${ADMIN_DELETE_IP_CACHE_KEY}:${input.email}`
+  )
+  if (isDeletedUserIp) {
+    return '您的 IP 地址已被永久封禁'
   }
 
   const normalizedName = input.name.toLowerCase()
