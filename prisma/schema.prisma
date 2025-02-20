@@ -83,9 +83,9 @@ model user_message {
   status  Int    @default(0)
 
   sender_id    Int?
-  sender       user? @relation("user_send_message", fields: [sender_id], references: [id])
+  sender       user? @relation("user_send_message", fields: [sender_id], references: [id], onDelete: Cascade, onUpdate: NoAction)
   recipient_id Int?
-  recipient    user? @relation("user_receive_message", fields: [recipient_id], references: [id])
+  recipient    user? @relation("user_receive_message", fields: [recipient_id], references: [id], onDelete: Cascade, onUpdate: NoAction)
 
   patch_id          Int @default(0)
   patch_resource_id Int @default(0)
@@ -99,9 +99,9 @@ model user_patch_favorite_relation {
   id Int @id @default(autoincrement())
 
   user_id  Int
-  user     user  @relation(fields: [user_id], references: [id], onDelete: Cascade)
+  user     user  @relation(fields: [user_id], references: [id], onDelete: Cascade, onUpdate: NoAction)
   patch_id Int
-  patch    patch @relation(fields: [patch_id], references: [id], onDelete: Cascade)
+  patch    patch @relation(fields: [patch_id], references: [id], onDelete: Cascade, onUpdate: NoAction)
 
   created DateTime @default(now())
   updated DateTime @updatedAt
@@ -113,9 +113,9 @@ model user_patch_contribute_relation {
   id Int @id @default(autoincrement())
 
   user_id  Int
-  user     user  @relation(fields: [user_id], references: [id], onDelete: Cascade)
+  user     user  @relation(fields: [user_id], references: [id], onDelete: Cascade, onUpdate: NoAction)
   patch_id Int
-  patch    patch @relation(fields: [patch_id], references: [id], onDelete: Cascade)
+  patch    patch @relation(fields: [patch_id], references: [id], onDelete: Cascade, onUpdate: NoAction)
 
   created DateTime @default(now())
   updated DateTime @updatedAt
@@ -127,9 +127,9 @@ model user_patch_comment_like_relation {
   id Int @id @default(autoincrement())
 
   user_id    Int
-  user       user          @relation(fields: [user_id], references: [id], onDelete: Cascade)
+  user       user          @relation(fields: [user_id], references: [id], onDelete: Cascade, onUpdate: NoAction)
   comment_id Int
-  comment    patch_comment @relation(fields: [comment_id], references: [id], onDelete: Cascade)
+  comment    patch_comment @relation(fields: [comment_id], references: [id], onDelete: Cascade, onUpdate: NoAction)
 
   created DateTime @default(now())
   updated DateTime @updatedAt
@@ -141,9 +141,9 @@ model user_patch_resource_like_relation {
   id Int @id @default(autoincrement())
 
   user_id     Int
-  user        user           @relation(fields: [user_id], references: [id], onDelete: Cascade)
+  user        user           @relation(fields: [user_id], references: [id], onDelete: Cascade, onUpdate: NoAction)
   resource_id Int
-  resource    patch_resource @relation(fields: [resource_id], references: [id], onDelete: Cascade)
+  resource    patch_resource @relation(fields: [resource_id], references: [id], onDelete: Cascade, onUpdate: NoAction)
 
   created DateTime @default(now())
   updated DateTime @updatedAt
@@ -192,9 +192,9 @@ model patch_walkthrough {
   content String @default("") @db.VarChar(100007)
 
   user_id  Int
-  user     user  @relation(fields: [user_id], references: [id], onDelete: Cascade)
+  user     user  @relation(fields: [user_id], references: [id], onDelete: Cascade, onUpdate: NoAction)
   patch_id Int
-  patch    patch @relation(fields: [patch_id], references: [id], onDelete: Cascade)
+  patch    patch @relation(fields: [patch_id], references: [id], onDelete: Cascade, onUpdate: NoAction)
 
   created DateTime @default(now())
   updated DateTime @updatedAt
@@ -212,7 +212,7 @@ model patch_tag {
 
   patch_relation patch_tag_relation[]
   user_id        Int
-  user           user                 @relation(fields: [user_id], references: [id], onDelete: Cascade)
+  user           user                 @relation(fields: [user_id], references: [id], onDelete: Cascade, onUpdate: NoAction)
 
   created DateTime @default(now())
   updated DateTime @updatedAt
@@ -245,7 +245,7 @@ model patch_company {
 
   patch_relations patch_company_relation[]
   user_id         Int
-  user            user                     @relation(fields: [user_id], references: [id], onDelete: Cascade)
+  user            user                     @relation(fields: [user_id], references: [id], onDelete: Cascade, onUpdate: NoAction)
 
   created DateTime @default(now())
   updated DateTime @updatedAt
@@ -283,7 +283,7 @@ model patch_resource {
   like_by user_patch_resource_like_relation[]
 
   user_id  Int
-  user     user  @relation("user_patch_resource", fields: [user_id], references: [id])
+  user     user  @relation("user_patch_resource", fields: [user_id], references: [id], onDelete: Cascade, onUpdate: NoAction)
   patch_id Int
   patch    patch @relation("patch_resource", fields: [patch_id], references: [id], onDelete: Cascade, onUpdate: NoAction)
 
@@ -298,7 +298,7 @@ model patch_history {
   content String @default("") @db.VarChar(10007)
 
   user_id  Int
-  user     user  @relation("user_patch_history", fields: [user_id], references: [id])
+  user     user  @relation("user_patch_history", fields: [user_id], references: [id], onDelete: Cascade, onUpdate: NoAction)
   patch_id Int
   patch    patch @relation("patch_history", fields: [patch_id], references: [id], onDelete: Cascade, onUpdate: NoAction)
 

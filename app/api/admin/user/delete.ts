@@ -1,22 +1,50 @@
 import { z } from 'zod'
+import { setKv } from '~/lib/redis'
 import { prisma } from '~/prisma/index'
 
 const userIdSchema = z.object({
   uid: z.coerce.number({ message: '用户 ID 必须为数字' }).min(1).max(9999999)
 })
 
-export const deleteUser = async (input: z.infer<typeof userIdSchema>) => {
+const REDIS_DELETE_CACHE_KEY = 'admin:delete:user'
+
+export const deleteUser = async (
+  input: z.infer<typeof userIdSchema>,
+  uid: number
+) => {
   const user = await prisma.user.findUnique({
-    where: {
-      id: input.uid
-    }
+    where: { id: input.uid }
   })
   if (!user) {
     return '未找到用户'
   }
 
-  await prisma.user.delete({
-    where: { id: input.uid }
+  const admin = await prisma.user.findUnique({
+    where: { id: uid }
   })
-  return {}
+  if (!admin) {
+    return '未找到管理员'
+  }
+
+  await setKv(
+    `${REDIS_DELETE_CACHE_KEY}:${user.email}`,
+    user.email,
+    60 * 24 * 60 * 60
+  )
+
+  return prisma.$transaction(async (prisma) => {
+    await prisma.user.delete({
+      where: { id: input.uid }
+    })
+
+    await prisma.admin_log.create({
+      data: {
+        type: 'delete',
+        user_id: uid,
+        content: `管理员 ${admin.name} 删除了一个用户\n\n${JSON.stringify(user)}`
+      }
+    })
+
+    return {}
+  })
 }

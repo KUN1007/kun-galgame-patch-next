@@ -1,6 +1,10 @@
 import { z } from 'zod'
 import { NextRequest, NextResponse } from 'next/server'
-import { kunParseGetQuery, kunParsePutBody } from '~/app/api/utils/parseQuery'
+import {
+  kunParseGetQuery,
+  kunParsePutBody,
+  kunParseDeleteQuery
+} from '~/app/api/utils/parseQuery'
 import { verifyHeaderCookie } from '~/middleware/_verifyHeaderCookie'
 import {
   adminPaginationSchema,
@@ -18,6 +22,13 @@ export const GET = async (req: NextRequest) => {
   const input = kunParseGetQuery(req, adminPaginationSchema)
   if (typeof input === 'string') {
     return NextResponse.json(input)
+  }
+  const payload = await verifyHeaderCookie(req)
+  if (!payload) {
+    return NextResponse.json('用户未登录')
+  }
+  if (payload.role < 3) {
+    return NextResponse.json('本页面仅管理员可访问')
   }
 
   const response = await getUserInfo(input)
@@ -42,7 +53,7 @@ export const PUT = async (req: NextRequest) => {
 }
 
 export const DELETE = async (req: NextRequest) => {
-  const input = await kunParsePutBody(req, userIdSchema)
+  const input = kunParseDeleteQuery(req, userIdSchema)
   if (typeof input === 'string') {
     return NextResponse.json(input)
   }
@@ -54,6 +65,6 @@ export const DELETE = async (req: NextRequest) => {
     return NextResponse.json('本页面仅超级管理员可访问')
   }
 
-  const response = await deleteUser(input)
+  const response = await deleteUser(input, payload.uid)
   return NextResponse.json(response)
 }

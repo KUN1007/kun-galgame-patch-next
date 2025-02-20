@@ -7,6 +7,7 @@ import {
   USER_STATUS_MAP
 } from '~/constants/user'
 import { UserEdit } from './UserEdit'
+import { UserDelete } from './UserDelete'
 import type { AdminUser as AdminUserType } from '~/types/api/admin'
 
 export const RenderCell = (user: AdminUserType, columnKey: string) => {
@@ -34,7 +35,12 @@ export const RenderCell = (user: AdminUserType, columnKey: string) => {
         </Chip>
       )
     case 'actions':
-      return <UserEdit initialUser={user} />
+      return (
+        <div className="flex items-center gap-2">
+          <UserEdit initialUser={user} />
+          <UserDelete user={user} />
+        </div>
+      )
     default:
       return (
         <Chip color="primary" variant="flat">
