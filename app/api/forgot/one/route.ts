@@ -9,10 +9,13 @@ export const stepOne = async (
   input: z.infer<typeof stepOneSchema>,
   headers: Headers
 ) => {
+  // const user = await prisma.user.findFirst({
+  //   where: {
+  //     OR: [{ email: input.name }, { name: input.name }]
+  //   }
+  // })
   const user = await prisma.user.findFirst({
-    where: {
-      OR: [{ email: input.name }, { name: input.name }]
-    }
+    where: { email: input.name }
   })
   if (!user) {
     return '用户未找到'

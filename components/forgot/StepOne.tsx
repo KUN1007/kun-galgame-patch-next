@@ -51,8 +51,8 @@ export const StepOne = ({ setStep, setEmail }: Props) => {
         render={({ field, formState: { errors } }) => (
           <Input
             {...field}
-            label="邮箱或用户名"
-            placeholder="请输入您的邮箱或用户名"
+            label="邮箱"
+            placeholder="请输入您的邮箱"
             autoComplete="email"
             isInvalid={!!errors.name}
             errorMessage={errors.name?.message}
