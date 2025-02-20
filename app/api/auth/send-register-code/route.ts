@@ -10,7 +10,8 @@ import { getKv } from '~/lib/redis'
 import { getRemoteIp } from '~/app/api/utils/getRemoteIp'
 import {
   ADMIN_DELETE_EMAIL_CACHE_KEY,
-  ADMIN_DELETE_IP_CACHE_KEY
+  ADMIN_DELETE_IP_CACHE_KEY,
+  KUN_PATCH_DISABLE_REGISTER_KEY
 } from '~/config/admin'
 
 export const sendRegisterCode = async (
@@ -21,13 +22,17 @@ export const sendRegisterCode = async (
   if (!res) {
     return '人机验证无效, 请完成人机验证'
   }
+  const isDisableRegister = await getKv(KUN_PATCH_DISABLE_REGISTER_KEY)
+  if (isDisableRegister) {
+    return '由于网站近日遭受大量攻击，当前时间段暂时不可注册，请明天下午再来，一定要来哦'
+  }
 
   const emailDomain = input.email.split('@')[1]
   const isEmailAllowed = KUN_ALLOW_REGISTER_EMAIL.some(
     (whitelistedDomain) => whitelistedDomain === emailDomain
   )
   if (!isEmailAllowed) {
-    return '您的邮箱已被封禁, 请换一个试试, 如果您有任何问题, 欢迎联系我们'
+    return '您的邮箱地址暂时不支持, 请换一个试试, 如果您有任何问题, 欢迎联系我们'
   }
 
   const isDeletedUserEmail = await getKv(
