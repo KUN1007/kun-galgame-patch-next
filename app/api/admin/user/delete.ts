@@ -34,7 +34,7 @@ export const deleteUser = async (
     60 * 24 * 60 * 60
   )
   await setKv(
-    `${ADMIN_DELETE_IP_CACHE_KEY}:${user.email}`,
+    `${ADMIN_DELETE_IP_CACHE_KEY}:${user.ip}`,
     user.ip,
     60 * 24 * 60 * 60
   )

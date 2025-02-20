@@ -7,6 +7,7 @@ import { sendRegisterEmailVerificationCodeSchema } from '~/validations/auth'
 import { prisma } from '~/prisma/index'
 import { checkCaptchaExist } from '../captcha/verify'
 import { getKv } from '~/lib/redis'
+import { getRemoteIp } from '~/app/api/utils/getRemoteIp'
 import {
   ADMIN_DELETE_EMAIL_CACHE_KEY,
   ADMIN_DELETE_IP_CACHE_KEY
@@ -35,8 +36,9 @@ export const sendRegisterCode = async (
   if (isDeletedUserEmail) {
     return '您的邮箱已被永久封禁'
   }
+  const authUserIp = getRemoteIp(headers)
   const isDeletedUserIp = await getKv(
-    `${ADMIN_DELETE_IP_CACHE_KEY}:${input.email}`
+    `${ADMIN_DELETE_IP_CACHE_KEY}:${authUserIp}`
   )
   if (isDeletedUserIp) {
     return '您的 IP 地址已被永久封禁'
