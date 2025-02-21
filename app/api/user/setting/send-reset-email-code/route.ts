@@ -3,7 +3,7 @@ import { kunParsePostBody } from '~/app/api/utils/parseQuery'
 import { verifyHeaderCookie } from '~/middleware/_verifyHeaderCookie'
 import { sendVerificationCodeEmail } from '~/app/api/utils/sendVerificationCodeEmail'
 import { sendResetEmailVerificationCodeSchema } from '~/validations/user'
-import { checkCaptchaExist } from '~/app/api/auth/captcha/verify'
+import { checkKunCaptchaExist } from '~/app/api/utils/verifyKunCaptcha'
 
 const sendCode = async (req: NextRequest) => {
   const input = await kunParsePostBody(
@@ -21,7 +21,7 @@ const sendCode = async (req: NextRequest) => {
     return '读取请求头失败'
   }
 
-  const res = await checkCaptchaExist(input.captcha)
+  const res = await checkKunCaptchaExist(input.captcha)
   if (!res) {
     return '人机验证无效, 请完成人机验证'
   }

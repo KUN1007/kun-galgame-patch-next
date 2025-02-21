@@ -15,6 +15,8 @@ import { getPatchComment } from './get'
 import { createPatchComment } from './create'
 import { updateComment } from './update'
 import { deleteComment } from './delete'
+import { checkKunCaptchaExist } from '~/app/api/utils/verifyKunCaptcha'
+import { getCommentVerifyStatus } from '~/app/api/admin/setting/comment/getCommentVerifyStatus'
 
 const patchIdSchema = z.object({
   patchId: z.coerce.number().min(1).max(9999999)
@@ -46,6 +48,16 @@ export const POST = async (req: NextRequest) => {
   const payload = await verifyHeaderCookie(req)
   if (!payload) {
     return NextResponse.json('用户未登录')
+  }
+
+  const { enableCommentVerify } = await getCommentVerifyStatus()
+  if (enableCommentVerify) {
+    const res = await checkKunCaptchaExist(input.captcha)
+    if (!res) {
+      return NextResponse.json(
+        '人机验证无效, 请刷新页面在发送评论时完成人机验证'
+      )
+    }
   }
 
   const response = await createPatchComment(input, payload.uid)

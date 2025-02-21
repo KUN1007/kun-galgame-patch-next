@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { kunParsePostBody } from '~/app/api/utils/parseQuery'
 import { generateCaptcha } from './generate'
-import { verifyCaptcha } from './verify'
+import { verifyKunCaptcha } from '~/app/api/utils/verifyKunCaptcha'
 import { captchaSchema } from '~/validations/auth'
 
 export const GET = async () => {
@@ -15,6 +15,6 @@ export const POST = async (req: NextRequest) => {
     return NextResponse.json(input)
   }
 
-  const captcha = await verifyCaptcha(input.sessionId, input.selectedIds)
+  const captcha = await verifyKunCaptcha(input.sessionId, input.selectedIds)
   return NextResponse.json(captcha)
 }

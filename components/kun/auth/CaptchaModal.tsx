@@ -21,12 +21,14 @@ interface CaptchaModalProps {
   isOpen: boolean
   onClose: () => void
   onSuccess: (code: string) => void
+  hint?: string
 }
 
 export const KunCaptchaModal = ({
   isOpen,
   onClose,
-  onSuccess
+  onSuccess,
+  hint
 }: CaptchaModalProps) => {
   const [selectedImages, setSelectedImages] = useState<Set<string>>(new Set())
   const [images, setImages] = useState<KunCaptchaImage[]>([])
@@ -84,9 +86,12 @@ export const KunCaptchaModal = ({
   return (
     <Modal isOpen={isOpen} onClose={onClose}>
       <ModalContent>
-        <ModalHeader className="flex-col">
+        <ModalHeader className="flex-col gap-2">
           <h3 className="text-lg">验证</h3>
           <p className="font-medium">请选择下面所有的 白毛 女孩子</p>
+          {hint && (
+            <p className="text-sm font-medium text-default-500">{hint}</p>
+          )}
         </ModalHeader>
         <ModalBody>
           {loading ? (

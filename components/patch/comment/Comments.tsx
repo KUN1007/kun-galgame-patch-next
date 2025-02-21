@@ -16,9 +16,14 @@ import type { PatchComment } from '~/types/api/patch'
 interface Props {
   initialComments: PatchComment[]
   id: number
+  enableCommentVerify: boolean
 }
 
-export const Comments = ({ initialComments, id }: Props) => {
+export const Comments = ({
+  initialComments,
+  id,
+  enableCommentVerify
+}: Props) => {
   const [comments, setComments] = useState<PatchComment[]>(initialComments)
   const [replyTo, setReplyTo] = useState<number | null>(null)
 
@@ -80,6 +85,7 @@ export const Comments = ({ initialComments, id }: Props) => {
               receiver={comment.quotedUsername}
               onSuccess={() => setReplyTo(null)}
               setNewComment={setNewComment}
+              enableCommentVerify={enableCommentVerify}
             />
           </div>
         )}
@@ -93,6 +99,7 @@ export const Comments = ({ initialComments, id }: Props) => {
         patchId={id}
         receiver={null}
         setNewComment={setNewComment}
+        enableCommentVerify={enableCommentVerify}
       />
       {renderComments(comments)}
     </div>

@@ -1,7 +1,7 @@
 'use server'
 
 import { getDisableRegisterStatus } from '~/app/api/admin/setting/register/route'
-import { getCommentVerifyStatus } from '~/app/api/admin/setting/comment/route'
+import { getCommentVerifyStatus } from '~/app/api/admin/setting/comment/getCommentVerifyStatus'
 
 export const kunGetDisableRegisterStatusActions = async () => {
   const response = await getDisableRegisterStatus()

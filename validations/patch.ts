@@ -40,7 +40,8 @@ export const patchCommentCreateSchema = z.object({
     .string()
     .trim()
     .min(1, { message: '评论的内容最少为 1 个字符' })
-    .max(10007, { message: '评论的内容最多为 10007 个字符' })
+    .max(10007, { message: '评论的内容最多为 10007 个字符' }),
+  captcha: z.string().trim().max(10, { message: '非法的人机验证码格式' })
 })
 
 export const patchCommentUpdateSchema = z.object({

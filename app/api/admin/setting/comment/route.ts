@@ -2,15 +2,9 @@ import { NextRequest, NextResponse } from 'next/server'
 import { kunParsePutBody } from '~/app/api/utils/parseQuery'
 import { verifyHeaderCookie } from '~/middleware/_verifyHeaderCookie'
 import { adminEnableCommentVerifySchema } from '~/validations/admin'
-import { getKv, setKv, delKv } from '~/lib/redis'
+import { setKv, delKv } from '~/lib/redis'
 import { KUN_PATCH_ENABLE_COMMENT_VERIFY_KEY } from '~/config/redis'
-
-export const getCommentVerifyStatus = async () => {
-  const isEnableCommentVerify = await getKv(KUN_PATCH_ENABLE_COMMENT_VERIFY_KEY)
-  return {
-    enableCommentVerify: !!isEnableCommentVerify
-  }
-}
+import { getCommentVerifyStatus } from './getCommentVerifyStatus'
 
 export const GET = async (req: NextRequest) => {
   const payload = await verifyHeaderCookie(req)

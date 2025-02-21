@@ -5,7 +5,7 @@ import { KUN_ALLOW_REGISTER_EMAIL } from '~/config/email-whitelist'
 import { sendVerificationCodeEmail } from '~/app/api/utils/sendVerificationCodeEmail'
 import { sendRegisterEmailVerificationCodeSchema } from '~/validations/auth'
 import { prisma } from '~/prisma/index'
-import { checkCaptchaExist } from '../captcha/verify'
+import { checkKunCaptchaExist } from '~/app/api/utils/verifyKunCaptcha'
 import { getKv } from '~/lib/redis'
 import { getRemoteIp } from '~/app/api/utils/getRemoteIp'
 import {
@@ -18,7 +18,7 @@ export const sendRegisterCode = async (
   input: z.infer<typeof sendRegisterEmailVerificationCodeSchema>,
   headers: Headers
 ) => {
-  const res = await checkCaptchaExist(input.captcha)
+  const res = await checkKunCaptchaExist(input.captcha)
   if (!res) {
     return '人机验证无效, 请完成人机验证'
   }

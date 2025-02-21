@@ -1,9 +1,14 @@
 'use client'
 
 import { useState } from 'react'
-import { Card, CardBody, CardHeader } from '@nextui-org/card'
-import { Button } from '@nextui-org/button'
-import { Chip } from '@nextui-org/chip'
+import {
+  Button,
+  Card,
+  CardBody,
+  CardHeader,
+  Chip,
+  useDisclosure
+} from '@nextui-org/react'
 import { Send } from 'lucide-react'
 import { kunFetchPost } from '~/utils/kunFetch'
 import toast from 'react-hot-toast'
@@ -14,6 +19,7 @@ import { MilkdownProvider } from '@milkdown/react'
 import { KunEditor } from '~/components/kun/milkdown/Editor'
 import { Markdown } from '~/components/kun/icons/Markdown'
 import { useKunMilkdownStore } from '~/store/milkdownStore'
+import { KunCaptchaModal } from '~/components/kun/auth/CaptchaModal'
 import type { PatchComment } from '~/types/api/patch'
 
 interface CreateCommentProps {
@@ -22,6 +28,7 @@ interface CreateCommentProps {
   parentId?: number | null
   setNewComment: (newComment: PatchComment) => void
   onSuccess?: () => void
+  enableCommentVerify: boolean
 }
 
 export const PublishComment = ({
@@ -29,7 +36,8 @@ export const PublishComment = ({
   parentId = null,
   receiver = null,
   setNewComment,
-  onSuccess
+  onSuccess,
+  enableCommentVerify
 }: CreateCommentProps) => {
   const [loading, setLoading] = useState(false)
   const { user } = useUserStore((state) => state)
@@ -37,15 +45,17 @@ export const PublishComment = ({
     (state) => state.refreshMilkdownContent
   )
   const [content, setContent] = useState('')
+  const { isOpen, onOpen, onClose } = useDisclosure()
 
-  const handlePublishComment = async () => {
+  const handlePublishComment = async (code?: string) => {
     setLoading(true)
     const res = await kunFetchPost<KunResponse<PatchComment>>(
       '/patch/comment',
       {
         patchId,
         parentId,
-        content: content.trim()
+        content: content.trim(),
+        captcha: code ?? ''
       }
     )
     kunErrorHandler(res, (value) => {
@@ -57,6 +67,7 @@ export const PublishComment = ({
       setContent('')
       refreshMilkdownContent()
       onSuccess?.()
+      onClose()
     })
 
     setLoading(false)
@@ -99,12 +110,25 @@ export const PublishComment = ({
             startContent={<Send className="size-4" />}
             isDisabled={!content.trim() || loading}
             isLoading={loading}
-            onPress={handlePublishComment}
+            onPress={() => {
+              if (enableCommentVerify) {
+                onOpen()
+              } else {
+                handlePublishComment()
+              }
+            }}
           >
             发布评论
           </Button>
         </div>
       </CardBody>
+
+      <KunCaptchaModal
+        isOpen={isOpen}
+        onClose={onClose}
+        onSuccess={handlePublishComment}
+        hint="由于近日网站被频繁攻击, 因此您发送评论需要进行人机验证, 为您添麻烦了！ 非常对不起！"
+      />
     </Card>
   )
 }

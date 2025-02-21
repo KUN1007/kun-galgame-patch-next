@@ -1,7 +1,7 @@
 import { delKv, getKv, setKv } from '~/lib/redis'
 import { generateRandomCode } from '~/app/api/utils/generateRandomCode'
 
-export const verifyCaptcha = async (
+export const verifyKunCaptcha = async (
   sessionId: string,
   selectedIds: string[]
 ) => {
@@ -28,7 +28,7 @@ export const verifyCaptcha = async (
   return { code: randomCode }
 }
 
-export const checkCaptchaExist = async (sessionId: string) => {
+export const checkKunCaptchaExist = async (sessionId: string) => {
   const captcha = await getKv(`captcha:verify:${sessionId}`)
   if (captcha) {
     await delKv(`captcha:verify:${sessionId}`)
