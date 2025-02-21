@@ -4,7 +4,7 @@ import { useState } from 'react'
 import { z } from 'zod'
 import { Controller, useForm } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
-import { Button, Divider, Input, Link, useDisclosure } from '@nextui-org/react'
+import { Button, Input, Link, useDisclosure } from '@nextui-org/react'
 import { kunFetchPost } from '~/utils/kunFetch'
 import { loginSchema } from '~/validations/auth'
 import { useUserStore } from '~/store/providers/user'
@@ -45,7 +45,7 @@ export const LoginForm = () => {
       setUser(value)
       reset()
       toast.success('登录成功!')
-      router.push(`/user/${value.uid}`)
+      router.push(`/user/${value.uid}/resource`)
     })
   }
 
