@@ -12,7 +12,7 @@ import {
   ADMIN_DELETE_EMAIL_CACHE_KEY,
   ADMIN_DELETE_IP_CACHE_KEY,
   KUN_PATCH_DISABLE_REGISTER_KEY
-} from '~/config/admin'
+} from '~/config/redis'
 
 export const sendRegisterCode = async (
   input: z.infer<typeof sendRegisterEmailVerificationCodeSchema>,

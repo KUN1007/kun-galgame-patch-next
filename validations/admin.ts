@@ -31,3 +31,7 @@ export const declineCreatorSchema = z.object({
     .min(1)
     .max(1007, { message: '拒绝理由最多 1007 个字符' })
 })
+
+export const adminUpdateDisableRegisterSchema = z.object({
+  disableRegister: z.boolean()
+})

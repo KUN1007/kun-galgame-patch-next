@@ -4,7 +4,7 @@ import { prisma } from '~/prisma/index'
 import {
   ADMIN_DELETE_EMAIL_CACHE_KEY,
   ADMIN_DELETE_IP_CACHE_KEY
-} from '~/config/admin'
+} from '~/config/redis'
 
 const userIdSchema = z.object({
   uid: z.coerce.number({ message: '用户 ID 必须为数字' }).min(1).max(9999999)
