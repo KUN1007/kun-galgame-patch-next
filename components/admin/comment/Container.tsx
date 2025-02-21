@@ -25,7 +25,7 @@ export const Comment = ({ initialComments, total }: Props) => {
     const { comments } = await kunFetchGet<{
       comments: AdminComment[]
       total: number
-    }>('/admin/resource', {
+    }>('/admin/comment', {
       page,
       limit: 30
     })

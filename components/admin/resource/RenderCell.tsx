@@ -1,10 +1,11 @@
 'use client'
 
-import { Chip, User } from '@nextui-org/react'
+import { Chip } from '@nextui-org/react'
 import { SUPPORTED_RESOURCE_LINK_MAP } from '~/constants/resource'
 import { formatDistanceToNow } from '~/utils/formatDistanceToNow'
 import Link from 'next/link'
 import { ResourceEdit } from './ResourceEdit'
+import { KunUser } from '~/components/kun/floating-card/KunUser'
 import type { AdminResource } from '~/types/api/admin'
 
 export const RenderCell = (resource: AdminResource, columnKey: string) => {
@@ -20,10 +21,13 @@ export const RenderCell = (resource: AdminResource, columnKey: string) => {
       )
     case 'user':
       return (
-        <User
-          name={resource.user.name}
-          avatarProps={{
-            src: resource.user.avatar
+        <KunUser
+          user={resource.user}
+          userProps={{
+            name: resource.user.name,
+            avatarProps: {
+              src: resource.user.avatar
+            }
           }}
         />
       )

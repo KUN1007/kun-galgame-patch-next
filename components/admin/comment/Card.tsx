@@ -1,3 +1,4 @@
+import { KunAvatar } from '~/components/kun/floating-card/KunAvatar'
 import { Card, CardBody } from '@nextui-org/card'
 import { ThumbsUp } from 'lucide-react'
 import { formatDate } from '~/utils/time'
@@ -15,10 +16,12 @@ export const CommentCard = ({ comment }: Props) => {
       <CardBody>
         <div className="flex items-start justify-between">
           <div className="flex gap-4">
-            <img
-              src={comment.user.avatar}
-              alt={comment.user.name}
-              className="w-10 h-10 rounded-full"
+            <KunAvatar
+              uid={comment.user.id}
+              avatarProps={{
+                name: comment.user.name,
+                src: comment.user.avatar
+              }}
             />
             <div>
               <div className="flex items-center gap-2">

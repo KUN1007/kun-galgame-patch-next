@@ -35,3 +35,7 @@ export const declineCreatorSchema = z.object({
 export const adminUpdateDisableRegisterSchema = z.object({
   disableRegister: z.boolean()
 })
+
+export const adminEnableCommentVerifySchema = z.object({
+  enableCommentVerify: z.boolean()
+})
