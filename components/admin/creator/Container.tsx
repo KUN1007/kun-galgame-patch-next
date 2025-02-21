@@ -8,7 +8,7 @@ import {
   TableHeader,
   TableRow
 } from '@nextui-org/react'
-import { useState } from 'react'
+// import { useState } from 'react'
 import { RenderCell } from './RenderCell'
 import type { AdminCreator } from '~/types/api/admin'
 
@@ -24,9 +24,7 @@ const columns = [
   { name: '操作', uid: 'actions' }
 ]
 
-export const Creator = ({ initialCreators, total }: Props) => {
-  const [creators, setCreators] = useState<AdminCreator[]>(initialCreators)
-
+export const Creator = ({ initialCreators }: Props) => {
   return (
     <div className="space-y-6">
       <h1 className="mb-6 text-2xl font-bold">创作者管理</h1>
@@ -37,7 +35,7 @@ export const Creator = ({ initialCreators, total }: Props) => {
           )}
         </TableHeader>
         <TableBody>
-          {creators.map((creator) => (
+          {initialCreators.map((creator) => (
             <TableRow key={creator.id}>
               {(columnKey) => (
                 <TableCell>

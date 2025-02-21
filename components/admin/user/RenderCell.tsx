@@ -1,6 +1,6 @@
 'use client'
 
-import { Chip, User } from '@nextui-org/react'
+import { Chip } from '@nextui-org/react'
 import {
   USER_ROLE_MAP,
   USER_STATUS_COLOR_MAP,
@@ -8,17 +8,21 @@ import {
 } from '~/constants/user'
 import { UserEdit } from './UserEdit'
 import { UserDelete } from './UserDelete'
+import { KunUser } from '~/components/kun/floating-card/KunUser'
 import type { AdminUser as AdminUserType } from '~/types/api/admin'
 
 export const RenderCell = (user: AdminUserType, columnKey: string) => {
   switch (columnKey) {
     case 'user':
       return (
-        <User
-          name={user.name}
-          description={`补丁数 - ${user._count.patch} | 资源数 - ${user._count.patch_resource}`}
-          avatarProps={{
-            src: user.avatar
+        <KunUser
+          user={user}
+          userProps={{
+            name: user.name,
+            description: `补丁数 - ${user._count.patch} | 资源数 - ${user._count.patch_resource}`,
+            avatarProps: {
+              src: user.avatar
+            }
           }}
         />
       )

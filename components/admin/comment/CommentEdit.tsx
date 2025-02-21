@@ -91,6 +91,7 @@ export const CommentEdit = ({ initialComment }: Props) => {
         </DropdownTrigger>
         <DropdownMenu>
           <DropdownItem
+            key="edit"
             onPress={() => {
               setEditContent(initialComment.content)
               onOpenEdit()
@@ -99,6 +100,7 @@ export const CommentEdit = ({ initialComment }: Props) => {
             编辑
           </DropdownItem>
           <DropdownItem
+            key="delete"
             className="text-danger"
             color="danger"
             onPress={onOpenDelete}

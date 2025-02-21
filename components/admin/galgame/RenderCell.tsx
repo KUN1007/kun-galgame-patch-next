@@ -1,9 +1,10 @@
 'use client'
 
-import { Chip, User } from '@nextui-org/react'
+import { Chip } from '@nextui-org/react'
 import { Image } from '@nextui-org/image'
 import Link from 'next/link'
 import { formatDistanceToNow } from '~/utils/formatDistanceToNow'
+import { KunUser } from '~/components/kun/floating-card/KunUser'
 import type { AdminGalgame } from '~/types/api/admin'
 
 export const RenderCell = (galgame: AdminGalgame, columnKey: string) => {
@@ -29,10 +30,13 @@ export const RenderCell = (galgame: AdminGalgame, columnKey: string) => {
       )
     case 'user':
       return (
-        <User
-          name={galgame.user.name}
-          avatarProps={{
-            src: galgame.user.avatar
+        <KunUser
+          user={galgame.user}
+          userProps={{
+            name: galgame.user.name,
+            avatarProps: {
+              src: galgame.user.avatar
+            }
           }}
         />
       )
