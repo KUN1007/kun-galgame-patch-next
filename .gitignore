@@ -49,3 +49,6 @@ next-env.d.ts
 
 # IDX
 .idx/.data
+
+# migration cache
+migration/*.json

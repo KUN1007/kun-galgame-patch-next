@@ -4,10 +4,12 @@ import type { Metadata } from 'next'
 import type { Patch } from '~/types/api/patch'
 
 export const generateKunMetadataTemplate = (patch: Patch): Metadata => {
+  const pageTitle = patch.alias.length
+    ? `${patch.name} | ${patch.alias[0]}`
+    : `${patch.name}`
+
   return {
-    title: patch.alias[0]
-      ? `${patch.name} | ${patch.alias[0]}`
-      : `${patch.name}`,
+    title: pageTitle,
     description: convert(patch.introduction).slice(0, 170),
     openGraph: {
       title: patch.alias[0]
@@ -31,9 +33,7 @@ export const generateKunMetadataTemplate = (patch: Patch): Metadata => {
     },
     twitter: {
       card: 'summary',
-      title: patch.alias[0]
-        ? `${patch.name} | ${patch.alias[0]}`
-        : `${patch.name}`,
+      title: pageTitle,
       description: convert(patch.introduction).slice(0, 170),
       images: [patch.banner]
     },

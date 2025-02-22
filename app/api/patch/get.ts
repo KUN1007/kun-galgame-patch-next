@@ -24,6 +24,11 @@ export const getPatchById = async (
           comment: true
         }
       },
+      alias: {
+        select: {
+          name: true
+        }
+      },
       favorite_by: {
         where: {
           user_id: uid
@@ -53,7 +58,7 @@ export const getPatchById = async (
     type: patch.type,
     language: patch.language,
     platform: patch.platform,
-    alias: patch.alias,
+    alias: patch.alias.map((a) => a.name),
     isFavorite: patch.favorite_by.length > 0,
     user: {
       id: patch.user.id,

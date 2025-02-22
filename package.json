@@ -84,7 +84,7 @@
     "ioredis": "^5.4.2",
     "isomorphic-dompurify": "^2.20.0",
     "js-cookie": "^3.0.5",
-    "jsdom": "^25.0.1",
+    "jsdom": "^26.0.0",
     "jsonwebtoken": "^9.0.2",
     "localforage": "^1.10.0",
     "lucide-react": "^0.469.0",
