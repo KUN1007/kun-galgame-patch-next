@@ -1,14 +1,17 @@
 import { DisableRegisterSetting } from './DisableRegisterSetting'
 import { EnableCommentVerify } from './EnableCommentVerify'
+import { EnableOnlyCreatorCreateGalgame } from './EnableOnlyCreatorCreateGalgame'
 
 interface Props {
   disableRegister: boolean
   enableCommentVerify: boolean
+  enableOnlyCreatorCreate: boolean
 }
 
 export const AdminSetting = ({
   disableRegister,
-  enableCommentVerify
+  enableCommentVerify,
+  enableOnlyCreatorCreate
 }: Props) => {
   return (
     <div className="space-y-6">
@@ -19,6 +22,10 @@ export const AdminSetting = ({
       <DisableRegisterSetting disableRegister={disableRegister} />
 
       <EnableCommentVerify enableCommentVerify={enableCommentVerify} />
+
+      <EnableOnlyCreatorCreateGalgame
+        enableOnlyCreatorCreate={enableOnlyCreatorCreate}
+      />
     </div>
   )
 }
