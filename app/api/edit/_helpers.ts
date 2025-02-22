@@ -1,6 +1,15 @@
 import * as Diff from 'diff'
 
-export const generatePatchDiff = (patch: any, input: any): string => {
+interface PatchField {
+  name: string
+  alias: string[]
+  introduction: string
+}
+
+export const generatePatchDiff = (
+  patch: PatchField,
+  input: PatchField
+): string => {
   const diffResult: string[] = []
 
   diffResult.push(_diffField('name', patch.name, input.name))

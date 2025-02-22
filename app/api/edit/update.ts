@@ -11,7 +11,16 @@ export const updatePatch = async (
 ) => {
   const { id, name, vndbId, alias, introduction, released } = input
 
-  const patch = await prisma.patch.findUnique({ where: { id } })
+  const patch = await prisma.patch.findUnique({
+    where: { id },
+    include: {
+      alias: {
+        select: {
+          name: true
+        }
+      }
+    }
+  })
   if (!patch) {
     return '该 ID 下未找到对应补丁'
   }
@@ -22,8 +31,27 @@ export const updatePatch = async (
   })
   const newIndex = lastPullRequest ? lastPullRequest.index + 1 : 0
 
+  const diffContent = generatePatchDiff(
+    {
+      name: patch.name,
+      alias: patch.alias.map((a) => a.name),
+      introduction: patch.introduction
+    },
+    input
+  )
+
   return await prisma.$transaction(async (prisma) => {
-    const diffContent = generatePatchDiff(patch, input)
+    await prisma.patch_alias.deleteMany({
+      where: { patch_id: id }
+    })
+    const aliasData = alias.map((name) => ({
+      name,
+      patch_id: id
+    }))
+    await prisma.patch_alias.createMany({
+      data: aliasData,
+      skipDuplicates: true
+    })
 
     if (currentUserUid === patch.user_id) {
       await prisma.patch.update({
@@ -31,7 +59,6 @@ export const updatePatch = async (
         data: {
           name,
           vndb_id: vndbId ? vndbId : null,
-          alias: alias ? alias : [],
           introduction,
           released: released ? released : 'unknown'
         }

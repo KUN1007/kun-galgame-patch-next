@@ -19,7 +19,6 @@ export const createPatch = async (
         data: {
           name,
           vndb_id: vndbId ? vndbId : null,
-          alias: alias ? alias : [],
           introduction,
           user_id: uid,
           banner: '',
@@ -39,6 +38,17 @@ export const createPatch = async (
         where: { id: newId },
         data: { banner: imageLink }
       })
+
+      if (alias.length) {
+        const aliasData = alias.map((name) => ({
+          name,
+          patch_id: newId
+        }))
+        await prisma.patch_alias.createMany({
+          data: aliasData,
+          skipDuplicates: true
+        })
+      }
 
       await prisma.user.update({
         where: { id: uid },
