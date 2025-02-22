@@ -4,6 +4,7 @@ import { kunParsePostBody, kunParsePutBody } from '~/app/api/utils/parseQuery'
 import { prisma } from '~/prisma/index'
 import { verifyHeaderCookie } from '~/middleware/_verifyHeaderCookie'
 import { patchTagChangeSchema } from '~/validations/patch'
+import { getEnableOnlyCreatorCreateStatus } from '~/app/api/admin/setting/creator/getEnableOnlyCreatorCreateStatus'
 
 export const handleAddPatchTag = async (
   input: z.infer<typeof patchTagChangeSchema>,
@@ -52,6 +53,10 @@ export const POST = async (req: NextRequest) => {
   const payload = await verifyHeaderCookie(req)
   if (!payload) {
     return NextResponse.json('用户未登录')
+  }
+  const { enableOnlyCreatorCreate } = await getEnableOnlyCreatorCreateStatus()
+  if (enableOnlyCreatorCreate && payload.role < 2) {
+    return NextResponse.json('网站正在遭受攻击, 目前仅允许创作者创建和更改项目')
   }
 
   const response = await handleAddPatchTag(input, payload.uid)
@@ -104,6 +109,10 @@ export const PUT = async (req: NextRequest) => {
   const payload = await verifyHeaderCookie(req)
   if (!payload) {
     return NextResponse.json('用户未登录')
+  }
+  const { enableOnlyCreatorCreate } = await getEnableOnlyCreatorCreateStatus()
+  if (enableOnlyCreatorCreate && payload.role < 2) {
+    return NextResponse.json('网站正在遭受攻击, 目前仅允许创作者创建和更改项目')
   }
 
   const response = await handleRemovePatchTag(input, payload.uid)

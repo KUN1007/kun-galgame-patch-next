@@ -12,6 +12,7 @@ import {
   getTagByIdSchema,
   updateTagSchema
 } from '~/validations/tag'
+import { getEnableOnlyCreatorCreateStatus } from '~/app/api/admin/setting/creator/getEnableOnlyCreatorCreateStatus'
 import type { TagDetail } from '~/types/api/tag'
 
 export const getTagById = async (input: z.infer<typeof getTagByIdSchema>) => {
@@ -94,6 +95,10 @@ export const PUT = async (req: NextRequest) => {
   if (!payload) {
     return NextResponse.json('用户未登录')
   }
+  const { enableOnlyCreatorCreate } = await getEnableOnlyCreatorCreateStatus()
+  if (enableOnlyCreatorCreate && payload.role < 2) {
+    return NextResponse.json('网站正在遭受攻击, 目前仅允许创作者创建和更改项目')
+  }
 
   const response = await rewriteTag(input)
   return NextResponse.json(response)
@@ -140,6 +145,10 @@ export const POST = async (req: NextRequest) => {
   const payload = await verifyHeaderCookie(req)
   if (!payload) {
     return NextResponse.json('用户未登录')
+  }
+  const { enableOnlyCreatorCreate } = await getEnableOnlyCreatorCreateStatus()
+  if (enableOnlyCreatorCreate && payload.role < 2) {
+    return NextResponse.json('网站正在遭受攻击, 目前仅允许创作者创建和更改项目')
   }
 
   const response = await createTag(input, payload.uid)

@@ -5,6 +5,7 @@ import { NextRequest, NextResponse } from 'next/server'
 import { kunParseFormData } from '~/app/api/utils/parseQuery'
 import { uploadLogoSchema } from '~/validations/company'
 import { verifyHeaderCookie } from '~/middleware/_verifyHeaderCookie'
+import { getEnableOnlyCreatorCreateStatus } from '~/app/api/admin/setting/creator/getEnableOnlyCreatorCreateStatus'
 
 export const uploadCompanyLogo = async (image: ArrayBuffer, id: number) => {
   const logoBuffer = await sharp(image).avif({ quality: 60 }).toBuffer()
@@ -24,6 +25,10 @@ export const POST = async (req: NextRequest) => {
   const payload = await verifyHeaderCookie(req)
   if (!payload) {
     return NextResponse.json('用户未登录')
+  }
+  const { enableOnlyCreatorCreate } = await getEnableOnlyCreatorCreateStatus()
+  if (enableOnlyCreatorCreate && payload.role < 2) {
+    return NextResponse.json('网站正在遭受攻击, 目前仅允许创作者创建和更改项目')
   }
 
   const { logo, companyId } = input

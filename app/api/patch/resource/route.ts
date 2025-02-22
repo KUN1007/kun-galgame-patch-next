@@ -15,6 +15,7 @@ import { getPatchResource } from './get'
 import { createPatchResource } from './create'
 import { updatePatchResource } from './update'
 import { deleteResource } from './delete'
+import { getEnableOnlyCreatorCreateStatus } from '~/app/api/admin/setting/creator/getEnableOnlyCreatorCreateStatus'
 
 const patchIdSchema = z.object({
   patchId: z.coerce.number().min(1).max(9999999)
@@ -47,6 +48,10 @@ export const POST = async (req: NextRequest) => {
   if (!payload) {
     return NextResponse.json('用户未登录')
   }
+  const { enableOnlyCreatorCreate } = await getEnableOnlyCreatorCreateStatus()
+  if (enableOnlyCreatorCreate && payload.role < 2) {
+    return NextResponse.json('网站正在遭受攻击, 目前仅允许创作者创建和更改项目')
+  }
 
   const response = await createPatchResource(input, payload.uid)
   return NextResponse.json(response)
@@ -74,6 +79,10 @@ export const DELETE = async (req: NextRequest) => {
   const payload = await verifyHeaderCookie(req)
   if (!payload) {
     return NextResponse.json('用户未登录')
+  }
+  const { enableOnlyCreatorCreate } = await getEnableOnlyCreatorCreateStatus()
+  if (enableOnlyCreatorCreate && payload.role < 2) {
+    return NextResponse.json('网站正在遭受攻击, 目前仅允许创作者创建和更改项目')
   }
 
   const response = await deleteResource(input, payload.uid)

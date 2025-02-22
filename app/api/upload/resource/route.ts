@@ -17,6 +17,7 @@ import {
   USER_DAILY_UPLOAD_LIMIT,
   CREATOR_DAILY_UPLOAD_LIMIT
 } from '~/config/upload'
+import { getEnableOnlyCreatorCreateStatus } from '~/app/api/admin/setting/creator/getEnableOnlyCreatorCreateStatus'
 import type { KunChunkMetadata } from '~/types/api/upload'
 
 const getFileExtension = (filename: string) => {
@@ -99,6 +100,10 @@ const checkRequestValid = async (req: NextRequest) => {
   }
   if (user.role === 2 && user.daily_upload_size >= CREATOR_DAILY_UPLOAD_LIMIT) {
     return '您今日的上传大小已达到 5GB 限额'
+  }
+  const { enableOnlyCreatorCreate } = await getEnableOnlyCreatorCreateStatus()
+  if (enableOnlyCreatorCreate && payload.role < 2) {
+    return '网站正在遭受攻击, 目前仅允许创作者创建和更改项目'
   }
 
   return { chunk, metadata, uid: payload.uid }
