@@ -29,7 +29,7 @@ export const Container: FC<Props> = ({ initialCompanies, initialTotal }) => {
         companies: CompanyType[]
         total: number
       }>('/company/all', {
-        page: 1,
+        page,
         limit: 100
       })
       setCompanies(companies)

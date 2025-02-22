@@ -28,7 +28,7 @@ export const Container = ({ initialTags, initialTotal }: Props) => {
       tags: TagType[]
       total: number
     }>('/tag/all', {
-      page: 1,
+      page,
       limit: 100
     })
     setTags(tags)
