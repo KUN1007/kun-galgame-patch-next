@@ -11,6 +11,7 @@ import { CommentLikeButton } from './CommentLike'
 import { CommentDropdown } from './CommentDropdown'
 import { CommentContent } from './CommentContent'
 import { scrollIntoComment } from './_scrollIntoComment'
+import { cn } from '~/utils/cn'
 import type { PatchComment } from '~/types/api/patch'
 
 interface Props {
@@ -37,10 +38,13 @@ export const Comments = ({
 
   const renderComments = (comments: PatchComment[], depth = 0) => {
     return comments.map((comment) => (
-      <div key={comment.id} className={`ml-${depth * 4}`}>
-        <Card id={`comment-${comment.id}`} className="border-none shadow-none">
-          <CardBody className="px-0">
-            <div className="flex-1 space-y-2">
+      <div
+        key={comment.id}
+        className={cn(depth <= 3 && depth !== 0 ? `ml-4` : 'ml-0', 'space-y-4')}
+      >
+        <Card id={`comment-${comment.id}`}>
+          <CardBody>
+            <div className="space-y-2">
               <div className="flex items-start justify-between">
                 <KunUser
                   user={comment.user}
@@ -91,9 +95,7 @@ export const Comments = ({
         )}
 
         {comment.reply && comment.reply.length > 0 && (
-          <div className="mt-4 ml-4">
-            {renderComments(comment.reply, depth + 1)}
-          </div>
+          <>{renderComments(comment.reply, depth + 1)}</>
         )}
       </div>
     ))
