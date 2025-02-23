@@ -36,7 +36,7 @@ export const deleteComment = async (
     return '未找到对应的评论'
   }
 
-  return await prisma.$transaction(async (prisma) => {
+  return await prisma.$transaction(async () => {
     await deleteCommentWithReplies(input.commentId)
     return {}
   })

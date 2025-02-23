@@ -24,7 +24,7 @@ import type { PatchComment } from '~/types/api/patch'
 
 interface CreateCommentProps {
   patchId: number
-  receiver: string | null | undefined
+  receiverUsername: string | null | undefined
   parentId?: number | null
   setNewComment: (newComment: PatchComment) => void
   onSuccess?: () => void
@@ -34,7 +34,7 @@ interface CreateCommentProps {
 export const PublishComment = ({
   patchId,
   parentId = null,
-  receiver = null,
+  receiverUsername = null,
   setNewComment,
   onSuccess,
   enableCommentVerify
@@ -86,7 +86,9 @@ export const PublishComment = ({
         />
         <div className="flex flex-col">
           <span className="font-semibold">{user.name}</span>
-          {receiver && <span className="text-sm">回复 @{receiver}</span>}
+          {receiverUsername && (
+            <span className="text-sm">回复 @{receiverUsername}</span>
+          )}
         </div>
       </CardHeader>
       <CardBody className="space-y-4">

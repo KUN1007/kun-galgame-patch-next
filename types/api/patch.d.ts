@@ -91,6 +91,7 @@ export interface PatchComment {
   patchId: number
   created: string
   updated: string
+  reply: PatchComment[]
   user: KunUser
   quotedContent?: string | null
   quotedUsername?: string | null

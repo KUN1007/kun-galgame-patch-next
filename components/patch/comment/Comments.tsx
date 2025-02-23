@@ -35,9 +35,9 @@ export const Comments = ({
     scrollIntoComment(newComment.id)
   }
 
-  const renderComments = (comments: PatchComment[]) => {
+  const renderComments = (comments: PatchComment[], depth = 0) => {
     return comments.map((comment) => (
-      <div key={comment.id}>
+      <div key={comment.id} className={`ml-${depth * 4}`}>
         <Card id={`comment-${comment.id}`} className="border-none shadow-none">
           <CardBody className="px-0">
             <div className="flex-1 space-y-2">
@@ -82,11 +82,17 @@ export const Comments = ({
             <PublishComment
               patchId={id}
               parentId={comment.id}
-              receiver={comment.quotedUsername}
+              receiverUsername={comment.quotedUsername}
               onSuccess={() => setReplyTo(null)}
               setNewComment={setNewComment}
               enableCommentVerify={enableCommentVerify}
             />
+          </div>
+        )}
+
+        {comment.reply && comment.reply.length > 0 && (
+          <div className="mt-4 ml-4">
+            {renderComments(comment.reply, depth + 1)}
           </div>
         )}
       </div>
@@ -97,7 +103,7 @@ export const Comments = ({
     <div className="space-y-4">
       <PublishComment
         patchId={id}
-        receiver={null}
+        receiverUsername={null}
         setNewComment={setNewComment}
         enableCommentVerify={enableCommentVerify}
       />

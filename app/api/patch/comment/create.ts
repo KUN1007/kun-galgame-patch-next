@@ -40,6 +40,7 @@ export const createPatchComment = async (
     parentId: data.parent_id,
     userId: data.user_id,
     patchId: data.patch_id,
+    reply: [],
     created: String(data.created),
     updated: String(data.updated)
   }
