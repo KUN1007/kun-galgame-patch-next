@@ -30,8 +30,8 @@ export const PublishWalkthrough = ({ patchId, onClose, onSuccess }: Props) => {
       '/patch/walkthrough',
       {
         patchId,
-        name,
-        content
+        name: name.trim(),
+        content: content.trim()
       }
     )
     kunErrorHandler(res, (value) => {

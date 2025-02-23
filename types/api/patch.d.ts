@@ -111,6 +111,7 @@ export interface PatchHistory {
 export interface PatchWalkthrough {
   id: number
   name: string
+  markdown: string
   content: string
   created: string | Date
   updated: string | Date

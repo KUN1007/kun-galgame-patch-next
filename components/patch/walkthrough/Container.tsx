@@ -36,7 +36,11 @@ export const Walkthrough = ({ patchId, initialWalkthroughs }: Props) => {
 
       <>
         {walkthroughs.map((walkthrough) => (
-          <WalkthroughCard key={walkthrough.id} walkthrough={walkthrough} />
+          <WalkthroughCard
+            key={walkthrough.id}
+            walkthrough={walkthrough}
+            setWalkthroughs={setWalkthroughs}
+          />
         ))}
       </>
 

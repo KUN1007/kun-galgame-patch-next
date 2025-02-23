@@ -1,7 +1,6 @@
 import { z } from 'zod'
 import { prisma } from '~/prisma/index'
 import { updateWalkthroughSchema } from '~/validations/walkthrough'
-import type { PatchWalkthrough } from '~/types/api/patch'
 
 export const updateWalkthrough = async (
   input: z.infer<typeof updateWalkthroughSchema>,
@@ -18,34 +17,10 @@ export const updateWalkthrough = async (
     return '您没有权限更改该攻略'
   }
 
-  const data = await prisma.patch_walkthrough.update({
+  await prisma.patch_walkthrough.update({
     where: { id: walkthroughId, user_id: uid },
-    data: { name, content },
-    include: {
-      user: {
-        select: {
-          _count: {
-            select: { patch_walkthrough: true }
-          },
-          id: true,
-          name: true,
-          avatar: true
-        }
-      }
-    }
+    data: { name, content }
   })
 
-  const newWalkthrough: PatchWalkthrough = {
-    id: data.id,
-    name: data.name,
-    content: data.content,
-    created: data.created,
-    updated: data.updated,
-    user: data.user,
-    _count: {
-      patch_walkthrough: data.user._count.patch_walkthrough
-    }
-  }
-
-  return newWalkthrough
+  return {}
 }
