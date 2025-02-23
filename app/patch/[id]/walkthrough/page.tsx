@@ -59,7 +59,7 @@ export default async function Kun({
           </p>
         </div>
 
-        <Walkthrough walkthroughs={response} />
+        <Walkthrough patchId={Number(id)} initialWalkthroughs={response} />
       </CardBody>
     </Card>
   )
