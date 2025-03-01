@@ -94,6 +94,12 @@ export const PublishResource = ({
     setValue('size', size)
   }
 
+  const handleRemoveFile = () => {
+    setValue('hash', '')
+    setValue('content', '')
+    setValue('size', '')
+  }
+
   const progress = () => {
     const uploadSizeRate =
       user.dailyUploadLimit /
@@ -149,7 +155,7 @@ export const PublishResource = ({
           {watch().storage !== 'user' && (
             <FileUploadContainer
               onSuccess={handleUploadSuccess}
-              handleRemoveFile={() => reset()}
+              handleRemoveFile={handleRemoveFile}
             />
           )}
 
