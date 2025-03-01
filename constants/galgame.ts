@@ -1,5 +1,6 @@
 export const GALGAME_SORT_FIELD_LABEL_MAP: Record<string, string> = {
-  created: '创建时间',
+  resource_update_time: '补丁更新时间',
+  created: '游戏创建时间',
   view: '浏览量',
   download: '下载量'
 }

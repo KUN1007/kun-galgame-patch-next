@@ -19,7 +19,7 @@ export default async function Kun({ searchParams }: Props) {
 
   const response = await kunGetActions({
     selectedType: 'all',
-    sortField: 'created',
+    sortField: 'resource_update_time',
     sortOrder: 'desc',
     page: currentPage,
     limit: 24,

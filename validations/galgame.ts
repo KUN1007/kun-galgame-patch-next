@@ -3,6 +3,7 @@ import { z } from 'zod'
 export const galgameSchema = z.object({
   selectedType: z.string().min(1).max(107),
   sortField: z.union([
+    z.literal('resource_update_time'),
     z.literal('created'),
     z.literal('view'),
     z.literal('download')

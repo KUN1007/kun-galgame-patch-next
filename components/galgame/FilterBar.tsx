@@ -76,7 +76,6 @@ export const FilterBar = ({
             label="发售年份"
             placeholder="选择年份"
             selectedKeys={selectedYears}
-            className="max-w-xs"
             onSelectionChange={(keys) => {
               if (keys.anchorKey === 'all') {
                 setSelectedYears(['all'])
@@ -106,7 +105,6 @@ export const FilterBar = ({
             label="发售月份"
             placeholder="选择月份"
             selectedKeys={selectedMonths}
-            className="max-w-xs"
             onSelectionChange={(keys) => {
               if (keys.anchorKey === 'all') {
                 setSelectedMonths(['all'])
@@ -157,17 +155,14 @@ export const FilterBar = ({
                 selectedKeys={new Set([sortField])}
                 onAction={(key) => setSortField(key as SortOption)}
                 selectionMode="single"
-                className="min-w-[120px]"
               >
-                <DropdownItem key="created" className="text-default-700">
-                  创建时间
-                </DropdownItem>
-                <DropdownItem key="view" className="text-default-700">
-                  浏览量
-                </DropdownItem>
-                <DropdownItem key="download" className="text-default-700">
-                  下载量
-                </DropdownItem>
+                {Object.entries(GALGAME_SORT_FIELD_LABEL_MAP).map(
+                  ([key, label]) => (
+                    <DropdownItem key={key} className="text-default-700">
+                      {label}
+                    </DropdownItem>
+                  )
+                )}
               </DropdownMenu>
             </Dropdown>
 

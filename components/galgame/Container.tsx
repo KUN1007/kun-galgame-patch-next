@@ -21,7 +21,7 @@ export const CardContainer = ({ initialGalgames, initialTotal }: Props) => {
   const [total, setTotal] = useState(initialTotal)
   const [loading, setLoading] = useState(false)
   const [selectedType, setSelectedType] = useState<string>('all')
-  const [sortField, setSortField] = useState<SortOption>('created')
+  const [sortField, setSortField] = useState<SortOption>('resource_update_time')
   const [sortOrder, setSortOrder] = useState<SortDirection>('desc')
   const [selectedYears, setSelectedYears] = useState<string[]>(['all'])
   const [selectedMonths, setSelectedMonths] = useState<string[]>(['all'])

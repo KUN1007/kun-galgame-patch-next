@@ -81,6 +81,7 @@ export const createPatchResource = async (
         await prisma.patch.update({
           where: { id: patchId },
           data: {
+            resource_update_time: new Date(),
             type: { set: updatedTypes },
             language: { set: updatedLanguages },
             platform: { set: updatedPlatforms }
