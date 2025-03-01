@@ -1,9 +1,9 @@
 import { Snippet } from '@nextui-org/snippet'
 import { KunPatchAttribute } from '~/components/kun/PatchAttribute'
-import type { PatchResource } from '~/types/api/patch'
+import type { PatchResourceHtml } from '~/types/api/patch'
 
 interface Props {
-  resource: PatchResource
+  resource: PatchResourceHtml
 }
 
 export const ResourceInfo = ({ resource }: Props) => {

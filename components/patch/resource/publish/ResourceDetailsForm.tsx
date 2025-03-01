@@ -1,5 +1,5 @@
 import { Controller } from 'react-hook-form'
-import { Input, Textarea } from '@nextui-org/input'
+import { Input } from '@nextui-org/input'
 import { Select, SelectItem } from '@nextui-org/select'
 import {
   resourceTypes,
@@ -170,20 +170,6 @@ export const ResourceDetailsForm = ({
           placeholder="如果资源的解压需要解压码, 请填写解压码"
           isInvalid={!!errors.code}
           errorMessage={errors.code?.message}
-        />
-      )}
-    />
-
-    <Controller
-      name="note"
-      control={control}
-      render={({ field }) => (
-        <Textarea
-          {...field}
-          label="备注"
-          placeholder="您可以在此处随意添加备注, 例如资源的注意事项等"
-          isInvalid={!!errors.note}
-          errorMessage={errors.note?.message}
         />
       )}
     />

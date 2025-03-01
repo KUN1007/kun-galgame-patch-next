@@ -7,10 +7,10 @@ import { useUserStore } from '~/store/providers/user'
 import toast from 'react-hot-toast'
 import { kunErrorHandler } from '~/utils/kunErrorHandler'
 import { cn } from '~/utils/cn'
-import { PatchResource } from '~/types/api/patch'
+import { PatchResourceHtml } from '~/types/api/patch'
 
 interface Props {
-  resource: PatchResource
+  resource: PatchResourceHtml
 }
 
 export const ResourceLikeButton = ({ resource }: Props) => {

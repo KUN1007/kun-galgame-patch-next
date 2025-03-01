@@ -7,7 +7,7 @@ import { Cloud, Link as LinkIcon, Database } from 'lucide-react'
 import { SUPPORTED_RESOURCE_LINK_MAP } from '~/constants/resource'
 import { kunFetchPut } from '~/utils/kunFetch'
 import type { JSX } from 'react'
-import type { PatchResource } from '~/types/api/patch'
+import type { PatchResourceHtml } from '~/types/api/patch'
 
 const storageIcons: { [key: string]: JSX.Element } = {
   s3: <Cloud className="size-4" />,
@@ -15,7 +15,7 @@ const storageIcons: { [key: string]: JSX.Element } = {
 }
 
 interface Props {
-  resource: PatchResource
+  resource: PatchResourceHtml
 }
 
 export const ResourceDownloadCard = ({ resource }: Props) => {

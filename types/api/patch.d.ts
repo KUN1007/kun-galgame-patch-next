@@ -83,6 +83,10 @@ export interface PatchResource {
   }
 }
 
+export interface PatchResourceHtml extends PatchResource {
+  noteHtml: string
+}
+
 export interface PatchComment {
   id: number
   content: string

@@ -18,14 +18,16 @@ import { ResourceLinksInput } from '../publish/ResourceLinksInput'
 import { kunErrorHandler } from '~/utils/kunErrorHandler'
 import { ResourceDetailsForm } from '../publish/ResourceDetailsForm'
 import { FileUploadContainer } from '../upload/FileUploadContainer'
-import type { PatchResource } from '~/types/api/patch'
+import { MilkdownProvider } from '@milkdown/react'
+import { KunEditor } from '~/components/kun/milkdown/Editor'
+import type { PatchResourceHtml } from '~/types/api/patch'
 
 type EditResourceFormData = z.infer<typeof patchResourceCreateSchema>
 
 interface EditResourceDialogProps {
-  resource: PatchResource
+  resource: PatchResourceHtml
   onClose: () => void
-  onSuccess: (resource: PatchResource) => void
+  onSuccess: (resource: PatchResourceHtml) => void
   type?: 'patch' | 'admin'
 }
 
@@ -50,7 +52,7 @@ export const EditResourceDialog = ({
 
   const handleUpdateResource = async () => {
     setEditing(true)
-    const res = await kunFetchPut<KunResponse<PatchResource>>(
+    const res = await kunFetchPut<KunResponse<PatchResourceHtml>>(
       `/${type}/resource`,
       { resourceId: resource.id, ...watch() }
     )
@@ -108,6 +110,29 @@ export const EditResourceDialog = ({
             />
           )}
           <ResourceDetailsForm control={control} errors={errors} />
+
+          <div className="space-y-2">
+            <h3 className="text-lg font-medium">资源备注</h3>
+            <div className="text-sm font-medium text-default-500">
+              我们建议您详细的说明如何使用您发布的补丁, 例如
+              <ul>
+                <li>
+                  - 注意事项 / 使用说明 (闪退说明, 不兼容 xxx, 需要安装 xxx)
+                </li>
+                <li> - 原创 / 授权说明 (补丁的作者, 以及是否为原创或是转载)</li>
+                <li>
+                  - 更新日志 (网站只会通知用户该补丁被作者更新,
+                  更新的对于补丁的具体影响可以列举说明)
+                </li>
+              </ul>
+            </div>
+            <MilkdownProvider>
+              <KunEditor
+                valueMarkdown={watch().note}
+                saveMarkdown={(markdown) => setValue('note', markdown)}
+              />
+            </MilkdownProvider>
+          </div>
         </form>
       </ModalBody>
 

@@ -2,7 +2,8 @@ import { z } from 'zod'
 import { prisma } from '~/prisma/index'
 import { patchResourceUpdateSchema } from '~/validations/patch'
 import { uploadPatchResource, deletePatchResource } from './_helper'
-import type { PatchResource } from '~/types/api/patch'
+import { markdownToHtml } from '~/app/api/utils/markdownToHtml'
+import type { PatchResourceHtml } from '~/types/api/patch'
 
 export const updatePatchResource = async (
   input: z.infer<typeof patchResourceUpdateSchema>,
@@ -85,7 +86,7 @@ export const updatePatchResource = async (
         })
       }
 
-      const resource: PatchResource = {
+      const resource: PatchResourceHtml = {
         id: newResource.id,
         storage: newResource.storage,
         name: newResource.name,
@@ -94,6 +95,7 @@ export const updatePatchResource = async (
         type: newResource.type,
         language: newResource.language,
         note: newResource.note,
+        noteHtml: await markdownToHtml(newResource.note),
         hash: newResource.hash,
         content: newResource.content,
         code: newResource.code,

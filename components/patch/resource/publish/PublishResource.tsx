@@ -27,14 +27,16 @@ import {
   USER_DAILY_UPLOAD_LIMIT,
   CREATOR_DAILY_UPLOAD_LIMIT
 } from '~/config/upload'
-import type { PatchResource } from '~/types/api/patch'
+import { MilkdownProvider } from '@milkdown/react'
+import { KunEditor } from '~/components/kun/milkdown/Editor'
+import type { PatchResourceHtml } from '~/types/api/patch'
 
 export type ResourceFormData = z.infer<typeof patchResourceCreateSchema>
 
 interface CreateResourceProps {
   patchId: number
   onClose: () => void
-  onSuccess?: (res: PatchResource) => void
+  onSuccess?: (res: PatchResourceHtml) => void
 }
 
 export const PublishResource = ({
@@ -72,7 +74,7 @@ export const PublishResource = ({
 
   const handleRewriteResource = async () => {
     setCreating(true)
-    const res = await kunFetchPost<KunResponse<PatchResource>>(
+    const res = await kunFetchPost<KunResponse<PatchResourceHtml>>(
       '/patch/resource',
       watch()
     )
@@ -171,6 +173,29 @@ export const PublishResource = ({
           )}
 
           <ResourceDetailsForm control={control} errors={errors} />
+
+          <div className="space-y-2">
+            <h3 className="text-lg font-medium">资源备注</h3>
+            <div className="text-sm font-medium text-default-500">
+              我们建议您详细的说明如何使用您发布的补丁, 例如
+              <ul>
+                <li>
+                  - 注意事项 / 使用说明 (闪退说明, 不兼容 xxx, 需要安装 xxx)
+                </li>
+                <li> - 原创 / 授权说明 (补丁的作者, 以及是否为原创或是转载)</li>
+                <li>
+                  - 更新日志 (网站只会通知用户该补丁被作者更新,
+                  更新的对于补丁的具体影响可以列举说明)
+                </li>
+              </ul>
+            </div>
+            <MilkdownProvider>
+              <KunEditor
+                valueMarkdown={watch().note}
+                saveMarkdown={(markdown) => setValue('note', markdown)}
+              />
+            </MilkdownProvider>
+          </div>
         </form>
       </ModalBody>
 

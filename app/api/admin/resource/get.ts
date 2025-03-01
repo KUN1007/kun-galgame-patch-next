@@ -1,6 +1,7 @@
 import { z } from 'zod'
 import { prisma } from '~/prisma/index'
 import { adminPaginationSchema } from '~/validations/admin'
+import { markdownToText } from '~/utils/markdownToText'
 import type { AdminResource } from '~/types/api/admin'
 
 export const getPatchResource = async (
@@ -41,7 +42,7 @@ export const getPatchResource = async (
     size: resource.size,
     type: resource.type,
     language: resource.language,
-    note: resource.note,
+    note: markdownToText(resource.note).slice(0, 233),
     hash: resource.hash,
     content: resource.content,
     code: resource.code,

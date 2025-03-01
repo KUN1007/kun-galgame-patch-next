@@ -3,6 +3,7 @@ import { NextRequest, NextResponse } from 'next/server'
 import { kunParseGetQuery } from '../utils/parseQuery'
 import { prisma } from '~/prisma/index'
 import { resourceSchema } from '~/validations/resource'
+import { markdownToText } from '~/utils/markdownToText'
 import type { PatchResource } from '~/types/api/resource'
 
 export const getPatchResource = async (
@@ -53,7 +54,7 @@ export const getPatchResource = async (
     size: resource.size,
     type: resource.type,
     language: resource.language,
-    note: resource.note.slice(0, 233),
+    note: markdownToText(resource.note).slice(0, 233),
     platform: resource.platform,
     likeCount: resource._count.like_by,
     download: resource.download,

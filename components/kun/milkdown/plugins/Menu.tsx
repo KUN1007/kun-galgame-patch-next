@@ -66,7 +66,7 @@ export const KunMilkdownPluginsMenu = ({
   const buttonList = createButtons(call)
 
   return (
-    <div className="sticky top-0 flex flex-wrap bg-background/80 backdrop-blur-md">
+    <div className="sticky top-0 flex flex-wrap">
       {buttonList.map(({ tooltip, icon, onPress, ariaLabel }, index) => (
         <MenuButton
           key={index}

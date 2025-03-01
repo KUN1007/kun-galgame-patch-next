@@ -1,5 +1,6 @@
 'use client'
 
+import DOMPurify from 'isomorphic-dompurify'
 import { useState } from 'react'
 import { Accordion, AccordionItem, Button } from '@nextui-org/react'
 import { KunUser } from '~/components/kun/floating-card/KunUser'
@@ -7,10 +8,10 @@ import { Download } from 'lucide-react'
 import { formatDistanceToNow } from '~/utils/formatDistanceToNow'
 import { ResourceLikeButton } from './ResourceLike'
 import { ResourceDownloadCard } from './DownloadCard'
-import type { PatchResource } from '~/types/api/patch'
+import type { PatchResourceHtml } from '~/types/api/patch'
 
 interface Props {
-  resource: PatchResource
+  resource: PatchResourceHtml
 }
 
 export const ResourceDownload = ({ resource }: Props) => {
@@ -29,30 +30,34 @@ export const ResourceDownload = ({ resource }: Props) => {
         <p className="mt-2 whitespace-pre-wrap">{resource.name}</p>
       )}
 
-      {resource.note && resource.name ? (
-        <Accordion
-          fullWidth={true}
-          className="p-0"
-          itemClasses={{
-            base: 'p-0 w-full',
-            title: 'font-normal text-medium',
-            trigger: 'p-0 flex items-center',
-            indicator: 'text-medium',
-            content: 'text-small px-2 whitespace-pre-wrap'
+      <Accordion
+        fullWidth={true}
+        className="p-0"
+        itemClasses={{
+          base: 'p-0 w-full',
+          title: 'font-normal text-medium',
+          trigger: 'p-0 flex items-center',
+          indicator: 'text-medium',
+          content: 'text-small px-2 whitespace-pre-wrap'
+        }}
+      >
+        <AccordionItem
+          key="1"
+          aria-label="资源备注"
+          subtitle="点击查看备注"
+          title={resource.name ? resource.name : '资源备注'}
+          classNames={{
+            content: 'whitespace-normal'
           }}
         >
-          <AccordionItem
-            key="1"
-            aria-label="资源备注"
-            subtitle="点击查看备注"
-            title={resource.name ? resource.name : '资源备注'}
-          >
-            {resource.note}
-          </AccordionItem>
-        </Accordion>
-      ) : (
-        <p className="mt-2 whitespace-pre-wrap">{resource.note}</p>
-      )}
+          <div
+            dangerouslySetInnerHTML={{
+              __html: DOMPurify.sanitize(resource.noteHtml)
+            }}
+            className="kun-prose max-w-none"
+          />
+        </AccordionItem>
+      </Accordion>
 
       <div className="flex justify-between">
         <KunUser

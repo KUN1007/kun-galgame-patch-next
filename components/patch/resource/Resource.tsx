@@ -24,16 +24,17 @@ import { EditResourceDialog } from './edit/EditResourceDialog'
 import { useUserStore } from '~/store/providers/user'
 import { ResourceInfo } from './ResourceInfo'
 import { ResourceDownload } from './ResourceDownload'
-import type { PatchResource } from '~/types/api/patch'
+import type { PatchResourceHtml } from '~/types/api/patch'
 import toast from 'react-hot-toast'
 
 interface Props {
-  initialResources: PatchResource[]
+  initialResources: PatchResourceHtml[]
   id: number
 }
 
 export const Resources = ({ initialResources, id }: Props) => {
-  const [resources, setResources] = useState<PatchResource[]>(initialResources)
+  const [resources, setResources] =
+    useState<PatchResourceHtml[]>(initialResources)
 
   const {
     isOpen: isOpenCreate,
@@ -47,7 +48,9 @@ export const Resources = ({ initialResources, id }: Props) => {
     onClose: onCloseEdit
   } = useDisclosure()
   const { user } = useUserStore((state) => state)
-  const [editResource, setEditResource] = useState<PatchResource | null>(null)
+  const [editResource, setEditResource] = useState<PatchResourceHtml | null>(
+    null
+  )
 
   const {
     isOpen: isOpenDelete,
