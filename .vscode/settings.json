@@ -99,8 +99,13 @@
     "vercel",
     "vndb",
     "webp",
+    "WITHSCORES",
     "Yuzu",
     "Yuzusoft",
+    "zadd",
+    "zcard",
+    "zrange",
+    "zremrangebyscore",
     "zustand"
   ],
   "eslint.alwaysShowStatus": true,
