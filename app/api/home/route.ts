@@ -79,6 +79,8 @@ export const getHomeData = async () => {
   const resources: HomeResource[] = resourcesData.map((resource) => ({
     id: resource.id,
     storage: resource.storage,
+    name: resource.name,
+    modelName: resource.model_name,
     size: resource.size,
     type: resource.type,
     language: resource.language,

@@ -19,7 +19,7 @@ export const ResourceCard = ({ resource }: Props) => {
       href={`/patch/${resource.patchId}/resource`}
       className="w-full"
     >
-      <CardBody className="space-y-2">
+      <CardBody className="flex flex-col justify-between space-y-2">
         <div className="flex">
           <KunUser
             user={resource.user}
@@ -39,9 +39,9 @@ export const ResourceCard = ({ resource }: Props) => {
           {resource.patchName}
         </h2>
 
-        {resource.note && (
+        {(resource.name || resource.note) && (
           <p className="break-all truncate whitespace-pre-wrap text-small text-default-500 line-clamp-2">
-            {resource.note}
+            {resource.name ? resource.name : resource.note}
           </p>
         )}
 
@@ -49,6 +49,7 @@ export const ResourceCard = ({ resource }: Props) => {
           types={resource.type}
           languages={resource.language}
           platforms={resource.platform}
+          modelName={resource.modelName}
           size="sm"
         />
 

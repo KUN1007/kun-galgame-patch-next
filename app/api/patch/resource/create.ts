@@ -15,6 +15,7 @@ export const createPatchResource = async (
     platform,
     content,
     storage,
+    modelName,
     ...resourceData
   } = input
 
@@ -49,6 +50,7 @@ export const createPatchResource = async (
           platform,
           content: res,
           storage,
+          model_name: modelName,
           ...resourceData
         },
         include: {
@@ -89,6 +91,8 @@ export const createPatchResource = async (
       const resource: PatchResource = {
         id: newResource.id,
         storage: newResource.storage,
+        name: newResource.name,
+        modelName: newResource.model_name,
         size: newResource.size,
         type: newResource.type,
         language: newResource.language,

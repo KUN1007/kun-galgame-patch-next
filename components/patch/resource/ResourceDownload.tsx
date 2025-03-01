@@ -1,7 +1,7 @@
 'use client'
 
 import { useState } from 'react'
-import { Button } from '@nextui-org/button'
+import { Accordion, AccordionItem, Button } from '@nextui-org/react'
 import { KunUser } from '~/components/kun/floating-card/KunUser'
 import { Download } from 'lucide-react'
 import { formatDistanceToNow } from '~/utils/formatDistanceToNow'
@@ -24,7 +24,36 @@ export const ResourceDownload = ({ resource }: Props) => {
   }
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-2">
+      {resource.name && !resource.note && (
+        <p className="mt-2 whitespace-pre-wrap">{resource.name}</p>
+      )}
+
+      {resource.note && resource.name ? (
+        <Accordion
+          fullWidth={true}
+          className="p-0"
+          itemClasses={{
+            base: 'p-0 w-full',
+            title: 'font-normal text-medium',
+            trigger: 'p-0 flex items-center',
+            indicator: 'text-medium',
+            content: 'text-small px-2 whitespace-pre-wrap'
+          }}
+        >
+          <AccordionItem
+            key="1"
+            aria-label="资源备注"
+            subtitle="点击查看备注"
+            title={resource.name ? resource.name : '资源备注'}
+          >
+            {resource.note}
+          </AccordionItem>
+        </Accordion>
+      ) : (
+        <p className="mt-2 whitespace-pre-wrap">{resource.note}</p>
+      )}
+
       <div className="flex justify-between">
         <KunUser
           user={resource.user}

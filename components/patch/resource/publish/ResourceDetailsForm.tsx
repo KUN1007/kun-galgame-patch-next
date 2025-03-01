@@ -119,6 +119,34 @@ export const ResourceDetailsForm = ({
     </div>
 
     <Controller
+      name="name"
+      control={control}
+      render={({ field }) => (
+        <Input
+          {...field}
+          label="资源名称 (可选)"
+          placeholder="请填写资源的名称, 例如 枯れない世界と終わる花 翻译补丁 "
+          isInvalid={!!errors.name}
+          errorMessage={errors.name?.message}
+        />
+      )}
+    />
+
+    <Controller
+      name="modelName"
+      control={control}
+      render={({ field }) => (
+        <Input
+          {...field}
+          label="AI 模型名称 (可选)"
+          placeholder="如果您发布的是 AI 翻译补丁, 我们建议您填写您使用的翻译模型名称, 例如 claude-3-7-sonnet-20250219"
+          isInvalid={!!errors.modelName}
+          errorMessage={errors.modelName?.message}
+        />
+      )}
+    />
+
+    <Controller
       name="code"
       control={control}
       render={({ field }) => (

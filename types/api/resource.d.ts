@@ -1,6 +1,8 @@
 export interface PatchResource {
   id: number
   storage: string
+  name: string
+  modelName: string
   size: string
   type: string[]
   language: string[]

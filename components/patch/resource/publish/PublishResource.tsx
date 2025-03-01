@@ -56,6 +56,8 @@ export const PublishResource = ({
     defaultValues: {
       patchId,
       storage: 's3',
+      name: '',
+      modelName: '',
       hash: '',
       content: '',
       code: '',

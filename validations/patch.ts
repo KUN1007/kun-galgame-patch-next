@@ -58,6 +58,10 @@ export const patchResourceCreateSchema = z.object({
   storage: z.string().refine((type) => SUPPORTED_RESOURCE_LINK.includes(type), {
     message: '非法的资源链接类型'
   }),
+  name: z.string().max(300, { message: '资源的名称最大 300 个字符' }),
+  modelName: z
+    .string()
+    .max(1007, { message: 'AI 补丁类资源的模型名称最多 1007 个字符' }),
   hash: z.string().max(107),
   content: z
     .string()

@@ -13,6 +13,7 @@ export const ResourceInfo = ({ resource }: Props) => {
         types={resource.type}
         languages={resource.language}
         platforms={resource.platform}
+        modelName={resource.modelName}
       />
 
       <div className="flex flex-wrap gap-2">
@@ -44,10 +45,6 @@ export const ResourceInfo = ({ resource }: Props) => {
           </Snippet>
         )}
       </div>
-
-      {resource.note && (
-        <p className="mt-2 whitespace-pre-wrap">{resource.note}</p>
-      )}
     </div>
   )
 }

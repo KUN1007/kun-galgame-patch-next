@@ -8,7 +8,7 @@ export const updatePatchResource = async (
   input: z.infer<typeof patchResourceUpdateSchema>,
   uid: number
 ) => {
-  const { resourceId, patchId, content, ...resourceData } = input
+  const { resourceId, patchId, content, modelName, ...resourceData } = input
   const resource = await prisma.patch_resource.findUnique({
     where: { id: resourceId }
   })
@@ -41,6 +41,7 @@ export const updatePatchResource = async (
         where: { id: resourceId, user_id: uid },
         data: {
           content: newContent,
+          model_name: modelName,
           ...resourceData
         },
         include: {
@@ -86,6 +87,8 @@ export const updatePatchResource = async (
       const resource: PatchResource = {
         id: newResource.id,
         storage: newResource.storage,
+        name: newResource.name,
+        modelName: newResource.model_name,
         size: newResource.size,
         type: newResource.type,
         language: newResource.language,

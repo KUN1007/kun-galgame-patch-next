@@ -152,19 +152,20 @@ model user_patch_resource_like_relation {
 }
 
 model patch {
-  id           Int      @id @default(autoincrement())
-  name         String   @db.VarChar(1007)
-  vndb_id      String?  @unique @db.VarChar(107)
-  banner       String   @default("") @db.VarChar(1007)
-  introduction String   @default("") @db.VarChar(100007)
-  released     String   @default("unknown") @db.VarChar(107)
-  status       Int      @default(0)
-  download     Int      @default(0)
-  view         Int      @default(0)
-  type         String[]
-  language     String[]
-  engine       String[]
-  platform     String[]
+  id                   Int      @id @default(autoincrement())
+  name                 String   @db.VarChar(1007)
+  vndb_id              String?  @unique @db.VarChar(107)
+  banner               String   @default("") @db.VarChar(1007)
+  introduction         String   @default("") @db.VarChar(100007)
+  released             String   @default("unknown") @db.VarChar(107)
+  status               Int      @default(0)
+  download             Int      @default(0)
+  view                 Int      @default(0)
+  resource_update_time DateTime @default(now())
+  type                 String[]
+  language             String[]
+  engine               String[]
+  platform             String[]
 
   walkthrough patch_walkthrough[]
   company     patch_company_relation[]
@@ -279,19 +280,21 @@ model patch_company_relation {
 }
 
 model patch_resource {
-  id       Int      @id @default(autoincrement())
-  storage  String
-  size     String   @default("") @db.VarChar(107)
-  code     String   @default("") @db.VarChar(1007)
-  password String   @default("") @db.VarChar(1007)
-  note     String   @default("") @db.VarChar(10007)
-  hash     String   @default("")
-  content  String   @default("")
-  type     String[]
-  language String[]
-  platform String[]
-  download Int      @default(0)
-  status   Int      @default(0)
+  id         Int      @id @default(autoincrement())
+  storage    String
+  name       String   @default("") @db.VarChar(300)
+  model_name String   @default("") @db.VarChar(1007)
+  size       String   @default("") @db.VarChar(107)
+  code       String   @default("") @db.VarChar(1007)
+  password   String   @default("") @db.VarChar(1007)
+  note       String   @default("") @db.VarChar(10007)
+  hash       String   @default("")
+  content    String   @default("")
+  type       String[]
+  language   String[]
+  platform   String[]
+  download   Int      @default(0)
+  status     Int      @default(0)
 
   like_by user_patch_resource_like_relation[]
 

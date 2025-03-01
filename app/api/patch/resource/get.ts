@@ -36,6 +36,8 @@ export const getPatchResource = async (
   const resources: PatchResource[] = data.map((resource) => ({
     id: resource.id,
     storage: resource.storage,
+    name: resource.name,
+    modelName: resource.model_name,
     size: resource.size,
     type: resource.type,
     language: resource.language,
