@@ -4,6 +4,7 @@ import { verifyHeaderCookie } from '~/middleware/_verifyHeaderCookie'
 import { prisma } from '~/prisma/index'
 import { uploadIntroductionImage } from './_upload'
 import { imageSchema } from '~/validations/edit'
+import { KUN_PATCH_USER_DAILY_UPLOAD_IMAGE_LIMIT } from '~/config/user'
 
 export const uploadImage = async (uid: number, image: ArrayBuffer) => {
   const user = await prisma.user.findUnique({
@@ -12,8 +13,8 @@ export const uploadImage = async (uid: number, image: ArrayBuffer) => {
   if (!user) {
     return '用户未找到'
   }
-  if (user.daily_image_count >= 50) {
-    return '您今日上传的图片已达到 50 张限额'
+  if (user.daily_image_count >= KUN_PATCH_USER_DAILY_UPLOAD_IMAGE_LIMIT) {
+    return `您今日上传的图片已达到 ${KUN_PATCH_USER_DAILY_UPLOAD_IMAGE_LIMIT} 张限额`
   }
 
   const newFileName = `${uid}-${Date.now()}`

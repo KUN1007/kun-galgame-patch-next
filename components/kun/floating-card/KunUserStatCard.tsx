@@ -1,5 +1,3 @@
-import { Card } from '@nextui-org/card'
-
 interface UserStatCardProps {
   value: number
   label: string
