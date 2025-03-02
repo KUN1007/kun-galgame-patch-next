@@ -1,5 +1,5 @@
 .milkdown {
-  @apply text-default-800 leading-7 whitespace-pre-wrap;
+  @apply text-default-800 leading-7 whitespace-pre-line;
 
   .ProseMirror {
     @apply m-2 min-h-[200px] p-4 rounded-lg bg-content1 border border-default-200
