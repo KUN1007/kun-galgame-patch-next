@@ -36,7 +36,8 @@ export const applyForCreator = async (uid: number) => {
   await createMessage({
     type: 'apply',
     content: '申请成为创作者',
-    sender_id: uid
+    sender_id: uid,
+    link: `/user/${uid}/resource`
   })
 
   return {}

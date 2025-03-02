@@ -50,7 +50,8 @@ export const approveCreator = async (
     await createMessage({
       type: 'apply',
       content: '恭喜! 您的创作者申请已经通过!',
-      recipient_id: message.sender_id ?? undefined
+      recipient_id: message.sender_id ?? undefined,
+      link: '/apply/success'
     })
 
     await prisma.admin_log.create({

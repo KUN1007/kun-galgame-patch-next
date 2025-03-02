@@ -3,9 +3,7 @@ export interface Message {
   type: string
   content: string
   status: number
-  patch_id: number
-  patch_resource_id: number
-  comment_id: number
+  link: string
   created: string | Date
   sender: KunUser | null
 }

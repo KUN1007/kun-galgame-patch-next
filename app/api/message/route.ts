@@ -9,16 +9,14 @@ export const create = async (
   input: z.infer<typeof createMessageSchema>,
   uid: number
 ) => {
-  const { type, content, recipientId, patchId, resourceId, commentId } = input
+  const { type, content, recipientId, link } = input
 
   const message = await createMessage({
     type,
     content,
     sender_id: uid,
     recipient_id: recipientId,
-    patch_id: patchId,
-    patch_resource_id: resourceId,
-    comment_id: commentId
+    link
   })
 
   return message

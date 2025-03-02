@@ -46,16 +46,10 @@ const getCardRoute = (msg: Message) => {
   if (!msg.sender) {
     return '/'
   }
-
-  if (msg.patch_id) {
-    return `/patch/${msg.patch_id}/introduction`
-  } else if (msg.comment_id) {
-    return `/patch/${msg.patch_id}/comment`
-  } else if (msg.patch_resource_id) {
-    return `/patch/${msg.patch_id}/resource`
-  } else {
-    return `/user/${msg.sender?.id}/resource`
+  if (!msg.link) {
+    return `/user/${msg.sender.id}/resource`
   }
+  return msg.link
 }
 
 export const MessageCard = ({ msg }: Props) => {

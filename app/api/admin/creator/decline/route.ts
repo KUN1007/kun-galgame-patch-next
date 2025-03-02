@@ -45,7 +45,8 @@ export const approveCreator = async (
     await createMessage({
       type: 'apply',
       content: `您的创作者申请被拒绝, 理由: ${reason}`,
-      recipient_id: message.sender_id ?? undefined
+      recipient_id: message.sender_id ?? undefined,
+      link: '/'
     })
 
     await prisma.admin_log.create({
