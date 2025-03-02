@@ -20,6 +20,14 @@ import { automd } from '@milkdown/plugin-automd'
 import { KunMilkdownPluginsMenu } from './plugins/Menu'
 import { KunLoading } from '../Loading'
 import { useKunMilkdownStore } from '~/store/milkdownStore'
+import {
+  mentionsPlugin,
+  mentionsPluginOptions
+} from './plugins/mention/mentionPlugin'
+import {
+  stopLinkCommand,
+  linkCustomKeymap
+} from './plugins/stop-link/stopLinkPlugin'
 import '~/styles/editor.scss'
 
 import bash from 'refractor/lang/bash'
@@ -105,6 +113,7 @@ export const KunEditor = ({ valueMarkdown, saveMarkdown }: Props) => {
       .use(trailing)
       .use(upload)
       .use(automd)
+      .use([stopLinkCommand, linkCustomKeymap].flat())
   )
 
   useEffect(
