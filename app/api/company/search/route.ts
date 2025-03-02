@@ -15,8 +15,6 @@ export const searchCompany = async (
         OR: [
           { name: { contains: q, mode: 'insensitive' } },
           { alias: { has: q } },
-          { primary_language: { has: q } },
-          { official_website: { has: q } },
           { parent_brand: { has: q } }
         ]
       }))

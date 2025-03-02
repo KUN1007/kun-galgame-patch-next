@@ -55,7 +55,7 @@ export const Container: FC<Props> = ({ initialCompanies, initialTotal }) => {
 
     setSearching(true)
     const res = await kunFetchPost<CompanyType[]>('/company/search', {
-      query: query.split('').filter((term) => term.length > 0)
+      query: query.split(' ').filter((term) => term.length > 0)
     })
     setCompanies(res)
     setSearching(false)
