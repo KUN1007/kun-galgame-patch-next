@@ -105,7 +105,7 @@ export const updatePatch = async (
         sender_id: currentUserUid,
         content: '向您提出了更新请求',
         recipient_id: patch.user_id,
-        patch_id: patch.id
+        link: `/patch/${patch.id}/pr`
       })
     }
 

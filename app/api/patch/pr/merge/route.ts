@@ -24,20 +24,36 @@ export const mergePullRequest = async (
   const patch = await prisma.patch.findUnique({
     where: { id: pullRequest.patch_id }
   })
+  if (!patch) {
+    return '未找到更新请求对应的 Galgame'
+  }
   const user = await prisma.user.findUnique({ where: { id: uid } })
-  if (patch?.user_id !== uid && user!.role < 3) {
+  if (patch.user_id !== uid && user!.role < 3) {
     return '您没有权限合并更新请求'
   }
 
   const updates = JSON.parse(pullRequest.content) as PatchUpdate
 
   return await prisma.$transaction(async (prisma) => {
+    if (updates.alias.length) {
+      await prisma.patch_alias.deleteMany({
+        where: { patch_id: pullRequest.patch_id }
+      })
+      const aliasData = updates.alias.map((name) => ({
+        name,
+        patch_id: pullRequest.patch_id
+      }))
+      await prisma.patch_alias.createMany({
+        data: aliasData,
+        skipDuplicates: true
+      })
+    }
+
     await prisma.patch.update({
       where: { id: pullRequest.patch_id },
       data: {
         name: updates.name,
-        introduction: updates.introduction,
-        alias: updates.alias
+        introduction: updates.introduction
       }
     })
 
@@ -67,7 +83,7 @@ export const mergePullRequest = async (
         content: '合并了您的更新请求!',
         sender_id: uid,
         recipient_id: pullRequest.user_id,
-        patch_id: pullRequest.patch_id
+        link: `/patch/${pullRequest.patch_id}/pr`
       })
     }
 

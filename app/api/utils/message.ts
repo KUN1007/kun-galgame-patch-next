@@ -1,13 +1,5 @@
 import { prisma } from '~/prisma/index'
-import { MESSAGE_TYPE } from '~/constants/message'
-
-interface CreateMessageType {
-  type: (typeof MESSAGE_TYPE)[number]
-  content: string
-  link: string
-  sender_id?: number
-  recipient_id?: number
-}
+import type { CreateMessageType } from '~/types/api/message'
 
 export const createMessage = async (data: CreateMessageType) => {
   const message = await prisma.user_message.create({

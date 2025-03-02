@@ -3,6 +3,7 @@ import { prisma } from '~/prisma/index'
 import { patchResourceCreateSchema } from '~/validations/patch'
 import { uploadPatchResource } from './_helper'
 import { markdownToHtml } from '~/app/api/utils/markdownToHtml'
+import type { CreateMessageType } from '~/types/api/message'
 import type { PatchResourceHtml } from '~/types/api/patch'
 
 export const createPatchResource = async (
@@ -23,11 +24,27 @@ export const createPatchResource = async (
   const currentPatch = await prisma.patch.findUnique({
     where: { id: patchId },
     select: {
+      name: true,
       type: true,
       language: true,
-      platform: true
+      platform: true,
+      user: {
+        select: { name: true }
+      },
+      favorite_by: {
+        include: {
+          user: {
+            select: {
+              id: true
+            }
+          }
+        }
+      }
     }
   })
+  if (!currentPatch) {
+    return '未找到该补丁对应的 Galgame 信息, 请确认 Galgame 存在'
+  }
 
   let res: string
   if (storage === 'user') {
@@ -70,25 +87,42 @@ export const createPatchResource = async (
         data: { moemoepoint: { increment: 3 } }
       })
 
-      if (currentPatch) {
-        const updatedTypes = [...new Set(currentPatch.type.concat(type))]
-        const updatedLanguages = [
-          ...new Set(currentPatch.language.concat(language))
-        ]
-        const updatedPlatforms = [
-          ...new Set(currentPatch.platform.concat(platform))
-        ]
+      const updatedTypes = [...new Set(currentPatch.type.concat(type))]
+      const updatedLanguages = [
+        ...new Set(currentPatch.language.concat(language))
+      ]
+      const updatedPlatforms = [
+        ...new Set(currentPatch.platform.concat(platform))
+      ]
 
-        await prisma.patch.update({
-          where: { id: patchId },
-          data: {
-            resource_update_time: new Date(),
-            type: { set: updatedTypes },
-            language: { set: updatedLanguages },
-            platform: { set: updatedPlatforms }
+      await prisma.patch.update({
+        where: { id: patchId },
+        data: {
+          resource_update_time: new Date(),
+          type: { set: updatedTypes },
+          language: { set: updatedLanguages },
+          platform: { set: updatedPlatforms }
+        }
+      })
+
+      const favoritePatchUserUid = currentPatch.favorite_by.map(
+        (like) => like.user.id
+      )
+      const noticeMessageData: CreateMessageType[] = favoritePatchUserUid.map(
+        (favoriteUid) => {
+          return {
+            type: 'patchResourceCreate',
+            content: `${newResource.user.name} 在您收藏的 Galgame ${currentPatch.name} 下创建了新的补丁资源\n${newResource.name ?? newResource.note.slice(0, 50)}`,
+            sender_id: uid,
+            recipient_id: favoriteUid,
+            link: `/patch/${patchId}/resource`
           }
-        })
-      }
+        }
+      )
+      await prisma.user_message.createMany({
+        data: noticeMessageData,
+        skipDuplicates: true
+      })
 
       const resource: PatchResourceHtml = {
         id: newResource.id,

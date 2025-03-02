@@ -53,7 +53,7 @@ export const declinePullRequest = async (
         content: `拒绝了您的更新请求... 理由: ${input.note}`,
         sender_id: uid,
         recipient_id: pullRequest.user_id,
-        patch_id: pullRequest.patch_id
+        link: `/patch/${pullRequest.patch_id}/pr`
       })
     }
 

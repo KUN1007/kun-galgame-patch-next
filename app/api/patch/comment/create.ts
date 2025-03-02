@@ -27,7 +27,8 @@ export const createPatchComment = async (
         type: 'comment',
         content: `评论了您的评论! -> ${parentComment!.content.slice(0, 107)}`,
         sender_id: uid,
-        recipient_id: parentComment!.user_id
+        recipient_id: parentComment!.user_id,
+        link: `/patch/${input.patchId}/comment`
       })
     }
   }

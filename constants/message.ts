@@ -6,7 +6,10 @@ export const MESSAGE_TYPE = [
   'favorite',
   'comment',
   'follow',
-  'pr'
+  'pr',
+  'mention',
+  'patchResourceCreate',
+  'patchResourceUpdate'
 ] as const
 
 export const MESSAGE_TYPE_MAP: Record<string, string> = {
@@ -17,5 +20,8 @@ export const MESSAGE_TYPE_MAP: Record<string, string> = {
   favorite: '收藏',
   comment: '评论',
   follow: '关注',
-  pr: '更新请求'
+  pr: '更新请求',
+  mention: '提到了您',
+  patchResourceCreate: '创建新补丁',
+  patchResourceUpdate: '更新了补丁'
 }

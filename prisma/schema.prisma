@@ -63,6 +63,7 @@ model admin_log {
   updated DateTime @updatedAt
 }
 
+// follower follows following, e.g. user 1 followed user 2 => follower_id: 1, following_id: 2
 model user_follow_relation {
   id Int @id @default(autoincrement())
 
