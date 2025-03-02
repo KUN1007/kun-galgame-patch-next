@@ -9,7 +9,8 @@ export const MESSAGE_TYPE = [
   'pr',
   'mention',
   'patchResourceCreate',
-  'patchResourceUpdate'
+  'patchResourceUpdate',
+  ''
 ] as const
 
 export const MESSAGE_TYPE_MAP: Record<string, string> = {

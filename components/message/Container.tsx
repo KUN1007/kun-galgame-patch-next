@@ -8,8 +8,8 @@ import { MessageCard } from './MessageCard'
 import { kunFetchGet } from '~/utils/kunFetch'
 import { KunNull } from '~/components/kun/Null'
 import { MESSAGE_TYPE } from '~/constants/message'
-import type { Message } from '~/types/api/message'
 import toast from 'react-hot-toast'
+import type { Message } from '~/types/api/message'
 
 interface Props {
   initialMessages: Message[]
@@ -57,7 +57,7 @@ export const MessageContainer = ({ initialMessages, total, type }: Props) => {
   }
 
   return (
-    <>
+    <div className="space-y-4">
       {loading ? (
         <KunLoading hint="正在获取消息数据..." />
       ) : (
@@ -80,6 +80,6 @@ export const MessageContainer = ({ initialMessages, total, type }: Props) => {
           />
         </div>
       )}
-    </>
+    </div>
   )
 }
