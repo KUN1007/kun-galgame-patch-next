@@ -39,9 +39,8 @@ export const PatchHeaderContainer = ({ patch, intro }: PatchHeaderProps) => {
 
   return (
     <>
-      <div className="relative w-full sm:h-[512px]">
+      <div className="relative w-full h-[300px] sm:h-[400px] md:h-[512px]">
         <KunAutoImageViewer />
-        {/* Why use unoptimized? Production env unknown error */}
         <Image
           src={patch.banner}
           alt={patch.name}
@@ -53,7 +52,7 @@ export const PatchHeaderContainer = ({ patch, intro }: PatchHeaderProps) => {
         />
 
         <PatchHeader patch={patch} />
-        <Card className="w-full rounded-none shadow-lg rounded-b-2xl bg-background/70 backdrop-blur-xl sm:absolute sm:bottom-0">
+        <Card className="absolute bottom-0 w-full rounded-none shadow-lg rounded-b-2xl bg-background/70 backdrop-blur-xl">
           <CardBody>
             <ButtonList patch={patch} />
 

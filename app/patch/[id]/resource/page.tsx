@@ -62,6 +62,10 @@ export default async function Kun({
               主站论坛
             </Link>
           </p>
+          <p className="text-primary-500">
+            新功能, 我们更新了网站的通知系统, 如果您点赞了游戏资源,
+            那么将会收到这个游戏下载资源的更新通知 (资源下载链接更新和备注更新)
+          </p>
         </div>
 
         <Resources initialResources={response} id={Number(id)} />

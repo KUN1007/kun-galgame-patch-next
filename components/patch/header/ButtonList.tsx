@@ -21,12 +21,19 @@ export const ButtonList = ({ patch }: Props) => {
           <Tags patch={patch} />
         </div>
       </div>
-      <div className="flex gap-2 ml-auto">
-        <DownloadButton patch={patch} />
-        <FavoriteButton patchId={patch.id} isFavorite={patch.isFavorite} />
-        <ShareButton patch={patch} />
-        <EditButton />
-        <DeleteButton patch={patch} />
+
+      <div className="flex flex-col items-start space-y-2 sm:items-end">
+        <div className="flex gap-2">
+          <DownloadButton patch={patch} />
+          <FavoriteButton patchId={patch.id} isFavorite={patch.isFavorite} />
+          <ShareButton patch={patch} />
+          <EditButton />
+          <DeleteButton patch={patch} />
+        </div>
+
+        <p className="text-sm text-default-500">
+          收藏后, 有新补丁资源发布时, 您将收到通知
+        </p>
       </div>
     </div>
   )

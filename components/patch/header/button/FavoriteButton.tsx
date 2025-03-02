@@ -41,7 +41,8 @@ export const FavoriteButton = ({ patchId, isFavorite }: Props) => {
     <Tooltip key="favorite" color="default" content="收藏">
       <Button
         isIconOnly
-        variant="bordered"
+        color={favorite ? 'danger' : 'default'}
+        variant={favorite ? 'flat' : 'bordered'}
         disabled={loading}
         isLoading={loading}
         onPress={toggleLike}
