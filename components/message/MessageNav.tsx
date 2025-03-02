@@ -3,7 +3,7 @@
 import { useEffect } from 'react'
 import { kunFetchPut } from '~/utils/kunFetch'
 import { Button } from '@nextui-org/react'
-import { Bell, Globe, UserPlus } from 'lucide-react'
+import { Bell, Globe, UserPlus, RefreshCcw, Puzzle } from 'lucide-react'
 import { Card, CardBody } from '@nextui-org/card'
 import { usePathname } from 'next/navigation'
 import Link from 'next/link'
@@ -16,6 +16,18 @@ const notificationTypes = [
     label: '关注消息',
     icon: UserPlus,
     href: '/message/follow'
+  },
+  {
+    type: 'patchResourceCreate',
+    label: '新补丁资源发布消息',
+    icon: Puzzle,
+    href: '/message/patch-resource-create'
+  },
+  {
+    type: 'patchResourceUpdate',
+    label: '补丁资源更新消息',
+    icon: RefreshCcw,
+    href: '/message/patch-resource-update'
   },
   { type: 'system', label: '系统消息', icon: Globe, href: '/message/system' }
 ]
@@ -35,20 +47,21 @@ export const MessageNav = () => {
   }, [])
 
   return (
-    <Card className="w-full max-h-40 lg:w-1/4">
+    <Card className="w-full lg:w-1/4">
       <CardBody className="flex flex-row gap-2 lg:flex-col">
         {notificationTypes.map(({ type, label, icon: Icon, href }) => (
-          <Button
-            key={label}
-            color={lastSegment === type ? 'primary' : 'default'}
-            as={Link}
-            className="justify-start w-full"
-            variant={lastSegment === type ? 'solid' : 'light'}
-            startContent={<Icon className="size-4 shrink-0" />}
-            href={href}
-          >
-            <span>{label}</span>
-          </Button>
+          <div key={label}>
+            <Button
+              color={lastSegment === type ? 'primary' : 'default'}
+              as={Link}
+              className="justify-start w-full"
+              variant={lastSegment === type ? 'solid' : 'light'}
+              startContent={<Icon className="size-4 shrink-0" />}
+              href={href}
+            >
+              <span>{label}</span>
+            </Button>
+          </div>
         ))}
       </CardBody>
     </Card>

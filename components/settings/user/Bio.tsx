@@ -53,7 +53,7 @@ export const Bio = () => {
       </CardBody>
 
       <CardFooter className="flex-wrap">
-        <p className="text-gray-500">签名最大长度为 107, 可以是任意字符</p>
+        <p className="text-default-500">签名最大长度为 107, 可以是任意字符</p>
 
         <Button
           color="primary"

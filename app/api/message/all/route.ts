@@ -12,12 +12,7 @@ export const getMessage = async (
   const { type, page, limit } = input
   const offset = (page - 1) * limit
 
-  const where = type
-    ? { recipient_id: uid, type }
-    : {
-        recipient_id: uid
-        // type: { in: ['like', 'favorite', 'comment', 'pr'] }
-      }
+  const where = type ? { recipient_id: uid, type } : { recipient_id: uid }
 
   const [messages, total] = await Promise.all([
     prisma.user_message.findMany({

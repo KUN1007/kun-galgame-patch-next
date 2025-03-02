@@ -30,34 +30,36 @@ export const ResourceDownload = ({ resource }: Props) => {
         <p className="mt-2 whitespace-pre-wrap">{resource.name}</p>
       )}
 
-      <Accordion
-        fullWidth={true}
-        className="p-0"
-        itemClasses={{
-          base: 'p-0 w-full',
-          title: 'font-normal text-medium',
-          trigger: 'p-0 flex items-center',
-          indicator: 'text-medium',
-          content: 'text-small px-2 whitespace-pre-wrap'
-        }}
-      >
-        <AccordionItem
-          key="1"
-          aria-label="资源备注"
-          subtitle="点击查看备注"
-          title={resource.name ? resource.name : '资源备注'}
-          classNames={{
-            content: 'whitespace-normal'
+      {resource.note && (
+        <Accordion
+          fullWidth={true}
+          className="p-0"
+          itemClasses={{
+            base: 'p-0 w-full',
+            title: 'font-normal text-medium',
+            trigger: 'p-0 flex items-center',
+            indicator: 'text-medium',
+            content: 'text-small px-2 whitespace-pre-wrap'
           }}
         >
-          <div
-            dangerouslySetInnerHTML={{
-              __html: DOMPurify.sanitize(resource.noteHtml)
+          <AccordionItem
+            key="1"
+            aria-label="资源备注"
+            subtitle="点击查看备注"
+            title={resource.name ? resource.name : '资源备注'}
+            classNames={{
+              content: 'whitespace-normal'
             }}
-            className="kun-prose max-w-none"
-          />
-        </AccordionItem>
-      </Accordion>
+          >
+            <div
+              dangerouslySetInnerHTML={{
+                __html: DOMPurify.sanitize(resource.noteHtml)
+              }}
+              className="kun-prose max-w-none"
+            />
+          </AccordionItem>
+        </Accordion>
+      )}
 
       <div className="flex justify-between">
         <KunUser

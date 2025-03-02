@@ -112,7 +112,7 @@ export const createPatchResource = async (
         (favoriteUid) => {
           return {
             type: 'patchResourceCreate',
-            content: `${newResource.user.name} 在您收藏的 Galgame ${currentPatch.name} 下创建了新的补丁资源\n${newResource.name ?? newResource.note.slice(0, 50)}`,
+            content: `${newResource.user.name} 在您收藏的 Galgame ${currentPatch.name} 下创建了新的补丁资源\n🎁 ${newResource.name ?? newResource.note.slice(0, 50)}`,
             sender_id: uid,
             recipient_id: favoriteUid,
             link: `/patch/${patchId}/resource`

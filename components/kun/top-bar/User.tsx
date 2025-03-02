@@ -91,7 +91,7 @@ export const KunTopBarUser = () => {
         </>
       ) : (
         <Skeleton className="rounded-lg">
-          <div className="w-32 h-10 bg-gray-300 rounded-lg" />
+          <div className="w-32 h-10 rounded-lg bg-default-300" />
         </Skeleton>
       )}
     </NavbarContent>

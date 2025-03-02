@@ -17,7 +17,7 @@ export const UserAvatar = () => {
       </CardBody>
 
       <CardFooter>
-        <p className="py-2 text-gray-500">
+        <p className="py-2 text-default-500">
           头像不是必须, 但是我们强烈推荐设置头像
         </p>
       </CardFooter>

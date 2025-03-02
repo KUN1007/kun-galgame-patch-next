@@ -102,7 +102,7 @@ export const Email = () => {
           />
         </CardBody>
         <CardFooter className="flex-wrap">
-          <p className="text-gray-500">
+          <p className="text-default-500">
             如果您的新邮箱未收到验证码, 请检查垃圾邮件或者全部邮件
           </p>
           <Button

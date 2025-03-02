@@ -73,15 +73,13 @@ export const MessageCard = ({ msg }: Props) => {
         <div className="flex-1 space-y-2">
           <div className="flex items-center gap-2">
             {getNotificationIcon(msg.type)}
-
             <span className="font-semibold">
               {msg.sender ? msg.sender.name : '系统'}
             </span>
-
             <span>{MESSAGE_TYPE_MAP[msg.type]}</span>
           </div>
-          <p className="text-gray-600">{msg.content}</p>
-          <span className="text-sm text-gray-400">
+          <p className="whitespace-pre-wrap text-default-600">{msg.content}</p>
+          <span className="text-sm text-default-400">
             {formatDistanceToNow(msg.created)}
           </span>
         </div>
