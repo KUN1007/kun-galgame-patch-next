@@ -28,9 +28,6 @@ export const createPatchResource = async (
       type: true,
       language: true,
       platform: true,
-      user: {
-        select: { name: true }
-      },
       favorite_by: {
         include: {
           user: {

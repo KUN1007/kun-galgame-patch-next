@@ -6,6 +6,7 @@ import { Tooltip } from '@nextui-org/tooltip'
 import { Bell, BellRing } from 'lucide-react'
 import { AnimatePresence, motion } from 'framer-motion'
 import { bellShakeVariants, dotVariants } from '~/motion/bell'
+import { useRouter } from 'next-nprogress-bar'
 
 interface AnimatedNotificationBellProps {
   hasUnreadMessages: boolean
@@ -16,9 +17,12 @@ export const UserMessageBell = ({
   hasUnreadMessages,
   setReadMessage
 }: AnimatedNotificationBellProps) => {
+  const router = useRouter()
+
   const handleClickButton = () => {
     if (hasUnreadMessages) {
       setReadMessage()
+      router.push('/message/notice')
     }
   }
 

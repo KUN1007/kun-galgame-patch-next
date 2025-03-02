@@ -3,6 +3,7 @@ import { prisma } from '~/prisma/index'
 import { patchResourceUpdateSchema } from '~/validations/patch'
 import { uploadPatchResource, deletePatchResource } from './_helper'
 import { markdownToHtml } from '~/app/api/utils/markdownToHtml'
+import type { CreateMessageType } from '~/types/api/message'
 import type { PatchResourceHtml } from '~/types/api/patch'
 
 export const updatePatchResource = async (
@@ -18,6 +19,19 @@ export const updatePatchResource = async (
   }
   if (resource.user_id !== uid) {
     return '您没有权限更改该补丁资源'
+  }
+
+  const currentPatch = await prisma.patch.findUnique({
+    where: { id: patchId },
+    select: {
+      name: true,
+      type: true,
+      language: true,
+      platform: true
+    }
+  })
+  if (!currentPatch) {
+    return '未找到该补丁对应的 Galgame 信息, 请确认 Galgame 存在'
   }
 
   let newContent: string
@@ -46,6 +60,15 @@ export const updatePatchResource = async (
           ...resourceData
         },
         include: {
+          like_by: {
+            include: {
+              user: {
+                select: {
+                  id: true
+                }
+              }
+            }
+          },
           user: {
             include: {
               _count: {
@@ -56,37 +79,52 @@ export const updatePatchResource = async (
         }
       })
 
-      const currentPatch = await prisma.patch.findUnique({
+      const updatedTypes = [
+        ...new Set(currentPatch.type.concat(resourceData.type))
+      ]
+      const updatedLanguages = [
+        ...new Set(currentPatch.language.concat(resourceData.language))
+      ]
+      const updatedPlatforms = [
+        ...new Set(currentPatch.platform.concat(resourceData.platform))
+      ]
+
+      await prisma.patch.update({
         where: { id: patchId },
-        select: {
-          type: true,
-          language: true,
-          platform: true
+        data: {
+          resource_update_time: new Date(),
+          type: { set: updatedTypes },
+          language: { set: updatedLanguages },
+          platform: { set: updatedPlatforms }
         }
       })
-      if (currentPatch) {
-        const updatedTypes = [
-          ...new Set(currentPatch.type.concat(resourceData.type))
-        ]
-        const updatedLanguages = [
-          ...new Set(currentPatch.language.concat(resourceData.language))
-        ]
-        const updatedPlatforms = [
-          ...new Set(currentPatch.platform.concat(resourceData.platform))
-        ]
 
-        await prisma.patch.update({
-          where: { id: patchId },
-          data: {
-            resource_update_time: new Date(),
-            type: { set: updatedTypes },
-            language: { set: updatedLanguages },
-            platform: { set: updatedPlatforms }
+      if (resource.content !== content || resource.note !== resourceData.note) {
+        const likeResourceUserUid = newResource.like_by.map(
+          (like) => like.user.id
+        )
+        const noticeString =
+          resource.content !== content
+            ? '更新了补丁的下载资源'
+            : '更新了补丁资源的备注信息'
+        const noticeMessageData: CreateMessageType[] = likeResourceUserUid.map(
+          (likeUid) => {
+            return {
+              type: 'patchResourceUpdate',
+              content: `${newResource.user.name} 更您收藏的 Galgame (${currentPatch.name}) 下的补丁资源 ${newResource.name ?? newResource.note.slice(0, 50)}\n✨ ${noticeString}`,
+              sender_id: uid,
+              recipient_id: likeUid,
+              link: `/patch/${patchId}/resource`
+            }
           }
+        )
+        await prisma.user_message.createMany({
+          data: noticeMessageData,
+          skipDuplicates: true
         })
       }
 
-      const resource: PatchResourceHtml = {
+      const resourceResponse: PatchResourceHtml = {
         id: newResource.id,
         storage: newResource.storage,
         name: newResource.name,
@@ -115,7 +153,7 @@ export const updatePatchResource = async (
         }
       }
 
-      return resource
+      return resourceResponse
     },
     { timeout: 60000 }
   )
