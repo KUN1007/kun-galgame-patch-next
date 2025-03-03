@@ -18,7 +18,6 @@ import { kunFetchDelete, kunFetchPut } from '~/utils/kunFetch'
 import toast from 'react-hot-toast'
 import { kunErrorHandler } from '~/utils/kunErrorHandler'
 import { useUserStore } from '~/store/providers/user'
-import { MilkdownProvider } from '@milkdown/react'
 import { KunEditor } from '~/components/kun/milkdown/Editor'
 import { markdownToText } from '~/utils/markdownToText'
 import type { PatchWalkthrough } from '~/types/api/patch'
@@ -150,9 +149,7 @@ export const WalkthroughDropdown = ({
                 onValueChange={setName}
               />
 
-              <MilkdownProvider>
-                <KunEditor valueMarkdown={content} saveMarkdown={setContent} />
-              </MilkdownProvider>
+              <KunEditor valueMarkdown={content} saveMarkdown={setContent} />
             </form>
           </ModalBody>
           <ModalFooter>

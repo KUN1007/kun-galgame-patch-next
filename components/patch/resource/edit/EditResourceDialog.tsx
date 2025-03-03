@@ -18,7 +18,6 @@ import { ResourceLinksInput } from '../publish/ResourceLinksInput'
 import { kunErrorHandler } from '~/utils/kunErrorHandler'
 import { ResourceDetailsForm } from '../publish/ResourceDetailsForm'
 import { FileUploadContainer } from '../upload/FileUploadContainer'
-import { MilkdownProvider } from '@milkdown/react'
 import { KunEditor } from '~/components/kun/milkdown/Editor'
 import type { PatchResourceHtml } from '~/types/api/patch'
 
@@ -126,12 +125,11 @@ export const EditResourceDialog = ({
                 </li>
               </ul>
             </div>
-            <MilkdownProvider>
-              <KunEditor
-                valueMarkdown={watch().note}
-                saveMarkdown={(markdown) => setValue('note', markdown)}
-              />
-            </MilkdownProvider>
+
+            <KunEditor
+              valueMarkdown={watch().note}
+              saveMarkdown={(markdown) => setValue('note', markdown)}
+            />
           </div>
         </form>
       </ModalBody>

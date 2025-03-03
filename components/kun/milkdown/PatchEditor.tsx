@@ -1,5 +1,3 @@
-import { MilkdownProvider } from '@milkdown/react'
-import { ProsemirrorAdapterProvider } from '@prosemirror-adapter/react'
 import { useCreatePatchStore } from '~/store/editStore'
 import { useRewritePatchStore } from '~/store/rewriteStore'
 import { useMounted } from '~/hooks/useMounted'
@@ -40,11 +38,5 @@ export const Editor = ({ storeName }: Props) => {
     return <KunLoading className="min-h-64" hint="正在加载编辑器" />
   }
 
-  return (
-    <MilkdownProvider>
-      <ProsemirrorAdapterProvider>
-        <KunEditor valueMarkdown={getMarkdown()} saveMarkdown={saveMarkdown} />
-      </ProsemirrorAdapterProvider>
-    </MilkdownProvider>
-  )
+  return <KunEditor valueMarkdown={getMarkdown()} saveMarkdown={saveMarkdown} />
 }

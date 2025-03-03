@@ -8,7 +8,6 @@ import {
 } from '@nextui-org/react'
 import { useState } from 'react'
 import { PatchWalkthrough } from '~/types/api/patch'
-import { MilkdownProvider } from '@milkdown/react'
 import { KunEditor } from '~/components/kun/milkdown/Editor'
 import { kunFetchPost } from '~/utils/kunFetch'
 import { kunErrorHandler } from '~/utils/kunErrorHandler'
@@ -57,9 +56,7 @@ export const PublishWalkthrough = ({ patchId, onClose, onSuccess }: Props) => {
             onValueChange={setName}
           />
 
-          <MilkdownProvider>
-            <KunEditor valueMarkdown={content} saveMarkdown={setContent} />
-          </MilkdownProvider>
+          <KunEditor valueMarkdown={content} saveMarkdown={setContent} />
         </form>
       </ModalBody>
 

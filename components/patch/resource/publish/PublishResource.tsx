@@ -27,7 +27,6 @@ import {
   USER_DAILY_UPLOAD_LIMIT,
   CREATOR_DAILY_UPLOAD_LIMIT
 } from '~/config/upload'
-import { MilkdownProvider } from '@milkdown/react'
 import { KunEditor } from '~/components/kun/milkdown/Editor'
 import type { PatchResourceHtml } from '~/types/api/patch'
 
@@ -189,12 +188,11 @@ export const PublishResource = ({
                 </li>
               </ul>
             </div>
-            <MilkdownProvider>
-              <KunEditor
-                valueMarkdown={watch().note}
-                saveMarkdown={(markdown) => setValue('note', markdown)}
-              />
-            </MilkdownProvider>
+
+            <KunEditor
+              valueMarkdown={watch().note}
+              saveMarkdown={(markdown) => setValue('note', markdown)}
+            />
           </div>
         </form>
       </ModalBody>
