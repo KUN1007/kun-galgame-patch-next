@@ -19,11 +19,14 @@ import { MenuButton } from './MenuButton'
 import { createButtons } from './_buttonList'
 import type { CmdKey } from '@milkdown/core'
 import type { UseEditorReturn } from '@milkdown/react'
+import { cn } from '~/utils/cn'
 
 export const KunMilkdownPluginsMenu = ({
-  editorInfo
+  editorInfo,
+  className
 }: {
   editorInfo: UseEditorReturn
+  className?: string
 }) => {
   const [link, setLink] = useState('')
   const uploadImageInputRef = useRef<HTMLInputElement | null>(null)
@@ -66,7 +69,7 @@ export const KunMilkdownPluginsMenu = ({
   const buttonList = createButtons(call)
 
   return (
-    <div className="sticky top-0 flex flex-wrap">
+    <div className={cn('sticky top-0 flex flex-wrap', className)}>
       {buttonList.map(({ tooltip, icon, onPress, ariaLabel }, index) => (
         <MenuButton
           key={index}

@@ -69,7 +69,8 @@ export const mentionsPlugin = () => {
 
                 const height = start.bottom - start.top
 
-                const left = start.left - box.left
+                // 24 is an '@' symbol
+                const left = start.left - box.left + 24
                 const top = start.top - box.top + height
 
                 const div = document.createElement('div')

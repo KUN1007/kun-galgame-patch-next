@@ -24,6 +24,7 @@ import {
   mentionsPlugin,
   mentionsPluginOptions
 } from './plugins/mention/mentionPlugin'
+import { MentionsListDropdown } from './plugins/mention/MentionsListDropdown'
 import {
   stopLinkCommand,
   linkCustomKeymap
@@ -61,6 +62,8 @@ export const KunEditor = ({ valueMarkdown, saveMarkdown }: Props) => {
     (state) => state.data.refreshContentStatus
   )
 
+  const mentions = mentionsPlugin()
+
   const editor = useEditor((root) =>
     Editor.make()
       .config((ctx) => {
@@ -71,6 +74,11 @@ export const KunEditor = ({ valueMarkdown, saveMarkdown }: Props) => {
         listener.markdownUpdated((_, markdown) => {
           saveMarkdown(markdown)
         })
+
+        ctx.update(mentionsPluginOptions.key, (prev) => ({
+          ...prev,
+          view: MentionsListDropdown
+        }))
 
         ctx.update(uploadConfig.key, (prev) => ({
           ...prev,
@@ -113,7 +121,7 @@ export const KunEditor = ({ valueMarkdown, saveMarkdown }: Props) => {
       .use(trailing)
       .use(upload)
       .use(automd)
-      .use([stopLinkCommand, linkCustomKeymap].flat())
+      .use([stopLinkCommand, linkCustomKeymap, mentions].flat())
   )
 
   useEffect(
@@ -124,7 +132,9 @@ export const KunEditor = ({ valueMarkdown, saveMarkdown }: Props) => {
   return (
     <div className="min-h-64" onClick={(e) => e.stopPropagation()}>
       <KunMilkdownPluginsMenu editorInfo={editor} />
-      <Milkdown />
+      <div className="relative">
+        <Milkdown />
+      </div>
       {editor.loading && (
         <KunLoading className="min-h-48" hint="正在加载编辑器" />
       )}
