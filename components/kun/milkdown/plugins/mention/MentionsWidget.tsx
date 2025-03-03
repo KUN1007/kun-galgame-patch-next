@@ -6,7 +6,7 @@ import { useWidgetViewContext } from '@prosemirror-adapter/react'
 import { mentionsPluginOptions } from './mentionPlugin'
 import { MentionsPluginAttrs } from './utils'
 
-const defaultDropdownComponent = () => <div>krzys</div>
+const defaultDropdownComponent = () => <></>
 
 const getDropdownListComponent = (editor: Editor | undefined) => {
   if (editor) {

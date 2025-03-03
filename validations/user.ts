@@ -64,3 +64,7 @@ export const getUserInfoSchema = z.object({
   page: z.coerce.number().min(1).max(9999999),
   limit: z.coerce.number().min(1).max(20)
 })
+
+export const searchUserSchema = z.object({
+  query: z.string().min(1).max(20, { message: '非法的用户名长度' })
+})
