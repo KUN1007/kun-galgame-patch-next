@@ -10,15 +10,19 @@ export type MentionsPluginAttrs = {
   queryText: string | undefined
 }
 
-const mentionsRegex = new RegExp('(^|\\s)@([\\w-\\+]+)$')
+const mentionsRegex = new RegExp(
+  '(^|\\s)@([\\p{L}\\p{N}!~_@#$%^&*()+=-]{1,17})$',
+  'u'
+)
+
 export const computeStateFromSelection = (
   ctx: Ctx,
   selection: Selection
 ): MentionsPluginAttrs | undefined => {
   const { $from } = selection
 
-  const parastart = $from.before()
-  const text = $from.doc.textBetween(parastart, $from.pos, '\n', '\0')
+  const start = $from.before()
+  const text = $from.doc.textBetween(start, $from.pos, '\n', '\0')
   const match = text.match(mentionsRegex)
 
   if (match) {

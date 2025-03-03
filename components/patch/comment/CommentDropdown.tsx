@@ -18,6 +18,7 @@ import { kunFetchDelete, kunFetchGet, kunFetchPut } from '~/utils/kunFetch'
 import toast from 'react-hot-toast'
 import { kunErrorHandler } from '~/utils/kunErrorHandler'
 import { useUserStore } from '~/store/providers/user'
+import { convert } from 'html-to-text'
 import type { PatchComment } from '~/types/api/patch'
 
 interface Props {
@@ -165,8 +166,8 @@ export const CommentDropdown = ({ comment, setComments }: Props) => {
               您确定要删除这条评论吗, 这将会删除该评论,
               以及所有回复该评论的评论, 该操作不可撤销
             </p>
-            <p className="pl-4 border-l-4 border-primary-500">
-              {comment.content}
+            <p className="pl-4 whitespace-pre-line border-l-4 border-primary-500">
+              {convert(comment.content)}
             </p>
           </ModalBody>
           <ModalFooter>

@@ -1,9 +1,9 @@
 'use client'
 
-import { useEffect, useState } from 'react'
+import { useEffect, useState, useTransition } from 'react'
 import { Avatar, Listbox, ListboxItem, Skeleton } from '@nextui-org/react'
 import { kunFetchGet } from '~/utils/kunFetch'
-import { kunMoyuMoe } from '~/config/moyu-moe'
+import { useDebounce } from 'use-debounce'
 import type { MentionsListDropdownProps } from './MentionsWidget'
 
 export const MentionsListDropdown = ({
@@ -11,41 +11,30 @@ export const MentionsListDropdown = ({
   onMentionItemClick
 }: MentionsListDropdownProps) => {
   const [users, setUsers] = useState<KunUser[]>([])
-  const [loading, setLoading] = useState(false)
+  const [debouncedQueryText] = useDebounce(queryText, 300)
+  const [isPending, startTransition] = useTransition()
 
   const fetchUsers = async () => {
-    if (!queryText || queryText.length < 1) {
+    if (!debouncedQueryText || debouncedQueryText.length < 1) {
       setUsers([])
       return
     }
-    setLoading(true)
-    const response = await kunFetchGet<KunUser[]>('/user/search', {
-      query: queryText
+    startTransition(async () => {
+      const response = await kunFetchGet<KunUser[]>('/user/mention/search', {
+        query: debouncedQueryText
+      })
+      setUsers(response)
     })
-    setUsers(response)
-    setLoading(false)
   }
 
   useEffect(() => {
     fetchUsers()
-  }, [queryText])
-
-  if (users.length === 0 && queryText) {
-    return (
-      <div className="w-full max-w-[260px] border-small px-1 py-2 rounded-small border-default-200 dark:border-default-100">
-        <p className="p-2 text-sm text-muted-foreground">No users found</p>
-      </div>
-    )
-  }
-
-  if (users.length === 0) {
-    return null
-  }
+  }, [debouncedQueryText])
 
   return (
-    <div className="w-full max-w-[260px] shadow bg-background border-small px-1 py-2 rounded-small border-default-200 dark:border-default-100">
-      {loading ? (
-        <div className="p-2 space-y-2">
+    <div className="w-full px-1 py-2 shadow max-w-64 bg-background border-small rounded-small border-default-200 dark:border-default-100">
+      {isPending ? (
+        <div className="w-64 p-2 space-y-2">
           {[1, 2, 3].map((i) => (
             <div key={i} className="flex items-center gap-2">
               <Skeleton className="w-8 h-8 rounded-full" />
@@ -72,17 +61,31 @@ export const MentionsListDropdown = ({
               onMentionItemClick(selectedUser.name, `/user/${userId}/resource`)
             }
           }}
+          disabledKeys={['null']}
         >
-          {(user) => (
-            <ListboxItem key={user.id} textValue={user.name}>
-              <div className="flex items-center gap-2">
-                <Avatar
-                  alt={user.name}
-                  className="flex-shrink-0 w-8 h-8"
-                  src={user.avatar}
-                />
-                <span className="text-sm">{user.name}</span>
-              </div>
+          {users.length ? (
+            (user) => (
+              <ListboxItem key={user.id} textValue={user.name}>
+                <div className="flex items-center gap-2">
+                  <Avatar
+                    alt={user.name}
+                    className="flex-shrink-0 w-8 h-8"
+                    src={user.avatar}
+                  />
+                  <span className="text-sm">{user.name}</span>
+                </div>
+              </ListboxItem>
+            )
+          ) : (
+            <ListboxItem
+              key="null"
+              textValue="null"
+              classNames={{
+                base: 'w-64',
+                wrapper: 'w-full'
+              }}
+            >
+              未找到任何用户
             </ListboxItem>
           )}
         </Listbox>
