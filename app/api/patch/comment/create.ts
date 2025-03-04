@@ -2,6 +2,7 @@ import { z } from 'zod'
 import { prisma } from '~/prisma/index'
 import { patchCommentCreateSchema } from '~/validations/patch'
 import { createDedupMessage } from '~/app/api/utils/message'
+import { createMentionMessage } from '~/app/api/utils/createMentionMessage'
 import type { PatchComment } from '~/types/api/patch'
 
 export const createPatchComment = async (
@@ -14,6 +15,18 @@ export const createPatchComment = async (
       user_id: uid,
       patch_id: input.patchId,
       parent_id: input.parentId
+    },
+    include: {
+      patch: {
+        select: {
+          name: true
+        }
+      },
+      user: {
+        select: {
+          name: true
+        }
+      }
     }
   })
 
@@ -32,6 +45,14 @@ export const createPatchComment = async (
       })
     }
   }
+
+  await createMentionMessage(
+    input.patchId,
+    data.patch.name,
+    uid,
+    data.user.name,
+    input.content
+  )
 
   const newComment: Omit<PatchComment, 'user'> = {
     id: data.id,

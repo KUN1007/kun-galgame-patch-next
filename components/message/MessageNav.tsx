@@ -3,7 +3,7 @@
 import { useEffect } from 'react'
 import { kunFetchPut } from '~/utils/kunFetch'
 import { Button } from '@nextui-org/react'
-import { Bell, Globe, UserPlus, RefreshCcw, Puzzle } from 'lucide-react'
+import { Bell, Globe, UserPlus, RefreshCcw, Puzzle, AtSign } from 'lucide-react'
 import { Card, CardBody } from '@nextui-org/card'
 import { usePathname } from 'next/navigation'
 import Link from 'next/link'
@@ -28,6 +28,12 @@ const notificationTypes = [
     label: '补丁资源更新消息',
     icon: RefreshCcw,
     href: '/message/patch-resource-update'
+  },
+  {
+    type: 'mention',
+    label: '@ 消息',
+    icon: AtSign,
+    href: '/message/mention'
   },
   { type: 'system', label: '系统消息', icon: Globe, href: '/message/system' }
 ]

@@ -3,25 +3,24 @@
 import { useEffect, useState, useTransition } from 'react'
 import { Avatar, Listbox, ListboxItem, Skeleton } from '@nextui-org/react'
 import { kunFetchGet } from '~/utils/kunFetch'
-import { useDebounce } from 'use-debounce'
 import type { MentionsListDropdownProps } from './MentionsWidget'
 
+// TODO: this component will be rerendered many times
 export const MentionsListDropdown = ({
   queryText,
   onMentionItemClick
 }: MentionsListDropdownProps) => {
   const [users, setUsers] = useState<KunUser[]>([])
-  const [debouncedQueryText] = useDebounce(queryText, 300)
   const [isPending, startTransition] = useTransition()
 
   const fetchUsers = async () => {
-    if (!debouncedQueryText || debouncedQueryText.length < 1) {
+    if (!queryText || queryText.length < 1) {
       setUsers([])
       return
     }
     startTransition(async () => {
       const response = await kunFetchGet<KunUser[]>('/user/mention/search', {
-        query: debouncedQueryText
+        query: queryText
       })
       setUsers(response)
     })
@@ -29,7 +28,7 @@ export const MentionsListDropdown = ({
 
   useEffect(() => {
     fetchUsers()
-  }, [debouncedQueryText])
+  }, [])
 
   return (
     <div className="w-full px-1 py-2 shadow max-w-64 bg-background border-small rounded-small border-default-200 dark:border-default-100">
