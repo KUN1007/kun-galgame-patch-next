@@ -91,7 +91,11 @@ export const PublishComment = ({
         </div>
       </CardHeader>
       <CardBody className="space-y-4">
-        <KunEditor valueMarkdown={content} saveMarkdown={setContent} />
+        <KunEditor
+          valueMarkdown={content}
+          saveMarkdown={setContent}
+          placeholder="输入 @ 符号可以 @ 用户, 如果您对其他用户发布的资源有反馈或疑问, 建议您 @ 发布资源的用户以便通知"
+        />
 
         <div className="flex items-center justify-between">
           <Chip

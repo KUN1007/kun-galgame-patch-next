@@ -29,6 +29,10 @@ import {
   stopLinkCommand,
   linkCustomKeymap
 } from './plugins/stop-link/stopLinkPlugin'
+import {
+  placeholderPlugin,
+  placeholderCtx
+} from './plugins/placeholder/placeholderPlugin'
 import '~/styles/editor.scss'
 
 import bash from 'refractor/lang/bash'
@@ -55,9 +59,14 @@ import markdown from 'refractor/lang/markdown'
 type Props = {
   valueMarkdown: string
   saveMarkdown: (markdown: string) => void
+  placeholder?: string
 }
 
-export const KunEditorProvider = ({ valueMarkdown, saveMarkdown }: Props) => {
+export const KunEditorProvider = ({
+  valueMarkdown,
+  saveMarkdown,
+  placeholder
+}: Props) => {
   const refreshContentStatus = useKunMilkdownStore(
     (state) => state.data.refreshContentStatus
   )
@@ -69,6 +78,7 @@ export const KunEditorProvider = ({ valueMarkdown, saveMarkdown }: Props) => {
       .config((ctx) => {
         ctx.set(rootCtx, root)
         ctx.set(defaultValueCtx, valueMarkdown)
+        ctx.set(placeholderCtx.key, placeholder ?? '')
 
         const listener = ctx.get(listenerCtx)
         listener.markdownUpdated((_, markdown) => {
@@ -121,7 +131,15 @@ export const KunEditorProvider = ({ valueMarkdown, saveMarkdown }: Props) => {
       .use(trailing)
       .use(upload)
       .use(automd)
-      .use([stopLinkCommand, linkCustomKeymap, mentions].flat())
+      .use(
+        [
+          stopLinkCommand,
+          linkCustomKeymap,
+          mentions,
+          placeholderCtx,
+          placeholderPlugin
+        ].flat()
+      )
   )
 
   useEffect(

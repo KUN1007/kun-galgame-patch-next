@@ -1,6 +1,10 @@
 .milkdown {
   @apply text-default-800 leading-7 whitespace-pre-line;
 
+  .ProseMirror[data-placeholder]::before {
+    @apply pointer-events-none content-[attr(data-placeholder)] absolute top-4 left-6 right-6 text-default-400 dark:text-default-500 text-sm;
+  }
+
   .ProseMirror {
     @apply m-2 min-h-[200px] p-4 rounded-lg bg-content1 border border-default-200
     transition-colors duration-200 focus:outline-none focus:ring-2

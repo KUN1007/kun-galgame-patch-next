@@ -29,7 +29,7 @@ export const mentionsPlugin = () => {
   const proseMentionsPlugin = useMemo(
     () =>
       $prose((ctx) => {
-        const key = new PluginKey<MentionsPluginAttrs>('MENTIONS_PLUGIN')
+        const key = new PluginKey<MentionsPluginAttrs>('KUN_MILKDOWN_MENTIONS_PLUGIN')
         return new Plugin({
           key,
           state: {
