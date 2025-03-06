@@ -1,7 +1,6 @@
 'use client'
 
 import { useState, useEffect, useTransition } from 'react'
-import { Button } from '@nextui-org/react'
 import { ReleaseCard } from './ReleaseCard'
 import { MonthNavigation } from './MonthNavigation'
 import { KunHeader } from '~/components/kun/Header'
@@ -9,8 +8,10 @@ import { KunLoading } from '~/components/kun/Loading'
 import { motion } from 'framer-motion'
 import { kunFetchGet } from '~/utils/kunFetch'
 import { kunErrorHandler } from '~/utils/kunErrorHandler'
-import type { GalgameReleaseCard } from '~/types/api/release'
 import { KunNull } from '../kun/Null'
+import { useMounted } from '~/hooks/useMounted'
+import type { GalgameReleaseCard } from '~/types/api/release'
+import { Link } from '@nextui-org/react'
 
 interface Props {
   initialGalgames: GalgameReleaseCard[]
@@ -28,6 +29,7 @@ export const ReleaseContainer = ({
   const [currentYear, setCurrentYear] = useState<number>(initialYear)
   const [currentMonth, setCurrentMonth] = useState<number>(initialMonth)
   const [isPending, startTransition] = useTransition()
+  const isMounted = useMounted()
 
   const fetchReleaseGalgame = async () => {
     startTransition(async () => {
@@ -42,6 +44,9 @@ export const ReleaseContainer = ({
   }
 
   useEffect(() => {
+    if (!isMounted) {
+      return
+    }
     fetchReleaseGalgame()
   }, [currentYear, currentMonth])
 
@@ -53,14 +58,6 @@ export const ReleaseContainer = ({
     )
   })
 
-  const handleMonthChange = (month: number) => {
-    setCurrentMonth(month)
-  }
-
-  const handleYearChange = (year: number) => {
-    setCurrentYear(year)
-  }
-
   return (
     <div className="container mx-auto my-4 space-y-6">
       <motion.div
@@ -70,7 +67,21 @@ export const ReleaseContainer = ({
       >
         <KunHeader
           name="Galgame 新作月表"
-          description="这里列举了按照月份分类的 Galgame 新作, 如果您发现有缺失, 您可以创建 Galgame"
+          description="这里列举了按照月份分类的 Galgame 新作"
+          endContent={
+            <p className="w-full mx-auto text-default-500">
+              若游戏有缺失, 您可以参照{' '}
+              <Link
+                showAnchorIcon
+                isExternal
+                href="https://vndb.org/r?f=01731;o=a;s=released"
+              >
+                VNDB 的新作页面
+              </Link>
+              , 按照列表中的游戏来{' '}
+              <Link href="/edit/create">创建新 Galgame</Link>
+            </p>
+          }
         />
       </motion.div>
 
@@ -79,37 +90,25 @@ export const ReleaseContainer = ({
         availableMonths={Array.from({ length: 12 }, (_, i) =>
           (i + 1).toString()
         )}
-        onMonthChange={handleMonthChange}
+        onMonthChange={setCurrentMonth}
         currentYear={currentYear}
-        onYearChange={handleYearChange}
+        onYearChange={setCurrentYear}
       />
 
       {isPending ? (
         <KunLoading hint="正在加载 Galgame 数据" />
       ) : (
-        <>
-          {filteredGalgames.length > 0 ? (
-            <div className="grid grid-cols-2 gap-2 mx-auto mb-8 sm:gap-6 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
-              {filteredGalgames.map((game) => (
-                <ReleaseCard key={game.patchId} patch={game} />
-              ))}
-            </div>
-          ) : (
-            <div className="flex flex-col items-center justify-center space-y-2">
-              <KunNull message="该月份暂无新作发布" />
-              <Button
-                color="primary"
-                variant="flat"
-                onPress={() => {
-                  setCurrentMonth(1)
-                  setCurrentYear(new Date().getFullYear())
-                }}
-              >
-                查看本月最新发布
-              </Button>
-            </div>
-          )}
-        </>
+        <div className="grid grid-cols-2 gap-2 mx-auto mb-8 sm:gap-6 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
+          {filteredGalgames.map((game) => (
+            <ReleaseCard key={game.patchId} patch={game} />
+          ))}
+        </div>
+      )}
+
+      {!filteredGalgames.length && (
+        <div className="flex flex-col items-center justify-center space-y-2">
+          <KunNull message="该月份暂无新作发布" />
+        </div>
       )}
     </div>
   )
