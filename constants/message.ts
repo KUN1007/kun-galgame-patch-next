@@ -1,6 +1,5 @@
 export const MESSAGE_TYPE = [
   'apply',
-  'system',
   'pm',
   'like',
   'favorite',
@@ -10,12 +9,12 @@ export const MESSAGE_TYPE = [
   'mention',
   'patchResourceCreate',
   'patchResourceUpdate',
+  'system',
   ''
 ] as const
 
 export const MESSAGE_TYPE_MAP: Record<string, string> = {
   apply: '申请',
-  system: '系统',
   pm: '私聊',
   like: '点赞',
   favorite: '收藏',
@@ -24,5 +23,6 @@ export const MESSAGE_TYPE_MAP: Record<string, string> = {
   pr: '更新请求',
   mention: '提到了您',
   patchResourceCreate: '创建新补丁',
-  patchResourceUpdate: '更新了补丁'
+  patchResourceUpdate: '更新了补丁',
+  system: '系统'
 }

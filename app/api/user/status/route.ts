@@ -25,13 +25,14 @@ export const getStatus = async (uid: number | undefined) => {
     role: user.role,
     dailyCheckIn: user.daily_check_in,
     dailyImageLimit: user.daily_image_count,
-    dailyUploadLimit: user.daily_upload_size
+    dailyUploadLimit: user.daily_upload_size,
+    mutedMessageTypes: []
   }
 
   return responseData
 }
 
-export async function GET(req: NextRequest) {
+export const GET = async (req: NextRequest) => {
   const payload = await verifyHeaderCookie(req)
   if (!payload) {
     return NextResponse.json('用户登陆失效')

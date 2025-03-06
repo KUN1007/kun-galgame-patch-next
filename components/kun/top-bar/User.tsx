@@ -14,14 +14,32 @@ import { useMounted } from '~/hooks/useMounted'
 import { UserDropdown } from './UserDropdown'
 import { KunSearch } from './Search'
 import { UserMessageBell } from './UserMessageBell'
+import { kunErrorHandler } from '~/utils/kunErrorHandler'
 import type { UserState } from '~/store/userStore'
-import type { Message } from '~/types/api/message'
 
 export const KunTopBarUser = () => {
   const router = useRouter()
-  const { user, setUser } = useUserStore((state) => state)
-  const [hasUnread, setHasUnread] = useState(false)
+  const { user, setUser, logout } = useUserStore()
+  const [unreadMessageTypes, setUnreadMessageTypes] = useState<string[]>([])
   const isMounted = useMounted()
+
+  const getUserStatus = async () => {
+    const res = await kunFetchGet<KunResponse<UserState>>('/user/status')
+    if (typeof res === 'string') {
+      toast.error(res)
+      logout()
+      router.push('/login')
+    } else {
+      setUser({ ...res, mutedMessageTypes: user.mutedMessageTypes })
+    }
+  }
+
+  const getUserUnreadMessage = async () => {
+    const response = await kunFetchGet<KunResponse<string[]>>('/message/unread')
+    kunErrorHandler(response, (value) => {
+      setUnreadMessageTypes(value)
+    })
+  }
 
   useEffect(() => {
     if (!isMounted) {
@@ -30,24 +48,6 @@ export const KunTopBarUser = () => {
     if (!user.uid) {
       return
     }
-
-    const getUserStatus = async () => {
-      const res = await kunFetchGet<KunResponse<UserState>>('/user/status')
-      if (typeof res === 'string') {
-        toast.error(res)
-        router.push('/login')
-      } else {
-        setUser(user)
-      }
-    }
-
-    const getUserUnreadMessage = async () => {
-      const message = await kunFetchGet<Message | null>('/message/unread')
-      if (message) {
-        setHasUnread(true)
-      }
-    }
-
     getUserStatus()
     getUserUnreadMessage()
   }, [isMounted])
@@ -81,8 +81,8 @@ export const KunTopBarUser = () => {
           {user.name && (
             <>
               <UserMessageBell
-                hasUnreadMessages={hasUnread}
-                setReadMessage={() => setHasUnread(false)}
+                unreadMessageTypes={unreadMessageTypes}
+                readMessages={() => setUnreadMessageTypes([])}
               />
 
               <UserDropdown />

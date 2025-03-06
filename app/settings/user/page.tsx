@@ -1,4 +1,4 @@
-import { UserSettings } from '~/components/settings/user/User'
+import { UserSettings } from '~/components/settings/user/Container'
 import { kunMetadata } from './metadata'
 import type { Metadata } from 'next'
 

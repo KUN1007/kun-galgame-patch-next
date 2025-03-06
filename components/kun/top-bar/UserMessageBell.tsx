@@ -7,21 +7,27 @@ import { Bell, BellRing } from 'lucide-react'
 import { AnimatePresence, motion } from 'framer-motion'
 import { bellShakeVariants, dotVariants } from '~/motion/bell'
 import { useRouter } from 'next-nprogress-bar'
+import { useUserStore } from '~/store/userStore'
 
-interface AnimatedNotificationBellProps {
-  hasUnreadMessages: boolean
-  setReadMessage: () => void
+interface Props {
+  unreadMessageTypes: string[]
+  readMessages: () => void
 }
 
 export const UserMessageBell = ({
-  hasUnreadMessages,
-  setReadMessage
-}: AnimatedNotificationBellProps) => {
+  unreadMessageTypes,
+  readMessages
+}: Props) => {
   const router = useRouter()
+  const { user } = useUserStore()
+
+  const hasUnreadMessages = unreadMessageTypes.some(
+    (type) => !user.mutedMessageTypes.includes(type)
+  )
 
   const handleClickButton = () => {
     if (hasUnreadMessages) {
-      setReadMessage()
+      readMessages()
       router.push('/message/notice')
     }
   }
