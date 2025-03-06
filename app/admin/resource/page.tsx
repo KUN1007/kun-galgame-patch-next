@@ -18,6 +18,9 @@ export default async function Kun() {
   }
 
   return (
-    <Resource initialResources={response.resources} total={response.total} />
+    <Resource
+      initialResources={response.resources}
+      initialTotal={response.total}
+    />
   )
 }

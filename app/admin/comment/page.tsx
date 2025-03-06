@@ -17,5 +17,10 @@ export default async function Kun() {
     return <ErrorComponent error={response} />
   }
 
-  return <Comment initialComments={response.comments} total={response.total} />
+  return (
+    <Comment
+      initialComments={response.comments}
+      initialTotal={response.total}
+    />
+  )
 }

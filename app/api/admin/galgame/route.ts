@@ -9,11 +9,21 @@ import type { AdminGalgame } from '~/types/api/admin'
 export const getGalgame = async (
   input: z.infer<typeof adminPaginationSchema>
 ) => {
-  const { page, limit } = input
+  const { page, limit, search } = input
   const offset = (page - 1) * limit
+
+  const where = search
+    ? {
+        name: {
+          contains: search,
+          mode: 'insensitive' as const
+        }
+      }
+    : {}
 
   const [data, total] = await Promise.all([
     prisma.patch.findMany({
+      where,
       take: limit,
       skip: offset,
       orderBy: { created: 'desc' },
@@ -27,7 +37,7 @@ export const getGalgame = async (
         }
       }
     }),
-    prisma.patch.count()
+    prisma.patch.count({ where })
   ])
 
   const galgames: AdminGalgame[] = data.map((galgame) => ({

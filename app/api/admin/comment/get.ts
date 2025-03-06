@@ -7,11 +7,21 @@ import type { AdminComment } from '~/types/api/admin'
 export const getComment = async (
   input: z.infer<typeof adminPaginationSchema>
 ) => {
-  const { page, limit } = input
+  const { page, limit, search } = input
   const offset = (page - 1) * limit
+
+  const where = search
+    ? {
+        content: {
+          contains: search,
+          mode: 'insensitive' as const
+        }
+      }
+    : {}
 
   const [data, total] = await Promise.all([
     prisma.patch_comment.findMany({
+      where,
       take: limit,
       skip: offset,
       orderBy: { created: 'desc' },
@@ -35,7 +45,7 @@ export const getComment = async (
         }
       }
     }),
-    prisma.patch.count()
+    prisma.patch_comment.count({ where })
   ])
 
   const comments: AdminComment[] = data.map((comment) => ({

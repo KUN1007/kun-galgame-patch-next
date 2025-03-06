@@ -17,5 +17,10 @@ export default async function Kun() {
     return <ErrorComponent error={response} />
   }
 
-  return <Galgame initialGalgames={response.galgames} total={response.total} />
+  return (
+    <Galgame
+      initialGalgames={response.galgames}
+      initialTotal={response.total}
+    />
+  )
 }

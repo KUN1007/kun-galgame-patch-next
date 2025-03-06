@@ -82,14 +82,14 @@ export const User = ({ initialUsers, initialTotal }: Props) => {
       <Input
         fullWidth
         isClearable
-        placeholder="搜索用户名..."
+        placeholder="使用用户名搜索用户"
         startContent={<Search className="text-default-300" size={20} />}
         value={searchQuery}
         onValueChange={handleSearch}
       />
 
       {loading ? (
-        <KunLoading hint="正在获取消息数据..." />
+        <KunLoading hint="正在获取用户数据..." />
       ) : (
         <Table
           aria-label="用户管理"

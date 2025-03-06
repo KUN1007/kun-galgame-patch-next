@@ -1,37 +1,44 @@
 'use client'
 
-import { Pagination } from '@nextui-org/react'
+import { Pagination, Input } from '@nextui-org/react'
+import { Search } from 'lucide-react'
 import { useEffect, useState } from 'react'
 import { kunFetchGet } from '~/utils/kunFetch'
 import { KunLoading } from '~/components/kun/Loading'
 import { useMounted } from '~/hooks/useMounted'
 import { CommentCard } from './Card'
+import { useDebounce } from 'use-debounce'
 import type { AdminComment } from '~/types/api/admin'
 
 interface Props {
   initialComments: AdminComment[]
-  total: number
+  initialTotal: number
 }
 
-export const Comment = ({ initialComments, total }: Props) => {
+export const Comment = ({ initialComments, initialTotal }: Props) => {
   const [comments, setComments] = useState<AdminComment[]>(initialComments)
+  const [total, setTotal] = useState(initialTotal)
   const [page, setPage] = useState(1)
+  const [searchQuery, setSearchQuery] = useState('')
+  const [debouncedQuery] = useDebounce(searchQuery, 500)
   const isMounted = useMounted()
 
   const [loading, setLoading] = useState(false)
   const fetchData = async () => {
     setLoading(true)
 
-    const { comments } = await kunFetchGet<{
+    const { comments, total } = await kunFetchGet<{
       comments: AdminComment[]
       total: number
     }>('/admin/comment', {
       page,
-      limit: 30
+      limit: 30,
+      search: debouncedQuery
     })
 
     setLoading(false)
     setComments(comments)
+    setTotal(total)
   }
 
   useEffect(() => {
@@ -39,11 +46,25 @@ export const Comment = ({ initialComments, total }: Props) => {
       return
     }
     fetchData()
-  }, [page])
+  }, [page, debouncedQuery])
+
+  const handleSearch = (value: string) => {
+    setSearchQuery(value)
+    setPage(1)
+  }
 
   return (
     <div className="space-y-6">
       <h1 className="text-2xl font-bold">评论管理</h1>
+
+      <Input
+        fullWidth
+        isClearable
+        placeholder="输入评论内容搜索评论"
+        startContent={<Search className="text-default-300" size={20} />}
+        value={searchQuery}
+        onValueChange={handleSearch}
+      />
 
       <div className="space-y-4">
         {loading ? (

@@ -7,11 +7,21 @@ import type { AdminResource } from '~/types/api/admin'
 export const getPatchResource = async (
   input: z.infer<typeof adminPaginationSchema>
 ) => {
-  const { page, limit } = input
+  const { page, limit, search } = input
   const offset = (page - 1) * limit
+
+  const where = search
+    ? {
+        content: {
+          contains: search,
+          mode: 'insensitive' as const
+        }
+      }
+    : {}
 
   const [data, total] = await Promise.all([
     prisma.patch_resource.findMany({
+      where,
       take: limit,
       skip: offset,
       orderBy: { created: 'desc' },
@@ -30,7 +40,7 @@ export const getPatchResource = async (
         }
       }
     }),
-    prisma.patch_resource.count()
+    prisma.patch_resource.count({ where })
   ])
 
   const resources: AdminResource[] = data.map((resource) => ({

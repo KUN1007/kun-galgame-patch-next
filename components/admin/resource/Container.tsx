@@ -8,13 +8,16 @@ import {
   TableCell,
   TableColumn,
   TableHeader,
-  TableRow
+  TableRow,
+  Input
 } from '@nextui-org/react'
+import { Search } from 'lucide-react'
 import { kunFetchGet } from '~/utils/kunFetch'
 import { useEffect, useState } from 'react'
 import { useMounted } from '~/hooks/useMounted'
 import { KunLoading } from '~/components/kun/Loading'
 import { RenderCell } from './RenderCell'
+import { useDebounce } from 'use-debounce'
 import type { AdminResource } from '~/types/api/admin'
 
 const columns = [
@@ -28,28 +31,33 @@ const columns = [
 
 interface Props {
   initialResources: AdminResource[]
-  total: number
+  initialTotal: number
 }
 
-export const Resource = ({ initialResources, total }: Props) => {
+export const Resource = ({ initialResources, initialTotal }: Props) => {
   const [resources, setResources] = useState<AdminResource[]>(initialResources)
+  const [total, setTotal] = useState(initialTotal)
   const [page, setPage] = useState(1)
+  const [searchQuery, setSearchQuery] = useState('')
+  const [debouncedQuery] = useDebounce(searchQuery, 500)
   const isMounted = useMounted()
 
   const [loading, setLoading] = useState(false)
   const fetchData = async () => {
     setLoading(true)
 
-    const { resources } = await kunFetchGet<{
+    const { resources, total } = await kunFetchGet<{
       resources: AdminResource[]
       total: number
     }>('/admin/resource', {
       page,
-      limit: 30
+      limit: 30,
+      search: debouncedQuery
     })
 
     setLoading(false)
     setResources(resources)
+    setTotal(total)
   }
 
   useEffect(() => {
@@ -57,7 +65,12 @@ export const Resource = ({ initialResources, total }: Props) => {
       return
     }
     fetchData()
-  }, [page])
+  }, [page, debouncedQuery])
+
+  const handleSearch = (value: string) => {
+    setSearchQuery(value)
+    setPage(1)
+  }
 
   return (
     <div className="space-y-6">
@@ -67,6 +80,15 @@ export const Resource = ({ initialResources, total }: Props) => {
           正在开发中...
         </Chip>
       </div>
+
+      <Input
+        fullWidth
+        isClearable
+        placeholder="输入补丁资源链接 (或 BLAKE3 Hash 值), 搜索补丁资源"
+        startContent={<Search className="text-default-300" size={20} />}
+        value={searchQuery}
+        onValueChange={handleSearch}
+      />
 
       {loading ? (
         <KunLoading hint="正在获取补丁资源数据..." />
