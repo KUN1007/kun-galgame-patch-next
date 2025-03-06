@@ -29,7 +29,7 @@ export const KunTopBar = () => {
       onMenuOpenChange={setIsMenuOpen}
       classNames={{ wrapper: 'px-3' }}
     >
-      <NavbarContent className="sm:hidden" justify="start">
+      <NavbarContent className="md:hidden" justify="start">
         <li className="h-full">
           <NavbarMenuToggle />
         </li>
@@ -37,7 +37,7 @@ export const KunTopBar = () => {
 
       <KunTopBarBrand />
 
-      <NavbarContent className="hidden gap-3 sm:flex">
+      <NavbarContent className="hidden gap-3 md:flex">
         {kunNavItem.map((item) => (
           <NavbarItem key={item.href} isActive={pathname === item.href}>
             <Link

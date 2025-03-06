@@ -20,7 +20,7 @@ export const KunTopBarBrand = () => {
         </div>
       }
     >
-      <NavbarBrand className="hidden mr-16 grow-0 sm:flex">
+      <NavbarBrand className="hidden mr-16 grow-0 md:flex">
         <Link className="flex items-center" href="/">
           <Image
             src="/favicon.webp"
