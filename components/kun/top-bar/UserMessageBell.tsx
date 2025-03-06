@@ -22,7 +22,7 @@ export const UserMessageBell = ({
   const { user } = useUserStore()
 
   const hasUnreadMessages = unreadMessageTypes.some(
-    (type) => !user.mutedMessageTypes?.includes(type)
+    (type) => !user.mutedMessageTypes.includes(type)
   )
 
   const handleClickButton = () => {

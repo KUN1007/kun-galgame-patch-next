@@ -21,7 +21,7 @@ export const MessageSettings = () => {
           {MESSAGE_TYPE.filter((t) => t).map((type) => (
             <Checkbox
               key={type}
-              isSelected={!user.mutedMessageTypes?.includes(type)}
+              isSelected={!user.mutedMessageTypes.includes(type)}
               onValueChange={() => toggleMutedMessageType(type)}
               color="primary"
               isDisabled={type === 'system'}

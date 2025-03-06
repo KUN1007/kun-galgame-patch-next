@@ -30,7 +30,7 @@ export const KunTopBarUser = () => {
       logout()
       router.push('/login')
     } else {
-      setUser({ ...res, mutedMessageTypes: user.mutedMessageTypes })
+      setUser({ ...res, mutedMessageTypes: user.mutedMessageTypes ?? [] })
     }
   }
 
