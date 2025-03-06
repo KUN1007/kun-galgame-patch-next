@@ -17,9 +17,10 @@ import { resizeImage } from '~/utils/resizeImage'
 import { kunFetchFormData } from '~/utils/kunFetch'
 import { MenuButton } from './MenuButton'
 import { createButtons } from './_buttonList'
+import { EmojiPicker } from './emoji/EmojiPicker'
+import { cn } from '~/utils/cn'
 import type { CmdKey } from '@milkdown/core'
 import type { UseEditorReturn } from '@milkdown/react'
-import { cn } from '~/utils/cn'
 
 export const KunMilkdownPluginsMenu = ({
   editorInfo,
@@ -79,6 +80,8 @@ export const KunMilkdownPluginsMenu = ({
           ariaLabel={ariaLabel}
         />
       ))}
+
+      <EmojiPicker editorInfo={editorInfo} />
 
       <Popover placement="bottom" offset={10}>
         <PopoverTrigger>
