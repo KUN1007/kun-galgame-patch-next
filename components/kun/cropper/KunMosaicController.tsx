@@ -17,8 +17,8 @@ export const KunMosaicController: FC<KunMosaicControllerProps> = ({
         <Slider
           size="sm"
           step={1}
-          maxValue={24}
-          minValue={3}
+          maxValue={48}
+          minValue={16}
           value={mosaicSize}
           onChange={(value) => onMosaicSizeChange(Number(value))}
           className="max-w-md"

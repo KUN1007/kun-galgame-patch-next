@@ -43,7 +43,7 @@ export const KunImageMosaicModal: FC<Props> = ({
   })
   const containerRef = useRef<HTMLDivElement>(null)
   const [imageLoaded, setImageLoaded] = useState(false)
-  const [mosaicSize, setMosaicSize] = useState(10)
+  const [mosaicSize, setMosaicSize] = useState(24)
 
   const image = useMemo(() => {
     if (typeof window === 'undefined' || !imgSrc) return undefined

@@ -107,9 +107,11 @@ export const mosaicImg = (
       const avgA = totalA / count
 
       for (const pixelIndex of pixelIndices) {
-        data[pixelIndex] = avgR
-        data[pixelIndex + 1] = avgG
-        data[pixelIndex + 2] = avgB
+        const fadeAmount = 1.2
+
+        data[pixelIndex] = avgR * fadeAmount
+        data[pixelIndex + 1] = avgG * fadeAmount
+        data[pixelIndex + 2] = avgB * fadeAmount
         data[pixelIndex + 3] = avgA
       }
     }
