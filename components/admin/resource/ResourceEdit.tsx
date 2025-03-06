@@ -12,7 +12,7 @@ import {
   useDisclosure
 } from '@nextui-org/react'
 import { Edit2, Trash2 } from 'lucide-react'
-import { useUserStore } from '~/store/providers/user'
+import { useUserStore } from '~/store/userStore'
 import { kunFetchDelete } from '~/utils/kunFetch'
 import { EditResourceDialog } from '~/components/patch/resource/edit/EditResourceDialog'
 import type { AdminResource } from '~/types/api/admin'

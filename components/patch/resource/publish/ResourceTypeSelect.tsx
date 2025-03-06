@@ -4,7 +4,7 @@ import { z } from 'zod'
 import { Controller } from 'react-hook-form'
 import { Select, SelectItem } from '@nextui-org/select'
 import { patchResourceCreateSchema } from '~/validations/patch'
-import { useUserStore } from '~/store/providers/user'
+import { useUserStore } from '~/store/userStore'
 import { storageTypes } from '~/constants/resource'
 import {
   USER_DAILY_UPLOAD_LIMIT,

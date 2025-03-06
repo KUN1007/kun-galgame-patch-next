@@ -13,7 +13,7 @@ import {
 import { kunFetchPost } from '~/utils/kunFetch'
 import { Check, Plus } from 'lucide-react'
 import { useRouter } from 'next-nprogress-bar'
-import { useUserStore } from '~/store/providers/user'
+import { useUserStore } from '~/store/userStore'
 import { kunErrorHandler } from '~/utils/kunErrorHandler'
 
 interface Props {

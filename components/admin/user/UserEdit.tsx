@@ -19,7 +19,7 @@ import { Edit2 } from 'lucide-react'
 import { USER_ROLE_MAP, USER_STATUS_MAP } from '~/constants/user'
 import { kunFetchPut } from '~/utils/kunFetch'
 import { kunErrorHandler } from '~/utils/kunErrorHandler'
-import { useUserStore } from '~/store/providers/user'
+import { useUserStore } from '~/store/userStore'
 import type { AdminUser } from '~/types/api/admin'
 
 interface Props {

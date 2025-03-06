@@ -11,7 +11,7 @@ import {
   useDisclosure
 } from '@nextui-org/modal'
 import { LogOut } from 'lucide-react'
-import { useUserStore } from '~/store/providers/user'
+import { useUserStore } from '~/store/userStore'
 import { useState } from 'react'
 import { useRouter } from 'next-nprogress-bar'
 import { kunFetchPost } from '~/utils/kunFetch'

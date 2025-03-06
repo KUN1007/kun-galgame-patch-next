@@ -4,10 +4,10 @@ import { useState } from 'react'
 import { Controller, useForm } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { z } from 'zod'
-import { Button, Checkbox, Divider, Input, Link } from '@nextui-org/react'
+import { Button, Checkbox, Input, Link } from '@nextui-org/react'
 import { kunFetchPost } from '~/utils/kunFetch'
 import { registerSchema } from '~/validations/auth'
-import { useUserStore } from '~/store/providers/user'
+import { useUserStore } from '~/store/userStore'
 import { kunErrorHandler } from '~/utils/kunErrorHandler'
 import { redirect } from 'next/navigation'
 import toast from 'react-hot-toast'
@@ -95,7 +95,7 @@ export const RegisterForm = () => {
       <Controller
         name="code"
         control={control}
-        render={({ field, formState: { errors, defaultValues } }) => (
+        render={({ field, formState: { errors } }) => (
           <Input
             {...field}
             isRequired

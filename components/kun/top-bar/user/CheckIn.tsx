@@ -2,7 +2,7 @@
 
 import { DropdownItem } from '@nextui-org/dropdown'
 import { CalendarCheck, Sparkles } from 'lucide-react'
-import { useUserStore } from '~/store/providers/user'
+import { useUserStore } from '~/store/userStore'
 import { useState } from 'react'
 import { kunFetchPost } from '~/utils/kunFetch'
 import { showKunSooner } from '~/components/kun/Sooner'

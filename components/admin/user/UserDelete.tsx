@@ -14,7 +14,7 @@ import {
 import { Trash2 } from 'lucide-react'
 import { kunFetchDelete } from '~/utils/kunFetch'
 import { kunErrorHandler } from '~/utils/kunErrorHandler'
-import { useUserStore } from '~/store/providers/user'
+import { useUserStore } from '~/store/userStore'
 import type { AdminUser } from '~/types/api/admin'
 
 interface Props {

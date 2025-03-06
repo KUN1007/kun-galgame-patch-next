@@ -18,7 +18,7 @@ import {
 } from '@nextui-org/modal'
 import { Textarea } from '@nextui-org/input'
 import { MoreVertical } from 'lucide-react'
-import { useUserStore } from '~/store/providers/user'
+import { useUserStore } from '~/store/userStore'
 import { kunFetchDelete, kunFetchPut } from '~/utils/kunFetch'
 import type { AdminComment } from '~/types/api/admin'
 import toast from 'react-hot-toast'

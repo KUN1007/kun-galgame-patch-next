@@ -1,4 +1,4 @@
-import type { PatchResource } from '~/types/api/patch'
+import type { PatchResourceHtml } from '~/types/api/patch'
 import type { PatchComment } from '~/types/api/comment'
 
 export type AdminStatsName =
@@ -55,7 +55,7 @@ export interface AdminGalgame {
   created: Date | string
 }
 
-export interface AdminResource extends PatchResource {
+export interface AdminResource extends PatchResourceHtml {
   patchName: string
 }
 

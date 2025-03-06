@@ -12,7 +12,7 @@ import {
 import { Send } from 'lucide-react'
 import { kunFetchPost } from '~/utils/kunFetch'
 import toast from 'react-hot-toast'
-import { useUserStore } from '~/store/providers/user'
+import { useUserStore } from '~/store/userStore'
 import { kunErrorHandler } from '~/utils/kunErrorHandler'
 import { KunAvatar } from '~/components/kun/floating-card/KunAvatar'
 import { KunEditor } from '~/components/kun/milkdown/Editor'

@@ -2,7 +2,7 @@ import { Upload } from 'lucide-react'
 import { Button, Input } from '@nextui-org/react'
 import { cn } from '~/utils/cn'
 import { useState, useRef } from 'react'
-import { useUserStore } from '~/store/providers/user'
+import { useUserStore } from '~/store/userStore'
 import { handleFileInput } from './utils'
 
 interface Props {

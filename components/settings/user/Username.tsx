@@ -3,7 +3,7 @@
 import { Card, CardBody, CardFooter, CardHeader } from '@nextui-org/card'
 import { Input } from '@nextui-org/input'
 import { Button } from '@nextui-org/button'
-import { useUserStore } from '~/store/providers/user'
+import { useUserStore } from '~/store/userStore'
 import { useState } from 'react'
 import { kunFetchPost } from '~/utils/kunFetch'
 import { kunErrorHandler } from '~/utils/kunErrorHandler'

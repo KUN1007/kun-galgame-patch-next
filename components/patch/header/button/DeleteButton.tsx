@@ -13,7 +13,7 @@ import {
 import { Button } from '@nextui-org/button'
 import { Tooltip } from '@nextui-org/tooltip'
 import { Trash2 } from 'lucide-react'
-import { useUserStore } from '~/store/providers/user'
+import { useUserStore } from '~/store/userStore'
 import toast from 'react-hot-toast'
 import { useRouter } from 'next-nprogress-bar'
 import type { Patch } from '~/types/api/patch'

@@ -8,7 +8,7 @@ import {
   useDisclosure
 } from '@nextui-org/modal'
 import { RewritePatchBanner } from '~/components/edit/rewrite/RewritePatchBanner'
-import { useUserStore } from '~/store/providers/user'
+import { useUserStore } from '~/store/userStore'
 import type { Patch } from '~/types/api/patch'
 
 interface PatchHeaderProps {

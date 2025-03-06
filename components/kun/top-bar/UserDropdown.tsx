@@ -25,7 +25,7 @@ import {
   Sparkles,
   UserRound
 } from 'lucide-react'
-import { useUserStore } from '~/store/providers/user'
+import { useUserStore } from '~/store/userStore'
 import { useEffect, useState } from 'react'
 import { useRouter } from 'next-nprogress-bar'
 import { kunFetchGet, kunFetchPost } from '~/utils/kunFetch'

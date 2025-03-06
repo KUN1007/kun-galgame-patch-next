@@ -22,7 +22,7 @@ import { Upload } from 'lucide-react'
 import { FileUploadContainer } from '../upload/FileUploadContainer'
 import { ResourceTypeSelect } from './ResourceTypeSelect'
 import { kunErrorHandler } from '~/utils/kunErrorHandler'
-import { useUserStore } from '~/store/providers/user'
+import { useUserStore } from '~/store/userStore'
 import {
   USER_DAILY_UPLOAD_LIMIT,
   CREATOR_DAILY_UPLOAD_LIMIT

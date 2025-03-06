@@ -11,7 +11,7 @@ import {
   ModalHeader,
   useDisclosure
 } from '@nextui-org/react'
-import { useUserStore } from '~/store/providers/user'
+import { useUserStore } from '~/store/userStore'
 import { Camera } from 'lucide-react'
 import { dataURItoBlob } from '~/utils/dataURItoBlob'
 import { kunFetchFormData } from '~/utils/kunFetch'
