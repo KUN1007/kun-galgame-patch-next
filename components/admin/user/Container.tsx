@@ -8,13 +8,16 @@ import {
   TableCell,
   TableColumn,
   TableHeader,
-  TableRow
+  TableRow,
+  Input
 } from '@nextui-org/react'
+import { Search } from 'lucide-react'
 import { useEffect, useState } from 'react'
 import { RenderCell } from './RenderCell'
 import { kunFetchGet } from '~/utils/kunFetch'
 import { KunLoading } from '~/components/kun/Loading'
 import { useMounted } from '~/hooks/useMounted'
+import { useDebounce } from 'use-debounce'
 import type { AdminUser } from '~/types/api/admin'
 
 const columns = [
@@ -26,28 +29,33 @@ const columns = [
 
 interface Props {
   initialUsers: AdminUser[]
-  total: number
+  initialTotal: number
 }
 
-export const User = ({ initialUsers, total }: Props) => {
+export const User = ({ initialUsers, initialTotal }: Props) => {
   const [users, setUsers] = useState<AdminUser[]>(initialUsers)
+  const [total, setTotal] = useState(initialTotal)
   const [page, setPage] = useState(1)
+  const [searchQuery, setSearchQuery] = useState('')
+  const [debouncedQuery] = useDebounce(searchQuery, 500)
   const isMounted = useMounted()
 
   const [loading, setLoading] = useState(false)
   const fetchData = async () => {
     setLoading(true)
 
-    const { users } = await kunFetchGet<{
+    const { users, total } = await kunFetchGet<{
       users: AdminUser[]
       total: number
     }>('/admin/user', {
       page,
-      limit: 30
+      limit: 30,
+      search: debouncedQuery
     })
 
     setLoading(false)
     setUsers(users)
+    setTotal(total)
   }
 
   useEffect(() => {
@@ -55,7 +63,12 @@ export const User = ({ initialUsers, total }: Props) => {
       return
     }
     fetchData()
-  }, [page])
+  }, [page, debouncedQuery])
+
+  const handleSearch = (value: string) => {
+    setSearchQuery(value)
+    setPage(1)
+  }
 
   return (
     <div className="space-y-6">
@@ -65,6 +78,15 @@ export const User = ({ initialUsers, total }: Props) => {
           杂鱼! 不许视奸!
         </Chip>
       </div>
+
+      <Input
+        fullWidth
+        isClearable
+        placeholder="搜索用户名..."
+        startContent={<Search className="text-default-300" size={20} />}
+        value={searchQuery}
+        onValueChange={handleSearch}
+      />
 
       {loading ? (
         <KunLoading hint="正在获取消息数据..." />

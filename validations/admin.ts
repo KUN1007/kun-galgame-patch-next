@@ -2,7 +2,8 @@ import { z } from 'zod'
 
 export const adminPaginationSchema = z.object({
   page: z.coerce.number().min(1).max(9999999),
-  limit: z.coerce.number().min(1).max(100)
+  limit: z.coerce.number().min(1).max(100),
+  search: z.string().max(300, { message: '搜索内容最多 300 个字符' }).optional()
 })
 
 export const adminUpdateUserSchema = z.object({

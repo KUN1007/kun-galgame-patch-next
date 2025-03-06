@@ -6,11 +6,21 @@ import type { AdminUser } from '~/types/api/admin'
 export const getUserInfo = async (
   input: z.infer<typeof adminPaginationSchema>
 ) => {
-  const { page, limit } = input
+  const { page, limit, search } = input
   const offset = (page - 1) * limit
+
+  const where = search
+    ? {
+        name: {
+          contains: search,
+          mode: 'insensitive' as const
+        }
+      }
+    : {}
 
   const [data, total] = await Promise.all([
     prisma.user.findMany({
+      where,
       take: limit,
       skip: offset,
       orderBy: { created: 'desc' },
@@ -23,7 +33,7 @@ export const getUserInfo = async (
         }
       }
     }),
-    prisma.user.count()
+    prisma.user.count({ where })
   ])
 
   const users: AdminUser[] = data.map((user) => ({
