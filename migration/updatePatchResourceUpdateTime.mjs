@@ -2,7 +2,7 @@ import { PrismaClient } from '@prisma/client'
 
 const prisma = new PrismaClient()
 
-const updateResourceUpdateTime = async () => {
+const updatePatchResourceUpdateTime = async () => {
   try {
     const patches = await prisma.patch.findMany({
       select: {
@@ -30,4 +30,4 @@ const updateResourceUpdateTime = async () => {
   }
 }
 
-updateResourceUpdateTime()
+updatePatchResourceUpdateTime()

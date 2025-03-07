@@ -18,7 +18,7 @@ export default async function Kun({ searchParams }: Props) {
   const currentPage = res?.page ? res.page : 1
 
   const response = await kunGetActions({
-    sortField: 'created',
+    sortField: 'update_time',
     sortOrder: 'desc',
     page: currentPage,
     limit: 50

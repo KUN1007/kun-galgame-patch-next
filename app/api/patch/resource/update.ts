@@ -57,6 +57,7 @@ export const updatePatchResource = async (
         data: {
           content: newContent,
           model_name: modelName,
+          update_time: new Date(),
           ...resourceData
         },
         include: {

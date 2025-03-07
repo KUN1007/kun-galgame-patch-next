@@ -21,7 +21,7 @@ export const CardContainer = ({ initialResources, initialTotal }: Props) => {
   const [resources, setResources] = useState<PatchResource[]>(initialResources)
   const [total, setTotal] = useState(initialTotal)
   const [loading, setLoading] = useState(false)
-  const [sortField, setSortField] = useState<SortOption>('created')
+  const [sortField, setSortField] = useState<SortOption>('update_time')
   const [sortOrder, setSortOrder] = useState<SortDirection>('desc')
   const isMounted = useMounted()
   const router = useRouter()

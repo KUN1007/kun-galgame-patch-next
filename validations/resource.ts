@@ -2,6 +2,7 @@ import { z } from 'zod'
 
 export const resourceSchema = z.object({
   sortField: z.union([
+    z.literal('update_time'),
     z.literal('created'),
     z.literal('download'),
     z.literal('like')
