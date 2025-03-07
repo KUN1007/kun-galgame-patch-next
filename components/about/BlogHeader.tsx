@@ -11,8 +11,8 @@ interface BlogHeaderProps {
 
 export const BlogHeader = ({ frontmatter }: BlogHeaderProps) => {
   return (
-    <Card className="w-full bg-transparent border-none shadow-none">
-      <CardHeader className="flex flex-col items-start px-0 pb-0">
+    <Card className="w-full space-y-4 overflow-visible bg-transparent border-none shadow-none">
+      <CardHeader className="flex flex-col items-start p-0">
         <div className="relative w-full overflow-hidden rounded-xl">
           <Image
             isZoomed
@@ -25,9 +25,9 @@ export const BlogHeader = ({ frontmatter }: BlogHeaderProps) => {
         </div>
       </CardHeader>
 
-      <CardBody>
+      <CardBody className="p-0 overflow-visible">
         <div className="flex flex-col space-y-4">
-          <h1 className="text-3xl font-bold tracking-tight sm:text-4xl">
+          <h1 className="text-2xl font-bold tracking-tight sm:text-4xl">
             {frontmatter.title}
           </h1>
 

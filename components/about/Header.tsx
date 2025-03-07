@@ -1,5 +1,5 @@
-import { Input } from '@nextui-org/react'
-import { Search } from 'lucide-react'
+// import { Input } from '@nextui-org/react'
+// import { Search } from 'lucide-react'
 import { KunHeader } from '../kun/Header'
 
 // interface HeaderProps {

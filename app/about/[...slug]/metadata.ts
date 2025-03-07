@@ -3,7 +3,7 @@ import type { Metadata } from 'next'
 import type { KunBlog } from '~/lib/mdx/types'
 
 export const generateKunMetadataTemplate = (blog: KunBlog): Metadata => {
-  const { slug, content, frontmatter } = blog
+  const { slug, frontmatter } = blog
 
   return {
     title: `${frontmatter.title}`,

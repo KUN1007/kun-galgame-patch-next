@@ -141,3 +141,11 @@
 .kun-prose mark {
   @apply bg-warning-100 text-warning-800 px-1 rounded;
 }
+
+.kun-prose-normal {
+  @apply whitespace-normal leading-7;
+}
+
+.kun-prose-normal p {
+  @apply my-4;
+}
