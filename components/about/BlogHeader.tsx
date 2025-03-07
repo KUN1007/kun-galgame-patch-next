@@ -1,3 +1,4 @@
+import { Alert } from '@nextui-org/alert'
 import { Card, CardBody, CardHeader } from '@nextui-org/card'
 import { Image } from '@nextui-org/image'
 import { CalendarDays } from 'lucide-react'
@@ -58,6 +59,12 @@ export const BlogHeader = ({ frontmatter }: BlogHeaderProps) => {
               </div>
             </div>
           </div>
+
+          <Alert
+            hideIcon
+            description={frontmatter.description}
+            color="primary"
+          />
         </div>
       </CardBody>
     </Card>
