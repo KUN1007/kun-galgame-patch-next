@@ -27,7 +27,9 @@ const getNotificationIcon = (type: string) => {
       return <MonitorCog className="size-5 text-secondary-500" />
     case 'pm':
       return <Mail className="size-5 text-secondary-500" />
-    case 'like':
+    case 'likeComment':
+      return <ThumbsUp className="size-5 text-secondary-500" />
+    case 'likeResource':
       return <ThumbsUp className="size-5 text-secondary-500" />
     case 'favorite':
       return <Heart className="size-5 text-danger-500" />

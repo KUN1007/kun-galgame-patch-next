@@ -26,7 +26,8 @@ export const followUser = async (uid: number, currentUserUid: number) => {
       type: 'follow',
       content: '关注了您!',
       sender_id: currentUserUid,
-      recipient_id: uid
+      recipient_id: uid,
+      link: `/user/${currentUserUid}/resource`
     })
 
     return {}

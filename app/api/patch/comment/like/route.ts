@@ -60,7 +60,7 @@ export const toggleCommentLike = async (
     }
 
     await createDedupMessage({
-      type: 'like',
+      type: 'likeComment',
       content: `点赞了您的评论! -> ${comment.content.slice(0, 107)}`,
       sender_id: uid,
       recipient_id: comment.user_id,
