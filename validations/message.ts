@@ -8,7 +8,7 @@ export const createMessageSchema = z.object({
     .url('请输入有效的链接格式')
     .max(1007, { message: '单个链接的长度最大 1007 个字符' }),
   recipientId: z.coerce.number().min(1).max(9999999),
-  link: z.string().min(1).max(1007, { message: '消息链接最多 1007 个字符' })
+  link: z.string().max(1007)
 })
 
 export const getMessageSchema = z.object({

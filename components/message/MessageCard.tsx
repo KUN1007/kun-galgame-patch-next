@@ -11,7 +11,8 @@ import {
   MessageCircle,
   MonitorCog,
   ThumbsUp,
-  Users
+  Users,
+  AtSign
 } from 'lucide-react'
 import { MESSAGE_TYPE_MAP } from '~/constants/message'
 import { KunAvatar } from '~/components/kun/floating-card/KunAvatar'
@@ -39,6 +40,8 @@ const getNotificationIcon = (type: string) => {
       return <GitPullRequestArrow className="size-5 text-success-500" />
     case 'follow':
       return <Users className="size-5 text-success-500" />
+    case 'mention':
+      return <AtSign className="size-5 text-success-500" />
     default:
       return <Bell className="size-5 text-default-500" />
   }
