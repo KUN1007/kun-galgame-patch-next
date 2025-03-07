@@ -5,6 +5,7 @@ import { Bio } from './Bio'
 import { Email } from './Email'
 import { Password } from './Password'
 import { MessageSettings } from './MessageSettings'
+import { Reset } from './Reset'
 
 export const UserSettings = () => {
   return (
@@ -18,6 +19,7 @@ export const UserSettings = () => {
         <Email />
         <Password />
         <MessageSettings />
+        <Reset />
       </div>
     </div>
   )
