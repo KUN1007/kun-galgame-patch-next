@@ -134,10 +134,7 @@ export const TagDetailContainer = ({
               <Pagination
                 total={Math.ceil(total / 24)}
                 page={page}
-                onChange={(newPage: number) => {
-                  setPage(newPage)
-                  fetchPatches()
-                }}
+                onChange={setPage}
                 showControls
                 size="lg"
                 radius="lg"
