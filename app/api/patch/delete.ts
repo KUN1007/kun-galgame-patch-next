@@ -8,7 +8,8 @@ const patchIdSchema = z.object({
 
 export const deletePatchById = async (
   input: z.infer<typeof patchIdSchema>,
-  uid: number
+  uid: number,
+  userRole: number
 ) => {
   const { patchId } = input
 
@@ -18,16 +19,23 @@ export const deletePatchById = async (
   if (!patch) {
     return '未找到该游戏'
   }
-  if (patch.vndb_id) {
-    return '该游戏含有 VNDB ID, 仅可以删除未填写 VNDB ID 的游戏'
-  }
-  if (uid !== patch.user_id) {
-    return '您没有权限删除该游戏, 该游戏仅限游戏发布者可删除'
+  if (uid !== patch.user_id && userRole < 4) {
+    return '您没有权限删除该游戏, 该游戏仅限游戏发布者或超级管理员可删除'
   }
 
   const patchResources = await prisma.patch_resource.findMany({
-    where: { patch_id: patchId }
+    where: { patch_id: patchId },
+    include: {
+      user: {
+        select: { id: true }
+      }
+    }
   })
+  const resourceUserIds = patchResources.map((res) => res.user.id)
+  const hasOtherUserResource = resourceUserIds.some((id) => id !== uid)
+  if (hasOtherUserResource && userRole < 4) {
+    return '这个 Galgame 下有其它用户发布的 Galgame 补丁资源, 请与这些用户协商后联系超级管理员删除'
+  }
 
   return await prisma.$transaction(async (prisma) => {
     if (patchResources.length > 0) {

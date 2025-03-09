@@ -43,19 +43,21 @@ export const DeleteButton = ({ patch }: Props) => {
     setDeleting(false)
   }
 
+  const handlePressDeleteButton = () => {
+    if (user.uid !== patch.user.id && user.role < 4) {
+      toast.error('仅游戏发布者或超级管理员可删除该游戏')
+      return
+    }
+    onOpen()
+  }
+
   return (
     <>
       <Tooltip color="default" content="删除游戏">
         <Button
           isIconOnly
           variant="bordered"
-          onPress={() => {
-            if (user.uid !== patch.user.id) {
-              toast.error('仅游戏发布者可删除该游戏')
-              return
-            }
-            onOpen()
-          }}
+          onPress={handlePressDeleteButton}
           className="min-w-0 px-2"
           aria-label="删除游戏"
         >
@@ -79,7 +81,7 @@ export const DeleteButton = ({ patch }: Props) => {
             <Button
               color="danger"
               onPress={handleDelete}
-              isDisabled={deleting || !!patch.vndbId}
+              isDisabled={deleting}
               isLoading={deleting}
             >
               删除
