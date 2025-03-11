@@ -76,7 +76,7 @@ export const SearchPage = () => {
     }>('/search', {
       query: query.split(' ').filter((term) => term.length > 0),
       page: currentPage,
-      limit: 10,
+      limit: 12,
       searchOption: {
         searchInIntroduction: searchData.searchInIntroduction,
         searchInAlias: searchData.searchInAlias,
@@ -184,10 +184,10 @@ export const SearchPage = () => {
             ))}
           </div>
 
-          {total > 10 && (
+          {total > 12 && (
             <div className="flex justify-center">
               <Pagination
-                total={Math.ceil(total / 10)}
+                total={Math.ceil(total / 12)}
                 page={page}
                 onChange={setPage}
                 showControls
