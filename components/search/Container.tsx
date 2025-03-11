@@ -15,10 +15,12 @@ import { GalgameCard } from '~/components/galgame/Card'
 import { useSearchStore } from '~/store/searchStore'
 import { SearchHistory } from './SearchHistory'
 import { KUN_PATCH_MAX_HISTORY_ITEMS } from '~/config/search'
+import { useMounted } from '~/hooks/useMounted'
 
 export const SearchPage = () => {
   const router = useRouter()
   const searchParams = useSearchParams()
+  const isMounted = useMounted()
   const currentPage = Number(searchParams.get('page') || '1')
 
   const [page, setPage] = useState(currentPage)
@@ -33,7 +35,7 @@ export const SearchPage = () => {
   const setSearchData = useSearchStore((state) => state.setData)
 
   useEffect(() => {
-    if (debouncedQuery) {
+    if (debouncedQuery && isMounted) {
       setPage(1)
       handleSearch(1)
     } else {
