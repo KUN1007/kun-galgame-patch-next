@@ -20,14 +20,16 @@ export default function RootLayout({
 }) {
   return (
     <html lang="zh-Hans" suppressHydrationWarning>
-      <head>
-        <Script
-          defer
-          src="https://cloud.umami.is/script.js"
-          data-website-id="ec706c0d-7ce2-4a2c-93ed-d8e6ea635905"
-          strategy="afterInteractive"
-        />
-      </head>
+      {process.env.NODE_ENV === 'production' && (
+        <head>
+          <Script
+            defer
+            src="https://cloud.umami.is/script.js"
+            data-website-id="ec706c0d-7ce2-4a2c-93ed-d8e6ea635905"
+            strategy="afterInteractive"
+          />
+        </head>
+      )}
       <body>
         <Providers>
           <div className="relative flex flex-col items-center justify-center min-h-screen bg-radial">

@@ -1,6 +1,6 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { Button } from '@nextui-org/button'
 import { Card, CardBody } from '@nextui-org/card'
 import {
@@ -17,15 +17,18 @@ import {
   ModalHeader,
   useDisclosure
 } from '@nextui-org/modal'
-import { Edit, MoreHorizontal, Plus, Trash2 } from 'lucide-react'
+import { Edit, MoreHorizontal, Plus, Trash2, Share } from 'lucide-react'
 import { kunFetchDelete } from '~/utils/kunFetch'
 import { PublishResource } from './publish/PublishResource'
 import { EditResourceDialog } from './edit/EditResourceDialog'
 import { useUserStore } from '~/store/userStore'
 import { ResourceInfo } from './ResourceInfo'
 import { ResourceDownload } from './ResourceDownload'
-import type { PatchResourceHtml } from '~/types/api/patch'
 import toast from 'react-hot-toast'
+import { kunCopy } from '~/utils/kunCopy'
+import { kunMoyuMoe } from '~/config/moyu-moe'
+import { useParams } from 'next/navigation'
+import type { PatchResourceHtml } from '~/types/api/patch'
 
 interface Props {
   initialResources: PatchResourceHtml[]
@@ -35,6 +38,9 @@ interface Props {
 export const Resources = ({ initialResources, id }: Props) => {
   const [resources, setResources] =
     useState<PatchResourceHtml[]>(initialResources)
+  const [windowHash, setWindowHash] = useState('')
+
+  useEffect(() => setWindowHash(window.location.hash), [])
 
   const {
     isOpen: isOpenCreate,
@@ -89,7 +95,14 @@ export const Resources = ({ initialResources, id }: Props) => {
       </div>
 
       {resources.map((resource) => (
-        <Card key={resource.id}>
+        <Card
+          key={resource.id}
+          className={
+            windowHash === `#kun_patch_resource_${resource.id}`
+              ? 'border-primary border-3'
+              : ''
+          }
+        >
           <CardBody className="space-y-2">
             <div className="flex items-start justify-between">
               <ResourceInfo resource={resource} />
@@ -130,6 +143,18 @@ export const Resources = ({ initialResources, id }: Props) => {
                     }}
                   >
                     删除
+                  </DropdownItem>
+                  <DropdownItem
+                    key="share"
+                    startContent={<Share className="size-4" />}
+                    onPress={() => {
+                      kunCopy(
+                        // `${kunMoyuMoe.domain.storage}/patch/${resource.id}/resource#kun_patch_resource_${resource.id}`
+                        `http://127.0.0.1:2333/patch/${resource.patchId}/resource#kun_patch_resource_${resource.id}`
+                      )
+                    }}
+                  >
+                    分享
                   </DropdownItem>
                 </DropdownMenu>
               </Dropdown>
