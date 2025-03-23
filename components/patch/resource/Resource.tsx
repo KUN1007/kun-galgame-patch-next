@@ -149,7 +149,7 @@ export const Resources = ({ initialResources, id }: Props) => {
                     startContent={<Share className="size-4" />}
                     onPress={() => {
                       kunCopy(
-                        `${kunMoyuMoe.domain.storage}/patch/${resource.patchId}/resource#kun_patch_resource_${resource.id}`
+                        `${kunMoyuMoe.domain.main}/patch/${resource.patchId}/resource#kun_patch_resource_${resource.id}`
                         // `http://127.0.0.1:2333/patch/${resource.patchId}/resource#kun_patch_resource_${resource.id}`
                       )
                     }}
