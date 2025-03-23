@@ -5,7 +5,11 @@ import { getRemoteIp } from '~/app/api/utils/getRemoteIp'
 import type { HikariResponse } from './type'
 
 // Define allowed origins
-// const allowedOrigins = ['hikarinagi.com']
+const allowedOrigins = [
+  'http://localhost',
+  'http://127.0.0.1',
+  'https://www.hikarinagi.com'
+]
 
 // Rate limit configuration
 const RATE_LIMIT_MAX = 10000
@@ -14,37 +18,29 @@ const RATE_LIMIT_WINDOW_MS = 60000
 export const GET = async (
   request: NextRequest
 ): Promise<NextResponse<HikariResponse>> => {
-  // Get the vndb_id from the query parameters
   const { searchParams } = new URL(request.url)
   const vndbId = searchParams.get('vndb_id')
 
-  // const origin = request.headers.get('origin') || ''
-  // const isAllowedOrigin = allowedOrigins.includes(origin)
+  const origin = request.headers.get('origin') ?? ''
 
-  // if (!isAllowedOrigin && origin) {
-  //   return new NextResponse(
-  //     JSON.stringify({
-  //       success: false,
-  //       message:
-  //         'CORS error: This origin is not allowed to access this resource',
-  //       url: null
-  //     }),
-  //     {
-  //       status: 403,
-  //       headers: {
-  //         'Content-Type': 'application/json'
-  //       }
-  //     }
-  //   )
-  // }
+  // Check if origin exists and is allowed
+  const isAllowedOrigin = origin ? allowedOrigins.includes(origin) : false
+
+  // Set CORS headers based on origin
+  const corsHeaders = {
+    'Access-Control-Allow-Origin': isAllowedOrigin ? origin : allowedOrigins[0],
+    'Access-Control-Allow-Methods': 'GET, OPTIONS',
+    'Access-Control-Allow-Headers': 'Content-Type, Authorization',
+    'Access-Control-Expose-Headers':
+      'X-RateLimit-Limit, X-RateLimit-Remaining, X-RateLimit-Reset'
+  }
 
   const ip = getRemoteIp(request.headers)
   const rateLimitResult = await kunRateLimiter({
     windowMs: RATE_LIMIT_WINDOW_MS,
     max: RATE_LIMIT_MAX,
     message: 'Too many requests, please try again later.',
-    // identifier: `${ip}:${origin}`
-    identifier: ip
+    identifier: `${ip}:${origin || 'unknown'}`
   })
 
   const headers = {
@@ -52,11 +48,12 @@ export const GET = async (
     'X-RateLimit-Limit': rateLimitResult.limit.toString(),
     'X-RateLimit-Remaining': rateLimitResult.remaining.toString(),
     'X-RateLimit-Reset': rateLimitResult.reset.toString(),
-    // 'Access-Control-Allow-Origin': origin,
-    'Access-Control-Allow-Methods': 'GET, OPTIONS',
-    'Access-Control-Allow-Headers': 'Content-Type, Authorization',
-    'Access-Control-Expose-Headers':
-      'X-RateLimit-Limit, X-RateLimit-Remaining, X-RateLimit-Reset'
+    ...corsHeaders
+  }
+
+  // Handle OPTIONS request for CORS preflight
+  if (request.method === 'OPTIONS') {
+    return new NextResponse(null, { headers: corsHeaders })
   }
 
   if (!rateLimitResult.success) {
