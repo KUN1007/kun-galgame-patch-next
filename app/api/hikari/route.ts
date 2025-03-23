@@ -4,14 +4,14 @@ import { kunRateLimiter } from '~/lib/reteLimiter'
 import { getRemoteIp } from '~/app/api/utils/getRemoteIp'
 import type { HikariResponse } from './type'
 
-// Define allowed origins
-const allowedOrigins = [
-  'http://localhost:3000',
-  'http://127.0.0.1:3000',
-  'https://www.hikarinagi.com'
+const DOMAIN_PATTERNS = [
+  /^http:\/\/localhost:3000$/,
+  /^http:\/\/127.0.0.1:3000$/,
+  /^https:\/\/([\w-]+\.)*himoe\.uk$/,
+  /^https:\/\/([\w-]+\.)*hikarinagi\.com$/,
+  /^https:\/\/([\w-]+\.)*hikarinagi\.org$/
 ]
 
-// Rate limit configuration
 const RATE_LIMIT_MAX = 10000
 const RATE_LIMIT_WINDOW_MS = 60000
 
@@ -23,12 +23,12 @@ export const GET = async (
 
   const origin = request.headers.get('origin') ?? ''
 
-  // Check if origin exists and is allowed
-  const isAllowedOrigin = origin ? allowedOrigins.includes(origin) : false
+  const isAllowedOrigin = origin
+    ? DOMAIN_PATTERNS.some((pattern) => pattern.test(origin))
+    : false
 
-  // Set CORS headers based on origin
   const corsHeaders = {
-    'Access-Control-Allow-Origin': isAllowedOrigin ? origin : allowedOrigins[0],
+    'Access-Control-Allow-Origin': isAllowedOrigin ? origin : '',
     'Access-Control-Allow-Methods': 'GET, OPTIONS',
     'Access-Control-Allow-Headers': 'Content-Type, Authorization',
     'Access-Control-Expose-Headers':
@@ -51,7 +51,6 @@ export const GET = async (
     ...corsHeaders
   }
 
-  // Handle OPTIONS request for CORS preflight
   if (request.method === 'OPTIONS') {
     return new NextResponse(null, { headers: corsHeaders })
   }
