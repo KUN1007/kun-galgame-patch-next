@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server'
 import { prisma } from '~/prisma/index'
 import { kunRateLimiter } from '~/lib/reteLimiter'
 import { getRemoteIp } from '~/app/api/utils/getRemoteIp'
+import type { HikariResponse } from './type'
 
 // Define allowed origins
 // const allowedOrigins = ['hikarinagi.com']
@@ -10,7 +11,9 @@ import { getRemoteIp } from '~/app/api/utils/getRemoteIp'
 const RATE_LIMIT_MAX = 10000
 const RATE_LIMIT_WINDOW_MS = 60000
 
-export const GET = async (request: NextRequest) => {
+export const GET = async (
+  request: NextRequest
+): Promise<NextResponse<HikariResponse>> => {
   // Get the vndb_id from the query parameters
   const { searchParams } = new URL(request.url)
   const vndbId = searchParams.get('vndb_id')
@@ -61,7 +64,7 @@ export const GET = async (request: NextRequest) => {
       JSON.stringify({
         success: false,
         message: 'Rate limit exceeded. Please try again later.',
-        url: null
+        data: null
       }),
       { status: 429, headers }
     )
@@ -72,7 +75,7 @@ export const GET = async (request: NextRequest) => {
       JSON.stringify({
         success: false,
         message: 'Missing required parameter: vndb_id',
-        url: null
+        data: null
       }),
       { status: 400, headers }
     )
@@ -80,8 +83,19 @@ export const GET = async (request: NextRequest) => {
 
   try {
     const patch = await prisma.patch.findUnique({
-      where: {
-        vndb_id: vndbId
+      where: { vndb_id: vndbId },
+      include: {
+        user: {
+          select: { name: true, id: true, avatar: true }
+        },
+        resource: {
+          omit: { content: true },
+          include: {
+            user: {
+              select: { name: true, id: true, avatar: true }
+            }
+          }
+        }
       }
     })
 
@@ -90,19 +104,17 @@ export const GET = async (request: NextRequest) => {
         JSON.stringify({
           success: false,
           message: `No patch found for VNDB ID: ${vndbId}`,
-          url: null
+          data: null
         }),
         { status: 404, headers }
       )
     }
 
-    const url = `https://www.moyu.moe/patch/${patch.id}/resource`
-
     return new NextResponse(
       JSON.stringify({
         success: true,
         message: 'Patch found successfully',
-        url
+        data: patch
       }),
       { status: 200, headers }
     )
@@ -111,7 +123,7 @@ export const GET = async (request: NextRequest) => {
       JSON.stringify({
         success: false,
         message: `An error occurred while processing your request ${error}`,
-        url: null
+        data: null
       }),
       { status: 500, headers }
     )
