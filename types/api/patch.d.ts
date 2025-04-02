@@ -15,6 +15,7 @@ export interface Patch {
   language: string[]
   platform: string[]
   isFavorite: boolean
+  resourceUpdateTime: Date | string
   user: {
     id: number
     name: string
@@ -78,6 +79,7 @@ export interface PatchResource {
   userId: number
   patchId: number
   created: string
+  updateTime: Date | string
   user: KunUser & {
     patchCount: number
   }

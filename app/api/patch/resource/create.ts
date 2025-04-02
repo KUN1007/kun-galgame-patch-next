@@ -142,6 +142,7 @@ export const createPatchResource = async (
         userId: newResource.user_id,
         patchId: newResource.patch_id,
         created: String(newResource.created),
+        updateTime: newResource.update_time,
         user: {
           id: newResource.user.id,
           name: newResource.user.name,

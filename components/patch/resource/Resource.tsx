@@ -27,7 +27,6 @@ import { ResourceDownload } from './ResourceDownload'
 import toast from 'react-hot-toast'
 import { kunCopy } from '~/utils/kunCopy'
 import { kunMoyuMoe } from '~/config/moyu-moe'
-import { useParams } from 'next/navigation'
 import type { PatchResourceHtml } from '~/types/api/patch'
 
 interface Props {
@@ -150,7 +149,6 @@ export const Resources = ({ initialResources, id }: Props) => {
                     onPress={() => {
                       kunCopy(
                         `${kunMoyuMoe.domain.main}/patch/${resource.patchId}/resource#kun_patch_resource_${resource.id}`
-                        // `http://127.0.0.1:2333/patch/${resource.patchId}/resource#kun_patch_resource_${resource.id}`
                       )
                     }}
                   >

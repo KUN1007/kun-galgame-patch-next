@@ -61,6 +61,7 @@ export const getPatchResource = async (
     patchId: resource.patch_id,
     patchName: resource.patch.name,
     created: String(resource.created),
+    updateTime: resource.update_time,
     user: {
       id: resource.user.id,
       name: resource.user.name,

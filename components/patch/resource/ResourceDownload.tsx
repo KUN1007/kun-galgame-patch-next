@@ -45,7 +45,7 @@ export const ResourceDownload = ({ resource }: Props) => {
           <AccordionItem
             key="1"
             aria-label="资源备注"
-            subtitle="点击查看备注"
+            subtitle={`该补丁资源最后更新于 ${formatDistanceToNow(resource.updateTime)} - 点击查看备注`}
             title={resource.name ? resource.name : '资源备注'}
             classNames={{
               content: 'whitespace-normal'

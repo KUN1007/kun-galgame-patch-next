@@ -62,7 +62,7 @@ export const PatchHeaderContainer = ({ patch, intro }: PatchHeaderProps) => {
               <KunUser
                 user={patch.user}
                 userProps={{
-                  name: `${patch.user.name} - ${formatDistanceToNow(patch.created)}`,
+                  name: `${patch.user.name} - 发布于 ${formatDistanceToNow(patch.created)} - 资源更新于 ${formatDistanceToNow(patch.resourceUpdateTime)}`,
                   description: (
                     <KunCardStats
                       patch={patch}
