@@ -21,7 +21,7 @@ import { KunMilkdownPluginsMenu } from './plugins/Menu'
 import { KunLoading } from '../Loading'
 import { useKunMilkdownStore } from '~/store/milkdownStore'
 import {
-  mentionsPlugin,
+  useMentionsPlugin,
   mentionsPluginOptions
 } from './plugins/mention/mentionPlugin'
 import { MentionsListDropdown } from './plugins/mention/MentionsListDropdown'
@@ -71,7 +71,7 @@ export const KunEditorProvider = ({
     (state) => state.data.refreshContentStatus
   )
 
-  const mentions = mentionsPlugin()
+  const mentions = useMentionsPlugin()
 
   const editor = useEditor((root) =>
     Editor.make()

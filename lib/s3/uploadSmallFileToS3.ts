@@ -13,7 +13,6 @@ export const uploadSmallFileToS3 = async (key: string, filePath: string) => {
     })
     await s3.send(uploadCommand)
   } catch (error) {
-    console.log(error)
     return '上传文件错误, uploadSmallFileToS3 function ERROR'
   }
 }

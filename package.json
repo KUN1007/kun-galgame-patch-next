@@ -12,6 +12,7 @@
     "format": "prettier . --write",
     "lint": "next lint",
     "lint:fix": "next lint --fix",
+    "typecheck": "tsc --noEmit",
     "prisma:push": "pnpx prisma db push",
     "prisma:generate": "pnpx prisma generate",
     "up": "pnpm update --latest && pnpm prisma:generate",

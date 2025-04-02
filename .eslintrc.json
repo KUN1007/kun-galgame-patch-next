@@ -50,13 +50,7 @@
     "no-debugger": "off",
     "@typescript-eslint/no-explicit-any": "off",
     "no-console": "warn",
-    "sort-imports": [
-      "error",
-      {
-        "ignoreCase": true,
-        "ignoreDeclarationSort": true
-      }
-    ],
+    "sort-imports": 0,
     "@typescript-eslint/no-unused-vars": "off",
     "@typescript-eslint/no-empty-object-type": "off",
     "@next/next/no-img-element": "off",

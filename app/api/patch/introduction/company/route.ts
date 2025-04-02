@@ -21,16 +21,18 @@ export const handlePatchCompanyAction = (type: 'add' | 'delete') => {
     const companiesNameArray = companies.map((c) => c.name)
 
     return await prisma.$transaction(async (prisma) => {
-      isAdd
-        ? await prisma.patch_company_relation.createMany({
-            data: companyId.map((id) => ({
-              patch_id: patchId,
-              company_id: id
-            }))
-          })
-        : await prisma.patch_company_relation.deleteMany({
-            where: { patch_id: patchId, company_id: { in: companyId } }
-          })
+      if (isAdd) {
+        await prisma.patch_company_relation.createMany({
+          data: companyId.map((id) => ({
+            patch_id: patchId,
+            company_id: id
+          }))
+        })
+      } else {
+        await prisma.patch_company_relation.deleteMany({
+          where: { patch_id: patchId, company_id: { in: companyId } }
+        })
+      }
 
       await prisma.patch_company.updateMany({
         where: { id: { in: companyId } },

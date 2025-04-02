@@ -68,7 +68,7 @@ export const MentionsListDropdown = ({
                 <div className="flex items-center gap-2">
                   <Avatar
                     alt={user.name}
-                    className="flex-shrink-0 w-8 h-8"
+                    className="w-8 h-8 shrink-0"
                     src={user.avatar}
                   />
                   <span className="text-sm">{user.name}</span>

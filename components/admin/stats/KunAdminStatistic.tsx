@@ -51,7 +51,7 @@ export const KunAdminStatistic: FC = () => {
           ))}
         </div>
 
-        <div className="flex-grow max-w-xl">
+        <div className="max-w-xl grow">
           <Slider
             label="设置天数"
             step={1}

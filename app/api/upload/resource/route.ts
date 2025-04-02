@@ -61,7 +61,6 @@ const processResourceChunk = async (
       return metadata
     } catch (error) {
       await cleanupChunks(metadata.fileId, metadata.totalChunks)
-      console.log(error)
       return '合并上传资源分片错误'
     }
   }

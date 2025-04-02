@@ -19,10 +19,7 @@ interface Props {
   handleRemoveFile: () => void
 }
 
-export const FileUploadContainer: React.FC<Props> = ({
-  onSuccess,
-  handleRemoveFile
-}) => {
+export const FileUploadContainer = ({ onSuccess, handleRemoveFile }: Props) => {
   const [fileData, setFileData] = useState<FileStatus | null>(null)
 
   const handleFileUpload = async (file: File) => {
