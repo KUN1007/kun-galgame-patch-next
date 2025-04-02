@@ -1,0 +1,10 @@
+{
+  "packageRules": [
+    {
+      "managers": ["npm"],
+      "packageNames": ["pnpm"],
+      "enabled": true,
+      "rangeStrategy": "bump"
+    }
+  ]
+}
