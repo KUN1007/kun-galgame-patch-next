@@ -1,6 +1,7 @@
 import { z } from 'zod'
 import { prisma } from '~/prisma/index'
 import { createWalkthroughSchema } from '~/validations/walkthrough'
+import { markdownToHtml } from '~/app/api/utils/markdownToHtml'
 import type { PatchWalkthrough } from '~/types/api/patch'
 
 export const createWalkthrough = async (
@@ -33,7 +34,8 @@ export const createWalkthrough = async (
   const newWalkthrough: PatchWalkthrough = {
     id: data.id,
     name: data.name,
-    content: data.content,
+    markdown: data.content,
+    content: await markdownToHtml(data.content),
     created: data.created,
     updated: data.updated,
     user: data.user,

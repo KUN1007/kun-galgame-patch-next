@@ -54,7 +54,8 @@ export const login = async (input: z.infer<typeof loginSchema>) => {
     role: user.role,
     dailyCheckIn: user.daily_check_in,
     dailyImageLimit: user.daily_image_count,
-    dailyUploadLimit: user.daily_upload_size
+    dailyUploadLimit: user.daily_upload_size,
+    mutedMessageTypes: []
   }
 
   return responseData

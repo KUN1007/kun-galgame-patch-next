@@ -62,7 +62,8 @@ export const register = async (
     role: user.role,
     dailyCheckIn: user.daily_check_in,
     dailyImageLimit: user.daily_image_count,
-    dailyUploadLimit: user.daily_upload_size
+    dailyUploadLimit: user.daily_upload_size,
+    mutedMessageTypes: []
   }
   return responseData
 }
