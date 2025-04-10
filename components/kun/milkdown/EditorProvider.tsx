@@ -16,15 +16,15 @@ import { upload, uploadConfig } from '@milkdown/plugin-upload'
 import { kunUploader, kunUploadWidgetFactory } from './plugins/uploader'
 import { replaceAll } from '@milkdown/utils'
 import { automd } from '@milkdown/plugin-automd'
+import { usePluginViewFactory } from '@prosemirror-adapter/react'
 
 import { KunMilkdownPluginsMenu } from './plugins/Menu'
 import { KunLoading } from '../Loading'
 import { useKunMilkdownStore } from '~/store/milkdownStore'
 import {
-  useMentionsPlugin,
-  mentionsPluginOptions
-} from './plugins/mention/mentionPlugin'
-import { MentionsListDropdown } from './plugins/mention/MentionsListDropdown'
+  MentionsListDropdown,
+  slash
+} from './plugins/mention/MentionsListDropdown'
 import {
   stopLinkCommand,
   linkCustomKeymap
@@ -71,7 +71,7 @@ export const KunEditorProvider = ({
     (state) => state.data.refreshContentStatus
   )
 
-  const mentions = useMentionsPlugin()
+  const pluginViewFactory = usePluginViewFactory()
 
   const editor = useEditor((root) =>
     Editor.make()
@@ -85,10 +85,11 @@ export const KunEditorProvider = ({
           saveMarkdown(markdown)
         })
 
-        ctx.update(mentionsPluginOptions.key, (prev) => ({
-          ...prev,
-          view: MentionsListDropdown
-        }))
+        ctx.set(slash.key, {
+          view: pluginViewFactory({
+            component: MentionsListDropdown
+          })
+        })
 
         ctx.update(uploadConfig.key, (prev) => ({
           ...prev,
@@ -135,17 +136,20 @@ export const KunEditorProvider = ({
         [
           stopLinkCommand,
           linkCustomKeymap,
-          mentions,
           placeholderCtx,
-          placeholderPlugin
+          placeholderPlugin,
+          slash
         ].flat()
       )
   )
 
-  useEffect(
-    () => editor.get()?.action(replaceAll(valueMarkdown, true)),
-    [refreshContentStatus]
-  )
+  useEffect(() => {
+    if (editor.get()) {
+      requestAnimationFrame(() => {
+        editor.get()?.action(replaceAll(valueMarkdown, true))
+      })
+    }
+  }, [refreshContentStatus])
 
   return (
     <div className="min-h-64" onClick={(e) => e.stopPropagation()}>
