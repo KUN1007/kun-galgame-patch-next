@@ -58,8 +58,14 @@ export default async function Kun({
           </p>
           <p>
             如果您要下载 Galgame 本体资源, 请前往{' '}
-            <Link showAnchorIcon isExternal href="https://www.kungal.com/zh-cn">
+            <Link showAnchorIcon isExternal href="https://www.kungal.com">
               主站论坛
+            </Link>
+          </p>
+          <p>
+            如果您在本站有找不到的 AI 补丁资源, 可以前往友站{' '}
+            <Link showAnchorIcon isExternal href="https://www.ai2.moe/">
+              御爱同萌
             </Link>
           </p>
           <p className="text-danger-500">

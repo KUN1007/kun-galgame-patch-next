@@ -54,10 +54,7 @@ export const KunFooter = () => {
             >
               Telegram
             </Link>
-            <Link
-              href="https://www.kungal.com/zh-cn"
-              className="flex items-center"
-            >
+            <Link href="https://www.kungal.com" className="flex items-center">
               主站论坛
             </Link>
           </div>

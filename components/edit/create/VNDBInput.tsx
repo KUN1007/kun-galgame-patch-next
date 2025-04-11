@@ -102,7 +102,7 @@ export const VNDBInput = ({ errors }: Props) => {
         target="_blank"
         className="flex"
         underline="hover"
-        href="https://www.kungal.com/zh-cn/topic/1040"
+        href="https://www.kungal.com/topic/1040"
         size="sm"
       >
         如何通过 VNDB 检索 Galgame?
