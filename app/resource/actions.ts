@@ -4,6 +4,7 @@ import { z } from 'zod'
 import { safeParseSchema } from '~/utils/actions/safeParseSchema'
 import { resourceSchema } from '~/validations/resource'
 import { getPatchResource } from '~/app/api/resource/route'
+import { getNSFWHeader } from '~/utils/actions/getNSFWHeader'
 
 export const kunGetActions = async (params: z.infer<typeof resourceSchema>) => {
   const input = safeParseSchema(resourceSchema, params)
@@ -11,6 +12,8 @@ export const kunGetActions = async (params: z.infer<typeof resourceSchema>) => {
     return input
   }
 
-  const response = await getPatchResource(input)
+  const nsfwEnable = await getNSFWHeader()
+
+  const response = await getPatchResource(input, nsfwEnable)
   return response
 }

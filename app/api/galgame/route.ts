@@ -73,7 +73,8 @@ export const getGalgame = async (
     prisma.patch.count({
       where: {
         ...typeQuery,
-        ...dateFilter
+        ...dateFilter,
+        ...nsfwEnable
       }
     })
   ])

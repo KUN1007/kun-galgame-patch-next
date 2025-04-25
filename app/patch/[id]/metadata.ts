@@ -39,6 +39,12 @@ export const generateKunMetadataTemplate = (patch: Patch): Metadata => {
     },
     alternates: {
       canonical: `${kunMoyuMoe.domain.main}/patch/${patch.id}/introduction`
-    }
+    },
+    other:
+      patch.content_limit === 'nsfw'
+        ? {
+            bingbot: 'noindex, nofollow, nocache, noimageindex'
+          }
+        : undefined
   }
 }

@@ -4,10 +4,12 @@ import { kunParseGetQuery } from '../utils/parseQuery'
 import { prisma } from '~/prisma/index'
 import { resourceSchema } from '~/validations/resource'
 import { markdownToText } from '~/utils/markdownToText'
+import { getNSFWHeader } from '~/app/api/utils/getNSFWHeader'
 import type { PatchResource } from '~/types/api/resource'
 
 export const getPatchResource = async (
-  input: z.infer<typeof resourceSchema>
+  input: z.infer<typeof resourceSchema>,
+  nsfwEnable: Record<string, string | undefined>
 ) => {
   const { sortField, sortOrder, page, limit } = input
 
@@ -23,6 +25,7 @@ export const getPatchResource = async (
       take: limit,
       skip: offset,
       orderBy: orderByField,
+      where: { patch: nsfwEnable },
       include: {
         patch: {
           select: {
@@ -79,6 +82,8 @@ export const GET = async (req: NextRequest) => {
     return NextResponse.json(input)
   }
 
-  const response = await getPatchResource(input)
+  const nsfwEnable = getNSFWHeader(req)
+
+  const response = await getPatchResource(input, nsfwEnable)
   return NextResponse.json(response)
 }

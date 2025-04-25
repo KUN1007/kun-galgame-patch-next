@@ -67,7 +67,7 @@ export const CardContainer = ({ initialResources, initialTotal }: Props) => {
     <div className="container mx-auto my-4 space-y-6">
       <KunHeader
         name="Galgame 补丁资源"
-        description="这里展示了所有的 Galgame 补丁资源列表"
+        description="这里展示了所有的 Galgame 补丁资源列表, 但是, 本页面默认仅显示了 SFW (内容安全) 的补丁, 您可以在网站右上角切换显示全部补丁 (包括 NSFW, 也就是可能带有涩涩)"
       />
 
       <FilterBar

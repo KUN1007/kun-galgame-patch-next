@@ -57,9 +57,9 @@ export const NSFWSwitcher = () => {
             key={key}
             className="text-default-700"
           >
-            {key === 'sfw' && '仅显示 SFW (内容安全) 的游戏'}
-            {key === 'nsfw' && '仅显示 NSFW (可能含有 R18) 的游戏'}
-            {key === 'all' && '同时显示 SFW 和 NSFW 的游戏'}
+            {key === 'sfw' && '仅显示 SFW (内容安全) 的内容'}
+            {key === 'nsfw' && '仅显示 NSFW (可能含有 R18) 的内容'}
+            {key === 'all' && '同时显示 SFW 和 NSFW 的内容'}
           </DropdownItem>
         ))}
       </DropdownMenu>
