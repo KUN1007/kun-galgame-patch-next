@@ -2,11 +2,13 @@
 
 import { useState } from 'react'
 import { Card, CardBody, CardFooter, CardHeader } from '@nextui-org/card'
+import { Chip } from '@nextui-org/chip'
 import { Image } from '@nextui-org/image'
 import { KunCardStats } from '~/components/kun/CardStats'
 import Link from 'next/link'
 import { KunPatchAttribute } from '~/components/kun/PatchAttribute'
 import { cn } from '~/utils/cn'
+import { GALGAME_AGE_LIMIT_MAP } from '~/constants/galgame'
 
 interface Props {
   patch: GalgameCard
@@ -48,6 +50,15 @@ export const GalgameCard = ({ patch }: Props) => {
             style={{ aspectRatio: '16/9' }}
             onLoad={() => setImageLoaded(true)}
           />
+
+          <div className="absolute z-10 rounded-full bg-background left-2 top-2">
+            <Chip
+              color={patch.content_limit === 'sfw' ? 'success' : 'danger'}
+              variant="flat"
+            >
+              {GALGAME_AGE_LIMIT_MAP[patch.content_limit]}
+            </Chip>
+          </div>
         </div>
       </CardHeader>
       <CardBody className="justify-between space-y-2">
