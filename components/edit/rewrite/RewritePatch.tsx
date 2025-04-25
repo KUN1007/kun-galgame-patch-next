@@ -13,6 +13,7 @@ import { GameNameInput } from './GameNameInput'
 import { VNDBInput } from './VNDBInput'
 import { ReleaseDateInput } from '../components/ReleaseDateInput'
 import { AliasManager } from './AliasManager'
+import { ContentLimit } from './ContentLimit'
 import type { RewritePatchData } from '~/store/rewriteStore'
 
 export const RewritePatch = () => {
@@ -116,6 +117,8 @@ export const RewritePatch = () => {
             }
             errors={errors.alias}
           />
+
+          <ContentLimit errors={errors.contentLimit} />
 
           <Button
             color="primary"

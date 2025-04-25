@@ -3,6 +3,7 @@ import { NextRequest, NextResponse } from 'next/server'
 import { kunParseGetQuery } from '~/app/api/utils/parseQuery'
 import { prisma } from '~/prisma/index'
 import { getUserInfoSchema } from '~/validations/user'
+import { GalgameCardSelectField } from '~/constants/api/select'
 
 export const getUserGalgame = async (
   input: z.infer<typeof getUserInfoSchema>
@@ -13,25 +14,7 @@ export const getUserGalgame = async (
   const [galgames, total] = await Promise.all([
     prisma.patch.findMany({
       where: { user_id: uid },
-      select: {
-        id: true,
-        name: true,
-        banner: true,
-        view: true,
-        download: true,
-        type: true,
-        language: true,
-        platform: true,
-        created: true,
-        _count: {
-          select: {
-            favorite_by: true,
-            contribute_by: true,
-            resource: true,
-            comment: true
-          }
-        }
-      },
+      select: GalgameCardSelectField,
       orderBy: { created: 'desc' },
       take: limit,
       skip: offset

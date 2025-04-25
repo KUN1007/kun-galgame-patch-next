@@ -4,6 +4,7 @@ interface PatchField {
   name: string
   alias: string[]
   introduction: string
+  contentLimit: string
 }
 
 export const generatePatchDiff = (
@@ -13,6 +14,9 @@ export const generatePatchDiff = (
   const diffResult: string[] = []
 
   diffResult.push(_diffField('name', patch.name, input.name))
+  diffResult.push(
+    _diffField('contentLimit', patch.contentLimit, input.contentLimit)
+  )
   diffResult.push(
     _diffField('alias', patch.alias.join(','), input.alias?.join(',') || '')
   )

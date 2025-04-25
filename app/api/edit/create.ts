@@ -9,7 +9,8 @@ export const createPatch = async (
   },
   uid: number
 ) => {
-  const { name, vndbId, alias, banner, introduction, released } = input
+  const { name, vndbId, alias, banner, introduction, released, contentLimit } =
+    input
 
   const bannerArrayBuffer = banner as ArrayBuffer
 
@@ -22,7 +23,8 @@ export const createPatch = async (
           introduction,
           user_id: uid,
           banner: '',
-          released: released ? released : 'unknown'
+          released: released ? released : 'unknown',
+          content_limit: contentLimit
         }
       })
 

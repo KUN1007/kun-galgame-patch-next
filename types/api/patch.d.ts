@@ -16,6 +16,7 @@ export interface Patch {
   platform: string[]
   isFavorite: boolean
   resourceUpdateTime: Date | string
+  content_limit: string
   user: {
     id: number
     name: string
@@ -46,6 +47,7 @@ export interface PatchUpdate {
   name: string
   alias: string[]
   introduction: string
+  contentLimit: string
 }
 
 export interface PatchPullRequest {

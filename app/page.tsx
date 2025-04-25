@@ -1,10 +1,10 @@
 import { HomeContainer } from '~/components/home/Container'
-import { getHomeData } from '~/app/api/home/route'
+import { kunGetActions } from './actions'
 
 export const revalidate = 5
 
 export default async function Kun() {
-  const response = await getHomeData()
+  const response = await kunGetActions()
 
   return (
     <div className="container mx-auto my-4 space-y-6">

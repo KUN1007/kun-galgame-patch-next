@@ -4,6 +4,7 @@ import { z } from 'zod'
 import { safeParseSchema } from '~/utils/actions/safeParseSchema'
 import { galgameSchema } from '~/validations/galgame'
 import { getGalgame } from '~/app/api/galgame/route'
+import { getNSFWHeader } from '~/utils/actions/getNSFWHeader'
 
 export const kunGetActions = async (params: z.infer<typeof galgameSchema>) => {
   const input = safeParseSchema(galgameSchema, params)
@@ -11,6 +12,8 @@ export const kunGetActions = async (params: z.infer<typeof galgameSchema>) => {
     return input
   }
 
-  const response = await getGalgame(input)
+  const nsfwEnable = await getNSFWHeader()
+
+  const response = await getGalgame(input, nsfwEnable)
   return response
 }

@@ -30,7 +30,8 @@ export const PatchHeaderContainer = ({ patch, intro }: PatchHeaderProps) => {
       name: patch.name,
       introduction: patch.introduction,
       alias: patch.alias,
-      released: intro.released
+      released: intro.released,
+      contentLimit: patch.content_limit
     })
 
     // TODO:

@@ -1,35 +1,23 @@
-import { NextResponse } from 'next/server'
+import { NextRequest, NextResponse } from 'next/server'
 import { prisma } from '~/prisma/index'
 import { markdownToText } from '~/utils/markdownToText'
 import { HomeComment, HomeResource } from '~/types/api/home'
+import { GalgameCardSelectField } from '~/constants/api/select'
+import { getNSFWHeader } from '~/app/api/utils/getNSFWHeader'
 
-export const getHomeData = async () => {
+export const getHomeData = async (
+  nsfwEnable: Record<string, string | undefined>
+) => {
   const [galgames, resourcesData, commentsData] = await Promise.all([
     prisma.patch.findMany({
       orderBy: { created: 'desc' },
-      select: {
-        id: true,
-        name: true,
-        banner: true,
-        view: true,
-        download: true,
-        type: true,
-        language: true,
-        platform: true,
-        created: true,
-        _count: {
-          select: {
-            favorite_by: true,
-            contribute_by: true,
-            resource: true,
-            comment: true
-          }
-        }
-      },
+      where: nsfwEnable,
+      select: GalgameCardSelectField,
       take: 12
     }),
     prisma.patch_resource.findMany({
       orderBy: { created: 'desc' },
+      where: { patch: nsfwEnable },
       include: {
         patch: {
           select: {
@@ -112,7 +100,9 @@ export const getHomeData = async () => {
   return { galgames, resources, comments }
 }
 
-export const GET = async () => {
-  const response = await getHomeData()
+export const GET = async (req: NextRequest) => {
+  const nsfwEnable = getNSFWHeader(req)
+
+  const response = await getHomeData(nsfwEnable)
   return NextResponse.json(response)
 }

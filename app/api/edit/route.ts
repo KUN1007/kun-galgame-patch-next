@@ -70,6 +70,6 @@ export const PUT = async (req: NextRequest) => {
     return NextResponse.json('网站正在遭受攻击, 目前仅允许创作者创建和更改项目')
   }
 
-  const response = await updatePatch(input, payload.uid)
+  const response = await updatePatch(input, payload.uid, payload.role)
   return NextResponse.json(response)
 }

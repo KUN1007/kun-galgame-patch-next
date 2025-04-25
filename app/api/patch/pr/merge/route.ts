@@ -53,7 +53,8 @@ export const mergePullRequest = async (
       where: { id: pullRequest.patch_id },
       data: {
         name: updates.name,
-        introduction: updates.introduction
+        introduction: updates.introduction,
+        content_limit: updates.contentLimit
       }
     })
 

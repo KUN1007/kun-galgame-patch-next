@@ -14,7 +14,8 @@ export const patchCreateSchema = z.object({
     .max(2333, { message: '别名字符串总长度不可超过 3000 个字符' }),
   released: z
     .string({ message: '发售日期为空, 请点击 检查重复 以从 VNDB 获取数据' })
-    .max(30)
+    .max(30),
+  contentLimit: z.union([z.literal('sfw'), z.literal('nsfw')])
 })
 
 export const patchUpdateSchema = z.object({
@@ -37,7 +38,8 @@ export const patchUpdateSchema = z.object({
     .max(30, { message: '您最多使用 30 个别名' }),
   released: z
     .string({ message: '发售日期为空, 请点击 检查重复 以从 VNDB 获取数据' })
-    .max(30)
+    .max(30),
+  contentLimit: z.union([z.literal('sfw'), z.literal('nsfw')])
 })
 
 export const duplicateSchema = z.object({

@@ -3,6 +3,7 @@ import { z } from 'zod'
 import { prisma } from '~/prisma'
 import { getPatchByCompanySchema } from '~/validations/company'
 import { kunParseGetQuery } from '~/app/api/utils/parseQuery'
+import { GalgameCardSelectField } from '~/constants/api/select'
 
 export const getPatchByCompany = async (
   input: z.infer<typeof getPatchByCompanySchema>
@@ -15,25 +16,7 @@ export const getPatchByCompany = async (
       where: { company_id: companyId },
       select: {
         patch: {
-          select: {
-            id: true,
-            name: true,
-            banner: true,
-            view: true,
-            download: true,
-            type: true,
-            language: true,
-            platform: true,
-            created: true,
-            _count: {
-              select: {
-                favorite_by: true,
-                contribute_by: true,
-                resource: true,
-                comment: true
-              }
-            }
-          }
+          select: GalgameCardSelectField
         }
       },
       orderBy: { created: 'desc' },

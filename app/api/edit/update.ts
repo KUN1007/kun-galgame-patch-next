@@ -7,9 +7,11 @@ import type { PatchUpdate } from '~/types/api/patch'
 
 export const updatePatch = async (
   input: z.infer<typeof patchUpdateSchema>,
-  currentUserUid: number
+  currentUserUid: number,
+  currentUserRole: number
 ) => {
-  const { id, name, vndbId, alias, introduction, released } = input
+  const { id, name, vndbId, alias, introduction, released, contentLimit } =
+    input
 
   const patch = await prisma.patch.findUnique({
     where: { id },
@@ -35,7 +37,8 @@ export const updatePatch = async (
     {
       name: patch.name,
       alias: patch.alias.map((a) => a.name),
-      introduction: patch.introduction
+      introduction: patch.introduction,
+      contentLimit: patch.content_limit
     },
     input
   )
@@ -53,14 +56,15 @@ export const updatePatch = async (
       skipDuplicates: true
     })
 
-    if (currentUserUid === patch.user_id) {
+    if (currentUserUid === patch.user_id || currentUserRole > 2) {
       await prisma.patch.update({
         where: { id },
         data: {
           name,
           vndb_id: vndbId ? vndbId : null,
           introduction,
-          released: released ? released : 'unknown'
+          released: released ? released : 'unknown',
+          content_limit: contentLimit
         }
       })
 
@@ -77,7 +81,8 @@ export const updatePatch = async (
       const updates: PatchUpdate = {
         name: input.name,
         alias: input.alias ?? [],
-        introduction: input.introduction
+        introduction: input.introduction,
+        contentLimit: input.contentLimit
       }
 
       await prisma.patch_pull_request.create({

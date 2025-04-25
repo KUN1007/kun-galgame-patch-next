@@ -3,6 +3,7 @@ import { NextRequest, NextResponse } from 'next/server'
 import { kunParseGetQuery } from '~/app/api/utils/parseQuery'
 import { prisma } from '~/prisma/index'
 import { getPatchByTagSchema } from '~/validations/tag'
+import { GalgameCardSelectField } from '~/constants/api/select'
 
 export const getPatchByTag = async (
   input: z.infer<typeof getPatchByTagSchema>
@@ -15,25 +16,7 @@ export const getPatchByTag = async (
       where: { tag_id: tagId },
       select: {
         patch: {
-          select: {
-            id: true,
-            name: true,
-            banner: true,
-            view: true,
-            download: true,
-            type: true,
-            language: true,
-            platform: true,
-            created: true,
-            _count: {
-              select: {
-                favorite_by: true,
-                contribute_by: true,
-                resource: true,
-                comment: true
-              }
-            }
-          }
+          select: GalgameCardSelectField
         }
       },
       orderBy: { created: 'desc' },

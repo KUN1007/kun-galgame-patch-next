@@ -61,6 +61,7 @@ export const getPatchById = async (
     alias: patch.alias.map((a) => a.name),
     isFavorite: patch.favorite_by.length > 0,
     resourceUpdateTime: patch.resource_update_time,
+    content_limit: patch.content_limit,
     user: {
       id: patch.user.id,
       name: patch.user.name,

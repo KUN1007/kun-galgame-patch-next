@@ -63,6 +63,7 @@ export const PublishButton = ({ setErrors }: Props) => {
     formDataToSend.append('name', data.name)
     formDataToSend.append('vndbId', data.vndbId)
     formDataToSend.append('introduction', data.introduction)
+    formDataToSend.append('contentLimit', data.contentLimit)
     formDataToSend.append('alias', JSON.stringify(data.alias))
     formDataToSend.append('released', data.released)
 

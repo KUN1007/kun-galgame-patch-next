@@ -8,7 +8,6 @@ import { KunBackToTop } from '~/components/kun/BackToTop'
 import Script from 'next/script'
 import type { Metadata, Viewport } from 'next'
 import '~/styles/index.scss'
-import './cron'
 
 export const viewport: Viewport = kunViewport
 export const metadata: Metadata = kunMetadata

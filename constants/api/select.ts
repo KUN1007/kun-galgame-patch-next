@@ -7,6 +7,7 @@ export const GalgameCardSelectField = {
   type: true,
   language: true,
   platform: true,
+  content_limit: true,
   created: true,
   _count: {
     select: {
