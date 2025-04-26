@@ -5,6 +5,7 @@ import { safeParseSchema } from '~/utils/actions/safeParseSchema'
 import { getTagById } from '~/app/api/tag/route'
 import { getPatchByTag } from '~/app/api/tag/galgame/route'
 import { getTagByIdSchema, getPatchByTagSchema } from '~/validations/tag'
+import { getNSFWHeader } from '~/utils/actions/getNSFWHeader'
 
 export const kunGetTagByIdActions = async (
   params: z.infer<typeof getTagByIdSchema>
@@ -26,6 +27,8 @@ export const kunTagGalgameActions = async (
     return input
   }
 
-  const response = await getPatchByTag(input)
+  const nsfwEnable = await getNSFWHeader()
+
+  const response = await getPatchByTag(input, nsfwEnable)
   return response
 }

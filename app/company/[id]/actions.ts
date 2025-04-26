@@ -8,6 +8,7 @@ import {
   getCompanyByIdSchema,
   getPatchByCompanySchema
 } from '~/validations/company'
+import { getNSFWHeader } from '~/utils/actions/getNSFWHeader'
 
 export const kunGetCompanyByIdActions = async (
   params: z.infer<typeof getCompanyByIdSchema>
@@ -29,6 +30,8 @@ export const kunCompanyGalgameActions = async (
     return input
   }
 
-  const response = await getPatchByCompany(input)
+  const nsfwEnable = await getNSFWHeader()
+
+  const response = await getPatchByCompany(input, nsfwEnable)
   return response
 }

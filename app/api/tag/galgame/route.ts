@@ -4,16 +4,18 @@ import { kunParseGetQuery } from '~/app/api/utils/parseQuery'
 import { prisma } from '~/prisma/index'
 import { getPatchByTagSchema } from '~/validations/tag'
 import { GalgameCardSelectField } from '~/constants/api/select'
+import { getNSFWHeader } from '~/app/api/utils/getNSFWHeader'
 
 export const getPatchByTag = async (
-  input: z.infer<typeof getPatchByTagSchema>
+  input: z.infer<typeof getPatchByTagSchema>,
+  nsfwEnable: Record<string, string | undefined>
 ) => {
   const { tagId, page, limit } = input
   const offset = (page - 1) * limit
 
   const [data, total] = await Promise.all([
     prisma.patch_tag_relation.findMany({
-      where: { tag_id: tagId },
+      where: { tag_id: tagId, patch: nsfwEnable },
       select: {
         patch: {
           select: GalgameCardSelectField
@@ -24,7 +26,7 @@ export const getPatchByTag = async (
       skip: offset
     }),
     prisma.patch_tag_relation.count({
-      where: { tag_id: tagId }
+      where: { tag_id: tagId, patch: nsfwEnable }
     })
   ])
 
@@ -39,6 +41,8 @@ export const GET = async (req: NextRequest) => {
     return NextResponse.json(input)
   }
 
-  const response = await getPatchByTag(input)
+  const nsfwEnable = getNSFWHeader(req)
+
+  const response = await getPatchByTag(input, nsfwEnable)
   return NextResponse.json(response)
 }
