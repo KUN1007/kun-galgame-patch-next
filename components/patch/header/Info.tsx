@@ -22,7 +22,7 @@ interface PatchHeaderInfoProps {
 
 export const PatchHeaderInfo = ({ patch }: PatchHeaderInfoProps) => {
   return (
-    <Card className="border shadow-xl">
+    <Card>
       <CardBody className="p-0">
         <div className="grid grid-cols-1 gap-3 md:grid-cols-3">
           <div className="relative w-full h-full overflow-hidden md:col-span-1 aspect-video md:rounded-l-xl">
