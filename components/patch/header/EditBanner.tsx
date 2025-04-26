@@ -11,11 +11,11 @@ import { RewritePatchBanner } from '~/components/edit/rewrite/RewritePatchBanner
 import { useUserStore } from '~/store/userStore'
 import type { Patch } from '~/types/api/patch'
 
-interface PatchHeaderProps {
+interface PatchHeaderBannerProps {
   patch: Patch
 }
 
-export const PatchHeader = ({ patch }: PatchHeaderProps) => {
+export const EditBanner = ({ patch }: PatchHeaderBannerProps) => {
   const { isOpen, onOpen, onClose } = useDisclosure()
   const { user } = useUserStore((state) => state)
 
@@ -23,16 +23,17 @@ export const PatchHeader = ({ patch }: PatchHeaderProps) => {
     <>
       {(user.uid === patch.user.id || user.role > 2) && (
         <Button
-          color="secondary"
-          variant="bordered"
+          color="default"
+          variant="shadow"
           size="sm"
-          className="absolute right-2 top-2"
+          className="absolute z-10 bottom-3 left-3 backdrop-blur-sm bg-background/40"
           onPress={onOpen}
         >
           更改图片
         </Button>
       )}
 
+      {/* Edit modal */}
       <Modal isOpen={isOpen} onClose={onClose} placement="center">
         <ModalContent>
           <ModalHeader className="flex flex-col gap-1">

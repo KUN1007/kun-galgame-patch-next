@@ -48,7 +48,7 @@ export default async function Kun({ params }: Props) {
   }
 
   return (
-    <>
+    <div className="space-y-6">
       <Card>
         <CardHeader>
           <h2 className="text-2xl font-medium">贡献历史</h2>
@@ -68,6 +68,6 @@ export default async function Kun({ params }: Props) {
       </Card>
 
       <PatchContributor users={contributors} />
-    </>
+    </div>
   )
 }

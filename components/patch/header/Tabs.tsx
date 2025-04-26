@@ -28,7 +28,7 @@ export const PatchHeaderTabs = ({ id }: PatchHeaderProps) => {
   return (
     <Tabs
       aria-label="Options"
-      className="w-full overflow-hidden rounded-large shadow-medium"
+      className="z-10 w-full overflow-hidden rounded-large shadow-medium"
       fullWidth
       selectedKey={lastSegment}
     >

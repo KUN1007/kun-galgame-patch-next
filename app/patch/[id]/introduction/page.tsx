@@ -47,9 +47,9 @@ export default async function Kun({ params }: Props) {
   }
 
   return (
-    <>
+    <div className="space-y-6">
       <InfoContainer intro={intro} patchId={Number(id)} />
       <PatchContributor users={contributors} />
-    </>
+    </div>
   )
 }

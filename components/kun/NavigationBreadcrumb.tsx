@@ -53,7 +53,7 @@ export const KunNavigationBreadcrumb = () => {
   }, [pathname])
 
   return (
-    <div className="w-full my-4 bg-background/60 backdrop-blur-lg">
+    <div className="z-10 w-full my-4">
       <div className="px-3 mx-auto max-w-7xl">
         <Breadcrumbs
           underline="hover"
