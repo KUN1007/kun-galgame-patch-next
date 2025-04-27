@@ -1,4 +1,9 @@
 import { kunMoyuMoe } from '~/config/moyu-moe'
+import {
+  SUPPORTED_TYPE_MAP,
+  SUPPORTED_LANGUAGE_MAP,
+  SUPPORTED_PLATFORM_MAP
+} from '~/constants/resource'
 import type { Metadata } from 'next'
 import type { KunSiteAuthor } from '~/config/config'
 import type { Patch, PatchResource } from '~/types/api/patch'
@@ -8,11 +13,17 @@ export const generateKunMetadataTemplate = (
   resources: PatchResource[]
 ): Metadata => {
   const responseType = resources.map((res) => res.type).flat()
-  const dedupeType = [...new Set(responseType)].toString()
+  const dedupeType = [...new Set(responseType)].map(
+    (t) => SUPPORTED_TYPE_MAP[t]
+  )
   const responseLang = resources.map((res) => res.language).flat()
-  const dedupeLang = [...new Set(responseLang)].toString()
+  const dedupeLang = [...new Set(responseLang)].map(
+    (l) => SUPPORTED_LANGUAGE_MAP[l]
+  )
   const responsePlatform = resources.map((res) => res.platform).flat()
-  const dedupePlatform = [...new Set(responsePlatform)].toString()
+  const dedupePlatform = [...new Set(responsePlatform)].map(
+    (p) => SUPPORTED_PLATFORM_MAP[p]
+  )
   const authors: KunSiteAuthor[] = resources.map((res) => ({
     name: res.user.name,
     url: `${kunMoyuMoe.domain.main}/user/${res.user.id}/resource`
