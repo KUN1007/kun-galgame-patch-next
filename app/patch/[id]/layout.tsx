@@ -1,7 +1,7 @@
-import { PatchHeaderContainer } from '~/components/patch/header/Container'
 import { ErrorComponent } from '~/components/error/ErrorComponent'
 import { kunGetPatchActions, kunGetPatchIntroductionActions } from './actions'
 import { generateKunMetadataTemplate } from './metadata'
+import { PatchContainer } from '~/components/patch/Container'
 import type { Metadata } from 'next'
 
 interface Props {
@@ -41,10 +41,5 @@ export default async function Kun({ params, children }: Props) {
     return <ErrorComponent error={intro} />
   }
 
-  return (
-    <div className="container py-6 mx-auto space-y-6">
-      <PatchHeaderContainer patch={patch} intro={intro} />
-      {children}
-    </div>
-  )
+  return <PatchContainer patch={patch} intro={intro} children={children} />
 }
