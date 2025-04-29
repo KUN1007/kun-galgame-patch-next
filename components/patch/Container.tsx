@@ -11,7 +11,6 @@ interface Props {
   intro: PatchIntroduction
 }
 
-// TODO:
 export const PatchContainer = ({ children, patch, intro }: Props) => {
   const [show, setShow] = useState(false)
 

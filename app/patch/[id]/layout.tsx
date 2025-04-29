@@ -41,5 +41,9 @@ export default async function Kun({ params, children }: Props) {
     return <ErrorComponent error={intro} />
   }
 
-  return <PatchContainer patch={patch} intro={intro} children={children} />
+  return (
+    <PatchContainer patch={patch} intro={intro}>
+      {children}
+    </PatchContainer>
+  )
 }
