@@ -128,6 +128,10 @@ export const PatchTagSelector = ({
       query: query.split(' ').filter(Boolean)
     })
     setTags(response)
+    const commonIds = initialTags
+      .map((tag) => tag.id)
+      .filter((id) => response.some((tag) => tag.id === id))
+    dispatch({ type: 'SET_EXISTING_TAGS', payload: commonIds })
     setSearching(false)
   }
 

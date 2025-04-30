@@ -113,6 +113,10 @@ export const PatchCompanySelector: FC<Props> = ({
         query: query.split(' ').filter(Boolean)
       })
       setCompanies(response)
+      const commonIds = initialCompanies
+        .map((company) => company.id)
+        .filter((id) => response.some((company) => company.id === id))
+      dispatch({ type: 'SET_EXISTING_COMPANIES', payload: commonIds })
     })
   }
 
