@@ -5,18 +5,25 @@ import { KunFooter } from '~/components/kun/Footer'
 import { KunNavigationBreadcrumb } from '~/components/kun/NavigationBreadcrumb'
 import { kunMetadata, kunViewport } from './metadata'
 import { KunBackToTop } from '~/components/kun/BackToTop'
+import { NSFWIndicator } from '~/components/kun/NSFWIndicator'
 import Script from 'next/script'
+import { getNSFWHeader } from '~/utils/actions/getNSFWHeader'
 import type { Metadata, Viewport } from 'next'
 import '~/styles/index.scss'
 
 export const viewport: Viewport = kunViewport
 export const metadata: Metadata = kunMetadata
 
-export default function RootLayout({
+export default async function RootLayout({
   children
 }: {
   children: React.ReactNode
 }) {
+  const nsfwHeader = await getNSFWHeader()
+  const isNSFWEnable =
+    nsfwHeader.content_limit === 'nsfw' ||
+    nsfwHeader.content_limit === undefined
+
   return (
     <html lang="zh-Hans" suppressHydrationWarning>
       {process.env.NODE_ENV === 'production' && (
@@ -33,6 +40,7 @@ export default function RootLayout({
           <div className="relative flex flex-col items-center justify-center min-h-screen bg-radial">
             <KunTopBar />
             <KunNavigationBreadcrumb />
+            <NSFWIndicator isNSFWEnable={isNSFWEnable} />
             <div className="flex min-h-[calc(100dvh-256px)] w-full max-w-7xl grow px-3">
               {children}
               <Toaster />
