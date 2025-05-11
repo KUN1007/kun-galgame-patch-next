@@ -5,6 +5,7 @@ interface Props {
   name: string
   image?: string
   description?: string
+  isShowDivider?: boolean
   endContent?: React.ReactNode
   headerEndContent?: React.ReactNode
 }
@@ -13,6 +14,7 @@ export const KunHeader = ({
   name,
   image,
   description,
+  isShowDivider = true,
   endContent,
   headerEndContent
 }: Props) => {
@@ -45,7 +47,7 @@ export const KunHeader = ({
         </div>
         {endContent}
       </div>
-      <Divider className="my-8" />
+      {isShowDivider && <Divider className="my-8" />}
     </>
   )
 }

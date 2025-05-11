@@ -5,27 +5,31 @@ export interface KunNavItem {
 
 export const kunNavItem: KunNavItem[] = [
   {
-    name: '补丁下载',
+    name: '下载',
     href: '/galgame'
   },
   {
-    name: '发布补丁',
+    name: '发布',
     href: '/edit/create'
   },
   {
-    name: '标签分类',
+    name: '标签',
     href: '/tag'
   },
   {
-    name: '会社分类',
+    name: '会社',
     href: '/company'
   },
   {
-    name: '新作月表',
+    name: '新作',
     href: '/release'
   },
   {
-    name: '关于我们',
+    name: '排行',
+    href: '/ranking/user'
+  },
+  {
+    name: '关于',
     href: '/about'
   }
 ]
