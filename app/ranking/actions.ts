@@ -64,7 +64,6 @@ export const getPatchRanking = async (
   timeRange: string = 'all'
 ) => {
   const nsfwEnable = await getNSFWHeader()
-  const contentLimitCondition = nsfwEnable ? {} : { content_limit: 'sfw' }
 
   let orderBy = {}
   switch (sortBy) {
@@ -84,7 +83,7 @@ export const getPatchRanking = async (
   const galgames = await prisma.patch.findMany({
     where: {
       status: 0,
-      ...contentLimitCondition
+      ...nsfwEnable
     },
     select: GalgameCardSelectField,
     orderBy,
