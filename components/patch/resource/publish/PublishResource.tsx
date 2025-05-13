@@ -44,6 +44,7 @@ export const PublishResource = ({
   onSuccess
 }: CreateResourceProps) => {
   const [creating, setCreating] = useState(false)
+  const [uploadingResource, setUploadingResource] = useState(false)
   const user = useUserStore((state) => state.user)
 
   const {
@@ -159,6 +160,7 @@ export const PublishResource = ({
             <FileUploadContainer
               onSuccess={handleUploadSuccess}
               handleRemoveFile={handleRemoveFile}
+              setUploadingResource={setUploadingResource}
             />
           )}
 
@@ -198,18 +200,22 @@ export const PublishResource = ({
       </ModalBody>
 
       <ModalFooter className="flex-col items-end">
-        <div className="space-x-2">
+        <div className="flex items-center space-x-2">
           <Button color="danger" variant="light" onPress={onClose}>
             取消
           </Button>
           <Button
             color="primary"
-            disabled={creating}
-            isLoading={creating}
+            disabled={creating || uploadingResource}
+            isLoading={creating || uploadingResource}
             endContent={<Upload className="size-4" />}
             onPress={handleRewriteResource}
           >
-            发布资源
+            {creating
+              ? '发布中...'
+              : uploadingResource
+                ? '正在上传补丁资源中...'
+                : '发布资源'}
           </Button>
         </div>
 

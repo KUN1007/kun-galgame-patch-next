@@ -1,6 +1,6 @@
 'use client'
 
-import { useState } from 'react'
+import { Dispatch, SetStateAction, useState } from 'react'
 import { FileDropZone } from './FileDropZone'
 import { FileUploadCard } from './FileUploadCard'
 import { CHUNK_SIZE } from '~/config/upload'
@@ -17,9 +17,14 @@ interface Props {
     size: string
   ) => void
   handleRemoveFile: () => void
+  setUploadingResource: Dispatch<SetStateAction<boolean>>
 }
 
-export const FileUploadContainer = ({ onSuccess, handleRemoveFile }: Props) => {
+export const FileUploadContainer = ({
+  onSuccess,
+  handleRemoveFile,
+  setUploadingResource
+}: Props) => {
   const [fileData, setFileData] = useState<FileStatus | null>(null)
 
   const handleFileUpload = async (file: File) => {
@@ -29,6 +34,7 @@ export const FileUploadContainer = ({ onSuccess, handleRemoveFile }: Props) => {
       return
     }
 
+    setUploadingResource(true)
     setFileData({ file, uploadStatus: 1, progress: 0 })
 
     const totalChunks = Math.ceil(file.size / CHUNK_SIZE)
@@ -70,6 +76,7 @@ export const FileUploadContainer = ({ onSuccess, handleRemoveFile }: Props) => {
         )
       }
     }
+    setUploadingResource(false)
   }
 
   const removeFile = () => {
