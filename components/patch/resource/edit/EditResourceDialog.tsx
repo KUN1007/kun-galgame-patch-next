@@ -37,6 +37,7 @@ export const EditResourceDialog = ({
   type = 'patch'
 }: EditResourceDialogProps) => {
   const [editing, setEditing] = useState(false)
+  const [uploadingResource, setUploadingResource] = useState(false)
 
   const {
     control,
@@ -97,6 +98,7 @@ export const EditResourceDialog = ({
             <FileUploadContainer
               onSuccess={handleUploadSuccess}
               handleRemoveFile={handleRemoveFile}
+              setUploadingResource={setUploadingResource}
             />
           )}
 
@@ -140,11 +142,15 @@ export const EditResourceDialog = ({
         </Button>
         <Button
           color="primary"
-          disabled={editing}
-          isLoading={editing}
+          disabled={editing || uploadingResource}
+          isLoading={editing || uploadingResource}
           onPress={handleUpdateResource}
         >
-          保存
+          {editing
+            ? '更新中...'
+            : uploadingResource
+              ? '正在上传补丁资源中...'
+              : '保存'}
         </Button>
       </ModalFooter>
     </ModalContent>
