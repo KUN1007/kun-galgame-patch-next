@@ -15,6 +15,7 @@ export interface KunRateLimiterResponse {
   reset: number
 }
 
+// FIXME: Race condition error
 export const kunRateLimiter = async (
   // req: NextRequest,
   options: KunRateLimiterOptions

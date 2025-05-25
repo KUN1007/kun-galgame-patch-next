@@ -1,5 +1,6 @@
 import { kunMoyuMoe } from '~/config/moyu-moe'
 import { convert } from 'html-to-text'
+import { generateNullMetadata } from '~/utils/noIndex'
 import type { Metadata } from 'next'
 import type { Patch } from '~/types/api/patch'
 
@@ -7,6 +8,10 @@ export const generateKunMetadataTemplate = (patch: Patch): Metadata => {
   const pageTitle = patch.alias.length
     ? `${patch.name} | ${patch.alias[0]}`
     : `${patch.name}`
+
+  if (patch.content_limit === 'nsfw') {
+    return generateNullMetadata(pageTitle)
+  }
 
   return {
     title: pageTitle,
@@ -39,12 +44,6 @@ export const generateKunMetadataTemplate = (patch: Patch): Metadata => {
     },
     alternates: {
       canonical: `${kunMoyuMoe.domain.main}/patch/${patch.id}/introduction`
-    },
-    other:
-      patch.content_limit === 'nsfw'
-        ? {
-            bingbot: 'noindex, nofollow, nocache, noimageindex'
-          }
-        : undefined
+    }
   }
 }

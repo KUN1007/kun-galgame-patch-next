@@ -4,22 +4,14 @@ import { UserStats } from '~/components/user/Stats'
 import { UserActivity } from '~/components/user/Activity'
 import { generateKunMetadataTemplate } from './metadata'
 import { kunGetUserStatusActions } from './actions'
-import type { Metadata } from 'next'
 
 interface Props {
   children: React.ReactNode
   params: Promise<{ id: string }>
 }
 
-export const generateMetadata = async ({
-  params
-}: Props): Promise<Metadata> => {
-  const { id } = await params
-  const user = await kunGetUserStatusActions(Number(id))
-  if (typeof user === 'string') {
-    return {}
-  }
-  return generateKunMetadataTemplate(user)
+export const generateMetadata = () => {
+  return generateKunMetadataTemplate
 }
 
 export default async function Kun({ params, children }: Props) {
