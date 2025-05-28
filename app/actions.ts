@@ -1,9 +1,5 @@
 'use server'
 
-import { setKUNGalgameTask } from '~/server/cron'
-
-setKUNGalgameTask()
-
 import { getNSFWHeader } from '~/utils/actions/getNSFWHeader'
 import { getHomeData } from '~/app/api/home/route'
 
