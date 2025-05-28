@@ -2,9 +2,13 @@
 
 import { SetStateAction, useState } from 'react'
 import { Button } from '@nextui-org/button'
-import { Dropdown, DropdownMenu, DropdownTrigger } from '@nextui-org/dropdown'
+import {
+  Dropdown,
+  DropdownMenu,
+  DropdownTrigger,
+  DropdownItem
+} from '@nextui-org/dropdown'
 import { MoreHorizontal, Pencil, Trash2 } from 'lucide-react'
-import { DropdownItem } from '@nextui-org/dropdown'
 import {
   Modal,
   ModalBody,
