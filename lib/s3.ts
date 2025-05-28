@@ -3,11 +3,11 @@ import {
   CreateMultipartUploadCommand,
   UploadPartCommand,
   CompleteMultipartUploadCommand,
-  AbortMultipartUploadCommand
+  AbortMultipartUploadCommand,
+  DeleteObjectCommand
 } from '@aws-sdk/client-s3'
 import { createReadStream } from 'fs'
 import { stat } from 'fs/promises'
-import { DeleteObjectCommand } from '@aws-sdk/client-s3'
 
 export const s3 = new S3Client({
   endpoint: process.env.KUN_VISUAL_NOVEL_S3_STORAGE_ENDPOINT!,

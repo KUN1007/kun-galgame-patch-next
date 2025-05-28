@@ -6,11 +6,11 @@ import { Tooltip } from '@nextui-org/tooltip'
 import {
   DropdownItem,
   DropdownMenu,
-  DropdownTrigger
+  DropdownTrigger,
+  Dropdown
 } from '@nextui-org/dropdown'
 import { Button } from '@nextui-org/button'
 import { Moon, Sun, SunMoon } from 'lucide-react'
-import { Dropdown } from '@nextui-org/dropdown'
 import type { Selection } from '@nextui-org/react'
 
 enum Theme {

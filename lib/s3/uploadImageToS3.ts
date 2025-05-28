@@ -1,5 +1,4 @@
-import { S3Client } from '@aws-sdk/client-s3'
-import { PutObjectCommand } from '@aws-sdk/client-s3'
+import { S3Client, PutObjectCommand } from '@aws-sdk/client-s3'
 
 // Image will put to a different storage provider
 export const s3 = new S3Client({

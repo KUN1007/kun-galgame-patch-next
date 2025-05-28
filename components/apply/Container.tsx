@@ -9,13 +9,13 @@ import {
   CardHeader,
   Chip,
   Divider,
-  Progress
+  Progress,
+  Link
 } from '@nextui-org/react'
 import { BadgeCheck, CheckCircle2, CircleSlash, Trophy } from 'lucide-react'
 import { useRouter } from 'next-nprogress-bar'
 import { kunFetchPost } from '~/utils/kunFetch'
 import { kunErrorHandler } from '~/utils/kunErrorHandler'
-import { Link } from '@nextui-org/react'
 import toast from 'react-hot-toast'
 
 interface Props {

@@ -1,9 +1,8 @@
 'use client'
 
-import { AppProgressBar } from 'next-nprogress-bar'
+import { AppProgressBar, useRouter } from 'next-nprogress-bar'
 import { NextUIProvider } from '@nextui-org/react'
 import { ThemeProvider } from 'next-themes'
-import { useRouter } from 'next-nprogress-bar'
 
 export const Providers = ({ children }: { children: React.ReactNode }) => {
   const router = useRouter()
