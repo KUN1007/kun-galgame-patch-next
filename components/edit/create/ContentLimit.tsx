@@ -1,6 +1,6 @@
 'use client'
 
-import { Switch } from '@nextui-org/react'
+import { Switch, Alert, Image } from '@nextui-org/react'
 import { useCreatePatchStore } from '~/store/editStore'
 import { GALGAME_AGE_LIMIT_MAP } from '~/constants/galgame'
 
@@ -29,7 +29,23 @@ export const ContentLimit = ({ errors }: Props) => {
         SFW 的浏览量会高两到三倍,
         因此请您尽量保证游戏封面、游戏名、游戏介绍等可以在公共场合展示
       </p>
+      <Alert
+        color="danger"
+        title="再次请大家注意 NSFW 问题"
+        description="网站目前的 NSFW 认定标准可能比较苛刻, 看起来不能在公司报告大会上放在 PPT 里展示的游戏都是 NSFW ,封面需要打码才能放上去的一律算 NSFW, 总之就是越严越好，可以错杀不可以放过，因为会导致网站违反 Google 或 Bing 的条款"
+      />
+      <div className="pb-6">
+        <p className="text-sm text-default-500">
+          例如下面两张图就算作 NSFW 的游戏, 有 NSFW 的游戏名或介绍等等也算作
+          NSFW
+        </p>
+        <div className="flex gap-2">
+          <Image src="/edit/1.avif" width={200} />
+          <Image src="/edit/2.avif" width={200} />
+        </div>
+      </div>
 
+      <p>注意这个 NSFW 开关, 越严越好, 只要有一点不对立即设置为 NSFW</p>
       <Switch
         defaultSelected
         color="danger"
