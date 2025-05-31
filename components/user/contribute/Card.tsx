@@ -13,6 +13,7 @@ export const UserContributeCard = ({ contribute }: Props) => {
       isPressable
       as={Link}
       href={`/patch/${contribute.patchId}/history`}
+      target="_blank"
       className="w-full"
     >
       <CardBody className="p-4 space-y-3">

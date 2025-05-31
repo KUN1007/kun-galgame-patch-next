@@ -52,7 +52,7 @@ export const UserList = ({ userId, type }: UserListProps) => {
           {users.map((user) => (
             <Card key={user.id}>
               <CardBody className="flex flex-row items-center gap-4">
-                <Avatar src={user.avatar} className="size-12" />
+                <Avatar src={user.avatar} className="size-12 shrink-0" />
                 <div className="space-y-2 grow">
                   <h4
                     className="text-lg font-semibold transition-colors cursor-pointer hover:text-primary-500"

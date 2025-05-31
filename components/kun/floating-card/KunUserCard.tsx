@@ -33,7 +33,7 @@ export const KunUserCard = ({ uid }: UserCardProps) => {
           <div className="flex items-center justify-between">
             <User
               name={user.name}
-              description={user.bio || '这只笨萝莉还没有签名'}
+              description={user.bio.slice(0, 24) || '这只笨萝莉还没有签名'}
               avatarProps={{
                 src: user.avatar,
                 isBordered: true,

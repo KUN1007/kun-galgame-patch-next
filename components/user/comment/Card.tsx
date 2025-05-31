@@ -50,6 +50,7 @@ export const UserCommentCard = ({ comment }: Props) => {
             size="sm"
             underline="always"
             href={`/patch/${comment.patchId}/comment`}
+            target="_blank"
           >
             {comment.patchName}
           </Link>

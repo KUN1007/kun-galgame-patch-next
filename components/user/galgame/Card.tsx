@@ -16,6 +16,7 @@ export const UserGalgameCard = ({ galgame }: Props) => {
       isPressable
       as={Link}
       href={`/patch/${galgame.id}/introduction`}
+      target="_blank"
       className="w-full"
     >
       <CardBody className="p-4">
