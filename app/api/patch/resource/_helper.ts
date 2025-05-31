@@ -37,3 +37,60 @@ export const deletePatchResource = async (
   const s3Key = `patch/${id}/${hash}/${fileName}`
   await deleteFileFromS3(s3Key)
 }
+
+/**
+ * Removes the first occurrence of a given subsequence (`toRemove`) from the array (`arr`)
+ * and then returns a new array with duplicate values removed.
+ *
+ * Key behavior:
+ * - `toRemove` is treated as an exact ordered subsequence of `arr`, not just a set of values.
+ * - The function scans through `arr` and removes the first set of elements that match
+ *   the full order and content of `toRemove`.
+ * - If the full subsequence is not found in order, the original array is returned with duplicates removed.
+ * - The final result is deduplicated using a Set (preserving first occurrences).
+ *
+ * Example:
+ *   arr = ['a', 'b', 'c', 'a', 'd', 'e']
+ *   toRemove = ['b', 'c']
+ *   → remove first subsequence ['b', 'c'], result = ['a', 'a', 'd', 'e']
+ *   → deduplicate, final = ['a', 'd', 'e']
+ */
+export const _removeSubsequenceOnceAndDeduplicate = <T>(
+  arr: T[],
+  toRemove: T[]
+): T[] => {
+  if (toRemove.length === 0) {
+    return [...new Set(arr)]
+  }
+
+  const indicesToRemove = new Set<number>()
+  let currentToRemoveIndex = 0
+
+  for (let i = 0; i < arr.length; i++) {
+    if (
+      currentToRemoveIndex < toRemove.length &&
+      arr[i] === toRemove[currentToRemoveIndex]
+    ) {
+      indicesToRemove.add(i)
+      currentToRemoveIndex++
+      if (currentToRemoveIndex === toRemove.length) {
+        break
+      }
+    }
+  }
+
+  if (currentToRemoveIndex < toRemove.length && toRemove.length > 0) {
+    return [...new Set(arr)]
+  }
+
+  const arrayAfterRemoval: T[] = []
+  for (let i = 0; i < arr.length; i++) {
+    if (!indicesToRemove.has(i)) {
+      arrayAfterRemoval.push(arr[i])
+    }
+  }
+
+  const deduplicatedArray = [...new Set(arrayAfterRemoval)]
+
+  return deduplicatedArray
+}
