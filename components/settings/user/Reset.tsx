@@ -11,9 +11,9 @@ import {
   ModalFooter,
   ModalHeader,
   useDisclosure
-} from "@heroui/react"
-import { Button } from "@heroui/button"
-import { useRouter } from 'next-nprogress-bar'
+} from '@heroui/react'
+import { Button } from '@heroui/button'
+import { useRouter } from 'next/navigation'
 import toast from 'react-hot-toast'
 
 export const Reset = () => {

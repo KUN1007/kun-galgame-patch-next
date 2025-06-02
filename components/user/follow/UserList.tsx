@@ -1,10 +1,10 @@
 'use client'
 
-import { Avatar, Card, CardBody } from "@heroui/react"
+import { Avatar, Card, CardBody } from '@heroui/react'
 import { Users } from 'lucide-react'
 import { useEffect, useState } from 'react'
 import { kunFetchGet } from '~/utils/kunFetch'
-import { useRouter } from 'next-nprogress-bar'
+import { useRouter } from 'next/navigation'
 import { KunLoading } from '~/components/kun/Loading'
 import { KunNull } from '~/components/kun/Null'
 import { UserFollow } from './Follow'

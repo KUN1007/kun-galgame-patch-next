@@ -1,16 +1,16 @@
 'use client'
 
-import { Tab, Tabs } from "@heroui/tabs"
+import { Tab, Tabs } from '@heroui/tabs'
 import {
   Dropdown,
   DropdownTrigger,
   DropdownMenu,
   DropdownItem
-} from "@heroui/dropdown"
-import { Button } from "@heroui/button"
+} from '@heroui/dropdown'
+import { Button } from '@heroui/button'
 import { Puzzle, User, ChevronDown } from 'lucide-react'
 import { useSearchParams } from 'next/navigation'
-import { useRouter } from 'next-nprogress-bar'
+import { useRouter } from 'next/navigation'
 import { KunHeader } from '~/components/kun/Header'
 import {
   userSortOptions,

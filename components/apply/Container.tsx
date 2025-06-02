@@ -11,9 +11,9 @@ import {
   Divider,
   Progress,
   Link
-} from "@heroui/react"
+} from '@heroui/react'
 import { BadgeCheck, CheckCircle2, CircleSlash, Trophy } from 'lucide-react'
-import { useRouter } from 'next-nprogress-bar'
+import { useRouter } from 'next/navigation'
 import { kunFetchPost } from '~/utils/kunFetch'
 import { kunErrorHandler } from '~/utils/kunErrorHandler'
 import toast from 'react-hot-toast'

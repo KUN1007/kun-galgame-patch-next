@@ -1,7 +1,7 @@
 'use client'
 
 import { useState } from 'react'
-import { Button } from "@heroui/react"
+import { Button } from '@heroui/react'
 import localforage from 'localforage'
 import { useCreatePatchStore } from '~/store/editStore'
 import { useUserStore } from '~/store/userStore'
@@ -9,7 +9,7 @@ import toast from 'react-hot-toast'
 import { kunFetchFormData } from '~/utils/kunFetch'
 import { kunErrorHandler } from '~/utils/kunErrorHandler'
 import { patchCreateSchema } from '~/validations/edit'
-import { useRouter } from 'next-nprogress-bar'
+import { useRouter } from 'next/navigation'
 import { VNDBRegex } from '~/utils/validate'
 import type { Dispatch, SetStateAction } from 'react'
 import type { CreatePatchRequestData } from '~/store/editStore'

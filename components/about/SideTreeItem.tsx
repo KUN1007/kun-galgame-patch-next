@@ -1,10 +1,10 @@
 'use client'
 
 import { useState } from 'react'
-import { Link } from "@heroui/link"
+import { Link } from '@heroui/link'
 import { KunTreeNode } from '~/lib/mdx/types'
 import { ChevronRight, FileText, FolderOpen } from 'lucide-react'
-import { useRouter } from 'next-nprogress-bar'
+import { useRouter } from 'next/navigation'
 import { cn } from '~/utils/cn'
 
 interface TreeItemProps {

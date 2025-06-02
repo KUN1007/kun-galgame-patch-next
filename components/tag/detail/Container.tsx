@@ -1,11 +1,11 @@
 'use client'
 
 import { useEffect, useState } from 'react'
-import { Pagination } from "@heroui/pagination"
+import { Pagination } from '@heroui/pagination'
 import { kunFetchGet } from '~/utils/kunFetch'
-import { Chip } from "@heroui/chip"
-import { Button } from "@heroui/button"
-import { useDisclosure } from "@heroui/modal"
+import { Chip } from '@heroui/chip'
+import { Button } from '@heroui/button'
+import { useDisclosure } from '@heroui/modal'
 import { Pencil } from 'lucide-react'
 import { TagDetail } from '~/types/api/tag'
 import { KunLoading } from '~/components/kun/Loading'
@@ -14,7 +14,7 @@ import { useMounted } from '~/hooks/useMounted'
 import { GalgameCard } from '~/components/galgame/Card'
 import { KunNull } from '~/components/kun/Null'
 import { EditTagModal } from './EditTagModal'
-import { useRouter } from 'next-nprogress-bar'
+import { useRouter } from 'next/navigation'
 import { KunUser } from '~/components/kun/floating-card/KunUser'
 import { formatDistanceToNow } from '~/utils/formatDistanceToNow'
 

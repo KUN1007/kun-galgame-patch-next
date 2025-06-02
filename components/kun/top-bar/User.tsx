@@ -2,12 +2,12 @@
 
 import toast from 'react-hot-toast'
 import { useEffect, useState } from 'react'
-import { NavbarContent, NavbarItem } from "@heroui/navbar"
+import { NavbarContent, NavbarItem } from '@heroui/navbar'
 import Link from 'next/link'
-import { Button } from "@heroui/button"
-import { Skeleton } from "@heroui/skeleton"
+import { Button } from '@heroui/button'
+import { Skeleton } from '@heroui/skeleton'
 import { useUserStore } from '~/store/userStore'
-import { useRouter } from 'next-nprogress-bar'
+import { useRouter } from 'next/navigation'
 import { kunFetchGet } from '~/utils/kunFetch'
 import { ThemeSwitcher } from './ThemeSwitcher'
 import { useMounted } from '~/hooks/useMounted'

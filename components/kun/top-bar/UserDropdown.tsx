@@ -5,9 +5,9 @@ import {
   DropdownItem,
   DropdownMenu,
   DropdownTrigger
-} from "@heroui/dropdown"
-import { Avatar } from "@heroui/avatar"
-import { Button } from "@heroui/button"
+} from '@heroui/dropdown'
+import { Avatar } from '@heroui/avatar'
+import { Button } from '@heroui/button'
 import {
   Modal,
   ModalBody,
@@ -15,7 +15,7 @@ import {
   ModalFooter,
   ModalHeader,
   useDisclosure
-} from "@heroui/modal"
+} from '@heroui/modal'
 import {
   CalendarCheck,
   CircleHelp,
@@ -27,7 +27,7 @@ import {
 } from 'lucide-react'
 import { useUserStore } from '~/store/userStore'
 import { useState } from 'react'
-import { useRouter } from 'next-nprogress-bar'
+import { useRouter } from 'next/navigation'
 import { kunFetchPost } from '~/utils/kunFetch'
 import toast from 'react-hot-toast'
 import { showKunSooner } from '~/components/kun/Sooner'

@@ -8,19 +8,19 @@ import {
   ModalFooter,
   ModalHeader,
   useDisclosure
-} from "@heroui/modal"
-import { Button } from "@heroui/button"
-import { Chip } from "@heroui/chip"
-import { Checkbox } from "@heroui/checkbox"
-import { ScrollShadow } from "@heroui/scroll-shadow"
-import { Link } from "@heroui/link"
+} from '@heroui/modal'
+import { Button } from '@heroui/button'
+import { Chip } from '@heroui/chip'
+import { Checkbox } from '@heroui/checkbox'
+import { ScrollShadow } from '@heroui/scroll-shadow'
+import { Link } from '@heroui/link'
 import { Tag } from 'lucide-react'
 import { useMounted } from '~/hooks/useMounted'
 import { kunFetchGet, kunFetchPost, kunFetchPut } from '~/utils/kunFetch'
 import { useDebounce } from 'use-debounce'
 import { SearchTags } from '~/components/tag/SearchTag'
 import { KunLoading } from '~/components/kun/Loading'
-import { useRouter } from 'next-nprogress-bar'
+import { useRouter } from 'next/navigation'
 import type { Tag as TagType } from '~/types/api/tag'
 import toast from 'react-hot-toast'
 

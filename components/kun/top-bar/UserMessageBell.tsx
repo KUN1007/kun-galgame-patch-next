@@ -1,12 +1,12 @@
 'use client'
 
-import { Button } from "@heroui/button"
-import { Link } from "@heroui/link"
-import { Tooltip } from "@heroui/tooltip"
+import { Button } from '@heroui/button'
+import { Link } from '@heroui/link'
+import { Tooltip } from '@heroui/tooltip'
 import { Bell, BellRing } from 'lucide-react'
 import { AnimatePresence, motion } from 'framer-motion'
 import { bellShakeVariants, dotVariants } from '~/motion/bell'
-import { useRouter } from 'next-nprogress-bar'
+import { useRouter } from 'next/navigation'
 import { useUserStore } from '~/store/userStore'
 
 interface Props {

@@ -1,9 +1,9 @@
 'use client'
 
 import { useState } from 'react'
-import { Button, Tooltip } from "@heroui/react"
+import { Button, Tooltip } from '@heroui/react'
 import { Download, Heart, Share2, Pencil, Trash2 } from 'lucide-react'
-import { useRouter } from 'next-nprogress-bar'
+import { useRouter } from 'next/navigation'
 import {
   Modal,
   ModalBody,
@@ -11,7 +11,7 @@ import {
   ModalFooter,
   ModalHeader,
   useDisclosure
-} from "@heroui/modal"
+} from '@heroui/modal'
 import { useUserStore } from '~/store/userStore'
 import { kunFetchDelete, kunFetchPut } from '~/utils/kunFetch'
 import { kunCopy } from '~/utils/kunCopy'

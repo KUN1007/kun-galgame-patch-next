@@ -1,7 +1,7 @@
 'use client'
 
-import { DropdownItem } from "@heroui/dropdown"
-import { Button } from "@heroui/button"
+import { DropdownItem } from '@heroui/dropdown'
+import { Button } from '@heroui/button'
 import {
   Modal,
   ModalBody,
@@ -9,11 +9,11 @@ import {
   ModalFooter,
   ModalHeader,
   useDisclosure
-} from "@heroui/modal"
+} from '@heroui/modal'
 import { LogOut } from 'lucide-react'
 import { useUserStore } from '~/store/userStore'
 import { useState } from 'react'
-import { useRouter } from 'next-nprogress-bar'
+import { useRouter } from 'next/navigation'
 import { kunFetchPost } from '~/utils/kunFetch'
 import toast from 'react-hot-toast'
 

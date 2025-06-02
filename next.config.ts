@@ -12,6 +12,7 @@ import type { NextConfig } from 'next'
 // const __dirname = path.dirname(__filename)
 
 const nextConfig: NextConfig = {
+  devIndicators: false,
   pageExtensions: ['ts', 'tsx', 'js', 'jsx', 'md', 'mdx'],
   transpilePackages: ['next-mdx-remote'],
   publicRuntimeConfig: {

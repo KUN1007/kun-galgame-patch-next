@@ -1,14 +1,14 @@
 'use client'
 
 import { useState } from 'react'
-import { Button, Card, CardBody, CardHeader } from "@heroui/react"
+import { Button, Card, CardBody, CardHeader } from '@heroui/react'
 import { useRewritePatchStore } from '~/store/rewriteStore'
 import { Editor } from '~/components/kun/milkdown/PatchEditor'
 import toast from 'react-hot-toast'
 import { kunFetchPut } from '~/utils/kunFetch'
 import { kunErrorHandler } from '~/utils/kunErrorHandler'
 import { patchUpdateSchema } from '~/validations/edit'
-import { useRouter } from 'next-nprogress-bar'
+import { useRouter } from 'next/navigation'
 import { GameNameInput } from './GameNameInput'
 import { VNDBInput } from './VNDBInput'
 import { ReleaseDateInput } from '../components/ReleaseDateInput'

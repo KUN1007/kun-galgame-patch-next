@@ -8,18 +8,18 @@ import {
   ModalFooter,
   ModalHeader,
   useDisclosure
-} from "@heroui/modal"
-import { Button } from "@heroui/button"
-import { Chip } from "@heroui/chip"
-import { Checkbox } from "@heroui/checkbox"
-import { ScrollShadow } from "@heroui/scroll-shadow"
-import { Link } from "@heroui/link"
+} from '@heroui/modal'
+import { Button } from '@heroui/button'
+import { Chip } from '@heroui/chip'
+import { Checkbox } from '@heroui/checkbox'
+import { ScrollShadow } from '@heroui/scroll-shadow'
+import { Link } from '@heroui/link'
 import { House } from 'lucide-react'
 import type { Company as CompanyType } from '~/types/api/company'
 import { useDebounce } from 'use-debounce'
 import { useMounted } from '~/hooks/useMounted'
 import { kunFetchGet, kunFetchPost, kunFetchPut } from '~/utils/kunFetch'
-import { useRouter } from 'next-nprogress-bar'
+import { useRouter } from 'next/navigation'
 import toast from 'react-hot-toast'
 import { KunLoading } from '~/components/kun/Loading'
 import { SearchCompanies } from '~/components/company/SearchCompanies'

@@ -1,7 +1,7 @@
 'use client'
 
 import { useState } from 'react'
-import { Button } from "@heroui/button"
+import { Button } from '@heroui/button'
 import {
   Modal,
   ModalBody,
@@ -9,10 +9,10 @@ import {
   ModalFooter,
   ModalHeader,
   useDisclosure
-} from "@heroui/modal"
+} from '@heroui/modal'
 import { kunFetchPost } from '~/utils/kunFetch'
 import { Check, Plus } from 'lucide-react'
-import { useRouter } from 'next-nprogress-bar'
+import { useRouter } from 'next/navigation'
 import { useUserStore } from '~/store/userStore'
 import { kunErrorHandler } from '~/utils/kunErrorHandler'
 
