@@ -1,6 +1,6 @@
 'use client'
 
-import { Avatar, Card, CardBody } from '@nextui-org/react'
+import { Avatar, Card, CardBody } from "@heroui/react"
 import { Users } from 'lucide-react'
 import { useEffect, useState } from 'react'
 import { kunFetchGet } from '~/utils/kunFetch'

@@ -1,5 +1,5 @@
-import { Card, CardBody, CardHeader } from '@nextui-org/card'
-import { Link } from '@nextui-org/link'
+import { Card, CardBody, CardHeader } from "@heroui/card"
+import { Link } from "@heroui/link"
 import { Resources } from '~/components/patch/resource/Resource'
 import { generateKunMetadataTemplate } from './metadata'
 import { kunGetPatchActions } from '../actions'

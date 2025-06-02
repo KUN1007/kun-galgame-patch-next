@@ -1,6 +1,6 @@
 'use client'
 
-import { Pagination, Input } from '@nextui-org/react'
+import { Pagination, Input } from "@heroui/react"
 import { Search } from 'lucide-react'
 import { useEffect, useState } from 'react'
 import { kunFetchGet } from '~/utils/kunFetch'

@@ -1,6 +1,6 @@
 'use client'
 
-import { Switch, Alert, Image } from '@nextui-org/react'
+import { Switch, Alert, Image } from "@heroui/react"
 import { useCreatePatchStore } from '~/store/editStore'
 import { GALGAME_AGE_LIMIT_MAP } from '~/constants/galgame'
 

@@ -1,4 +1,4 @@
-import { Slider } from '@nextui-org/react'
+import { Slider } from "@heroui/react"
 import { FC } from 'react'
 
 interface KunMosaicControllerProps {

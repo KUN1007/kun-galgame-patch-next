@@ -3,8 +3,8 @@
 import { toast } from 'react-hot-toast'
 import { motion } from 'framer-motion'
 import { X } from 'lucide-react'
-import { Button } from '@nextui-org/button'
-import { Chip } from '@nextui-org/chip'
+import { Button } from "@heroui/button"
+import { Chip } from "@heroui/chip"
 import { iconVariants, textVariants, toastVariants } from '~/motion/sooner'
 import { loliAttribute } from './utils/loli'
 import Image from 'next/image'

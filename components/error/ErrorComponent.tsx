@@ -6,7 +6,7 @@ import {
   CardBody,
   CardFooter,
   CardHeader
-} from '@nextui-org/react'
+} from "@heroui/react"
 import { AlertTriangle, ArrowLeft, Home, RefreshCw } from 'lucide-react'
 import { useRouter } from 'next-nprogress-bar'
 

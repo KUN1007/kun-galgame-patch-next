@@ -1,7 +1,7 @@
 'use client'
 
 import { useState } from 'react'
-import { Card, CardBody, CardHeader, Input, Link } from '@nextui-org/react'
+import { Card, CardBody, CardHeader, Input, Link } from "@heroui/react"
 import { useCreatePatchStore } from '~/store/editStore'
 import { VNDBInput } from './VNDBInput'
 import { AliasInput } from './AliasInput'

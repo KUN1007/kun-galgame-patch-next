@@ -2,7 +2,7 @@
 
 import { useState, useEffect, useTransition } from 'react'
 import { useDebounce } from 'use-debounce'
-import { Pagination } from '@nextui-org/pagination'
+import { Pagination } from "@heroui/pagination"
 import { CompanyHeader } from './CompanyHeader'
 import { SearchCompanies } from './SearchCompanies'
 import { CompanyList } from './CompanyList'

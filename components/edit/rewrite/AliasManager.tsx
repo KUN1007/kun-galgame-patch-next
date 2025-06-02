@@ -1,7 +1,7 @@
 'use client'
 
 import { useState } from 'react'
-import { Button, Chip, Input } from '@nextui-org/react'
+import { Button, Chip, Input } from "@heroui/react"
 import { Plus } from 'lucide-react'
 
 interface Props {

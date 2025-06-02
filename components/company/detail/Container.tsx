@@ -2,10 +2,10 @@
 
 import { useState, useTransition, useEffect } from 'react'
 import { useRouter } from 'next-nprogress-bar'
-import { Button, Chip } from '@nextui-org/react'
-import { useDisclosure } from '@nextui-org/modal'
-import { Link } from '@nextui-org/link'
-import { Pagination } from '@nextui-org/pagination'
+import { Button, Chip } from "@heroui/react"
+import { useDisclosure } from "@heroui/modal"
+import { Link } from "@heroui/link"
+import { Pagination } from "@heroui/pagination"
 import { Pencil } from 'lucide-react'
 import { useMounted } from '~/hooks/useMounted'
 import { KunHeader } from '~/components/kun/Header'

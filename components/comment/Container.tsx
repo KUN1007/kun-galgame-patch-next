@@ -1,7 +1,7 @@
 'use client'
 
 import { useEffect, useState } from 'react'
-import { Pagination } from '@nextui-org/pagination'
+import { Pagination } from "@heroui/pagination"
 import { kunFetchGet } from '~/utils/kunFetch'
 import { CommentCard } from './CommentCard'
 import { FilterBar } from './FilterBar'

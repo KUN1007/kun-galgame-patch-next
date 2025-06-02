@@ -1,6 +1,6 @@
 'use client'
 
-import { Switch, Card, CardBody, CardFooter, Divider } from '@nextui-org/react'
+import { Switch, Card, CardBody, CardFooter, Divider } from "@heroui/react"
 import { useState } from 'react'
 import { Ban } from 'lucide-react'
 import { kunFetchPut } from '~/utils/kunFetch'

@@ -1,6 +1,6 @@
 'use client'
 
-import { Card, CardBody, CardFooter } from '@nextui-org/card'
+import { Card, CardBody, CardFooter } from "@heroui/card"
 import { AvatarCrop } from './AvatarCrop'
 
 export const UserAvatar = () => {

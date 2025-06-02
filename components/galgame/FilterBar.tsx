@@ -5,10 +5,10 @@ import {
   DropdownItem,
   DropdownMenu,
   DropdownTrigger
-} from '@nextui-org/dropdown'
-import { Button } from '@nextui-org/button'
-import { Card, CardHeader } from '@nextui-org/card'
-import { Select, SelectItem } from '@nextui-org/select'
+} from "@heroui/dropdown"
+import { Button } from "@heroui/button"
+import { Card, CardHeader } from "@heroui/card"
+import { Select, SelectItem } from "@heroui/select"
 import {
   ArrowDownAZ,
   ArrowUpAZ,

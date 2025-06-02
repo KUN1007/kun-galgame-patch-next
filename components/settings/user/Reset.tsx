@@ -11,8 +11,8 @@ import {
   ModalFooter,
   ModalHeader,
   useDisclosure
-} from '@nextui-org/react'
-import { Button } from '@nextui-org/button'
+} from "@heroui/react"
+import { Button } from "@heroui/button"
 import { useRouter } from 'next-nprogress-bar'
 import toast from 'react-hot-toast'
 

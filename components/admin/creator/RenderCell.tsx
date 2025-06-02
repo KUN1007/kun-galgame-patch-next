@@ -1,6 +1,6 @@
 'use client'
 
-import { Chip } from '@nextui-org/react'
+import { Chip } from "@heroui/react"
 import { formatDistanceToNow } from '~/utils/formatDistanceToNow'
 import { APPLICANT_STATUS_MAP } from '~/constants/admin'
 import { ActionButton } from './ActionButton'

@@ -1,8 +1,8 @@
 'use client'
 
 import DOMPurify from 'isomorphic-dompurify'
-import { Code } from '@nextui-org/code'
-import { Chip } from '@nextui-org/chip'
+import { Code } from "@heroui/code"
+import { Chip } from "@heroui/chip"
 import { Quote } from 'lucide-react'
 import { scrollIntoComment } from './_scrollIntoComment'
 import type { PatchComment } from '~/types/api/patch'

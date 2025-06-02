@@ -1,4 +1,4 @@
-import { Button, Tooltip } from '@nextui-org/react'
+import { Button, Tooltip } from "@heroui/react"
 import { FC } from 'react'
 import { LucideIcon } from 'lucide-react'
 

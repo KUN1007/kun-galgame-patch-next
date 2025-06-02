@@ -4,11 +4,11 @@ import { useState } from 'react'
 import { z } from 'zod'
 import { Controller, useForm } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
-import { Card, CardBody, CardFooter, CardHeader } from '@nextui-org/card'
-import { Input } from '@nextui-org/input'
-import { Button } from '@nextui-org/button'
-import { Divider } from '@nextui-org/divider'
-import { Link } from '@nextui-org/link'
+import { Card, CardBody, CardFooter, CardHeader } from "@heroui/card"
+import { Input } from "@heroui/input"
+import { Button } from "@heroui/button"
+import { Divider } from "@heroui/divider"
+import { Link } from "@heroui/link"
 import toast from 'react-hot-toast'
 import { passwordSchema } from '~/validations/user'
 import { kunFetchPost } from '~/utils/kunFetch'

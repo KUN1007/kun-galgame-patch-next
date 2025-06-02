@@ -8,12 +8,12 @@ import {
   ModalFooter,
   ModalHeader,
   useDisclosure
-} from '@nextui-org/modal'
-import { Button } from '@nextui-org/button'
-import { Chip } from '@nextui-org/chip'
-import { Checkbox } from '@nextui-org/checkbox'
-import { ScrollShadow } from '@nextui-org/scroll-shadow'
-import { Link } from '@nextui-org/link'
+} from "@heroui/modal"
+import { Button } from "@heroui/button"
+import { Chip } from "@heroui/chip"
+import { Checkbox } from "@heroui/checkbox"
+import { ScrollShadow } from "@heroui/scroll-shadow"
+import { Link } from "@heroui/link"
 import { House } from 'lucide-react'
 import type { Company as CompanyType } from '~/types/api/company'
 import { useDebounce } from 'use-debounce'

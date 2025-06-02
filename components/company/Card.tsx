@@ -1,6 +1,6 @@
 import Link from 'next/link'
-import { Card, CardBody } from '@nextui-org/card'
-import { Chip } from '@nextui-org/chip'
+import { Card, CardBody } from "@heroui/card"
+import { Chip } from "@heroui/chip"
 import type { Company as CompanyType } from '~/types/api/company'
 
 interface Props {

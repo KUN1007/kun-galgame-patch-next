@@ -4,7 +4,7 @@ import { useState } from 'react'
 import { z } from 'zod'
 import { Controller, useForm } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
-import { Button, Input } from '@nextui-org/react'
+import { Button, Input } from "@heroui/react"
 import { User } from 'lucide-react'
 import { kunFetchPost } from '~/utils/kunFetch'
 import { kunErrorHandler } from '~/utils/kunErrorHandler'

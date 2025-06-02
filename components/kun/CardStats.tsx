@@ -1,4 +1,4 @@
-import { Tooltip } from '@nextui-org/tooltip'
+import { Tooltip } from "@heroui/tooltip"
 import { Download, Eye, Heart, MessageSquare, Puzzle } from 'lucide-react'
 import { cn } from '~/utils/cn'
 import { formatNumber } from '~/utils/formatNumber'

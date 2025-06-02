@@ -1,7 +1,7 @@
 'use client'
 
 import { useEffect } from 'react'
-import { Button, Card, CardBody } from '@nextui-org/react'
+import { Button, Card, CardBody } from "@heroui/react"
 import { motion } from 'framer-motion'
 import { BadgeCheck, Home, Rocket } from 'lucide-react'
 import { useRouter } from 'next-nprogress-bar'

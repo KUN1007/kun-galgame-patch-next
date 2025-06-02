@@ -1,5 +1,5 @@
-import { Input } from '@nextui-org/input'
-import { Button } from '@nextui-org/react'
+import { Input } from "@heroui/input"
+import { Button } from "@heroui/react"
 import { Search } from 'lucide-react'
 import { KunLoading } from '~/components/kun/Loading'
 

@@ -11,7 +11,7 @@ import {
   Divider,
   Progress,
   Link
-} from '@nextui-org/react'
+} from "@heroui/react"
 import { BadgeCheck, CheckCircle2, CircleSlash, Trophy } from 'lucide-react'
 import { useRouter } from 'next-nprogress-bar'
 import { kunFetchPost } from '~/utils/kunFetch'

@@ -1,10 +1,10 @@
 'use client'
 
-import { Tooltip } from '@nextui-org/tooltip'
-import { User } from '@nextui-org/user'
+import { Tooltip } from "@heroui/tooltip"
+import { User } from "@heroui/user"
 import { useRouter } from 'next-nprogress-bar'
 import { KunUserCard } from './KunUserCard'
-import type { UserProps } from '@nextui-org/user'
+import type { UserProps } from "@heroui/user"
 
 interface KunUserProps {
   user: KunUser

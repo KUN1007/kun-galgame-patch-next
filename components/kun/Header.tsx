@@ -1,5 +1,5 @@
-import { Divider } from '@nextui-org/divider'
-import { Image } from '@nextui-org/image'
+import { Divider } from "@heroui/divider"
+import { Image } from "@heroui/image"
 
 interface Props {
   name: string

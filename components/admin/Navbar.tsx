@@ -4,7 +4,7 @@ import {
   NavbarContent,
   NavbarItem,
   Navbar as NextUINavbar
-} from '@nextui-org/react'
+} from "@heroui/react"
 
 export const Navbar = () => {
   return (

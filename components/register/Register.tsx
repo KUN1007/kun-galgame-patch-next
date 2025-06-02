@@ -4,7 +4,7 @@ import { useState } from 'react'
 import { Controller, useForm } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { z } from 'zod'
-import { Button, Checkbox, Input, Link } from '@nextui-org/react'
+import { Button, Checkbox, Input, Link } from "@heroui/react"
 import { kunFetchPost } from '~/utils/kunFetch'
 import { registerSchema } from '~/validations/auth'
 import { useUserStore } from '~/store/userStore'

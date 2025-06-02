@@ -7,7 +7,7 @@ import {
   ModalContent,
   ModalFooter,
   ModalHeader
-} from '@nextui-org/react'
+} from "@heroui/react"
 import { FC, useEffect, useMemo, useRef, useState } from 'react'
 import { mosaicImg } from './utils'
 import { KunMosaicController } from './KunMosaicController'

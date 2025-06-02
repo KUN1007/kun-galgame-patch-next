@@ -1,5 +1,5 @@
-import { Card } from '@nextui-org/card'
-import { Button } from '@nextui-org/button'
+import { Card } from "@heroui/card"
+import { Button } from "@heroui/button"
 import Link from 'next/link'
 import { CheckCircle2 } from 'lucide-react'
 import { kunMetadata } from './metadata'

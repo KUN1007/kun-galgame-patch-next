@@ -1,8 +1,8 @@
 'use client'
 
 import { useState } from 'react'
-import { Card, CardBody, CardHeader } from '@nextui-org/card'
-import { Divider } from '@nextui-org/react'
+import { Card, CardBody, CardHeader } from "@heroui/card"
+import { Divider } from "@heroui/react"
 import { LockKeyhole } from 'lucide-react'
 import { StepOne } from './StepOne'
 import { StepTwo } from './StepTwo'

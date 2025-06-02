@@ -5,7 +5,7 @@ import {
   ModalFooter,
   ModalHeader,
   Input
-} from '@nextui-org/react'
+} from "@heroui/react"
 import { useState } from 'react'
 import { PatchWalkthrough } from '~/types/api/patch'
 import { KunEditor } from '~/components/kun/milkdown/Editor'

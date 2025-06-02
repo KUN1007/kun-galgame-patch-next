@@ -14,7 +14,7 @@ import {
   SelectItem,
   Textarea,
   useDisclosure
-} from '@nextui-org/react'
+} from "@heroui/react"
 import { Edit2 } from 'lucide-react'
 import { USER_ROLE_MAP, USER_STATUS_MAP } from '~/constants/user'
 import { kunFetchPut } from '~/utils/kunFetch'

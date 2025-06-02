@@ -1,7 +1,7 @@
 'use client'
 
-import { DropdownItem } from '@nextui-org/dropdown'
-import { Button } from '@nextui-org/button'
+import { DropdownItem } from "@heroui/dropdown"
+import { Button } from "@heroui/button"
 import {
   Modal,
   ModalBody,
@@ -9,7 +9,7 @@ import {
   ModalFooter,
   ModalHeader,
   useDisclosure
-} from '@nextui-org/modal'
+} from "@heroui/modal"
 import { LogOut } from 'lucide-react'
 import { useUserStore } from '~/store/userStore'
 import { useState } from 'react'

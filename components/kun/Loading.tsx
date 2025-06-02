@@ -1,4 +1,4 @@
-import { Spinner } from '@nextui-org/spinner'
+import { Spinner } from "@heroui/spinner"
 import { cn } from '~/utils/cn'
 
 interface Props {

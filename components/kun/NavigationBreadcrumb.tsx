@@ -7,8 +7,8 @@ import {
   DropdownItem,
   DropdownMenu,
   DropdownTrigger
-} from '@nextui-org/react'
-import { BreadcrumbItem, Breadcrumbs } from '@nextui-org/breadcrumbs'
+} from "@heroui/react"
+import { BreadcrumbItem, Breadcrumbs } from "@heroui/breadcrumbs"
 import { ChevronRight } from 'lucide-react'
 import { useParams, usePathname } from 'next/navigation'
 import { useBreadcrumbStore } from '~/store/breadcrumb'

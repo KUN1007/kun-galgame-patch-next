@@ -11,7 +11,7 @@ import { kunErrorHandler } from '~/utils/kunErrorHandler'
 import { KunNull } from '../kun/Null'
 import { useMounted } from '~/hooks/useMounted'
 import type { GalgameReleaseCard } from '~/types/api/release'
-import { Link } from '@nextui-org/react'
+import { Link } from "@heroui/react"
 
 interface Props {
   initialGalgames: GalgameReleaseCard[]

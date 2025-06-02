@@ -1,6 +1,6 @@
 'use client'
 
-import { Alert, Button } from '@nextui-org/react'
+import { Alert, Button } from "@heroui/react"
 import { useState } from 'react'
 import { PatchHeaderContainer } from '~/components/patch/header/Container'
 import { Patch, PatchIntroduction } from '~/types/api/patch'

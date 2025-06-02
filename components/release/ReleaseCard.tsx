@@ -8,7 +8,7 @@ import {
   Chip,
   Image,
   Tooltip
-} from '@nextui-org/react'
+} from "@heroui/react"
 import { Puzzle } from 'lucide-react'
 import { formatDate } from '~/utils/time'
 import { motion } from 'framer-motion'
@@ -87,5 +87,5 @@ export const ReleaseCard = ({ patch }: PatchCardProps) => {
         </CardBody>
       </Card>
     </motion.div>
-  )
+  );
 }

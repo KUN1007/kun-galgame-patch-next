@@ -1,13 +1,13 @@
 'use client'
 
 import { SetStateAction, useState } from 'react'
-import { Button } from '@nextui-org/button'
+import { Button } from "@heroui/button"
 import {
   Dropdown,
   DropdownMenu,
   DropdownTrigger,
   DropdownItem
-} from '@nextui-org/dropdown'
+} from "@heroui/dropdown"
 import { MoreHorizontal, Pencil, Trash2 } from 'lucide-react'
 import {
   Modal,
@@ -16,8 +16,8 @@ import {
   ModalFooter,
   ModalHeader,
   useDisclosure
-} from '@nextui-org/modal'
-import { Input } from '@nextui-org/input'
+} from "@heroui/modal"
+import { Input } from "@heroui/input"
 import { kunFetchDelete, kunFetchPut } from '~/utils/kunFetch'
 import toast from 'react-hot-toast'
 import { kunErrorHandler } from '~/utils/kunErrorHandler'

@@ -1,6 +1,6 @@
 'use client'
 
-import { Chip } from '@nextui-org/react'
+import { Chip } from "@heroui/react"
 import {
   USER_ROLE_MAP,
   USER_STATUS_COLOR_MAP,

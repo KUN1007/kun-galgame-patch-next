@@ -1,4 +1,4 @@
-import { Card, CardBody, CardHeader } from '@nextui-org/card'
+import { Card, CardBody, CardHeader } from "@heroui/card"
 import { History } from '~/components/patch/history/History'
 import { PatchContributor } from '~/components/patch/Contributor'
 import { kunGetActions } from './actions'

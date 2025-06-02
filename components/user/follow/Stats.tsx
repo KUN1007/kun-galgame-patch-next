@@ -7,8 +7,8 @@ import {
   ModalContent,
   ModalHeader,
   useDisclosure
-} from '@nextui-org/modal'
-import { Button } from '@nextui-org/button'
+} from "@heroui/modal"
+import { Button } from "@heroui/button"
 import { Telescope, Users } from 'lucide-react'
 import { UserList } from './UserList'
 import type { UserInfo } from '~/types/api/user'

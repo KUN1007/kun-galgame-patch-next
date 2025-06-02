@@ -10,7 +10,7 @@ import {
   ModalHeader,
   Textarea,
   useDisclosure
-} from '@nextui-org/react'
+} from "@heroui/react"
 import { kunFetchPut } from '~/utils/kunFetch'
 import type { AdminCreator } from '~/types/api/admin'
 import { kunErrorHandler } from '~/utils/kunErrorHandler'

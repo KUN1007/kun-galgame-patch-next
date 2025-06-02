@@ -1,7 +1,7 @@
 import { useState } from 'react'
 import { kunFetchPut } from '~/utils/kunFetch'
-import { Button } from '@nextui-org/button'
-import { Tooltip } from '@nextui-org/tooltip'
+import { Button } from "@heroui/button"
+import { Tooltip } from "@heroui/tooltip"
 import { ThumbsUp } from 'lucide-react'
 import { useUserStore } from '~/store/userStore'
 import toast from 'react-hot-toast'

@@ -1,6 +1,6 @@
-import { NavbarBrand } from '@nextui-org/navbar'
-import { Tooltip } from '@nextui-org/tooltip'
-import { Chip } from '@nextui-org/chip'
+import { NavbarBrand } from "@heroui/navbar"
+import { Tooltip } from "@heroui/tooltip"
+import { Chip } from "@heroui/chip"
 import { kunMoyuMoe } from '~/config/moyu-moe'
 import Image from 'next/image'
 import Link from 'next/link'

@@ -1,6 +1,6 @@
-import { Chip } from '@nextui-org/chip'
-import { Card, CardBody } from '@nextui-org/card'
-import { ScrollShadow } from '@nextui-org/scroll-shadow'
+import { Chip } from "@heroui/chip"
+import { Card, CardBody } from "@heroui/card"
+import { ScrollShadow } from "@heroui/scroll-shadow"
 import { formatDistanceToNow } from '~/utils/formatDistanceToNow'
 import { HighlightedText } from '~/components/patch/DiffContent'
 import { HISTORY_ACTION_TYPE_MAP, HISTORY_TYPE_MAP } from '~/constants/history'

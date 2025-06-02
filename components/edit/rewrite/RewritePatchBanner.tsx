@@ -2,8 +2,8 @@
 
 import toast from 'react-hot-toast'
 import { useState } from 'react'
-import { Button } from '@nextui-org/button'
-import { ModalBody, ModalFooter } from '@nextui-org/modal'
+import { Button } from "@heroui/button"
+import { ModalBody, ModalFooter } from "@heroui/modal"
 import { kunFetchFormData } from '~/utils/kunFetch'
 import { kunErrorHandler } from '~/utils/kunErrorHandler'
 import { KunImageCropper } from '~/components/kun/cropper/KunImageCropper'

@@ -1,7 +1,7 @@
 'use client'
 
-import { Tooltip } from '@nextui-org/tooltip'
-import { Button, Link } from '@nextui-org/react'
+import { Tooltip } from "@heroui/tooltip"
+import { Button, Link } from "@heroui/react"
 import { Search } from 'lucide-react'
 import { useRouter } from 'next-nprogress-bar'
 import { useHotkeys } from 'react-hotkeys-hook'

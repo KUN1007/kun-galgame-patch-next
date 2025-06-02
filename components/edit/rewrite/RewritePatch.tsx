@@ -1,7 +1,7 @@
 'use client'
 
 import { useState } from 'react'
-import { Button, Card, CardBody, CardHeader } from '@nextui-org/react'
+import { Button, Card, CardBody, CardHeader } from "@heroui/react"
 import { useRewritePatchStore } from '~/store/rewriteStore'
 import { Editor } from '~/components/kun/milkdown/PatchEditor'
 import toast from 'react-hot-toast'

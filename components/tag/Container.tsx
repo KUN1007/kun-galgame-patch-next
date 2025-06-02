@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from 'react'
 import { useDebounce } from 'use-debounce'
-import { Pagination } from '@nextui-org/pagination'
+import { Pagination } from "@heroui/pagination"
 import { TagHeader } from './TagHeader'
 import { SearchTags } from './SearchTag'
 import { TagList } from './TagList'

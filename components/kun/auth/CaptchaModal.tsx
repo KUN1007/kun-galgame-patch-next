@@ -10,7 +10,7 @@ import {
   ModalContent,
   ModalFooter,
   ModalHeader
-} from '@nextui-org/react'
+} from "@heroui/react"
 import { kunFetchGet, kunFetchPost } from '~/utils/kunFetch'
 import { KunCaptchaCanvas } from './CaptchaCanvas'
 import { KunLoading } from '../Loading'

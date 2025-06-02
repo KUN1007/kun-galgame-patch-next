@@ -1,8 +1,8 @@
 'use client'
 
-import { Card, CardBody, CardFooter, CardHeader } from '@nextui-org/card'
-import { Input } from '@nextui-org/input'
-import { Button } from '@nextui-org/button'
+import { Card, CardBody, CardFooter, CardHeader } from "@heroui/card"
+import { Input } from "@heroui/input"
+import { Button } from "@heroui/button"
 import { useUserStore } from '~/store/userStore'
 import { useState } from 'react'
 import { kunFetchPost } from '~/utils/kunFetch'
@@ -15,7 +15,7 @@ import {
   ModalFooter,
   ModalHeader,
   useDisclosure
-} from '@nextui-org/modal'
+} from "@heroui/modal"
 import toast from 'react-hot-toast'
 
 export const Username = () => {

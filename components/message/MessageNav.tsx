@@ -2,9 +2,9 @@
 
 import { useEffect } from 'react'
 import { kunFetchPut } from '~/utils/kunFetch'
-import { Button } from '@nextui-org/react'
+import { Button } from "@heroui/react"
 import { Bell, Globe, UserPlus, RefreshCcw, Puzzle, AtSign } from 'lucide-react'
-import { Card, CardBody } from '@nextui-org/card'
+import { Card, CardBody } from "@heroui/card"
 import { usePathname } from 'next/navigation'
 import Link from 'next/link'
 import toast from 'react-hot-toast'

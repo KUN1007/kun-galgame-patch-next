@@ -1,6 +1,6 @@
 import { KunAvatar } from '~/components/kun/floating-card/KunAvatar'
-import { Card, CardBody } from '@nextui-org/card'
-import { Chip } from '@nextui-org/chip'
+import { Card, CardBody } from "@heroui/card"
+import { Chip } from "@heroui/chip"
 import { formatDate } from '~/utils/time'
 import { ADMIN_LOG_TYPE_MAP } from '~/constants/admin'
 import type { AdminLog } from '~/types/api/admin'

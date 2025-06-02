@@ -1,6 +1,6 @@
 'use client'
 
-import { Card, CardBody } from '@nextui-org/react'
+import { Card, CardBody } from "@heroui/react"
 import type { FC } from 'react'
 
 export const StatsCard: FC<{ title: string; value: number }> = ({

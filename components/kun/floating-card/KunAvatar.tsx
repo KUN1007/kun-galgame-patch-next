@@ -1,10 +1,10 @@
 'use client'
 
-import { Tooltip } from '@nextui-org/tooltip'
-import { Avatar } from '@nextui-org/avatar'
+import { Tooltip } from "@heroui/tooltip"
+import { Avatar } from "@heroui/avatar"
 import { KunUserCard } from './KunUserCard'
 import { useRouter } from 'next-nprogress-bar'
-import type { AvatarProps } from '@nextui-org/avatar'
+import type { AvatarProps } from "@heroui/avatar"
 
 interface KunAvatarProps extends AvatarProps {
   name: string

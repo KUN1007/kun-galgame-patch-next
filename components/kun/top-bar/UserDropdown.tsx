@@ -5,9 +5,9 @@ import {
   DropdownItem,
   DropdownMenu,
   DropdownTrigger
-} from '@nextui-org/dropdown'
-import { Avatar } from '@nextui-org/avatar'
-import { Button } from '@nextui-org/button'
+} from "@heroui/dropdown"
+import { Avatar } from "@heroui/avatar"
+import { Button } from "@heroui/button"
 import {
   Modal,
   ModalBody,
@@ -15,7 +15,7 @@ import {
   ModalFooter,
   ModalHeader,
   useDisclosure
-} from '@nextui-org/modal'
+} from "@heroui/modal"
 import {
   CalendarCheck,
   CircleHelp,

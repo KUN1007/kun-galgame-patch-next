@@ -1,13 +1,13 @@
 'use client'
 
-import { Tab, Tabs } from '@nextui-org/tabs'
+import { Tab, Tabs } from "@heroui/tabs"
 import {
   Dropdown,
   DropdownTrigger,
   DropdownMenu,
   DropdownItem
-} from '@nextui-org/dropdown'
-import { Button } from '@nextui-org/button'
+} from "@heroui/dropdown"
+import { Button } from "@heroui/button"
 import { Puzzle, User, ChevronDown } from 'lucide-react'
 import { useSearchParams } from 'next/navigation'
 import { useRouter } from 'next-nprogress-bar'

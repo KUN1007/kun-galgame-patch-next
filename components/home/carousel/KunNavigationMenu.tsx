@@ -1,7 +1,7 @@
 'use client'
 
 import { kunMoyuMoe } from '~/config/moyu-moe'
-import { Button, Link, Tooltip } from '@nextui-org/react'
+import { Button, Link, Tooltip } from "@heroui/react"
 import {
   CircleHelp,
   MessageSquare,

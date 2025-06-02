@@ -1,9 +1,9 @@
 'use client'
 
 import { useState } from 'react'
-import { Chip } from '@nextui-org/chip'
-import { Tooltip } from '@nextui-org/tooltip'
-import { Link } from '@nextui-org/link'
+import { Chip } from "@heroui/chip"
+import { Tooltip } from "@heroui/tooltip"
+import { Link } from "@heroui/link"
 import { PatchTagSelector } from './PatchTagSelector'
 import type { Tag } from '~/types/api/tag'
 

@@ -1,7 +1,7 @@
 'use client'
 
 import { useState } from 'react'
-import { Button } from '@nextui-org/react'
+import { Button } from "@heroui/react"
 import localforage from 'localforage'
 import { useCreatePatchStore } from '~/store/editStore'
 import { useUserStore } from '~/store/userStore'

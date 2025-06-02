@@ -1,4 +1,4 @@
-import { Button } from '@nextui-org/button'
+import { Button } from "@heroui/button"
 import { ChevronRight } from 'lucide-react'
 import { GalgameCard } from '~/components/galgame/Card'
 import { ResourceCard } from '~/components/resource/ResourceCard'

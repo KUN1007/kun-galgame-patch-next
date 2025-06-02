@@ -2,11 +2,11 @@
 
 import { useState } from 'react'
 import toast from 'react-hot-toast'
-import { Card, CardBody, CardFooter, CardHeader } from '@nextui-org/card'
+import { Card, CardBody, CardFooter, CardHeader } from "@heroui/card"
 import { KunUser } from '~/components/kun/floating-card/KunUser'
-import { Button } from '@nextui-org/button'
-import { Textarea } from '@nextui-org/input'
-import { Chip } from '@nextui-org/chip'
+import { Button } from "@heroui/button"
+import { Textarea } from "@heroui/input"
+import { Chip } from "@heroui/chip"
 import {
   Modal,
   ModalBody,
@@ -14,7 +14,7 @@ import {
   ModalFooter,
   ModalHeader,
   useDisclosure
-} from '@nextui-org/modal'
+} from "@heroui/modal"
 import { Check, X } from 'lucide-react'
 import { formatDistanceToNow } from '~/utils/formatDistanceToNow'
 import { HighlightedText } from '~/components/patch/DiffContent'

@@ -65,7 +65,7 @@
     "@microsoft/microsoft-graph-client": "^3.0.7",
     "@milkdown/plugin-automd": "^7.5.9",
     "@next/mdx": "^15.1.4",
-    "@nextui-org/react": "^2.6.11",
+    "@heroui/react": "2.7.9",
     "@noble/hashes": "^1.7.0",
     "@prisma/client": "^6.2.1",
     "@tanstack/react-query": "^5.64.1",

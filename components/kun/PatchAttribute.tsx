@@ -1,4 +1,4 @@
-import { Chip } from '@nextui-org/chip'
+import { Chip } from "@heroui/chip"
 import {
   SUPPORTED_LANGUAGE_MAP,
   SUPPORTED_PLATFORM_MAP,

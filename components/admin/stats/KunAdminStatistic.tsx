@@ -1,7 +1,7 @@
 'use client'
 
 import { FC, useEffect, useState } from 'react'
-import { Slider, Divider } from '@nextui-org/react'
+import { Slider, Divider } from "@heroui/react"
 import { useDebounce } from 'use-debounce'
 import { KunAdminSum } from './KunAdminSum'
 import { kunFetchGet } from '~/utils/kunFetch'

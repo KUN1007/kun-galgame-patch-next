@@ -1,5 +1,5 @@
 import { FC } from 'react'
-import { Divider } from '@nextui-org/react'
+import { Divider } from "@heroui/react"
 // import { KunAdminLineChart } from './KunAdminLineChart'
 import { KunAdminStatistic } from './KunAdminStatistic'
 

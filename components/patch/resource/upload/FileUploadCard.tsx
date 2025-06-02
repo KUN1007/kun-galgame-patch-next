@@ -1,4 +1,4 @@
-import { Button, Card, Progress } from '@nextui-org/react'
+import { Button, Card, Progress } from "@heroui/react"
 import { File as FileIcon } from 'lucide-react'
 import { sanitizeFileName } from '~/utils/sanitizeFileName'
 import { RESOURCE_UPLOAD_STATUS_MAP } from '~/constants/resource'

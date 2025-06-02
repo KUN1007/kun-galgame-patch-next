@@ -7,7 +7,7 @@ import {
   TableColumn,
   TableHeader,
   TableRow
-} from '@nextui-org/react'
+} from "@heroui/react"
 // import { useState } from 'react'
 import { RenderCell } from './RenderCell'
 import type { AdminCreator } from '~/types/api/admin'

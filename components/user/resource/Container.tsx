@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from 'react'
 import { kunFetchGet } from '~/utils/kunFetch'
-import { Pagination } from '@nextui-org/pagination'
+import { Pagination } from "@heroui/pagination"
 import { useMounted } from '~/hooks/useMounted'
 import { KunLoading } from '~/components/kun/Loading'
 import { KunNull } from '~/components/kun/Null'

@@ -1,7 +1,7 @@
 'use client'
 
 import { KunPostMetadata } from '~/lib/mdx/types'
-import { Button } from '@nextui-org/react'
+import { Button } from "@heroui/react"
 import { ChevronLeft, ChevronRight } from 'lucide-react'
 import Link from 'next/link'
 

@@ -5,7 +5,7 @@ import {
   Popover,
   PopoverContent,
   PopoverTrigger
-} from '@nextui-org/react'
+} from "@heroui/react"
 import { ImagePlus, Link } from 'lucide-react'
 import { callCommand } from '@milkdown/utils'
 import {

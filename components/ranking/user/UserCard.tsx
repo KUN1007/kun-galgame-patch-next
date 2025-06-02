@@ -1,8 +1,8 @@
 'use client'
 
-import { Avatar } from '@nextui-org/avatar'
-import { Card, CardBody } from '@nextui-org/card'
-import { Badge } from '@nextui-org/badge'
+import { Avatar } from "@heroui/avatar"
+import { Card, CardBody } from "@heroui/card"
+import { Badge } from "@heroui/badge"
 import { Download, MessageCircle, Puzzle, Lollipop } from 'lucide-react'
 import Link from 'next/link'
 import type { RankingUser } from '~/types/api/ranking'

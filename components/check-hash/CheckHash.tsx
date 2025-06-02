@@ -12,7 +12,7 @@ import {
   Progress,
   Input,
   Textarea
-} from '@nextui-org/react'
+} from "@heroui/react"
 import { FileIcon, CheckCircle2Icon, XCircleIcon } from 'lucide-react'
 import { cn } from '~/utils/cn'
 import toast from 'react-hot-toast'

@@ -5,9 +5,9 @@ import {
   DropdownItem,
   DropdownMenu,
   DropdownTrigger
-} from '@nextui-org/dropdown'
-import { Button } from '@nextui-org/button'
-import { Card, CardHeader } from '@nextui-org/card'
+} from "@heroui/dropdown"
+import { Button } from "@heroui/button"
+import { Card, CardHeader } from "@heroui/card"
 import { ArrowDownAZ, ArrowUpAZ, ChevronDown } from 'lucide-react'
 import type { SortDirection, SortOption } from './_sort'
 

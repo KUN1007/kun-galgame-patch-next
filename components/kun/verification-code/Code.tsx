@@ -1,8 +1,8 @@
 'use client'
 
 import { useState } from 'react'
-import { Button } from '@nextui-org/button'
-import { useDisclosure } from '@nextui-org/modal'
+import { Button } from "@heroui/button"
+import { useDisclosure } from "@heroui/modal"
 import toast from 'react-hot-toast'
 import { kunFetchPost } from '~/utils/kunFetch'
 import { KunCaptchaModal } from '~/components/kun/auth/CaptchaModal'

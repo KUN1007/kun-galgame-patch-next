@@ -1,5 +1,5 @@
 import { Upload } from 'lucide-react'
-import { Button, Input } from '@nextui-org/react'
+import { Button, Input } from "@heroui/react"
 import { cn } from '~/utils/cn'
 import { useState, useRef } from 'react'
 import { useUserStore } from '~/store/userStore'

@@ -1,8 +1,8 @@
 'use client'
 
-import { Card, CardBody, CardFooter, CardHeader } from '@nextui-org/card'
-import { Textarea } from '@nextui-org/input'
-import { Button } from '@nextui-org/button'
+import { Card, CardBody, CardFooter, CardHeader } from "@heroui/card"
+import { Textarea } from "@heroui/input"
+import { Button } from "@heroui/button"
 import { useUserStore } from '~/store/userStore'
 import { useState } from 'react'
 import { kunFetchPost } from '~/utils/kunFetch'

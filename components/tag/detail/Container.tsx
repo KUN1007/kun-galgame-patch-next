@@ -1,11 +1,11 @@
 'use client'
 
 import { useEffect, useState } from 'react'
-import { Pagination } from '@nextui-org/pagination'
+import { Pagination } from "@heroui/pagination"
 import { kunFetchGet } from '~/utils/kunFetch'
-import { Chip } from '@nextui-org/chip'
-import { Button } from '@nextui-org/button'
-import { useDisclosure } from '@nextui-org/modal'
+import { Chip } from "@heroui/chip"
+import { Button } from "@heroui/button"
+import { useDisclosure } from "@heroui/modal"
 import { Pencil } from 'lucide-react'
 import { TagDetail } from '~/types/api/tag'
 import { KunLoading } from '~/components/kun/Loading'
