@@ -12,7 +12,7 @@ export default function Error({
   reset: () => void
 }) {
   useEffect(() => {
-    toast.error(error)
+    toast.error(JSON.stringify(error))
   }, [error])
 
   return <ErrorComponent showReset={true} error={error.message} reset={reset} />

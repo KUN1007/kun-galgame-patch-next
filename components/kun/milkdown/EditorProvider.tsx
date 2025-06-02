@@ -33,7 +33,7 @@ import {
   placeholderPlugin,
   placeholderCtx
 } from './plugins/placeholder/placeholderPlugin'
-import '~/styles/editor.scss'
+import '~/styles/editor.css'
 
 import bash from 'refractor/lang/bash'
 import c from 'refractor/lang/c'

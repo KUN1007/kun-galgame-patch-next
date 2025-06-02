@@ -1,5 +1,5 @@
 import DOMPurify from 'isomorphic-dompurify'
-import './_diff.scss'
+import './_diff.css'
 
 export const parseTextToHTML = (text: string): string => {
   const regex = /(\+\+\+.*?\+\+\+|---.*?---|\|\|\|.*?\|\|\|)/gs

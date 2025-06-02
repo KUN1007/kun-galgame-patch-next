@@ -9,7 +9,7 @@ import { NSFWIndicator } from '~/components/kun/NSFWIndicator'
 import Script from 'next/script'
 import { getNSFWHeader } from '~/utils/actions/getNSFWHeader'
 import type { Metadata, Viewport } from 'next'
-import '~/styles/index.scss'
+import '~/styles/index.css'
 
 export const viewport: Viewport = kunViewport
 export const metadata: Metadata = kunMetadata

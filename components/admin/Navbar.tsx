@@ -3,15 +3,15 @@
 import {
   NavbarContent,
   NavbarItem,
-  Navbar as NextUINavbar
+  Navbar as HeroUINavbar
 } from "@heroui/react"
 
 export const Navbar = () => {
   return (
-    <NextUINavbar>
+    <HeroUINavbar>
       <NavbarContent justify="end">
         <NavbarItem>哦哈呦~</NavbarItem>
       </NavbarContent>
-    </NextUINavbar>
+    </HeroUINavbar>
   )
 }
