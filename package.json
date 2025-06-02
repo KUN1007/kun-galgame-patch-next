@@ -17,7 +17,7 @@
     "prisma:push": "pnpx prisma db push",
     "prisma:generate": "pnpx prisma generate",
     "up": "pnpm update --latest && pnpm prisma:generate",
-    "start": "pm2 start ecosystem.config.js --esm",
+    "start": "pm2 start ecosystem.config.cjs",
     "stop": "pm2 delete kun-visual-novel-patch",
     "deploy:install": "esno scripts/deployInstall.ts",
     "deploy:build": "esno scripts/deployBuild.ts"

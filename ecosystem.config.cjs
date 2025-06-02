@@ -1,15 +1,11 @@
-import { fileURLToPath } from 'url'
-import { join, dirname } from 'path'
+const path = require('path')
 
-const __filename = fileURLToPath(import.meta.url)
-const __dirname = dirname(__filename)
-
-export default {
+module.exports = {
   apps: [
     {
       name: 'kun-visual-novel-patch',
       port: 2333,
-      cwd: join(__dirname),
+      cwd: path.join(__dirname),
       instances: 1,
       autorestart: true,
       watch: false,
