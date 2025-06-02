@@ -1,6 +1,6 @@
 'use client'
 
-import { Card, CardBody } from "@heroui/card"
+import { Card, CardBody } from '@heroui/card'
 import { formatDistanceToNow } from '~/utils/formatDistanceToNow'
 import { KunUser } from '~/components/kun/floating-card/KunUser'
 import DOMPurify from 'isomorphic-dompurify'

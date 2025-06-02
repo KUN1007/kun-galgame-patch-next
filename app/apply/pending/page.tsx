@@ -1,5 +1,5 @@
-import { Card } from "@heroui/card"
-import { Button } from "@heroui/button"
+import { Card } from '@heroui/card'
+import { Button } from '@heroui/button'
 import Link from 'next/link'
 import { CheckCircle2 } from 'lucide-react'
 import { kunMetadata } from './metadata'

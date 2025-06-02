@@ -1,4 +1,4 @@
-import { Divider } from "@heroui/divider"
+import { Divider } from '@heroui/divider'
 
 interface Props {
   text: string

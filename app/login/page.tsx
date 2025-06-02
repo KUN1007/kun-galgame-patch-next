@@ -1,6 +1,6 @@
 import { LoginForm } from '~/components/login/Login'
 import { kunMetadata } from './metadata'
-import { Card, CardBody, CardHeader } from "@heroui/card"
+import { Card, CardBody, CardHeader } from '@heroui/card'
 import Image from 'next/image'
 import { kunMoyuMoe } from '~/config/moyu-moe'
 import type { Metadata } from 'next'

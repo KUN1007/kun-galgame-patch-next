@@ -1,8 +1,8 @@
 'use client'
 
-import { Card, CardBody } from "@heroui/card"
-import { Divider } from "@heroui/divider"
-import { Chip, Tooltip } from "@heroui/react"
+import { Card, CardBody } from '@heroui/card'
+import { Divider } from '@heroui/divider'
+import { Chip, Tooltip } from '@heroui/react'
 import { KunCardStats } from '~/components/kun/CardStats'
 import { KunUser } from '~/components/kun/floating-card/KunUser'
 import { formatDistanceToNow } from '~/utils/formatDistanceToNow'

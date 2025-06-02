@@ -1,7 +1,7 @@
 'use client'
 
 import { useEffect, useState } from 'react'
-import { Pagination } from "@heroui/pagination"
+import { Pagination } from '@heroui/pagination'
 import { kunFetchGet } from '~/utils/kunFetch'
 import { GalgameCard } from './Card'
 import { FilterBar } from './FilterBar'

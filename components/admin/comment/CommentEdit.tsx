@@ -1,13 +1,13 @@
 'use client'
 
 import { useState } from 'react'
-import { Button } from "@heroui/button"
+import { Button } from '@heroui/button'
 import {
   Dropdown,
   DropdownItem,
   DropdownMenu,
   DropdownTrigger
-} from "@heroui/dropdown"
+} from '@heroui/dropdown'
 import {
   Modal,
   ModalBody,
@@ -15,8 +15,8 @@ import {
   ModalFooter,
   ModalHeader,
   useDisclosure
-} from "@heroui/modal"
-import { Textarea } from "@heroui/input"
+} from '@heroui/modal'
+import { Textarea } from '@heroui/input'
 import { MoreVertical } from 'lucide-react'
 import { useUserStore } from '~/store/userStore'
 import { kunFetchDelete, kunFetchPut } from '~/utils/kunFetch'

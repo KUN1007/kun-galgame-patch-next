@@ -6,7 +6,7 @@ import {
   DropdownTrigger,
   DropdownMenu,
   DropdownItem
-} from "@heroui/react"
+} from '@heroui/react'
 import { ChevronLeft, ChevronRight, Calendar } from 'lucide-react'
 import { motion } from 'framer-motion'
 

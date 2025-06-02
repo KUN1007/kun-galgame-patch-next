@@ -1,6 +1,6 @@
 'use client'
 
-import { Card, Chip, Link } from "@heroui/react"
+import { Card, Chip, Link } from '@heroui/react'
 import { aboutDirectoryLabelMap } from '~/constants/about'
 import { KunNavigationMenu } from './KunNavigationMenu'
 import { formatDistanceToNow } from '~/utils/formatDistanceToNow'

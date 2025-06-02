@@ -1,6 +1,6 @@
 'use client'
 
-import { Pagination } from "@heroui/react"
+import { Pagination } from '@heroui/react'
 import { useEffect, useState } from 'react'
 import { kunFetchGet } from '~/utils/kunFetch'
 import { KunLoading } from '~/components/kun/Loading'

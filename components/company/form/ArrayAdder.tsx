@@ -1,6 +1,6 @@
 import type { FC } from 'react'
 import { Plus } from 'lucide-react'
-import { Chip, Button, Input } from "@heroui/react"
+import { Chip, Button, Input } from '@heroui/react'
 
 interface ArrayAdderProps {
   label: string

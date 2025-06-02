@@ -1,5 +1,5 @@
-import { Divider } from "@heroui/divider"
-import { Image } from "@heroui/image"
+import { Divider } from '@heroui/divider'
+import { Image } from '@heroui/image'
 
 interface Props {
   name: string

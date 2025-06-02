@@ -1,6 +1,6 @@
 'use client'
 
-import { Card, Chip, Link } from "@heroui/react"
+import { Card, Chip, Link } from '@heroui/react'
 import { aboutDirectoryLabelMap } from '~/constants/about'
 import { formatDistanceToNow } from '~/utils/formatDistanceToNow'
 import type { HomeCarouselMetadata } from './mdx'

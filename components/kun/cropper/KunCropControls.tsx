@@ -1,6 +1,6 @@
 'use client'
 
-import { Button, Slider } from "@heroui/react"
+import { Button, Slider } from '@heroui/react'
 import { InspectionPanel, RotateCw } from 'lucide-react'
 import type { KunAspect } from './types'
 

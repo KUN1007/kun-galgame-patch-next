@@ -10,7 +10,6 @@
     "eslint:recommended",
     "plugin:react/recommended",
     "plugin:@typescript-eslint/recommended",
-    "plugin:tailwindcss/recommended",
     "plugin:prettier/recommended",
     "prettier"
   ],
@@ -23,7 +22,7 @@
       "modules": true
     }
   },
-  "plugins": ["react", "@typescript-eslint", "tailwindcss", "prettier"],
+  "plugins": ["react", "@typescript-eslint", "prettier"],
   "settings": {
     "import/ignore": ["node_modules"],
     "react": {
@@ -54,9 +53,6 @@
     "@typescript-eslint/no-unused-vars": "off",
     "@typescript-eslint/no-empty-object-type": "off",
     "@next/next/no-img-element": "off",
-    "tailwindcss/no-custom-classname": "off",
-    "tailwindcss/classnames-order": "off",
-    "tailwindcss/enforces-shorthand": "off",
     "react-hooks/exhaustive-deps": "off"
   }
 }

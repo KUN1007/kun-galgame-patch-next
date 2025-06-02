@@ -1,5 +1,5 @@
-import { Card, CardBody, CardHeader } from "@heroui/card"
-import { Link } from "@heroui/link"
+import { Card, CardBody, CardHeader } from '@heroui/card'
+import { Link } from '@heroui/link'
 import { Walkthrough } from '~/components/patch/walkthrough/Container'
 import { generateKunMetadataTemplate } from './metadata'
 import { kunGetPatchActions } from '../actions'

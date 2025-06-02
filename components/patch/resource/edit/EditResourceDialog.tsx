@@ -1,13 +1,13 @@
 'use client'
 
 import { z } from 'zod'
-import { Button } from "@heroui/button"
+import { Button } from '@heroui/button'
 import {
   ModalBody,
   ModalContent,
   ModalFooter,
   ModalHeader
-} from "@heroui/react"
+} from '@heroui/react'
 import { useState } from 'react'
 import { useForm } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'

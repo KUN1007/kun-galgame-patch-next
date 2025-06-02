@@ -2,9 +2,9 @@
 
 import { useEffect, useState } from 'react'
 import { useRouter, useSearchParams } from 'next/navigation'
-import { Input } from "@heroui/input"
-import { Checkbox, Link } from "@heroui/react"
-import { Pagination } from "@heroui/pagination"
+import { Input } from '@heroui/input'
+import { Checkbox, Link } from '@heroui/react'
+import { Pagination } from '@heroui/pagination'
 import { KunLoading } from '~/components/kun/Loading'
 import { Search } from 'lucide-react'
 import { useDebounce } from 'use-debounce'

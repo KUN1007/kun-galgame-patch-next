@@ -1,7 +1,7 @@
 import Link from 'next/link'
-import { Card, CardBody } from "@heroui/card"
-import { Avatar } from "@heroui/avatar"
-import { Chip } from "@heroui/chip"
+import { Card, CardBody } from '@heroui/card'
+import { Avatar } from '@heroui/avatar'
+import { Chip } from '@heroui/chip'
 import { formatDistanceToNow } from '~/utils/formatDistanceToNow'
 import {
   Bell,

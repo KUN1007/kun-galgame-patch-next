@@ -1,4 +1,4 @@
-import { Input } from "@heroui/input"
+import { Input } from '@heroui/input'
 
 interface Props {
   date: string

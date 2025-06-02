@@ -1,14 +1,14 @@
 'use client'
 
 import { useState, useEffect } from 'react'
-import { Button } from "@heroui/button"
-import { Card, CardBody } from "@heroui/card"
+import { Button } from '@heroui/button'
+import { Card, CardBody } from '@heroui/card'
 import {
   Dropdown,
   DropdownItem,
   DropdownMenu,
   DropdownTrigger
-} from "@heroui/dropdown"
+} from '@heroui/dropdown'
 import {
   Modal,
   ModalBody,
@@ -16,7 +16,7 @@ import {
   ModalFooter,
   ModalHeader,
   useDisclosure
-} from "@heroui/modal"
+} from '@heroui/modal'
 import { Edit, MoreHorizontal, Plus, Trash2, Share } from 'lucide-react'
 import { kunFetchDelete } from '~/utils/kunFetch'
 import { PublishResource } from './publish/PublishResource'

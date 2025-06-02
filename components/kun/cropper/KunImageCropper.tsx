@@ -1,7 +1,7 @@
 'use client'
 
 import { useState } from 'react'
-import { Button, Card, CardBody, Image, useDisclosure } from "@heroui/react"
+import { Button, Card, CardBody, Image, useDisclosure } from '@heroui/react'
 import { KunImageUploader } from './KunImageUploader'
 import { KunImageCropperModal } from './KunImageCropperModal'
 import { KunImageMosaicModal } from './KunImageMosaicModal'

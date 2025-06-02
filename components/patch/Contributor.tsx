@@ -1,5 +1,5 @@
-import { Card, CardBody, CardHeader } from "@heroui/card"
-import { AvatarGroup } from "@heroui/avatar"
+import { Card, CardBody, CardHeader } from '@heroui/card'
+import { AvatarGroup } from '@heroui/avatar'
 import { KunAvatar } from '~/components/kun/floating-card/KunAvatar'
 
 interface Props {

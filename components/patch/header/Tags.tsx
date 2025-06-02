@@ -1,6 +1,6 @@
 'use client'
 
-import { Chip } from "@heroui/chip"
+import { Chip } from '@heroui/chip'
 import { motion } from 'framer-motion'
 import {
   SUPPORTED_LANGUAGE_MAP,

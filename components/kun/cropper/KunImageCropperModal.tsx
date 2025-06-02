@@ -9,7 +9,7 @@ import {
   ModalContent,
   ModalFooter,
   ModalHeader
-} from "@heroui/react"
+} from '@heroui/react'
 import { KunCropControls } from './KunCropControls'
 import { centerAspectCrop, createCroppedImage } from './utils'
 import type { KunAspect } from './types'

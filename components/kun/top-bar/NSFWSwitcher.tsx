@@ -7,7 +7,7 @@ import {
   DropdownTrigger,
   Button,
   Tooltip
-} from "@heroui/react"
+} from '@heroui/react'
 import { useSettingStore } from '~/store/settingStore'
 import { Ban, ShieldCheck, CircleSlash } from 'lucide-react'
 import type { JSX } from 'react'

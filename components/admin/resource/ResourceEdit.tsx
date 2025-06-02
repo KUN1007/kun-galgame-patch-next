@@ -10,7 +10,7 @@ import {
   ModalFooter,
   ModalHeader,
   useDisclosure
-} from "@heroui/react"
+} from '@heroui/react'
 import { Edit2, Trash2 } from 'lucide-react'
 import { useUserStore } from '~/store/userStore'
 import { kunFetchDelete } from '~/utils/kunFetch'

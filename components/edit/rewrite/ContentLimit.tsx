@@ -1,6 +1,6 @@
 'use client'
 
-import { Switch } from "@heroui/react"
+import { Switch } from '@heroui/react'
 import { useRewritePatchStore } from '~/store/rewriteStore'
 import { GALGAME_AGE_LIMIT_MAP } from '~/constants/galgame'
 

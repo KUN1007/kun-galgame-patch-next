@@ -1,6 +1,6 @@
 'use client'
 
-import { Card, CardBody, CardFooter, Image, Link } from "@heroui/react"
+import { Card, CardBody, CardFooter, Image, Link } from '@heroui/react'
 import { motion } from 'framer-motion'
 import { kunMoyuMoe } from '~/config/moyu-moe'
 import { kunFriends } from '~/config/friend'

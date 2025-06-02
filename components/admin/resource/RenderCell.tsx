@@ -1,6 +1,6 @@
 'use client'
 
-import { Chip } from "@heroui/react"
+import { Chip } from '@heroui/react'
 import { SUPPORTED_RESOURCE_LINK_MAP } from '~/constants/resource'
 import { formatDistanceToNow } from '~/utils/formatDistanceToNow'
 import Link from 'next/link'

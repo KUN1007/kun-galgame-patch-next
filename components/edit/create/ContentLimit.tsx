@@ -1,6 +1,6 @@
 'use client'
 
-import { Switch, Alert, Image } from "@heroui/react"
+import { Switch, Alert, Image } from '@heroui/react'
 import { useCreatePatchStore } from '~/store/editStore'
 import { GALGAME_AGE_LIMIT_MAP } from '~/constants/galgame'
 
@@ -40,8 +40,8 @@ export const ContentLimit = ({ errors }: Props) => {
           NSFW
         </p>
         <div className="flex gap-2">
-          <Image src="/edit/1.avif" width={200} />
-          <Image src="/edit/2.avif" width={200} />
+          <Image alt="nsfw-image2" src="/edit/1.avif" width={200} />
+          <Image alt="nsfw-image2" src="/edit/2.avif" width={200} />
         </div>
       </div>
 

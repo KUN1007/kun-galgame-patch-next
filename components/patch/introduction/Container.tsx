@@ -1,4 +1,4 @@
-import { Card, CardBody, CardHeader } from "@heroui/card"
+import { Card, CardBody, CardHeader } from '@heroui/card'
 import { Info } from './Info'
 import { PatchTag } from './Tag'
 import { PatchCompany } from './Company'

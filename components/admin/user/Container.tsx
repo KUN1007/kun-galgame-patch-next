@@ -10,7 +10,7 @@ import {
   TableHeader,
   TableRow,
   Input
-} from "@heroui/react"
+} from '@heroui/react'
 import { Search } from 'lucide-react'
 import { useEffect, useState } from 'react'
 import { RenderCell } from './RenderCell'

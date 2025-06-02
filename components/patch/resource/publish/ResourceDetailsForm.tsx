@@ -1,6 +1,6 @@
 import { Controller } from 'react-hook-form'
-import { Input } from "@heroui/input"
-import { Select, SelectItem } from "@heroui/select"
+import { Input } from '@heroui/input'
+import { Select, SelectItem } from '@heroui/select'
 import {
   resourceTypes,
   SUPPORTED_LANGUAGE,
@@ -69,9 +69,7 @@ export const ResourceDetailsForm = ({
             errorMessage={errors.language?.message}
           >
             {SUPPORTED_LANGUAGE.map((lang) => (
-              <SelectItem key={lang} value={lang}>
-                {SUPPORTED_LANGUAGE_MAP[lang]}
-              </SelectItem>
+              <SelectItem key={lang}>{SUPPORTED_LANGUAGE_MAP[lang]}</SelectItem>
             ))}
           </Select>
         )}
@@ -94,7 +92,7 @@ export const ResourceDetailsForm = ({
             errorMessage={errors.platform?.message}
           >
             {SUPPORTED_PLATFORM.map((platform) => (
-              <SelectItem key={platform} value={platform}>
+              <SelectItem key={platform}>
                 {SUPPORTED_PLATFORM_MAP[platform]}
               </SelectItem>
             ))}

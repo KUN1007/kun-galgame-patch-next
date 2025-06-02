@@ -1,7 +1,7 @@
 'use client'
 
-import { NavbarMenu, NavbarMenuItem } from "@heroui/navbar"
-import { Chip } from "@heroui/chip"
+import { NavbarMenu, NavbarMenuItem } from '@heroui/navbar'
+import { Chip } from '@heroui/chip'
 import Link from 'next/link'
 import Image from 'next/image'
 import { kunMoyuMoe } from '~/config/moyu-moe'

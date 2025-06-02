@@ -1,6 +1,6 @@
-import { Chip } from "@heroui/chip"
-import { Card, CardBody } from "@heroui/card"
-import { Image } from "@heroui/image"
+import { Chip } from '@heroui/chip'
+import { Card, CardBody } from '@heroui/card'
+import { Image } from '@heroui/image'
 import Link from 'next/link'
 import { formatDistanceToNow } from '~/utils/formatDistanceToNow'
 import { KunCardStats } from '~/components/kun/CardStats'
@@ -56,5 +56,5 @@ export const UserGalgameCard = ({ galgame }: Props) => {
         </div>
       </CardBody>
     </Card>
-  );
+  )
 }

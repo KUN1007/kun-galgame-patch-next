@@ -2,7 +2,7 @@
 
 import DOMPurify from 'isomorphic-dompurify'
 import { useState } from 'react'
-import { Accordion, AccordionItem, Button } from "@heroui/react"
+import { Accordion, AccordionItem, Button } from '@heroui/react'
 import { KunUser } from '~/components/kun/floating-card/KunUser'
 import { Download } from 'lucide-react'
 import { formatDistanceToNow } from '~/utils/formatDistanceToNow'

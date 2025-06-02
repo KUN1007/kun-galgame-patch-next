@@ -10,10 +10,10 @@ import {
   ModalContent,
   ModalFooter,
   ModalHeader
-} from "@heroui/modal"
-import { Button } from "@heroui/button"
-import { Input, Textarea } from "@heroui/input"
-import { Chip } from "@heroui/chip"
+} from '@heroui/modal'
+import { Button } from '@heroui/button'
+import { Input, Textarea } from '@heroui/input'
+import { Chip } from '@heroui/chip'
 import { Plus } from 'lucide-react'
 import { updateTagSchema } from '~/validations/tag'
 import { kunFetchPut } from '~/utils/kunFetch'

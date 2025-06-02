@@ -1,6 +1,6 @@
 'use client'
 
-import { Link } from "@heroui/react"
+import { Link } from '@heroui/react'
 import { useCreatePatchStore } from '~/store/editStore'
 import { Editor } from '~/components/kun/milkdown/PatchEditor'
 

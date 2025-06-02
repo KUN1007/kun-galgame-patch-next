@@ -2,7 +2,7 @@
 
 import { z } from 'zod'
 import { Controller } from 'react-hook-form'
-import { Select, SelectItem } from "@heroui/select"
+import { Select, SelectItem } from '@heroui/select'
 import { patchResourceCreateSchema } from '~/validations/patch'
 import { useUserStore } from '~/store/userStore'
 import { storageTypes } from '~/constants/resource'

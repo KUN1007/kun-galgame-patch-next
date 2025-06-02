@@ -8,7 +8,7 @@ import {
   PopoverContent,
   PopoverTrigger,
   Tooltip
-} from "@heroui/react"
+} from '@heroui/react'
 import { ChevronLeft, ChevronRight, SmilePlus } from 'lucide-react'
 import { emojiArray } from './_isoEmoji'
 import type { UseEditorReturn } from '@milkdown/react'

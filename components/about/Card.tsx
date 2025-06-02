@@ -1,9 +1,9 @@
 'use client'
 
 import { useState } from 'react'
-import { Card, CardBody, CardFooter } from "@heroui/react"
+import { Card, CardBody, CardFooter } from '@heroui/react'
 import { Calendar, Type } from 'lucide-react'
-import { Image } from "@heroui/image"
+import { Image } from '@heroui/image'
 import { KunPostMetadata } from '~/lib/mdx/types'
 import { formatDistanceToNow } from '~/utils/formatDistanceToNow'
 import Link from 'next/link'

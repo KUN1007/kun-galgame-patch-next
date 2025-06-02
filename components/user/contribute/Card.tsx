@@ -1,4 +1,4 @@
-import { Card, CardBody } from "@heroui/card"
+import { Card, CardBody } from '@heroui/card'
 import { formatDate } from '~/utils/time'
 import Link from 'next/link'
 import type { UserContribute } from '~/types/api/user'

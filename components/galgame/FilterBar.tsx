@@ -5,10 +5,10 @@ import {
   DropdownItem,
   DropdownMenu,
   DropdownTrigger
-} from "@heroui/dropdown"
-import { Button } from "@heroui/button"
-import { Card, CardHeader } from "@heroui/card"
-import { Select, SelectItem } from "@heroui/select"
+} from '@heroui/dropdown'
+import { Button } from '@heroui/button'
+import { Card, CardHeader } from '@heroui/card'
+import { Select, SelectItem } from '@heroui/select'
 import {
   ArrowDownAZ,
   ArrowUpAZ,
@@ -65,7 +65,7 @@ export const FilterBar = ({
             size="sm"
           >
             {ALL_SUPPORTED_TYPE.map((type) => (
-              <SelectItem key={type} value={type} className="text-default-700">
+              <SelectItem key={type} className="text-default-700">
                 {SUPPORTED_TYPE_MAP[type]}
               </SelectItem>
             ))}
@@ -94,7 +94,7 @@ export const FilterBar = ({
             size="sm"
           >
             {GALGAME_SORT_YEARS.map((year) => (
-              <SelectItem key={year} value={year} className="text-default-700">
+              <SelectItem key={year} className="text-default-700">
                 {GALGAME_SORT_YEARS_MAP[year] ?? year}
               </SelectItem>
             ))}
@@ -125,11 +125,7 @@ export const FilterBar = ({
             }
           >
             {GALGAME_SORT_MONTHS.map((month) => (
-              <SelectItem
-                key={month}
-                value={month}
-                className="text-default-700"
-              >
+              <SelectItem key={month} className="text-default-700">
                 {month === 'all' ? '全部月份' : month}
               </SelectItem>
             ))}

@@ -4,15 +4,15 @@ import { z } from 'zod'
 import { useState } from 'react'
 import { useForm } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
-import { Button } from "@heroui/button"
-import { Link } from "@heroui/link"
+import { Button } from '@heroui/button'
+import { Link } from '@heroui/link'
 import {
   ModalBody,
   ModalContent,
   ModalFooter,
   ModalHeader,
   Progress
-} from "@heroui/react"
+} from '@heroui/react'
 import toast from 'react-hot-toast'
 import { kunFetchPost } from '~/utils/kunFetch'
 import { patchResourceCreateSchema } from '~/validations/patch'

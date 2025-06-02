@@ -1,6 +1,6 @@
-import { Chip } from "@heroui/chip"
-import { Card, CardBody } from "@heroui/card"
-import { Image } from "@heroui/image"
+import { Chip } from '@heroui/chip'
+import { Card, CardBody } from '@heroui/card'
+import { Image } from '@heroui/image'
 import { formatDistanceToNow } from '~/utils/formatDistanceToNow'
 import Link from 'next/link'
 import { KunPatchAttribute } from '~/components/kun/PatchAttribute'
@@ -50,5 +50,5 @@ export const UserResourceCard = ({ resource }: Props) => {
         </div>
       </CardBody>
     </Card>
-  );
+  )
 }

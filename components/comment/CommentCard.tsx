@@ -1,4 +1,4 @@
-import { Card, CardBody } from "@heroui/card"
+import { Card, CardBody } from '@heroui/card'
 import { KunAvatar } from '~/components/kun/floating-card/KunAvatar'
 import { ThumbsUp } from 'lucide-react'
 import { formatDate } from '~/utils/time'

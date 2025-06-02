@@ -17,7 +17,7 @@ import {
   ModalFooter,
   Select,
   SelectItem
-} from "@heroui/react"
+} from '@heroui/react'
 import { ArrayAdder } from './ArrayAdder'
 import { SUPPORTED_LANGUAGE_MAP } from '~/constants/resource'
 import { kunFetchFormData, kunFetchPost, kunFetchPut } from '~/utils/kunFetch'

@@ -1,4 +1,4 @@
-import { Alert } from "@heroui/alert"
+import { Alert } from '@heroui/alert'
 
 interface Props {
   isNSFWEnable: boolean

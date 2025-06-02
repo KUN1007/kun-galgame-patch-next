@@ -7,7 +7,7 @@ import {
   DrawerBody,
   useDisclosure,
   Link
-} from "@heroui/react"
+} from '@heroui/react'
 import { KunTreeNode } from '~/lib/mdx/types'
 import { ChevronRight } from 'lucide-react'
 import { SidebarContent } from './SidebarContent'

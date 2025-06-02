@@ -1,6 +1,6 @@
 import Link from 'next/link'
-import { Card, CardBody } from "@heroui/card"
-import { Chip } from "@heroui/chip"
+import { Card, CardBody } from '@heroui/card'
+import { Chip } from '@heroui/chip'
 import type { Tag as TagType } from '~/types/api/tag'
 
 interface Props {

@@ -1,7 +1,7 @@
 'use client'
 
-import { Button } from "@heroui/button"
-import { useDisclosure } from "@heroui/modal"
+import { Button } from '@heroui/button'
+import { useDisclosure } from '@heroui/modal'
 import { Plus } from 'lucide-react'
 import { CreateTagModal } from '~/components/tag/CreateTagModal'
 import { KunHeader } from '../kun/Header'

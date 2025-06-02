@@ -5,7 +5,7 @@ import {
   NavbarContent,
   NavbarItem,
   NavbarMenuToggle
-} from "@heroui/navbar"
+} from '@heroui/navbar'
 import Link from 'next/link'
 import { KunTopBarBrand } from './Brand'
 import { KunTopBarUser } from './User'

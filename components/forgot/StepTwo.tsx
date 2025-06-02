@@ -4,7 +4,7 @@ import { z } from 'zod'
 import { useState } from 'react'
 import { Controller, useForm } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
-import { Button, Input } from "@heroui/react"
+import { Button, Input } from '@heroui/react'
 import { KeyRound, LockKeyhole } from 'lucide-react'
 import { stepTwoSchema } from '~/validations/forgot'
 import { kunFetchPost } from '~/utils/kunFetch'

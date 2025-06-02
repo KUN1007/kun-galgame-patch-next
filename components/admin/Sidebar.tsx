@@ -7,7 +7,7 @@ import {
   DrawerBody,
   useDisclosure,
   Link
-} from "@heroui/react"
+} from '@heroui/react'
 import { usePathname } from 'next/navigation'
 import { ChevronRight } from 'lucide-react'
 import { SidebarContent } from './SidebarContent'

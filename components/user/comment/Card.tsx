@@ -1,9 +1,9 @@
 'use client'
 
-import { Card, CardBody } from "@heroui/card"
-import { Chip } from "@heroui/chip"
-import { Link } from "@heroui/link"
-import { Tooltip } from "@heroui/tooltip"
+import { Card, CardBody } from '@heroui/card'
+import { Chip } from '@heroui/chip'
+import { Link } from '@heroui/link'
+import { Tooltip } from '@heroui/tooltip'
 import { Heart } from 'lucide-react'
 import { formatDistanceToNow } from '~/utils/formatDistanceToNow'
 import type { UserComment } from '~/types/api/user'

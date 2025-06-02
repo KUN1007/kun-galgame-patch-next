@@ -1,5 +1,6 @@
 @import './tailwindcss.css';
 @import './blog.css';
+@import './editor.css';
 @import './prose.css';
 
 [data-overlay-container='true'] {

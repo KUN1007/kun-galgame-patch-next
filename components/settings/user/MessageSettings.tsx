@@ -1,7 +1,7 @@
 'use client'
 
-import { Card, CardBody, CardHeader, CardFooter } from "@heroui/card"
-import { Checkbox } from "@heroui/checkbox"
+import { Card, CardBody, CardHeader, CardFooter } from '@heroui/card'
+import { Checkbox } from '@heroui/checkbox'
 import { MESSAGE_TYPE, MESSAGE_TYPE_MAP } from '~/constants/message'
 import { useUserStore } from '~/store/userStore'
 

@@ -14,7 +14,7 @@ import {
   SelectItem,
   Textarea,
   useDisclosure
-} from "@heroui/react"
+} from '@heroui/react'
 import { Edit2 } from 'lucide-react'
 import { USER_ROLE_MAP, USER_STATUS_MAP } from '~/constants/user'
 import { kunFetchPut } from '~/utils/kunFetch'
@@ -94,9 +94,7 @@ export const UserEdit = ({ initialUser }: Props) => {
                 onChange={(e) => handleChange('role', Number(e.target.value))}
               >
                 {roleOptions.map((role) => (
-                  <SelectItem key={role.value} value={role.value}>
-                    {role.label}
-                  </SelectItem>
+                  <SelectItem key={role.value}>{role.label}</SelectItem>
                 ))}
               </Select>
               <Select
@@ -106,9 +104,7 @@ export const UserEdit = ({ initialUser }: Props) => {
                 disabledKeys={['1']}
               >
                 {statusOptions.map((status) => (
-                  <SelectItem key={status.value} value={status.value}>
-                    {status.label}
-                  </SelectItem>
+                  <SelectItem key={status.value}>{status.label}</SelectItem>
                 ))}
               </Select>
               <Input

@@ -8,7 +8,7 @@ import {
   CardHeader,
   Chip,
   useDisclosure
-} from "@heroui/react"
+} from '@heroui/react'
 import { Send } from 'lucide-react'
 import { kunFetchPost } from '~/utils/kunFetch'
 import toast from 'react-hot-toast'

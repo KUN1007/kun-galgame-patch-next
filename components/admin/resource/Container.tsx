@@ -10,7 +10,7 @@ import {
   TableHeader,
   TableRow,
   Input
-} from "@heroui/react"
+} from '@heroui/react'
 import { Search } from 'lucide-react'
 import { kunFetchGet } from '~/utils/kunFetch'
 import { useEffect, useState } from 'react'

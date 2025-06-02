@@ -1,6 +1,6 @@
 'use client'
 
-import { Tab, Tabs } from "@heroui/tabs"
+import { Tab, Tabs } from '@heroui/tabs'
 import { usePathname } from 'next/navigation'
 import Link from 'next/link'
 

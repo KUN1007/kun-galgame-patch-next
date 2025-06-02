@@ -1,6 +1,6 @@
 'use client'
 
-import { Button, Modal, useDisclosure } from "@heroui/react"
+import { Button, Modal, useDisclosure } from '@heroui/react'
 import { WalkthroughCard } from './Card'
 import { Plus } from 'lucide-react'
 import { PublishWalkthrough } from './PublishWalkthrough'

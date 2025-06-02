@@ -1,7 +1,7 @@
 'use client'
 
-import { Button } from "@heroui/button"
-import { useDisclosure } from "@heroui/modal"
+import { Button } from '@heroui/button'
+import { useDisclosure } from '@heroui/modal'
 import { Plus } from 'lucide-react'
 import { KunHeader } from '../kun/Header'
 import { CompanyFormModal } from './form/CompanyFormModal'

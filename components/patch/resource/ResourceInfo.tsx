@@ -1,4 +1,4 @@
-import { Snippet } from "@heroui/snippet"
+import { Snippet } from '@heroui/snippet'
 import { KunPatchAttribute } from '~/components/kun/PatchAttribute'
 import type { PatchResourceHtml } from '~/types/api/patch'
 

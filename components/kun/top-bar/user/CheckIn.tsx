@@ -1,6 +1,6 @@
 'use client'
 
-import { DropdownItem } from "@heroui/dropdown"
+import { DropdownItem } from '@heroui/dropdown'
 import { CalendarCheck, Sparkles } from 'lucide-react'
 import { useUserStore } from '~/store/userStore'
 import { useState } from 'react'

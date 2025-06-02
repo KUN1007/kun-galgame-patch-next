@@ -1,6 +1,6 @@
 import Link from 'next/link'
-import { Card, CardBody } from "@heroui/card"
-import { Chip } from "@heroui/chip"
+import { Card, CardBody } from '@heroui/card'
+import { Chip } from '@heroui/chip'
 import { Download, Heart } from 'lucide-react'
 import { formatDistanceToNow } from '~/utils/formatDistanceToNow'
 import { KunPatchAttribute } from '~/components/kun/PatchAttribute'

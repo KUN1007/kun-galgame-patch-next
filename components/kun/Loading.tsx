@@ -1,4 +1,4 @@
-import { Spinner } from "@heroui/spinner"
+import { Spinner } from '@heroui/spinner'
 import { cn } from '~/utils/cn'
 
 interface Props {

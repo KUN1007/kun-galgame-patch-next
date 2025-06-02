@@ -1,8 +1,8 @@
 'use client'
 
 import { useState } from 'react'
-import { Card, CardBody } from "@heroui/card"
-import { Button } from "@heroui/button"
+import { Card, CardBody } from '@heroui/card'
+import { Button } from '@heroui/button'
 import { KunUser } from '~/components/kun/floating-card/KunUser'
 import { MessageCircle } from 'lucide-react'
 import { formatDistanceToNow } from '~/utils/formatDistanceToNow'

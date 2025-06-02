@@ -1,7 +1,7 @@
 'use client'
 
-import { Tooltip } from "@heroui/tooltip"
-import { Badge } from "@heroui/badge"
+import { Tooltip } from '@heroui/tooltip'
+import { Badge } from '@heroui/badge'
 import { formatNumber } from '~/utils/formatNumber'
 
 export const UserStatsItem = ({

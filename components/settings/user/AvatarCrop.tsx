@@ -10,7 +10,7 @@ import {
   ModalFooter,
   ModalHeader,
   useDisclosure
-} from "@heroui/react"
+} from '@heroui/react'
 import { useUserStore } from '~/store/userStore'
 import { Camera } from 'lucide-react'
 import { dataURItoBlob } from '~/utils/dataURItoBlob'

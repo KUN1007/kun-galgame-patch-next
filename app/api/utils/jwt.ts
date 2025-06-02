@@ -25,7 +25,7 @@ export const generateKunToken = async (
 
   const token = jwt.sign(payload, process.env.JWT_SECRET!, {
     expiresIn: expire
-  })
+  } as jwt.SignOptions)
   await setKv(`access:token:${payload.uid}`, token, 30 * 24 * 60 * 60)
 
   return token

@@ -1,9 +1,9 @@
 'use client'
 
 import { type FC, useState } from 'react'
-import { Chip } from "@heroui/chip"
-import { Tooltip } from "@heroui/tooltip"
-import { Link } from "@heroui/link"
+import { Chip } from '@heroui/chip'
+import { Tooltip } from '@heroui/tooltip'
+import { Link } from '@heroui/link'
 import { Company } from '~/types/api/company'
 import { PatchCompanySelector } from './PatchCompanySelector'
 

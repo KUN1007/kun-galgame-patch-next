@@ -1,5 +1,5 @@
 import { KunAvatar } from '~/components/kun/floating-card/KunAvatar'
-import { Card, CardBody } from "@heroui/card"
+import { Card, CardBody } from '@heroui/card'
 import { ThumbsUp } from 'lucide-react'
 import { formatDate } from '~/utils/time'
 import Link from 'next/link'

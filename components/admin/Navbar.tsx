@@ -4,7 +4,7 @@ import {
   NavbarContent,
   NavbarItem,
   Navbar as HeroUINavbar
-} from "@heroui/react"
+} from '@heroui/react'
 
 export const Navbar = () => {
   return (

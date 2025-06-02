@@ -1,7 +1,7 @@
 'use client'
 
 import { useEffect, useState } from 'react'
-import { User } from "@heroui/react"
+import { User } from '@heroui/react'
 import { kunFetchGet } from '~/utils/kunFetch'
 import { KunUserStatCard } from './KunUserStatCard'
 import { KunLoading } from '../Loading'

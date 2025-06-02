@@ -1,4 +1,4 @@
-import { Slider } from "@heroui/react"
+import { Slider } from '@heroui/react'
 import { FC } from 'react'
 
 interface KunMosaicControllerProps {
