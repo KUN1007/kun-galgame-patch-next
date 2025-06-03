@@ -6,5 +6,6 @@ export const s3 = new S3Client({
   credentials: {
     accessKeyId: process.env.KUN_VISUAL_NOVEL_S3_STORAGE_ACCESS_KEY_ID!,
     secretAccessKey: process.env.KUN_VISUAL_NOVEL_S3_STORAGE_SECRET_ACCESS_KEY!
-  }
+  },
+  requestChecksumCalculation: 'WHEN_REQUIRED'
 })
