@@ -21,7 +21,7 @@ const deleteOldFilesAndFolders = async (dir: string) => {
 
       const subEntries = await fs.readdir(fullPath)
       if (subEntries.length === 0) {
-        await fs.rm(fullPath)
+        await fs.rmdir(fullPath)
       }
     } else if (entry.isFile()) {
       if (await isOlderThanOneDay(fullPath)) {
