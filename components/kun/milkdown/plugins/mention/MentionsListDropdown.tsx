@@ -53,10 +53,6 @@ export const MentionsListDropdown = () => {
   }, [view, prevState])
 
   useEffect(() => {
-    slashProvider.current?.update(view, prevState)
-  })
-
-  useEffect(() => {
     const div = ref.current
     if (loading || !div) {
       return
@@ -84,6 +80,10 @@ export const MentionsListDropdown = () => {
       slashProvider.current?.destroy()
     }
   }, [loading])
+
+  useEffect(() => {
+    slashProvider.current?.update(view, prevState)
+  })
 
   const onMentionItemClick = (userId: number) => {
     action((ctx) => {
