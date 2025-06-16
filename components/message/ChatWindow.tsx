@@ -21,15 +21,20 @@ import { useSocket } from '~/context/SocketProvider'
 import { kunFetchGet } from '~/utils/kunFetch'
 import { KUN_CHAT_EVENT } from '~/constants/chat'
 import { useInfiniteScroll } from '~/hooks/useInfiniteScroll'
-import { MAX_CHAT_MESSAGE_PER_REQUEST } from '~/constants/chat'
+import {
+  MAX_CHAT_MESSAGE_PER_REQUEST,
+  USER_IS_TYPING_DURATION
+} from '~/constants/chat'
+import { KunLoading } from '../kun/Loading'
+import { ReplyPreviewBanner } from './ReplyPreviewBanner'
+import { UserTypingIndicator } from './UserTypingIndicator'
+import { useHotkeys } from 'react-hotkeys-hook'
+import { useDebounce, useDebouncedCallback } from 'use-debounce'
 import type {
   ChatRoom,
   ChatMessage as ChatMessageType,
   ChatMessagesApiResponse
 } from '~/types/api/chat'
-import { KunLoading } from '../kun/Loading'
-import { ReplyPreviewBanner } from './ReplyPreviewBanner'
-import { useHotkeys } from 'react-hotkeys-hook'
 
 interface Props {
   chatroom: ChatRoom
@@ -44,6 +49,7 @@ export const ChatWindow = ({
 }: Props) => {
   const [messages, setMessages] = useState<ChatMessageType[]>(initialMessages)
   const [inputValue, setInputValue] = useState('')
+  const [debouncedInputValue] = useDebounce(inputValue, 500)
   const { socket, isConnected } = useSocket()
 
   // State for Infinite Scroll
@@ -64,6 +70,38 @@ export const ChatWindow = ({
     onOpen: onOpenEdit,
     onClose: onCloseEdit
   } = useDisclosure()
+
+  const [typingUsers, setTypingUsers] = useState<Record<number, KunUser>>({})
+
+  // xxx is typing...
+  useEffect(() => {
+    if (!socket || !isConnected) {
+      return
+    }
+
+    if (debouncedInputValue.length > 0) {
+      socket.emit(KUN_CHAT_EVENT.USER_TYPING, {
+        roomId: chatroom.id,
+        isTyping: true
+      })
+
+      const timerId = setTimeout(() => {
+        socket.emit(KUN_CHAT_EVENT.USER_TYPING, {
+          roomId: chatroom.id,
+          isTyping: false
+        })
+      }, USER_IS_TYPING_DURATION)
+
+      return () => {
+        clearTimeout(timerId)
+      }
+    } else {
+      socket.emit(KUN_CHAT_EVENT.USER_TYPING, {
+        roomId: chatroom.id,
+        isTyping: false
+      })
+    }
+  }, [debouncedInputValue, socket, isConnected, chatroom.id])
 
   const fetchHistory = async () => {
     if (!hasMoreHistory || !historyCursor) return []
@@ -175,6 +213,29 @@ export const ChatWindow = ({
       )
     }
 
+    const handleUserTyping = ({
+      roomId,
+      isTyping,
+      user
+    }: {
+      roomId: number
+      isTyping: boolean
+      user: KunUser
+    }) => {
+      if (roomId !== chatroom.id) return
+
+      setTypingUsers((prev) => {
+        const newTypingUsers = { ...prev }
+        if (isTyping) {
+          newTypingUsers[user.id] = user
+        } else {
+          delete newTypingUsers[user.id]
+        }
+        return newTypingUsers
+      })
+    }
+
+    socket.on(KUN_CHAT_EVENT.USER_TYPING, handleUserTyping)
     socket.on(KUN_CHAT_EVENT.RECEIVE_MESSAGE, handleReceiveMessage)
     socket.on(KUN_CHAT_EVENT.DELETE_MESSAGE, handleDeleteMessage)
     socket.on(KUN_CHAT_EVENT.ADD_REACTION, handleUpdateMessage)
@@ -185,6 +246,7 @@ export const ChatWindow = ({
       socket.off(KUN_CHAT_EVENT.DELETE_MESSAGE)
       socket.off(KUN_CHAT_EVENT.ADD_REACTION)
       socket.off(KUN_CHAT_EVENT.REMOVE_REACTION)
+      socket.off(KUN_CHAT_EVENT.USER_TYPING)
     }
   }, [socket, chatroom.id])
 
@@ -227,7 +289,7 @@ export const ChatWindow = ({
     { enableOnFormTags: true }
   )
 
-  const handleSaveEdit = () => {
+  const handleSaveEdit = useDebouncedCallback(() => {
     if (!socket || !editingMessage) return
     socket.emit(KUN_CHAT_EVENT.EDIT_MESSAGE, {
       messageId: editingMessage.id,
@@ -238,7 +300,7 @@ export const ChatWindow = ({
     )
     setEditingMessage(null)
     onCloseEdit()
-  }
+  }, 500)
 
   return (
     <Card className="flex flex-col h-full">
@@ -252,6 +314,9 @@ export const ChatWindow = ({
             </span>
           </div>
         </div>
+
+        <UserTypingIndicator users={typingUsers} />
+
         <div className="flex items-center gap-2">
           <Button isIconOnly variant="light" aria-label="更多选项">
             <MoreVertical size={20} />
@@ -337,7 +402,7 @@ export const ChatWindow = ({
               isConnected ? '输入消息... (Ctrl + 回车发送)' : '正在连接...'
             }
             value={inputValue}
-            onChange={(e) => setInputValue(e.target.value)}
+            onValueChange={(value) => setInputValue(value)}
             disabled={!isConnected}
           />
           <Button

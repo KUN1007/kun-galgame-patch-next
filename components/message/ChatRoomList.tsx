@@ -6,27 +6,24 @@ import { useSocket } from '~/context/SocketProvider'
 import { kunFetchGet } from '~/utils/kunFetch'
 import { KUN_CHAT_EVENT } from '~/constants/chat'
 import toast from 'react-hot-toast'
-import type {
-  ChatRoomsApiResponse,
-  ChatRoomWithDetails
-} from '~/types/api/chat'
 import {
   Avatar,
   Button,
   Listbox,
   ListboxItem,
-  ScrollShadow,
-  Skeleton
+  ScrollShadow
 } from '@heroui/react'
 import { Plus, User, Users } from 'lucide-react'
-import Link from 'next/link'
 import { CreateGroupChatModal } from './CreateGroupChatModal'
 import { useDisclosure } from '@heroui/react'
 import { KunLoading } from '~/components/kun/Loading'
-import type { GetChatroomResponse } from '~/types/api/chat'
+import type {
+  GetChatroomResponse,
+  ChatRoomWithLatestMessage
+} from '~/types/api/chat'
 
 export const ChatRoomList = () => {
-  const [rooms, setRooms] = useState<ChatRoomWithDetails[]>([])
+  const [rooms, setRooms] = useState<ChatRoomWithLatestMessage[]>([])
   const { isOpen, onOpen, onClose } = useDisclosure()
   const [loading, setLoading] = useState(true)
   const pathname = usePathname()

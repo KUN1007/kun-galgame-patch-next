@@ -64,3 +64,8 @@ export const seenMessageSchema = z.object({
   messageId: z.coerce.number().min(1).max(9999999),
   roomId: z.coerce.number().min(1).max(9999999)
 })
+
+export const userTypingMessageSchema = z.object({
+  roomId: z.coerce.number().min(1).max(9999999),
+  isTyping: z.boolean()
+})
