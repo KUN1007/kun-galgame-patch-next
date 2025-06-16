@@ -1,30 +1,25 @@
-import dayjs from 'dayjs'
+import { differenceInHours, format } from 'date-fns'
 
-export const hourDiff = (upvoteTime: number, hours: number) => {
+export const hourDiff = (upvoteTime: number, hours: number): boolean => {
   if (upvoteTime === 0 || upvoteTime === undefined) {
     return false
   }
-
-  const currentTime = dayjs()
-
-  const time = dayjs(upvoteTime)
-
-  return currentTime.diff(time, 'hour') <= hours
+  return differenceInHours(new Date(), new Date(upvoteTime)) <= hours
 }
 
 export const formatDate = (
   time: Date | number | string,
   config?: { isShowYear?: boolean; isPrecise?: boolean }
 ): string => {
-  let formatString = 'MM-DD'
+  let formatString = 'MM-dd'
 
   if (config?.isShowYear) {
-    formatString = 'YYYY-MM-DD'
+    formatString = 'yyyy-MM-dd'
   }
 
   if (config?.isPrecise) {
     formatString = `${formatString} - HH:mm`
   }
 
-  return dayjs(time).format(formatString)
+  return format(new Date(time), formatString)
 }

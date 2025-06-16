@@ -3,8 +3,7 @@ import { globby } from 'globby'
 import prettier from 'prettier'
 import { getKunDynamicRoutes } from './dynamic-routes/getKunDynamicRoutes'
 import { getKunDynamicBlog } from './dynamic-routes/getKunDynamicBlog'
-
-const WEBSITE_URL = process.env.NEXT_PUBLIC_KUN_PATCH_ADDRESS_PROD
+import { KUN_VISUAL_NOVEL_PATCH_APP_ADDRESS } from '~/config/app'
 
 const generateKunSitemap = async () => {
   try {
@@ -44,7 +43,7 @@ const generateKunSitemap = async () => {
 
             return `
               <url>
-                <loc>${WEBSITE_URL}${route}</loc>
+                <loc>${KUN_VISUAL_NOVEL_PATCH_APP_ADDRESS}${route}</loc>
                 <lastmod>${new Date().toISOString()}</lastmod>
                 <changefreq>daily</changefreq>
                 <priority>0.7</priority>
@@ -56,7 +55,7 @@ const generateKunSitemap = async () => {
           .map(
             (patch) => `
               <url>
-                <loc>${WEBSITE_URL}${patch.path}</loc>
+                <loc>${KUN_VISUAL_NOVEL_PATCH_APP_ADDRESS}${patch.path}</loc>
                 <lastmod>${patch.lastmod}</lastmod>
                 <changefreq>daily</changefreq>
                 <priority>0.8</priority>
@@ -68,7 +67,7 @@ const generateKunSitemap = async () => {
             .map(
               (patch) => `
                 <url>
-                  <loc>${WEBSITE_URL}${patch.path}</loc>
+                  <loc>${KUN_VISUAL_NOVEL_PATCH_APP_ADDRESS}${patch.path}</loc>
                   <lastmod>${patch.lastmod}</lastmod>
                   <changefreq>weekly</changefreq>
                   <priority>0.9</priority>

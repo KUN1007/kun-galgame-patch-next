@@ -18,8 +18,10 @@ config({ path: envPath })
 
 export const envSchema = z.object({
   KUN_DATABASE_URL: z.string().url(),
-  NEXT_PUBLIC_KUN_PATCH_ADDRESS_DEV: z.string(),
-  NEXT_PUBLIC_KUN_PATCH_ADDRESS_PROD: z.string(),
+  NEXT_PUBLIC_KUN_PATCH_APP_ADDRESS_DEV_HOST: z.string(),
+  NEXT_PUBLIC_KUN_PATCH_APP_ADDRESS_DEV_PORT: z.string(),
+  NEXT_PUBLIC_KUN_PATCH_APP_ADDRESS_PROD_HOST: z.string(),
+  NEXT_PUBLIC_KUN_PATCH_APP_ADDRESS_PROD_PORT: z.string(),
   REDIS_HOST: z.string(),
   REDIS_PORT: z.string(),
   JWT_ISS: z.string(),

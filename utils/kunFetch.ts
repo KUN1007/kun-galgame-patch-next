@@ -1,3 +1,5 @@
+import { KUN_VISUAL_NOVEL_PATCH_APP_ADDRESS } from '~/config/app'
+
 type FetchOptions = {
   headers?: Record<string, string>
   query?: Record<string, string | number>
@@ -20,11 +22,7 @@ const kunFetchRequest = async <T>(
           .join('&')
       : ''
 
-    const fetchAddress =
-      process.env.NODE_ENV === 'development'
-        ? process.env.NEXT_PUBLIC_KUN_PATCH_ADDRESS_DEV
-        : process.env.NEXT_PUBLIC_KUN_PATCH_ADDRESS_PROD
-    const fullUrl = `${fetchAddress}/api${url}${queryString}`
+    const fullUrl = `${KUN_VISUAL_NOVEL_PATCH_APP_ADDRESS}/api${url}${queryString}`
 
     const fetchOptions: RequestInit = {
       method,

@@ -1,4 +1,4 @@
-import dayjs from 'dayjs'
+import { getYear, getMonth } from 'date-fns'
 import { ReleaseContainer } from '~/components/release/Container'
 import { kunGetActions } from './actions'
 import { ErrorComponent } from '~/components/error/ErrorComponent'
@@ -10,8 +10,9 @@ export const revalidate = 5
 export const metadata: Metadata = kunMetadata
 
 export default async function Kun() {
-  const currentYear = dayjs().year()
-  const currentMonth = dayjs().month() + 1
+  const now = new Date()
+  const currentYear = getYear(now)
+  const currentMonth = getMonth(now) + 1
 
   const response = await kunGetActions({
     year: currentYear,

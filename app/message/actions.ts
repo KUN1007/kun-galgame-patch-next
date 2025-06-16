@@ -5,6 +5,7 @@ import { safeParseSchema } from '~/utils/actions/safeParseSchema'
 import { getMessageSchema } from '~/validations/message'
 import { verifyHeaderCookie } from '~/utils/actions/verifyHeaderCookie'
 import { getMessage } from '~/app/api/message/all/route'
+import { getStatus } from '~/app/api/user/status/route'
 
 export const kunGetActions = async (
   params: z.infer<typeof getMessageSchema>
@@ -20,4 +21,12 @@ export const kunGetActions = async (
 
   const response = await getMessage(input, payload.uid)
   return response
+}
+
+export const kunGetUserInfoActions = async () => {
+  const payload = await verifyHeaderCookie()
+  if (!payload) {
+    return '用户登陆失效'
+  }
+  return await getStatus(payload.uid)
 }

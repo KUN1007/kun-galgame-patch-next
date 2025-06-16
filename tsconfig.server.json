@@ -1,0 +1,11 @@
+{
+  "extends": "./tsconfig.json",
+  "compilerOptions": {
+    "module": "commonjs",
+    "outDir": ".next/server",
+    "target": "esnext",
+    "isolatedModules": false,
+    "noEmit": false
+  },
+  "include": ["server.ts", "socket/**/*.ts", "types/**/*.ts"]
+}

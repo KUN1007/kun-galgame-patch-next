@@ -1,17 +1,33 @@
+'use client'
+
 import { Card, CardBody, CardHeader } from '@heroui/card'
 import { Avatar } from '@heroui/avatar'
+import { Button } from '@heroui/button'
 import { Chip } from '@heroui/chip'
 import { Divider } from '@heroui/divider'
 import { Progress } from '@heroui/progress'
 import { formatDistanceToNow } from '~/utils/formatDistanceToNow'
-import { Calendar, Link as LinkIcon } from 'lucide-react'
+import { Calendar, Link as LinkIcon, MessageCircle } from 'lucide-react'
 import { UserFollow } from './follow/Follow'
 import { Stats } from './follow/Stats'
 import { SelfButton } from './SelfButton'
 import { USER_ROLE_MAP } from '~/constants/user'
+import { useRouter } from 'next/navigation'
+import { generatePrivateRoomLink } from '~/utils/generatePrivateRoomLink'
 import type { UserInfo } from '~/types/api/user'
 
 export const UserProfile = ({ user }: { user: UserInfo }) => {
+  const router = useRouter()
+  const isCurrentUser = user.id === user.requestUserUid
+
+  const handleSendMessage = () => {
+    if (isCurrentUser) {
+      return
+    }
+    const link = generatePrivateRoomLink(user.id, user.requestUserUid)
+    router.push(`/message/chat/${link}`)
+  }
+
   return (
     <div className="lg:col-span-1">
       <Card className="w-full">
@@ -84,15 +100,16 @@ export const UserProfile = ({ user }: { user: UserInfo }) => {
                 />
               )}
 
-              {/* TODO: */}
-              {/* <Button
-                startContent={<Mail className="w-4 h-4" />}
-                color="default"
-                variant="flat"
-                fullWidth
-              >
-                Message
-              </Button> */}
+              {!isCurrentUser && (
+                <Button
+                  startContent={<MessageCircle className="size-4" />}
+                  color="primary"
+                  fullWidth
+                  onPress={handleSendMessage}
+                >
+                  发消息
+                </Button>
+              )}
             </div>
           </div>
         </CardBody>
