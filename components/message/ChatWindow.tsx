@@ -260,7 +260,7 @@ export const ChatWindow = ({
       </CardHeader>
 
       <CardBody>
-        <ScrollShadow ref={scrollRef} className="p-4 space-y-4">
+        <ScrollShadow ref={scrollRef}>
           {isLoadingHistory && (
             <div className="h-16">
               <KunLoading hint="正在加载历史消息..." />
@@ -319,31 +319,36 @@ export const ChatWindow = ({
         </Modal>
       </CardBody>
 
-      <CardFooter className="shrink-0 gap-2">
-        {replyingTo?.quoteMessage && (
+      <CardFooter className="shrink-0 flex-col">
+        {replyingTo && (
           <ReplyPreviewBanner
-            message={replyingTo.quoteMessage}
+            message={{
+              content: replyingTo.content,
+              senderName: replyingTo.sender.name
+            }}
             onClose={() => setReplyingTo(null)}
           />
         )}
 
-        <Textarea
-          minRows={1}
-          placeholder={
-            isConnected ? '输入消息... (Ctrl + 回车发送)' : '正在连接...'
-          }
-          value={inputValue}
-          onChange={(e) => setInputValue(e.target.value)}
-          disabled={!isConnected}
-        />
-        <Button
-          isIconOnly
-          color="primary"
-          aria-label="发送消息"
-          onPress={handleSendMessage}
-        >
-          <SendHorizontal />
-        </Button>
+        <div className="flex w-full gap-2">
+          <Textarea
+            minRows={1}
+            placeholder={
+              isConnected ? '输入消息... (Ctrl + 回车发送)' : '正在连接...'
+            }
+            value={inputValue}
+            onChange={(e) => setInputValue(e.target.value)}
+            disabled={!isConnected}
+          />
+          <Button
+            isIconOnly
+            color="primary"
+            aria-label="发送消息"
+            onPress={handleSendMessage}
+          >
+            <SendHorizontal />
+          </Button>
+        </div>
       </CardFooter>
     </Card>
   )

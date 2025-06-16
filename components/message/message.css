@@ -1,4 +1,8 @@
-.highlight {
+.message-item {
   transition: background-color 0.5s ease-in-out;
-  background-color: rgba(94, 138, 234, 0.3);
+  background-color: transparent;
+}
+
+.message-item.highlight {
+  background-color: hsl(var(--heroui-default-200));
 }

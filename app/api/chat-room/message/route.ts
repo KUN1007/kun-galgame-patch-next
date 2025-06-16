@@ -91,8 +91,8 @@ export const getChatRoomMessage = async (
       seenBy: msg.seen_by,
       quoteMessage: msg.reply_to
         ? {
-            senderName: msg.reply_to?.sender.name,
-            content: msg.reply_to?.content
+            senderName: msg.reply_to.sender.name,
+            content: msg.reply_to.content
           }
         : undefined
     }))

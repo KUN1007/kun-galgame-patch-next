@@ -40,7 +40,7 @@ export const createChatRoomSchema = z.object({
 })
 
 export const sendMessageSchema = z.object({
-  roomId: z.number(),
+  roomId: z.coerce.number().min(1).max(9999999),
   content: z.string().min(1).max(2000),
   fileUrl: z.string().url().optional(),
   replyToId: z.number().optional()

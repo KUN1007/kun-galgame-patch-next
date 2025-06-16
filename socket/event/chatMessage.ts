@@ -6,6 +6,7 @@ import {
   editMessageSchema
 } from '~/validations/chat'
 import { KUN_CHAT_EVENT } from '~/constants/chat'
+import type { ChatMessage } from '~/types/api/chat'
 
 export const handleSendMessage = async (
   io: Server,
@@ -18,7 +19,7 @@ export const handleSendMessage = async (
   const { roomId, content, fileUrl, replyToId } = result.data
   const user = socket.data.user
 
-  const message = await prisma.chat_message.create({
+  const messageData = await prisma.chat_message.create({
     data: {
       content,
       file_url: fileUrl,
@@ -27,15 +28,38 @@ export const handleSendMessage = async (
       reply_to_id: replyToId
     },
     include: {
-      sender: true,
+      sender: {
+        select: {
+          id: true,
+          name: true,
+          avatar: true
+        }
+      },
       reaction: true,
+      seen_by: true,
       reply_to: {
-        include: {
-          sender: { select: { name: true } }
+        select: {
+          content: true,
+          sender: {
+            select: {
+              name: true
+            }
+          }
         }
       }
     }
   })
+
+  const message: ChatMessage = {
+    ...messageData,
+    seenBy: messageData.seen_by,
+    quoteMessage: messageData.reply_to
+      ? {
+          senderName: messageData.reply_to.sender.name,
+          content: messageData.reply_to.content
+        }
+      : undefined
+  }
 
   io.to(`room:${roomId}`).emit(KUN_CHAT_EVENT.RECEIVE_MESSAGE, message)
   await prisma.chat_room.update({

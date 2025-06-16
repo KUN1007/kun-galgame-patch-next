@@ -5,7 +5,7 @@ interface UserStatCardProps {
 
 export const KunUserStatCard = ({ value, label }: UserStatCardProps) => {
   return (
-    <div className="p-2 text-center border shadow rounded-2xl bg-background/30">
+    <div className="p-2 text-center border border-default-300 shadow rounded-2xl bg-background/30">
       <p className="font-semibold">{value.toLocaleString()}</p>
       <p className="text-tiny text-default-500">{label}</p>
     </div>

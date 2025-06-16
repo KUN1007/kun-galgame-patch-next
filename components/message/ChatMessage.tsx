@@ -65,9 +65,7 @@ export const ChatMessage = ({
   }
 
   const alignment = isOwnMessage ? 'justify-end' : 'justify-start'
-  const bubbleColor = isOwnMessage
-    ? 'bg-primary text-primary-foreground'
-    : 'bg-default-100'
+  const bubbleColor = isOwnMessage ? 'bg-primary/10' : 'bg-default-100'
 
   if (message.status === 'DELETED') {
     return (
@@ -83,7 +81,11 @@ export const ChatMessage = ({
     <>
       <div
         id={`message-${message.id}`}
-        className={cn('flex items-end gap-2 group', alignment)}
+        className={cn(
+          'message-item',
+          'flex items-end gap-2 group rounded-lg p-2',
+          alignment
+        )}
       >
         {!isOwnMessage && (
           <Avatar
@@ -105,23 +107,28 @@ export const ChatMessage = ({
             </span>
           )}
 
-          {message.quoteMessage && (
-            <ReplyQuote
-              message={message.quoteMessage}
-              onJumpTo={() => handleJumpToMessage(message.reply_to_id!)}
-            />
-          )}
-
           <div
             onContextMenu={!isMobile ? handleContextMenu : undefined}
             onClick={isMobile ? handleMessageClick : undefined}
-            className={cn('relative p-3 pt-2 pb-5 rounded-xl', bubbleColor)}
+            className={cn(
+              'relative p-3 pt-2 pb-5 rounded-xl text-sm',
+              bubbleColor
+            )}
           >
+            <span className="text-primary">{message.sender.name}</span>
+
+            {message.quoteMessage && (
+              <ReplyQuote
+                message={message.quoteMessage}
+                onJumpTo={() => handleJumpToMessage(message.reply_to_id!)}
+              />
+            )}
+
             <p className="whitespace-pre-wrap break-words pr-12">
               {message.content}
             </p>
 
-            <div className="absolute bottom-1 right-2 text-xs opacity-60">
+            <div className="absolute bottom-1 right-2 text-xs opacity-50">
               {message.status === 'EDITED' && '已编辑 '}
               {format(new Date(message.created), 'HH:mm')}
             </div>

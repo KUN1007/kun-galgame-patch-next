@@ -1,6 +1,5 @@
 'use client'
 
-import { MessageCircle } from 'lucide-react'
 import type { QuoteMessage } from '~/types/api/chat'
 
 interface Props {
@@ -14,11 +13,10 @@ export const ReplyQuote = ({ message, onJumpTo }: Props) => {
   return (
     <div
       onClick={onJumpTo}
-      className="flex items-start gap-2 p-2 mb-1 bg-black/10 rounded-lg cursor-pointer border-l-2 border-primary"
+      className="flex items-start gap-2 mb-1 cursor-pointer rounded-lg overflow-hidden"
     >
-      <MessageCircle className="size-4 shrink-0 text-primary mt-0.5" />
-      <div className="flex flex-col text-sm">
-        <span className="font-semibold text-primary">{message.senderName}</span>
+      <div className="flex w-full flex-col border-l-3 bg-secondary/10 px-2 py-1 border-secondary">
+        <span className="text-secondary">{message.senderName}</span>
         <p className="line-clamp-2 opacity-80">{message.content}</p>
       </div>
     </div>

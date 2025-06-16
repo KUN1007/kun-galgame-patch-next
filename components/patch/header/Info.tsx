@@ -82,7 +82,7 @@ export const PatchHeaderInfo = ({ patch }: PatchHeaderInfoProps) => {
                     name: patch.user.name.charAt(0).toUpperCase(),
                     src: patch.user.avatar,
                     size: 'sm',
-                    className: 'border border-border/30'
+                    className: 'border border-default-300'
                   }
                 }}
               />
