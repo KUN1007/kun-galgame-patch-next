@@ -72,13 +72,29 @@ export const getChatRoomMessage = async (
         }
       },
       reaction: true,
-      seen_by: true
+      seen_by: true,
+      reply_to: {
+        select: {
+          content: true,
+          sender: {
+            select: {
+              name: true
+            }
+          }
+        }
+      }
     }
   })
   const messages: ChatMessage[] = data
     .map((msg) => ({
       ...msg,
-      seenBy: msg.seen_by
+      seenBy: msg.seen_by,
+      quoteMessage: msg.reply_to
+        ? {
+            senderName: msg.reply_to?.sender.name,
+            content: msg.reply_to?.content
+          }
+        : undefined
     }))
     .reverse()
 

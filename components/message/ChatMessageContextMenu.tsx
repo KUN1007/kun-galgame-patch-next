@@ -7,6 +7,7 @@ import {
   DropdownTrigger
 } from '@heroui/react'
 import { CornerDownRight, Trash2, Edit } from 'lucide-react'
+import type { Key } from 'react'
 
 interface Props {
   isMenuOpen: boolean
@@ -14,6 +15,8 @@ interface Props {
   anchorPoint: { x: number; y: number }
   onReaction: (emoji: string) => void
   onDelete?: () => void
+  onReply?: () => void
+  onEdit?: () => void
   isOwner?: boolean
 }
 
@@ -25,14 +28,29 @@ export const ChatMessageContextMenu = ({
   anchorPoint,
   onReaction,
   onDelete,
+  onReply,
+  onEdit,
   isOwner = false
 }: Props) => {
   if (!isMenuOpen) return null
 
-  const performAction = (action?: () => void) => {
-    if (action) {
-      action()
+  const handleMenuAction = (key: Key) => {
+    switch (key) {
+      case 'reply':
+        onReply?.()
+        break
+      case 'edit':
+        onEdit?.()
+        break
+      case 'delete':
+        onDelete?.()
+        break
     }
+    onClose()
+  }
+
+  const handleReactionClick = (emoji: string) => {
+    onReaction(emoji)
     onClose()
   }
 
@@ -42,9 +60,9 @@ export const ChatMessageContextMenu = ({
         <DropdownTrigger>
           <div />
         </DropdownTrigger>
-        <DropdownMenu aria-label="Message Actions">
+        <DropdownMenu aria-label="Message Actions" onAction={handleMenuAction}>
           <DropdownItem
-            textValue="表情"
+            textValue="Reactions"
             isReadOnly
             key="reactions"
             className="gap-1 cursor-default data-[hover=true]:bg-background"
@@ -53,7 +71,7 @@ export const ChatMessageContextMenu = ({
               <span
                 key={emoji}
                 className="cursor-pointer p-1 rounded-full text-lg hover:bg-default-200"
-                onClick={() => onReaction(emoji)}
+                onClick={() => handleReactionClick(emoji)}
               >
                 {emoji}
               </span>
@@ -79,7 +97,6 @@ export const ChatMessageContextMenu = ({
               className="text-danger"
               color="danger"
               startContent={<Trash2 className="size-4" />}
-              onClick={() => performAction(onDelete)}
             >
               删除
             </DropdownItem>

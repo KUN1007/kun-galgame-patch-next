@@ -9,15 +9,25 @@ import { KUN_CHAT_EVENT } from '~/constants/chat'
 import { useContextMenu } from '~/hooks/useContextMenu'
 import { ChatMessageContextMenu } from './ChatMessageContextMenu'
 import { useIsMobile } from '~/hooks/useIsMobile'
+import { ReplyQuote } from './ReplyQuote'
+import './message.css'
 import type { ChatMessage as ChatMessageType } from '~/types/api/chat'
 
 interface Props {
   message: ChatMessageType
   isOwnMessage: boolean
   isGroupChat: boolean
+  onReply: () => void
+  onEdit: () => void
 }
 
-export const ChatMessage = ({ message, isOwnMessage, isGroupChat }: Props) => {
+export const ChatMessage = ({
+  message,
+  isOwnMessage,
+  isGroupChat,
+  onReply,
+  onEdit
+}: Props) => {
   const { socket } = useSocket()
   const { anchorPoint, isMenuOpen, handleContextMenu, setIsMenuOpen } =
     useContextMenu()
@@ -29,13 +39,28 @@ export const ChatMessage = ({ message, isOwnMessage, isGroupChat }: Props) => {
     }
   }
 
+  const handleJumpToMessage = (messageId: number) => {
+    const element = document.getElementById(`message-${messageId}`)
+    if (element) {
+      element.scrollIntoView({ behavior: 'smooth', block: 'center' })
+      element.classList.add('highlight')
+      setTimeout(() => {
+        element.classList.remove('highlight')
+      }, 1500)
+    }
+  }
+
   const handleDelete = () => {
-    if (!socket || !message) return
+    if (!socket || !message) {
+      return
+    }
     socket.emit(KUN_CHAT_EVENT.DELETE_MESSAGE, { messageId: message.id })
   }
 
   const handleReaction = (emoji: string) => {
-    if (!socket || !message) return
+    if (!socket || !message) {
+      return
+    }
     socket.emit(KUN_CHAT_EVENT.ADD_REACTION, { messageId: message.id, emoji })
   }
 
@@ -56,7 +81,10 @@ export const ChatMessage = ({ message, isOwnMessage, isGroupChat }: Props) => {
 
   return (
     <>
-      <div className={cn('flex items-end gap-2 group', alignment)}>
+      <div
+        id={`message-${message.id}`}
+        className={cn('flex items-end gap-2 group', alignment)}
+      >
         {!isOwnMessage && (
           <Avatar
             src={message.sender.avatar}
@@ -77,23 +105,30 @@ export const ChatMessage = ({ message, isOwnMessage, isGroupChat }: Props) => {
             </span>
           )}
 
+          {message.quoteMessage && (
+            <ReplyQuote
+              message={message.quoteMessage}
+              onJumpTo={() => handleJumpToMessage(message.reply_to_id!)}
+            />
+          )}
+
           <div
             onContextMenu={!isMobile ? handleContextMenu : undefined}
             onClick={isMobile ? handleMessageClick : undefined}
-            className={cn('relative px-3 py-2 rounded-xl', bubbleColor)}
+            className={cn('relative p-3 pt-2 pb-5 rounded-xl', bubbleColor)}
           >
             <p className="whitespace-pre-wrap break-words pr-12">
               {message.content}
             </p>
 
             <div className="absolute bottom-1 right-2 text-xs opacity-60">
-              {message.status === 'EDITED' && 'edited '}
+              {message.status === 'EDITED' && '已编辑 '}
               {format(new Date(message.created), 'HH:mm')}
             </div>
           </div>
 
           {message.reaction && message.reaction.length > 0 && (
-            <div className="flex flex-wrap gap-1 mt-1 px-1">
+            <div className="flex flex-wrap gap-1 mt-1">
               {message.reaction.map((r: any) => (
                 <Chip
                   key={r.id}
@@ -124,6 +159,8 @@ export const ChatMessage = ({ message, isOwnMessage, isGroupChat }: Props) => {
         anchorPoint={anchorPoint}
         onReaction={handleReaction}
         onDelete={handleDelete}
+        onReply={onReply}
+        onEdit={onEdit}
         isOwner={isOwnMessage}
       />
     </>

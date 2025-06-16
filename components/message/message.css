@@ -1,0 +1,4 @@
+.highlight {
+  transition: background-color 0.5s ease-in-out;
+  background-color: rgba(94, 138, 234, 0.3);
+}

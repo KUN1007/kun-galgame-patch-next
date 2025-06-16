@@ -7,7 +7,15 @@ import { Textarea } from '@heroui/input'
 import { Button } from '@heroui/button'
 import { SendHorizontal, MoreVertical } from 'lucide-react'
 import { ChatMessage } from './ChatMessage'
-import { ScrollShadow } from '@heroui/react'
+import {
+  Modal,
+  ModalHeader,
+  ModalBody,
+  ModalContent,
+  ModalFooter,
+  ScrollShadow,
+  useDisclosure
+} from '@heroui/react'
 import toast from 'react-hot-toast'
 import { useSocket } from '~/context/SocketProvider'
 import { kunFetchGet } from '~/utils/kunFetch'
@@ -20,6 +28,8 @@ import type {
   ChatMessagesApiResponse
 } from '~/types/api/chat'
 import { KunLoading } from '../kun/Loading'
+import { ReplyPreviewBanner } from './ReplyPreviewBanner'
+import { useHotkeys } from 'react-hotkeys-hook'
 
 interface Props {
   chatroom: ChatRoom
@@ -45,9 +55,20 @@ export const ChatWindow = ({
     initialMessages.length >= MAX_CHAT_MESSAGE_PER_REQUEST
   )
 
+  const [replyingTo, setReplyingTo] = useState<ChatMessageType | null>(null)
+  const [editingMessage, setEditingMessage] = useState<ChatMessageType | null>(
+    null
+  )
+  const {
+    isOpen: isOpenEdit,
+    onOpen: onOpenEdit,
+    onClose: onCloseEdit
+  } = useDisclosure()
+
   const fetchHistory = async () => {
     if (!hasMoreHistory || !historyCursor) return []
     setIsLoadingHistory(true)
+
     try {
       const response = await kunFetchGet<KunResponse<ChatMessagesApiResponse>>(
         `/chat-room/message`,
@@ -86,9 +107,7 @@ export const ChatWindow = ({
 
   // Socket.IO listeners, smart auto-scrolling
   useEffect(() => {
-    if (!socket) {
-      return
-    }
+    if (!socket) return
 
     const handleReceiveMessage = (newMessage: ChatMessageType) => {
       if (newMessage.chat_room_id !== chatroom.id) return
@@ -130,16 +149,45 @@ export const ChatWindow = ({
       }
     }
 
+    const handleUpdateMessage = (updatedMessage: ChatMessageType) => {
+      setMessages((prev) =>
+        prev.map((msg) => (msg.id === updatedMessage.id ? updatedMessage : msg))
+      )
+    }
+
+    const handleRemoveReaction = ({
+      messageId,
+      reactionId
+    }: {
+      messageId: number
+      reactionId: number
+    }) => {
+      setMessages((prev) =>
+        prev.map((msg) => {
+          if (msg.id === messageId) {
+            return {
+              ...msg,
+              reaction: msg.reaction.filter((r) => r.id !== reactionId)
+            }
+          }
+          return msg
+        })
+      )
+    }
+
     socket.on(KUN_CHAT_EVENT.RECEIVE_MESSAGE, handleReceiveMessage)
     socket.on(KUN_CHAT_EVENT.DELETE_MESSAGE, handleDeleteMessage)
+    socket.on(KUN_CHAT_EVENT.ADD_REACTION, handleUpdateMessage)
+    socket.on(KUN_CHAT_EVENT.REMOVE_REACTION, handleRemoveReaction)
 
     return () => {
-      socket.off(KUN_CHAT_EVENT.RECEIVE_MESSAGE, handleReceiveMessage)
-      socket.off(KUN_CHAT_EVENT.DELETE_MESSAGE, handleDeleteMessage)
+      socket.off(KUN_CHAT_EVENT.RECEIVE_MESSAGE)
+      socket.off(KUN_CHAT_EVENT.DELETE_MESSAGE)
+      socket.off(KUN_CHAT_EVENT.ADD_REACTION)
+      socket.off(KUN_CHAT_EVENT.REMOVE_REACTION)
     }
   }, [socket, chatroom.id])
 
-  // Initial Scroll to Bottom
   useEffect(() => {
     if (scrollRef.current) {
       scrollRef.current.scrollTop = scrollRef.current.scrollHeight
@@ -152,28 +200,49 @@ export const ChatWindow = ({
   useLayoutEffect(() => {
     const scrollContainer = scrollRef.current
     if (scrollContainer && scrollHeightBeforeUpdate > 0) {
-      // Adjust scroll position to keep the user's view stable
       scrollContainer.scrollTop =
         scrollContainer.scrollHeight - scrollHeightBeforeUpdate
     }
-  }, [messages, scrollHeightBeforeUpdate])
+  }, [scrollHeightBeforeUpdate])
 
-  const handleSendMessage = (e: React.FormEvent) => {
-    e.preventDefault()
+  const handleSendMessage = () => {
     if (!inputValue.trim() || !socket) return
 
-    // send with socket.emit, wait the server broadcast
     socket.emit(KUN_CHAT_EVENT.SEND_MESSAGE, {
       roomId: chatroom.id,
-      content: inputValue
+      content: inputValue,
+      replyToId: replyingTo?.id
     })
 
     setInputValue('')
+    setReplyingTo(null)
+  }
+
+  useHotkeys(
+    'ctrl+enter, cmd+enter',
+    (event) => {
+      event.preventDefault()
+      handleSendMessage()
+    },
+    { enableOnFormTags: true }
+  )
+
+  const handleSaveEdit = () => {
+    if (!socket || !editingMessage) return
+    socket.emit(KUN_CHAT_EVENT.EDIT_MESSAGE, {
+      messageId: editingMessage.id,
+      newContent: editingMessage.content
+    })
+    setMessages((prev) =>
+      prev.map((msg) => (msg.id === editingMessage.id ? editingMessage : msg))
+    )
+    setEditingMessage(null)
+    onCloseEdit()
   }
 
   return (
     <Card className="flex flex-col h-full">
-      <CardHeader className="flex items-center justify-between">
+      <CardHeader className="shrink-0 flex items-center justify-between">
         <div className="flex items-center gap-3">
           <Avatar src={chatroom.avatar} name={chatroom.name} />
           <div className="flex flex-col">
@@ -204,32 +273,77 @@ export const ChatWindow = ({
               message={msg}
               isOwnMessage={msg.sender_id === currentUserId}
               isGroupChat={chatroom.type === 'GROUP'}
+              onReply={() => setReplyingTo(msg)}
+              onEdit={() => {
+                setEditingMessage(msg)
+                onOpenEdit()
+              }}
             />
           ))}
         </ScrollShadow>
+
+        <Modal isOpen={isOpenEdit} onClose={onCloseEdit}>
+          <ModalContent>
+            <ModalHeader className="flex-col space-y-2">
+              <h3 className="text-lg">重新编辑消息</h3>
+              <p className="text-sm font-medium text-default-500">
+                系统不会显示您编辑之前的消息, 但是消息的时间前会增加 “已编辑”
+                提示
+              </p>
+            </ModalHeader>
+
+            <ModalBody>
+              {editingMessage && (
+                <Textarea
+                  value={editingMessage.content}
+                  onValueChange={(value) =>
+                    setEditingMessage({ ...editingMessage, content: value })
+                  }
+                  autoFocus
+                  minRows={1}
+                />
+              )}
+            </ModalBody>
+
+            <ModalFooter>
+              <div className="flex justify-end gap-2 mt-2">
+                <Button variant="light" color="danger" onPress={onCloseEdit}>
+                  取消
+                </Button>
+                <Button color="primary" onPress={handleSaveEdit}>
+                  保存
+                </Button>
+              </div>
+            </ModalFooter>
+          </ModalContent>
+        </Modal>
       </CardBody>
 
-      <CardFooter>
-        <form
-          onSubmit={handleSendMessage}
-          className="flex items-center w-full py-6 gap-2"
-        >
-          <Textarea
-            minRows={1}
-            placeholder={isConnected ? '输入消息...' : '正在连接...'}
-            value={inputValue}
-            onChange={(e) => setInputValue(e.target.value)}
-            disabled={!isConnected}
+      <CardFooter className="shrink-0 gap-2">
+        {replyingTo?.quoteMessage && (
+          <ReplyPreviewBanner
+            message={replyingTo.quoteMessage}
+            onClose={() => setReplyingTo(null)}
           />
-          <Button
-            type="submit"
-            isIconOnly
-            color="primary"
-            aria-label="发送消息"
-          >
-            <SendHorizontal />
-          </Button>
-        </form>
+        )}
+
+        <Textarea
+          minRows={1}
+          placeholder={
+            isConnected ? '输入消息... (Ctrl + 回车发送)' : '正在连接...'
+          }
+          value={inputValue}
+          onChange={(e) => setInputValue(e.target.value)}
+          disabled={!isConnected}
+        />
+        <Button
+          isIconOnly
+          color="primary"
+          aria-label="发送消息"
+          onPress={handleSendMessage}
+        >
+          <SendHorizontal />
+        </Button>
       </CardFooter>
     </Card>
   )

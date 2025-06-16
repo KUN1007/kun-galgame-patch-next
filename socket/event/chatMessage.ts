@@ -15,7 +15,7 @@ export const handleSendMessage = async (
   const result = sendMessageSchema.safeParse(data)
   if (!result.success) return
 
-  const { roomId, content, fileUrl } = result.data
+  const { roomId, content, fileUrl, replyToId } = result.data
   const user = socket.data.user
 
   const message = await prisma.chat_message.create({
@@ -23,9 +23,18 @@ export const handleSendMessage = async (
       content,
       file_url: fileUrl,
       chat_room_id: roomId,
-      sender_id: user.id
+      sender_id: user.id,
+      reply_to_id: replyToId
     },
-    include: { sender: true, reaction: true }
+    include: {
+      sender: true,
+      reaction: true,
+      reply_to: {
+        include: {
+          sender: { select: { name: true } }
+        }
+      }
+    }
   })
 
   io.to(`room:${roomId}`).emit(KUN_CHAT_EVENT.RECEIVE_MESSAGE, message)
@@ -93,13 +102,13 @@ export const handleEditMessage = async (
   const user = socket.data.user
 
   const message = await prisma.chat_message.findFirst({
-    where: { id: messageId, sender_id: user.id } // Can only edit your own message
+    where: { id: messageId, sender_id: user.id }
   })
   if (!message) {
     return
   }
 
-  const updatedMessage = await prisma.chat_message.update({
+  await prisma.chat_message.update({
     where: { id: messageId },
     data: { content: newContent, status: 'EDITED' }
   })
@@ -109,9 +118,9 @@ export const handleEditMessage = async (
     data: { chat_message_id: messageId, previous_content: message.content! }
   })
 
-  io.to(`room:${message.chat_room_id}`).emit(KUN_CHAT_EVENT.EDIT_MESSAGE, {
-    messageId,
-    roomId: message.chat_room_id,
-    newContent
-  })
+  // io.to(`room:${message.chat_room_id}`).emit(KUN_CHAT_EVENT.EDIT_MESSAGE, {
+  //   messageId,
+  //   roomId: message.chat_room_id,
+  //   newContent
+  // })
 }

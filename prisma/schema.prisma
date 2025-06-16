@@ -127,6 +127,10 @@ model chat_message {
   sender_id Int
   sender    user @relation("sent_chat_message", fields: [sender_id], references: [id], onDelete: Cascade)
 
+  reply_to_id Int?
+  reply_to    chat_message?  @relation("chat_message_reply", fields: [reply_to_id], references: [id], onDelete: SetNull, onUpdate: NoAction)
+  reply_array chat_message[] @relation("chat_message_reply")
+
   seen_by      chat_message_seen[]
   reaction     chat_message_reaction[]
   edit_history chat_message_edit_history[]

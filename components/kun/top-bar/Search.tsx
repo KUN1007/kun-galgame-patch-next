@@ -8,7 +8,7 @@ import { useHotkeys } from 'react-hotkeys-hook'
 
 export const KunSearch = () => {
   const router = useRouter()
-  useHotkeys('ctrl+k', (event) => {
+  useHotkeys('ctrl+k, cmd+k', (event) => {
     event.preventDefault()
     router.push('/search')
   })
