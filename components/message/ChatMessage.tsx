@@ -1,7 +1,15 @@
 'use client'
 
-import { Avatar } from '@heroui/avatar'
-import { Chip } from '@heroui/chip'
+import {
+  Avatar,
+  Button,
+  Chip,
+  Modal,
+  ModalHeader,
+  ModalContent,
+  ModalFooter,
+  useDisclosure
+} from '@heroui/react'
 import { format } from 'date-fns'
 import { cn } from '~/utils/cn'
 import { useSocket } from '~/context/SocketProvider'
@@ -32,6 +40,11 @@ export const ChatMessage = ({
   const { anchorPoint, isMenuOpen, handleContextMenu, setIsMenuOpen } =
     useContextMenu()
   const isMobile = useIsMobile()
+  const {
+    isOpen: isOpenDelete,
+    onOpen: onOpenDelete,
+    onClose: onCloseDelete
+  } = useDisclosure()
 
   const handleMessageClick = (event: React.MouseEvent) => {
     if (isMobile) {
@@ -71,7 +84,7 @@ export const ChatMessage = ({
     return (
       <div className="flex justify-center my-1">
         <Chip size="sm" variant="flat">
-          {isOwnMessage ? 'You' : `"${message.sender.name}"`} deleted a message
+          {isOwnMessage ? '您' : `"${message.sender.name}"`} 删除了一条消息
         </Chip>
       </div>
     )
@@ -165,11 +178,33 @@ export const ChatMessage = ({
         onClose={() => setIsMenuOpen(false)}
         anchorPoint={anchorPoint}
         onReaction={handleReaction}
-        onDelete={handleDelete}
+        onDelete={onOpenDelete}
         onReply={onReply}
         onEdit={onEdit}
         isOwner={isOwnMessage}
       />
+
+      <Modal isOpen={isOpenDelete} onClose={onCloseDelete}>
+        <ModalContent>
+          <ModalHeader className="flex-col space-y-2">
+            <h3 className="text-lg">删除消息</h3>
+            <p className="text-sm font-medium text-default-500">
+              您的消息将会被永久删除, 所有人不可见, 不可恢复, 并且会留下一条
+              “某萝莉删除了一条消息” 的记录
+            </p>
+          </ModalHeader>
+          <ModalFooter>
+            <div className="flex justify-end gap-2 mt-2">
+              <Button variant="light" onPress={onCloseDelete}>
+                取消
+              </Button>
+              <Button color="danger" onPress={handleDelete}>
+                删除
+              </Button>
+            </div>
+          </ModalFooter>
+        </ModalContent>
+      </Modal>
     </>
   )
 }

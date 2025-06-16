@@ -79,7 +79,7 @@ export const ChatWindow = ({
         }
       )
       if (typeof response === 'string') {
-        toast.error('Failed to load history')
+        toast.error('加载历史消息错误, 请重试')
         setHasMoreHistory(false)
         return []
       }
