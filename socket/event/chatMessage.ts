@@ -6,6 +6,7 @@ import {
   editMessageSchema
 } from '~/validations/chat'
 import { KUN_CHAT_EVENT } from '~/constants/chat'
+import { ChatMessageSelectField } from '~/constants/api/select'
 import type { ChatMessage } from '~/types/api/chat'
 
 export const handleSendMessage = async (
@@ -27,27 +28,7 @@ export const handleSendMessage = async (
       sender_id: user.id,
       reply_to_id: replyToId
     },
-    include: {
-      sender: {
-        select: {
-          id: true,
-          name: true,
-          avatar: true
-        }
-      },
-      reaction: true,
-      seen_by: true,
-      reply_to: {
-        select: {
-          content: true,
-          sender: {
-            select: {
-              name: true
-            }
-          }
-        }
-      }
-    }
+    include: ChatMessageSelectField
   })
 
   const message: ChatMessage = {

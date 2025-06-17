@@ -22,7 +22,7 @@ export const registerChatEventHandlers = (io: Server, socket: Socket) => {
     handleEditMessage(io, socket, data)
   )
 
-  socket.on(KUN_CHAT_EVENT.ADD_REACTION, (data) =>
+  socket.on(KUN_CHAT_EVENT.TOGGLE_REACTION, (data) =>
     handleToggleReaction(io, socket, data)
   )
 

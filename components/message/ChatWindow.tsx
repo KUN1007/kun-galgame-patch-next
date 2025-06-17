@@ -33,7 +33,8 @@ import { useDebounce, useDebouncedCallback } from 'use-debounce'
 import type {
   ChatRoom,
   ChatMessage as ChatMessageType,
-  ChatMessagesApiResponse
+  ChatMessagesApiResponse,
+  ChatMessageReaction
 } from '~/types/api/chat'
 
 interface Props {
@@ -187,26 +188,17 @@ export const ChatWindow = ({
       }
     }
 
-    const handleUpdateMessage = (updatedMessage: ChatMessageType) => {
-      setMessages((prev) =>
-        prev.map((msg) => (msg.id === updatedMessage.id ? updatedMessage : msg))
-      )
-    }
-
-    const handleRemoveReaction = ({
+    const handleReactionUpdate = ({
       messageId,
-      reactionId
+      reaction
     }: {
       messageId: number
-      reactionId: number
+      reaction: ChatMessageReaction[]
     }) => {
       setMessages((prev) =>
         prev.map((msg) => {
           if (msg.id === messageId) {
-            return {
-              ...msg,
-              reaction: msg.reaction.filter((r) => r.id !== reactionId)
-            }
+            return { ...msg, reaction }
           }
           return msg
         })
@@ -238,15 +230,13 @@ export const ChatWindow = ({
     socket.on(KUN_CHAT_EVENT.USER_TYPING, handleUserTyping)
     socket.on(KUN_CHAT_EVENT.RECEIVE_MESSAGE, handleReceiveMessage)
     socket.on(KUN_CHAT_EVENT.DELETE_MESSAGE, handleDeleteMessage)
-    socket.on(KUN_CHAT_EVENT.ADD_REACTION, handleUpdateMessage)
-    socket.on(KUN_CHAT_EVENT.REMOVE_REACTION, handleRemoveReaction)
+    socket.on(KUN_CHAT_EVENT.REACTION_UPDATED, handleReactionUpdate)
 
     return () => {
+      socket.off(KUN_CHAT_EVENT.USER_TYPING)
       socket.off(KUN_CHAT_EVENT.RECEIVE_MESSAGE)
       socket.off(KUN_CHAT_EVENT.DELETE_MESSAGE)
-      socket.off(KUN_CHAT_EVENT.ADD_REACTION)
-      socket.off(KUN_CHAT_EVENT.REMOVE_REACTION)
-      socket.off(KUN_CHAT_EVENT.USER_TYPING)
+      socket.off(KUN_CHAT_EVENT.REACTION_UPDATED)
     }
   }, [socket, chatroom.id])
 

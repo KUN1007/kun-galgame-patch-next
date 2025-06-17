@@ -3,8 +3,8 @@ export const KUN_CHAT_EVENT = {
   RECEIVE_MESSAGE: 'chat:receive_message',
   DELETE_MESSAGE: 'chat:delete_message',
   EDIT_MESSAGE: 'chat:edit_message',
-  ADD_REACTION: 'chat:add_reaction',
-  REMOVE_REACTION: 'chat:remove_reaction',
+  TOGGLE_REACTION: 'chat:toggle_reaction',
+  REACTION_UPDATED: 'chat:reaction_updated',
   MESSAGE_SEEN: 'chat:message_seen',
   USER_TYPING: 'chat:user_typing'
 }

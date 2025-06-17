@@ -2,6 +2,7 @@ import { Server, Socket } from 'socket.io'
 import { prisma } from '~/prisma'
 import { messageReactionSchema } from '~/validations/chat'
 import { KUN_CHAT_EVENT } from '~/constants/chat'
+import type { ChatMessageReaction } from '~/types/api/chat'
 
 export const handleToggleReaction = async (
   io: Server,
@@ -34,18 +35,20 @@ export const handleToggleReaction = async (
     await prisma.chat_message_reaction.delete({
       where: { id: existingReaction.id }
     })
-    io.to(`room:${message.chat_room_id}`).emit(KUN_CHAT_EVENT.REMOVE_REACTION, {
-      messageId,
-      reactionId: existingReaction.id
-    })
   } else {
-    const newReaction = await prisma.chat_message_reaction.create({
-      data: { chat_message_id: messageId, user_id: user.id, emoji },
-      include: { user: { select: { id: true, name: true, avatar: true } } }
-    })
-    io.to(`room:${message.chat_room_id}`).emit(KUN_CHAT_EVENT.ADD_REACTION, {
-      messageId,
-      reaction: newReaction
+    await prisma.chat_message_reaction.create({
+      data: { chat_message_id: messageId, user_id: user.id, emoji }
     })
   }
+
+  const reactionArray: ChatMessageReaction[] =
+    await prisma.chat_message_reaction.findMany({
+      where: { chat_message_id: messageId },
+      include: { user: { select: { id: true, name: true, avatar: true } } }
+    })
+
+  io.to(`room:${message.chat_room_id}`).emit(KUN_CHAT_EVENT.REACTION_UPDATED, {
+    messageId,
+    reaction: reactionArray
+  })
 }

@@ -6,6 +6,7 @@ import { getChatMessagesSchema } from '~/validations/chat'
 import { generatePrivateRoomLink } from '~/utils/generatePrivateRoomLink'
 import { getChatRoomMessageSchema } from '~/validations/chat'
 import { kunParseGetQuery } from '~/app/api/utils/parseQuery'
+import { ChatMessageSelectField } from '~/constants/api/select'
 import type { ChatMessage } from '~/types/api/chat'
 
 export const getChatRoomMessage = async (
@@ -63,27 +64,7 @@ export const getChatRoomMessage = async (
     skip: cursor ? 1 : 0,
     cursor: cursor ? { id: cursor } : undefined,
     orderBy: { created: 'desc' },
-    include: {
-      sender: {
-        select: {
-          id: true,
-          name: true,
-          avatar: true
-        }
-      },
-      reaction: true,
-      seen_by: true,
-      reply_to: {
-        select: {
-          content: true,
-          sender: {
-            select: {
-              name: true
-            }
-          }
-        }
-      }
-    }
+    include: ChatMessageSelectField
   })
   const messages: ChatMessage[] = data
     .map((msg) => ({

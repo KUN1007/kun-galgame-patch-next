@@ -18,3 +18,35 @@ export const GalgameCardSelectField = {
     }
   }
 }
+
+export const ChatMessageSelectField = {
+  sender: {
+    select: {
+      id: true,
+      name: true,
+      avatar: true
+    }
+  },
+  reaction: {
+    include: {
+      user: {
+        select: {
+          id: true,
+          name: true,
+          avatar: true
+        }
+      }
+    }
+  },
+  seen_by: true,
+  reply_to: {
+    select: {
+      content: true,
+      sender: {
+        select: {
+          name: true
+        }
+      }
+    }
+  }
+}

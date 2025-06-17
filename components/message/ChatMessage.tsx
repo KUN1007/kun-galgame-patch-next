@@ -10,6 +10,7 @@ import {
   ModalFooter,
   useDisclosure
 } from '@heroui/react'
+import { useMemo } from 'react'
 import { format } from 'date-fns'
 import { cn } from '~/utils/cn'
 import { useSocket } from '~/context/SocketProvider'
@@ -19,7 +20,10 @@ import { ChatMessageContextMenu } from './ChatMessageContextMenu'
 import { useIsMobile } from '~/hooks/useIsMobile'
 import { ReplyQuote } from './ReplyQuote'
 import './message.css'
-import type { ChatMessage as ChatMessageType } from '~/types/api/chat'
+import type {
+  ChatMessage as ChatMessageType,
+  ChatMessageReaction
+} from '~/types/api/chat'
 
 interface Props {
   message: ChatMessageType
@@ -45,6 +49,16 @@ export const ChatMessage = ({
     onOpen: onOpenDelete,
     onClose: onCloseDelete
   } = useDisclosure()
+
+  const reactionGroups = useMemo(() => {
+    if (!message.reaction || message.reaction.length < 3) {
+      return null
+    }
+    return message.reaction.reduce<Record<string, number>>((acc, r) => {
+      acc[r.emoji] = (acc[r.emoji] || 0) + 1
+      return acc
+    }, {})
+  }, [message.reaction])
 
   const handleMessageClick = (event: React.MouseEvent) => {
     if (isMobile) {
@@ -74,7 +88,10 @@ export const ChatMessage = ({
     if (!socket || !message) {
       return
     }
-    socket.emit(KUN_CHAT_EVENT.ADD_REACTION, { messageId: message.id, emoji })
+    socket.emit(KUN_CHAT_EVENT.TOGGLE_REACTION, {
+      messageId: message.id,
+      emoji
+    })
   }
 
   const alignment = isOwnMessage ? 'justify-end' : 'justify-start'
@@ -148,18 +165,37 @@ export const ChatMessage = ({
           </div>
 
           {message.reaction && message.reaction.length > 0 && (
-            <div className="flex flex-wrap gap-1 mt-1">
-              {message.reaction.map((r: any) => (
-                <Chip
-                  key={r.id}
-                  size="sm"
-                  variant="flat"
-                  className="cursor-pointer"
-                  onClick={() => handleReaction(r.emoji)}
-                >
-                  {r.emoji} {r._count?.id || 1}
-                </Chip>
-              ))}
+            <div className="flex flex-wrap items-center gap-x-2 gap-y-1 mt-1">
+              {message.reaction.length < 3
+                ? message.reaction.map((r: ChatMessageReaction) => (
+                    <Chip
+                      key={r.id}
+                      size="sm"
+                      variant="flat"
+                      className="cursor-pointer"
+                      onClick={() => handleReaction(r.emoji)}
+                      classNames={{ content: 'flex gap-1 px-0' }}
+                    >
+                      <span>{r.emoji}</span>
+                      <Avatar
+                        src={r.user.avatar}
+                        alt={r.user.name?.charAt(0).toUpperCase()}
+                        className="size-4 shrink-0"
+                      />
+                    </Chip>
+                  ))
+                : reactionGroups &&
+                  Object.entries(reactionGroups).map(([emoji, count]) => (
+                    <Chip
+                      key={emoji}
+                      size="sm"
+                      variant="flat"
+                      className="cursor-pointer"
+                      onClick={() => handleReaction(emoji)}
+                    >
+                      {emoji} {count}
+                    </Chip>
+                  ))}
             </div>
           )}
         </div>

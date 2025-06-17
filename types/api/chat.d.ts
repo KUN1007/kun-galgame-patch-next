@@ -9,6 +9,10 @@ import type {
 
 export type ChatRoom = chat_room
 
+export interface ChatMessageReaction extends chat_message_reaction {
+  user: KunUser
+}
+
 export interface QuoteMessage {
   senderName: string
   content: string
@@ -22,7 +26,7 @@ export interface GetChatroomResponse extends ChatRoom {
 export interface ChatMessage extends chat_message {
   sender: KunUser
   seenBy: chat_message_seen[]
-  reaction: chat_message_reaction[]
+  reaction: ChatMessageReaction[]
   quoteMessage?: QuoteMessage
 }
 
