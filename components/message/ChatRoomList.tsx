@@ -92,12 +92,7 @@ export const ChatRoomList = () => {
       {loading ? (
         <KunLoading hint="正在加载聊天中..." />
       ) : (
-        <Listbox
-          aria-label="聊天室列表"
-          variant="flat"
-          selectionMode="single"
-          selectedKeys={new Set([activeLink])}
-        >
+        <Listbox aria-label="聊天室列表" variant="flat">
           {rooms.map((room) => {
             const Icon = room.type === 'PRIVATE' ? User : Users
 
@@ -112,11 +107,19 @@ export const ChatRoomList = () => {
                     name={room.name}
                   />
                 }
-                endContent={<Icon className="text-default-400" />}
                 description={getDescription(room)}
                 textValue={room.name}
+                classNames={{
+                  base:
+                    activeLink === room.link
+                      ? 'data-[hover=true]:bg-primary/10 bg-primary/10'
+                      : ''
+                }}
               >
-                {room.name}
+                <div className="flex gap-1">
+                  <Icon className="text-default-400 w-4 h-4" />
+                  <span>{room.name}</span>
+                </div>
               </ListboxItem>
             )
           })}

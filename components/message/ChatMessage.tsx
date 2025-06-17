@@ -19,11 +19,11 @@ import { useContextMenu } from '~/hooks/useContextMenu'
 import { ChatMessageContextMenu } from './ChatMessageContextMenu'
 import { useIsMobile } from '~/hooks/useIsMobile'
 import { ReplyQuote } from './ReplyQuote'
+import { KunAvatar } from '~/components/kun/floating-card/KunAvatar'
 import type {
   ChatMessage as ChatMessageType,
   ChatMessageReaction
 } from '~/types/api/chat'
-import { KunAvatar } from '../kun/floating-card/KunAvatar'
 
 interface Props {
   message: ChatMessageType
@@ -136,12 +136,6 @@ export const ChatMessage = ({
             isOwnMessage ? 'items-end' : 'items-start'
           )}
         >
-          {isGroupChat && !isOwnMessage && (
-            <span className="text-xs text-default-500 ml-2 mb-1">
-              {message.sender.name}
-            </span>
-          )}
-
           <div
             onContextMenu={!isMobile ? handleContextMenu : undefined}
             onClick={isMobile ? handleMessageClick : undefined}

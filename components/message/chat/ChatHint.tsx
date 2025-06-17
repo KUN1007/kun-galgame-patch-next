@@ -27,7 +27,7 @@ export const ChatHint = () => {
             欢迎来到我们的聊天室
           </h1>
           <p className="text-default-500">
-            在这里, 您可以与本站的任何用户私聊, 也可以创建 / 加入群组进行交流。
+            在这里, 您可以与本站的任何用户私聊, 也可以创建 / 加入群组进行交流
           </p>
         </div>
 
@@ -37,7 +37,7 @@ export const ChatHint = () => {
             <div>
               <p className="font-semibold text-default-700">新功能尝鲜</p>
               <p className="text-sm text-default-500">
-                聊天系统刚刚上线，我们正在努力完善它，难免会有一些 BUG。
+                聊天系统刚刚上线，我们正在努力完善它，难免会有一些 BUG
               </p>
             </div>
           </div>
@@ -55,7 +55,7 @@ export const ChatHint = () => {
                 >
                   我们的论坛
                 </Link>{' '}
-                中告诉我们。
+                中告诉我们
               </p>
             </div>
           </div>

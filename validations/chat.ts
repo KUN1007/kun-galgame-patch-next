@@ -3,7 +3,10 @@ import { MAX_CHAT_MESSAGE_PER_REQUEST } from '~/constants/chat'
 
 const isValidChatGroup = (value: string) => {
   const userPrivateChatPattern = /^\d+-\d+$/
-  return !userPrivateChatPattern.test(value)
+  const letterOrNumberPattern = /^[a-zA-Z0-9]+$/
+  return (
+    !userPrivateChatPattern.test(value) && letterOrNumberPattern.test(value)
+  )
 }
 
 const _chatGroupLinkSchema = z
@@ -34,9 +37,14 @@ export const getChatMessagesSchema = z.object({
 
 export const createChatRoomSchema = z.object({
   name: z.string().min(1, '群聊名称不能为空').max(107),
-  memberIdArray: z
-    .array(z.number().min(1).max(9999999))
-    .min(1, '群聊至少需要邀请一位成员')
+  link: _chatGroupLinkSchema,
+  avatar: z
+    .string()
+    .url({ message: '非法的群组头像 URL' })
+    .min(1)
+    .max(1007, { message: '群组头像最多 1007 个字符' }),
+  memberIdArray: z.array(z.number().min(1).max(9999999))
+  // .min(1, '群聊至少需要邀请一位成员')
 })
 
 export const sendMessageSchema = z.object({

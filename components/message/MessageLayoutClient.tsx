@@ -15,7 +15,7 @@ export const MessageLayoutClient = ({ sidebar, children }: Props) => {
   const isChatPage = pathname === '/message/chat'
 
   return (
-    <div className="flex min-h-[500px] gap-6">
+    <div className="flex flex-col md:flex-row min-h-[500px] gap-6">
       <div
         className={cn(
           'transition-all duration-300 md:block md:fixed md:top-81 md:w-64',
@@ -29,7 +29,7 @@ export const MessageLayoutClient = ({ sidebar, children }: Props) => {
         className={cn(
           'flex-1 transition-all duration-300',
           'md:block md:pl-68',
-          isChatPage ? 'hidden' : 'block'
+          isChatPage ? '' : 'block'
         )}
       >
         {children}

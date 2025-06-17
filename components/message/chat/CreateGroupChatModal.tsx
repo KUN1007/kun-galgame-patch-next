@@ -1,6 +1,6 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, useTransition } from 'react'
 import { useForm, Controller } from 'react-hook-form'
 import { useRouter } from 'next/navigation'
 import {
@@ -8,18 +8,16 @@ import {
   ModalContent,
   ModalHeader,
   ModalBody,
-  ModalFooter,
   Tabs,
   Tab,
   Input,
-  Button,
-  Autocomplete,
-  AutocompleteItem,
-  Avatar
+  Button
 } from '@heroui/react'
 import { kunFetchPost } from '~/utils/kunFetch'
 import { kunFetchGet } from '~/utils/kunFetch'
 import toast from 'react-hot-toast'
+import { kunErrorHandler } from '~/utils/kunErrorHandler'
+import type { JoinChatRoomResponse } from '~/types/api/chat'
 
 interface Props {
   isOpen: boolean
@@ -29,64 +27,80 @@ interface Props {
 export const CreateGroupChatModal = ({ isOpen, onClose }: Props) => {
   const router = useRouter()
   const [searchedUsers, setSearchedUsers] = useState<KunUser[]>([])
-  const [isLoading, setIsLoading] = useState(false)
+  const [loading, startTransition] = useTransition()
 
-  const { control: createControl, handleSubmit: handleCreateSubmit } = useForm({
-    defaultValues: { name: '', members: [] as KunUser[] }
+  const {
+    control: createControl,
+    handleSubmit: handleCreateSubmit,
+    watch: submitWatch
+  } = useForm({
+    defaultValues: { name: '', link: '', avatar: '', members: [] as KunUser[] }
   })
-  const { control: joinControl, handleSubmit: handleJoinSubmit } = useForm({
-    defaultValues: { link: '' }
+  const {
+    control: joinControl,
+    handleSubmit: handleJoinSubmit,
+    watch: joinWatch
+  } = useForm({
+    defaultValues: { link: 'kun' }
   })
 
   const handleUserSearch = async (query: string) => {
     if (!query) return
-    const users = await kunFetchGet<KunUser[]>(`/api/users/search`, { query })
+    const users = await kunFetchGet<KunUser[]>(`/users/search`, { query })
     if (typeof users !== 'string') {
       setSearchedUsers(users)
     }
   }
 
-  const onCreateGroup = async (data: { name: string; members: KunUser[] }) => {
-    setIsLoading(true)
-    const memberIdArray = data.members.map((m) => m.id)
-    const response = await kunFetchPost<any>('/api/chat-rooms', {
-      name: data.name,
-      memberIdArray
+  const onCreateGroup = async (data: {
+    name: string
+    link: string
+    avatar: string
+    members: KunUser[]
+  }) => {
+    startTransition(async () => {
+      const memberIdArray = data.members.map((m) => m.id)
+      const res = await kunFetchPost<KunResponse<{}>>('/chat-room', {
+        ...data,
+        memberIdArray
+      })
+      kunErrorHandler(res, () => {
+        toast.success(`群聊 "${submitWatch().name}" 创建成功!`)
+        onClose()
+        router.push(`/message/chat/${submitWatch().link}`)
+      })
     })
-
-    if (typeof response === 'string') {
-      toast.error(response)
-    } else {
-      toast.success(`群聊 "${response.name}" 创建成功!`)
-      onClose()
-      router.push(`/message/chat/${response.link}`)
-    }
-    setIsLoading(false)
   }
 
   const onJoinGroup = async (data: { link: string }) => {
-    setIsLoading(true)
-    const response = await kunFetchPost<any>(`/api/chat-rooms/join`, {
-      link: data.link
-    })
+    startTransition(async () => {
+      const res = await kunFetchPost<KunResponse<JoinChatRoomResponse>>(
+        `/chat-room/join`,
+        { link: data.link }
+      )
 
-    if (typeof response === 'string') {
-      toast.error(response)
-    } else {
-      toast.success(`成功加入群聊 "${response.name}"!`)
-      onClose()
-      router.push(`/message/chat/${response.link}`)
-    }
-    setIsLoading(false)
+      kunErrorHandler(res, (value) => {
+        toast.success(`成功加入群聊 "${value.name}"!`)
+        onClose()
+        router.push(`/message/chat/${value.link}`)
+      })
+    })
   }
 
   return (
-    <Modal isOpen={isOpen} onClose={onClose} placement="top-center">
+    <Modal isOpen={isOpen} onClose={onClose}>
       <ModalContent>
         {(close) => (
           <>
             <ModalHeader className="flex flex-col gap-1">
-              创建或加入群聊
+              <h2>创建或加入群聊</h2>
+              <p className="font-normal text-sm text-default-500">
+                目前由于我摆烂的原因, 只有超级管理员才可以创建群聊!
+                因为懒得写代码了 (别打我呜呜呜, 有空就写, 嗯, 下次一定) !
+                <br />
+                加入群聊中已经为大家提供了一个网站的公共群组,
+                快点击加入来聊天吧~
+              </p>
             </ModalHeader>
             <ModalBody>
               <Tabs fullWidth>
@@ -101,6 +115,28 @@ export const CreateGroupChatModal = ({ isOpen, onClose }: Props) => {
                       rules={{ required: true }}
                       render={({ field }) => (
                         <Input {...field} label="群聊名称" isRequired />
+                      )}
+                    />
+
+                    <Controller
+                      name="link"
+                      control={createControl}
+                      rules={{ required: true }}
+                      render={({ field }) => (
+                        <Input
+                          {...field}
+                          label="群组链接 (3 ~ 17 个字母或数字)"
+                          isRequired
+                        />
+                      )}
+                    />
+
+                    <Controller
+                      name="avatar"
+                      control={createControl}
+                      rules={{ required: true }}
+                      render={({ field }) => (
+                        <Input {...field} label="群聊的头像链接" isRequired />
                       )}
                     />
                     {/* <Controller
@@ -142,7 +178,7 @@ export const CreateGroupChatModal = ({ isOpen, onClose }: Props) => {
                       type="submit"
                       color="primary"
                       fullWidth
-                      isLoading={isLoading}
+                      isLoading={loading}
                     >
                       创建
                     </Button>
@@ -165,7 +201,7 @@ export const CreateGroupChatModal = ({ isOpen, onClose }: Props) => {
                       type="submit"
                       color="primary"
                       fullWidth
-                      isLoading={isLoading}
+                      isLoading={loading}
                     >
                       加入
                     </Button>

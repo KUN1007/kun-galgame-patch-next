@@ -59,6 +59,9 @@ export const POST = async (req: NextRequest) => {
   if (!payload) {
     return NextResponse.json('用户未登录')
   }
+  if (payload.role < 4) {
+    return NextResponse.json('目前创建群组仅超级管理员可用')
+  }
 
   const response = await createChatRoom(input, payload.uid)
   return NextResponse.json(response)
@@ -68,16 +71,16 @@ export const createChatRoom = async (
   input: z.infer<typeof createChatRoomSchema>,
   uid: number
 ) => {
-  const { name, memberIdArray } = input
+  const { name, link, avatar, memberIdArray } = input
+
   const allMember = [...new Set([uid, ...memberIdArray])]
 
   const newRoom = await prisma.chat_room.create({
     data: {
       name,
       type: 'GROUP',
-      // TODO: set a default group avatar
-      avatar: '',
-      link: `group_${new Date().getTime()}`,
+      avatar,
+      link,
       member: {
         create: allMember.map((id) => ({
           user_id: id,

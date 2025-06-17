@@ -294,7 +294,7 @@ export const ChatWindow = ({
   }, 500)
 
   return (
-    <Card className="flex flex-col h-full h-[calc(100vh-24rem)]">
+    <Card className="flex flex-col h-full h-[48rem]">
       <CardHeader className="shrink-0 flex items-center justify-between">
         <div className="flex items-center gap-3">
           <Button
