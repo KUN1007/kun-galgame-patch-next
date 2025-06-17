@@ -35,7 +35,7 @@ export interface JoinChatRoomResponse extends chat_room {
 }
 
 export type ChatRoomWithLatestMessage = chat_room & {
-  message: (chat_message & { sender: Pick<user, 'name'> })[]
+  message: (chat_message & { sender: KunUser })[]
 }
 
 export interface ChatMessagesApiResponse {

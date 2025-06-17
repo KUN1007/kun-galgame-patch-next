@@ -1,6 +1,6 @@
 'use client'
 
-import { useEffect, useState } from 'react'
+import { useCallback, useEffect, useMemo, useState } from 'react'
 import { usePathname } from 'next/navigation'
 import { useSocket } from '~/context/SocketProvider'
 import { kunFetchGet } from '~/utils/kunFetch'
@@ -18,6 +18,7 @@ import { CreateGroupChatModal } from './CreateGroupChatModal'
 import { useDisclosure } from '@heroui/react'
 import { KunLoading } from '~/components/kun/Loading'
 import type {
+  ChatMessage,
   GetChatroomResponse,
   ChatRoomWithLatestMessage
 } from '~/types/api/chat'
@@ -26,8 +27,12 @@ export const ChatRoomList = () => {
   const [rooms, setRooms] = useState<ChatRoomWithLatestMessage[]>([])
   const { isOpen, onOpen, onClose } = useDisclosure()
   const [loading, setLoading] = useState(true)
-  const pathname = usePathname()
   const { socket } = useSocket()
+  const pathname = usePathname()
+
+  const activeLink = useMemo(() => {
+    return pathname.split('/').pop() || ''
+  }, [pathname])
 
   useEffect(() => {
     const fetchChatRooms = async () => {
@@ -52,35 +57,44 @@ export const ChatRoomList = () => {
   useEffect(() => {
     if (!socket) return
 
-    const handleNewMessage = (newMessage: any) => {
+    const handleNewMessage = (newMessage: ChatMessage) => {
       setRooms((prevRooms) => {
+        const newRooms = [...prevRooms]
+        const roomIndex = newRooms.findIndex(
+          (r) => r.id === newMessage.chat_room_id
+        )
+
+        if (roomIndex !== -1) {
+          const updatedRoom = {
+            ...newRooms[roomIndex],
+            message: [newMessage],
+            last_message_time: newMessage.created
+          }
+          newRooms.splice(roomIndex, 1)
+          newRooms.unshift(updatedRoom)
+          return newRooms
+        }
         return prevRooms
-          .map((room) => {
-            if (room.id === newMessage.chat_room_id) {
-              return {
-                ...room,
-                message: [newMessage],
-                last_message_time: newMessage.created
-              }
-            }
-            return room
-          })
-          .sort(
-            (a, b) =>
-              new Date(b.last_message_time).getTime() -
-              new Date(a.last_message_time).getTime()
-          )
       })
     }
 
     socket.on(KUN_CHAT_EVENT.RECEIVE_MESSAGE, handleNewMessage)
-
     return () => {
       socket.off(KUN_CHAT_EVENT.RECEIVE_MESSAGE, handleNewMessage)
     }
   }, [socket])
 
-  const activeLink = pathname.split('/').pop() || ''
+  const getDescription = useCallback((room: ChatRoomWithLatestMessage) => {
+    const lastMessage = room.message[0]
+
+    if (!lastMessage) {
+      return '暂无消息'
+    }
+
+    return lastMessage.status === 'DELETED'
+      ? `${lastMessage.sender.name} 删除了一条消息`
+      : lastMessage.content
+  }, [])
 
   return (
     <div className="flex flex-col h-full">
@@ -108,25 +122,24 @@ export const ChatRoomList = () => {
             selectedKeys={new Set([activeLink])}
           >
             {rooms.map((room) => {
-              const lastMessage = room.message[0]
-              // TODO: room name and avatar
-              const title = room.type === 'PRIVATE' ? room.name : room.name
               const Icon = room.type === 'PRIVATE' ? User : Users
 
               return (
                 <ListboxItem
                   key={room.link}
                   href={`/message/chat/${room.link}`}
-                  startContent={<Avatar src={room.avatar} name={title} />}
-                  endContent={<Icon size={16} className="text-default-400" />}
-                  description={
-                    lastMessage
-                      ? `${lastMessage.sender.name}: ${lastMessage.content}`
-                      : '暂无消息'
+                  startContent={
+                    <Avatar
+                      className="shrink-0"
+                      src={room.avatar}
+                      name={room.name}
+                    />
                   }
-                  textValue={title ?? ''}
+                  endContent={<Icon className="text-default-400" />}
+                  description={getDescription(room)}
+                  textValue={room.name}
                 >
-                  {title}
+                  {room.name}
                 </ListboxItem>
               )
             })}

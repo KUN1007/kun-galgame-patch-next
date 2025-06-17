@@ -24,6 +24,7 @@ import type {
   ChatMessage as ChatMessageType,
   ChatMessageReaction
 } from '~/types/api/chat'
+import { KunAvatar } from '../kun/floating-card/KunAvatar'
 
 interface Props {
   message: ChatMessageType
@@ -118,10 +119,15 @@ export const ChatMessage = ({
         )}
       >
         {!isOwnMessage && (
-          <Avatar
-            src={message.sender.avatar}
-            size="sm"
-            name={message.sender.name}
+          <KunAvatar
+            uid={message.sender.id}
+            avatarProps={{
+              radius: 'full',
+              size: 'sm',
+              name: message.sender.name,
+              src: message.sender.avatar,
+              className: 'shrink-0'
+            }}
           />
         )}
 
@@ -201,10 +207,15 @@ export const ChatMessage = ({
         </div>
 
         {isOwnMessage && (
-          <Avatar
-            src={message.sender.avatar}
-            size="sm"
-            name={message.sender.name}
+          <KunAvatar
+            uid={message.sender.id}
+            avatarProps={{
+              radius: 'full',
+              size: 'sm',
+              name: message.sender.name,
+              src: message.sender.avatar,
+              className: 'shrink-0'
+            }}
           />
         )}
       </div>

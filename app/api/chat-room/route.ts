@@ -17,7 +17,7 @@ export const GET = async (req: NextRequest) => {
 }
 
 export const getChatroom = async (uid: number) => {
-  const rooms: GetChatroomResponse[] = await prisma.chat_room.findMany({
+  const data: GetChatroomResponse[] = await prisma.chat_room.findMany({
     where: { member: { some: { user_id: uid } } },
     include: {
       message: {
@@ -31,6 +31,20 @@ export const getChatroom = async (uid: number) => {
       }
     },
     orderBy: { last_message_time: 'desc' }
+  })
+
+  const rooms = data.map((chatroom) => {
+    if (chatroom.type === 'PRIVATE') {
+      const otherMember = chatroom.member.find(
+        (member) => member.user_id !== uid
+      )
+
+      if (otherMember && otherMember.user) {
+        chatroom.name = otherMember.user.name
+        chatroom.avatar = otherMember.user.avatar
+      }
+    }
+    return chatroom
   })
 
   return rooms
