@@ -25,7 +25,7 @@ import {
   MAX_CHAT_MESSAGE_PER_REQUEST,
   USER_IS_TYPING_DURATION
 } from '~/constants/chat'
-import { KunLoading } from '../kun/Loading'
+import { KunLoading } from '~/components/kun/Loading'
 import { ReplyPreviewBanner } from './ReplyPreviewBanner'
 import { UserTypingIndicator } from './UserTypingIndicator'
 import { useHotkeys } from 'react-hotkeys-hook'

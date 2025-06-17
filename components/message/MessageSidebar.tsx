@@ -9,8 +9,8 @@ import {
   Divider
 } from '@heroui/react'
 import { MessageNav } from '~/components/message/MessageNav'
-import { ChatRoomList } from '~/components/message/ChatRoomList'
-import './message.css'
+import { ChatRoomList } from '~/components/message/chat/ChatRoomList'
+import './chat/message.css'
 
 export const MessageSidebar = () => {
   const itemClasses = {

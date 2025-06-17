@@ -158,7 +158,7 @@ export const ChatMessage = ({
               dangerouslySetInnerHTML={{
                 __html: DOMPurify.sanitize(message.content)
               }}
-              className="kun-prose-message pr-12"
+              className="kun-prose-message"
             />
 
             <div className="absolute bottom-1 right-2 text-xs opacity-50">

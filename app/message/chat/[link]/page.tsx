@@ -1,4 +1,4 @@
-import { ChatWindow } from '~/components/message/ChatWindow'
+import { ChatWindow } from '~/components/message/chat/ChatWindow'
 import { ErrorComponent } from '~/components/error/ErrorComponent'
 import { kunGetActions } from './actions'
 
