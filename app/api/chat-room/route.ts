@@ -18,7 +18,7 @@ export const GET = async (req: NextRequest) => {
 
 export const getChatroom = async (uid: number) => {
   const data: GetChatroomResponse[] = await prisma.chat_room.findMany({
-    where: { member: { some: { user_id: uid } } },
+    where: { member: { some: { user_id: uid } }, message: { some: {} } },
     include: {
       message: {
         orderBy: { created: 'desc' },
