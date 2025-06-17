@@ -24,6 +24,7 @@ export interface GetChatroomResponse extends ChatRoom {
 }
 
 export interface ChatMessage extends chat_message {
+  contentMarkdown: string
   sender: KunUser
   seenBy: chat_message_seen[]
   reaction: ChatMessageReaction[]

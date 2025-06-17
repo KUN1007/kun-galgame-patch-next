@@ -7,6 +7,7 @@ import {
 } from '~/validations/chat'
 import { KUN_CHAT_EVENT } from '~/constants/chat'
 import { ChatMessageSelectField } from '~/constants/api/select'
+import { markdownToHtml } from '~/app/api/utils/markdownToHtml'
 import type { ChatMessage } from '~/types/api/chat'
 
 export const handleSendMessage = async (
@@ -33,11 +34,13 @@ export const handleSendMessage = async (
 
   const message: ChatMessage = {
     ...messageData,
+    content: await markdownToHtml(messageData.content),
+    contentMarkdown: messageData.content,
     seenBy: messageData.seen_by,
     quoteMessage: messageData.reply_to
       ? {
           senderName: messageData.reply_to.sender.name,
-          content: messageData.reply_to.content
+          content: await markdownToHtml(messageData.reply_to.content)
         }
       : undefined
   }

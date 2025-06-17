@@ -1,5 +1,6 @@
 'use client'
 
+import DOMPurify from 'isomorphic-dompurify'
 import type { QuoteMessage } from '~/types/api/chat'
 
 interface Props {
@@ -17,7 +18,13 @@ export const ReplyQuote = ({ message, onJumpTo }: Props) => {
     >
       <div className="flex w-full flex-col border-l-3 bg-secondary/10 px-2 py-1 border-secondary">
         <span className="text-secondary">{message.senderName}</span>
-        <p className="line-clamp-2 opacity-80">{message.content}</p>
+
+        <div
+          dangerouslySetInnerHTML={{
+            __html: DOMPurify.sanitize(message.content)
+          }}
+          className="kun-prose-message line-clamp-2 opacity-80"
+        />
       </div>
     </div>
   )

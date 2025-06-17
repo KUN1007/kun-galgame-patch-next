@@ -14,8 +14,6 @@ export const onSocketConnection = async (io: Server, socket: Socket) => {
       throw new Error('Invalid user ID.')
     }
 
-    console.log(`- Socket connected: ${socket.id} (User: ${user.name})`)
-
     socket.data.user = user
 
     const memberships = await prisma.chat_member.findMany({
@@ -24,12 +22,10 @@ export const onSocketConnection = async (io: Server, socket: Socket) => {
     })
     memberships.forEach((m) => socket.join(`room:${m.chat_room_id}`))
 
-    console.log(`> User ${user.name} joined ${memberships.length} rooms.`)
-
     registerChatEventHandlers(io, socket)
 
     socket.on('disconnect', () => {
-      console.log(`- Socket disconnected: ${socket.id} (User: ${user.name})`)
+      // console.log(`- Socket disconnected: ${socket.id} (User: ${user.name})`)
     })
   } catch (error: any) {
     console.error(`! Socket connection failed: ${error.message}`)

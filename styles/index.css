@@ -2,6 +2,7 @@
 @import './blog.css';
 @import './editor.css';
 @import './prose.css';
+@import './prose-message.css';
 
 [data-overlay-container='true'] {
   height: 100%;

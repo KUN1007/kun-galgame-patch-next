@@ -5,6 +5,7 @@ import { verifyHeaderCookie } from '~/middleware/_verifyHeaderCookie'
 import { getChatRoomMessageSchema } from '~/validations/chat'
 import { kunParseGetQuery } from '~/app/api/utils/parseQuery'
 import { ChatMessageSelectField } from '~/constants/api/select'
+import { markdownToHtml } from '~/app/api/utils/markdownToHtml'
 import type { ChatMessage } from '~/types/api/chat'
 
 export const getChatRoomMessage = async (
@@ -64,18 +65,22 @@ export const getChatRoomMessage = async (
     orderBy: { created: 'desc' },
     include: ChatMessageSelectField
   })
-  const messages: ChatMessage[] = data
-    .map((msg) => ({
-      ...msg,
-      seenBy: msg.seen_by,
-      quoteMessage: msg.reply_to
-        ? {
-            senderName: msg.reply_to.sender.name,
-            content: msg.reply_to.content
-          }
-        : undefined
-    }))
-    .reverse()
+  const messages: ChatMessage[] = await Promise.all(
+    data
+      .map(async (msg) => ({
+        ...msg,
+        content: await markdownToHtml(msg.content),
+        contentMarkdown: msg.content,
+        seenBy: msg.seen_by,
+        quoteMessage: msg.reply_to
+          ? {
+              senderName: msg.reply_to.sender.name,
+              content: await markdownToHtml(msg.reply_to.content)
+            }
+          : undefined
+      }))
+      .reverse()
+  )
 
   let nextCursor = null
   if (messages.length === limit) {

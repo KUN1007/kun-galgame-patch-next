@@ -284,7 +284,7 @@ export const ChatWindow = ({
     if (!socket || !editingMessage) return
     socket.emit(KUN_CHAT_EVENT.EDIT_MESSAGE, {
       messageId: editingMessage.id,
-      newContent: editingMessage.content
+      newContent: editingMessage.contentMarkdown
     })
     setMessages((prev) =>
       prev.map((msg) => (msg.id === editingMessage.id ? editingMessage : msg))
@@ -360,9 +360,12 @@ export const ChatWindow = ({
             <ModalBody>
               {editingMessage && (
                 <Textarea
-                  value={editingMessage.content}
+                  value={editingMessage.contentMarkdown}
                   onValueChange={(value) =>
-                    setEditingMessage({ ...editingMessage, content: value })
+                    setEditingMessage({
+                      ...editingMessage,
+                      contentMarkdown: value
+                    })
                   }
                   autoFocus
                   minRows={1}

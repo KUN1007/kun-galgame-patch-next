@@ -40,12 +40,10 @@ export const SocketProvider = ({
     })
 
     socketInstance.on('connect', () => {
-      console.log('Socket.IO: Connected')
       setIsConnected(true)
     })
 
     socketInstance.on('disconnect', () => {
-      console.log('Socket.IO: Disconnected')
       setIsConnected(false)
     })
 

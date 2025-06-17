@@ -20,6 +20,7 @@ import { ChatMessageContextMenu } from './ChatMessageContextMenu'
 import { useIsMobile } from '~/hooks/useIsMobile'
 import { ReplyQuote } from './ReplyQuote'
 import { KunAvatar } from '~/components/kun/floating-card/KunAvatar'
+import DOMPurify from 'isomorphic-dompurify'
 import type {
   ChatMessage as ChatMessageType,
   ChatMessageReaction
@@ -153,9 +154,12 @@ export const ChatMessage = ({
               />
             )}
 
-            <p className="whitespace-pre-wrap break-words pr-12">
-              {message.content}
-            </p>
+            <div
+              dangerouslySetInnerHTML={{
+                __html: DOMPurify.sanitize(message.content)
+              }}
+              className="kun-prose-message pr-12"
+            />
 
             <div className="absolute bottom-1 right-2 text-xs opacity-50">
               {message.status === 'EDITED' && '已编辑 '}
