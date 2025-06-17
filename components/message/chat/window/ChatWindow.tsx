@@ -1,7 +1,6 @@
 'use client'
 
-import { useState } from 'react'
-import { Card, CardFooter } from '@heroui/card'
+import { useState, useCallback, useMemo } from 'react'
 import { useDisclosure } from '@heroui/react'
 import { useDebouncedCallback } from 'use-debounce'
 import { useSocket } from '~/context/SocketProvider'
@@ -13,6 +12,7 @@ import { MessageList } from './MessageList'
 import { ChatInput } from './ChatInput'
 import { ReplyPreviewBanner } from './ReplyPreviewBanner'
 import { EditMessageModal } from './EditMessageModal'
+import { ChatLayout } from './ChatLayout'
 import type { ChatRoom, ChatMessage as ChatMessageType } from '~/types/api/chat'
 
 interface Props {
@@ -55,7 +55,7 @@ export const ChatWindow = ({
     scrollRef
   })
 
-  const handleSendMessage = () => {
+  const handleSendMessage = useCallback(() => {
     if (!inputValue.trim() || !socket) return
     socket.emit(KUN_CHAT_EVENT.SEND_MESSAGE, {
       roomId: chatroom.id,
@@ -64,18 +64,21 @@ export const ChatWindow = ({
     })
     setInputValue('')
     setReplyingTo(null)
-  }
+  }, [socket, chatroom.id, inputValue, replyingTo])
 
-  const handleStickerSend = (stickerUrl: string) => {
-    if (!socket) return
-    const content = `![sticker](${stickerUrl})`
-    socket.emit(KUN_CHAT_EVENT.SEND_MESSAGE, {
-      roomId: chatroom.id,
-      content,
-      replyToId: replyingTo?.id
-    })
-    setReplyingTo(null)
-  }
+  const handleStickerSend = useCallback(
+    (stickerUrl: string) => {
+      if (!socket) return
+      const content = `![sticker](${stickerUrl})`
+      socket.emit(KUN_CHAT_EVENT.SEND_MESSAGE, {
+        roomId: chatroom.id,
+        content,
+        replyToId: replyingTo?.id
+      })
+      setReplyingTo(null)
+    },
+    [socket, chatroom.id, replyingTo]
+  )
 
   const handleSaveEdit = useDebouncedCallback(() => {
     if (!socket || !editingMessage) return
@@ -88,16 +91,33 @@ export const ChatWindow = ({
     )
     setEditingMessage(null)
     onEditModalClose()
-  }, 500)
+  })
 
-  return (
-    <Card className="flex flex-col h-full h-[48rem]">
+  const handleReply = useCallback((message: ChatMessageType) => {
+    setReplyingTo(message)
+  }, [])
+  const handleEdit = useCallback(
+    (message: ChatMessageType) => {
+      setEditingMessage(message)
+      onEditModalOpen()
+    },
+    [onEditModalOpen]
+  )
+
+  // separate the state between MessageList and ChatInput, avoid MessageList too-many rerender, !important
+  const header = useMemo(
+    () => (
       <ChatHeader
         chatroom={chatroom}
         onlineCount={onlineCount}
         typingUsers={typingUsers}
       />
+    ),
+    [chatroom, onlineCount, typingUsers]
+  )
 
+  const messageList = useMemo(
+    () => (
       <MessageList
         messages={messages}
         chatroom={chatroom}
@@ -105,32 +125,37 @@ export const ChatWindow = ({
         isLoadingHistory={isLoadingHistory}
         scrollRef={scrollRef}
         scrollHeightBeforeUpdate={scrollHeightBeforeUpdate}
-        onReply={setReplyingTo}
-        onEdit={(msg) => {
-          setEditingMessage(msg)
-          onEditModalOpen()
-        }}
+        onReply={handleReply}
+        onEdit={handleEdit}
       />
+    ),
+    [
+      messages,
+      chatroom,
+      currentUserId,
+      isLoadingHistory,
+      scrollRef,
+      scrollHeightBeforeUpdate,
+      handleReply,
+      handleEdit
+    ]
+  )
 
-      <CardFooter className="shrink-0 flex-col">
-        {replyingTo && (
-          <ReplyPreviewBanner
-            message={{
-              content: replyingTo.content,
-              senderName: replyingTo.sender.name
-            }}
-            onClose={() => setReplyingTo(null)}
-          />
-        )}
-        <ChatInput
-          inputValue={inputValue}
-          onValueChange={setInputValue}
-          onSendMessage={handleSendMessage}
-          onStickerSend={handleStickerSend}
-          isConnected={isConnected}
-        />
-      </CardFooter>
+  const replyBanner = useMemo(() => {
+    if (!replyingTo) return null
+    return (
+      <ReplyPreviewBanner
+        message={{
+          content: replyingTo.content,
+          senderName: replyingTo.sender.name
+        }}
+        onClose={() => setReplyingTo(null)}
+      />
+    )
+  }, [replyingTo])
 
+  const modal = useMemo(
+    () => (
       <EditMessageModal
         isOpen={isEditModalOpen}
         onClose={onEditModalClose}
@@ -138,6 +163,27 @@ export const ChatWindow = ({
         setEditingMessage={setEditingMessage}
         onSave={handleSaveEdit}
       />
-    </Card>
+    ),
+    [isEditModalOpen, onEditModalClose, editingMessage, handleSaveEdit]
+  )
+
+  const input = (
+    <ChatInput
+      inputValue={inputValue}
+      onValueChange={setInputValue}
+      onSendMessage={handleSendMessage}
+      onStickerSend={handleStickerSend}
+      isConnected={isConnected}
+    />
+  )
+
+  return (
+    <ChatLayout
+      header={header}
+      messageList={messageList}
+      replyBanner={replyBanner}
+      input={input}
+      modal={modal}
+    />
   )
 }
