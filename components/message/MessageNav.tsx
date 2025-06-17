@@ -18,13 +18,13 @@ const notificationTypes = [
     href: '/message/follow'
   },
   {
-    type: 'patchResourceCreate',
+    type: 'patch-resource-create',
     label: '新补丁资源发布消息',
     icon: Puzzle,
     href: '/message/patch-resource-create'
   },
   {
-    type: 'patchResourceUpdate',
+    type: 'patch-resource-update',
     label: '补丁资源更新消息',
     icon: RefreshCcw,
     href: '/message/patch-resource-update'

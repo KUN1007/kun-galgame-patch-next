@@ -1,9 +1,10 @@
-import { MessageSidebar } from '~/components/message/MessageSidebar'
-import { SocketProvider } from '~/context/SocketProvider'
 import { KunHeader } from '~/components/kun/Header'
 import { kunMetadata } from './metadata'
 import { kunGetUserInfoActions } from './actions'
 import { Alert } from '@heroui/alert'
+import { SocketProvider } from '~/context/SocketProvider'
+import { MessageLayoutClient } from '~/components/message/MessageLayoutClient'
+import { MessageSidebar } from '~/components/message/MessageSidebar'
 import type { Metadata } from 'next'
 
 export const metadata: Metadata = kunMetadata
@@ -15,22 +16,21 @@ export default async function MessageLayout({
 }) {
   const user = await kunGetUserInfoActions()
 
-  return typeof user === 'string' ? (
-    <Alert color="danger" title="请登录后查看消息页面" />
-  ) : (
+  if (typeof user === 'string') {
+    return <Alert color="danger" title="请登录后查看消息页面" />
+  }
+
+  return (
     <SocketProvider userId={user.uid}>
       <div className="container mx-auto my-4">
         <KunHeader
           name="消息中心"
           description="您可以在这里查看系统通知与私聊"
         />
-        <div className="flex min-h-[500px] gap-6">
-          <div className="fixed hidden md:block top-81 w-64">
-            <MessageSidebar />
-          </div>
 
-          <div className="flex-1 pl-0 md:pl-68">{children}</div>
-        </div>
+        <MessageLayoutClient sidebar={<MessageSidebar />}>
+          {children}
+        </MessageLayoutClient>
       </div>
     </SocketProvider>
   )
