@@ -7,6 +7,7 @@ import {
   Plus,
   MessageCircleQuestion,
   Star,
+  Lightbulb,
   PartyPopper,
   AlertTriangle
 } from 'lucide-react'
@@ -85,7 +86,26 @@ export const ChatHint = () => {
             <div>
               <p className="font-semibold text-default-700">注意事项</p>
               <p className="text-sm text-default-500">
-                当前的实时消息系统正在开发中, 请勿发送重要的消息以免造成消息丢失, 当消息系统正式稳定后将不会显示此提示
+                消息系统正在开发中, 请勿发送重要的消息, 以免造成消息丢失,
+                当消息系统正式稳定后将不会显示此提示
+              </p>
+            </div>
+          </div>
+          <div className="flex items-start gap-3">
+            <Lightbulb className="mt-1 h-5 w-5 flex-shrink-0 text-success-600" />
+            <div>
+              <p className="font-semibold text-default-700">帮助信息</p>
+              <p className="text-sm text-default-500">
+                群聊的在线人数是精确的, 有人在的话就聊天吧! 设计灵感来源于
+                Telegram, 您可以加入我们的{' '}
+                <Link
+                  isExternal
+                  showAnchorIcon
+                  href="https://t.me/kungalgame"
+                  className="font-semibold"
+                >
+                  Telegram 群组
+                </Link>
               </p>
             </div>
           </div>

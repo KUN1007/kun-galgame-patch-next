@@ -36,7 +36,7 @@ import { UserTypingIndicator } from './UserTypingIndicator'
 import { useHotkeys } from 'react-hotkeys-hook'
 import { useDebounce, useDebouncedCallback } from 'use-debounce'
 import Link from 'next/link'
-import { emojiArray } from './_isoEmoji'
+import { emojiArray } from '~/constants/emoji'
 import type {
   ChatRoom,
   ChatMessage as ChatMessageType,
@@ -90,7 +90,7 @@ export const ChatWindow = ({
   } = useDisclosure()
 
   const [typingUsers, setTypingUsers] = useState<Record<number, KunUser>>({})
-  const [onlineCount, setOnlineCount] = useState<number | null>(null)
+  const [onlineCount, setOnlineCount] = useState<number>(1)
 
   const textAreaRef = useRef<HTMLTextAreaElement>(null)
   const [stickers, setStickers] = useState<string[]>([])
@@ -361,6 +361,11 @@ export const ChatWindow = ({
     setReplyingTo(null)
   }
 
+  // TODO:
+  const handleMoreAction = () => {
+    toast.success('功能正在开发中...')
+  }
+
   return (
     <Card className="flex flex-col h-full h-[48rem]">
       <CardHeader className="shrink-0 flex items-center justify-between">
@@ -386,7 +391,12 @@ export const ChatWindow = ({
         </div>
 
         <div className="flex items-center gap-2">
-          <Button isIconOnly variant="light" aria-label="更多选项">
+          <Button
+            isIconOnly
+            variant="light"
+            aria-label="更多选项"
+            onPress={handleMoreAction}
+          >
             <MoreVertical size={20} />
           </Button>
         </div>

@@ -10,7 +10,7 @@ import {
   Tooltip
 } from '@heroui/react'
 import { ChevronLeft, ChevronRight, SmilePlus } from 'lucide-react'
-import { emojiArray } from './_isoEmoji'
+import { emojiArray } from '~/constants/emoji'
 import type { UseEditorReturn } from '@milkdown/react'
 
 interface Props {

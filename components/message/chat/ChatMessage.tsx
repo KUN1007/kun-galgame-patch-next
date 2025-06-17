@@ -161,7 +161,7 @@ export const ChatMessage = ({
               className="kun-prose-message"
             />
 
-            <div className="absolute bottom-1 right-2 text-xs opacity-50">
+            <div className="absolute bottom-1 right-2 text-xs text-default-400">
               {message.status === 'EDITED' && '已编辑 '}
               {format(new Date(message.created), 'HH:mm')}
             </div>
