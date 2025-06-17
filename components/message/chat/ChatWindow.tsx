@@ -1,11 +1,11 @@
 'use client'
 
-import { useState, useEffect, useLayoutEffect } from 'react'
+import { useState, useEffect, useLayoutEffect, useRef } from 'react'
 import { Card, CardHeader, CardBody, CardFooter } from '@heroui/card'
 import { Avatar } from '@heroui/avatar'
 import { Textarea } from '@heroui/input'
 import { Button } from '@heroui/button'
-import { ChevronLeft, SendHorizontal, MoreVertical } from 'lucide-react'
+import { ChevronLeft, SendHorizontal, Smile, MoreVertical } from 'lucide-react'
 import { ChatMessage } from './ChatMessage'
 import {
   Modal,
@@ -14,6 +14,11 @@ import {
   ModalContent,
   ModalFooter,
   ScrollShadow,
+  Popover,
+  PopoverTrigger,
+  PopoverContent,
+  Tabs,
+  Tab,
   useDisclosure
 } from '@heroui/react'
 import toast from 'react-hot-toast'
@@ -30,18 +35,29 @@ import { ReplyPreviewBanner } from './ReplyPreviewBanner'
 import { UserTypingIndicator } from './UserTypingIndicator'
 import { useHotkeys } from 'react-hotkeys-hook'
 import { useDebounce, useDebouncedCallback } from 'use-debounce'
+import Link from 'next/link'
+import { emojiArray } from './_isoEmoji'
 import type {
   ChatRoom,
   ChatMessage as ChatMessageType,
   ChatMessagesApiResponse,
   ChatMessageReaction
 } from '~/types/api/chat'
-import Link from 'next/link'
 
 interface Props {
   chatroom: ChatRoom
   initialMessages: ChatMessageType[]
   currentUserId: number
+}
+
+const generateStickerArray = () => {
+  const result = []
+  for (let set = 1; set <= 6; set++) {
+    for (let id = 1; id <= 80; id++) {
+      result.push(`https://sticker.kungal.com/stickers/KUNgal${set}/${id}.webp`)
+    }
+  }
+  return result.slice(0, -6)
 }
 
 export const ChatWindow = ({
@@ -74,6 +90,13 @@ export const ChatWindow = ({
   } = useDisclosure()
 
   const [typingUsers, setTypingUsers] = useState<Record<number, KunUser>>({})
+
+  const textAreaRef = useRef<HTMLTextAreaElement>(null)
+  const [stickers, setStickers] = useState<string[]>([])
+
+  useEffect(() => {
+    setStickers(generateStickerArray())
+  }, [])
 
   // xxx is typing...
   useEffect(() => {
@@ -293,6 +316,36 @@ export const ChatWindow = ({
     onCloseEdit()
   }, 500)
 
+  const handleEmojiSelect = (emoji: string) => {
+    const textarea = textAreaRef.current
+    if (!textarea) return
+
+    const start = textarea.selectionStart
+    const end = textarea.selectionEnd
+    const newValue =
+      inputValue.substring(0, start) + emoji + inputValue.substring(end)
+    setInputValue(newValue)
+
+    setTimeout(() => {
+      textarea.focus()
+      textarea.selectionStart = textarea.selectionEnd = start + emoji.length
+    }, 0)
+  }
+
+  const handleStickerSend = (stickerUrl: string) => {
+    if (!socket) return
+
+    const content = `![sticker](${stickerUrl})`
+
+    socket.emit(KUN_CHAT_EVENT.SEND_MESSAGE, {
+      roomId: chatroom.id,
+      content,
+      replyToId: replyingTo?.id
+    })
+
+    setReplyingTo(null)
+  }
+
   return (
     <Card className="flex flex-col h-full h-[48rem]">
       <CardHeader className="shrink-0 flex items-center justify-between">
@@ -324,8 +377,8 @@ export const ChatWindow = ({
         </div>
       </CardHeader>
 
-      <CardBody>
-        <ScrollShadow ref={scrollRef}>
+      <CardBody className="px-3 py-0">
+        <ScrollShadow visibility="none" ref={scrollRef}>
           {isLoadingHistory && (
             <div className="h-16">
               <KunLoading hint="正在加载历史消息..." />
@@ -398,21 +451,76 @@ export const ChatWindow = ({
           />
         )}
 
-        <div className="flex w-full gap-2">
+        <div className="flex w-full items-end gap-2">
+          <Popover placement="top-start">
+            <PopoverTrigger>
+              <Button isIconOnly variant="light" aria-label="表情与贴纸">
+                <Smile />
+              </Button>
+            </PopoverTrigger>
+            <PopoverContent className="w-96 p-2">
+              <Tabs aria-label="表情与贴纸" fullWidth>
+                <Tab key="emoji" title="表情">
+                  <ScrollShadow
+                    hideScrollBar
+                    visibility="none"
+                    className="h-48"
+                  >
+                    <div className="grid grid-cols-8 gap-2 p-2">
+                      {emojiArray.map((emoji, index) => (
+                        <button
+                          key={index}
+                          className="text-xl shrink-0 hover:bg-default-200 rounded-md p-1 transition-colors"
+                          onClick={() => handleEmojiSelect(emoji)}
+                        >
+                          {emoji}
+                        </button>
+                      ))}
+                    </div>
+                  </ScrollShadow>
+                </Tab>
+                <Tab key="stickers" title="贴纸">
+                  <ScrollShadow visibility="none" className="h-48">
+                    <div className="grid grid-cols-5 gap-2 p-2">
+                      {stickers.map((url) => (
+                        <button
+                          key={url}
+                          className="hover:bg-default-200 rounded-md p-1 transition-colors"
+                          onClick={() => handleStickerSend(url)}
+                        >
+                          <img
+                            src={url}
+                            alt="sticker"
+                            width="64"
+                            height="64"
+                            loading="lazy"
+                          />
+                        </button>
+                      ))}
+                    </div>
+                  </ScrollShadow>
+                </Tab>
+              </Tabs>
+            </PopoverContent>
+          </Popover>
+
           <Textarea
+            ref={textAreaRef}
             minRows={1}
             placeholder={
-              isConnected ? '输入消息... (Ctrl + 回车发送)' : '正在连接...'
+              isConnected ? 'Ctrl + 回车发送消息, 支持 Markdown' : '正在连接...'
             }
             value={inputValue}
             onValueChange={(value) => setInputValue(value)}
             disabled={!isConnected}
           />
+
           <Button
             isIconOnly
             color="primary"
             aria-label="发送消息"
             onPress={handleSendMessage}
+            disabled={!inputValue.trim()}
           >
             <SendHorizontal />
           </Button>

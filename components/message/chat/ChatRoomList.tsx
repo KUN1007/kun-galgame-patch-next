@@ -9,6 +9,7 @@ import toast from 'react-hot-toast'
 import { Avatar, Listbox, ListboxItem, ScrollShadow } from '@heroui/react'
 import { User, Users } from 'lucide-react'
 import { KunLoading } from '~/components/kun/Loading'
+import { markdownToText } from '~/utils/markdownToText'
 import type {
   ChatMessage,
   GetChatroomResponse,
@@ -84,7 +85,7 @@ export const ChatRoomList = () => {
 
     return lastMessage.status === 'DELETED'
       ? `${lastMessage.sender.name} 删除了一条消息`
-      : lastMessage.content
+      : markdownToText(lastMessage.content)
   }, [])
 
   return (

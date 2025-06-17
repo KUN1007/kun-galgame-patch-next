@@ -7,7 +7,8 @@ import {
   Plus,
   MessageCircleQuestion,
   Star,
-  PartyPopper
+  PartyPopper,
+  AlertTriangle
 } from 'lucide-react'
 import { CreateGroupChatModal } from './CreateGroupChatModal'
 
@@ -76,6 +77,15 @@ export const ChatHint = () => {
                 一颗{' '}
                 <Star className="inline h-4 w-4 fill-yellow-400 text-yellow-500" />{' '}
                 以示支持！
+              </p>
+            </div>
+          </div>
+          <div className="flex items-start gap-3">
+            <AlertTriangle className="mt-1 h-5 w-5 flex-shrink-0 text-danger-600" />
+            <div>
+              <p className="font-semibold text-default-700">注意事项</p>
+              <p className="text-sm text-default-500">
+                当前的实时消息系统正在开发中, 请勿发送重要的消息以免造成消息丢失, 当消息系统正式稳定后将不会显示此提示
               </p>
             </div>
           </div>
