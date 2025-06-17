@@ -6,16 +6,8 @@ import { useSocket } from '~/context/SocketProvider'
 import { kunFetchGet } from '~/utils/kunFetch'
 import { KUN_CHAT_EVENT } from '~/constants/chat'
 import toast from 'react-hot-toast'
-import {
-  Avatar,
-  Button,
-  Listbox,
-  ListboxItem,
-  ScrollShadow
-} from '@heroui/react'
-import { Plus, User, Users } from 'lucide-react'
-import { CreateGroupChatModal } from './CreateGroupChatModal'
-import { useDisclosure } from '@heroui/react'
+import { Avatar, Listbox, ListboxItem, ScrollShadow } from '@heroui/react'
+import { User, Users } from 'lucide-react'
 import { KunLoading } from '~/components/kun/Loading'
 import type {
   ChatMessage,
@@ -25,7 +17,6 @@ import type {
 
 export const ChatRoomList = () => {
   const [rooms, setRooms] = useState<ChatRoomWithLatestMessage[]>([])
-  const { isOpen, onOpen, onClose } = useDisclosure()
   const [loading, setLoading] = useState(true)
   const { socket } = useSocket()
   const pathname = usePathname()
@@ -97,55 +88,40 @@ export const ChatRoomList = () => {
   }, [])
 
   return (
-    <div className="flex flex-col h-full">
-      <div className="p-2 border-b">
-        <Button
-          fullWidth
-          color="primary"
+    <ScrollShadow hideScrollBar className="flex-grow p-2">
+      {loading ? (
+        <KunLoading hint="正在加载聊天中..." />
+      ) : (
+        <Listbox
+          aria-label="聊天室列表"
           variant="flat"
-          startContent={<Plus size={16} />}
-          onPress={onOpen}
+          selectionMode="single"
+          selectedKeys={new Set([activeLink])}
         >
-          创建或加入群聊
-        </Button>
+          {rooms.map((room) => {
+            const Icon = room.type === 'PRIVATE' ? User : Users
 
-        <CreateGroupChatModal isOpen={isOpen} onClose={onClose} />
-      </div>
-      <ScrollShadow hideScrollBar className="flex-grow p-2">
-        {loading ? (
-          <KunLoading hint="正在加载聊天中..." />
-        ) : (
-          <Listbox
-            aria-label="聊天室列表"
-            variant="flat"
-            selectionMode="single"
-            selectedKeys={new Set([activeLink])}
-          >
-            {rooms.map((room) => {
-              const Icon = room.type === 'PRIVATE' ? User : Users
-
-              return (
-                <ListboxItem
-                  key={room.link}
-                  href={`/message/chat/${room.link}`}
-                  startContent={
-                    <Avatar
-                      className="shrink-0"
-                      src={room.avatar}
-                      name={room.name}
-                    />
-                  }
-                  endContent={<Icon className="text-default-400" />}
-                  description={getDescription(room)}
-                  textValue={room.name}
-                >
-                  {room.name}
-                </ListboxItem>
-              )
-            })}
-          </Listbox>
-        )}
-      </ScrollShadow>
-    </div>
+            return (
+              <ListboxItem
+                key={room.link}
+                href={`/message/chat/${room.link}`}
+                startContent={
+                  <Avatar
+                    className="shrink-0"
+                    src={room.avatar}
+                    name={room.name}
+                  />
+                }
+                endContent={<Icon className="text-default-400" />}
+                description={getDescription(room)}
+                textValue={room.name}
+              >
+                {room.name}
+              </ListboxItem>
+            )
+          })}
+        </Listbox>
+      )}
+    </ScrollShadow>
   )
 }

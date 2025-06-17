@@ -19,7 +19,6 @@ import { useContextMenu } from '~/hooks/useContextMenu'
 import { ChatMessageContextMenu } from './ChatMessageContextMenu'
 import { useIsMobile } from '~/hooks/useIsMobile'
 import { ReplyQuote } from './ReplyQuote'
-import './message.css'
 import type {
   ChatMessage as ChatMessageType,
   ChatMessageReaction

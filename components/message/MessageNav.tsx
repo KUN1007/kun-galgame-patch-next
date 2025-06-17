@@ -53,23 +53,21 @@ export const MessageNav = () => {
   }, [])
 
   return (
-    <Card className="w-full lg:w-1/4">
-      <CardBody className="flex flex-row gap-2 lg:flex-col">
-        {notificationTypes.map(({ type, label, icon: Icon, href }) => (
-          <div key={label}>
-            <Button
-              color={lastSegment === type ? 'primary' : 'default'}
-              as={Link}
-              className="justify-start w-full"
-              variant={lastSegment === type ? 'solid' : 'light'}
-              startContent={<Icon className="size-4 shrink-0" />}
-              href={href}
-            >
-              <span>{label}</span>
-            </Button>
-          </div>
-        ))}
-      </CardBody>
-    </Card>
+    <div className="flex flex-col w-full gap-3">
+      {notificationTypes.map(({ type, label, icon: Icon, href }) => (
+        <div key={label}>
+          <Button
+            color={lastSegment === type ? 'primary' : 'default'}
+            as={Link}
+            className="justify-start w-full"
+            variant={lastSegment === type ? 'solid' : 'light'}
+            startContent={<Icon className="size-4 shrink-0" />}
+            href={href}
+          >
+            <span>{label}</span>
+          </Button>
+        </div>
+      ))}
+    </div>
   )
 }

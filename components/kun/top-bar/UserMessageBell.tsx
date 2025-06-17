@@ -28,7 +28,7 @@ export const UserMessageBell = ({
   const handleClickButton = () => {
     if (hasUnreadMessages) {
       readMessages()
-      router.push('/message/notice')
+      router.push('/message/chat')
     }
   }
 
@@ -46,7 +46,7 @@ export const UserMessageBell = ({
         className="relative"
         aria-label="我的消息"
         as={Link}
-        href="/message/notice"
+        href="/message/chat"
       >
         <motion.div
           initial="initial"

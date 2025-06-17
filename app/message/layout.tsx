@@ -24,12 +24,12 @@ export default async function MessageLayout({
           name="消息中心"
           description="您可以在这里查看系统通知与私聊"
         />
-        <div className="flex h-[calc(100vh-12rem)] min-h-[500px] gap-6">
-          <div className="hidden w-1/3 lg:flex lg:flex-col">
+        <div className="flex min-h-[500px] gap-6">
+          <div className="fixed hidden md:block top-81 w-64">
             <MessageSidebar />
           </div>
 
-          <div className="w-full lg:w-2/3">{children}</div>
+          <div className="flex-1 pl-0 md:pl-68">{children}</div>
         </div>
       </div>
     </SocketProvider>

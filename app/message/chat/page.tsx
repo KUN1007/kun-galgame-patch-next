@@ -1,5 +1,7 @@
-import { redirect } from 'next/navigation'
+import { ChatHint } from '~/components/message/chat/ChatHint'
+
+export const revalidate = 5
 
 export default async function Kun() {
-  redirect('/message/notice')
+  return <ChatHint />
 }

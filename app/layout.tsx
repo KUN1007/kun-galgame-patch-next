@@ -41,7 +41,7 @@ export default async function RootLayout({
             <KunTopBar />
             <KunNavigationBreadcrumb />
             <NSFWIndicator isNSFWEnable={isNSFWEnable} />
-            <div className="flex min-h-[calc(100dvh-256px)] w-full max-w-7xl grow px-3">
+            <div className="flex min-h-[calc(100dvh-24rem)] w-full max-w-7xl grow px-3">
               {children}
               <Toaster />
             </div>

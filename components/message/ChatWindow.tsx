@@ -5,7 +5,7 @@ import { Card, CardHeader, CardBody, CardFooter } from '@heroui/card'
 import { Avatar } from '@heroui/avatar'
 import { Textarea } from '@heroui/input'
 import { Button } from '@heroui/button'
-import { SendHorizontal, MoreVertical } from 'lucide-react'
+import { ChevronLeft, SendHorizontal, MoreVertical } from 'lucide-react'
 import { ChatMessage } from './ChatMessage'
 import {
   Modal,
@@ -36,6 +36,7 @@ import type {
   ChatMessagesApiResponse,
   ChatMessageReaction
 } from '~/types/api/chat'
+import Link from 'next/link'
 
 interface Props {
   chatroom: ChatRoom
@@ -293,9 +294,18 @@ export const ChatWindow = ({
   }, 500)
 
   return (
-    <Card className="flex flex-col h-full">
+    <Card className="flex flex-col h-full h-[calc(100vh-24rem)]">
       <CardHeader className="shrink-0 flex items-center justify-between">
         <div className="flex items-center gap-3">
+          <Button
+            isIconOnly
+            as={Link}
+            href="/message/chat"
+            variant="light"
+            aria-label="返回"
+          >
+            <ChevronLeft size={20} />
+          </Button>
           <Avatar src={chatroom.avatar} name={chatroom.name} />
           <div className="flex flex-col">
             <span className="font-semibold">{chatroom.name}</span>
