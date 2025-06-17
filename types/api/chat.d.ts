@@ -7,7 +7,9 @@ import type {
   chat_message_seen
 } from '@prisma/client'
 
-export type ChatRoom = chat_room
+export interface ChatRoom extends chat_room {
+  memberCount: number
+}
 
 export interface ChatMessageReaction extends chat_message_reaction {
   user: KunUser
@@ -18,7 +20,7 @@ export interface QuoteMessage {
   content: string
 }
 
-export interface GetChatroomResponse extends ChatRoom {
+export interface GetChatroomResponse extends chat_room {
   message: (chat_message & { sender: KunUser })[]
   member: (chat_member & { user: KunUser })[]
 }

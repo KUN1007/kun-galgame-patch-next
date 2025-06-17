@@ -30,6 +30,11 @@ export const kunGetActions = async (link: string) => {
             }
           }
         }
+      },
+      _count: {
+        select: {
+          member: true
+        }
       }
     }
   })
@@ -49,7 +54,7 @@ export const kunGetActions = async (link: string) => {
   }
 
   return {
-    chatroom,
+    chatroom: { ...chatroom, memberCount: chatroom._count.member },
     initialMessages: roomDetails.messages,
     currentUserId: payload.uid
   }

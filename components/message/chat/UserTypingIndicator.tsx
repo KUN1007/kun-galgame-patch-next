@@ -19,8 +19,6 @@ export const UserTypingIndicator = ({
   }
 
   return (
-    <div className="h-6 px-4 text-sm text-gray-500 italic animate-pulse">
-      {text}
-    </div>
+    <div className="text-xs text-gray-500 italic animate-pulse">{text}</div>
   )
 }

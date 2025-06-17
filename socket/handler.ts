@@ -1,6 +1,7 @@
 import { Server, Socket } from 'socket.io'
 import { prisma } from '~/prisma/index'
 import { registerChatEventHandlers } from './event/register'
+import { broadcastRoomStatus } from './event/roomStatus' // 1. 引入辅助函数
 
 export const onSocketConnection = async (io: Server, socket: Socket) => {
   try {
@@ -20,15 +21,32 @@ export const onSocketConnection = async (io: Server, socket: Socket) => {
       where: { user_id: user.id },
       select: { chat_room_id: true }
     })
-    memberships.forEach((m) => socket.join(`room:${m.chat_room_id}`))
+
+    const roomIds = memberships.map((m) => m.chat_room_id)
+    socket.data.roomIds = roomIds
+
+    roomIds.forEach((roomId) => {
+      socket.join(`room:${roomId}`)
+    })
+
+    roomIds.forEach((roomId) => {
+      broadcastRoomStatus(io, roomId)
+    })
 
     registerChatEventHandlers(io, socket)
 
     socket.on('disconnect', () => {
-      // console.log(`- Socket disconnected: ${socket.id} (User: ${user.name})`)
+      console.log(`- Socket disconnected: ${socket.id} (User: ${user.name})`)
+      const roomsToUpdate = socket.data.roomIds as number[] | undefined
+
+      if (roomsToUpdate) {
+        roomsToUpdate.forEach((roomId) => {
+          broadcastRoomStatus(io, roomId)
+        })
+      }
     })
-  } catch (error: any) {
-    console.error(`! Socket connection failed: ${error.message}`)
+  } catch (error: unknown) {
+    console.error(`! Socket connection failed: ${error}`)
     socket.disconnect()
   }
 }

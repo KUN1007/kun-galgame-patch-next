@@ -90,6 +90,7 @@ export const ChatWindow = ({
   } = useDisclosure()
 
   const [typingUsers, setTypingUsers] = useState<Record<number, KunUser>>({})
+  const [onlineCount, setOnlineCount] = useState<number | null>(null)
 
   const textAreaRef = useRef<HTMLTextAreaElement>(null)
   const [stickers, setStickers] = useState<string[]>([])
@@ -251,16 +252,30 @@ export const ChatWindow = ({
       })
     }
 
+    const handleRoomStatusUpdate = ({
+      roomId,
+      onlineCount
+    }: {
+      roomId: number
+      onlineCount: number
+    }) => {
+      if (roomId === chatroom.id) {
+        setOnlineCount(onlineCount)
+      }
+    }
+
     socket.on(KUN_CHAT_EVENT.USER_TYPING, handleUserTyping)
     socket.on(KUN_CHAT_EVENT.RECEIVE_MESSAGE, handleReceiveMessage)
     socket.on(KUN_CHAT_EVENT.DELETE_MESSAGE, handleDeleteMessage)
     socket.on(KUN_CHAT_EVENT.REACTION_UPDATED, handleReactionUpdate)
+    socket.on(KUN_CHAT_EVENT.ROOM_STATUS_UPDATE, handleRoomStatusUpdate)
 
     return () => {
-      socket.off(KUN_CHAT_EVENT.USER_TYPING)
-      socket.off(KUN_CHAT_EVENT.RECEIVE_MESSAGE)
-      socket.off(KUN_CHAT_EVENT.DELETE_MESSAGE)
-      socket.off(KUN_CHAT_EVENT.REACTION_UPDATED)
+      socket.off(KUN_CHAT_EVENT.USER_TYPING, handleUserTyping)
+      socket.off(KUN_CHAT_EVENT.RECEIVE_MESSAGE, handleReceiveMessage)
+      socket.off(KUN_CHAT_EVENT.DELETE_MESSAGE, handleDeleteMessage)
+      socket.off(KUN_CHAT_EVENT.REACTION_UPDATED, handleReactionUpdate)
+      socket.off(KUN_CHAT_EVENT.ROOM_STATUS_UPDATE, handleRoomStatusUpdate)
     }
   }, [socket, chatroom.id])
 
@@ -362,13 +377,13 @@ export const ChatWindow = ({
           <Avatar src={chatroom.avatar} name={chatroom.name} />
           <div className="flex flex-col">
             <span className="font-semibold">{chatroom.name}</span>
-            <span className="text-xs text-default-500">
-              {chatroom.type === 'GROUP' ? '群聊' : '在线'}
-            </span>
+            {Object.keys(typingUsers).length ? (
+              <UserTypingIndicator users={typingUsers} />
+            ) : (
+              <p className="text-xs text-default-500">{`共 ${chatroom.memberCount} 人, ${onlineCount} 在线`}</p>
+            )}
           </div>
         </div>
-
-        <UserTypingIndicator users={typingUsers} />
 
         <div className="flex items-center gap-2">
           <Button isIconOnly variant="light" aria-label="更多选项">

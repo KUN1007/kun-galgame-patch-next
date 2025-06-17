@@ -1,7 +1,4 @@
-// socket/handlers/typingHandler.ts
-
 import { Server, Socket } from 'socket.io'
-import { z } from 'zod'
 import { KUN_CHAT_EVENT } from '~/constants/chat'
 import { userTypingMessageSchema } from '~/validations/chat'
 

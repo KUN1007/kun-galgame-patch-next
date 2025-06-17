@@ -6,7 +6,8 @@ export const KUN_CHAT_EVENT = {
   TOGGLE_REACTION: 'chat:toggle_reaction',
   REACTION_UPDATED: 'chat:reaction_updated',
   MESSAGE_SEEN: 'chat:message_seen',
-  USER_TYPING: 'chat:user_typing'
+  USER_TYPING: 'chat:user_typing',
+  ROOM_STATUS_UPDATE: 'chat:room_status_update'
 }
 
 export const MAX_CHAT_MESSAGE_PER_REQUEST = 30
