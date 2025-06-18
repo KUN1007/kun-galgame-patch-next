@@ -19,7 +19,7 @@ interface ChatHeaderProps {
 export const ChatHeader = memo(
   ({ chatroom, onlineCount, typingUsers }: ChatHeaderProps) => {
     const handleMoreAction = () => {
-      toast.success('功能正在开发中...')
+      toast.success('杂鱼杂鱼杂鱼, 功能正在开发中...')
     }
 
     const hasTypingUsers = Object.keys(typingUsers).length > 0
@@ -60,3 +60,5 @@ export const ChatHeader = memo(
     )
   }
 )
+
+ChatHeader.displayName = 'ChatHeader'

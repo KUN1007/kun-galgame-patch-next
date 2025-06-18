@@ -222,6 +222,7 @@ export const ChatMessage = ({
         onClose={() => setIsMenuOpen(false)}
         anchorPoint={anchorPoint}
         onReaction={handleReaction}
+        reactionArray={message.reaction}
         onDelete={onOpenDelete}
         onReply={onReply}
         onEdit={onEdit}

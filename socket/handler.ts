@@ -1,7 +1,7 @@
 import { Server, Socket } from 'socket.io'
 import { prisma } from '~/prisma/index'
 import { registerChatEventHandlers } from './event/register'
-import { broadcastRoomStatus } from './event/roomStatus' // 1. 引入辅助函数
+import { broadcastRoomStatus } from './event/roomStatus'
 
 export const onSocketConnection = async (io: Server, socket: Socket) => {
   try {
