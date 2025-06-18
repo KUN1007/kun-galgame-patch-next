@@ -140,10 +140,7 @@ export const ChatMessage = ({
           <div
             onContextMenu={!isMobile ? handleContextMenu : undefined}
             onClick={isMobile ? handleMessageClick : undefined}
-            className={cn(
-              'relative p-3 pt-2 pb-5 rounded-xl text-sm',
-              bubbleColor
-            )}
+            className={cn('relative p-3 pt-2 rounded-xl text-sm', bubbleColor)}
           >
             <span className="text-primary">{message.sender.name}</span>
 
@@ -154,21 +151,23 @@ export const ChatMessage = ({
               />
             )}
 
-            <div
-              dangerouslySetInnerHTML={{
-                __html: DOMPurify.sanitize(message.content)
-              }}
-              className="kun-prose-message"
-            />
+            <div className="flex flex-wrap items-end gap-2">
+              <div
+                dangerouslySetInnerHTML={{
+                  __html: DOMPurify.sanitize(message.content)
+                }}
+                className="kun-prose-message"
+              />
 
-            <div className="absolute bottom-1 right-2 text-xs text-default-400">
-              {message.status === 'EDITED' && '已编辑 '}
-              {format(new Date(message.created), 'HH:mm')}
+              <div className="ml-auto whitespace-nowrap text-xs text-default-400 translate-y-[4px]">
+                {message.status === 'EDITED' && '已编辑 '}
+                {format(new Date(message.created), 'HH:mm')}
+              </div>
             </div>
           </div>
 
           {message.reaction && message.reaction.length > 0 && (
-            <div className="flex flex-wrap items-center gap-x-2 gap-y-1 mt-1">
+            <div className="grid grid-cols-5 gap-x-2 gap-y-1 mt-1">
               {message.reaction.length < 3
                 ? message.reaction.map((r: ChatMessageReaction) => (
                     <Chip
