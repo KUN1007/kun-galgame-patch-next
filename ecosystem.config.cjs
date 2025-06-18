@@ -10,7 +10,7 @@ module.exports = {
       autorestart: true,
       watch: false,
       max_memory_restart: '1G',
-      script: './.next/standalone/server.js'
+      script: './.next/kun/server.js'
     }
   ]
 }

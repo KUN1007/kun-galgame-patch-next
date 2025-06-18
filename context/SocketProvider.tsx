@@ -2,6 +2,7 @@
 
 import React, { createContext, useContext, useEffect, useState } from 'react'
 import { io } from 'socket.io-client'
+import { KUN_SOCKET_IO_ROUTE } from '~/config/app'
 import type { Socket } from 'socket.io-client'
 
 interface SocketContextType {
@@ -34,7 +35,7 @@ export const SocketProvider = ({
     }
 
     const socketInstance = io({
-      path: '/api/socket',
+      path: KUN_SOCKET_IO_ROUTE,
       query: { userId }
       // addTrailingSlash: false,
     })

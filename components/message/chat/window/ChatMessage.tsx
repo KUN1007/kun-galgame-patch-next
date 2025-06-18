@@ -167,7 +167,7 @@ export const ChatMessage = ({
           </div>
 
           {message.reaction && message.reaction.length > 0 && (
-            <div className="grid grid-cols-5 gap-x-2 gap-y-1 mt-1">
+            <div className="flex flex-wrap items-center gap-x-2 gap-y-1 mt-1">
               {message.reaction.length < 3
                 ? message.reaction.map((r: ChatMessageReaction) => (
                     <Chip

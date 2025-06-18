@@ -42,7 +42,11 @@ const nextConfig: NextConfig = {
     ]
   },
 
-  output: 'standalone',
+  // outputFileTracingIncludes: {
+  //   '/ws': ['./socket/**/*', './server.ts']
+  // },
+
+  // output: 'standalone',
   experimental: {
     // turbotrace: {
     //   logLevel: 'error',

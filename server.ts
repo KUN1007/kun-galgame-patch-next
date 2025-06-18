@@ -4,6 +4,7 @@ import { parse } from 'url'
 import next from 'next'
 import express from 'ultimate-express'
 import { onSocketConnection } from './socket/handler'
+import { KUN_SOCKET_IO_ROUTE } from '~/config/app'
 
 const dev = process.env.NODE_ENV !== 'production'
 const hostname = process.env.NEXT_PUBLIC_KUN_PATCH_APP_ADDRESS_PROD_HOST
@@ -19,7 +20,7 @@ app.prepare().then(() => {
   const httpServer = createServer((req, res) => {
     const parsedUrl = parse(req.url!, true)
 
-    if (parsedUrl.pathname?.startsWith('/api/socket')) {
+    if (parsedUrl.pathname?.startsWith(KUN_SOCKET_IO_ROUTE)) {
       expressApp(req, res)
     } else {
       handle(req, res, parsedUrl)
@@ -30,7 +31,7 @@ app.prepare().then(() => {
   })
 
   const io = new Server(httpServer, {
-    path: '/api/socket',
+    path: KUN_SOCKET_IO_ROUTE,
     cors: {
       origin: process.env.NEXT_PUBLIC_KUN_PATCH_ADDRESS_DEV
     }
@@ -42,8 +43,6 @@ app.prepare().then(() => {
 
   httpServer.listen(port, () => {
     console.log(`> Ready on http://${hostname}:${port}`)
-    console.log(
-      `> Socket.IO server listening on http://${hostname}:${port}/api/socket`
-    )
+    console.log(`> Socket.IO server listening on http://${hostname}:${port}/ws`)
   })
 })

@@ -50,8 +50,6 @@ export const ChatMessageContextMenu = ({
   onEdit,
   isOwner = false
 }: Props) => {
-  if (!isMenuOpen) return null
-
   const groupedReactions = useMemo(() => {
     if (!reactionArray || reactionArray.length === 0) {
       return {}
@@ -67,6 +65,8 @@ export const ChatMessageContextMenu = ({
       {} as Record<string, ChatMessageReaction[]>
     )
   }, [reactionArray])
+
+  if (!isMenuOpen) return null
 
   const handleMenuAction = (key: Key) => {
     switch (key) {
