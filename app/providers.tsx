@@ -2,6 +2,7 @@
 
 import { AppProgressProvider as ProgressProvider } from '@bprogress/next'
 import { HeroUIProvider } from '@heroui/react'
+import { ConsoleProvider } from '~/widget/moe-console/ConsoleProvider'
 import { ThemeProvider } from 'next-themes'
 import { useRouter } from 'next/navigation'
 
@@ -17,6 +18,7 @@ export const Providers = ({ children }: { children: React.ReactNode }) => {
           height="4px"
           options={{ showSpinner: false }}
         >
+          <ConsoleProvider />
           {children}
         </ProgressProvider>
       </ThemeProvider>
