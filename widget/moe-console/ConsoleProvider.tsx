@@ -5,7 +5,9 @@ import { showMoeMessage } from './showMoeMessage'
 
 export const ConsoleProvider = () => {
   useEffect(() => {
-    showMoeMessage()
+    if (process.env.NODE_ENV === 'production') {
+      showMoeMessage()
+    }
   }, [])
 
   return null
