@@ -2,6 +2,7 @@ import { ErrorComponent } from '~/components/error/ErrorComponent'
 import { kunGetPatchActions, kunGetPatchIntroductionActions } from './actions'
 import { generateKunMetadataTemplate } from './metadata'
 import { PatchContainer } from '~/components/patch/Container'
+import { verifyHeaderCookie } from '~/utils/actions/verifyHeaderCookie'
 import type { Metadata } from 'next'
 
 interface Props {
@@ -41,8 +42,10 @@ export default async function Kun({ params, children }: Props) {
     return <ErrorComponent error={intro} />
   }
 
+  const payload = await verifyHeaderCookie()
+
   return (
-    <PatchContainer patch={patch} intro={intro}>
+    <PatchContainer patch={patch} intro={intro} uid={payload?.uid}>
       {children}
     </PatchContainer>
   )

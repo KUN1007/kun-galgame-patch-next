@@ -9,12 +9,13 @@ interface Props {
   children: React.ReactNode
   patch: Patch
   intro: PatchIntroduction
+  uid?: number
 }
 
-export const PatchContainer = ({ children, patch, intro }: Props) => {
+export const PatchContainer = ({ children, patch, intro, uid }: Props) => {
   const [show, setShow] = useState(false)
 
-  if (patch.content_limit === 'nsfw') {
+  if (!uid && patch.content_limit === 'nsfw') {
     return (
       <div className="container py-6 mx-auto space-y-6">
         {!show && (
