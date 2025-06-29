@@ -6,7 +6,6 @@ import { Button } from '@heroui/button'
 import { Chip } from '@heroui/chip'
 import { Divider } from '@heroui/divider'
 import { Progress } from '@heroui/progress'
-import { formatDistanceToNow } from '~/utils/formatDistanceToNow'
 import { Calendar, Link as LinkIcon, MessageCircle } from 'lucide-react'
 import { UserFollow } from './follow/Follow'
 import { Stats } from './follow/Stats'
@@ -14,6 +13,7 @@ import { SelfButton } from './SelfButton'
 import { USER_ROLE_MAP } from '~/constants/user'
 import { useRouter } from 'next/navigation'
 import { generatePrivateRoomLink } from '~/utils/generatePrivateRoomLink'
+import { formatDate } from '~/utils/time'
 import type { UserInfo } from '~/types/api/user'
 
 export const UserProfile = ({ user }: { user: UserInfo }) => {
@@ -68,7 +68,11 @@ export const UserProfile = ({ user }: { user: UserInfo }) => {
             <div className="flex items-center gap-2">
               <Calendar className="size-4 text-default-400" />
               <span className="text-small text-default-500">
-                加入于 {formatDistanceToNow(user.registerTime)}
+                加入于{' '}
+                {formatDate(user.registerTime, {
+                  isShowYear: true,
+                  isPrecise: true
+                })}
               </span>
             </div>
           </div>

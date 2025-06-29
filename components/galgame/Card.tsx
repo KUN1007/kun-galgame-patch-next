@@ -9,6 +9,7 @@ import Link from 'next/link'
 import { KunPatchAttribute } from '~/components/kun/PatchAttribute'
 import { cn } from '~/utils/cn'
 import { GALGAME_AGE_LIMIT_MAP } from '~/constants/galgame'
+import { formatDistanceToNow } from '~/utils/formatDistanceToNow'
 
 interface Props {
   patch: GalgameCard
@@ -57,6 +58,12 @@ export const GalgameCard = ({ patch }: Props) => {
               variant="flat"
             >
               {GALGAME_AGE_LIMIT_MAP[patch.content_limit]}
+            </Chip>
+          </div>
+
+          <div className="absolute z-10 rounded-full bg-background right-2 bottom-2">
+            <Chip size="sm" variant="flat">
+              {formatDistanceToNow(patch.created)}
             </Chip>
           </div>
         </div>

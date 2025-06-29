@@ -2,9 +2,9 @@ import Link from 'next/link'
 import { Card, CardBody } from '@heroui/card'
 import { Chip } from '@heroui/chip'
 import { Download, Heart } from 'lucide-react'
-import { formatDistanceToNow } from '~/utils/formatDistanceToNow'
 import { KunPatchAttribute } from '~/components/kun/PatchAttribute'
 import { KunUser } from '../kun/floating-card/KunUser'
+import { formatDate } from '~/utils/time'
 import type { PatchResource } from '~/types/api/resource'
 
 interface Props {
@@ -25,7 +25,7 @@ export const ResourceCard = ({ resource }: Props) => {
             user={resource.user}
             userProps={{
               name: resource.user.name,
-              description: `${formatDistanceToNow(resource.created)} • 已发布补丁 ${resource.user.patchCount} 个`,
+              description: `发布于 ${formatDate(resource.created, { isShowYear: true, isPrecise: true })} • 已发布补丁 ${resource.user.patchCount} 个`,
               avatarProps: {
                 showFallback: true,
                 src: resource.user.avatar,
