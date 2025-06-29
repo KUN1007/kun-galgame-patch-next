@@ -16,3 +16,7 @@ export const getMessageSchema = z.object({
   page: z.coerce.number().min(1).max(9999999),
   limit: z.coerce.number().min(1).max(30)
 })
+
+export const readMessageSchema = z.object({
+  type: z.string().max(20, { message: '消息类型最多 20 个字符' })
+})

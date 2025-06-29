@@ -7,6 +7,7 @@ import { Bell, Globe, UserPlus, RefreshCcw, Puzzle, AtSign } from 'lucide-react'
 import { usePathname } from 'next/navigation'
 import Link from 'next/link'
 import toast from 'react-hot-toast'
+import { READABLE_MESSAGE_MAP } from '~/constants/message'
 
 const notificationTypes = [
   { type: 'notice', label: '全部消息', icon: Bell, href: '/message/notice' },
@@ -39,17 +40,24 @@ const notificationTypes = [
 
 export const MessageNav = () => {
   const pathname = usePathname()
-  const lastSegment = pathname.split('/').filter(Boolean).pop()
+  const lastSegment = pathname.split('/').filter(Boolean).pop() || ''
+
+  const readableMessageType = notificationTypes.map((msg) => msg.type)
 
   useEffect(() => {
-    const readAllMessage = async () => {
-      const res = await kunFetchPut<KunResponse<{}>>('/message/read')
+    const readAllMessage = async (messageType: string) => {
+      const res = await kunFetchPut<KunResponse<{}>>('/message/read', {
+        type: messageType
+      })
       if (typeof res === 'string') {
         toast.error(res)
       }
     }
-    readAllMessage()
-  }, [])
+
+    if (readableMessageType.includes(lastSegment)) {
+      readAllMessage(READABLE_MESSAGE_MAP[lastSegment])
+    }
+  }, [lastSegment])
 
   return (
     <div className="flex flex-col w-full gap-3">

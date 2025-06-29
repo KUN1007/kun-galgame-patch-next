@@ -28,3 +28,12 @@ export const MESSAGE_TYPE_MAP: Record<string, string> = {
   patchResourceUpdate: '更新补丁',
   system: '系统'
 }
+
+export const READABLE_MESSAGE_MAP: Record<string, string> = {
+  notice: 'all',
+  follow: 'follow',
+  'patch-resource-create': 'patchResourceCreate',
+  'patch-resource-update': 'patchResourceUpdate',
+  mention: 'mention',
+  system: 'system'
+}

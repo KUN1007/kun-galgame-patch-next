@@ -60,17 +60,14 @@ export const GalgameCard = ({ patch }: Props) => {
               {GALGAME_AGE_LIMIT_MAP[patch.content_limit]}
             </Chip>
           </div>
-
-          <div className="absolute z-10 rounded-full bg-background right-2 bottom-2">
-            <Chip size="sm" variant="flat">
-              {formatDistanceToNow(patch.created)}
-            </Chip>
-          </div>
         </div>
       </CardHeader>
       <CardBody className="justify-between space-y-2">
-        <h2 className="font-semibold transition-colors text-medium sm:text-lg line-clamp-2 hover:text-primary-500">
-          {patch.name}
+        <h2 className="font-semibold transition-colors space-x-2 text-medium sm:text-lg line-clamp-2 hover:text-primary-500">
+          <span>{patch.name}</span>
+          <span className="font-normal text-base text-xs text-default-500">
+            {formatDistanceToNow(patch.created)}
+          </span>
         </h2>
         <KunCardStats patch={patch} />
       </CardBody>
