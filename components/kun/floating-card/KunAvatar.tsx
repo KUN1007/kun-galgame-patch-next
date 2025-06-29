@@ -3,7 +3,7 @@
 import { Tooltip } from '@heroui/tooltip'
 import { Avatar } from '@heroui/avatar'
 import { KunUserCard } from './KunUserCard'
-import { useRouter } from 'next/navigation'
+import { useRouter } from '@bprogress/next'
 import type { AvatarProps } from '@heroui/avatar'
 
 interface KunAvatarProps extends AvatarProps {

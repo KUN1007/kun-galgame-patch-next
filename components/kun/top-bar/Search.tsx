@@ -3,7 +3,7 @@
 import { Tooltip } from '@heroui/tooltip'
 import { Button, Link } from '@heroui/react'
 import { Search } from 'lucide-react'
-import { useRouter } from 'next/navigation'
+import { useRouter } from '@bprogress/next'
 import { useHotkeys } from 'react-hotkeys-hook'
 
 export const KunSearch = () => {

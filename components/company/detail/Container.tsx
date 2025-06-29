@@ -1,7 +1,7 @@
 'use client'
 
 import { useState, useTransition, useEffect } from 'react'
-import { useRouter } from 'next/navigation'
+import { useRouter } from '@bprogress/next'
 import { Button, Chip } from '@heroui/react'
 import { useDisclosure } from '@heroui/modal'
 import { Link } from '@heroui/link'

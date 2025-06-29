@@ -10,7 +10,7 @@ import {
 import { Button } from '@heroui/button'
 import { Puzzle, User, ChevronDown } from 'lucide-react'
 import { useSearchParams } from 'next/navigation'
-import { useRouter } from 'next/navigation'
+import { useRouter } from '@bprogress/next'
 import { KunHeader } from '~/components/kun/Header'
 import {
   userSortOptions,

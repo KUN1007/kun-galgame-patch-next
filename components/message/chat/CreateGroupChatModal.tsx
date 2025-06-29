@@ -2,7 +2,7 @@
 
 import { useState, useTransition } from 'react'
 import { useForm, Controller } from 'react-hook-form'
-import { useRouter } from 'next/navigation'
+import { useRouter } from '@bprogress/next'
 import {
   Modal,
   ModalContent,

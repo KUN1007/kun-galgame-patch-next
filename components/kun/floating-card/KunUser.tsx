@@ -2,7 +2,7 @@
 
 import { Tooltip } from '@heroui/tooltip'
 import { User } from '@heroui/user'
-import { useRouter } from 'next/navigation'
+import { useRouter } from '@bprogress/next'
 import { KunUserCard } from './KunUserCard'
 import type { UserProps } from '@heroui/user'
 

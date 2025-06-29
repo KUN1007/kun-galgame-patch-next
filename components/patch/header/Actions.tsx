@@ -3,7 +3,7 @@
 import { useState } from 'react'
 import { Button, Tooltip } from '@heroui/react'
 import { Download, Heart, Share2, Pencil, Trash2 } from 'lucide-react'
-import { useRouter } from 'next/navigation'
+import { useRouter } from '@bprogress/next'
 import {
   Modal,
   ModalBody,

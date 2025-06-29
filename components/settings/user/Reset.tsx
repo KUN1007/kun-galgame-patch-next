@@ -13,7 +13,7 @@ import {
   useDisclosure
 } from '@heroui/react'
 import { Button } from '@heroui/button'
-import { useRouter } from 'next/navigation'
+import { useRouter } from '@bprogress/next'
 import toast from 'react-hot-toast'
 
 export const Reset = () => {

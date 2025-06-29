@@ -2,7 +2,7 @@
 
 import { Button } from '@heroui/react'
 import { Dices } from 'lucide-react'
-import { useRouter } from 'next/navigation'
+import { useRouter } from '@bprogress/next'
 import toast from 'react-hot-toast'
 import { kunFetchGet } from '~/utils/kunFetch'
 import type { ButtonProps } from '@heroui/react'

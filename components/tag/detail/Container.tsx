@@ -14,7 +14,7 @@ import { useMounted } from '~/hooks/useMounted'
 import { GalgameCard } from '~/components/galgame/Card'
 import { KunNull } from '~/components/kun/Null'
 import { EditTagModal } from './EditTagModal'
-import { useRouter } from 'next/navigation'
+import { useRouter } from '@bprogress/next'
 import { KunUser } from '~/components/kun/floating-card/KunUser'
 import { formatDistanceToNow } from '~/utils/formatDistanceToNow'
 

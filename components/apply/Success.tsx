@@ -4,7 +4,7 @@ import { useEffect } from 'react'
 import { Button, Card, CardBody } from '@heroui/react'
 import { motion } from 'framer-motion'
 import { BadgeCheck, Home, Rocket } from 'lucide-react'
-import { useRouter } from 'next/navigation'
+import { useRouter } from '@bprogress/next'
 import { useConfetti } from '~/hooks/useConfetti'
 
 export const ApplySuccess = () => {

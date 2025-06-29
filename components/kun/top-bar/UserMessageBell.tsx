@@ -6,7 +6,7 @@ import { Tooltip } from '@heroui/tooltip'
 import { Bell, BellRing } from 'lucide-react'
 import { AnimatePresence, motion } from 'framer-motion'
 import { bellShakeVariants, dotVariants } from '~/motion/bell'
-import { useRouter } from 'next/navigation'
+import { useRouter } from '@bprogress/next'
 import { useUserStore } from '~/store/userStore'
 
 interface Props {

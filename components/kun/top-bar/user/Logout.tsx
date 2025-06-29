@@ -13,7 +13,7 @@ import {
 import { LogOut } from 'lucide-react'
 import { useUserStore } from '~/store/userStore'
 import { useState } from 'react'
-import { useRouter } from 'next/navigation'
+import { useRouter } from '@bprogress/next'
 import { kunFetchPost } from '~/utils/kunFetch'
 import toast from 'react-hot-toast'
 

@@ -12,7 +12,7 @@ import { kunErrorHandler } from '~/utils/kunErrorHandler'
 import { redirect } from 'next/navigation'
 import toast from 'react-hot-toast'
 import { EmailVerification } from '~/components/kun/verification-code/Code'
-import { useRouter } from 'next/navigation'
+import { useRouter } from '@bprogress/next'
 import { KunTextDivider } from '~/components/kun/TextDivider'
 import type { UserState } from '~/store/userStore'
 

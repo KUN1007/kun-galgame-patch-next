@@ -12,7 +12,7 @@ import {
 } from '@heroui/modal'
 import { kunFetchPost } from '~/utils/kunFetch'
 import { Check, Plus } from 'lucide-react'
-import { useRouter } from 'next/navigation'
+import { useRouter } from '@bprogress/next'
 import { useUserStore } from '~/store/userStore'
 import { kunErrorHandler } from '~/utils/kunErrorHandler'
 

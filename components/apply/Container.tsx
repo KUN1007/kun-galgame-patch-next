@@ -13,7 +13,7 @@ import {
   Link
 } from '@heroui/react'
 import { BadgeCheck, CheckCircle2, CircleSlash, Trophy } from 'lucide-react'
-import { useRouter } from 'next/navigation'
+import { useRouter } from '@bprogress/next'
 import { kunFetchPost } from '~/utils/kunFetch'
 import { kunErrorHandler } from '~/utils/kunErrorHandler'
 import toast from 'react-hot-toast'
