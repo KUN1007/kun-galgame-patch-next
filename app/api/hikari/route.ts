@@ -5,8 +5,8 @@ import { getRemoteIp } from '~/app/api/utils/getRemoteIp'
 import type { HikariResponse } from './type'
 
 const DOMAIN_PATTERNS = [
-  /^http:\/\/localhost$/,
-  /^http:\/\/127.0.0.1$/,
+  /^http:\/\/localhost:\d+$/,
+  /^http:\/\/127.0.0.1:\d+$/,
   // Hikarinagi
   /^https:\/\/([\w-]+\.)*himoe\.uk$/,
   /^https:\/\/([\w-]+\.)*hikarinagi\.com$/,
