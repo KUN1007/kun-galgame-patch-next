@@ -5,11 +5,14 @@ import { getRemoteIp } from '~/app/api/utils/getRemoteIp'
 import type { HikariResponse } from './type'
 
 const DOMAIN_PATTERNS = [
-  /^http:\/\/localhost:3000$/,
-  /^http:\/\/127.0.0.1:3000$/,
+  /^http:\/\/localhost$/,
+  /^http:\/\/127.0.0.1$/,
+  // Hikarinagi
   /^https:\/\/([\w-]+\.)*himoe\.uk$/,
   /^https:\/\/([\w-]+\.)*hikarinagi\.com$/,
-  /^https:\/\/([\w-]+\.)*hikarinagi\.org$/
+  /^https:\/\/([\w-]+\.)*hikarinagi\.org$/,
+  // TouchGal
+  /^https:\/\/([\w-]+\.)*touchgal\.us$/
 ]
 
 const RATE_LIMIT_MAX = 10000
