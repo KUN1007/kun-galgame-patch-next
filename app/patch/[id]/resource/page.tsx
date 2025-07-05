@@ -1,3 +1,4 @@
+import { Alert } from '@heroui/alert'
 import { Card, CardBody, CardHeader } from '@heroui/card'
 import { Link } from '@heroui/link'
 import { Resources } from '~/components/patch/resource/Resource'
@@ -44,7 +45,7 @@ export default async function Kun({
       <CardHeader>
         <h2 className="text-2xl font-medium">资源链接</h2>
       </CardHeader>
-      <CardBody>
+      <CardBody className="space-y-4">
         <div className="text-default-600">
           <p>
             请注意, 本站是 Galgame 补丁站, 资源链接指的是 Galgame 补丁资源,
@@ -75,6 +76,13 @@ export default async function Kun({
         </div>
 
         <Resources initialResources={response} id={Number(id)} />
+
+        <Alert
+          color="warning"
+          variant="faded"
+          title="使用补丁前请认真阅读补丁资源的备注（如果有）, 以免产生问题"
+          className="shadow-medium"
+        />
       </CardBody>
     </Card>
   )
