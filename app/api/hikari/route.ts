@@ -12,7 +12,9 @@ const DOMAIN_PATTERNS = [
   /^https:\/\/([\w-]+\.)*hikarinagi\.com$/,
   /^https:\/\/([\w-]+\.)*hikarinagi\.org$/,
   // TouchGal
-  /^https:\/\/([\w-]+\.)*touchgal\.us$/
+  /^https:\/\/([\w-]+\.)*touchgal\.us$/,
+  // Nysoure
+  /^https:\/\/([\w-]+\.)*nyne\.dev$/
 ]
 
 const RATE_LIMIT_MAX = 10000
