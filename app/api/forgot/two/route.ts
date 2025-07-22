@@ -43,7 +43,7 @@ export const POST = async (req: NextRequest) => {
 
   const response = await stepTwo(input)
   if (typeof response === 'string') {
-    return NextResponse.json(input)
+    return NextResponse.json(response)
   }
 
   return NextResponse.json({})
