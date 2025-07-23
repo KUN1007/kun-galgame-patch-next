@@ -29,7 +29,10 @@ export const register = async (
     return '您的用户名已经有人注册了, 请修改'
   }
 
-  const sameEmailUser = await prisma.user.findUnique({ where: { email } })
+  const normalizedEmail = email.toLowerCase()
+  const sameEmailUser = await prisma.user.findFirst({
+    where: { email: { equals: normalizedEmail, mode: 'insensitive' } }
+  })
   if (sameEmailUser) {
     return '您的邮箱已经有人注册了, 请修改'
   }

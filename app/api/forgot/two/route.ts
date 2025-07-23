@@ -11,9 +11,13 @@ export const stepTwo = async (input: z.infer<typeof stepTwoSchema>) => {
     return '两次密码输入不一致'
   }
 
+  const normalizedInput = input.name.toLowerCase()
   const user = await prisma.user.findFirst({
     where: {
-      OR: [{ email: input.name }, { name: input.name }]
+      OR: [
+        { email: { equals: normalizedInput, mode: 'insensitive' } },
+        { name: { equals: normalizedInput, mode: 'insensitive' } }
+      ]
     }
   })
   if (!user) {

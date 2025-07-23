@@ -14,8 +14,14 @@ export const stepOne = async (
   //     OR: [{ email: input.name }, { name: input.name }]
   //   }
   // })
+  const normalizedInput = input.name.toLowerCase()
   const user = await prisma.user.findFirst({
-    where: { email: input.name }
+    where: {
+      OR: [
+        { email: { equals: normalizedInput, mode: 'insensitive' } },
+        { name: { equals: normalizedInput, mode: 'insensitive' } }
+      ]
+    }
   })
   if (!user) {
     return '用户未找到'

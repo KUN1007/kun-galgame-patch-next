@@ -10,5 +10,5 @@ export const verifyVerificationCode = async (
     return false
   }
 
-  return userProvidedCode === storedCode
+  return userProvidedCode.toLowerCase() === storedCode.toLowerCase()
 }
