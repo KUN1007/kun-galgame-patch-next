@@ -14,7 +14,10 @@ const DOMAIN_PATTERNS = [
   // TouchGal
   /^https:\/\/([\w-]+\.)*touchgal\.us$/,
   // Nysoure
-  /^https:\/\/([\w-]+\.)*nyne\.dev$/
+  /^https:\/\/([\w-]+\.)*nyne\.dev$/,
+  // kungal
+  /^https:\/\/([\w-]+\.)*kungal\.com$/,
+  /^https:\/\/([\w-]+\.)*kungal\.org$/
 ]
 
 const RATE_LIMIT_MAX = 10000
