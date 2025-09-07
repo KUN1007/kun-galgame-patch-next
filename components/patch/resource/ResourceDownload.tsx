@@ -4,10 +4,11 @@ import DOMPurify from 'isomorphic-dompurify'
 import { useState, useRef, useLayoutEffect } from 'react'
 import { Button } from '@heroui/react'
 import { KunUser } from '~/components/kun/floating-card/KunUser'
-import { Download, ChevronDown, ChevronUp } from 'lucide-react'
+import { Download, ChevronDown, ChevronUp, Ban } from 'lucide-react'
 import { formatDistanceToNow } from '~/utils/formatDistanceToNow'
 import { ResourceLikeButton } from './ResourceLike'
 import { ResourceDownloadCard } from './DownloadCard'
+import toast from 'react-hot-toast'
 import type { PatchResourceHtml } from '~/types/api/patch'
 
 interface Props {
@@ -22,7 +23,15 @@ export const ResourceDownload = ({ resource }: Props) => {
   const [isNoteOverflowing, setIsNoteOverflowing] = useState(false)
   const noteContentRef = useRef<HTMLDivElement>(null)
 
-  const toggleLinks = (resourceId: number) => {
+  const toggleLinks = (resource: PatchResourceHtml) => {
+    if (resource.status) {
+      toast.error(
+        '这个补丁资源因为可能含有病毒, 或者其它原因, 已被补丁作者或管理员禁止下载, 请等待我们的处理'
+      )
+      return
+    }
+
+    const resourceId = resource.id
     setShowLinks((prev) => ({
       ...prev,
       [resourceId]: !prev[resourceId]
@@ -119,13 +128,17 @@ export const ResourceDownload = ({ resource }: Props) => {
         <div className="flex gap-2">
           <ResourceLikeButton resource={resource} />
           <Button
-            color="primary"
-            variant="flat"
+            color={resource.status ? 'danger' : 'primary'}
+            variant={resource.status ? 'solid' : 'flat'}
             isIconOnly
             aria-label={`下载 Galgame 补丁资源`}
-            onPress={() => toggleLinks(resource.id)}
+            onPress={() => toggleLinks(resource)}
           >
-            <Download className="size-4" />
+            {resource.status ? (
+              <Ban className="size-4" />
+            ) : (
+              <Download className="size-4" />
+            )}
           </Button>
         </div>
       </div>

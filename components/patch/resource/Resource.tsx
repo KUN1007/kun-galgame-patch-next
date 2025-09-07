@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useTransition } from 'react'
 import { Button } from '@heroui/button'
 import { Card, CardBody } from '@heroui/card'
 import {
@@ -17,8 +17,16 @@ import {
   ModalHeader,
   useDisclosure
 } from '@heroui/modal'
-import { Edit, MoreHorizontal, Plus, Trash2, Share } from 'lucide-react'
-import { kunFetchDelete } from '~/utils/kunFetch'
+import {
+  Edit,
+  MoreHorizontal,
+  Plus,
+  Trash2,
+  Share,
+  Lock,
+  LockOpen
+} from 'lucide-react'
+import { kunFetchDelete, kunFetchPut } from '~/utils/kunFetch'
 import { PublishResource } from './publish/PublishResource'
 import { EditResourceDialog } from './edit/EditResourceDialog'
 import { useUserStore } from '~/store/userStore'
@@ -63,21 +71,66 @@ export const Resources = ({ initialResources, id }: Props) => {
     onClose: onCloseDelete
   } = useDisclosure()
   const [deleteResourceId, setDeleteResourceId] = useState(0)
-  const [deleting, setDeleting] = useState(false)
+  const [deleting, startDeleting] = useTransition()
   const handleDeleteResource = async () => {
-    setDeleting(true)
+    startDeleting(async () => {
+      await kunFetchDelete<KunResponse<{}>>('/patch/resource', {
+        resourceId: deleteResourceId
+      })
 
-    await kunFetchDelete<KunResponse<{}>>('/patch/resource', {
-      resourceId: deleteResourceId
+      setResources((prev) =>
+        prev.filter((resource) => resource.id !== deleteResourceId)
+      )
+      setDeleteResourceId(0)
+      onCloseDelete()
+      toast.success('删除资源链接成功')
     })
+  }
 
-    setResources((prev) =>
-      prev.filter((resource) => resource.id !== deleteResourceId)
-    )
-    setDeleteResourceId(0)
-    setDeleting(false)
-    onCloseDelete()
-    toast.success('删除资源链接成功')
+  const {
+    isOpen: isOpenDisable,
+    onOpen: onOpenDisable,
+    onClose: onCloseDisable
+  } = useDisclosure()
+  const [disableResource, setDisableResource] =
+    useState<PatchResourceHtml | null>(null)
+  const [disabling, startDisabling] = useTransition()
+  const toggleDisableResource = async () => {
+    startDisabling(async () => {
+      if (!disableResource) {
+        return
+      }
+
+      const nextStatus = disableResource.status === 0 ? 1 : 0
+
+      await kunFetchPut<KunResponse<{}>>('/patch/resource/disable', {
+        resourceId: disableResource.id
+      })
+      toast.success(
+        disableResource.status ? '启用补丁下载成功' : '禁止补丁被下载成功'
+      )
+
+      setResources((prev) =>
+        prev.map((resource) =>
+          resource.id === disableResource.id
+            ? { ...resource, status: nextStatus }
+            : resource
+        )
+      )
+      setDisableResource(null)
+      onCloseDisable()
+    })
+  }
+
+  const getDisabledKeys = (resource: PatchResourceHtml) => {
+    const disabledKeys: string[] = []
+    if (user.uid !== resource.userId) {
+      disabledKeys.push('edit', 'delete')
+    }
+    if (user.role < 3) {
+      disabledKeys.push('disable')
+    }
+    return disabledKeys
   }
 
   return (
@@ -117,9 +170,7 @@ export const Resources = ({ initialResources, id }: Props) => {
                 </DropdownTrigger>
                 <DropdownMenu
                   aria-label="Resource actions"
-                  disabledKeys={
-                    user.uid === resource.userId ? [] : ['edit', 'delete']
-                  }
+                  disabledKeys={getDisabledKeys(resource)}
                 >
                   <DropdownItem
                     key="edit"
@@ -137,11 +188,27 @@ export const Resources = ({ initialResources, id }: Props) => {
                     color="danger"
                     startContent={<Trash2 className="size-4" />}
                     onPress={() => {
-                      onOpenDelete()
                       setDeleteResourceId(resource.id)
+                      onOpenDelete()
                     }}
                   >
                     删除
+                  </DropdownItem>
+                  <DropdownItem
+                    key="disable"
+                    startContent={
+                      resource.status ? (
+                        <LockOpen className="size-4" />
+                      ) : (
+                        <Lock className="size-4" />
+                      )
+                    }
+                    onPress={() => {
+                      setDisableResource(resource)
+                      onOpenDisable()
+                    }}
+                  >
+                    {resource.status ? '启用补丁下载' : '禁止补丁被下载'}
                   </DropdownItem>
                   <DropdownItem
                     key="share"
@@ -225,6 +292,36 @@ export const Resources = ({ initialResources, id }: Props) => {
               isLoading={deleting}
             >
               删除
+            </Button>
+          </ModalFooter>
+        </ModalContent>
+      </Modal>
+
+      <Modal isOpen={isOpenDisable} onClose={onCloseDisable} placement="center">
+        <ModalContent>
+          <ModalHeader className="flex flex-col gap-1">
+            {disableResource?.status
+              ? '启用补丁资源下载'
+              : '禁止任何人下载这个补丁资源'}
+          </ModalHeader>
+          <ModalBody>
+            <p>
+              {disableResource?.status
+                ? '您确定要重新启用这个补丁资源的下载吗'
+                : `您确定要禁止任何人下载这个补丁资源吗, 这对于补丁资源可能存在病毒风险时非常有用`}
+            </p>
+          </ModalBody>
+          <ModalFooter>
+            <Button variant="light" onPress={onCloseDisable}>
+              取消
+            </Button>
+            <Button
+              color="danger"
+              onPress={toggleDisableResource}
+              disabled={disabling}
+              isLoading={disabling}
+            >
+              {disableResource?.status ? '启用' : '禁用'}
             </Button>
           </ModalFooter>
         </ModalContent>

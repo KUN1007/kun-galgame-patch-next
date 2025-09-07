@@ -427,6 +427,7 @@ model patch_resource {
   language    String[]
   platform    String[]
   download    Int      @default(0)
+  // 0 - normal, 1 - disable download
   status      Int      @default(0)
   update_time DateTime @default(now())
 
