@@ -14,6 +14,7 @@ export const ResourceInfo = ({ resource }: Props) => {
         languages={resource.language}
         platforms={resource.platform}
         modelName={resource.modelName}
+        downloadCount={resource.download}
       />
 
       <div className="flex flex-wrap gap-2">

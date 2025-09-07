@@ -52,6 +52,7 @@ export const getPatchResource = async (
       platform: resource.platform,
       likeCount: resource._count.like_by,
       isLike: resource.like_by.length > 0,
+      download: resource.download,
       status: resource.status,
       userId: resource.user_id,
       patchId: resource.patch_id,

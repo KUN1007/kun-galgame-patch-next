@@ -78,6 +78,7 @@ export interface PatchResource {
   likeCount: number
   isLike: boolean
   status: number
+  download: number
   userId: number
   patchId: number
   created: string

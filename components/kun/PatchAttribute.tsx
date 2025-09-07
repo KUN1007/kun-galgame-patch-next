@@ -11,6 +11,7 @@ interface Props {
   languages: string[]
   platforms: string[]
   modelName?: string
+  downloadCount?: number
   className?: string
   size?: 'lg' | 'md' | 'sm'
 }
@@ -20,6 +21,7 @@ export const KunPatchAttribute = ({
   languages,
   platforms,
   modelName = '',
+  downloadCount,
   className = '',
   size = 'md'
 }: Props) => {
@@ -43,6 +45,11 @@ export const KunPatchAttribute = ({
       {modelName && (
         <Chip variant="flat" color="danger" size={size}>
           {modelName}
+        </Chip>
+      )}
+      {downloadCount && (
+        <Chip variant="flat" color="default" size={size}>
+          {`${downloadCount} 人下载`}
         </Chip>
       )}
     </div>
