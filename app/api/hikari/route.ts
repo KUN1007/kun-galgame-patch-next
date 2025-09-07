@@ -17,7 +17,9 @@ const DOMAIN_PATTERNS = [
   /^https:\/\/([\w-]+\.)*nyne\.dev$/,
   // kungal
   /^https:\/\/([\w-]+\.)*kungal\.com$/,
-  /^https:\/\/([\w-]+\.)*kungal\.org$/
+  /^https:\/\/([\w-]+\.)*kungal\.org$/,
+  // LycorisGal
+  /^https:\/\/([\w-]+\.)*lycorisgal\.com$/
 ]
 
 const RATE_LIMIT_MAX = 10000
