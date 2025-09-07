@@ -41,11 +41,6 @@ export const getPatchById = async (
     return '未找到对应补丁'
   }
 
-  await prisma.patch.update({
-    where: { id: patch.id },
-    data: { view: { increment: 1 } }
-  })
-
   const response: Patch = {
     id: patch.id,
     vndbId: patch.vndb_id,
