@@ -17,10 +17,7 @@ import { updateComment } from './update'
 import { deleteComment } from './delete'
 import { checkKunCaptchaExist } from '~/app/api/utils/verifyKunCaptcha'
 import { getCommentVerifyStatus } from '~/app/api/admin/setting/comment/getCommentVerifyStatus'
-
-const patchIdSchema = z.object({
-  patchId: z.coerce.number().min(1).max(9999999)
-})
+import { getPatchCommentSchema } from '~/validations/patch'
 
 const commentIdSchema = z.object({
   commentId: z.coerce
@@ -30,7 +27,7 @@ const commentIdSchema = z.object({
 })
 
 export const GET = async (req: NextRequest) => {
-  const input = kunParseGetQuery(req, patchIdSchema)
+  const input = kunParseGetQuery(req, getPatchCommentSchema)
   if (typeof input === 'string') {
     return NextResponse.json(input)
   }

@@ -1,33 +1,37 @@
 import { z } from 'zod'
 import { prisma } from '~/prisma/index'
-import { nestComments } from './_helpers'
 import { markdownToHtml } from '~/app/api/utils/markdownToHtml'
+import { convert } from 'html-to-text'
+import { getPatchCommentSchema } from '~/validations/patch'
 import type { PatchComment } from '~/types/api/patch'
 
-const patchIdSchema = z.object({
-  patchId: z.coerce.number().min(1).max(9999999)
-})
-
 export const getPatchComment = async (
-  input: z.infer<typeof patchIdSchema>,
+  input: z.infer<typeof getPatchCommentSchema>,
   uid: number
 ) => {
-  const { patchId } = input
+  const { patchId, page, limit } = input
+  const skip = (page - 1) * limit
 
-  const data = await prisma.patch_comment.findMany({
-    where: { patch_id: patchId },
-    include: {
-      user: true,
-      like_by: {
-        where: {
-          user_id: uid
+  const [total, data] = await Promise.all([
+    prisma.patch_comment.count({ where: { patch_id: patchId } }),
+    prisma.patch_comment.findMany({
+      where: { patch_id: patchId },
+      include: {
+        user: true,
+        like_by: {
+          where: {
+            user_id: uid
+          }
+        },
+        _count: {
+          select: { like_by: true }
         }
       },
-      _count: {
-        select: { like_by: true }
-      }
-    }
-  })
+      orderBy: { created: 'desc' },
+      skip,
+      take: limit
+    })
+  ])
 
   const flatComments: PatchComment[] = await Promise.all(
     data.map(async (comment) => ({
@@ -49,7 +53,37 @@ export const getPatchComment = async (
     }))
   )
 
-  const nestedComments = nestComments(flatComments)
+  const parentIds = Array.from(
+    new Set(
+      flatComments
+        .map((c) => c.parentId)
+        .filter((id): id is number => typeof id === 'number')
+    )
+  )
 
-  return nestedComments
+  if (parentIds.length > 0) {
+    const parents = await prisma.patch_comment.findMany({
+      where: { id: { in: parentIds } },
+      include: { user: true }
+    })
+
+    const parentMap = new Map<number, { username: string; content: string }>()
+    for (const p of parents) {
+      const html = await markdownToHtml(p.content)
+      parentMap.set(p.id, {
+        username: p.user.name,
+        content: convert(html).slice(0, 107)
+      })
+    }
+
+    for (const c of flatComments) {
+      if (c.parentId && parentMap.has(c.parentId)) {
+        const p = parentMap.get(c.parentId)!
+        c.quotedUsername = p.username
+        c.quotedContent = p.content
+      }
+    }
+  }
+
+  return { comments: flatComments, total }
 }

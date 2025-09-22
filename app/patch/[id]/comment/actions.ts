@@ -5,15 +5,12 @@ import { getPatchComment } from '~/app/api/patch/comment/get'
 import { getCommentVerifyStatus } from '~/app/api/admin/setting/comment/getCommentVerifyStatus'
 import { verifyHeaderCookie } from '~/utils/actions/verifyHeaderCookie'
 import { safeParseSchema } from '~/utils/actions/safeParseSchema'
-
-const patchIdSchema = z.object({
-  patchId: z.coerce.number().min(1).max(9999999)
-})
+import { getPatchCommentSchema } from '~/validations/patch'
 
 export const kunGetCommentActions = async (
-  params: z.infer<typeof patchIdSchema>
+  params: z.infer<typeof getPatchCommentSchema>
 ) => {
-  const input = safeParseSchema(patchIdSchema, params)
+  const input = safeParseSchema(getPatchCommentSchema, params)
   if (typeof input === 'string') {
     return input
   }

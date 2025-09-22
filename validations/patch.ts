@@ -33,6 +33,12 @@ export const patchCompanyChangeSchema = z.object({
     .max(107, { message: '一个补丁最多有 107 个会社' })
 })
 
+export const getPatchCommentSchema = z.object({
+  patchId: z.coerce.number().min(1).max(9999999),
+  page: z.coerce.number().min(1).max(9999999),
+  limit: z.coerce.number().min(1).max(30)
+})
+
 export const patchCommentCreateSchema = z.object({
   patchId: z.coerce.number().min(1).max(9999999),
   parentId: z.coerce.number().min(1).max(9999999).nullable(),

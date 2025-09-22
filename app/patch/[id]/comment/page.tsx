@@ -20,18 +20,26 @@ export const generateMetadata = async ({
 }: Props): Promise<Metadata> => {
   const { id } = await params
   const patch = await kunGetPatchActions({ patchId: Number(id) })
-  const response = await kunGetCommentActions({ patchId: Number(id) })
+  const response = await kunGetCommentActions({
+    patchId: Number(id),
+    page: 1,
+    limit: 30
+  })
   if (typeof patch === 'string' || typeof response === 'string') {
     return {}
   }
 
-  return generateKunMetadataTemplate(patch, response)
+  return generateKunMetadataTemplate(patch, response.comments)
 }
 
 export default async function Kun({ params }: Props) {
   const { id } = await params
 
-  const response = await kunGetCommentActions({ patchId: Number(id) })
+  const response = await kunGetCommentActions({
+    patchId: Number(id),
+    page: 1,
+    limit: 30
+  })
   if (typeof response === 'string') {
     return <ErrorComponent error={response} />
   }
@@ -45,7 +53,8 @@ export default async function Kun({ params }: Props) {
       </CardHeader>
       <CardBody>
         <Comments
-          initialComments={response}
+          initialComments={response.comments}
+          total={response.total}
           id={Number(id)}
           enableCommentVerify={enableCommentVerify}
         />
