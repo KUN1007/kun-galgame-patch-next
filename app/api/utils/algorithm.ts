@@ -1,4 +1,4 @@
-import { argon2id } from '@noble/hashes/argon2'
+import { argon2id } from '@noble/hashes/argon2.js'
 import crypto from 'crypto'
 
 const options = {

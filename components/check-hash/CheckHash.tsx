@@ -2,8 +2,8 @@
 
 import { useState, useCallback, useEffect, useRef } from 'react'
 import { useSearchParams, useRouter } from 'next/navigation'
-import { blake3 } from '@noble/hashes/blake3'
-import { bytesToHex } from '@noble/hashes/utils'
+import { blake3 } from '@noble/hashes/blake3.js'
+import * as utils from '@noble/hashes/utils.js'
 import {
   Card,
   CardBody,
@@ -16,6 +16,8 @@ import {
 import { FileIcon, CheckCircle2Icon, XCircleIcon } from 'lucide-react'
 import { cn } from '~/utils/cn'
 import toast from 'react-hot-toast'
+
+const { bytesToHex } = utils
 
 export const CheckHash = () => {
   const router = useRouter()

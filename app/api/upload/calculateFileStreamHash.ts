@@ -1,8 +1,10 @@
 import path from 'path'
 import { createReadStream, createWriteStream } from 'fs'
 import { mkdir, writeFile } from 'fs/promises'
-import { blake3 } from '@noble/hashes/blake3'
-import { bytesToHex } from '@noble/hashes/utils'
+import { blake3 } from '@noble/hashes/blake3.js'
+import * as utils from '@noble/hashes/utils.js'
+
+const { bytesToHex } = utils
 
 export const generateFileHash = async (filePath: string): Promise<string> => {
   return new Promise((resolve, reject) => {

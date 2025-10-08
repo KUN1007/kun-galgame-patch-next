@@ -5,7 +5,8 @@
     "outDir": "./.next/kun",
     "target": "esnext",
     "isolatedModules": false,
-    "noEmit": false
+    "noEmit": false,
+    "moduleResolution": "node"
   },
   "include": ["server.ts", "socket/**/*.ts", "types/**/*.ts"]
 }

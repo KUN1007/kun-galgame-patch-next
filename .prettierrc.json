@@ -1,11 +1,9 @@
 {
-  "eslintIntegration": true,
   "singleQuote": true,
   "semi": false,
   "bracketSpacing": true,
   "tabWidth": 2,
   "useTabs": false,
-  "files.insertFinalNewline": true,
   "htmlWhitespaceSensitivity": "strict",
   "trailingComma": "none",
   "endOfLine": "auto"
