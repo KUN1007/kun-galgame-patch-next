@@ -1,0 +1,41 @@
+model patch_tag {
+  id           Int      @id @default(autoincrement())
+  name         String   @db.VarChar(107)
+  // vndb / bangumi
+  provider     String   @default("") @db.VarChar(31)
+  name_en_us   String   @default("") @db.VarChar(107)
+  // deprecated introduction
+  introduction String   @default("") @db.VarChar(10007)
+
+  introduction_zh_cn String @default("") @db.VarChar(10007)
+  introduction_ja_jp String @default("") @db.VarChar(10007)
+  introduction_en_us String @default("") @db.VarChar(10007)
+  count        Int      @default(0)
+  alias        String[]
+
+  // content sexual technical
+  // category    String
+
+  patch_relation patch_tag_relation[]
+  user_id        Int
+  user           user                 @relation(fields: [user_id], references: [id], onDelete: Cascade, onUpdate: NoAction)
+
+  created DateTime @default(now())
+  updated DateTime @updatedAt
+}
+
+model patch_tag_relation {
+  id       Int       @id @default(autoincrement())
+  patch_id Int
+  patch    patch     @relation(fields: [patch_id], references: [id], onDelete: Cascade, onUpdate: NoAction)
+  tag_id   Int
+  tag      patch_tag @relation(fields: [tag_id], references: [id], onDelete: Cascade, onUpdate: NoAction)
+
+  // 0 - none, 1 - mild, 2 - severe
+  // spoiler_level Int @default(0)
+
+  created DateTime @default(now())
+  updated DateTime @updatedAt
+
+  @@unique([patch_id, tag_id])
+}

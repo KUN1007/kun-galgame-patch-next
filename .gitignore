@@ -54,3 +54,4 @@ next-env.d.ts
 migration/*.json
 
 refs
+migration/temp

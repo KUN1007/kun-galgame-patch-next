@@ -1,0 +1,53 @@
+model patch {
+  id                   Int      @id @default(autoincrement())
+  name                 String   @db.VarChar(1007)
+  name_en_us           String   @db.VarChar(1007) @default("")
+  name_zh_cn           String   @db.VarChar(1007) @default("")
+  name_ja_jp           String   @db.VarChar(1007) @default("")
+  vndb_id              String?  @unique @db.VarChar(107)
+  // Bangumi Subject ID
+  bid                  Int?     @unique
+  banner               String   @default("") @db.VarChar(1007)
+  // deprecated introduction
+  introduction         String   @default("") @db.VarChar(100007)
+
+  introduction_zh_cn   String   @default("") @db.VarChar(100007)
+  introduction_ja_jp   String   @default("") @db.VarChar(100007)
+  introduction_en_us   String   @default("") @db.VarChar(100007)
+  released             String   @default("unknown") @db.VarChar(107)
+  content_limit        String   @default("sfw") @db.VarChar(107)
+  status               Int      @default(0)
+  download             Int      @default(0)
+  view                 Int      @default(0)
+  resource_update_time DateTime @default(now())
+  type                 String[]
+  language             String[]
+  engine               String[]
+  platform             String[]
+
+  cover                patch_cover?
+  screenshot           patch_screenshot[]
+
+  walkthrough patch_walkthrough[]
+  company     patch_company_relation[]
+  tag         patch_tag_relation[]
+
+  user_id Int
+  user    user @relation("user_patch", fields: [user_id], references: [id])
+
+  alias         patch_alias[]
+  favorite_by   user_patch_favorite_relation[]
+  contribute_by user_patch_contribute_relation[]
+
+  resource patch_resource[]     @relation("patch_resource")
+  comment  patch_comment[]      @relation("patch_comment")
+  history  patch_history[]      @relation("patch_history")
+  pr       patch_pull_request[] @relation("patch_pull_request")
+
+  char     patch_char[]
+  release  patch_release[]
+
+  created DateTime @default(now())
+  updated DateTime @updatedAt
+}
+
