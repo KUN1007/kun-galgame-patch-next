@@ -10,7 +10,6 @@ export async function clearLegacyTables() {
     'patch_alias',
     'patch_cover',
     'patch_screenshot',
-    'patch_char_infobox',
     'patch_char',
     'patch_person',
     'patch_release',

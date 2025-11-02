@@ -20,9 +20,7 @@ async function main() {
       await prisma.patch_alias.create({
         data: {
           name: alias,
-          patch: {
-            connect: { id: id }
-          }
+          patch_id: id
         }
       })
     }

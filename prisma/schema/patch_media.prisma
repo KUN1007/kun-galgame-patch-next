@@ -5,16 +5,16 @@ model patch_cover {
   patch          patch  @relation(fields: [patch_id], references: [id], onDelete: Cascade, onUpdate: NoAction)
 
   // VNDB image id
-  image_id       String? @db.VarChar(107)
-  url            String? @db.VarChar(1007)
-  width          Int?
-  height         Int?
-  sexual         Float?
-  violence       Float?
-  votecount      Int?
-  thumbnail_url  String? @db.VarChar(1007)
-  thumb_width    Int?
-  thumb_height   Int?
+  image_id       String @db.VarChar(107)
+  url            String @db.VarChar(1007)
+  width          Int
+  height         Int
+  sexual         Float
+  violence       Float
+  votecount      Int
+  thumbnail_url  String @db.VarChar(1007)
+  thumb_width    Int
+  thumb_height   Int
 
   created        DateTime @default(now())
   updated        DateTime @updatedAt
@@ -28,17 +28,17 @@ model patch_screenshot {
   patch_id       Int
   patch          patch  @relation(fields: [patch_id], references: [id], onDelete: Cascade, onUpdate: NoAction)
 
-  image_id       String? @db.VarChar(107)
+  image_id       String @db.VarChar(107)
   url            String  @db.VarChar(1007)
-  width          Int?
-  height         Int?
-  sexual         Float?
-  violence       Float?
-  votecount      Int?
-  thumbnail_url  String? @db.VarChar(1007)
-  thumb_width    Int?
-  thumb_height   Int?
-  order_no       Int?    @default(0)
+  width          Int
+  height         Int
+  sexual         Float
+  violence       Float
+  votecount      Int
+  thumbnail_url  String @db.VarChar(1007)
+  thumb_width    Int
+  thumb_height   Int
+  order_no       Int   @default(0)
 
   created        DateTime @default(now())
   updated        DateTime @updatedAt

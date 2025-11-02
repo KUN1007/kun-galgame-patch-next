@@ -48,18 +48,23 @@ export function splitSummary(summary) {
   }
 
   const index = match.index ?? 0
-
   const splitPos = cleaned.lastIndexOf('\n', index)
   const cutIndex = splitPos >= 0 ? splitPos : index
 
   let chinesePart = cleaned.slice(0, cutIndex).trim()
   let japanesePart = cleaned.slice(cutIndex).trim()
 
-  const chineseCharCount = (chinesePart.match(/[\u4E00-\u9FFF]/g) || []).length
+  const firstChineseChars = (chinesePart.match(/[\u4E00-\u9FFF]/g) || [])
+    .slice(0, 7)
+    .join('')
 
-  if (chineseCharCount < 5) {
+  const traditionalOrJapaneseRegex =
+    /[\u3400-\u4DBF\uF900-\uFAFF\u2E80-\u2EFF\u3040-\u30FF\u31F0-\u31FF\uFF66-\uFF9F]/
+
+  if (traditionalOrJapaneseRegex.test(firstChineseChars)) {
     return { chinese: '', japanese: cleaned.trim() }
   }
+
   chinesePart = chinesePart.replace(/\n{2,}/g, '\n').trim()
   japanesePart = japanesePart.replace(/\n{2,}/g, '\n').trim()
 

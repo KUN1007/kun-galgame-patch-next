@@ -17,14 +17,8 @@ async function appendPersonLog(record) {
     const outDir = path.join('migration', 'sync', 'data')
     await ensureDir(outDir)
     const outFile = path.join(outDir, 'char.json')
-    let arr = []
-    try {
-      const src = await fs.readFile(outFile, 'utf8')
-      const parsed = JSON.parse(src)
-      if (Array.isArray(parsed)) arr = parsed
-    } catch {}
-    arr.push(record)
-    await fs.writeFile(outFile, JSON.stringify(arr, null, 2))
+    const line = JSON.stringify(record) + '\n'
+    await fs.appendFile(outFile, line, { encoding: 'utf8' })
   } catch (e) {
     console.warn('appendPersonLog failed:', e?.message || e)
   }
@@ -158,29 +152,37 @@ export async function syncVndbCover(vnDetail, baseDir, patchId) {
     await prisma.patch_cover.upsert({
       where: { patch_id: patchId },
       update: {
-        image_id: c.id || null,
-        url: c.url || null,
-        width: Array.isArray(c.dims) ? c.dims[0] : null,
-        height: Array.isArray(c.dims) ? c.dims[1] : null,
-        sexual: c.sexual ?? null,
-        violence: c.violence ?? null,
-        votecount: c.votecount ?? null,
-        thumbnail_url: c.thumbnail || null,
-        thumb_width: Array.isArray(c.thumbnail_dims) ? c.thumbnail_dims[0] : null,
-        thumb_height: Array.isArray(c.thumbnail_dims) ? c.thumbnail_dims[1] : null
+        image_id: c.id ? String(c.id) : '',
+        url: c.url || '',
+        width: Array.isArray(c.dims) ? c.dims[0] : 0,
+        height: Array.isArray(c.dims) ? c.dims[1] : 0,
+        sexual: typeof c.sexual === 'number' ? c.sexual : 0,
+        violence: typeof c.violence === 'number' ? c.violence : 0,
+        votecount: typeof c.votecount === 'number' ? c.votecount : 0,
+        thumbnail_url: c.thumbnail || '',
+        thumb_width: Array.isArray(c.thumbnail_dims)
+          ? c.thumbnail_dims[0]
+          : 0,
+        thumb_height: Array.isArray(c.thumbnail_dims)
+          ? c.thumbnail_dims[1]
+          : 0
       },
       create: {
         patch_id: patchId,
-        image_id: c.id || null,
-        url: c.url || null,
-        width: Array.isArray(c.dims) ? c.dims[0] : null,
-        height: Array.isArray(c.dims) ? c.dims[1] : null,
-        sexual: c.sexual ?? null,
-        violence: c.violence ?? null,
-        votecount: c.votecount ?? null,
-        thumbnail_url: c.thumbnail || null,
-        thumb_width: Array.isArray(c.thumbnail_dims) ? c.thumbnail_dims[0] : null,
-        thumb_height: Array.isArray(c.thumbnail_dims) ? c.thumbnail_dims[1] : null
+        image_id: c.id ? String(c.id) : '',
+        url: c.url || '',
+        width: Array.isArray(c.dims) ? c.dims[0] : 0,
+        height: Array.isArray(c.dims) ? c.dims[1] : 0,
+        sexual: typeof c.sexual === 'number' ? c.sexual : 0,
+        violence: typeof c.violence === 'number' ? c.violence : 0,
+        votecount: typeof c.votecount === 'number' ? c.votecount : 0,
+        thumbnail_url: c.thumbnail || '',
+        thumb_width: Array.isArray(c.thumbnail_dims)
+          ? c.thumbnail_dims[0]
+          : 0,
+        thumb_height: Array.isArray(c.thumbnail_dims)
+          ? c.thumbnail_dims[1]
+          : 0
       }
     })
   } catch (e) {
@@ -197,16 +199,20 @@ export async function syncVndbScreenshots(vnDetail, baseDir, patchId) {
       await prisma.patch_screenshot.create({
         data: {
           patch_id: patchId,
-          image_id: s.id || null,
-          url: s.url,
-          width: Array.isArray(s.dims) ? s.dims[0] : null,
-          height: Array.isArray(s.dims) ? s.dims[1] : null,
-          sexual: s.sexual ?? null,
-          violence: s.violence ?? null,
-          votecount: s.votecount ?? null,
-          thumbnail_url: s.thumbnail || null,
-          thumb_width: Array.isArray(s.thumbnail_dims) ? s.thumbnail_dims[0] : null,
-          thumb_height: Array.isArray(s.thumbnail_dims) ? s.thumbnail_dims[1] : null,
+          image_id: s.id ? String(s.id) : '',
+          url: s.url || '',
+          width: Array.isArray(s.dims) ? s.dims[0] : 0,
+          height: Array.isArray(s.dims) ? s.dims[1] : 0,
+          sexual: typeof s.sexual === 'number' ? s.sexual : 0,
+          violence: typeof s.violence === 'number' ? s.violence : 0,
+          votecount: typeof s.votecount === 'number' ? s.votecount : 0,
+          thumbnail_url: s.thumbnail || '',
+          thumb_width: Array.isArray(s.thumbnail_dims)
+            ? s.thumbnail_dims[0]
+            : 0,
+          thumb_height: Array.isArray(s.thumbnail_dims)
+            ? s.thumbnail_dims[1]
+            : 0,
           order_no: i + 1
         }
       })
@@ -244,15 +250,15 @@ export async function syncVndbReleasesAndCompanies(
         }
         await prisma.patch_release.create({
           data: {
-            patch_id: patchId,
-            rid: r.id || null,
+            patch: { connect: { id: patchId } },
+            rid: r.id ? String(r.id) : '',
             title: r.title ?? '',
-            released: r.released || null,
+            released: r.released || '',
             platforms: Array.isArray(r.platforms) ? r.platforms : [],
             languages: Array.isArray(r.languages)
               ? r.languages.map((x) => x.lang || x).filter(Boolean)
               : [],
-            minage: r.minage ?? null
+            minage: typeof r.minage === 'number' ? r.minage : 0
           }
         })
       } catch (e) {
@@ -426,8 +432,12 @@ export async function handleBangumiSubjectAndTags(
       try {
         await prisma.patch_cover.upsert({
           where: { patch_id: patchId },
-          update: { image_id: null, url: subject.images.large },
-          create: { patch_id: patchId, image_id: null, url: subject.images.large }
+          update: { image_id: "", url: subject.images.large },
+          create: {
+            patch_id: patchId,
+            image_id: "",
+            url: subject.images.large
+          }
         })
       } catch (e) {
         console.warn('bangumi cover fallback failed:', e?.message || e)
@@ -548,19 +558,22 @@ export async function addBangumiCharactersToCharMap(subjectId, charMap) {
       try {
         const cdetail = await bgmGetCharacter(c.id)
         const { chinese, japanese } = splitSummary(cdetail?.summary || '')
+        const infobox = cdetail?.infobox || null
         if (targetKey) {
           const prev = charMap.get(targetKey) || entry
           charMap.set(targetKey, {
             ...prev,
             zhSummary: chinese || prev.zhSummary,
-            jaSummary: japanese || prev.jaSummary
+            jaSummary: japanese || prev.jaSummary,
+            infobox: infobox || prev.infobox
           })
         } else {
           const prev = charMap.get(k) || entry
           charMap.set(k, {
             ...prev,
             zhSummary: chinese || prev.zhSummary,
-            jaSummary: japanese || prev.jaSummary
+            jaSummary: japanese || prev.jaSummary,
+            infobox: infobox || prev.infobox
           })
         }
       } catch {}
@@ -744,9 +757,9 @@ export async function persistCharMap(charMap, baseDir, patchId) {
       name_en_us: val.nameEn || '',
       alias: [],
       image: '',
-      description_zh_cn: val.zhSummary || null,
-      description_ja_jp: val.jaSummary || null,
-      description_en_us: null,
+      description_zh_cn: val.zhSummary || '',
+      description_ja_jp: val.jaSummary || '',
+      description_en_us: '',
       roles: Array.isArray(val.roles) ? val.roles : []
     }
 
@@ -761,13 +774,11 @@ export async function persistCharMap(charMap, baseDir, patchId) {
     try {
       if (val.kind === 'person') {
         const personData = {
-          ...common,
-          kind: val.kind,
-          vndb_staff_id: val.vndb_staff_id || null,
-          bangumi_person_id: val.bangumi_person_id || null
+          ...common
         }
-        // gender is optional on patch_person; only include if present
-        if (val.gender) personData.gender = val.gender
+        if (val.vndb_staff_id) personData.vndb_staff_id = val.vndb_staff_id
+        if (val.bangumi_person_id) personData.bangumi_person_id = val.bangumi_person_id
+        // patch_person schema no longer has gender; do not include it
         if (personData.vndb_staff_id) {
           await prisma.patch_person.upsert({
             where: {
@@ -796,9 +807,12 @@ export async function persistCharMap(charMap, baseDir, patchId) {
       } else {
         const charData = {
           ...common,
-          vndb_char_id: val.vndb_char_id || null,
-          bangumi_character_id: val.bangumi_character_id || null
+          // Store Bangumi infobox as JSON string in patch_char.infobox
+          infobox: JSON.stringify(val.infobox || [])
         }
+        if (val.vndb_char_id) charData.vndb_char_id = val.vndb_char_id
+        if (val.bangumi_character_id)
+          charData.bangumi_character_id = val.bangumi_character_id
         // patch_char.gender is non-nullable with a default; avoid sending null
         if (val.gender) charData.gender = val.gender
         if (charData.vndb_char_id) {
