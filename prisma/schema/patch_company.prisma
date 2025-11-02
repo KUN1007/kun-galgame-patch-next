@@ -34,4 +34,3 @@ model patch_company_relation {
 
   @@unique([patch_id, company_id])
 }
-

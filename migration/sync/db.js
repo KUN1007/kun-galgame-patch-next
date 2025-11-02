@@ -12,6 +12,7 @@ export async function clearLegacyTables() {
     'patch_screenshot',
     'patch_char_infobox',
     'patch_char',
+    'patch_person',
     'patch_release',
     'patch_company',
     'patch_tag'
@@ -29,7 +30,8 @@ export async function upsertTagByName(
   description = '',
   ownerId = 1,
   provider = '',
-  nameEn = ''
+  nameEn = '',
+  category = 'content'
 ) {
   if (!name) return null
   const key = `${provider}:${name}`
@@ -44,6 +46,7 @@ export async function upsertTagByName(
       introduction_ja_jp: '',
       introduction_en_us: '',
       alias: [],
+      category,
       user_id: ownerId
     }
   })

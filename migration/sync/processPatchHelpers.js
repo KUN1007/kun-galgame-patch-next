@@ -1,12 +1,5 @@
 import { prisma } from './dbClient.js'
-import {
-  ensureDir,
-  sleep,
-  downloadImage,
-  splitSummary,
-  fs,
-  path
-} from './utils.js'
+import { ensureDir, sleep, splitSummary, fs, path } from './utils.js'
 import { vndbPost, vndbFindVnByName, vndbGetReleasesByVn } from './api/vndb.js'
 import {
   bgmPost,
@@ -18,6 +11,51 @@ import {
   pickBestBangumiSubject
 } from './api/bangumi.js'
 import { upsertCompanyByName, upsertTagByName } from './db.js'
+
+async function appendPersonLog(record) {
+  try {
+    const outDir = path.join('migration', 'sync', 'data')
+    await ensureDir(outDir)
+    const outFile = path.join(outDir, 'char.json')
+    let arr = []
+    try {
+      const src = await fs.readFile(outFile, 'utf8')
+      const parsed = JSON.parse(src)
+      if (Array.isArray(parsed)) arr = parsed
+    } catch {}
+    arr.push(record)
+    await fs.writeFile(outFile, JSON.stringify(arr, null, 2))
+  } catch (e) {
+    console.warn('appendPersonLog failed:', e?.message || e)
+  }
+}
+
+function normalizeJaName(name, options = {}) {
+  if (!name) return ''
+
+  let n = name
+
+  n = n.replace(/（.*?）|\(.*?\)|\[.*?\]|\【.*?\】/g, '')
+  n = n.replace(/[！-～]/g, (ch) =>
+    String.fromCharCode(ch.charCodeAt(0) - 0xfee0)
+  )
+  n = n.replace(/[\s　\t]+/g, '')
+  n = n.replace(/[・･＝=－—〜~‒–―]+/g, '')
+  n = n.replace(/[“”‘’'"「」『』]/g, '')
+  n = n
+    .normalize('NFD')
+    .replace(/[\u0300-\u036f]/g, '')
+    .toLowerCase()
+  if (options.kana === 'hiragana') {
+    n = n.replace(/[\u30a1-\u30f6]/g, (ch) =>
+      String.fromCharCode(ch.charCodeAt(0) - 0x60)
+    )
+  }
+  n = n.replace(/^[・･＝=－—〜~‒–―]+|[・･＝=－—〜~‒–―]+$/g, '')
+  n = n.replace(/＝|・|･/g, '')
+
+  return n.trim()
+}
 
 export async function resolveVndbId(patch) {
   let vndbId = patch.vndb_id || null
@@ -78,7 +116,12 @@ export async function syncVndbTags(vnDetail, ownerId, patchId, tagMap) {
   for (const t of vnDetail.tags) {
     const en = t.name || ''
     const zh = tagMap && en && tagMap[en] ? tagMap[en] : en
-    const tid = await upsertTagByName(zh, '', ownerId, 'vndb', en)
+    // Map VNDB category shorthand to internal category
+    let category = 'content'
+    if (t.category === 'cont') category = 'content'
+    else if (t.category === 'ero') category = 'sexual'
+    else if (t.category === 'tech') category = 'technical'
+    const tid = await upsertTagByName(zh, '', ownerId, 'vndb', en, category)
     if (!tid) continue
     try {
       await prisma.patch_tag.update({
@@ -88,7 +131,11 @@ export async function syncVndbTags(vnDetail, ownerId, patchId, tagMap) {
     } catch {}
     try {
       await prisma.patch_tag_relation.create({
-        data: { patch_id: patchId, tag_id: tid }
+        data: {
+          patch_id: patchId,
+          tag_id: tid,
+          spoiler_level: Number.isInteger(t.spoiler) ? t.spoiler : 0
+        }
       })
     } catch {}
   }
@@ -108,14 +155,6 @@ export async function syncVndbCover(vnDetail, baseDir, patchId) {
   if (!vnDetail?.image?.url) return
   const c = vnDetail.image
   try {
-    const { buf, ext } = await downloadImage(c.url)
-    const outDir = path.join(baseDir, 'cover')
-    await ensureDir(outDir)
-    await fs.writeFile(path.join(outDir, `banner.${ext}`), buf)
-  } catch (e) {
-    console.warn('cover download/process failed:', e?.message || e)
-  }
-  try {
     await prisma.patch_cover.upsert({
       where: { patch_id: patchId },
       update: {
@@ -127,12 +166,8 @@ export async function syncVndbCover(vnDetail, baseDir, patchId) {
         violence: c.violence ?? null,
         votecount: c.votecount ?? null,
         thumbnail_url: c.thumbnail || null,
-        thumb_width: Array.isArray(c.thumbnail_dims)
-          ? c.thumbnail_dims[0]
-          : null,
-        thumb_height: Array.isArray(c.thumbnail_dims)
-          ? c.thumbnail_dims[1]
-          : null
+        thumb_width: Array.isArray(c.thumbnail_dims) ? c.thumbnail_dims[0] : null,
+        thumb_height: Array.isArray(c.thumbnail_dims) ? c.thumbnail_dims[1] : null
       },
       create: {
         patch_id: patchId,
@@ -144,12 +179,8 @@ export async function syncVndbCover(vnDetail, baseDir, patchId) {
         violence: c.violence ?? null,
         votecount: c.votecount ?? null,
         thumbnail_url: c.thumbnail || null,
-        thumb_width: Array.isArray(c.thumbnail_dims)
-          ? c.thumbnail_dims[0]
-          : null,
-        thumb_height: Array.isArray(c.thumbnail_dims)
-          ? c.thumbnail_dims[1]
-          : null
+        thumb_width: Array.isArray(c.thumbnail_dims) ? c.thumbnail_dims[0] : null,
+        thumb_height: Array.isArray(c.thumbnail_dims) ? c.thumbnail_dims[1] : null
       }
     })
   } catch (e) {
@@ -163,14 +194,6 @@ export async function syncVndbScreenshots(vnDetail, baseDir, patchId) {
   for (let i = 0; i < vnDetail.screenshots.length; i++) {
     const s = vnDetail.screenshots[i]
     try {
-      const { buf, ext } = await downloadImage(s.url)
-      const outDir = path.join(baseDir, 'screenshots', `${i + 1}`)
-      await ensureDir(outDir)
-      await fs.writeFile(path.join(outDir, `shot.${ext}`), buf)
-    } catch (e) {
-      console.warn('screenshot download/process failed:', e?.message || e)
-    }
-    try {
       await prisma.patch_screenshot.create({
         data: {
           patch_id: patchId,
@@ -182,12 +205,8 @@ export async function syncVndbScreenshots(vnDetail, baseDir, patchId) {
           violence: s.violence ?? null,
           votecount: s.votecount ?? null,
           thumbnail_url: s.thumbnail || null,
-          thumb_width: Array.isArray(s.thumbnail_dims)
-            ? s.thumbnail_dims[0]
-            : null,
-          thumb_height: Array.isArray(s.thumbnail_dims)
-            ? s.thumbnail_dims[1]
-            : null,
+          thumb_width: Array.isArray(s.thumbnail_dims) ? s.thumbnail_dims[0] : null,
+          thumb_height: Array.isArray(s.thumbnail_dims) ? s.thumbnail_dims[1] : null,
           order_no: i + 1
         }
       })
@@ -282,7 +301,9 @@ export function initCharMapFromVndb(vnDetail) {
           kind: 'character',
           vndb_char_id: ch.id,
           name: ch.name || ch.original || '',
-          images: ch.image,
+          nameEn: ch.name || '',
+          nameJa: ch.original || '',
+          imagesVndb: ch.image,
           roles: ['voice']
         })
       }
@@ -294,8 +315,18 @@ export function initCharMapFromVndb(vnDetail) {
           kind: 'person',
           vndb_staff_id: staff.id,
           name: staff.name || staff.original || '',
-          images: null,
+          nameEn: staff.name || '',
+          nameJa: staff.original || '',
+          imagesVndb: null,
           roles: ['voice']
+        })
+        // Log VNDB staff entry from VA relation
+        appendPersonLog({
+          provider: 'vndb',
+          kind: 'staff',
+          id: staff.id,
+          name: staff.name || staff.original || '',
+          data: staff
         })
       }
     }
@@ -311,9 +342,19 @@ export function initCharMapFromVndb(vnDetail) {
           kind: 'person',
           vndb_staff_id: st.id,
           name: st.name || st.original || '',
-          images: null,
+          nameEn: st.name || '',
+          nameJa: st.original || '',
+          imagesVndb: null,
           roles
         })
+      // Log VNDB staff from staff list
+      appendPersonLog({
+        provider: 'vndb',
+        kind: 'staff',
+        id: st.id,
+        name: st.name || st.original || '',
+        data: st
+      })
     }
   }
   return charMap
@@ -383,18 +424,10 @@ export async function handleBangumiSubjectAndTags(
     } catch {}
     if (!vnDetail?.image?.url && subject?.images?.large) {
       try {
-        const { buf, ext } = await downloadImage(subject.images.large)
-        const outDir = path.join(baseDir, 'cover')
-        await ensureDir(outDir)
-        await fs.writeFile(path.join(outDir, `banner.${ext}`), buf)
         await prisma.patch_cover.upsert({
           where: { patch_id: patchId },
           update: { image_id: null, url: subject.images.large },
-          create: {
-            patch_id: patchId,
-            image_id: null,
-            url: subject.images.large
-          }
+          create: { patch_id: patchId, image_id: null, url: subject.images.large }
         })
       } catch (e) {
         console.warn('bangumi cover fallback failed:', e?.message || e)
@@ -419,11 +452,19 @@ export async function handleBangumiSubjectAndTags(
     if (Array.isArray(subject?.tags) && subject.tags.length) {
       for (const tg of subject.tags) {
         const tname = tg?.name || ''
-        const tid = await upsertTagByName(tname, '', ownerId, 'bangumi', '')
+        // Bangumi tags are treated as sexual by default
+        const tid = await upsertTagByName(
+          tname,
+          '',
+          ownerId,
+          'bangumi',
+          '',
+          'sexual'
+        )
         if (!tid) continue
         try {
           await prisma.patch_tag_relation.create({
-            data: { patch_id: patchId, tag_id: tid }
+            data: { patch_id: patchId, tag_id: tid, spoiler_level: 0 }
           })
         } catch {}
       }
@@ -457,28 +498,71 @@ export async function addBangumiCharactersToCharMap(subjectId, charMap) {
     const chars = await bgmGetSubjectCharacters(subjectId)
     for (const c of chars || []) {
       const k = `bgm-char:${c.id}`
+      const ja = c.name || ''
+      const zh = c.name_cn || ''
       const entry = {
         source: 'bangumi',
         kind: 'character',
         bangumi_character_id: c.id,
         name: c.name || c.name_cn || '',
-        images: c.images || null,
+        nameJa: ja,
+        nameZh: zh,
+        imagesBgm: c.images || null,
         roles: []
       }
       if (c.summary) {
         const { chinese, japanese } = splitSummary(c.summary)
         Object.assign(entry, { zhSummary: chinese, jaSummary: japanese })
       }
-      if (!charMap.has(k)) charMap.set(k, entry)
+
+      // Try to match with existing VNDB character by Japanese name
+      let targetKey = null
+      for (const [ck, cv] of charMap.entries()) {
+        if (cv && cv.kind === 'character') {
+          const vJa = cv.nameJa || ''
+          if (
+            vJa &&
+            normalizeJaName(vJa) &&
+            normalizeJaName(vJa) === normalizeJaName(ja)
+          ) {
+            targetKey = ck
+            break
+          }
+        }
+      }
+
+      if (targetKey) {
+        const prev = charMap.get(targetKey) || {}
+        charMap.set(targetKey, {
+          ...prev,
+          bangumi_character_id: c.id,
+          nameJa: prev.nameJa || ja,
+          nameZh: prev.nameZh || zh,
+          imagesBgm: c.images || prev.imagesBgm || null,
+          zhSummary: entry.zhSummary || prev.zhSummary,
+          jaSummary: entry.jaSummary || prev.jaSummary
+        })
+      } else {
+        if (!charMap.has(k)) charMap.set(k, entry)
+      }
       try {
         const cdetail = await bgmGetCharacter(c.id)
         const { chinese, japanese } = splitSummary(cdetail?.summary || '')
-        const prev = charMap.get(k) || entry
-        charMap.set(k, {
-          ...prev,
-          zhSummary: chinese || prev.zhSummary,
-          jaSummary: japanese || prev.jaSummary
-        })
+        if (targetKey) {
+          const prev = charMap.get(targetKey) || entry
+          charMap.set(targetKey, {
+            ...prev,
+            zhSummary: chinese || prev.zhSummary,
+            jaSummary: japanese || prev.jaSummary
+          })
+        } else {
+          const prev = charMap.get(k) || entry
+          charMap.set(k, {
+            ...prev,
+            zhSummary: chinese || prev.zhSummary,
+            jaSummary: japanese || prev.jaSummary
+          })
+        }
       } catch {}
     }
     await sleep(200)
@@ -498,7 +582,7 @@ export async function addBangumiPersonsAndCompanies(
     const persons = await bgmGetSubjectPersons(subjectId)
     const companyIds = new Set()
     for (const p of persons || []) {
-      if (p.type === 2 || p.type === 3) {
+      if (p.type === 2) {
         try {
           const compId = await upsertCompanyByName(p.name || '', null, [], [])
           if (compId) companyIds.add(compId)
@@ -518,23 +602,10 @@ export async function addBangumiPersonsAndCompanies(
             const logoUrl =
               p.images?.large || p.images?.medium || p.images?.small || ''
             if (logoUrl) {
-              const { buf, ext } = await downloadImage(logoUrl)
-              const compDir = path.join(baseDir, 'companies', String(compId))
-              await ensureDir(compDir)
-              const fileName = `logo.${ext}`
-              await fs.writeFile(path.join(compDir, fileName), buf)
-              const relLogoPath = [
-                'migration',
-                'temp',
-                `patch-${patchId}`,
-                'companies',
-                String(compId),
-                fileName
-              ].join('/')
               try {
                 await prisma.patch_company.update({
                   where: { id: compId },
-                  data: { logo: relLogoPath }
+                  data: { logo: logoUrl }
                 })
               } catch {}
             }
@@ -556,23 +627,10 @@ export async function addBangumiPersonsAndCompanies(
                 detail?.images?.small ||
                 ''
               if (dlogo) {
-                const { buf, ext } = await downloadImage(dlogo)
-                const compDir = path.join(baseDir, 'companies', String(compId))
-                await ensureDir(compDir)
-                const fileName = `logo.${ext}`
-                await fs.writeFile(path.join(compDir, fileName), buf)
-                const relLogoPath = [
-                  'migration',
-                  'temp',
-                  `patch-${patchId}`,
-                  'companies',
-                  String(compId),
-                  fileName
-                ].join('/')
                 try {
                   await prisma.patch_company.update({
                     where: { id: compId },
-                    data: { logo: relLogoPath }
+                    data: { logo: dlogo }
                   })
                 } catch {}
               }
@@ -581,27 +639,84 @@ export async function addBangumiPersonsAndCompanies(
         } catch {}
       } else {
         const k = `bgm-person:${p.id}`
+        const ja = p.name || ''
         const base = {
           source: 'bangumi',
           kind: 'person',
           bangumi_person_id: p.id,
           name: p.name || p.name_cn || '',
-          images: p.images || null,
+          nameJa: ja,
+          imagesBgm: p.images || null,
           roles: []
         }
         if (p.summary) {
           const { chinese, japanese } = splitSummary(p.summary)
           Object.assign(base, { zhSummary: chinese, jaSummary: japanese })
         }
-        if (!charMap.has(k)) charMap.set(k, base)
+
+        // Try to match with existing VNDB staff by Japanese name
+        let targetKey = null
+        for (const [ck, cv] of charMap.entries()) {
+          if (cv && cv.kind === 'person') {
+            const vJa = cv.nameJa || ''
+            if (
+              vJa &&
+              normalizeJaName(vJa) &&
+              normalizeJaName(vJa) === normalizeJaName(ja)
+            ) {
+              targetKey = ck
+              break
+            }
+          }
+        }
+
+        if (targetKey) {
+          const prev = charMap.get(targetKey) || {}
+          charMap.set(targetKey, {
+            ...prev,
+            bangumi_person_id: p.id,
+            nameJa: prev.nameJa || ja,
+            imagesBgm: p.images || prev.imagesBgm || null,
+            zhSummary: base.zhSummary || prev.zhSummary,
+            jaSummary: base.jaSummary || prev.jaSummary
+          })
+        } else {
+          if (!charMap.has(k)) charMap.set(k, base)
+        }
+
+        // Log Bangumi person (list item)
+        appendPersonLog({
+          provider: 'bangumi',
+          kind: 'person',
+          id: p.id,
+          name: p.name || p.name_cn || '',
+          data: p
+        })
         try {
           const detail = await bgmGetPerson(p.id)
           const { chinese, japanese } = splitSummary(detail?.summary || '')
-          const prev = charMap.get(k) || base
-          charMap.set(k, {
-            ...prev,
-            zhSummary: chinese || prev.zhSummary,
-            jaSummary: japanese || prev.jaSummary
+          if (targetKey) {
+            const prev = charMap.get(targetKey) || base
+            charMap.set(targetKey, {
+              ...prev,
+              zhSummary: chinese || prev.zhSummary,
+              jaSummary: japanese || prev.jaSummary
+            })
+          } else {
+            const prev = charMap.get(k) || base
+            charMap.set(k, {
+              ...prev,
+              zhSummary: chinese || prev.zhSummary,
+              jaSummary: japanese || prev.jaSummary
+            })
+          }
+          // Log Bangumi person detail
+          appendPersonLog({
+            provider: 'bangumi',
+            kind: 'person',
+            id: p.id,
+            name: detail?.name || detail?.name_cn || p.name || p.name_cn || '',
+            data: detail || {}
           })
         } catch {}
       }
@@ -621,59 +736,99 @@ export async function addBangumiPersonsAndCompanies(
 
 export async function persistCharMap(charMap, baseDir, patchId) {
   for (const [key, val] of charMap) {
-    const data = {
+    // Common fields shared by both models (excluding schema-specific ones)
+    const common = {
       patch_id: patchId,
-      source: val.source,
-      kind: val.kind,
-      vndb_char_id: val.vndb_char_id || null,
-      vndb_staff_id: val.vndb_staff_id || null,
-      bangumi_person_id: val.bangumi_person_id || null,
-      bangumi_character_id: val.bangumi_character_id || null,
-      name: val.name || '',
-      name_zh_cn: '',
-      name_ja_jp: '',
-      name_en_us: '',
+      name_zh_cn: val.nameZh || '',
+      name_ja_jp: val.nameJa || '',
+      name_en_us: val.nameEn || '',
       alias: [],
-      gender: null,
-      blood_type: null,
-      birth_year: null,
-      birth_mon: null,
-      birth_day: null,
-      image: null,
-      image_small: null,
-      image_medium: null,
-      image_large: null,
-      image_grid: null,
-      description: null,
-      description_zh_cn: null,
+      image: '',
+      description_zh_cn: val.zhSummary || null,
       description_ja_jp: val.jaSummary || null,
       description_en_us: null,
       roles: Array.isArray(val.roles) ? val.roles : []
     }
+
     let imgUrl = null
-    if (val.images?.url) imgUrl = val.images.url
+    if (val.imagesBgm?.large) imgUrl = val.imagesBgm.large
     else if (val.images?.large) imgUrl = val.images.large
-    else if (val.images?.medium) imgUrl = val.images.medium
-    else if (val.images?.small) imgUrl = val.images.small
+    else if (val.imagesVndb?.url) imgUrl = val.imagesVndb.url
     if (imgUrl) {
-      try {
-        const { buf, ext } = await downloadImage(imgUrl)
-        const outDir = path.join(
-          baseDir,
-          'chars',
-          `${val.vndb_char_id || val.vndb_staff_id || val.bangumi_character_id || val.bangumi_person_id || 'unknown'}`
-        )
-        await ensureDir(outDir)
-        await fs.writeFile(path.join(outDir, `portrait.${ext}`), buf)
-        data.image = imgUrl
-      } catch (e) {
-        console.warn('char image process failed:', e?.message || e)
-      }
+      common.image = imgUrl
     }
+
     try {
-      await prisma.patch_char.create({ data })
+      if (val.kind === 'person') {
+        const personData = {
+          ...common,
+          kind: val.kind,
+          vndb_staff_id: val.vndb_staff_id || null,
+          bangumi_person_id: val.bangumi_person_id || null
+        }
+        // gender is optional on patch_person; only include if present
+        if (val.gender) personData.gender = val.gender
+        if (personData.vndb_staff_id) {
+          await prisma.patch_person.upsert({
+            where: {
+              patch_id_vndb_staff_id: {
+                patch_id: personData.patch_id,
+                vndb_staff_id: personData.vndb_staff_id
+              }
+            },
+            update: personData,
+            create: personData
+          })
+        } else if (personData.bangumi_person_id) {
+          await prisma.patch_person.upsert({
+            where: {
+              patch_id_bangumi_person_id: {
+                patch_id: personData.patch_id,
+                bangumi_person_id: personData.bangumi_person_id
+              }
+            },
+            update: personData,
+            create: personData
+          })
+        } else {
+          await prisma.patch_person.create({ data: personData })
+        }
+      } else {
+        const charData = {
+          ...common,
+          vndb_char_id: val.vndb_char_id || null,
+          bangumi_character_id: val.bangumi_character_id || null
+        }
+        // patch_char.gender is non-nullable with a default; avoid sending null
+        if (val.gender) charData.gender = val.gender
+        if (charData.vndb_char_id) {
+          await prisma.patch_char.upsert({
+            where: {
+              patch_id_vndb_char_id: {
+                patch_id: charData.patch_id,
+                vndb_char_id: charData.vndb_char_id
+              }
+            },
+            update: charData,
+            create: charData
+          })
+        } else if (charData.bangumi_character_id) {
+          await prisma.patch_char.upsert({
+            where: {
+              patch_id_bangumi_character_id: {
+                patch_id: charData.patch_id,
+                bangumi_character_id: charData.bangumi_character_id
+              }
+            },
+            update: charData,
+            create: charData
+          })
+        } else {
+          await prisma.patch_char.create({ data: charData })
+        }
+      }
     } catch (e) {
-      console.warn('patch_char create failed:', e?.message || e)
+      console.warn('patch_char/person upsert failed:', e?.message || e)
     }
     await sleep(120)
   }

@@ -1,5 +1,5 @@
 import { prisma } from './dbClient.js'
-import { ensureDir, path } from './utils.js'
+import { path } from './utils.js'
 import { loadVndbTagMap } from './tagMap.js'
 import {
   resolveVndbId,
@@ -23,7 +23,7 @@ export async function processPatch(patch) {
   const vndbId = await resolveVndbId(patch)
 
   const baseDir = path.join('migration', 'temp', `patch-${patch.id}`)
-  await ensureDir(baseDir)
+  // No-op: we no longer write images to disk
 
   const vnDetail = await fetchVndbDetailAndSyncNames(vndbId, patch.id)
   const tagMap = await loadVndbTagMap()

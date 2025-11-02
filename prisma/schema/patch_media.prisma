@@ -47,4 +47,3 @@ model patch_screenshot {
   @@index([image_id])
   @@unique([patch_id, image_id])
 }
-

@@ -45,9 +45,9 @@ model patch {
   pr       patch_pull_request[] @relation("patch_pull_request")
 
   char     patch_char[]
+  person   patch_person[]
   release  patch_release[]
 
   created DateTime @default(now())
   updated DateTime @updatedAt
 }
-
