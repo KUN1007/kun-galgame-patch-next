@@ -32,6 +32,96 @@ export interface Patch {
   }
 }
 
+export interface PatchDetail {
+  id: number
+  name: string
+  name_en_us: string
+  name_ja_jp: string
+  name_zh_cn: string
+  banner: string
+  content_limit: string
+  view: number
+  download: number
+  released: string
+  type: string[]
+  language: string[]
+  engine: string[]
+  platform: string[]
+  alias: string[]
+  introduction_zh_cn: string
+  introduction_ja_jp: string
+  introduction_en_us: string
+  vndbId: string
+  cover: {
+    url: string
+    image_id: string
+    width: number
+    height: number
+    thumbnail_url: string
+    thumb_width: number
+    thumb_height: number
+  } | null
+  screenshot: {
+    id: number
+    image_id: string
+    url: string
+    width: number
+    height: number
+    thumbnail_url: string
+    thumb_width: number
+    thumb_height: number
+    order_no: number
+  }[]
+  tag: {
+    id: number
+    name: string
+    name_en_us: string
+    category: string
+    spoiler_level: number
+    provider: string
+  }[]
+  company: {
+    id: number
+    name: string
+    logo: string
+  }[]
+  release: {
+    id: number
+    rid: string
+    title: string
+    released: string
+    platforms: string[]
+    languages: string[]
+    minage: number
+  }[]
+  char: {
+    id: number
+    image: string
+    gender: string
+    roles: string[]
+    name_zh_cn: string
+    name_ja_jp: string
+    name_en_us: string
+    description_zh_cn: string
+    description_ja_jp: string
+    description_en_us: string
+    infobox: string
+  }[]
+  person: {
+    id: number
+    image: string
+    roles: string[]
+    name_zh_cn: string
+    name_ja_jp: string
+    name_en_us: string
+    description_zh_cn: string
+    description_ja_jp: string
+    description_en_us: string
+  }[]
+  created: string
+  updated: string
+}
+
 export interface PatchIntroduction {
   vndbId: string | null
   introduction: string
