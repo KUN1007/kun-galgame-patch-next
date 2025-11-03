@@ -73,7 +73,8 @@ export const getPatchDetail = async (
         name_en_us: tr.tag.name_en_us,
         category: tr.tag.category,
         spoiler_level: tr.spoiler_level,
-        provider: tr.tag.provider
+        provider: tr.tag.provider,
+        count: tr.tag.count
       }))
       .filter(
         (t) => nsfwEnable.content_limit !== 'sfw' || t.category !== 'sexual'
@@ -81,7 +82,8 @@ export const getPatchDetail = async (
     company: patch.company.map((cr) => ({
       id: cr.company.id,
       name: cr.company.name,
-      logo: cr.company.logo
+      logo: cr.company.logo,
+      count: cr.company.count
     })),
     release: patch.release.map((r) => ({
       id: r.id,

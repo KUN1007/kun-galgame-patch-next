@@ -14,7 +14,7 @@ export const PersonSection = ({ detail }: { detail: PatchDetail }) => (
         <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-3">
           {detail.person.map((p) => (
             <div key={p.id} className="flex gap-3">
-              <div className="size-16 sm:size-20 rounded-xl bg-default-100 overflow-hidden flex items-center justify-center">
+              <div className="w-20 h-20 rounded-xl bg-default-100 overflow-hidden flex items-center justify-center">
                 <Image
                   src={p.image || '/person.avif'}
                   alt={p.name_zh_cn || p.name_ja_jp}

@@ -1,3 +1,37 @@
+async function normalizeNamesForMatching(bgmName, bgmInfobox) {
+  const names = new Set()
+  if (bgmName) names.add(normalizeJaName(bgmName))
+  try {
+    const aliasEntry = (bgmInfobox || []).find(
+      (x) => x && x.key && (x.key === '别名' || x.key === '別名')
+    )
+    if (aliasEntry) {
+      const val = aliasEntry.value
+      if (Array.isArray(val)) {
+        for (const item of val) {
+          const v = typeof item === 'string' ? item : item?.v
+          if (v) names.add(normalizeJaName(String(v)))
+        }
+      } else if (typeof val === 'string') {
+        names.add(normalizeJaName(val))
+      }
+    }
+  } catch {}
+  return Array.from(names).filter(Boolean)
+}
+
+function normalizeNamesFromVndbStaff(st) {
+  const names = new Set()
+  if (st?.name) names.add(normalizeJaName(st.name))
+  if (st?.original) names.add(normalizeJaName(st.original))
+  if (Array.isArray(st?.aliases)) {
+    for (const a of st.aliases) {
+      if (a?.name) names.add(normalizeJaName(a.name))
+      if (a?.latin) names.add(normalizeJaName(a.latin))
+    }
+  }
+  return Array.from(names).filter(Boolean)
+}
 import { prisma } from './dbClient.js'
 import { ensureDir, sleep, splitSummary, fs, path } from './utils.js'
 import { vndbPost, vndbFindVnByName, vndbGetReleasesByVn } from './api/vndb.js'
@@ -11,13 +45,14 @@ import {
   pickBestBangumiSubject
 } from './api/bangumi.js'
 import { upsertCompanyByName, upsertTagByName } from './db.js'
+import { vndbGetStaffByIds, vndbGetCharactersByIds } from './api/vndb.js'
 
 async function appendPersonLog(record) {
   try {
     const outDir = path.join('migration', 'sync', 'data')
     await ensureDir(outDir)
     const outFile = path.join(outDir, 'char.json')
-    const line = JSON.stringify(record) + '\n'
+    const line = JSON.stringify(record) + ''
     await fs.appendFile(outFile, line, { encoding: 'utf8' })
   } catch (e) {
     console.warn('appendPersonLog failed:', e?.message || e)
@@ -131,6 +166,12 @@ export async function syncVndbTags(vnDetail, ownerId, patchId, tagMap) {
           spoiler_level: Number.isInteger(t.spoiler) ? t.spoiler : 0
         }
       })
+      try {
+        await prisma.patch_tag.update({
+          where: { id: tid },
+          data: { count: { increment: 1 } }
+        })
+      } catch {}
     } catch {}
   }
 }
@@ -160,12 +201,8 @@ export async function syncVndbCover(vnDetail, baseDir, patchId) {
         violence: typeof c.violence === 'number' ? c.violence : 0,
         votecount: typeof c.votecount === 'number' ? c.votecount : 0,
         thumbnail_url: c.thumbnail || '',
-        thumb_width: Array.isArray(c.thumbnail_dims)
-          ? c.thumbnail_dims[0]
-          : 0,
-        thumb_height: Array.isArray(c.thumbnail_dims)
-          ? c.thumbnail_dims[1]
-          : 0
+        thumb_width: Array.isArray(c.thumbnail_dims) ? c.thumbnail_dims[0] : 0,
+        thumb_height: Array.isArray(c.thumbnail_dims) ? c.thumbnail_dims[1] : 0
       },
       create: {
         patch_id: patchId,
@@ -177,12 +214,8 @@ export async function syncVndbCover(vnDetail, baseDir, patchId) {
         violence: typeof c.violence === 'number' ? c.violence : 0,
         votecount: typeof c.votecount === 'number' ? c.votecount : 0,
         thumbnail_url: c.thumbnail || '',
-        thumb_width: Array.isArray(c.thumbnail_dims)
-          ? c.thumbnail_dims[0]
-          : 0,
-        thumb_height: Array.isArray(c.thumbnail_dims)
-          ? c.thumbnail_dims[1]
-          : 0
+        thumb_width: Array.isArray(c.thumbnail_dims) ? c.thumbnail_dims[0] : 0,
+        thumb_height: Array.isArray(c.thumbnail_dims) ? c.thumbnail_dims[1] : 0
       }
     })
   } catch (e) {
@@ -283,6 +316,12 @@ export async function syncVndbReleasesAndCompanies(
         await prisma.patch_company_relation.create({
           data: { patch_id: patchId, company_id: compId }
         })
+        try {
+          await prisma.patch_company.update({
+            where: { id: compId },
+            data: { count: { increment: 1 } }
+          })
+        } catch {}
       } catch {}
     }
     await sleep(300)
@@ -432,10 +471,10 @@ export async function handleBangumiSubjectAndTags(
       try {
         await prisma.patch_cover.upsert({
           where: { patch_id: patchId },
-          update: { image_id: "", url: subject.images.large },
+          update: { image_id: '', url: subject.images.large },
           create: {
             patch_id: patchId,
-            image_id: "",
+            image_id: '',
             url: subject.images.large
           }
         })
@@ -476,6 +515,12 @@ export async function handleBangumiSubjectAndTags(
           await prisma.patch_tag_relation.create({
             data: { patch_id: patchId, tag_id: tid, spoiler_level: 0 }
           })
+          try {
+            await prisma.patch_tag.update({
+              where: { id: tid },
+              data: { count: { increment: 1 } }
+            })
+          } catch {}
         } catch {}
       }
     }
@@ -510,6 +555,11 @@ export async function addBangumiCharactersToCharMap(subjectId, charMap) {
       const k = `bgm-char:${c.id}`
       const ja = c.name || ''
       const zh = c.name_cn || ''
+      // 依据 Bangumi 关系推断主/配角
+      const rel = String(c.relation || c.relation_name || '').toLowerCase()
+      const roleSet = new Set()
+      if (rel.includes('主') || rel.includes('main')) roleSet.add('main')
+      else if (rel) roleSet.add('supporting')
       const entry = {
         source: 'bangumi',
         kind: 'character',
@@ -518,7 +568,7 @@ export async function addBangumiCharactersToCharMap(subjectId, charMap) {
         nameJa: ja,
         nameZh: zh,
         imagesBgm: c.images || null,
-        roles: []
+        roles: Array.from(roleSet)
       }
       if (c.summary) {
         const { chinese, japanese } = splitSummary(c.summary)
@@ -558,6 +608,12 @@ export async function addBangumiCharactersToCharMap(subjectId, charMap) {
       try {
         const cdetail = await bgmGetCharacter(c.id)
         const { chinese, japanese } = splitSummary(cdetail?.summary || '')
+        const mappedGender =
+          g.includes('male') || g.includes('男')
+            ? 'male'
+            : g.includes('female') || g.includes('女')
+              ? 'female'
+              : 'unknown'
         const infobox = cdetail?.infobox || null
         if (targetKey) {
           const prev = charMap.get(targetKey) || entry
@@ -565,16 +621,230 @@ export async function addBangumiCharactersToCharMap(subjectId, charMap) {
             ...prev,
             zhSummary: chinese || prev.zhSummary,
             jaSummary: japanese || prev.jaSummary,
+            gender: mappedGender || prev.gender,
             infobox: infobox || prev.infobox
           })
+          // parse additional infobox fields for character
+          try {
+            const inf = infobox || []
+            const zhName = inf.find((x) => x.key === '简体中文名')?.value || ''
+            if (zhName) {
+              const prevN =
+                (targetKey ? charMap.get(targetKey) : charMap.get(k)) || entry
+              const objN = { ...prevN, nameZh: prevN.nameZh || String(zhName) }
+              if (targetKey) charMap.set(targetKey, objN)
+              else charMap.set(k, objN)
+            }
+            const aliasEntry = inf.find((x) => x.key === '别名')
+            if (aliasEntry) {
+              const vals = Array.isArray(aliasEntry.value)
+                ? aliasEntry.value
+                    .map((i) => (typeof i === 'string' ? i : i?.v))
+                    .filter(Boolean)
+                : aliasEntry.value
+                  ? [aliasEntry.value]
+                  : []
+              if (vals.length) {
+                const prevA =
+                  (targetKey ? charMap.get(targetKey) : charMap.get(k)) || entry
+                const merged = Array.from(
+                  new Set([...(prevA.char_aliases || []), ...vals])
+                )
+                const objA = { ...prevA, char_aliases: merged }
+                if (targetKey) charMap.set(targetKey, objA)
+                else charMap.set(k, objA)
+              }
+            }
+            const bwhEntry = inf.find(
+              (x) => x.key && x.key.toUpperCase() === 'BWH'
+            )
+            if (bwhEntry && typeof bwhEntry.value === 'string') {
+              const m = bwhEntry.value.match(
+                /B(\d+)\s*\/\s*W(\d+)\s*\/\s*H(\d+)/i
+              )
+              if (m) {
+                const [_, B, W, H] = m
+                const prevB =
+                  (targetKey ? charMap.get(targetKey) : charMap.get(k)) || entry
+                const objB = {
+                  ...prevB,
+                  bust: Number(B) || 0,
+                  waist: Number(W) || 0,
+                  hips: Number(H) || 0
+                }
+                if (targetKey) charMap.set(targetKey, objB)
+                else charMap.set(k, objB)
+              }
+            }
+          } catch {}
+          // parse additional infobox fields for character
+          try {
+            const inf = infobox || []
+            const zhName = inf.find((x) => x.key === '简体中文名')?.value || ''
+            if (zhName) {
+              const prevN =
+                (targetKey ? charMap.get(targetKey) : charMap.get(k)) || entry
+              const objN = { ...prevN, nameZh: prevN.nameZh || String(zhName) }
+              if (targetKey) charMap.set(targetKey, objN)
+              else charMap.set(k, objN)
+            }
+            const aliasEntry = inf.find((x) => x.key === '别名')
+            if (aliasEntry) {
+              const vals = Array.isArray(aliasEntry.value)
+                ? aliasEntry.value
+                    .map((i) => (typeof i === 'string' ? i : i?.v))
+                    .filter(Boolean)
+                : aliasEntry.value
+                  ? [aliasEntry.value]
+                  : []
+              if (vals.length) {
+                const prevA =
+                  (targetKey ? charMap.get(targetKey) : charMap.get(k)) || entry
+                const merged = Array.from(
+                  new Set([...(prevA.char_aliases || []), ...vals])
+                )
+                const objA = { ...prevA, char_aliases: merged }
+                if (targetKey) charMap.set(targetKey, objA)
+                else charMap.set(k, objA)
+              }
+            }
+            const bwhEntry = inf.find(
+              (x) => x.key && x.key.toUpperCase() === 'BWH'
+            )
+            if (bwhEntry && typeof bwhEntry.value === 'string') {
+              const m = bwhEntry.value.match(
+                /B(\d+)\s*\/\s*W(\d+)\s*\/\s*H(\d+)/i
+              )
+              if (m) {
+                const [_, B, W, H] = m
+                const prevB =
+                  (targetKey ? charMap.get(targetKey) : charMap.get(k)) || entry
+                const objB = {
+                  ...prevB,
+                  bust: Number(B) || 0,
+                  waist: Number(W) || 0,
+                  hips: Number(H) || 0
+                }
+                if (targetKey) charMap.set(targetKey, objB)
+                else charMap.set(k, objB)
+              }
+            }
+          } catch {}
         } else {
           const prev = charMap.get(k) || entry
           charMap.set(k, {
             ...prev,
             zhSummary: chinese || prev.zhSummary,
             jaSummary: japanese || prev.jaSummary,
+            gender: mappedGender || prev.gender,
             infobox: infobox || prev.infobox
           })
+          // parse additional infobox fields for character
+          try {
+            const inf = infobox || []
+            const zhName = inf.find((x) => x.key === '简体中文名')?.value || ''
+            if (zhName) {
+              const prevN =
+                (targetKey ? charMap.get(targetKey) : charMap.get(k)) || entry
+              const objN = { ...prevN, nameZh: prevN.nameZh || String(zhName) }
+              if (targetKey) charMap.set(targetKey, objN)
+              else charMap.set(k, objN)
+            }
+            const aliasEntry = inf.find((x) => x.key === '别名')
+            if (aliasEntry) {
+              const vals = Array.isArray(aliasEntry.value)
+                ? aliasEntry.value
+                    .map((i) => (typeof i === 'string' ? i : i?.v))
+                    .filter(Boolean)
+                : aliasEntry.value
+                  ? [aliasEntry.value]
+                  : []
+              if (vals.length) {
+                const prevA =
+                  (targetKey ? charMap.get(targetKey) : charMap.get(k)) || entry
+                const merged = Array.from(
+                  new Set([...(prevA.char_aliases || []), ...vals])
+                )
+                const objA = { ...prevA, char_aliases: merged }
+                if (targetKey) charMap.set(targetKey, objA)
+                else charMap.set(k, objA)
+              }
+            }
+            const bwhEntry = inf.find(
+              (x) => x.key && x.key.toUpperCase() === 'BWH'
+            )
+            if (bwhEntry && typeof bwhEntry.value === 'string') {
+              const m = bwhEntry.value.match(
+                /B(\d+)\s*\/\s*W(\d+)\s*\/\s*H(\d+)/i
+              )
+              if (m) {
+                const [_, B, W, H] = m
+                const prevB =
+                  (targetKey ? charMap.get(targetKey) : charMap.get(k)) || entry
+                const objB = {
+                  ...prevB,
+                  bust: Number(B) || 0,
+                  waist: Number(W) || 0,
+                  hips: Number(H) || 0
+                }
+                if (targetKey) charMap.set(targetKey, objB)
+                else charMap.set(k, objB)
+              }
+            }
+          } catch {}
+          // parse additional infobox fields for character
+          try {
+            const inf = infobox || []
+            const zhName = inf.find((x) => x.key === '简体中文名')?.value || ''
+            if (zhName) {
+              const prevN =
+                (targetKey ? charMap.get(targetKey) : charMap.get(k)) || entry
+              const objN = { ...prevN, nameZh: prevN.nameZh || String(zhName) }
+              if (targetKey) charMap.set(targetKey, objN)
+              else charMap.set(k, objN)
+            }
+            const aliasEntry = inf.find((x) => x.key === '别名')
+            if (aliasEntry) {
+              const vals = Array.isArray(aliasEntry.value)
+                ? aliasEntry.value
+                    .map((i) => (typeof i === 'string' ? i : i?.v))
+                    .filter(Boolean)
+                : aliasEntry.value
+                  ? [aliasEntry.value]
+                  : []
+              if (vals.length) {
+                const prevA =
+                  (targetKey ? charMap.get(targetKey) : charMap.get(k)) || entry
+                const merged = Array.from(
+                  new Set([...(prevA.char_aliases || []), ...vals])
+                )
+                const objA = { ...prevA, char_aliases: merged }
+                if (targetKey) charMap.set(targetKey, objA)
+                else charMap.set(k, objA)
+              }
+            }
+            const bwhEntry = inf.find(
+              (x) => x.key && x.key.toUpperCase() === 'BWH'
+            )
+            if (bwhEntry && typeof bwhEntry.value === 'string') {
+              const m = bwhEntry.value.match(
+                /B(\d+)\s*\/\s*W(\d+)\s*\/\s*H(\d+)/i
+              )
+              if (m) {
+                const [_, B, W, H] = m
+                const prevB =
+                  (targetKey ? charMap.get(targetKey) : charMap.get(k)) || entry
+                const objB = {
+                  ...prevB,
+                  bust: Number(B) || 0,
+                  waist: Number(W) || 0,
+                  hips: Number(H) || 0
+                }
+                if (targetKey) charMap.set(targetKey, objB)
+                else charMap.set(k, objB)
+              }
+            }
+          } catch {}
         }
       } catch {}
     }
@@ -667,16 +937,28 @@ export async function addBangumiPersonsAndCompanies(
           Object.assign(base, { zhSummary: chinese, jaSummary: japanese })
         }
 
-        // Try to match with existing VNDB staff by Japanese name
+        // Match Bangumi person with VNDB staff via normalized aliases
         let targetKey = null
+        let detail = null
+        try {
+          detail = await bgmGetPerson(p.id)
+        } catch {}
+        const bgmNorms = await normalizeNamesForMatching(
+          p.name || p.name_cn || '',
+          detail?.infobox || []
+        )
         for (const [ck, cv] of charMap.entries()) {
-          if (cv && cv.kind === 'person') {
-            const vJa = cv.nameJa || ''
-            if (
-              vJa &&
-              normalizeJaName(vJa) &&
-              normalizeJaName(vJa) === normalizeJaName(ja)
-            ) {
+          if (cv && cv.kind === 'person' && cv.source === 'vndb') {
+            const vnSet = new Set(
+              [
+                normalizeJaName(cv.name || ''),
+                normalizeJaName(cv.nameJa || ''),
+                ...(Array.isArray(cv.aliases)
+                  ? cv.aliases.map((x) => normalizeJaName(String(x)))
+                  : [])
+              ].filter(Boolean)
+            )
+            if (bgmNorms.some((n) => vnSet.has(n))) {
               targetKey = ck
               break
             }
@@ -706,7 +988,7 @@ export async function addBangumiPersonsAndCompanies(
           data: p
         })
         try {
-          const detail = await bgmGetPerson(p.id)
+          const detail = detail || (await bgmGetPerson(p.id))
           const { chinese, japanese } = splitSummary(detail?.summary || '')
           if (targetKey) {
             const prev = charMap.get(targetKey) || base
@@ -715,6 +997,77 @@ export async function addBangumiPersonsAndCompanies(
               zhSummary: chinese || prev.zhSummary,
               jaSummary: japanese || prev.jaSummary
             })
+            // enrich bangumi person fields from infobox & data
+            try {
+              const inf = detail?.infobox || []
+              const zhName =
+                inf.find((x) => x.key === '简体中文名')?.value || ''
+              if (zhName) {
+                const prevN =
+                  (targetKey ? charMap.get(targetKey) : charMap.get(k)) || base
+                const objN = {
+                  ...prevN,
+                  nameZh: prevN.nameZh || String(zhName)
+                }
+                if (targetKey) charMap.set(targetKey, objN)
+                else charMap.set(k, objN)
+              }
+              const aliasEntry = inf.find((x) => x.key === '别名')
+              if (aliasEntry) {
+                const vals = Array.isArray(aliasEntry.value)
+                  ? aliasEntry.value
+                      .map((i) => (typeof i === 'string' ? i : i?.v))
+                      .filter(Boolean)
+                  : aliasEntry.value
+                    ? [aliasEntry.value]
+                    : []
+                if (vals.length) {
+                  const prevA =
+                    (targetKey ? charMap.get(targetKey) : charMap.get(k)) ||
+                    base
+                  const merged = Array.from(
+                    new Set([...(prevA.aliases || []), ...vals])
+                  )
+                  const objA = { ...prevA, aliases: merged }
+                  if (targetKey) charMap.set(targetKey, objA)
+                  else charMap.set(k, objA)
+                }
+              }
+              const by = Number(detail?.birth_year || 0),
+                bm = Number(detail?.birth_mon || 0),
+                bd = Number(detail?.birth_day || 0)
+              const bday = by ? by : ''
+              const prevB =
+                (targetKey ? charMap.get(targetKey) : charMap.get(k)) || base
+              const objB = {
+                ...prevB,
+                birthday: prevB.birthday || bday,
+                blood_type: prevB.blood_type || String(detail?.blood_type || '')
+              }
+              if (targetKey) charMap.set(targetKey, objB)
+              else charMap.set(k, objB)
+              const mapKeys = [
+                ['引用来源', 'reference_source'],
+                ['出生地', 'birthplace'],
+                ['事务所', 'office'],
+                ['Twitter', 'x'],
+                ['配偶', 'spouse'],
+                ['官方网站', 'official_website'],
+                ['个人博客', 'blog']
+              ]
+              for (const [ik, fk] of mapKeys) {
+                const v = inf.find((x) => x.key === ik)?.value
+                if (v) {
+                  const prevC =
+                    (targetKey ? charMap.get(targetKey) : charMap.get(k)) ||
+                    objB
+                  const str = Array.isArray(v) ? v[0]?.v || v[0] || '' : v
+                  const objC = { ...prevC, [fk]: String(str) }
+                  if (targetKey) charMap.set(targetKey, objC)
+                  else charMap.set(k, objC)
+                }
+              }
+            } catch {}
           } else {
             const prev = charMap.get(k) || base
             charMap.set(k, {
@@ -739,6 +1092,12 @@ export async function addBangumiPersonsAndCompanies(
         await prisma.patch_company_relation.create({
           data: { patch_id: patchId, company_id: compId }
         })
+        try {
+          await prisma.patch_company.update({
+            where: { id: compId },
+            data: { count: { increment: 1 } }
+          })
+        } catch {}
       } catch {}
     }
     await sleep(200)
@@ -777,7 +1136,8 @@ export async function persistCharMap(charMap, baseDir, patchId) {
           ...common
         }
         if (val.vndb_staff_id) personData.vndb_staff_id = val.vndb_staff_id
-        if (val.bangumi_person_id) personData.bangumi_person_id = val.bangumi_person_id
+        if (val.bangumi_person_id)
+          personData.bangumi_person_id = val.bangumi_person_id
         // patch_person schema no longer has gender; do not include it
         if (personData.vndb_staff_id) {
           await prisma.patch_person.upsert({
@@ -813,8 +1173,7 @@ export async function persistCharMap(charMap, baseDir, patchId) {
         if (val.vndb_char_id) charData.vndb_char_id = val.vndb_char_id
         if (val.bangumi_character_id)
           charData.bangumi_character_id = val.bangumi_character_id
-        // patch_char.gender is non-nullable with a default; avoid sending null
-        if (val.gender) charData.gender = val.gender
+        // 始终写入性别，无法判断时使用 unknown 避免默认 female        charData.gender = val.gender || 'unknown'
         if (charData.vndb_char_id) {
           await prisma.patch_char.upsert({
             where: {
@@ -845,5 +1204,142 @@ export async function persistCharMap(charMap, baseDir, patchId) {
       console.warn('patch_char/person upsert failed:', e?.message || e)
     }
     await sleep(120)
+  }
+}
+
+export async function augmentVndbDetails(vnDetail, vndbId, charMap) {
+  try {
+    const staffIds = []
+    const charIds = []
+    if (Array.isArray(vnDetail?.staff)) {
+      for (const s of vnDetail.staff) if (s?.id) staffIds.push(s.id)
+    }
+    if (Array.isArray(vnDetail?.va)) {
+      for (const va of vnDetail.va) {
+        if (va?.character?.id) charIds.push(va.character.id)
+        if (va?.staff?.id) staffIds.push(va.staff.id)
+      }
+    }
+    const uniq = (arr) => Array.from(new Set(arr))
+    const sids = uniq(staffIds)
+    const cids = uniq(charIds)
+
+    const [staffs, chars] = await Promise.all([
+      vndbGetStaffByIds(sids),
+      vndbGetCharactersByIds(cids)
+    ])
+    const staffMap = new Map()
+    for (const st of staffs || []) staffMap.set(st.id, st)
+    const charDetMap = new Map()
+    for (const ch of chars || []) charDetMap.set(ch.id, ch)
+    for (const [k, v] of charMap) {
+      if (v?.source === 'vndb' && v?.kind === 'person' && v?.vndb_staff_id) {
+        const st = staffMap.get(v.vndb_staff_id)
+        if (st) {
+          v.language = st.lang || v.language || ''
+          v.links = (st.extlinks || []).map((l) => l?.url).filter(Boolean)
+          v.aliases = [
+            ...(Array.isArray(v.aliases) ? v.aliases : []),
+            ...normalizeNamesFromVndbStaff(st).map((x) => x)
+          ]
+          v.descriptionEn = st.description || v.descriptionEn || ''
+          const by = Number(st.birth_year || 0)
+          const bm = Number(st.birth_mon || 0)
+          const bd = Number(st.birth_day || 0)
+          v.birthday = by ? by : v.birthday || ''
+          v.blood_type = st.blood_type || v.blood_type || ''
+        }
+      }
+      if (v?.source === 'vndb' && v?.kind === 'character' && v?.vndb_char_id) {
+        const ch = charDetMap.get(v.vndb_char_id)
+        if (ch) {
+          const g = String(ch.gender || '').toLowerCase()
+          v.gender =
+            g === 'm'
+              ? 'male'
+              : g === 'f'
+                ? 'female'
+                : g === 'o'
+                  ? 'non-binary'
+                  : g === 'a'
+                    ? 'ambiguous'
+                    : v.gender || 'unknown'
+          v.height = Number(ch.height || 0)
+          v.weight = Number(ch.weight || 0)
+          v.bust = Number(ch.bust || 0)
+          v.waist = Number(ch.waist || 0)
+          v.hips = Number(ch.hips || 0)
+          v.cup = ch.cup || v.cup || ''
+          v.age = Number(ch.age || 0)
+          v.char_aliases = [
+            ...(Array.isArray(v.char_aliases) ? v.char_aliases : []),
+            ...(ch.aliases || []).filter(Boolean)
+          ]
+          try {
+            const vr = (ch.vns || []).find((x) => x?.id === vndbId)
+            if (vr?.role) {
+              const r = String(vr.role)
+              v.role =
+                r === 'main'
+                  ? 'protagonist'
+                  : r === 'primary'
+                    ? 'main'
+                    : r === 'side' || r === 'appears'
+                      ? 'side'
+                      : v.role || 'side'
+            }
+          } catch {}
+        }
+      }
+    }
+  } catch (e) {
+    console.warn('augmentVndbDetails failed:', e?.message || e)
+  }
+}
+
+export async function linkVoices(vnDetail, patchId) {
+  if (!vnDetail?.va?.length) return
+  try {
+    const chars = await prisma.patch_char.findMany({
+      where: { patch_id: patchId }
+    })
+    const persons = await prisma.patch_person.findMany({
+      where: { patch_id: patchId }
+    })
+    const charIdMap = new Map()
+    for (const c of chars) {
+      if (c.vndb_char_id) charIdMap.set(String(c.vndb_char_id), c.id)
+      // 修正: 将 gm 替换为 c.bangumi_character_id
+      if (c.bangumi_character_id) {
+        charIdMap.set(String(c.bangumi_character_id), c.id)
+      }
+    }
+    const personIdMap = new Map()
+    for (const p of persons) {
+      if (p.vndb_staff_id) personIdMap.set(String(p.vndb_staff_id), p.id)
+      // 修正: 将 gm 替换为 p.bangumi_person_id
+      if (p.bangumi_person_id) {
+        personIdMap.set(String(p.bangumi_person_id), p.id)
+      }
+    }
+    for (const va of vnDetail.va) {
+      const chId = va?.character?.id
+        ? charIdMap.get(String(va.character.id))
+        : null
+      const stId = va?.staff?.id ? personIdMap.get(String(va.staff.id)) : null
+      if (chId && stId) {
+        try {
+          await prisma.patch_char_person_relation.create({
+            data: {
+              patch_char_id: chId,
+              patch_person_id: stId,
+              relation: 'voice'
+            }
+          })
+        } catch {}
+      }
+    }
+  } catch (e) {
+    console.warn('linkVoices failed:', e?.message || e)
   }
 }

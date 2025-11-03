@@ -3,6 +3,8 @@ model patch_person {
 
   image              String   @default("") @db.VarChar(1007)
   roles              String[]
+  language           String   @default("")
+  links              String[]
 
   vndb_staff_id      String?  @db.VarChar(32)
   bangumi_person_id  Int?
@@ -16,8 +18,21 @@ model patch_person {
   description_ja_jp  String  @db.VarChar(100007) @default("")
   description_en_us  String  @db.VarChar(100007) @default("")
 
+  birthday           String  @default("")
+  blood_type         String  @default("")
+  reference_source   String  @default("")
+  birthplace         String  @default("")
+  office             String  @default("")
+  x                  String  @default("")
+  spouse             String  @default("")
+  official_website   String  @default("")
+  blog               String  @default("")
+
   patch_id           Int
   patch              patch    @relation(fields: [patch_id], references: [id], onDelete: Cascade, onUpdate: NoAction)
+
+  aliases            patch_person_alias[]
+  chars patch_char_person_relation[]
 
   @@index([patch_id])
   @@unique([patch_id, vndb_staff_id])
@@ -25,4 +40,18 @@ model patch_person {
 
   created            DateTime @default(now())
   updated            DateTime @updatedAt
+}
+
+model patch_person_alias {
+  id          Int          @id @default(autoincrement())
+  name        String       @db.VarChar(233)
+  person_id   Int
+  person      patch_person @relation(fields: [person_id], references: [id], onDelete: Cascade, onUpdate: NoAction)
+
+  created DateTime @default(now())
+  updated DateTime @updatedAt
+
+  @@index([person_id])
+  @@index([name])
+  @@unique([person_id, name])
 }

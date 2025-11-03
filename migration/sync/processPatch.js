@@ -10,11 +10,13 @@ import {
   syncVndbScreenshots,
   syncVndbReleasesAndCompanies,
   initCharMapFromVndb,
+  augmentVndbDetails,
   findBangumiSubjectId,
   handleBangumiSubjectAndTags,
   addBangumiCharactersToCharMap,
   addBangumiPersonsAndCompanies,
-  persistCharMap
+  persistCharMap,
+  linkVoices
 } from './processPatchHelpers.js'
 
 export async function processPatch(patch) {
@@ -35,6 +37,7 @@ export async function processPatch(patch) {
   await syncVndbReleasesAndCompanies(vndbId, vnDetail, ownerId, patch.id)
 
   const charMap = initCharMapFromVndb(vnDetail)
+  await augmentVndbDetails(vnDetail, vndbId, charMap)
   const subjectId = await findBangumiSubjectId(
     patch.name,
     vnDetail,
@@ -57,4 +60,5 @@ export async function processPatch(patch) {
     await addBangumiPersonsAndCompanies(subjectId, baseDir, patch.id, charMap)
   }
   await persistCharMap(charMap, baseDir, patch.id)
+  await linkVoices(vnDetail, patch.id)
 }

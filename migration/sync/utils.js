@@ -51,6 +51,12 @@ export function splitSummary(summary) {
   const splitPos = cleaned.lastIndexOf('\n', index)
   const cutIndex = splitPos >= 0 ? splitPos : index
 
+  const before = cleaned[cutIndex - 1]
+  const after = cleaned[cutIndex]
+  if (before !== '\n' && after !== '\n') {
+    return { chinese: '', japanese: cleaned.trim() }
+  }
+
   let chinesePart = cleaned.slice(0, cutIndex).trim()
   let japanesePart = cleaned.slice(cutIndex).trim()
 

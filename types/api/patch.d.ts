@@ -79,11 +79,13 @@ export interface PatchDetail {
     category: string
     spoiler_level: number
     provider: string
+    count: number
   }[]
   company: {
     id: number
     name: string
     logo: string
+    count: number
   }[]
   release: {
     id: number

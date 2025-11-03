@@ -3,6 +3,7 @@ import { clearLegacyTables } from './db.js'
 import { processPatch } from './processPatch.js'
 import { getBangumiAccessToken } from './config.js'
 import { sleep } from './utils.js'
+import { lowercaseVndbId } from './lowercaseVndbId.js'
 
 // Keep original behavior: print token and enforce presence
 console.log(process.env.KUN_BANGUMI_TOKEN)
@@ -13,6 +14,7 @@ if (!getBangumiAccessToken()) {
 async function main() {
   console.log('Clearing legacy tables...')
   await clearLegacyTables()
+  await lowercaseVndbId()
 
   const patches = await prisma.patch.findMany({})
   console.log(`Found ${patches.length} patches`)

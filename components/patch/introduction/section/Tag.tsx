@@ -1,16 +1,18 @@
 'use client'
 
 import { Tabs, Tab } from '@heroui/tabs'
-import { Chip, Tooltip, Link } from '@heroui/react'
+import { Chip, Tooltip, Link, Checkbox } from '@heroui/react'
 import type { PatchDetail } from '~/types/api/patch'
 import { useMemo, useState } from 'react'
 
 export const TagSection = ({ detail }: { detail: PatchDetail }) => {
   const [provider, setProvider] = useState<'vndb' | 'bangumi'>('vndb')
+  const [showSpoiler, setShowSpoiler] = useState(false)
 
   const tags = useMemo(() => {
-    return detail.tag.filter((t) => t.provider === provider)
-  }, [detail.tag, provider])
+    const base = detail.tag.filter((t) => t.provider === provider)
+    return showSpoiler ? base : base.filter((t) => (t.spoiler_level ?? 0) === 0)
+  }, [detail.tag, provider, showSpoiler])
 
   return (
     <section>
@@ -19,22 +21,30 @@ export const TagSection = ({ detail }: { detail: PatchDetail }) => {
           <div className="w-1 h-6 bg-primary rounded" />
           <h2 className="text-2xl font-bold">标签</h2>
         </div>
-        <Tabs
-          aria-label="标签来源"
-          selectedKey={provider}
-          onSelectionChange={(key) => setProvider(key as 'vndb' | 'bangumi')}
-          variant="underlined"
-        >
-          <Tab key="vndb" title="VNDB" />
-          <Tab key="bangumi" title="Bangumi" />
-        </Tabs>
+        <div className="flex items-center gap-4">
+          <Checkbox
+            isSelected={showSpoiler}
+            onValueChange={(v) => setShowSpoiler(!!v)}
+          >
+            显示剧透
+          </Checkbox>
+          <Tabs
+            aria-label="标签来源"
+            selectedKey={provider}
+            onSelectionChange={(key) => setProvider(key as 'vndb' | 'bangumi')}
+            variant="underlined"
+          >
+            <Tab key="vndb" title="VNDB" />
+            <Tab key="bangumi" title="Bangumi" />
+          </Tabs>
+        </div>
       </div>
 
       <div className="flex flex-wrap gap-2">
         {tags.map((tag) => (
           <Tooltip
             key={`${tag.provider}-${tag.id}`}
-            content={`分类：${tag.category}`}
+            content={`分类: ${tag.category}`}
           >
             <Chip
               as={Link}
@@ -44,12 +54,12 @@ export const TagSection = ({ detail }: { detail: PatchDetail }) => {
               color={tag.provider === 'vndb' ? 'primary' : 'secondary'}
               variant="flat"
             >
-              {tag.name}
+              {`${tag.name}+${tag.count}`}
               {tag.spoiler_level > 0 ? ' · 剧透' : ''}
             </Chip>
           </Tooltip>
         ))}
-        {tags.length === 0 && <Chip>暂无标签, 或者您未开启网站 R18 开关</Chip>}
+        {tags.length === 0 && <Chip>暂无标签</Chip>}
       </div>
     </section>
   )

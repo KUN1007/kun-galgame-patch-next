@@ -37,3 +37,38 @@ export async function vndbGetReleasesByVn(vndbId) {
   })
   return data.results || []
 }
+
+export async function vndbGetStaffByIds(ids = []) {
+  if (!Array.isArray(ids) || !ids.length) return []
+
+  const filters =
+    ids.length === 1
+      ? ['id', '=', ids[0]]
+      : ['or', ...ids.map((id) => ['id', '=', id])]
+
+  const data = await vndbPost('/staff', {
+    filters,
+    fields: 'id, name, original, lang, description, extlinks{url}',
+    results: ids.length
+  })
+  return data.results || []
+}
+
+export async function vndbGetCharactersByIds(ids = []) {
+  if (!Array.isArray(ids) || !ids.length) return []
+
+  const filters =
+    ids.length === 1
+      ? ['id', '=', ids[0]]
+      : ['or', ...ids.map((id) => ['id', '=', id])]
+
+  const fields =
+    'id, name, original, gender, height, weight, bust, waist, hips, cup, age, aliases, vns{id, role}'
+
+  const data = await vndbPost('/character', {
+    filters,
+    fields,
+    results: ids.length
+  })
+  return data.results || []
+}
