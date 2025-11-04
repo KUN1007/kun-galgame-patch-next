@@ -2,36 +2,53 @@ import { prisma } from './dbClient.js'
 
 async function main() {
   const patches = await prisma.patch.findMany({
-    where: {
-      NOT: { vndb_id: null }
-    },
+    where: { NOT: { vndb_id: null } },
     select: { id: true, vndb_id: true }
   })
 
   let updated = 0
   for (const p of patches) {
-    const lower = p.vndb_id.toLowerCase()
+    const lower = String(p.vndb_id || '').toLowerCase()
     if (p.vndb_id !== lower) {
       try {
-        await prisma.patch.update({
-          where: { id: p.id },
-          data: { vndb_id: lower }
+        const conflict = await prisma.patch.findFirst({
+          where: { vndb_id: lower },
+          select: { id: true }
         })
-        updated++
-        console.log(`✅ Updated patch ${p.id}: ${p.vndb_id} → ${lower}`)
+        if (conflict && conflict.id !== p.id) {
+          await prisma.patch.update({
+            where: { id: p.id },
+            data: { vndb_id: null }
+          })
+          console.warn(
+            `lowercaseVndbId: skip patch ${p.id}, lowercase '${lower}' already used by patch ${conflict.id}; set current vndb_id to null`
+          )
+        } else {
+          await prisma.patch.update({
+            where: { id: p.id },
+            data: { vndb_id: lower }
+          })
+          updated++
+          console.log(
+            `lowercaseVndbId: updated patch ${p.id}: ${p.vndb_id} -> ${lower}`
+          )
+        }
       } catch (err) {
-        console.warn(`⚠️ Failed to update patch ${p.id}:`, err.message)
+        console.warn(
+          `lowercaseVndbId: failed to update patch ${p.id}:`,
+          err?.message || err
+        )
       }
     }
   }
 
-  console.log(`🎉 Done! Updated ${updated} patches.`)
+  console.log(`lowercaseVndbId: done, updated ${updated} patches.`)
 }
 
 export const lowercaseVndbId = async () => {
   await main()
     .catch((e) => {
-      console.error('❌ Error in script:', e)
+      console.error('lowercaseVndbId error:', e)
     })
     .finally(async () => {
       await prisma.$disconnect()

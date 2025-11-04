@@ -308,7 +308,8 @@ export async function syncVndbReleasesAndCompanies(
   try {
     const releases = await vndbGetReleasesByVn(vndbId)
     const companyIds = new Set()
-    for (const r of releases) {
+    for (let i = 0; i < releases.length; i++) {
+      const r = releases[i]
       try {
         if (Array.isArray(r.producers)) {
           for (const p of r.producers) {
@@ -323,10 +324,24 @@ export async function syncVndbReleasesAndCompanies(
             if (compId) companyIds.add(compId)
           }
         }
-        await prisma.patch_release.create({
-          data: {
-            patch: { connect: { id: patchId } },
-            rid: r.id ? String(r.id) : '',
+        // Ensure rid is unique and non-empty
+        let rid = r.id ? String(r.id) : ''
+        if (!rid) rid = `v-${vndbId}-${i + 1}`
+        await prisma.patch_release.upsert({
+          where: { rid },
+          update: {
+            patch_id: patchId,
+            title: r.title ?? '',
+            released: r.released || '',
+            platforms: Array.isArray(r.platforms) ? r.platforms : [],
+            languages: Array.isArray(r.languages)
+              ? r.languages.map((x) => x.lang || x).filter(Boolean)
+              : [],
+            minage: typeof r.minage === 'number' ? r.minage : 0
+          },
+          create: {
+            patch_id: patchId,
+            rid,
             title: r.title ?? '',
             released: r.released || '',
             platforms: Array.isArray(r.platforms) ? r.platforms : [],
@@ -337,7 +352,7 @@ export async function syncVndbReleasesAndCompanies(
           }
         })
       } catch (e) {
-        console.warn('release create failed:', e?.message || e)
+        console.warn('release upsert failed:', e?.message || e)
       }
     }
     if (Array.isArray(vnDetail?.developers)) {
@@ -380,7 +395,15 @@ export function initCharMapFromVndb(vnDetail) {
   const charMap = new Map()
   function putChar(key, data) {
     if (!key) return
-    if (!charMap.has(key)) charMap.set(key, data)
+    if (!charMap.has(key)) {
+      charMap.set(key, data)
+    } else {
+      const prev = charMap.get(key)
+      const mergedRoles = Array.from(
+        new Set([...(prev?.roles || []), ...(data?.roles || [])])
+      )
+      charMap.set(key, { ...prev, roles: mergedRoles })
+    }
   }
   if (vnDetail?.va) {
     for (const va of vnDetail.va) {
@@ -427,7 +450,7 @@ export function initCharMapFromVndb(vnDetail) {
       const st = s
       const k = `vndb-staff:${st.id}`
       const roles = st.role ? [String(st.role).toLowerCase()] : []
-      if (!charMap.has(k))
+      if (!charMap.has(k)) {
         charMap.set(k, {
           source: 'vndb',
           kind: 'person',
@@ -438,6 +461,13 @@ export function initCharMapFromVndb(vnDetail) {
           imagesVndb: null,
           roles
         })
+      } else {
+        const prev = charMap.get(k)
+        const mergedRoles = Array.from(
+          new Set([...(prev?.roles || []), ...roles])
+        )
+        charMap.set(k, { ...prev, roles: mergedRoles })
+      }
       // Log VNDB staff from staff list
       appendPersonLog({
         provider: 'vndb',
@@ -1068,7 +1098,7 @@ export async function addBangumiPersonsAndCompanies(
           data: p
         })
         try {
-          const detail = detail || (await bgmGetPerson(p.id))
+          const detail = await bgmGetPerson(p.id)
           const { chinese, japanese } = splitSummary(detail?.summary || '')
           if (targetKey) {
             const prev = charMap.get(targetKey) || base
