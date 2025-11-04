@@ -1,12 +1,22 @@
 import fs from 'fs/promises'
 import path from 'path'
 
+/**
+ * Pause execution for a period of time.
+ * Purpose: throttle API requests and DB writes to respect rate limits.
+ */
 export const sleep = (ms) => new Promise((r) => setTimeout(r, ms))
 
+/**
+ * Ensure directory exists (idempotent).
+ */
 export async function ensureDir(dir) {
   await fs.mkdir(dir, { recursive: true })
 }
 
+/**
+ * Convert Content-Type to a file extension.
+ */
 export function extFromContentType(ct) {
   if (!ct) return 'bin'
   if (ct.includes('jpeg')) return 'jpg'
@@ -17,6 +27,9 @@ export function extFromContentType(ct) {
   return 'bin'
 }
 
+/**
+ * Download an image and return Buffer + inferred extension.
+ */
 export async function downloadImage(url) {
   const res = await fetch(url)
   if (!res.ok) throw new Error(`Download failed ${res.status} for ${url}`)
@@ -26,7 +39,10 @@ export async function downloadImage(url) {
   return { buf, ext }
 }
 
-// Split combined CN/JP summary into separate fields
+/**
+ * Split combined CN/JP summary into separate fields.
+ * Heuristic: find first JP token and split at nearest newline boundary.
+ */
 export function splitSummary(summary) {
   if (!summary) return { chinese: '', japanese: '' }
 
@@ -78,3 +94,10 @@ export function splitSummary(summary) {
 }
 
 export { fs, path }
+
+/*
+可优化的地方：
+- downloadImage 可加入超时/重试（AbortController + 重试策略）。
+- splitSummary 的启发式拆分可结合更多样本微调或参数化。
+- ensureDir 可增加内存缓存，避免在同一 tick 内频繁 mkdir 调用。
+*/

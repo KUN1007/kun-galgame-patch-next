@@ -1,8 +1,13 @@
 import { prisma } from './dbClient.js'
 
+// Simple in-process caches to avoid duplicate inserts during a single run
 const globalTagMap = new Map() // (provider:name) -> id
 const globalCompanyMap = new Map() // name -> id
 
+/**
+ * Truncate legacy tables to ensure repeatable sync runs.
+ * Purpose: a clean slate before ingesting fresh data. Uses RESTART IDENTITY to reset sequences.
+ */
 export async function clearLegacyTables() {
   const tables = [
     'patch_company_relation',
@@ -24,6 +29,11 @@ export async function clearLegacyTables() {
   }
 }
 
+/**
+ * Create a tag if not seen in this process and return its id.
+ * - De-duplicated by (provider:name)
+ * - Initializes localized introductions to empty strings
+ */
 export async function upsertTagByName(
   name,
   description = '',
@@ -53,6 +63,10 @@ export async function upsertTagByName(
   return tag.id
 }
 
+/**
+ * Create a company if not seen and return its id.
+ * - Persists language/aliases/websites when provided
+ */
 export async function upsertCompanyByName(
   name,
   lang = null,
@@ -83,3 +97,10 @@ export async function upsertCompanyByName(
   globalCompanyMap.set(name, company.id)
   return company.id
 }
+
+/*
+可优化的地方：
+- 将全局缓存替换为 LRU，避免长时间进程内存占用；
+- 增加读路径（先查已有，再决定是否创建），便于断点续跑；
+- upsertTagByName 可支持传入别名与本地化介绍，减少后续 update 次数。
+*/

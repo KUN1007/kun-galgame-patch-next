@@ -1,3 +1,10 @@
+/**
+ * Build a normalized name set for Bangumi person matching.
+ * Sources:
+ * - person.name (or name_cn)
+ * - infobox['别名'] values (array or string)
+ * All entries go through normalizeJaName() to make matching robust.
+ */
 async function normalizeNamesForMatching(bgmName, bgmInfobox) {
   const names = new Set()
   if (bgmName) names.add(normalizeJaName(bgmName))
@@ -20,6 +27,10 @@ async function normalizeNamesForMatching(bgmName, bgmInfobox) {
   return Array.from(names).filter(Boolean)
 }
 
+/**
+ * Build a normalized name set for VNDB staff matching.
+ * Sources: name, original, aliases{name, latin}
+ */
 function normalizeNamesFromVndbStaff(st) {
   const names = new Set()
   if (st?.name) names.add(normalizeJaName(st.name))
@@ -47,12 +58,16 @@ import {
 import { upsertCompanyByName, upsertTagByName } from './db.js'
 import { vndbGetStaffByIds, vndbGetCharactersByIds } from './api/vndb.js'
 
+/**
+ * Append a person/character log record as a JSON line.
+ * Purpose: aid debugging mapping of staff/person across providers.
+ */
 async function appendPersonLog(record) {
   try {
     const outDir = path.join('migration', 'sync', 'data')
     await ensureDir(outDir)
     const outFile = path.join(outDir, 'char.json')
-    const line = JSON.stringify(record) + ''
+    const line = JSON.stringify(record) + '\n'
     await fs.appendFile(outFile, line, { encoding: 'utf8' })
   } catch (e) {
     console.warn('appendPersonLog failed:', e?.message || e)
@@ -86,6 +101,11 @@ function normalizeJaName(name, options = {}) {
   return n.trim()
 }
 
+/**
+ * Resolve a patch's VNDB id.
+ * - Use existing patch.vndb_id if present; otherwise search by name.
+ * - Persist the resolved id back to DB (best-effort, ignore errors).
+ */
 export async function resolveVndbId(patch) {
   let vndbId = patch.vndb_id || null
   if (!vndbId) {
@@ -104,6 +124,12 @@ export async function resolveVndbId(patch) {
   return vndbId
 }
 
+/**
+ * Fetch VNDB VN detail and sync localized names into patch.
+ * Key logic:
+ * - Use titles list to find main/official Japanese title for name_ja_jp
+ * - Use canonical title as name_en_us
+ */
 export async function fetchVndbDetailAndSyncNames(vndbId, patchId) {
   if (!vndbId) return null
   try {
@@ -140,6 +166,13 @@ export async function fetchVndbDetailAndSyncNames(vndbId, patchId) {
   }
 }
 
+/**
+ * Upsert VNDB tags to local patch_tag & patch_tag_relation.
+ * - Map VNDB category shorthand to internal category (cont/ero/tech)
+ * - Localize tag name via provided tagMap (EN->ZH) when possible
+ * - Update patch_tag.description_en_us for EN descriptions
+ * - Maintain tag.count += 1 to speed future aggregations
+ */
 export async function syncVndbTags(vnDetail, ownerId, patchId, tagMap) {
   if (!Array.isArray(vnDetail?.tags) || !vnDetail.tags.length) return
   for (const t of vnDetail.tags) {
@@ -176,6 +209,7 @@ export async function syncVndbTags(vnDetail, ownerId, patchId, tagMap) {
   }
 }
 
+/** Sync VNDB description into patch.introduction_en_us if present. */
 export async function syncVndbDescription(vnDetail, patchId) {
   if (!vnDetail?.description) return
   try {
@@ -186,6 +220,10 @@ export async function syncVndbDescription(vnDetail, patchId) {
   } catch {}
 }
 
+/**
+ * Sync VNDB cover into patch_cover via upsert on patch_id.
+ * - Copy size/ratings/thumbnail metrics; default to 0/'' when missing.
+ */
 export async function syncVndbCover(vnDetail, baseDir, patchId) {
   if (!vnDetail?.image?.url) return
   const c = vnDetail.image
@@ -223,6 +261,9 @@ export async function syncVndbCover(vnDetail, baseDir, patchId) {
   }
 }
 
+/**
+ * Insert VNDB screenshots into patch_screenshot with order_no sequence.
+ */
 export async function syncVndbScreenshots(vnDetail, baseDir, patchId) {
   if (!Array.isArray(vnDetail?.screenshots) || !vnDetail.screenshots.length)
     return
@@ -256,6 +297,10 @@ export async function syncVndbScreenshots(vnDetail, baseDir, patchId) {
   }
 }
 
+/**
+ * Fetch VNDB releases and related producers; upsert patch_release and
+ * patch_company (+relation), plus increment patch_company.count.
+ */
 export async function syncVndbReleasesAndCompanies(
   vndbId,
   vnDetail,
@@ -330,6 +375,10 @@ export async function syncVndbReleasesAndCompanies(
   }
 }
 
+/**
+ * Build initial character/person map from VNDB staff and VA relations.
+ * Map entries use composite keys: 'vndb-char:<id>' / 'vndb-staff:<id>'.
+ */
 export function initCharMapFromVndb(vnDetail) {
   const charMap = new Map()
   function putChar(key, data) {
@@ -405,6 +454,10 @@ export function initCharMapFromVndb(vnDetail) {
   return charMap
 }
 
+/**
+ * Find matching Bangumi subject id by JP title first, then by patch name.
+ * - score list and pick best match; fallback to provided bid.
+ */
 export async function findBangumiSubjectId(patchName, vnDetail, bid) {
   let subjectId = null
   let jaTitle = null
@@ -451,6 +504,13 @@ export async function findBangumiSubjectId(patchName, vnDetail, bid) {
   return subjectId
 }
 
+/**
+ * Fetch Bangumi subject detail and sync:
+ * - patch.bid
+ * - patch_cover fallback when VNDB cover missing
+ * - introduction/name localization
+ * - Bangumi tags → patch_tag (+count) + relation
+ */
 export async function handleBangumiSubjectAndTags(
   subjectId,
   vnDetail,
@@ -547,6 +607,12 @@ export async function handleBangumiSubjectAndTags(
   }
 }
 
+/**
+ * Merge Bangumi characters into charMap (source: 'bangumi').
+ * - Attempt JP-name matching against VNDB characters
+ * - Enrich with summaries & infobox (alias, BWH)
+ * - Record tentative role (main/supporting) via relation hints
+ */
 export async function addBangumiCharactersToCharMap(subjectId, charMap) {
   if (!subjectId) return
   try {
@@ -854,6 +920,11 @@ export async function addBangumiCharactersToCharMap(subjectId, charMap) {
   }
 }
 
+/**
+ * Merge Bangumi persons and companies:
+ * - type===2 are companies; upsert + logo/introduction from detail
+ * - others are persons; attempt robust alias-based matching to VNDB staff
+ */
 export async function addBangumiPersonsAndCompanies(
   subjectId,
   baseDir,
@@ -1106,6 +1177,12 @@ export async function addBangumiPersonsAndCompanies(
   }
 }
 
+/**
+ * Persist merged charMap to DB:
+ * - patch_person: language/links/birthday/blood_type/... + aliases table
+ * - patch_char: role/birthday/body metrics/... + aliases table
+ * - Avoid nulls; use ''/0 for unknowns
+ */
 export async function persistCharMap(charMap, baseDir, patchId) {
   for (const [key, val] of charMap) {
     // Common fields shared by both models (excluding schema-specific ones)
@@ -1118,7 +1195,7 @@ export async function persistCharMap(charMap, baseDir, patchId) {
       image: '',
       description_zh_cn: val.zhSummary || '',
       description_ja_jp: val.jaSummary || '',
-      description_en_us: '',
+      description_en_us: val.descriptionEn || '',
       roles: Array.isArray(val.roles) ? val.roles : []
     }
 
@@ -1207,6 +1284,11 @@ export async function persistCharMap(charMap, baseDir, patchId) {
   }
 }
 
+/**
+ * Enrich VNDB-derived entries (staff/characters) with detailed fields:
+ * - staff: language, extlinks, aliases, EN description, birthday, blood_type
+ * - character: gender/body metrics/aliases, VN-specific role mapping
+ */
 export async function augmentVndbDetails(vnDetail, vndbId, charMap) {
   try {
     const staffIds = []
@@ -1264,6 +1346,7 @@ export async function augmentVndbDetails(vnDetail, vndbId, charMap) {
                   : g === 'a'
                     ? 'ambiguous'
                     : v.gender || 'unknown'
+          v.descriptionEn = ch.description || v.descriptionEn || ''
           v.height = Number(ch.height || 0)
           v.weight = Number(ch.weight || 0)
           v.bust = Number(ch.bust || 0)
@@ -1297,6 +1380,9 @@ export async function augmentVndbDetails(vnDetail, vndbId, charMap) {
   }
 }
 
+/**
+ * Create voice relations (character ↔ person) based on VNDB VA list.
+ */
 export async function linkVoices(vnDetail, patchId) {
   if (!vnDetail?.va?.length) return
   try {
@@ -1343,3 +1429,10 @@ export async function linkVoices(vnDetail, patchId) {
     console.warn('linkVoices failed:', e?.message || e)
   }
 }
+
+/*
+可优化的地方：
+- 将匹配过程（normalize/compare）抽象为独立模块与测试；
+- augmentVndbDetails 中的批量 id 查询可做分片或缓存；
+- persistCharMap 可改为事务批量写入，减少往返与提升一致性。
+*/

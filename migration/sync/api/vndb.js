@@ -1,4 +1,8 @@
 import { VNDB_API } from '../config.js'
+/**
+ * POST helper for VNDB Kana API.
+ * Wraps fetch + JSON parse + HTTP status handling.
+ */
 
 export async function vndbPost(pathname, body) {
   const url = `${VNDB_API}${pathname}`
@@ -11,6 +15,10 @@ export async function vndbPost(pathname, body) {
   return res.json()
 }
 
+/**
+ * Search VN by title string; returns first match (or null).
+ * Fields kept minimal to identify VN and surface basic media fields.
+ */
 export async function vndbFindVnByName(name) {
   const data = await vndbPost('/vn', {
     filters: ['search', '=', name],
@@ -20,6 +28,9 @@ export async function vndbFindVnByName(name) {
   return data.results?.[0] || null
 }
 
+/**
+ * Get VN detail by id; includes staff/va lists for downstream linking.
+ */
 export async function vndbGetVnById(vndbId) {
   const data = await vndbPost('/vn', {
     filters: ['id', '=', vndbId],
@@ -29,6 +40,9 @@ export async function vndbGetVnById(vndbId) {
   return data.results?.[0] || null
 }
 
+/**
+ * Get releases of a VN, plus producers (companies).
+ */
 export async function vndbGetReleasesByVn(vndbId) {
   const data = await vndbPost('/release', {
     filters: ['vn', '=', ['id', '=', vndbId]],
@@ -38,6 +52,10 @@ export async function vndbGetReleasesByVn(vndbId) {
   return data.results || []
 }
 
+/**
+ * Batch fetch staff by ids using OR filters as per Kana docs.
+ * Note: caller controls ids length; we set results to ids.length to limit page size.
+ */
 export async function vndbGetStaffByIds(ids = []) {
   if (!Array.isArray(ids) || !ids.length) return []
 
@@ -48,12 +66,16 @@ export async function vndbGetStaffByIds(ids = []) {
 
   const data = await vndbPost('/staff', {
     filters,
-    fields: 'id, name, original, lang, description, extlinks{url}',
+    fields: 'id, name, original, lang, aliases{name,latin}, description, extlinks{id,label,name,url}, blood_type, birth_year, birth_mon, birth_day',
     results: ids.length
   })
   return data.results || []
 }
 
+/**
+ * Batch fetch characters by ids using OR filters.
+ * Fields include gender/body metrics/aliases and VN-role mapping.
+ */
 export async function vndbGetCharactersByIds(ids = []) {
   if (!Array.isArray(ids) || !ids.length) return []
 
@@ -63,7 +85,7 @@ export async function vndbGetCharactersByIds(ids = []) {
       : ['or', ...ids.map((id) => ['id', '=', id])]
 
   const fields =
-    'id, name, original, gender, height, weight, bust, waist, hips, cup, age, aliases, vns{id, role}'
+    'id, name, original, gender, height, weight, bust, waist, hips, cup, age, aliases{name,latin}, vns{vn{id}, role}'
 
   const data = await vndbPost('/character', {
     filters,
@@ -72,3 +94,10 @@ export async function vndbGetCharactersByIds(ids = []) {
   })
   return data.results || []
 }
+
+/*
+可优化的地方：
+- 对超大 ids 列表按批分段请求，减少 OR 长度与响应体积；
+- 根据 /schema 动态裁剪字段，避免接口字段变更导致 400；
+- vndbPost 增加退避重试和速率限制，结合 sleep 统一调度。
+*/

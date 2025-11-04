@@ -2,9 +2,9 @@ model patch_person {
   id                 Int      @id @default(autoincrement())
 
   image              String   @default("") @db.VarChar(1007)
-  roles              String[]
+  roles              String[] @default([])
   language           String   @default("")
-  links              String[]
+  links              String[] @default([])
 
   vndb_staff_id      String?  @db.VarChar(32)
   bangumi_person_id  Int?
