@@ -25,7 +25,11 @@ export const CompanySection = ({ detail }: { detail: PatchDetail }) => (
                   )}
                 </div>
                 <div className="flex-1">
-                  <h3 className="font-semibold">{c.name}</h3>
+                  <h3 className="font-semibold">
+                    <a href={`/company/${c.id}`} className="hover:underline">
+                      {c.name}
+                    </a>
+                  </h3>
                   <div className="text-xs text-default-500">
                     共 {c.count} 个补丁
                   </div>

@@ -98,6 +98,7 @@ export const getPatchDetail = async (
       id: c.id,
       image: c.image,
       gender: c.gender,
+      role: c.role,
       roles: c.roles,
       name_zh_cn: c.name_zh_cn,
       name_ja_jp: c.name_ja_jp,

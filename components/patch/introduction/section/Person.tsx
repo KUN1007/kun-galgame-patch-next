@@ -1,6 +1,7 @@
 'use client'
 
 import { Chip, Image } from '@heroui/react'
+import NextLink from 'next/link'
 import type { PatchDetail } from '~/types/api/patch'
 
 export const PersonSection = ({ detail }: { detail: PatchDetail }) => (
@@ -22,8 +23,13 @@ export const PersonSection = ({ detail }: { detail: PatchDetail }) => (
                 />
               </div>
               <div className="flex-1 min-w-0">
-                <h3 className="font-semibold">
-                  {p.name_zh_cn || p.name_ja_jp}
+                <h3 className="font-semibold truncate">
+                  <NextLink
+                    href={`/person/${p.id}`}
+                    className="hover:underline"
+                  >
+                    {p.name_zh_cn || p.name_ja_jp}
+                  </NextLink>
                 </h3>
                 <div className="flex flex-wrap gap-2 mt-2">
                   {p.roles.slice(0, 3).map((role) => (

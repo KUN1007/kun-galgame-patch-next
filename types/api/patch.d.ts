@@ -100,6 +100,7 @@ export interface PatchDetail {
     id: number
     image: string
     gender: string
+    role?: string
     roles: string[]
     name_zh_cn: string
     name_ja_jp: string

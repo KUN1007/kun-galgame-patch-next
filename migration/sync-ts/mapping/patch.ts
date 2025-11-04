@@ -5,6 +5,7 @@ import {
   vndbGetVnById
 } from '../api/vndb'
 import { upsertCompanyByName, upsertTagByName } from '../db/helpers'
+import { TAG_MAP } from '../../../lib/tagMap'
 
 export async function resolveVndbId(patch: {
   id: number
@@ -138,13 +139,12 @@ export async function syncVndbScreenshots(vnDetail: any, patchId: number) {
 export async function syncVndbTags(
   vnDetail: any,
   ownerId: number,
-  patchId: number,
-  tagMap: Record<string, string> | null
+  patchId: number
 ) {
   if (!Array.isArray(vnDetail?.tags) || !vnDetail.tags.length) return
   for (const t of vnDetail.tags) {
     const en = t.name || ''
-    const zh = tagMap && en && tagMap[en] ? tagMap[en] : en
+    const zh = TAG_MAP && en && TAG_MAP[en] ? TAG_MAP[en] : en
     let category = 'content'
     if (t.category === 'cont') category = 'content'
     else if (t.category === 'ero') category = 'sexual'

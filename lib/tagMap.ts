@@ -1960,6 +1960,7 @@ export const TAG_MAP: Record<string, string> = {
   'Navyman Hero': '海军男主角',
   'Idol Hero': '偶像男主角',
   'Instrumentalist Hero': '乐器演奏家男主角',
+  'Instrumentalist Protagonist': '乐器演奏家主人公',
   'Singer Hero': '歌手男主角',
   'Performing Arts Director Hero': '表演艺术总监男主角',
   'Photographer Hero': '摄影师男主角',

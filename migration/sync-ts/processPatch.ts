@@ -22,16 +22,6 @@ import {
 import { persistCharMap, linkVoices } from './mapping/persist'
 import { sleep } from './utils/sleep'
 
-// Simple loader for VNDB tag map (optional)
-async function loadVndbTagMap(): Promise<Record<string, string> | null> {
-  try {
-    const mod = await import('../sync/tagMap.js')
-    return (mod as any)?.default || null
-  } catch {
-    return null
-  }
-}
-
 export async function processPatch(patch: {
   id: number
   name: string
@@ -42,9 +32,8 @@ export async function processPatch(patch: {
   const ownerId = owner?.id ?? 1
   const vndbId = await resolveVndbId(patch)
   const vnDetail = await fetchVndbDetailAndSyncNames(vndbId, patch.id)
-  const tagMap = await loadVndbTagMap()
 
-  await syncVndbTags(vnDetail, ownerId, patch.id, tagMap)
+  await syncVndbTags(vnDetail, ownerId, patch.id)
   await syncVndbDescription(vnDetail, patch.id)
   await syncVndbCover(vnDetail, patch.id)
   await syncVndbScreenshots(vnDetail, patch.id)

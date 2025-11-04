@@ -2,6 +2,7 @@
 
 import { Card, CardBody } from '@heroui/card'
 import { Chip, Image } from '@heroui/react'
+import NextLink from 'next/link'
 import type { PatchDetail } from '~/types/api/patch'
 
 export const CharacterSection = ({ detail }: { detail: PatchDetail }) => (
@@ -24,15 +25,29 @@ export const CharacterSection = ({ detail }: { detail: PatchDetail }) => (
               </div>
               <CardBody className="p-3">
                 <h3 className="font-bold text-sm truncate">
-                  {c.name_zh_cn || c.name_ja_jp}
+                  <NextLink
+                    href={`/character/${c.id}`}
+                    className="hover:underline"
+                  >
+                    {c.name_zh_cn || c.name_ja_jp}
+                  </NextLink>
                 </h3>
-                <div className="flex gap-2 mt-2">
+                <div className="flex flex-wrap gap-2 mt-2">
                   <Chip
                     size="sm"
                     color={c.gender === 'female' ? 'danger' : 'primary'}
                   >
                     {c.gender}
                   </Chip>
+                  {c.role && (
+                    <Chip size="sm" color="secondary" variant="flat">
+                      {c.role === 'protagonist'
+                        ? '主角'
+                        : c.role === 'main'
+                          ? '主要角色'
+                          : '配角'}
+                    </Chip>
+                  )}
                   {c.roles.slice(0, 2).map((role) => (
                     <Chip key={role} size="sm" variant="flat">
                       {role}
@@ -47,3 +62,4 @@ export const CharacterSection = ({ detail }: { detail: PatchDetail }) => (
     )}
   </>
 )
+
