@@ -58,18 +58,26 @@ export async function vndbGetReleasesByVn(vndbId) {
  */
 export async function vndbGetStaffByIds(ids = []) {
   if (!Array.isArray(ids) || !ids.length) return []
-
-  const filters =
-    ids.length === 1
-      ? ['id', '=', ids[0]]
-      : ['or', ...ids.map((id) => ['id', '=', id])]
-
-  const data = await vndbPost('/staff', {
-    filters,
-    fields: 'id, name, original, lang, aliases{name,latin}, description, extlinks{id,label,name,url}, blood_type, birth_year, birth_mon, birth_day',
-    results: ids.length
-  })
-  return data.results || []
+  const MAX = 100
+  const chunks = []
+  for (let i = 0; i < ids.length; i += MAX) chunks.push(ids.slice(i, i + MAX))
+  const out = []
+  for (const part of chunks) {
+    const idFilter =
+      part.length === 1
+        ? ['id', '=', part[0]]
+        : ['or', ...part.map((id) => ['id', '=', id])]
+    const filters = ['and', ['ismain', '=', 1], idFilter]
+    const data = await vndbPost('/staff', {
+      filters,
+      // Only request fields allowed by /staff
+      fields:
+        'id, name, original, lang, gender, description, extlinks{url,label,name,id}, aliases{aid,name,latin,ismain}',
+      results: Math.min(part.length, MAX)
+    })
+    if (Array.isArray(data.results)) out.push(...data.results)
+  }
+  return out
 }
 
 /**
@@ -78,21 +86,25 @@ export async function vndbGetStaffByIds(ids = []) {
  */
 export async function vndbGetCharactersByIds(ids = []) {
   if (!Array.isArray(ids) || !ids.length) return []
-
-  const filters =
-    ids.length === 1
-      ? ['id', '=', ids[0]]
-      : ['or', ...ids.map((id) => ['id', '=', id])]
-
-  const fields =
-    'id, name, original, gender, height, weight, bust, waist, hips, cup, age, aliases{name,latin}, vns{vn{id}, role}'
-
-  const data = await vndbPost('/character', {
-    filters,
-    fields,
-    results: ids.length
-  })
-  return data.results || []
+  const MAX = 100
+  const chunks = []
+  for (let i = 0; i < ids.length; i += MAX) chunks.push(ids.slice(i, i + MAX))
+  const out = []
+  for (const part of chunks) {
+    const filters =
+      part.length === 1
+        ? ['id', '=', part[0]]
+        : ['or', ...part.map((id) => ['id', '=', id])]
+    const fields =
+      'id, name, original, description, gender, height, weight, bust, waist, hips, cup, age, aliases, vns{id, role}'
+    const data = await vndbPost('/character', {
+      filters,
+      fields,
+      results: Math.min(part.length, MAX)
+    })
+    if (Array.isArray(data.results)) out.push(...data.results)
+  }
+  return out
 }
 
 /*

@@ -1,17 +1,28 @@
-/**
- * Build a normalized name set for Bangumi person matching.
- * Sources:
- * - person.name (or name_cn)
- * - infobox['别名'] values (array or string)
- * All entries go through normalizeJaName() to make matching robust.
- */
-async function normalizeNamesForMatching(bgmName, bgmInfobox) {
+import { prisma } from './dbClient.js'
+import { ensureDir, sleep, splitSummary, fs, path } from './utils.js'
+import { vndbPost, vndbFindVnByName, vndbGetReleasesByVn } from './api/vndb.js'
+import {
+  bgmPost,
+  bgmGetSubject,
+  bgmGetSubjectCharacters,
+  bgmGetSubjectPersons,
+  bgmGetCharacter,
+  bgmGetPerson,
+  pickBestBangumiSubject
+} from './api/bangumi.js'
+import { upsertCompanyByName, upsertTagByName } from './db.js'
+import { vndbGetStaffByIds, vndbGetCharactersByIds } from './api/vndb.js'
+
+// Override earlier placeholder with a robust version that tolerates key variants and encodings
+function normalizeNamesForMatching(bgmName, bgmInfobox) {
   const names = new Set()
   if (bgmName) names.add(normalizeJaName(bgmName))
   try {
-    const aliasEntry = (bgmInfobox || []).find(
-      (x) => x && x.key && (x.key === '别名' || x.key === '別名')
-    )
+    const inf = Array.isArray(bgmInfobox) ? bgmInfobox : []
+    const aliasEntry = inf.find((x) => {
+      const k = String(x?.key || '').trim()
+      return k === '别名' || k === '別名' || k.toLowerCase() === 'alias'
+    })
     if (aliasEntry) {
       const val = aliasEntry.value
       if (Array.isArray(val)) {
@@ -43,20 +54,6 @@ function normalizeNamesFromVndbStaff(st) {
   }
   return Array.from(names).filter(Boolean)
 }
-import { prisma } from './dbClient.js'
-import { ensureDir, sleep, splitSummary, fs, path } from './utils.js'
-import { vndbPost, vndbFindVnByName, vndbGetReleasesByVn } from './api/vndb.js'
-import {
-  bgmPost,
-  bgmGetSubject,
-  bgmGetSubjectCharacters,
-  bgmGetSubjectPersons,
-  bgmGetCharacter,
-  bgmGetPerson,
-  pickBestBangumiSubject
-} from './api/bangumi.js'
-import { upsertCompanyByName, upsertTagByName } from './db.js'
-import { vndbGetStaffByIds, vndbGetCharactersByIds } from './api/vndb.js'
 
 /**
  * Append a person/character log record as a JSON line.
@@ -674,6 +671,16 @@ export async function addBangumiCharactersToCharMap(subjectId, charMap) {
       try {
         const cdetail = await bgmGetCharacter(c.id)
         const { chinese, japanese } = splitSummary(cdetail?.summary || '')
+        const g = String(cdetail?.gender || '')
+        const by = Number(cdetail?.birth_year || 0)
+        const bm = Number(cdetail?.birth_mon || 0)
+        const bd = Number(cdetail?.birth_day || 0)
+        let bdayStr = ''
+        if (by) {
+          bdayStr = String(by).padStart(4, '0')
+          if (bm) bdayStr += '-' + String(bm).padStart(2, '0')
+          if (bd) bdayStr += '-' + String(bd).padStart(2, '0')
+        }
         const mappedGender =
           g.includes('male') || g.includes('男')
             ? 'male'
@@ -688,6 +695,7 @@ export async function addBangumiCharactersToCharMap(subjectId, charMap) {
             zhSummary: chinese || prev.zhSummary,
             jaSummary: japanese || prev.jaSummary,
             gender: mappedGender || prev.gender,
+            birthday: prev.birthday || bdayStr,
             infobox: infobox || prev.infobox
           })
           // parse additional infobox fields for character
@@ -803,6 +811,7 @@ export async function addBangumiCharactersToCharMap(subjectId, charMap) {
             zhSummary: chinese || prev.zhSummary,
             jaSummary: japanese || prev.jaSummary,
             gender: mappedGender || prev.gender,
+            birthday: prev.birthday || bdayStr,
             infobox: infobox || prev.infobox
           })
           // parse additional infobox fields for character
@@ -1068,77 +1077,6 @@ export async function addBangumiPersonsAndCompanies(
               zhSummary: chinese || prev.zhSummary,
               jaSummary: japanese || prev.jaSummary
             })
-            // enrich bangumi person fields from infobox & data
-            try {
-              const inf = detail?.infobox || []
-              const zhName =
-                inf.find((x) => x.key === '简体中文名')?.value || ''
-              if (zhName) {
-                const prevN =
-                  (targetKey ? charMap.get(targetKey) : charMap.get(k)) || base
-                const objN = {
-                  ...prevN,
-                  nameZh: prevN.nameZh || String(zhName)
-                }
-                if (targetKey) charMap.set(targetKey, objN)
-                else charMap.set(k, objN)
-              }
-              const aliasEntry = inf.find((x) => x.key === '别名')
-              if (aliasEntry) {
-                const vals = Array.isArray(aliasEntry.value)
-                  ? aliasEntry.value
-                      .map((i) => (typeof i === 'string' ? i : i?.v))
-                      .filter(Boolean)
-                  : aliasEntry.value
-                    ? [aliasEntry.value]
-                    : []
-                if (vals.length) {
-                  const prevA =
-                    (targetKey ? charMap.get(targetKey) : charMap.get(k)) ||
-                    base
-                  const merged = Array.from(
-                    new Set([...(prevA.aliases || []), ...vals])
-                  )
-                  const objA = { ...prevA, aliases: merged }
-                  if (targetKey) charMap.set(targetKey, objA)
-                  else charMap.set(k, objA)
-                }
-              }
-              const by = Number(detail?.birth_year || 0),
-                bm = Number(detail?.birth_mon || 0),
-                bd = Number(detail?.birth_day || 0)
-              const bday = by ? by : ''
-              const prevB =
-                (targetKey ? charMap.get(targetKey) : charMap.get(k)) || base
-              const objB = {
-                ...prevB,
-                birthday: prevB.birthday || bday,
-                blood_type: prevB.blood_type || String(detail?.blood_type || '')
-              }
-              if (targetKey) charMap.set(targetKey, objB)
-              else charMap.set(k, objB)
-              const mapKeys = [
-                ['引用来源', 'reference_source'],
-                ['出生地', 'birthplace'],
-                ['事务所', 'office'],
-                ['Twitter', 'x'],
-                ['配偶', 'spouse'],
-                ['官方网站', 'official_website'],
-                ['个人博客', 'blog']
-              ]
-              for (const [ik, fk] of mapKeys) {
-                const v = inf.find((x) => x.key === ik)?.value
-                if (v) {
-                  const prevC =
-                    (targetKey ? charMap.get(targetKey) : charMap.get(k)) ||
-                    objB
-                  const str = Array.isArray(v) ? v[0]?.v || v[0] || '' : v
-                  const objC = { ...prevC, [fk]: String(str) }
-                  if (targetKey) charMap.set(targetKey, objC)
-                  else charMap.set(k, objC)
-                }
-              }
-            } catch {}
           } else {
             const prev = charMap.get(k) || base
             charMap.set(k, {
@@ -1147,6 +1085,69 @@ export async function addBangumiPersonsAndCompanies(
               jaSummary: japanese || prev.jaSummary
             })
           }
+          // enrich bangumi person fields from infobox & data (apply to whichever key is active)
+          try {
+            const activeKey = targetKey || k
+            const inf = detail?.infobox || []
+            const zhName = inf.find((x) => x.key === '简体中文名')?.value || ''
+            if (zhName) {
+              const prevN = charMap.get(activeKey) || base
+              const objN = { ...prevN, nameZh: prevN.nameZh || String(zhName) }
+              charMap.set(activeKey, objN)
+            }
+            const aliasEntry = inf.find((x) => x.key === '别名')
+            if (aliasEntry) {
+              const vals = Array.isArray(aliasEntry.value)
+                ? aliasEntry.value
+                    .map((i) => (typeof i === 'string' ? i : i?.v))
+                    .filter(Boolean)
+                : aliasEntry.value
+                  ? [aliasEntry.value]
+                  : []
+              if (vals.length) {
+                const prevA = charMap.get(activeKey) || base
+                const merged = Array.from(
+                  new Set([...(prevA.aliases || []), ...vals])
+                )
+                const objA = { ...prevA, aliases: merged }
+                charMap.set(activeKey, objA)
+              }
+            }
+            const by = Number(detail?.birth_year || 0)
+            const bm = Number(detail?.birth_mon || 0)
+            const bd = Number(detail?.birth_day || 0)
+            let bday = ''
+            if (by) {
+              bday = String(by).padStart(4, '0')
+              if (bm) bday += '-' + String(bm).padStart(2, '0')
+              if (bd) bday += '-' + String(bd).padStart(2, '0')
+            }
+            const prevB = charMap.get(activeKey) || base
+            const objB = {
+              ...prevB,
+              birthday: prevB.birthday || bday,
+              blood_type: prevB.blood_type || String(detail?.blood_type || '')
+            }
+            charMap.set(activeKey, objB)
+            const mapKeys = [
+              ['引用来源', 'reference_source'],
+              ['出生地', 'birthplace'],
+              ['事务所', 'office'],
+              ['Twitter', 'x'],
+              ['配偶', 'spouse'],
+              ['官方网站', 'official_website'],
+              ['个人博客', 'blog']
+            ]
+            for (const [ik, fk] of mapKeys) {
+              const v = inf.find((x) => x.key === ik)?.value
+              if (v) {
+                const prevC = charMap.get(activeKey) || objB
+                const str = Array.isArray(v) ? v[0]?.v || v[0] || '' : v
+                const objC = { ...prevC, [fk]: String(str) }
+                charMap.set(activeKey, objC)
+              }
+            }
+          } catch {}
           // Log Bangumi person detail
           appendPersonLog({
             provider: 'bangumi',
@@ -1191,7 +1192,6 @@ export async function persistCharMap(charMap, baseDir, patchId) {
       name_zh_cn: val.nameZh || '',
       name_ja_jp: val.nameJa || '',
       name_en_us: val.nameEn || '',
-      alias: [],
       image: '',
       description_zh_cn: val.zhSummary || '',
       description_ja_jp: val.jaSummary || '',
@@ -1210,14 +1210,26 @@ export async function persistCharMap(charMap, baseDir, patchId) {
     try {
       if (val.kind === 'person') {
         const personData = {
-          ...common
+          ...common,
+          language: val.language || '',
+          links: Array.isArray(val.links) ? val.links.filter(Boolean) : [],
+          birthday: val.birthday ? String(val.birthday) : '',
+          blood_type: val.blood_type || '',
+          reference_source: val.reference_source || '',
+          birthplace: val.birthplace || '',
+          office: val.office || '',
+          x: val.x || '',
+          spouse: val.spouse || '',
+          official_website: val.official_website || '',
+          blog: val.blog || ''
         }
         if (val.vndb_staff_id) personData.vndb_staff_id = val.vndb_staff_id
         if (val.bangumi_person_id)
           personData.bangumi_person_id = val.bangumi_person_id
         // patch_person schema no longer has gender; do not include it
+        let personRec = null
         if (personData.vndb_staff_id) {
-          await prisma.patch_person.upsert({
+          personRec = await prisma.patch_person.upsert({
             where: {
               patch_id_vndb_staff_id: {
                 patch_id: personData.patch_id,
@@ -1228,7 +1240,7 @@ export async function persistCharMap(charMap, baseDir, patchId) {
             create: personData
           })
         } else if (personData.bangumi_person_id) {
-          await prisma.patch_person.upsert({
+          personRec = await prisma.patch_person.upsert({
             where: {
               patch_id_bangumi_person_id: {
                 patch_id: personData.patch_id,
@@ -1239,20 +1251,55 @@ export async function persistCharMap(charMap, baseDir, patchId) {
             create: personData
           })
         } else {
-          await prisma.patch_person.create({ data: personData })
+          personRec = await prisma.patch_person.create({ data: personData })
+        }
+        // write alias rows
+        const personAliases = Array.isArray(val.aliases)
+          ? Array.from(
+              new Set(val.aliases.map((x) => String(x).trim()).filter(Boolean))
+            )
+          : []
+        if (personRec && personAliases.length) {
+          try {
+            await prisma.patch_person_alias.createMany({
+              data: personAliases.map((name) => ({
+                name,
+                person_id: personRec.id
+              })),
+              skipDuplicates: true
+            })
+          } catch {
+            for (const name of personAliases) {
+              try {
+                await prisma.patch_person_alias.create({
+                  data: { name, person_id: personRec.id }
+                })
+              } catch {}
+            }
+          }
         }
       } else {
         const charData = {
           ...common,
           // Store Bangumi infobox as JSON string in patch_char.infobox
-          infobox: JSON.stringify(val.infobox || [])
+          infobox: JSON.stringify(val.infobox || []),
+          gender: val.gender || 'unknown',
+          role: val.role || 'side',
+          birthday: val.birthday ? String(val.birthday) : '',
+          bust: Number(val.bust || 0),
+          waist: Number(val.waist || 0),
+          hips: Number(val.hips || 0),
+          height: Number(val.height || 0),
+          weight: Number(val.weight || 0),
+          cup: val.cup || '',
+          age: Number(val.age || 0)
         }
         if (val.vndb_char_id) charData.vndb_char_id = val.vndb_char_id
         if (val.bangumi_character_id)
           charData.bangumi_character_id = val.bangumi_character_id
         // 始终写入性别，无法判断时使用 unknown 避免默认 female        charData.gender = val.gender || 'unknown'
         if (charData.vndb_char_id) {
-          await prisma.patch_char.upsert({
+          let charRecTemp = await prisma.patch_char.upsert({
             where: {
               patch_id_vndb_char_id: {
                 patch_id: charData.patch_id,
@@ -1262,8 +1309,9 @@ export async function persistCharMap(charMap, baseDir, patchId) {
             update: charData,
             create: charData
           })
+          var charRec = charRecTemp
         } else if (charData.bangumi_character_id) {
-          await prisma.patch_char.upsert({
+          let charRecTemp = await prisma.patch_char.upsert({
             where: {
               patch_id_bangumi_character_id: {
                 patch_id: charData.patch_id,
@@ -1273,8 +1321,35 @@ export async function persistCharMap(charMap, baseDir, patchId) {
             update: charData,
             create: charData
           })
+          var charRec = charRecTemp
         } else {
-          await prisma.patch_char.create({ data: charData })
+          var charRec = await prisma.patch_char.create({ data: charData })
+        }
+        const charAliases = Array.isArray(val.char_aliases)
+          ? Array.from(
+              new Set(
+                val.char_aliases.map((x) => String(x).trim()).filter(Boolean)
+              )
+            )
+          : []
+        if (charRec && charAliases.length) {
+          try {
+            await prisma.patch_char_alias.createMany({
+              data: charAliases.map((name) => ({
+                name,
+                patch_char_id: charRec.id
+              })),
+              skipDuplicates: true
+            })
+          } catch {
+            for (const name of charAliases) {
+              try {
+                await prisma.patch_char_alias.create({
+                  data: { name, patch_char_id: charRec.id }
+                })
+              } catch {}
+            }
+          }
         }
       }
     } catch (e) {
@@ -1335,7 +1410,9 @@ export async function augmentVndbDetails(vnDetail, vndbId, charMap) {
       if (v?.source === 'vndb' && v?.kind === 'character' && v?.vndb_char_id) {
         const ch = charDetMap.get(v.vndb_char_id)
         if (ch) {
-          const g = String(ch.gender || '').toLowerCase()
+          const g = Array.isArray(ch.gender)
+            ? String(ch.gender[0] || '').toLowerCase()
+            : String(ch.gender || '').toLowerCase()
           v.gender =
             g === 'm'
               ? 'male'
@@ -1354,6 +1431,18 @@ export async function augmentVndbDetails(vnDetail, vndbId, charMap) {
           v.hips = Number(ch.hips || 0)
           v.cup = ch.cup || v.cup || ''
           v.age = Number(ch.age || 0)
+          try {
+            const bd = Array.isArray(ch.birthday) ? ch.birthday : null
+            if (bd && bd.length) {
+              const mon = Number(bd[0] || 0)
+              const day = Number(bd[1] || 0)
+              if (mon) {
+                let s = String(mon).padStart(2, '0')
+                if (day) s += '-' + String(day).padStart(2, '0')
+                v.birthday = v.birthday || s
+              }
+            }
+          } catch {}
           v.char_aliases = [
             ...(Array.isArray(v.char_aliases) ? v.char_aliases : []),
             ...(ch.aliases || []).filter(Boolean)

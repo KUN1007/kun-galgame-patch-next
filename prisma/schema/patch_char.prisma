@@ -23,7 +23,6 @@ model patch_char {
   name_zh_cn           String   @default("") @db.VarChar(1007)
   name_ja_jp           String   @default("") @db.VarChar(1007)
   name_en_us           String   @default("") @db.VarChar(1007)
-  alias                String[]
 
   description_zh_cn    String @default("")  @db.VarChar(100007)
   description_ja_jp    String @default("")  @db.VarChar(100007)
@@ -34,7 +33,7 @@ model patch_char {
   patch_id             Int
   patch                patch    @relation(fields: [patch_id], references: [id], onDelete: Cascade, onUpdate: NoAction)
 
-  aliases patch_char_alias[]
+  alias patch_char_alias[]
   voices  patch_char_person_relation[]
 
   @@index([patch_id])
