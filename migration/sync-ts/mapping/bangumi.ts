@@ -130,17 +130,27 @@ export async function addBangumiCharactersToCharMap(
         Object.assign(entry, { zhSummary: chinese, jaSummary: japanese })
       }
       // match with existing VNDB character by Japanese name
+      // Special rule: if Bangumi image ends with 'anidb.jpg', treat name-match as failed
+      const bgmImageUrl = (
+        c.images?.large ||
+        c.images?.medium ||
+        c.images?.small ||
+        ''
+      ).toString()
+      const blockMatch = /anidb\.jpg$/i.test(bgmImageUrl)
       let targetKey: string | null = null
-      for (const [ck, cv] of charMap.entries()) {
-        if (cv && cv.kind === 'character') {
-          const vJa = (cv as CharacterEntry).nameJa || ''
-          if (
-            vJa &&
-            normalizeJaName(vJa) &&
-            normalizeJaName(vJa) === normalizeJaName(ja)
-          ) {
-            targetKey = ck
-            break
+      if (!blockMatch) {
+        for (const [ck, cv] of charMap.entries()) {
+          if (cv && cv.kind === 'character') {
+            const vJa = (cv as CharacterEntry).nameJa || ''
+            if (
+              vJa &&
+              normalizeJaName(vJa) &&
+              normalizeJaName(vJa) === normalizeJaName(ja)
+            ) {
+              targetKey = ck
+              break
+            }
           }
         }
       }
@@ -171,10 +181,11 @@ export async function addBangumiCharactersToCharMap(
           if (bm) bdayStr += '-' + String(bm).padStart(2, '0')
           if (bd) bdayStr += '-' + String(bd).padStart(2, '0')
         }
+        const gl = g.trim().toLowerCase()
         const mappedGender =
-          g.includes('male') || g.includes('男')
+          gl === 'male' || gl === 'm' || g.includes('男')
             ? 'male'
-            : g.includes('female') || g.includes('女')
+            : gl === 'female' || gl === 'f' || g.includes('女')
               ? 'female'
               : 'unknown'
         const infobox = cdetail?.infobox || []

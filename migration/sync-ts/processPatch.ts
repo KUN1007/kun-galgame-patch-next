@@ -83,13 +83,34 @@ export async function processPatch(patch: {
   try {
     const p = await prisma.patch.findUnique({
       where: { id: patch.id },
-      select: { introduction_zh_cn: true, introduction: true }
+      select: {
+        introduction_zh_cn: true,
+        introduction: true,
+        introduction_en_us: true
+      }
     })
+    // Normalize function: remove last line if it starts with '[' and trim
+    const normalizeIntro = (txt?: string | null) => {
+      if (!txt) return ''
+      const lines = String(txt).split(/\n+/)
+      if (lines.length) {
+        const last = (lines[lines.length - 1] || '').trim()
+        if (last.startsWith('[')) lines.pop()
+      }
+      return lines.join('\n').trim()
+    }
     if (p && !p.introduction_zh_cn && p.introduction) {
-      await prisma.patch.update({
-        where: { id: patch.id },
-        data: { introduction_zh_cn: p.introduction }
-      })
+      const legacy = normalizeIntro(p.introduction)
+      const en = normalizeIntro(p.introduction_en_us || '')
+      // Skip writing zh_cn if legacy equals en_us after normalization
+      if (legacy && legacy !== en) {
+        await prisma.patch
+          .update({
+            where: { id: patch.id },
+            data: { introduction_zh_cn: p.introduction }
+          })
+          .catch(() => {})
+      }
     }
   } catch {}
   await sleep(250)

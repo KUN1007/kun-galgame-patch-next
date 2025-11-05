@@ -63,10 +63,18 @@ export async function fetchVndbDetailAndSyncNames(
 
 export async function syncVndbDescription(vnDetail: any, patchId: number) {
   if (!vnDetail?.description) return
+  // Trim trailing VNDB bracketed line like "[from vndb]"
+  let text = String(vnDetail.description || '')
+  const lines = text.split(/\n+/)
+  if (lines.length) {
+    const last = (lines[lines.length - 1] || '').trim()
+    if (last.startsWith('[')) lines.pop()
+  }
+  const processed = lines.join('\n').trim()
   await prisma.patch
     .update({
       where: { id: patchId },
-      data: { introduction_en_us: vnDetail.description }
+      data: { introduction_en_us: processed }
     })
     .catch(() => {})
 }
