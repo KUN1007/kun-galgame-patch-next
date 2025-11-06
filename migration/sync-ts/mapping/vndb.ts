@@ -1,6 +1,7 @@
 import {
   VndbVnDetail,
   vndbGetCharactersByIds,
+  vndbGetCharactersByVn,
   vndbGetStaffByIds
 } from '../api/vndb'
 import { appendJsonLine, normalizeJaName } from './normalize'
@@ -111,12 +112,52 @@ export async function augmentVndbDetails(
   const sids = uniq(staffIds)
   const cids = uniq(charIds)
 
-  const [staffs, chars] = await Promise.all([
+  // Also fetch all characters linked to this VN to capture unvoiced protagonists
+  const [staffs, chars, allByVn] = await Promise.all([
     vndbGetStaffByIds(sids),
-    vndbGetCharactersByIds(cids)
+    vndbGetCharactersByIds(cids),
+    vndbGetCharactersByVn(vndbId)
   ])
   const staffMap = new Map(staffs.map((s) => [s.id, s]))
   const charDetMap = new Map(chars.map((c) => [c.id, c]))
+
+  // Merge all VN characters into charMap so unvoiced ones (often protagonists) are included
+  for (const ch of allByVn || []) {
+    const key = `vndb-char:${ch.id}`
+    const prev = (charMap.get(key) || null) as CharacterEntry | null
+    const vnsRel = (ch.vns || []).find((x) => x?.id === vndbId)
+    const r = String(vnsRel?.role || '').toLowerCase()
+    const normRole =
+      r === 'protagonist' || r === 'main'
+        ? 'protagonist'
+        : r === 'primary'
+          ? 'main'
+          : 'side'
+    const base: CharacterEntry = {
+      source: 'vndb',
+      kind: 'character',
+      vndb_char_id: ch.id,
+      name: ch.name || ch.original || '',
+      nameEn: ch.name || '',
+      nameJa: ch.original || '',
+      imagesVndb: ch.image || prev?.imagesVndb || null,
+      role: normRole,
+      roles: Array.from(new Set([...(prev?.roles || [])]))
+    }
+    // merge previous if exists
+    if (prev) {
+      charMap.set(key, {
+        ...prev,
+        name: prev.name || base.name,
+        nameEn: prev.nameEn || base.nameEn,
+        nameJa: prev.nameJa || base.nameJa,
+        imagesVndb: prev.imagesVndb || base.imagesVndb || null,
+        role: base.role || prev.role
+      })
+    } else {
+      charMap.set(key, base)
+    }
+  }
 
   for (const [k, v] of charMap) {
     if (
@@ -186,7 +227,11 @@ export async function augmentVndbDetails(
           if (vr?.role) {
             const r = String(vr.role)
             ;(v as CharacterEntry).role =
-              r === 'main' ? 'protagonist' : r === 'primary' ? 'main' : 'side'
+              r === 'protagonist' || r === 'main'
+                ? 'protagonist'
+                : r === 'primary'
+                  ? 'main'
+                  : 'side'
           }
         } catch {}
         // VNDB does not provide year for birthday; if present mm-dd

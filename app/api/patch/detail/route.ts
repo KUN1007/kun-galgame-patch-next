@@ -34,8 +34,8 @@ export const getPatchDetail = async (
         }
       },
       release: true,
-      char: true,
-      person: true
+      char_rel: { include: { char: true } },
+      person_rel: { include: { person: true } }
     }
   })
   if (!patch) {
@@ -44,10 +44,11 @@ export const getPatchDetail = async (
 
   const detail: PatchDetail = {
     id: patch.id,
-    name: patch.name,
-    name_en_us: patch.name_en_us,
-    name_ja_jp: patch.name_ja_jp,
-    name_zh_cn: patch.name_zh_cn,
+    name: {
+      'zh-cn': patch.name_zh_cn,
+      'ja-jp': patch.name_ja_jp,
+      'en-us': patch.name_en_us
+    },
     banner: patch.banner,
     content_limit: patch.content_limit,
     view: patch.view,
@@ -58,9 +59,11 @@ export const getPatchDetail = async (
     engine: patch.engine,
     platform: patch.platform,
     alias: patch.alias.map((a) => a.name),
-    introduction_zh_cn: await markdownToHtml(patch.introduction_zh_cn),
-    introduction_ja_jp: await markdownToHtml(patch.introduction_ja_jp),
-    introduction_en_us: await markdownToHtml(patch.introduction_en_us),
+    introduction: {
+      'zh-cn': await markdownToHtml(patch.introduction_zh_cn),
+      'ja-jp': await markdownToHtml(patch.introduction_ja_jp),
+      'en-us': await markdownToHtml(patch.introduction_en_us)
+    },
     vndbId: patch.vndb_id || '',
     cover: patch.cover,
     screenshot: patch.screenshot.filter(
@@ -69,8 +72,11 @@ export const getPatchDetail = async (
     tag: patch.tag
       .map((tr) => ({
         id: tr.tag.id,
-        name: tr.tag.name,
-        name_en_us: tr.tag.name_en_us,
+        name: {
+          'zh-cn': tr.tag.name,
+          'ja-jp': '',
+          'en-us': tr.tag.name_en_us
+        },
         category: tr.tag.category,
         spoiler_level: tr.spoiler_level,
         provider: tr.tag.provider,
@@ -94,30 +100,38 @@ export const getPatchDetail = async (
       languages: r.languages,
       minage: r.minage ?? 0
     })),
-    char: patch.char.map((c) => ({
+    char: patch.char_rel.map((cr) => cr.char).map((c) => ({
       id: c.id,
       image: c.image,
       gender: c.gender,
       role: c.role,
       roles: c.roles,
-      name_zh_cn: c.name_zh_cn,
-      name_ja_jp: c.name_ja_jp,
-      name_en_us: c.name_en_us,
-      description_zh_cn: c.description_zh_cn,
-      description_ja_jp: c.description_ja_jp,
-      description_en_us: c.description_en_us,
+      name: {
+        'zh-cn': c.name_zh_cn,
+        'ja-jp': c.name_ja_jp,
+        'en-us': c.name_en_us
+      },
+      description: {
+        'zh-cn': c.description_zh_cn,
+        'ja-jp': c.description_ja_jp,
+        'en-us': c.description_en_us
+      },
       infobox: c.infobox
     })),
-    person: patch.person.map((p) => ({
+    person: patch.person_rel.map((pr) => pr.person).map((p) => ({
       id: p.id,
       image: p.image,
       roles: p.roles,
-      name_zh_cn: p.name_zh_cn,
-      name_ja_jp: p.name_ja_jp,
-      name_en_us: p.name_en_us,
-      description_zh_cn: p.description_zh_cn,
-      description_ja_jp: p.description_ja_jp,
-      description_en_us: p.description_en_us
+      name: {
+        'zh-cn': p.name_zh_cn,
+        'ja-jp': p.name_ja_jp,
+        'en-us': p.name_en_us
+      },
+      description: {
+        'zh-cn': p.description_zh_cn,
+        'ja-jp': p.description_ja_jp,
+        'en-us': p.description_en_us
+      }
     })),
     created: String(patch.created),
     updated: String(patch.updated)

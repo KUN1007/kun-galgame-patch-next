@@ -4,31 +4,28 @@ import { useMemo, useState } from 'react'
 import DOMPurify from 'isomorphic-dompurify'
 import { Calendar, Clock, Link, RefreshCw } from 'lucide-react'
 import { Select, SelectItem } from '@heroui/select'
-import type { PatchDetail } from '~/types/api/patch'
 import { formatDate } from '~/utils/time'
 import { GALGAME_SORT_YEARS_MAP } from '~/constants/galgame'
+import { getPreferredLanguageText } from '~/utils/getPreferredLanguageText'
+import type { PatchDetail } from '~/types/api/patch'
 
 export const OverviewSection = ({ detail }: { detail: PatchDetail }) => {
-  const [lang, setLang] = useState<'zh' | 'ja' | 'en'>(() => {
-    if (detail.introduction_zh_cn) return 'zh'
-    if (detail.introduction_ja_jp) return 'ja'
-    return 'en'
-  })
+  const initialLang: Language =
+    (['zh-cn', 'ja-jp', 'en-us'] as Language[]).find(
+      (l) => detail.introduction[l]
+    ) || 'zh-cn'
+
+  const [lang, setLang] = useState<Language>(initialLang)
 
   const introHtml = useMemo(() => {
-    const html =
-      lang === 'zh'
-        ? detail.introduction_zh_cn
-        : lang === 'ja'
-          ? detail.introduction_ja_jp
-          : detail.introduction_en_us
+    const html = getPreferredLanguageText(detail.introduction, lang)
     return DOMPurify.sanitize(html)
-  }, [lang, detail])
+  }, [lang, detail.introduction])
 
   const hasIntro = Boolean(
-    detail.introduction_zh_cn ||
-      detail.introduction_ja_jp ||
-      detail.introduction_en_us
+    detail.introduction['zh-cn'] ||
+      detail.introduction['ja-jp'] ||
+      detail.introduction['en-us']
   )
 
   return (
@@ -36,26 +33,27 @@ export const OverviewSection = ({ detail }: { detail: PatchDetail }) => {
       <div className="flex items-center gap-3 mb-4">
         <div className="w-1 h-6 bg-primary rounded" />
         <h2 className="text-2xl font-bold text-gray-900">简介</h2>
+
+        <Select
+          selectedKeys={[lang]}
+          defaultSelectedKeys={[lang]}
+          size="sm"
+          onSelectionChange={(keys) => {
+            const k = Array.from(keys)[0] as 'zh-cn'
+            if (k) setLang(k)
+          }}
+          classNames={{
+            base: 'max-w-36'
+          }}
+        >
+          <SelectItem key="zh-cn">中文</SelectItem>
+          <SelectItem key="ja-jp">日本語</SelectItem>
+          <SelectItem key="en-us">English</SelectItem>
+        </Select>
       </div>
       <div className="space-y-4">
         {hasIntro && (
           <div className="space-y-3">
-            <div className="max-w-xs">
-              <Select
-                selectedKeys={[lang]}
-                defaultSelectedKeys={[lang]}
-                label="介绍语言"
-                size="sm"
-                onSelectionChange={(keys) => {
-                  const k = Array.from(keys)[0] as 'zh' | 'ja' | 'en'
-                  if (k) setLang(k)
-                }}
-              >
-                <SelectItem key="zh">中文</SelectItem>
-                <SelectItem key="ja">日本語</SelectItem>
-                <SelectItem key="en">English</SelectItem>
-              </Select>
-            </div>
             <div
               className="kun-prose max-w-none"
               dangerouslySetInnerHTML={{ __html: introHtml }}

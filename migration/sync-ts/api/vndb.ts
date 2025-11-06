@@ -180,6 +180,7 @@ export interface VndbCharacterDetail {
   original?: string | null
   description?: string | null
   gender?: string | string[] | null
+  image?: VndbImage | null
   height?: number | null
   weight?: number | null
   bust?: number | null
@@ -209,7 +210,7 @@ export async function vndbGetCharactersByIds(
       {
         filters,
         fields:
-          'id, name, original, description, gender, height, weight, bust, waist, hips, cup, age, aliases, vns{id, role}',
+          'id, name, original, image{id,url,dims,sexual,violence,votecount}, description, gender, height, weight, bust, waist, hips, cup, age, aliases, vns{id, role}',
         results: Math.min(part.length, 100)
       }
     )
@@ -217,6 +218,30 @@ export async function vndbGetCharactersByIds(
     await sleep(150)
   }
   return out
+}
+
+export async function vndbGetCharactersByVn(
+  vnId: string
+): Promise<VndbCharacterDetail[]> {
+  const results: VndbCharacterDetail[] = []
+  let page = 1
+  while (true) {
+    const data = await vndbPost<{
+      results?: VndbCharacterDetail[]
+      more?: boolean
+    }>('/character', {
+      filters: ['vn', '=', ['id', '=', vnId]],
+      fields:
+        'id, name, original, image{id,url,dims,sexual,violence,votecount}, description, gender, height, weight, bust, waist, hips, cup, age, aliases, vns{id, role}',
+      results: 100,
+      page
+    })
+    results.push(...(data.results || []))
+    if (!data.more) break
+    page += 1
+    await sleep(120)
+  }
+  return results
 }
 
 export { vndbPost }

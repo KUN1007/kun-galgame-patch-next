@@ -34,10 +34,7 @@ export interface Patch {
 
 export interface PatchDetail {
   id: number
-  name: string
-  name_en_us: string
-  name_ja_jp: string
-  name_zh_cn: string
+  name: KunLanguage
   banner: string
   content_limit: string
   view: number
@@ -48,9 +45,7 @@ export interface PatchDetail {
   engine: string[]
   platform: string[]
   alias: string[]
-  introduction_zh_cn: string
-  introduction_ja_jp: string
-  introduction_en_us: string
+  introduction: KunLanguage
   vndbId: string
   cover: {
     url: string
@@ -74,8 +69,7 @@ export interface PatchDetail {
   }[]
   tag: {
     id: number
-    name: string
-    name_en_us: string
+    name: KunLanguage
     category: string
     spoiler_level: number
     provider: string
@@ -102,24 +96,16 @@ export interface PatchDetail {
     gender: string
     role?: string
     roles: string[]
-    name_zh_cn: string
-    name_ja_jp: string
-    name_en_us: string
-    description_zh_cn: string
-    description_ja_jp: string
-    description_en_us: string
+    name: KunLanguage
+    description: KunLanguage
     infobox: string
   }[]
   person: {
     id: number
     image: string
     roles: string[]
-    name_zh_cn: string
-    name_ja_jp: string
-    name_en_us: string
-    description_zh_cn: string
-    description_ja_jp: string
-    description_en_us: string
+    name: KunLanguage
+    description: KunLanguage
   }[]
   created: string
   updated: string

@@ -2,8 +2,9 @@
 
 import { Tabs, Tab } from '@heroui/tabs'
 import { Chip, Tooltip, Link, Checkbox } from '@heroui/react'
-import type { PatchDetail } from '~/types/api/patch'
 import { useMemo, useState } from 'react'
+import { getPreferredLanguageText } from '~/utils/getPreferredLanguageText'
+import type { PatchDetail } from '~/types/api/patch'
 
 export const TagSection = ({ detail }: { detail: PatchDetail }) => {
   const [provider, setProvider] = useState<'vndb' | 'bangumi'>('vndb')
@@ -54,7 +55,7 @@ export const TagSection = ({ detail }: { detail: PatchDetail }) => {
               color={tag.provider === 'vndb' ? 'primary' : 'secondary'}
               variant="flat"
             >
-              {`${tag.name}+${tag.count}`}
+              {`${getPreferredLanguageText(tag.name)}+${tag.count}`}
               {tag.spoiler_level > 0 ? ' · 剧透' : ''}
             </Chip>
           </Tooltip>

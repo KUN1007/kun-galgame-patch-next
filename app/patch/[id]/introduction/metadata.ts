@@ -1,36 +1,41 @@
 import { kunMoyuMoe } from '~/config/moyu-moe'
 import { convert } from 'html-to-text'
+import { getPreferredLanguageText } from '~/utils/getPreferredLanguageText'
 import type { Metadata } from 'next'
-import type { KunSiteAuthor } from '~/config/config'
 import type { PatchDetail } from '~/types/api/patch'
 
 export const generateKunMetadataTemplate = (detail: PatchDetail): Metadata => {
+  const patchName = getPreferredLanguageText(detail.name)
+  const patchIntro = convert(getPreferredLanguageText(detail.introduction), {
+    wordwrap: false,
+    selectors: [{ selector: 'p', format: 'inline' }]
+  }).slice(0, 170)
+
   const title = detail.alias.length
-    ? `${detail.name} | ${detail.alias[0]}`
-    : `${detail.name}`
-  const descriptionSource =
-    detail.introduction_zh_cn || detail.introduction_en_us || ''
+    ? `${patchName} | ${detail.alias[0]}`
+    : `${patchName}`
+
   return {
     title,
-    keywords: [detail.name, ...detail.alias],
-    description: descriptionSource.slice(0, 170),
+    keywords: [patchName, ...detail.alias],
+    description: patchIntro.slice(0, 170),
     openGraph: {
       title,
-      description: descriptionSource.slice(0, 170),
+      description: patchIntro.slice(0, 170),
       type: 'article',
       images: [
         {
           url: detail.banner,
           width: 1920,
           height: 1080,
-          alt: detail.name
+          alt: patchName
         }
       ]
     },
     twitter: {
       card: 'summary',
       title,
-      description: descriptionSource.slice(0, 170),
+      description: patchIntro.slice(0, 170),
       images: [detail.banner]
     },
     alternates: {

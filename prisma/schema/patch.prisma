@@ -45,8 +45,6 @@ model patch {
   history  patch_history[]      @relation("patch_history")
   pr       patch_pull_request[] @relation("patch_pull_request")
 
-  char     patch_char[]
-  person   patch_person[]
   char_rel patch_char_relation[]
   person_rel patch_person_relation[]
   release  patch_release[]

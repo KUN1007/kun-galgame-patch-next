@@ -1,4 +1,5 @@
 import { Chip } from '@heroui/react'
+import { getPreferredLanguageText } from '~/utils/getPreferredLanguageText'
 import type { PatchDetail } from '~/types/api/patch'
 
 const localizeTitle = (detail: PatchDetail, title: string): string => {
@@ -15,7 +16,9 @@ const localizeTitle = (detail: PatchDetail, title: string): string => {
   const [rawName, ...restParts] = parts
 
   const localizedName =
-    rawName.trim() === detail.name_en_us.trim() ? detail.name_zh_cn : rawName
+    rawName.trim() === detail.name['en-us'].trim()
+      ? getPreferredLanguageText(detail.name)
+      : rawName
 
   const localizedRest = restParts
     .map((p) => titleMap[p.trim()] ?? p.trim())

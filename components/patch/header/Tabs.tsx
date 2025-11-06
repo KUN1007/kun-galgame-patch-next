@@ -15,11 +15,11 @@ export const PatchHeaderTabs = ({ id }: PatchHeaderProps) => {
   const tabs = [
     {
       key: 'introduction',
-      title: '信息',
+      title: 'Galgame 信息',
       href: `/patch/${id}/introduction`
     },
-    { key: 'resource', title: '资源', href: `/patch/${id}/resource` },
-    { key: 'comment', title: '评论', href: `/patch/${id}/comment` }
+    { key: 'resource', title: '补丁资源下载', href: `/patch/${id}/resource` },
+    { key: 'comment', title: '评论区', href: `/patch/${id}/comment` }
   ]
 
   return (
@@ -30,13 +30,7 @@ export const PatchHeaderTabs = ({ id }: PatchHeaderProps) => {
       selectedKey={lastSegment}
     >
       {tabs.map(({ key, title, href }) => (
-        <Tab
-          key={key}
-          as={Link}
-          title={title}
-          href={href}
-          className="p-0 min-w-24 rounded-large"
-        />
+        <Tab key={key} as={Link} title={title} href={href} />
       ))}
     </Tabs>
   )

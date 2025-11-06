@@ -15,7 +15,7 @@ model patch_char {
   weight               Int      @default(0)
   cup                  String   @default("")
   age                  Int      @default(0)
-  // age                  Int?
+  infobox String @default("")
 
   vndb_char_id         String?  @db.VarChar(32)
   bangumi_character_id Int?
@@ -28,18 +28,14 @@ model patch_char {
   description_ja_jp    String @default("")  @db.VarChar(100007)
   description_en_us    String @default("")  @db.VarChar(100007)
 
-  infobox String @default("")
 
-  patch_id             Int
-  patch                patch    @relation(fields: [patch_id], references: [id], onDelete: Cascade, onUpdate: NoAction)
 
   alias patch_char_alias[]
   voices  patch_char_person_relation[]
   patches patch_char_relation[]
 
-  @@index([patch_id])
-  @@unique([patch_id, vndb_char_id])
-  @@unique([patch_id, bangumi_character_id])
+  @@unique([vndb_char_id])
+  @@unique([bangumi_character_id])
 
   created              DateTime @default(now())
   updated              DateTime @updatedAt

@@ -8,7 +8,6 @@ export async function persistCharMap(
 ) {
   for (const [, val] of charMap) {
     const base = {
-      patch_id: patchId,
       name_zh_cn: (val as any).nameZh || '',
       name_ja_jp: (val as any).nameJa || '',
       name_en_us: (val as any).nameEn || '',
@@ -38,18 +37,15 @@ export async function persistCharMap(
           official_website: (val as PersonEntry).official_website || '',
           blog: (val as PersonEntry).blog || ''
         }
-        if ((val as PersonEntry).vndb_staff_id)
+      if ((val as PersonEntry).vndb_staff_id)
           personData.vndb_staff_id = (val as PersonEntry).vndb_staff_id
-        if ((val as PersonEntry).bangumi_person_id)
+      if ((val as PersonEntry).bangumi_person_id)
           personData.bangumi_person_id = (val as PersonEntry).bangumi_person_id
-        let personRec: any = null
+      let personRec: any = null
         if (personData.vndb_staff_id) {
           personRec = await prisma.patch_person.upsert({
             where: {
-              patch_id_vndb_staff_id: {
-                patch_id: personData.patch_id,
-                vndb_staff_id: personData.vndb_staff_id
-              }
+              vndb_staff_id: personData.vndb_staff_id
             },
             update: personData,
             create: personData
@@ -57,10 +53,7 @@ export async function persistCharMap(
         } else if (personData.bangumi_person_id) {
           personRec = await prisma.patch_person.upsert({
             where: {
-              patch_id_bangumi_person_id: {
-                patch_id: personData.patch_id,
-                bangumi_person_id: personData.bangumi_person_id
-              }
+              bangumi_person_id: personData.bangumi_person_id
             },
             update: personData,
             create: personData
@@ -132,10 +125,7 @@ export async function persistCharMap(
         if (charData.vndb_char_id) {
           charRec = await prisma.patch_char.upsert({
             where: {
-              patch_id_vndb_char_id: {
-                patch_id: charData.patch_id,
-                vndb_char_id: charData.vndb_char_id
-              }
+              vndb_char_id: charData.vndb_char_id
             },
             update: charData,
             create: charData
@@ -143,10 +133,7 @@ export async function persistCharMap(
         } else if (charData.bangumi_character_id) {
           charRec = await prisma.patch_char.upsert({
             where: {
-              patch_id_bangumi_character_id: {
-                patch_id: charData.patch_id,
-                bangumi_character_id: charData.bangumi_character_id
-              }
+              bangumi_character_id: charData.bangumi_character_id
             },
             update: charData,
             create: charData
@@ -211,12 +198,16 @@ function resolveImage(v: CharMapValue): string {
 export async function linkVoices(vnDetail: any, patchId: number) {
   if (!vnDetail?.va?.length) return
   try {
-    const chars = await prisma.patch_char.findMany({
-      where: { patch_id: patchId }
+    const charRels = await prisma.patch_char_relation.findMany({
+      where: { patch_id: patchId },
+      include: { char: true }
     })
-    const persons = await prisma.patch_person.findMany({
-      where: { patch_id: patchId }
+    const chars = charRels.map((r) => r.char)
+    const personRels = await prisma.patch_person_relation.findMany({
+      where: { patch_id: patchId },
+      include: { person: true }
     })
+    const persons = personRels.map((r) => r.person)
     const charIdMap = new Map<string, number>()
     for (const c of chars) {
       if (c.vndb_char_id) charIdMap.set(String(c.vndb_char_id), c.id)
