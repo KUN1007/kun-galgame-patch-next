@@ -98,7 +98,12 @@ export async function syncVndbCover(vnDetail: any, patchId: number) {
   const c = vnDetail.image
   await prisma.patch_cover
     .upsert({
-      where: { patch_id: patchId },
+      where: {
+        patch_id_image_id: {
+          patch_id: patchId,
+          image_id: c.id ? String(c.id) : ''
+        }
+      },
       update: {
         image_id: c.id ? String(c.id) : '',
         url: c.url || '',
@@ -203,8 +208,7 @@ async function syncPatchAliasesFromVndb(vnDetail: any, patchId: number) {
     if (v) set.add(v)
   }
   add(vnDetail?.title)
-  if (Array.isArray(vnDetail?.aliases))
-    for (const a of vnDetail.aliases) add(a)
+  if (Array.isArray(vnDetail?.aliases)) for (const a of vnDetail.aliases) add(a)
   if (Array.isArray(vnDetail?.titles))
     for (const t of vnDetail.titles) {
       add(t?.title)

@@ -226,7 +226,7 @@ export async function syncVndbCover(vnDetail, baseDir, patchId) {
   const c = vnDetail.image
   try {
     await prisma.patch_cover.upsert({
-      where: { patch_id: patchId },
+      where: { patch_id_image_id: { patch_id: patchId, image_id: c.id ? String(c.id) : '' } },
       update: {
         image_id: c.id ? String(c.id) : '',
         url: c.url || '',
@@ -557,7 +557,7 @@ export async function handleBangumiSubjectAndTags(
     if (!vnDetail?.image?.url && subject?.images?.large) {
       try {
         await prisma.patch_cover.upsert({
-          where: { patch_id: patchId },
+          where: { patch_id_image_id: { patch_id: patchId, image_id: '' } },
           update: { image_id: '', url: subject.images.large },
           create: {
             patch_id: patchId,
@@ -707,9 +707,10 @@ export async function addBangumiCharactersToCharMap(subjectId, charMap) {
         const bd = Number(cdetail?.birth_day || 0)
         let bdayStr = ''
         if (by) {
-          bdayStr = String(by).padStart(4, '0')
-          if (bm) bdayStr += '-' + String(bm).padStart(2, '0')
-          if (bd) bdayStr += '-' + String(bd).padStart(2, '0')
+          const yy = String(by % 100).padStart(2, '0')
+          const mm = bm ? String(bm).padStart(2, '0') : ''
+          const dd = bd ? String(bd).padStart(2, '0') : ''
+          bdayStr = yy + (mm ? '-' + mm : '') + (dd ? '-' + dd : '')
         }
         const mappedGender =
           g.includes('male') || g.includes('男')
@@ -725,7 +726,10 @@ export async function addBangumiCharactersToCharMap(subjectId, charMap) {
             zhSummary: chinese || prev.zhSummary,
             jaSummary: japanese || prev.jaSummary,
             gender: mappedGender || prev.gender,
-            birthday: prev.birthday || bdayStr,
+            birthday:
+              prev.birthday && /^(\d{2}-\d{2}|\d-\d{1,2}|\d{1,2}-\d)$/.test(prev.birthday)
+                ? bdayStr || prev.birthday
+                : prev.birthday || bdayStr,
             infobox: infobox || prev.infobox
           })
           // parse additional infobox fields for character
@@ -841,7 +845,10 @@ export async function addBangumiCharactersToCharMap(subjectId, charMap) {
             zhSummary: chinese || prev.zhSummary,
             jaSummary: japanese || prev.jaSummary,
             gender: mappedGender || prev.gender,
-            birthday: prev.birthday || bdayStr,
+            birthday:
+              prev.birthday && /^(\d{2}-\d{2}|\d-\d{1,2}|\d{1,2}-\d)$/.test(prev.birthday)
+                ? bdayStr || prev.birthday
+                : prev.birthday || bdayStr,
             infobox: infobox || prev.infobox
           })
           // parse additional infobox fields for character
@@ -1148,14 +1155,18 @@ export async function addBangumiPersonsAndCompanies(
             const bd = Number(detail?.birth_day || 0)
             let bday = ''
             if (by) {
-              bday = String(by).padStart(4, '0')
-              if (bm) bday += '-' + String(bm).padStart(2, '0')
-              if (bd) bday += '-' + String(bd).padStart(2, '0')
+              const yy = String(by % 100).padStart(2, '0')
+              const mm = bm ? String(bm).padStart(2, '0') : ''
+              const dd = bd ? String(bd).padStart(2, '0') : ''
+              bday = yy + (mm ? '-' + mm : '') + (dd ? '-' + dd : '')
             }
             const prevB = charMap.get(activeKey) || base
             const objB = {
               ...prevB,
-              birthday: prevB.birthday || bday,
+              birthday:
+                prevB.birthday && /^(\d{2}-\d{2}|\d-\d{1,2}|\d{1,2}-\d)$/.test(prevB.birthday)
+                  ? bday || prevB.birthday
+                  : prevB.birthday || bday,
               blood_type: prevB.blood_type || String(detail?.blood_type || '')
             }
             charMap.set(activeKey, objB)

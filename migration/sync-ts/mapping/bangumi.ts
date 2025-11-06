@@ -41,7 +41,7 @@ export async function handleBangumiSubjectAndTags(
     if (!vnDetail?.image?.url && subject?.images?.large) {
       await prisma.patch_cover
         .upsert({
-          where: { patch_id: patchId },
+          where: { patch_id_image_id: { patch_id: patchId, image_id: '' } },
           update: { image_id: '', url: subject.images.large },
           create: { patch_id: patchId, image_id: '', url: subject.images.large }
         })
@@ -80,7 +80,9 @@ export async function handleBangumiSubjectAndTags(
       if (aliasEntry) {
         const v = aliasEntry.value
         const list: string[] = Array.isArray(v)
-          ? v.map((i: any) => (typeof i === 'string' ? i : i?.v)).filter(Boolean)
+          ? v
+              .map((i: any) => (typeof i === 'string' ? i : i?.v))
+              .filter(Boolean)
           : v
             ? [v]
             : []
@@ -245,9 +247,10 @@ export async function addBangumiCharactersToCharMap(
         const bd = Number(cdetail?.birth_day || 0)
         let bdayStr = ''
         if (by) {
-          bdayStr = String(by).padStart(4, '0')
-          if (bm) bdayStr += '-' + String(bm).padStart(2, '0')
-          if (bd) bdayStr += '-' + String(bd).padStart(2, '0')
+          const yy = String(by % 100).padStart(2, '0')
+          const mm = bm ? String(bm).padStart(2, '0') : ''
+          const dd = bd ? String(bd).padStart(2, '0') : ''
+          bdayStr = yy + (mm ? '-' + mm : '') + (dd ? '-' + dd : '')
         }
         const gl = g.trim().toLowerCase()
         const mappedGender =
@@ -264,7 +267,12 @@ export async function addBangumiCharactersToCharMap(
             zhSummary: chinese || prev.zhSummary,
             jaSummary: japanese || prev.jaSummary,
             gender: mappedGender || prev.gender,
-            birthday: prev.birthday || bdayStr,
+            // Prefer Bangumi full date (YY-MM-DD). If prev is only MM-DD, override.
+            birthday:
+              prev.birthday &&
+              /^(\d{2}-\d{2}|\d-\d{1,2}|\d{1,2}-\d)$/.test(prev.birthday)
+                ? bdayStr || prev.birthday
+                : prev.birthday || bdayStr,
             infobox: infobox || prev.infobox
           })
         }
@@ -503,9 +511,10 @@ export async function addBangumiPersonsAndCompanies(
           const bd = Number(detail2?.birth_day || 0)
           let bday = ''
           if (by) {
-            bday = String(by).padStart(4, '0')
-            if (bm) bday += '-' + String(bm).padStart(2, '0')
-            if (bd) bday += '-' + String(bd).padStart(2, '0')
+            const yy = String(by % 100).padStart(2, '0')
+            const mm = bm ? String(bm).padStart(2, '0') : ''
+            const dd = bd ? String(bd).padStart(2, '0') : ''
+            bday = yy + (mm ? '-' + mm : '') + (dd ? '-' + dd : '')
           }
           const pv2 = (charMap.get(activeKey) || base) as PersonEntry
           charMap.set(activeKey, {

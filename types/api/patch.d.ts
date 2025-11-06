@@ -60,7 +60,7 @@ export interface PatchDetail {
     thumbnail_url: string
     thumb_width: number
     thumb_height: number
-  } | null
+  }[]
   screenshot: {
     id: number
     image_id: string
