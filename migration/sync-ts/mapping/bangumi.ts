@@ -27,6 +27,13 @@ export async function handleBangumiSubjectAndTags(
   if (!subjectId) return null
   try {
     const subject = await bgmGetSubject(subjectId)
+    // dump raw JSON for inspection
+    appendJsonLine('migration/sync-ts/data/patch.json', {
+      provider: 'bangumi',
+      id: subjectId,
+      name: subject?.name || subject?.name_cn || '',
+      data: subject
+    }).catch(() => {})
     await prisma.patch
       .update({ where: { id: patchId }, data: { bid: subjectId } })
       .catch(() => {})
@@ -56,6 +63,67 @@ export async function handleBangumiSubjectAndTags(
         }
       })
       .catch(() => {})
+
+    // create patch_alias from bangumi names and infobox aliases
+    try {
+      const names = new Set<string>()
+      const add = (s?: string | null) => {
+        const v = String(s || '').trim()
+        if (v) names.add(v)
+      }
+      add(subject?.name)
+      add(subject?.name_cn)
+      const inf = (subject as any)?.infobox || []
+      const aliasEntry = Array.isArray(inf)
+        ? inf.find((x: any) => x?.key === '别名' || x?.key === '別名')
+        : null
+      if (aliasEntry) {
+        const v = aliasEntry.value
+        const list: string[] = Array.isArray(v)
+          ? v.map((i: any) => (typeof i === 'string' ? i : i?.v)).filter(Boolean)
+          : v
+            ? [v]
+            : []
+        for (const s of list) add(String(s))
+      }
+      if (names.size) {
+        const existing = await prisma.patch_alias
+          .findMany({ where: { patch_id: patchId }, select: { name: true } })
+          .then((rows: any[]) => new Set(rows.map((r) => r.name)))
+        const toCreate = Array.from(names).filter((n) => !existing.has(n))
+        for (const n of toCreate)
+          await prisma.patch_alias
+            .create({ data: { patch_id: patchId, name: n } })
+            .catch(() => {})
+      }
+    } catch {}
+
+    // collect links from bangumi infobox
+    try {
+      const inf = (subject as any)?.infobox || []
+      if (Array.isArray(inf)) {
+        for (const item of inf) {
+          const key = String(item?.key || '').trim()
+          if (!key) continue
+          const raw = item?.value
+          const getUrl = (v: any): string => {
+            if (!v) return ''
+            if (typeof v === 'string') return v
+            if (typeof v === 'object' && v.v) return String(v.v)
+            return ''
+          }
+          const url = Array.isArray(raw) ? getUrl(raw[0]) : getUrl(raw)
+          if (!url || !/^https?:\/\//i.test(url)) continue
+          await prisma.patch_link
+            .upsert({
+              where: { patch_id_name: { patch_id: patchId, name: key } },
+              update: { url },
+              create: { patch_id: patchId, name: key, url }
+            })
+            .catch(() => {})
+        }
+      }
+    } catch {}
     if (Array.isArray(subject?.tags) && subject.tags.length) {
       for (const tg of subject.tags) {
         const tname = tg?.name || ''

@@ -35,6 +35,7 @@ model patch_char {
 
   alias patch_char_alias[]
   voices  patch_char_person_relation[]
+  patches patch_char_relation[]
 
   @@index([patch_id])
   @@unique([patch_id, vndb_char_id])
@@ -73,4 +74,20 @@ model patch_char_person_relation {
   @@unique([patch_char_id, patch_person_id, relation])
   @@index([patch_char_id])
   @@index([patch_person_id])
+}
+
+model patch_char_relation {
+  id            Int        @id @default(autoincrement())
+  patch_id      Int
+  patch_char_id Int
+
+  patch patch      @relation(fields: [patch_id], references: [id], onDelete: Cascade, onUpdate: NoAction)
+  char  patch_char @relation(fields: [patch_char_id], references: [id], onDelete: Cascade, onUpdate: NoAction)
+
+  created DateTime @default(now())
+  updated DateTime @updatedAt
+
+  @@unique([patch_id, patch_char_id])
+  @@index([patch_id])
+  @@index([patch_char_id])
 }

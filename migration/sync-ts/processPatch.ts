@@ -102,8 +102,12 @@ export async function processPatch(patch: {
     if (p && !p.introduction_zh_cn && p.introduction) {
       const legacy = normalizeIntro(p.introduction)
       const en = normalizeIntro(p.introduction_en_us || '')
-      // Skip writing zh_cn if legacy equals en_us after normalization
-      if (legacy && legacy !== en) {
+      const l10 = legacy.slice(0, 10)
+      const e10 = en.slice(0, 10)
+      // If first 10 chars match, treat as equal, skip write
+      if (legacy && (!l10 || l10 === e10)) {
+        // skip
+      } else if (legacy) {
         await prisma.patch
           .update({
             where: { id: patch.id },

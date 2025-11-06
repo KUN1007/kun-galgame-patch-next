@@ -56,3 +56,4 @@ migration/*.json
 refs
 migration/temp
 migration/sync/data
+migration/sync-ts/data

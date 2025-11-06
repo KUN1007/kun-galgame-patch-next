@@ -77,6 +77,21 @@ export async function persistCharMap(
               )
             )
           : []
+        if (personRec) {
+          // link patch-person relation (many-to-many)
+          await prisma.patch_person_relation
+            .upsert({
+              where: {
+                patch_id_patch_person_id: {
+                  patch_id: patchId,
+                  patch_person_id: personRec.id
+                }
+              },
+              update: {},
+              create: { patch_id: patchId, patch_person_id: personRec.id }
+            })
+            .catch(() => {})
+        }
         if (personRec && aliases.length) {
           try {
             await prisma.patch_person_alias.createMany({
@@ -148,6 +163,21 @@ export async function persistCharMap(
               )
             )
           : []
+        if (charRec) {
+          // link patch-char relation (many-to-many)
+          await prisma.patch_char_relation
+            .upsert({
+              where: {
+                patch_id_patch_char_id: {
+                  patch_id: patchId,
+                  patch_char_id: charRec.id
+                }
+              },
+              update: {},
+              create: { patch_id: patchId, patch_char_id: charRec.id }
+            })
+            .catch(() => {})
+        }
         if (charRec && charAliases.length) {
           try {
             await prisma.patch_char_alias.createMany({

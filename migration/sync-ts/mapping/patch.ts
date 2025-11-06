@@ -1,4 +1,5 @@
 import { prisma } from '../db/prisma'
+import { appendJsonLine } from './normalize'
 import {
   vndbFindVnByName,
   vndbGetReleasesByVn,
@@ -36,6 +37,13 @@ export async function fetchVndbDetailAndSyncNames(
   try {
     const vnDetail = await vndbGetVnById(vndbId)
     if (vnDetail) {
+      // dump raw JSON for inspection
+      appendJsonLine('migration/sync-ts/data/patch.json', {
+        provider: 'vndb',
+        id: vndbId,
+        name: vnDetail.title || '',
+        data: vnDetail
+      }).catch(() => {})
       const nameEn = vnDetail.title || ''
       let nameJa = ''
       if (Array.isArray(vnDetail.titles)) {
@@ -53,6 +61,12 @@ export async function fetchVndbDetailAndSyncNames(
           data: { name_en_us: nameEn, name_ja_jp: nameJa }
         })
         .catch(() => {})
+      try {
+        await syncPatchAliasesFromVndb(vnDetail, patchId)
+      } catch {}
+      try {
+        await syncPatchLinksFromVndb(vnDetail, patchId)
+      } catch {}
     }
     return vnDetail
   } catch (e: any) {
@@ -178,6 +192,48 @@ export async function syncVndbTags(
           .update({ where: { id: tid }, data: { count: { increment: 1 } } })
           .catch(() => {})
       )
+      .catch(() => {})
+  }
+}
+
+async function syncPatchAliasesFromVndb(vnDetail: any, patchId: number) {
+  const set = new Set<string>()
+  const add = (s?: string | null) => {
+    const v = String(s || '').trim()
+    if (v) set.add(v)
+  }
+  add(vnDetail?.title)
+  if (Array.isArray(vnDetail?.aliases))
+    for (const a of vnDetail.aliases) add(a)
+  if (Array.isArray(vnDetail?.titles))
+    for (const t of vnDetail.titles) {
+      add(t?.title)
+      add(t?.latin)
+    }
+  if (!set.size) return
+  const existing = await prisma.patch_alias
+    .findMany({ where: { patch_id: patchId }, select: { name: true } })
+    .then((rows) => new Set(rows.map((r) => r.name)))
+  const toCreate = Array.from(set).filter((n) => !existing.has(n))
+  for (const name of toCreate) {
+    await prisma.patch_alias
+      .create({ data: { patch_id: patchId, name } })
+      .catch(() => {})
+  }
+}
+
+async function syncPatchLinksFromVndb(vnDetail: any, patchId: number) {
+  const links = Array.isArray(vnDetail?.extlinks) ? vnDetail.extlinks : []
+  for (const l of links) {
+    const name = String(l?.name || l?.label || '').trim()
+    const url = String(l?.url || '').trim()
+    if (!name || !url) continue
+    await prisma.patch_link
+      .upsert({
+        where: { patch_id_name: { patch_id: patchId, name } },
+        update: { url },
+        create: { patch_id: patchId, name, url }
+      })
       .catch(() => {})
   }
 }

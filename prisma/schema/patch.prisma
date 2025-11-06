@@ -31,6 +31,7 @@ model patch {
   walkthrough patch_walkthrough[]
   company     patch_company_relation[]
   tag         patch_tag_relation[]
+  link        patch_link[]
 
   user_id Int
   user    user @relation("user_patch", fields: [user_id], references: [id])
@@ -46,6 +47,8 @@ model patch {
 
   char     patch_char[]
   person   patch_person[]
+  char_rel patch_char_relation[]
+  person_rel patch_person_relation[]
   release  patch_release[]
 
   created DateTime @default(now())
