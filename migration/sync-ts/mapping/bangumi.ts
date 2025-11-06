@@ -18,7 +18,6 @@ export async function handleBangumiSubjectAndTags(
   upsertTagByName: (
     name: string,
     desc?: string,
-    ownerId?: number,
     provider?: string,
     nameEn?: string,
     category?: string
@@ -129,14 +128,7 @@ export async function handleBangumiSubjectAndTags(
     if (Array.isArray(subject?.tags) && subject.tags.length) {
       for (const tg of subject.tags) {
         const tname = tg?.name || ''
-        const tid = await upsertTagByName(
-          tname,
-          '',
-          ownerId,
-          'bangumi',
-          '',
-          'sexual'
-        )
+        const tid = await upsertTagByName(tname, '', 'bangumi', '', 'sexual')
         if (!tid) continue
         await prisma.patch_tag_relation
           .create({
@@ -340,10 +332,8 @@ export async function addBangumiPersonsAndCompanies(
     lang?: string | null,
     aliases?: string[],
     websites?: string[],
-    ownerId?: number,
     introEn?: string
-  ) => Promise<number | null>,
-  ownerId: number
+  ) => Promise<number | null>
 ) {
   if (!subjectId) return
   try {

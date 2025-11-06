@@ -20,11 +20,10 @@ export const createTagSchema = z.object({
   )
 })
 
-export const updateTagSchema = createTagSchema.merge(
-  z.object({
-    tagId: z.coerce.number().min(1).max(9999999)
-  })
-)
+export const updateTagSchema = z.object({
+  ...createTagSchema.shape,
+  tagId: z.coerce.number<number>().min(1).max(9999999)
+})
 
 export const getTagSchema = z.object({
   page: z.coerce.number().min(1).max(9999999),

@@ -20,4 +20,9 @@ export interface PersonDetail extends Person {
   official_website: string
   blog: string
   alias: string[]
+  patches: {
+    id: number
+    name: string
+    banner: string
+  }[]
 }

@@ -26,7 +26,6 @@ export async function clearLegacyTables() {
 export async function upsertTagByName(
   name: string,
   description: string = '',
-  ownerId: number = 1,
   provider: string = '',
   nameEn: string = '',
   category: string = 'content'
@@ -44,8 +43,7 @@ export async function upsertTagByName(
       introduction_ja_jp: '',
       introduction_en_us: '',
       alias: [],
-      category,
-      user_id: ownerId
+      category
     }
   })
   globalTagMap.set(key, tag.id)
@@ -57,7 +55,6 @@ export async function upsertCompanyByName(
   lang: string | null = null,
   aliases: string[] = [],
   websites: string[] = [],
-  ownerId: number = 1,
   introEn: string = ''
 ): Promise<number | null> {
   if (!name) return null
@@ -75,8 +72,7 @@ export async function upsertCompanyByName(
       primary_language: primaryLanguage,
       official_website: websites,
       parent_brand: [],
-      alias: Array.isArray(aliases) ? aliases.filter(Boolean) : [],
-      user_id: ownerId
+      alias: Array.isArray(aliases) ? aliases.filter(Boolean) : []
     }
   })
   globalCompanyMap.set(name, company.id)

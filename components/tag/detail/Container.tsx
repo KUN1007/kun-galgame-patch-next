@@ -15,8 +15,6 @@ import { GalgameCard } from '~/components/galgame/Card'
 import { KunNull } from '~/components/kun/Null'
 import { EditTagModal } from './EditTagModal'
 import { useRouter } from '@bprogress/next'
-import { KunUser } from '~/components/kun/floating-card/KunUser'
-import { formatDistanceToNow } from '~/utils/formatDistanceToNow'
 
 interface Props {
   initialTag: TagDetail
@@ -73,17 +71,6 @@ export const TagDetailContainer = ({
         }
         endContent={
           <div className="flex justify-between">
-            <KunUser
-              user={tag.user}
-              userProps={{
-                name: tag.user.name,
-                description: `创建于 ${formatDistanceToNow(tag.created)}`,
-                avatarProps: {
-                  src: tag.user?.avatar
-                }
-              }}
-            />
-
             <Button
               variant="flat"
               color="primary"

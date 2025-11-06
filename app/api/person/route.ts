@@ -14,6 +14,16 @@ export const getPersonById = async (input: z.infer<typeof personIdSchema>) => {
   const aliases = await prisma.patch_person_alias
     .findMany({ where: { person_id: personId }, select: { name: true } })
     .then((rows) => rows.map((r) => r.name))
+  const patchRelations = await prisma.patch_person_relation.findMany({
+    where: { patch_person_id: personId },
+    include: { patch: true }
+  })
+  const patches = patchRelations.map((pr) => ({
+    id: pr.patch.id,
+    name: pr.patch.name,
+    banner: pr.patch.banner
+  }))
+
   return {
     id: person.id,
     image: person.image,
@@ -34,7 +44,8 @@ export const getPersonById = async (input: z.infer<typeof personIdSchema>) => {
     spouse: person.spouse,
     official_website: person.official_website,
     blog: person.blog,
-    alias: aliases
+    alias: aliases,
+    patches
   }
 }
 

@@ -163,11 +163,7 @@ export async function syncVndbScreenshots(vnDetail: any, patchId: number) {
   }
 }
 
-export async function syncVndbTags(
-  vnDetail: any,
-  ownerId: number,
-  patchId: number
-) {
+export async function syncVndbTags(vnDetail: any, patchId: number) {
   if (!Array.isArray(vnDetail?.tags) || !vnDetail.tags.length) return
   for (const t of vnDetail.tags) {
     const en = t.name || ''
@@ -176,7 +172,7 @@ export async function syncVndbTags(
     if (t.category === 'cont') category = 'content'
     else if (t.category === 'ero') category = 'sexual'
     else if (t.category === 'tech') category = 'technical'
-    const tid = await upsertTagByName(zh, '', ownerId, 'vndb', en, category)
+    const tid = await upsertTagByName(zh, '', 'vndb', en, category)
     if (!tid) continue
     await prisma.patch_tag
       .update({
@@ -245,7 +241,6 @@ async function syncPatchLinksFromVndb(vnDetail: any, patchId: number) {
 export async function syncVndbReleasesAndCompanies(
   vndbId: string,
   vnDetail: any,
-  ownerId: number,
   patchId: number
 ) {
   if (!vndbId) return
@@ -262,7 +257,6 @@ export async function syncVndbReleasesAndCompanies(
               p.lang || null,
               p.aliases || [],
               (p.extlinks || []).map((el) => el.url).filter(Boolean),
-              ownerId,
               p.description || ''
             )
             if (compId) companyIds.add(compId)
@@ -307,7 +301,6 @@ export async function syncVndbReleasesAndCompanies(
           d.lang || null,
           d.aliases || [],
           (d.extlinks || []).map((el: any) => el.url).filter(Boolean),
-          ownerId,
           d.description || ''
         )
         if (compId) companyIds.add(compId)

@@ -23,4 +23,9 @@ export interface CharDetail extends Char {
   age: number
   infobox: string
   alias: string[]
+  patches: {
+    id: number
+    name: string
+    banner: string
+  }[]
 }

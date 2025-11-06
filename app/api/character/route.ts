@@ -18,6 +18,16 @@ export const getCharacterById = async (
     .findMany({ where: { patch_char_id: characterId }, select: { name: true } })
     .then((rows) => rows.map((r) => r.name))
 
+  const patchRelations = await prisma.patch_char_relation.findMany({
+    where: { patch_char_id: characterId },
+    include: { patch: true }
+  })
+  const patches = patchRelations.map((pr) => ({
+    id: pr.patch.id,
+    name: pr.patch.name,
+    banner: pr.patch.banner
+  }))
+
   return {
     id: char.id,
     image: char.image,
@@ -39,7 +49,8 @@ export const getCharacterById = async (
     cup: char.cup,
     age: char.age,
     infobox: char.infobox,
-    alias: aliases
+    alias: aliases,
+    patches
   }
 }
 

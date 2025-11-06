@@ -24,8 +24,6 @@ model user {
   chat_message_reaction chat_message_reaction[]
 
   admin_log         admin_log[]
-  patch_tag         patch_tag[]
-  patch_company     patch_company[]
   patch_walkthrough patch_walkthrough[]
 
   patch_favorite      user_patch_favorite_relation[]

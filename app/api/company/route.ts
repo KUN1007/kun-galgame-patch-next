@@ -31,14 +31,7 @@ export const getCompanyById = async (
       primary_language: true,
       official_website: true,
       parent_brand: true,
-      created: true,
-      user: {
-        select: {
-          id: true,
-          name: true,
-          avatar: true
-        }
-      }
+      created: true
     }
   })
   if (!company) {
@@ -91,15 +84,6 @@ export const rewriteCompany = async (
       primary_language,
       official_website,
       parent_brand
-    },
-    include: {
-      user: {
-        select: {
-          id: true,
-          name: true,
-          avatar: true
-        }
-      }
     }
   })
 
@@ -126,8 +110,7 @@ export const PUT = async (req: NextRequest) => {
 }
 
 export const createCompany = async (
-  input: z.infer<typeof createCompanySchema>,
-  uid: number
+  input: z.infer<typeof createCompanySchema>
 ) => {
   const {
     name,
@@ -149,7 +132,6 @@ export const createCompany = async (
 
   const newCompany = await prisma.patch_company.create({
     data: {
-      user_id: uid,
       name,
       introduction,
       alias,
@@ -183,6 +165,6 @@ export const POST = async (req: NextRequest) => {
     return NextResponse.json('网站正在遭受攻击, 目前仅允许创作者创建和更改项目')
   }
 
-  const response = await createCompany(input, payload.uid)
+  const response = await createCompany(input)
   return NextResponse.json(response)
 }

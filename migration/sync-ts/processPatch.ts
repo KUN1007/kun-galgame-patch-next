@@ -1,9 +1,5 @@
 import { prisma } from './db/prisma'
-import {
-  lowercaseVndbIdSafely,
-  upsertTagByName,
-  upsertCompanyByName
-} from './db/helpers'
+import { upsertTagByName, upsertCompanyByName } from './db/helpers'
 import {
   resolveVndbId,
   fetchVndbDetailAndSyncNames,
@@ -33,16 +29,11 @@ export async function processPatch(patch: {
   const vndbId = await resolveVndbId(patch)
   const vnDetail = await fetchVndbDetailAndSyncNames(vndbId, patch.id)
 
-  await syncVndbTags(vnDetail, ownerId, patch.id)
+  await syncVndbTags(vnDetail, patch.id)
   await syncVndbDescription(vnDetail, patch.id)
   await syncVndbCover(vnDetail, patch.id)
   await syncVndbScreenshots(vnDetail, patch.id)
-  await syncVndbReleasesAndCompanies(
-    vndbId as string,
-    vnDetail,
-    ownerId,
-    patch.id
-  )
+  await syncVndbReleasesAndCompanies(vndbId as string, vnDetail, patch.id)
 
   // Build merged map
   const charMap = initCharMapFromVndb(vnDetail)
@@ -69,8 +60,7 @@ export async function processPatch(patch: {
       patch.id,
       charMap,
       prisma,
-      upsertCompanyByName,
-      ownerId
+      upsertCompanyByName
     )
   } else {
     console.warn('Bangumi subject not found by name or bid')

@@ -26,14 +26,7 @@ export const getTagById = async (input: z.infer<typeof getTagByIdSchema>) => {
       count: true,
       alias: true,
       introduction: true,
-      created: true,
-      user: {
-        select: {
-          id: true,
-          name: true,
-          avatar: true
-        }
-      }
+      created: true
     }
   })
   if (!tag) {
@@ -71,15 +64,6 @@ export const rewriteTag = async (input: z.infer<typeof updateTagSchema>) => {
       name,
       introduction,
       alias
-    },
-    include: {
-      user: {
-        select: {
-          id: true,
-          name: true,
-          avatar: true
-        }
-      }
     }
   })
 
@@ -104,10 +88,7 @@ export const PUT = async (req: NextRequest) => {
   return NextResponse.json(response)
 }
 
-export const createTag = async (
-  input: z.infer<typeof createTagSchema>,
-  uid: number
-) => {
+export const createTag = async (input: z.infer<typeof createTagSchema>) => {
   const { name, introduction = '', alias = [] } = input
 
   const existingTag = await prisma.patch_tag.findFirst({
@@ -121,7 +102,6 @@ export const createTag = async (
 
   const newTag = await prisma.patch_tag.create({
     data: {
-      user_id: uid,
       name,
       introduction,
       alias
@@ -151,6 +131,6 @@ export const POST = async (req: NextRequest) => {
     return NextResponse.json('网站正在遭受攻击, 目前仅允许创作者创建和更改项目')
   }
 
-  const response = await createTag(input, payload.uid)
+  const response = await createTag(input)
   return NextResponse.json(response)
 }

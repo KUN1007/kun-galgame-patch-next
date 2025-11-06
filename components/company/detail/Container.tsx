@@ -75,17 +75,6 @@ export const CompanyDetailContainer: FC<Props> = ({
         }
         endContent={
           <div className="flex justify-between">
-            <KunUser
-              user={company.user}
-              userProps={{
-                name: company.user.name,
-                description: `创建于 ${formatDistanceToNow(company.created)}`,
-                avatarProps: {
-                  src: company.user?.avatar
-                }
-              }}
-            />
-
             <Button
               variant="flat"
               color="primary"
