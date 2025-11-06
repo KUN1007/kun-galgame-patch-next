@@ -33,6 +33,15 @@ export async function upsertTagByName(
   if (!name) return null
   const key = `${provider}:${name}`
   if (globalTagMap.has(key)) return globalTagMap.get(key)!
+  // Check existing first to avoid duplicates when running concurrently
+  const existed = await prisma.patch_tag.findFirst({
+    where: { name, provider },
+    select: { id: true }
+  })
+  if (existed) {
+    globalTagMap.set(key, existed.id)
+    return existed.id
+  }
   const tag = await prisma.patch_tag.create({
     data: {
       name,
@@ -60,6 +69,15 @@ export async function upsertCompanyByName(
   if (!name) return null
   if (globalCompanyMap.has(name)) return globalCompanyMap.get(name)!
   const primaryLanguage = lang ? [lang] : []
+  // Check existing first to avoid duplicates when running concurrently
+  const existed = await prisma.patch_company.findFirst({
+    where: { name },
+    select: { id: true }
+  })
+  if (existed) {
+    globalCompanyMap.set(name, existed.id)
+    return existed.id
+  }
   const company = await prisma.patch_company.create({
     data: {
       name,

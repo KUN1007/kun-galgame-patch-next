@@ -100,39 +100,43 @@ export const getPatchDetail = async (
       languages: r.languages,
       minage: r.minage ?? 0
     })),
-    char: patch.char_rel.map((cr) => cr.char).map((c) => ({
-      id: c.id,
-      image: c.image,
-      gender: c.gender,
-      role: c.role,
-      roles: c.roles,
-      name: {
-        'zh-cn': c.name_zh_cn,
-        'ja-jp': c.name_ja_jp,
-        'en-us': c.name_en_us
-      },
-      description: {
-        'zh-cn': c.description_zh_cn,
-        'ja-jp': c.description_ja_jp,
-        'en-us': c.description_en_us
-      },
-      infobox: c.infobox
-    })),
-    person: patch.person_rel.map((pr) => pr.person).map((p) => ({
-      id: p.id,
-      image: p.image,
-      roles: p.roles,
-      name: {
-        'zh-cn': p.name_zh_cn,
-        'ja-jp': p.name_ja_jp,
-        'en-us': p.name_en_us
-      },
-      description: {
-        'zh-cn': p.description_zh_cn,
-        'ja-jp': p.description_ja_jp,
-        'en-us': p.description_en_us
-      }
-    })),
+    char: patch.char_rel
+      .map((cr) => cr.char)
+      .map((c) => ({
+        id: c.id,
+        image: c.image,
+        gender: c.gender,
+        role: c.role,
+        roles: c.roles,
+        name: {
+          'zh-cn': c.name_zh_cn,
+          'ja-jp': c.name_ja_jp,
+          'en-us': c.name_en_us
+        },
+        description: {
+          'zh-cn': c.description_zh_cn,
+          'ja-jp': c.description_ja_jp,
+          'en-us': c.description_en_us
+        },
+        infobox: c.infobox
+      })),
+    person: patch.person_rel
+      .map((pr) => pr.person)
+      .map((p) => ({
+        id: p.id,
+        image: p.image,
+        roles: p.roles,
+        name: {
+          'zh-cn': p.name_zh_cn,
+          'ja-jp': p.name_ja_jp,
+          'en-us': p.name_en_us
+        },
+        description: {
+          'zh-cn': p.description_zh_cn,
+          'ja-jp': p.description_ja_jp,
+          'en-us': p.description_en_us
+        }
+      })),
     created: String(patch.created),
     updated: String(patch.updated)
   }

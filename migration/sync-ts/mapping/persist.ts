@@ -37,27 +37,62 @@ export async function persistCharMap(
           official_website: (val as PersonEntry).official_website || '',
           blog: (val as PersonEntry).blog || ''
         }
-      if ((val as PersonEntry).vndb_staff_id)
-          personData.vndb_staff_id = (val as PersonEntry).vndb_staff_id
-      if ((val as PersonEntry).bangumi_person_id)
-          personData.bangumi_person_id = (val as PersonEntry).bangumi_person_id
-      let personRec: any = null
-        if (personData.vndb_staff_id) {
-          personRec = await prisma.patch_person.upsert({
-            where: {
-              vndb_staff_id: personData.vndb_staff_id
-            },
-            update: personData,
-            create: personData
+        const vStaff = (val as PersonEntry).vndb_staff_id || null
+        const bPid = (val as PersonEntry).bangumi_person_id || null
+        let personRec: any = null
+        // Merge strategy: find by either ID first, then update to include both IDs
+        if (vStaff) {
+          personRec = await prisma.patch_person.findUnique({
+            where: { vndb_staff_id: vStaff }
           })
-        } else if (personData.bangumi_person_id) {
-          personRec = await prisma.patch_person.upsert({
-            where: {
-              bangumi_person_id: personData.bangumi_person_id
-            },
-            update: personData,
-            create: personData
+        }
+        if (!personRec && bPid) {
+          personRec = await prisma.patch_person.findUnique({
+            where: { bangumi_person_id: bPid }
           })
+        }
+        if (personRec) {
+          // Update existing, fill missing unique ids if available
+          await prisma.patch_person
+            .update({
+              where: { id: personRec.id },
+              data: {
+                ...personData,
+                ...(vStaff && !personRec.vndb_staff_id
+                  ? { vndb_staff_id: vStaff }
+                  : {}),
+                ...(bPid && !personRec.bangumi_person_id
+                  ? { bangumi_person_id: bPid }
+                  : {})
+              }
+            })
+            .catch(() => {})
+        } else if (vStaff || bPid) {
+          personRec = await prisma.patch_person
+            .create({
+              data: {
+                ...personData,
+                ...(vStaff ? { vndb_staff_id: vStaff } : {}),
+                ...(bPid ? { bangumi_person_id: bPid } : {})
+              }
+            })
+            .catch(async (e) => {
+              // Last resort: try upsert by whichever ID exists to avoid race
+              if (bPid) {
+                return prisma.patch_person.upsert({
+                  where: { bangumi_person_id: bPid },
+                  update: personData,
+                  create: { ...personData, bangumi_person_id: bPid }
+                })
+              }
+              if (vStaff) {
+                return prisma.patch_person.upsert({
+                  where: { vndb_staff_id: vStaff },
+                  update: personData,
+                  create: { ...personData, vndb_staff_id: vStaff }
+                })
+              }
+            })
         } else {
           personRec = await prisma.patch_person.create({ data: personData })
         }
@@ -115,29 +150,55 @@ export async function persistCharMap(
           cup: (val as CharacterEntry).cup || '',
           age: Number((val as CharacterEntry).age || 0)
         }
-        if ((val as CharacterEntry).vndb_char_id)
-          charData.vndb_char_id = (val as CharacterEntry).vndb_char_id
-        if ((val as CharacterEntry).bangumi_character_id)
-          charData.bangumi_character_id = (
-            val as CharacterEntry
-          ).bangumi_character_id
+        const vChar = (val as CharacterEntry).vndb_char_id || null
+        const bCid = (val as CharacterEntry).bangumi_character_id || null
+        if (vChar) charData.vndb_char_id = vChar
+        if (bCid) charData.bangumi_character_id = bCid
         let charRec: any = null
-        if (charData.vndb_char_id) {
-          charRec = await prisma.patch_char.upsert({
-            where: {
-              vndb_char_id: charData.vndb_char_id
-            },
-            update: charData,
-            create: charData
+        if (vChar) {
+          charRec = await prisma.patch_char.findUnique({
+            where: { vndb_char_id: vChar }
           })
-        } else if (charData.bangumi_character_id) {
-          charRec = await prisma.patch_char.upsert({
-            where: {
-              bangumi_character_id: charData.bangumi_character_id
-            },
-            update: charData,
-            create: charData
+        }
+        if (!charRec && bCid) {
+          charRec = await prisma.patch_char.findUnique({
+            where: { bangumi_character_id: bCid }
           })
+        }
+        if (charRec) {
+          await prisma.patch_char
+            .update({
+              where: { id: charRec.id },
+              data: {
+                ...charData,
+                ...(vChar && !charRec.vndb_char_id
+                  ? { vndb_char_id: vChar }
+                  : {}),
+                ...(bCid && !charRec.bangumi_character_id
+                  ? { bangumi_character_id: bCid }
+                  : {})
+              }
+            })
+            .catch(() => {})
+        } else if (vChar || bCid) {
+          charRec = await prisma.patch_char
+            .create({ data: charData })
+            .catch(async () => {
+              if (bCid) {
+                return prisma.patch_char.upsert({
+                  where: { bangumi_character_id: bCid },
+                  update: charData,
+                  create: { ...charData, bangumi_character_id: bCid }
+                })
+              }
+              if (vChar) {
+                return prisma.patch_char.upsert({
+                  where: { vndb_char_id: vChar },
+                  update: charData,
+                  create: { ...charData, vndb_char_id: vChar }
+                })
+              }
+            })
         } else {
           charRec = await prisma.patch_char.create({ data: charData })
         }
