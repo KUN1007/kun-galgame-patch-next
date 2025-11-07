@@ -117,7 +117,7 @@ export const SearchPage = () => {
     <div className="w-full my-4">
       <KunHeader name="搜索 Galgame" description="输入内容以自动搜索 Galgame" />
 
-      <div className="mb-8 space-y-4">
+      <div className="my-8 space-y-4">
         <div className="relative">
           <Input
             autoFocus

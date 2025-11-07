@@ -73,7 +73,7 @@ export interface PatchPerson {
 export interface PatchHeader {
   id: number
   vndbId: string | null
-  name: string
+  name: KunLanguage
   banner: string
   introduction: string
   status: number
@@ -88,8 +88,8 @@ export interface PatchHeader {
   content_limit: string
   user: KunUser
   cover: PatchCover[]
-  created: string | Date
-  updated: string | Date
+  created: string
+  updated: string
   _count: {
     favorite_by: number
     contribute_by: number

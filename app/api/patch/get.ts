@@ -45,7 +45,11 @@ export const getPatchById = async (
   const response: PatchHeader = {
     id: patch.id,
     vndbId: patch.vndb_id,
-    name: patch.name,
+    name: {
+      'zh-cn': patch.name_zh_cn,
+      'ja-jp': patch.name_ja_jp,
+      'en-us': patch.name_en_us
+    },
     introduction: patch.introduction,
     banner: patch.banner,
     status: patch.status,

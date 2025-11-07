@@ -3,7 +3,7 @@ import { create } from 'zustand'
 export interface RewritePatchData {
   id: number
   vndbId: string
-  name: string
+  name: KunLanguage
   introduction: string
   alias: string[]
   contentLimit: string
@@ -20,7 +20,11 @@ interface StoreState {
 const initialState: RewritePatchData = {
   id: 0,
   vndbId: '',
-  name: '',
+  name: {
+    'zh-cn': '',
+    'ja-jp': '',
+    'en-us': ''
+  },
   introduction: '',
   alias: [],
   contentLimit: 'sfw',

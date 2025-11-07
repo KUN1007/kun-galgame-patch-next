@@ -34,6 +34,17 @@ export const kunNavItem: KunNavItem[] = [
   }
 ]
 
+export const kunNavItemDesktop: KunNavItem[] = [
+  {
+    name: '发布补丁',
+    href: '/edit/create'
+  },
+  {
+    name: '关于我们',
+    href: '/about'
+  }
+]
+
 export const kunMobileNavItem: KunNavItem[] = [
   ...kunNavItem,
   {

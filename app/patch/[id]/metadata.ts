@@ -1,13 +1,15 @@
 import { kunMoyuMoe } from '~/config/moyu-moe'
 import { convert } from 'html-to-text'
 import { generateNullMetadata } from '~/utils/noIndex'
+import { getPreferredLanguageText } from '~/utils/getPreferredLanguageText'
 import type { Metadata } from 'next'
-import type { Patch } from '~/types/api/patch'
+import type { PatchHeader } from '~/types/api/patch'
 
-export const generateKunMetadataTemplate = (patch: Patch): Metadata => {
+export const generateKunMetadataTemplate = (patch: PatchHeader): Metadata => {
+  const patchName = getPreferredLanguageText(patch.name)
   const pageTitle = patch.alias.length
-    ? `${patch.name} | ${patch.alias[0]}`
-    : `${patch.name}`
+    ? `${patchName} | ${patch.alias[0]}`
+    : `${patchName}`
 
   if (patch.content_limit === 'nsfw') {
     return generateNullMetadata(pageTitle)
@@ -18,8 +20,8 @@ export const generateKunMetadataTemplate = (patch: Patch): Metadata => {
     description: convert(patch.introduction).slice(0, 170),
     openGraph: {
       title: patch.alias[0]
-        ? `${patch.name} | ${patch.alias[0]}`
-        : `${patch.name}`,
+        ? `${patchName} | ${patch.alias[0]}`
+        : `${patchName}`,
       description: convert(patch.introduction, {
         wordwrap: false,
         selectors: [{ selector: 'p', format: 'inline' }]
@@ -32,7 +34,7 @@ export const generateKunMetadataTemplate = (patch: Patch): Metadata => {
           url: patch.banner,
           width: 1920,
           height: 1080,
-          alt: patch.name
+          alt: patchName
         }
       ]
     },

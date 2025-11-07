@@ -68,7 +68,6 @@ export const RankingContainer = ({
             ? `查看${currentTimeRange.label}的数据增长情况`
             : '查看全部时间的数据累计'
         }
-        isShowDivider={false}
         endContent={
           <div className="flex flex-wrap items-center justify-between gap-3">
             <Tabs
