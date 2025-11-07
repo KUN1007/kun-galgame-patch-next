@@ -18,7 +18,7 @@ export const MessageLayoutClient = ({ sidebar, children }: Props) => {
     <div className="flex flex-col md:flex-row min-h-[500px] gap-6">
       <div
         className={cn(
-          'transition-all duration-300 md:block md:fixed md:top-81 md:w-64',
+          'transition-all duration-300 md:block md:fixed md:top-65 md:w-64',
           isChatPage ? 'block w-full' : 'hidden'
         )}
       >

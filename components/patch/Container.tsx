@@ -33,7 +33,7 @@ export const PatchContainer = ({ children, patch, intro }: Props) => {
   }, [patch, intro, setData])
 
   return (
-    <div className="container py-6 mx-auto space-y-6">
+    <div className="container mx-auto space-y-6">
       <div className="relative w-full mx-auto max-w-7xl">
         <PatchBackgroundImage patch={patch} />
 

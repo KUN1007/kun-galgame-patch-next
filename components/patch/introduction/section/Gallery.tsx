@@ -44,7 +44,7 @@ export const GallerySection = ({ detail }: { detail: PatchDetail }) => {
         {list.map((s) => (
           <div
             key={s.id}
-            className="relative aspect-video bg-default-100 overflow-hidden rounded-lg"
+            className="relative aspect-video bg-default-100 overflow-hidden rounded-2xl"
           >
             <Image
               src={s.url}

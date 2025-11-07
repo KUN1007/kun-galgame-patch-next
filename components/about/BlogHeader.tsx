@@ -16,7 +16,6 @@ export const BlogHeader = ({ frontmatter }: BlogHeaderProps) => {
       <CardHeader className="flex flex-col items-start p-0">
         <div className="relative w-full overflow-hidden rounded-xl">
           <Image
-            isZoomed
             alt={frontmatter.title}
             className="object-cover"
             src={frontmatter.banner}
@@ -28,7 +27,7 @@ export const BlogHeader = ({ frontmatter }: BlogHeaderProps) => {
 
       <CardBody className="p-0 overflow-visible">
         <div className="flex flex-col space-y-4">
-          <h1 className="text-2xl font-bold tracking-tight sm:text-4xl">
+          <h1 className="text-2xl mt-8 font-bold tracking-tight sm:text-4xl">
             {frontmatter.title}
           </h1>
 

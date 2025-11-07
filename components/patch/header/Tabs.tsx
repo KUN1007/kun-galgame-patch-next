@@ -23,7 +23,12 @@ export const PatchHeaderTabs = ({ id }: PatchHeaderProps) => {
   ]
 
   return (
-    <Tabs aria-label="Options" selectedKey={lastSegment} variant="underlined">
+    <Tabs
+      aria-label="Options"
+      color="primary"
+      selectedKey={lastSegment}
+      variant="underlined"
+    >
       {tabs.map(({ key, title, href }) => (
         <Tab key={key} as={Link} title={title} href={href} />
       ))}

@@ -98,14 +98,18 @@ export const OverviewSection = ({ detail }: { detail: PatchDetail }) => {
               <span>Bangumi ID: {detail.bid}</span>
             </div>
           )}
-          {detail.company.length && (
+          {!!detail.company.length && (
             <div className="flex items-center gap-2 text-sm text-default-500">
               <Building2 className="size-4" />
               <div className="flex items-center gap-1">
                 <span className="shrink-0">制作会社:</span>
                 <div className="flex flex-wrap items-center gap-2">
                   {detail.company.map((c) => (
-                    <HeroLink underline="always" href={`/company/${c.id}`}>
+                    <HeroLink
+                      key={c.id}
+                      underline="always"
+                      href={`/company/${c.id}`}
+                    >
                       {`${c.name} +${c.count}`}
                     </HeroLink>
                   ))}

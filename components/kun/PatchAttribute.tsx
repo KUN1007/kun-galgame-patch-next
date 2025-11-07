@@ -47,7 +47,7 @@ export const KunPatchAttribute = ({
           {modelName}
         </Chip>
       )}
-      {downloadCount && (
+      {!!downloadCount && (
         <Chip variant="flat" color="default" size={size}>
           {`${downloadCount} 人下载`}
         </Chip>
