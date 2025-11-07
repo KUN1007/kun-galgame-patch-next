@@ -66,9 +66,19 @@ export const getPatchDetail = async (
     },
     vndbId: patch.vndb_id || '',
     cover: patch.cover,
-    screenshot: patch.screenshot.filter(
-      (s) => nsfwEnable.content_limit !== 'sfw' || !s.sexual
-    ),
+    screenshot: patch.screenshot.map((s) => ({
+      id: s.id,
+      image_id: s.image_id,
+      url: s.url,
+      width: s.width,
+      height: s.height,
+      sexual: s.sexual,
+      violence: s.violence,
+      thumbnail_url: s.thumbnail_url,
+      thumb_width: s.thumb_width,
+      thumb_height: s.thumb_height,
+      order_no: s.order_no
+    })),
     tag: patch.tag
       .map((tr) => ({
         id: tr.tag.id,

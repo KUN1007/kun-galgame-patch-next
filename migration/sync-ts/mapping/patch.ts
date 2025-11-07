@@ -250,6 +250,55 @@ export async function syncVndbReleasesAndCompanies(
     for (let i = 0; i < releases.length; i++) {
       const r = releases[i]
       try {
+        // Sync release images (covers) into patch_cover
+        if (Array.isArray((r as any).images)) {
+          for (const img of (r as any).images) {
+            if (!img?.url) continue
+            await prisma.patch_cover
+              .upsert({
+                where: {
+                  patch_id_image_id: {
+                    patch_id: patchId,
+                    image_id: img.id ? String(img.id) : ''
+                  }
+                },
+                update: {
+                  image_id: img.id ? String(img.id) : '',
+                  url: img.url || '',
+                  width: Array.isArray(img.dims) ? img.dims[0] : 0,
+                  height: Array.isArray(img.dims) ? img.dims[1] : 0,
+                  sexual: typeof img.sexual === 'number' ? img.sexual : 0,
+                  violence: typeof img.violence === 'number' ? img.violence : 0,
+                  votecount: typeof img.votecount === 'number' ? img.votecount : 0,
+                  thumbnail_url: img.thumbnail || '',
+                  thumb_width: Array.isArray(img.thumbnail_dims)
+                    ? img.thumbnail_dims[0]
+                    : 0,
+                  thumb_height: Array.isArray(img.thumbnail_dims)
+                    ? img.thumbnail_dims[1]
+                    : 0
+                },
+                create: {
+                  patch_id: patchId,
+                  image_id: img.id ? String(img.id) : '',
+                  url: img.url || '',
+                  width: Array.isArray(img.dims) ? img.dims[0] : 0,
+                  height: Array.isArray(img.dims) ? img.dims[1] : 0,
+                  sexual: typeof img.sexual === 'number' ? img.sexual : 0,
+                  violence: typeof img.violence === 'number' ? img.violence : 0,
+                  votecount: typeof img.votecount === 'number' ? img.votecount : 0,
+                  thumbnail_url: img.thumbnail || '',
+                  thumb_width: Array.isArray(img.thumbnail_dims)
+                    ? img.thumbnail_dims[0]
+                    : 0,
+                  thumb_height: Array.isArray(img.thumbnail_dims)
+                    ? img.thumbnail_dims[1]
+                    : 0
+                }
+              })
+              .catch(() => {})
+          }
+        }
         if (Array.isArray(r.producers)) {
           for (const p of r.producers) {
             const compId = await upsertCompanyByName(

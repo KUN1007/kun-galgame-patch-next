@@ -52,7 +52,13 @@ export const TagSection = ({ detail }: { detail: PatchDetail }) => {
               href={
                 tag.provider === 'vndb' ? `/tag/${tag.id}` : `/tag/${tag.id}`
               }
-              color={tag.provider === 'vndb' ? 'primary' : 'secondary'}
+              color={
+                tag.category === 'content'
+                  ? 'primary'
+                  : tag.category === 'sexual'
+                    ? 'danger'
+                    : 'success'
+              }
               variant="flat"
             >
               {`${getPreferredLanguageText(tag.name)}+${tag.count}`}

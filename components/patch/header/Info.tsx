@@ -13,6 +13,16 @@ import {
 import { PatchHeaderActions } from './Actions'
 import { Tags } from './Tags'
 import Image from 'next/image'
+import {
+  Button,
+  Image as HeroImage,
+  Modal,
+  ModalBody,
+  ModalContent,
+  ModalHeader,
+  useDisclosure
+} from '@heroui/react'
+import { useState } from 'react'
 import { EditBanner } from './EditBanner'
 import type { Patch } from '~/types/api/patch'
 
@@ -21,6 +31,37 @@ interface PatchHeaderInfoProps {
 }
 
 export const PatchHeaderInfo = ({ patch }: PatchHeaderInfoProps) => {
+  const { isOpen, onOpen, onOpenChange } = useDisclosure()
+  const [covers, setCovers] = useState<
+    Array<{
+      image_id: string
+      url: string
+      width: number
+      height: number
+      thumbnail_url: string
+      thumb_width: number
+      thumb_height: number
+    }>
+  >([])
+  const [loadingCovers, setLoadingCovers] = useState(false)
+
+  // TODO:
+  const ensureCovers = async () => {
+    if (covers.length || loadingCovers) return
+    try {
+      setLoadingCovers(true)
+      const res = await fetch(`/api/patch/detail?patchId=${patch.id}`, {
+        cache: 'no-store'
+      })
+      const json = await res.json()
+      const list = Array.isArray(json?.cover) ? json.cover : []
+      setCovers(list)
+    } catch {
+    } finally {
+      setLoadingCovers(false)
+    }
+  }
+
   return (
     <Card>
       <CardBody className="p-0">
@@ -35,6 +76,20 @@ export const PatchHeaderInfo = ({ patch }: PatchHeaderInfoProps) => {
               priority
               unoptimized
             />
+
+            <div className="absolute top-2 right-2 z-10">
+              <Button
+                size="sm"
+                color="secondary"
+                variant="flat"
+                onPress={async () => {
+                  await ensureCovers()
+                  onOpen()
+                }}
+              >
+                查看封面
+              </Button>
+            </div>
 
             <EditBanner patch={patch} />
           </div>
@@ -95,6 +150,43 @@ export const PatchHeaderInfo = ({ patch }: PatchHeaderInfoProps) => {
           </div>
         </div>
       </CardBody>
+
+      <Modal
+        isOpen={isOpen}
+        onOpenChange={onOpenChange}
+        size="lg"
+        scrollBehavior="inside"
+      >
+        <ModalContent>
+          {() => (
+            <>
+              <ModalHeader>全部封面（{covers.length}）</ModalHeader>
+              <ModalBody>
+                {loadingCovers && (
+                  <div className="text-sm text-default-500">加载中...</div>
+                )}
+                <div className="grid grid-cols-2 md:grid-cols-3 gap-3">
+                  {covers.map((c) => (
+                    <div
+                      key={c.image_id || c.url}
+                      className="aspect-[4/3] bg-default-100 rounded-lg overflow-hidden"
+                    >
+                      <HeroImage
+                        src={c.url}
+                        alt={c.image_id}
+                        className="w-full h-full object-cover"
+                      />
+                    </div>
+                  ))}
+                  {!covers.length && !loadingCovers && (
+                    <div className="text-sm text-default-400">暂无封面</div>
+                  )}
+                </div>
+              </ModalBody>
+            </>
+          )}
+        </ModalContent>
+      </Modal>
     </Card>
   )
 }

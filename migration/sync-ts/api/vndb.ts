@@ -119,6 +119,14 @@ export interface VndbRelease {
     lang?: string
     extlinks?: Array<{ id: string; label: string; name: string; url: string }>
   }>
+  images?: Array<
+    VndbImage & {
+      type?: string
+      languages?: string[] | null
+      photo?: boolean
+      vn?: string | null
+    }
+  >
 }
 
 export async function vndbGetReleasesByVn(
@@ -127,7 +135,7 @@ export async function vndbGetReleasesByVn(
   const data = await vndbPost<{ results?: VndbRelease[] }>('/release', {
     filters: ['vn', '=', ['id', '=', vnId]],
     fields:
-      'id, title, released, platforms, languages{lang,latin,main,mtl,title}, minage, producers{developer,publisher,id,name,original,aliases,description,type,lang,extlinks{id,label,name,url}}'
+      'id, title, released, platforms, languages{lang,latin,main,mtl,title}, minage, images{id,url,dims,sexual,violence,votecount,thumbnail,thumbnail_dims,type,languages,photo,vn}, producers{developer,publisher,id,name,original,aliases,description,type,lang,extlinks{id,label,name,url}}'
   })
   return data.results || []
 }

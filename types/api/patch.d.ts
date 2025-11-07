@@ -62,6 +62,8 @@ export interface PatchDetail {
     url: string
     width: number
     height: number
+    sexual: number
+    violence: number
     thumbnail_url: string
     thumb_width: number
     thumb_height: number
