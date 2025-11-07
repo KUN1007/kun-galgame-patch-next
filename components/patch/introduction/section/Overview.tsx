@@ -2,8 +2,8 @@
 
 import { useMemo, useState } from 'react'
 import DOMPurify from 'isomorphic-dompurify'
-import { Calendar, Clock, Link, RefreshCw } from 'lucide-react'
-import { Select, SelectItem } from '@heroui/select'
+import { Building2, Calendar, Clock, Link, RefreshCw, Tv } from 'lucide-react'
+import { Select, SelectItem, Link as HeroLink } from '@heroui/react'
 import { formatDate } from '~/utils/time'
 import { GALGAME_SORT_YEARS_MAP } from '~/constants/galgame'
 import { getPreferredLanguageText } from '~/utils/getPreferredLanguageText'
@@ -40,11 +40,14 @@ export const OverviewSection = ({ detail }: { detail: PatchDetail }) => {
           size="sm"
           onSelectionChange={(keys) => {
             const k = Array.from(keys)[0] as 'zh-cn'
-            if (k) setLang(k)
+            if (k) {
+              setLang(k)
+            }
           }}
           classNames={{
             base: 'max-w-36'
           }}
+          aria-label="语言"
         >
           <SelectItem key="zh-cn">中文</SelectItem>
           <SelectItem key="ja-jp">日本語</SelectItem>
@@ -87,6 +90,27 @@ export const OverviewSection = ({ detail }: { detail: PatchDetail }) => {
             <div className="flex items-center gap-2 text-sm text-default-500">
               <Link className="size-4" />
               <span>VNDB ID: {detail.vndbId}</span>
+            </div>
+          )}
+          {detail.bid && (
+            <div className="flex items-center gap-2 text-sm text-default-500">
+              <Tv className="size-4" />
+              <span>Bangumi ID: {detail.bid}</span>
+            </div>
+          )}
+          {detail.company.length && (
+            <div className="flex items-center gap-2 text-sm text-default-500">
+              <Building2 className="size-4" />
+              <div className="flex items-center gap-1">
+                <span className="shrink-0">制作会社:</span>
+                <div className="flex flex-wrap items-center gap-2">
+                  {detail.company.map((c) => (
+                    <HeroLink underline="always" href={`/company/${c.id}`}>
+                      {`${c.name} +${c.count}`}
+                    </HeroLink>
+                  ))}
+                </div>
+              </div>
             </div>
           )}
         </div>

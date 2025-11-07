@@ -7,10 +7,10 @@ import {
   SUPPORTED_PLATFORM_MAP,
   SUPPORTED_TYPE_MAP
 } from '~/constants/resource'
-import type { Patch } from '~/types/api/patch'
+import type { PatchHeader } from '~/types/api/patch'
 
 interface TagsProps {
-  patch: Patch
+  patch: PatchHeader
 }
 
 export const Tags = ({ patch }: TagsProps) => {

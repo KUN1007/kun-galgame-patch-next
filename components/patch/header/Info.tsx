@@ -24,10 +24,10 @@ import {
 } from '@heroui/react'
 import { useState } from 'react'
 import { EditBanner } from './EditBanner'
-import type { Patch } from '~/types/api/patch'
+import type { PatchHeader } from '~/types/api/patch'
 
 interface PatchHeaderInfoProps {
-  patch: Patch
+  patch: PatchHeader
 }
 
 export const PatchHeaderInfo = ({ patch }: PatchHeaderInfoProps) => {
@@ -63,10 +63,10 @@ export const PatchHeaderInfo = ({ patch }: PatchHeaderInfoProps) => {
   }
 
   return (
-    <Card>
-      <CardBody className="p-0">
+    <div>
+      <div className="p-0">
         <div className="grid grid-cols-1 gap-3 md:grid-cols-3">
-          <div className="relative w-full h-full overflow-hidden md:col-span-1 aspect-video md:rounded-l-xl">
+          <div className="relative w-full h-full overflow-hidden md:col-span-1 aspect-video md:rounded-2xl">
             <Image
               src={patch.banner}
               alt={patch.name}
@@ -94,7 +94,7 @@ export const PatchHeaderInfo = ({ patch }: PatchHeaderInfoProps) => {
             <EditBanner patch={patch} />
           </div>
 
-          <div className="flex flex-col gap-4 p-6 md:col-span-2">
+          <div className="flex flex-col gap-4 px-6 md:col-span-2">
             <div className="flex flex-wrap items-center gap-2">
               <h1 className="text-2xl font-bold leading-tight sm:text-3xl">
                 {patch.name}
@@ -149,7 +149,7 @@ export const PatchHeaderInfo = ({ patch }: PatchHeaderInfoProps) => {
             </div>
           </div>
         </div>
-      </CardBody>
+      </div>
 
       <Modal
         isOpen={isOpen}
@@ -187,6 +187,6 @@ export const PatchHeaderInfo = ({ patch }: PatchHeaderInfoProps) => {
           )}
         </ModalContent>
       </Modal>
-    </Card>
+    </div>
   )
 }

@@ -20,6 +20,8 @@ export const ROLE_LABELS: Record<string, string> = {
   voice: '配音',
   songs: '主题歌',
   staff: '工作人员',
+  translator: '翻译人',
+  qa: '质量保证',
   other: '其他'
 }
 

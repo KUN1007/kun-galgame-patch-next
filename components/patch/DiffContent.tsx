@@ -1,4 +1,5 @@
 import DOMPurify from 'isomorphic-dompurify'
+// @ts-expect-error kun love ren forever~
 import './_diff.css'
 
 export const parseTextToHTML = (text: string): string => {

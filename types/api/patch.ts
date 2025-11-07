@@ -1,7 +1,76 @@
 import { Tag } from './tag'
 import { Company } from './company'
 
-export interface Patch {
+export interface PatchCover {
+  url: string
+  image_id: string
+  width: number
+  height: number
+  thumbnail_url: string
+  thumb_width: number
+  thumb_height: number
+}
+
+export interface PatchScreenshot {
+  id: number
+  image_id: string
+  url: string
+  width: number
+  height: number
+  sexual: number
+  violence: number
+  thumbnail_url: string
+  thumb_width: number
+  thumb_height: number
+  order_no: number
+}
+
+export interface PatchDetailTag {
+  id: number
+  name: KunLanguage
+  category: string
+  spoiler_level: number
+  provider: string
+  count: number
+}
+
+export interface PatchDetailCompany {
+  id: number
+  name: string
+  logo: string
+  count: number
+}
+
+export interface PatchRelease {
+  id: number
+  rid: string
+  title: string
+  released: string
+  platforms: string[]
+  languages: string[]
+  minage: number
+}
+
+export interface PatchCharacter {
+  id: number
+  image: string
+  gender: string
+  role?: string
+  roles: string[]
+  name: KunLanguage
+  description: KunLanguage
+  infobox: string
+}
+
+export interface PatchPerson {
+  id: number
+  image: string
+  roles: string[]
+  name: KunLanguage
+  description: KunLanguage
+}
+
+export interface PatchHeader {
   id: number
   vndbId: string | null
   name: string
@@ -15,15 +84,12 @@ export interface Patch {
   language: string[]
   platform: string[]
   isFavorite: boolean
-  resourceUpdateTime: Date | string
+  resourceUpdateTime: string | Date
   content_limit: string
-  user: {
-    id: number
-    name: string
-    avatar: string
-  }
-  created: string
-  updated: string
+  user: KunUser
+  cover: PatchCover[]
+  created: string | Date
+  updated: string | Date
   _count: {
     favorite_by: number
     contribute_by: number
@@ -34,6 +100,7 @@ export interface Patch {
 
 export interface PatchDetail {
   id: number
+  bid: number
   name: KunLanguage
   banner: string
   content_limit: string
@@ -47,68 +114,13 @@ export interface PatchDetail {
   alias: string[]
   introduction: KunLanguage
   vndbId: string
-  cover: {
-    url: string
-    image_id: string
-    width: number
-    height: number
-    thumbnail_url: string
-    thumb_width: number
-    thumb_height: number
-  }[]
-  screenshot: {
-    id: number
-    image_id: string
-    url: string
-    width: number
-    height: number
-    sexual: number
-    violence: number
-    thumbnail_url: string
-    thumb_width: number
-    thumb_height: number
-    order_no: number
-  }[]
-  tag: {
-    id: number
-    name: KunLanguage
-    category: string
-    spoiler_level: number
-    provider: string
-    count: number
-  }[]
-  company: {
-    id: number
-    name: string
-    logo: string
-    count: number
-  }[]
-  release: {
-    id: number
-    rid: string
-    title: string
-    released: string
-    platforms: string[]
-    languages: string[]
-    minage: number
-  }[]
-  char: {
-    id: number
-    image: string
-    gender: string
-    role?: string
-    roles: string[]
-    name: KunLanguage
-    description: KunLanguage
-    infobox: string
-  }[]
-  person: {
-    id: number
-    image: string
-    roles: string[]
-    name: KunLanguage
-    description: KunLanguage
-  }[]
+  cover: PatchCover[]
+  screenshot: PatchScreenshot[]
+  tag: PatchDetailTag[]
+  company: PatchDetailCompany[]
+  release: PatchRelease[]
+  char: PatchCharacter[]
+  person: PatchPerson[]
   created: string
   updated: string
 }

@@ -42,6 +42,6 @@ export type ChatRoomWithLatestMessage = chat_room & {
 }
 
 export interface ChatMessagesApiResponse {
-  messages: ChatMessageWithSender[]
+  messages: ChatMessage[]
   nextCursor: number | null
 }

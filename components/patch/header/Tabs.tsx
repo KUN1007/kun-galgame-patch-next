@@ -23,12 +23,7 @@ export const PatchHeaderTabs = ({ id }: PatchHeaderProps) => {
   ]
 
   return (
-    <Tabs
-      aria-label="Options"
-      className="z-10 w-full overflow-hidden rounded-large shadow-medium"
-      fullWidth
-      selectedKey={lastSegment}
-    >
+    <Tabs aria-label="Options" selectedKey={lastSegment} variant="underlined">
       {tabs.map(({ key, title, href }) => (
         <Tab key={key} as={Link} title={title} href={href} />
       ))}

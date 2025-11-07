@@ -44,6 +44,7 @@ export const getPatchDetail = async (
 
   const detail: PatchDetail = {
     id: patch.id,
+    bid: patch.bid || 0,
     name: {
       'zh-cn': patch.name_zh_cn,
       'ja-jp': patch.name_ja_jp,

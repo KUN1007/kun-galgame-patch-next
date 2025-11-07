@@ -27,7 +27,9 @@ const sortCharacters = (chars: PatchDetail['char']) => {
 }
 
 export const CharacterSection = ({ detail }: { detail: PatchDetail }) => {
-  if (!detail.char.length) return null
+  if (!detail.char.length) {
+    return null
+  }
 
   const sortedChars = sortCharacters(detail.char)
 

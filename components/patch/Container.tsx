@@ -1,51 +1,51 @@
 'use client'
 
-import { Alert, Button } from '@heroui/react'
-import { useState } from 'react'
-import { PatchHeaderContainer } from '~/components/patch/header/Container'
-import { Patch, PatchIntroduction } from '~/types/api/patch'
+import { useEffect } from 'react'
+import { useRewritePatchStore } from '~/store/rewriteStore'
+import { PatchHeaderInfo } from './header/Info'
+import { PatchHeaderTabs } from './header/Tabs'
+import { PatchBackgroundImage } from './header/BackgroundImage'
+import { KunAutoImageViewer } from '~/components/kun/image-viewer/AutoImageViewer'
+import type { PatchHeader, PatchIntroduction } from '~/types/api/patch'
 
 interface Props {
   children: React.ReactNode
-  patch: Patch
+  patch: PatchHeader
   intro: PatchIntroduction
   uid?: number
 }
 
-export const PatchContainer = ({ children, patch, intro, uid }: Props) => {
-  const [show, setShow] = useState(false)
+export const PatchContainer = ({ children, patch, intro }: Props) => {
+  const { setData } = useRewritePatchStore()
 
-  if (!uid && patch.content_limit === 'nsfw') {
-    return (
-      <div className="container py-6 mx-auto space-y-6">
-        {!show && (
-          <div className="flex flex-col items-center">
-            <Alert
-              color="primary"
-              title="确认显示"
-              description="网站目前正在索引中, NSFW 的内容请您点击确定后即可显示"
-              endContent={
-                <Button color="primary" onPress={() => setShow(!show)}>
-                  确定
-                </Button>
-              }
-            />
-          </div>
-        )}
+  useEffect(() => {
+    setData({
+      id: patch.id,
+      vndbId: patch.vndbId ?? '',
+      name: patch.name,
+      introduction: patch.introduction,
+      alias: patch.alias,
+      released: intro.released,
+      contentLimit: patch.content_limit
+    })
 
-        {show && (
-          <>
-            <PatchHeaderContainer patch={patch} intro={intro} />
-            {children}
-          </>
-        )}
-      </div>
-    )
-  }
+    window.scroll(0, 0)
+  }, [patch, intro, setData])
 
   return (
     <div className="container py-6 mx-auto space-y-6">
-      <PatchHeaderContainer patch={patch} intro={intro} />
+      <div className="relative w-full mx-auto max-w-7xl">
+        <PatchBackgroundImage patch={patch} />
+
+        <KunAutoImageViewer />
+
+        <PatchHeaderInfo patch={patch} />
+
+        <div className="mt-6">
+          <PatchHeaderTabs id={patch.id} />
+        </div>
+      </div>
+
       {children}
     </div>
   )

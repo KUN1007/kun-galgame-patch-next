@@ -19,10 +19,10 @@ import { kunMoyuMoe } from '~/config/moyu-moe'
 import { kunErrorHandler } from '~/utils/kunErrorHandler'
 import { cn } from '~/utils/cn'
 import toast from 'react-hot-toast'
-import type { Patch } from '~/types/api/patch'
+import type { PatchHeader } from '~/types/api/patch'
 
 interface PatchHeaderActionsProps {
-  patch: Patch
+  patch: PatchHeader
 }
 
 export const PatchHeaderActions = ({ patch }: PatchHeaderActionsProps) => {

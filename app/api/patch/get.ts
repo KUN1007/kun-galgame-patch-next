@@ -1,6 +1,6 @@
 import { z } from 'zod'
 import { prisma } from '~/prisma/index'
-import type { Patch } from '~/types/api/patch'
+import type { PatchHeader } from '~/types/api/patch'
 
 const patchIdSchema = z.object({
   patchId: z.coerce.number().min(1).max(9999999)
@@ -24,6 +24,7 @@ export const getPatchById = async (
           comment: true
         }
       },
+      cover: true,
       alias: {
         select: {
           name: true
@@ -41,7 +42,7 @@ export const getPatchById = async (
     return '未找到对应补丁'
   }
 
-  const response: Patch = {
+  const response: PatchHeader = {
     id: patch.id,
     vndbId: patch.vndb_id,
     name: patch.name,
@@ -57,6 +58,7 @@ export const getPatchById = async (
     isFavorite: patch.favorite_by.length > 0,
     resourceUpdateTime: patch.resource_update_time,
     content_limit: patch.content_limit,
+    cover: patch.cover,
     user: {
       id: patch.user.id,
       name: patch.user.name,

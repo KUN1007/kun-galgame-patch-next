@@ -4,10 +4,10 @@ import { Button } from '@heroui/button'
 import { Modal, ModalContent, ModalHeader, useDisclosure } from '@heroui/modal'
 import { RewritePatchBanner } from '~/components/edit/rewrite/RewritePatchBanner'
 import { useUserStore } from '~/store/userStore'
-import type { Patch } from '~/types/api/patch'
+import type { PatchHeader } from '~/types/api/patch'
 
 interface PatchHeaderBannerProps {
-  patch: Patch
+  patch: PatchHeader
 }
 
 export const EditBanner = ({ patch }: PatchHeaderBannerProps) => {
@@ -28,7 +28,6 @@ export const EditBanner = ({ patch }: PatchHeaderBannerProps) => {
         </Button>
       )}
 
-      {/* Edit modal */}
       <Modal isOpen={isOpen} onClose={onClose} placement="center">
         <ModalContent>
           <ModalHeader className="flex flex-col gap-1">

@@ -1,12 +1,11 @@
 'use client'
 
 import { useState } from 'react'
-import { useUserStore } from '~/store/userStore'
 import Image from 'next/image'
-import type { Patch } from '~/types/api/patch'
+import type { PatchHeader } from '~/types/api/patch'
 
 interface Props {
-  patch: Patch
+  patch: PatchHeader
 }
 
 export const PatchBackgroundImage = ({ patch }: Props) => {
@@ -18,7 +17,7 @@ export const PatchBackgroundImage = ({ patch }: Props) => {
         src={patch.banner}
         alt={patch.name}
         className={`object-cover w-full h-full transition-opacity duration-500 ${
-          imageLoaded ? 'opacity-100' : 'opacity-0'
+          imageLoaded ? 'opacity-20' : 'opacity-0'
         }`}
         fill
         sizes="100vw"
@@ -28,7 +27,7 @@ export const PatchBackgroundImage = ({ patch }: Props) => {
       />
 
       <div className="absolute inset-0 bg-gradient-to-b from-black/30 via-black/10 to-background"></div>
-      <div className="absolute inset-0 bg-gradient-to-t from-background via-transparent to-transparent"></div>
+      <div className="absolute inset-0 bg-gradient-to-t from-background/50 via-background/30 to-transparent"></div>
     </div>
   )
 }
