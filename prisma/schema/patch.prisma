@@ -28,7 +28,6 @@ model patch {
   cover                patch_cover[]
   screenshot           patch_screenshot[]
 
-  walkthrough patch_walkthrough[]
   company     patch_company_relation[]
   tag         patch_tag_relation[]
   link        patch_link[]
@@ -42,8 +41,6 @@ model patch {
 
   resource patch_resource[]     @relation("patch_resource")
   comment  patch_comment[]      @relation("patch_comment")
-  history  patch_history[]      @relation("patch_history")
-  pr       patch_pull_request[] @relation("patch_pull_request")
 
   char_rel patch_char_relation[]
   person_rel patch_person_relation[]

@@ -144,7 +144,6 @@
     "zremrangebyscore",
     "zustand"
   ],
-  "biome.enabled": false,
   "editor.defaultFormatter": "esbenp.prettier-vscode",
   "editor.formatOnSave": true,
   "editor.codeActionsOnSave": {

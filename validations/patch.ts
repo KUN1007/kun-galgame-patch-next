@@ -114,27 +114,9 @@ export const patchResourceUpdateSchema = patchResourceCreateSchema.merge(
   })
 )
 
-export const declinePullRequestSchema = z.object({
-  prId: z.coerce.number({ message: '补丁 ID 必须为数字' }).min(1).max(9999999),
-  note: z
-    .string({ message: '必须填写拒绝原因' })
-    .trim()
-    .min(1)
-    .max(1007, { message: '拒绝原因最多 1007 个字符' })
-})
-
 export const updatePatchBannerSchema = z.object({
   patchId: z.coerce.number().min(1).max(9999999),
   image: z.any()
-})
-
-export const getPatchHistorySchema = z.object({
-  patchId: z.coerce
-    .number({ message: '补丁 ID 必须为数字' })
-    .min(1)
-    .max(9999999),
-  page: z.coerce.number().min(1).max(9999999),
-  limit: z.coerce.number().min(1).max(30)
 })
 
 export const updatePatchResourceStatsSchema = z.object({

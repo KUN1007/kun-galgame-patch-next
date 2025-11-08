@@ -1,37 +1,3 @@
-model patch_history {
-  id      Int    @id @default(autoincrement())
-  action  String @default("")
-  type    String @default("")
-  content String @default("") @db.VarChar(10007)
-
-  user_id  Int
-  user     user  @relation("user_patch_history", fields: [user_id], references: [id], onDelete: Cascade, onUpdate: NoAction)
-  patch_id Int
-  patch    patch @relation("patch_history", fields: [patch_id], references: [id], onDelete: Cascade, onUpdate: NoAction)
-
-  created DateTime @default(now())
-  updated DateTime @updatedAt
-}
-
-// status: 0 - pending, 1 - merged, 2 - declined
-model patch_pull_request {
-  id            Int    @id @default(autoincrement())
-  status        Int    @default(0)
-  index         Int    @default(0)
-  complete_time String @default("")
-  diff_content  String @default("") @db.VarChar(100007)
-  content       String @default("") @db.VarChar(100007)
-  note          String @default("") @db.VarChar(1007)
-
-  user_id  Int
-  user     user  @relation("user_patch_pull_request", fields: [user_id], references: [id], onDelete: Cascade, onUpdate: NoAction)
-  patch_id Int
-  patch    patch @relation("patch_pull_request", fields: [patch_id], references: [id], onDelete: Cascade, onUpdate: NoAction)
-
-  created DateTime @default(now())
-  updated DateTime @updatedAt
-}
-
 model patch_comment {
   id      Int    @id @default(autoincrement())
   content String @default("") @db.VarChar(10007)

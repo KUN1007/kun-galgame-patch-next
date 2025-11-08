@@ -24,7 +24,6 @@ model user {
   chat_message_reaction chat_message_reaction[]
 
   admin_log         admin_log[]
-  patch_walkthrough patch_walkthrough[]
 
   patch_favorite      user_patch_favorite_relation[]
   patch_contribute    user_patch_contribute_relation[]
@@ -36,8 +35,6 @@ model user {
   patch              patch[]                @relation("user_patch")
   patch_comment      patch_comment[]        @relation("user_patch_comment")
   patch_resource     patch_resource[]       @relation("user_patch_resource")
-  patch_history      patch_history[]        @relation("user_patch_history")
-  patch_pull_request patch_pull_request[]   @relation("user_patch_pull_request")
   send_message       user_message[]         @relation("user_send_message")
   receive_message    user_message[]         @relation("user_receive_message")
 

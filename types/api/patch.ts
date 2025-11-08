@@ -148,17 +148,6 @@ export interface PatchUpdate {
   contentLimit: string
 }
 
-export interface PatchPullRequest {
-  id: number
-  status: number
-  index: number
-  completeTime: string
-  content: string
-  note: string
-  user: KunUser
-  created: string
-}
-
 export interface PatchResource {
   id: number
   storage: string
@@ -204,29 +193,4 @@ export interface PatchComment {
   user: KunUser
   quotedContent?: string | null
   quotedUsername?: string | null
-}
-
-export interface PatchHistory {
-  id: number
-  action: string
-  type: string
-  content: string
-  userId: number
-  patchId: number
-  created: string
-  updated: string
-  user: KunUser
-}
-
-export interface PatchWalkthrough {
-  id: number
-  name: string
-  markdown: string
-  content: string
-  created: string | Date
-  updated: string | Date
-  user: KunUser
-  _count: {
-    patch_walkthrough: number
-  }
 }

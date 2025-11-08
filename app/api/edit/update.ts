@@ -1,9 +1,6 @@
 import { z } from 'zod'
 import { prisma } from '~/prisma/index'
-import { generatePatchDiff } from './_helpers'
 import { patchUpdateSchema } from '~/validations/edit'
-import { createDedupMessage } from '../utils/message'
-import type { PatchUpdate } from '~/types/api/patch'
 
 export const updatePatch = async (
   input: z.infer<typeof patchUpdateSchema>,
@@ -26,22 +23,9 @@ export const updatePatch = async (
   if (!patch) {
     return '该 ID 下未找到对应补丁'
   }
-
-  const lastPullRequest = await prisma.patch_pull_request.findFirst({
-    where: { patch_id: id },
-    orderBy: { index: 'desc' }
-  })
-  const newIndex = lastPullRequest ? lastPullRequest.index + 1 : 0
-
-  const diffContent = generatePatchDiff(
-    {
-      name: patch.name,
-      alias: patch.alias.map((a) => a.name),
-      introduction: patch.introduction,
-      contentLimit: patch.content_limit
-    },
-    input
-  )
+  if (currentUserUid !== patch.user_id || currentUserRole < 2) {
+    return '您没有权限更新该游戏信息'
+  }
 
   return await prisma.$transaction(async (prisma) => {
     await prisma.patch_alias.deleteMany({
@@ -56,63 +40,16 @@ export const updatePatch = async (
       skipDuplicates: true
     })
 
-    if (currentUserUid === patch.user_id || currentUserRole > 2) {
-      await prisma.patch.update({
-        where: { id },
-        data: {
-          name,
-          vndb_id: vndbId ? vndbId : null,
-          introduction,
-          released: released ? released : 'unknown',
-          content_limit: contentLimit
-        }
-      })
-
-      await prisma.patch_history.create({
-        data: {
-          action: 'update',
-          type: 'galgame',
-          content: diffContent,
-          user_id: currentUserUid,
-          patch_id: patch.id
-        }
-      })
-    } else {
-      const updates: PatchUpdate = {
-        name: input.name,
-        alias: input.alias ?? [],
-        introduction: input.introduction,
-        contentLimit: input.contentLimit
+    await prisma.patch.update({
+      where: { id },
+      data: {
+        name,
+        vndb_id: vndbId ? vndbId : null,
+        introduction,
+        released: released ? released : 'unknown',
+        content_limit: contentLimit
       }
-
-      await prisma.patch_pull_request.create({
-        data: {
-          index: newIndex,
-          user_id: currentUserUid,
-          patch_id: id,
-          diff_content: diffContent,
-          content: JSON.stringify(updates)
-        }
-      })
-
-      await prisma.patch_history.create({
-        data: {
-          action: 'create',
-          type: 'pr',
-          content: diffContent,
-          user_id: currentUserUid,
-          patch_id: patch.id
-        }
-      })
-
-      await createDedupMessage({
-        type: 'pr',
-        sender_id: currentUserUid,
-        content: '向您提出了更新请求',
-        recipient_id: patch.user_id,
-        link: `/patch/${patch.id}/pr`
-      })
-    }
+    })
 
     return {}
   })

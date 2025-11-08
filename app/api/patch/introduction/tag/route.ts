@@ -12,12 +12,6 @@ export const handleAddPatchTag = async (
 ) => {
   const { patchId, tagId } = input
 
-  const tags = await prisma.patch_tag.findMany({
-    where: { id: { in: tagId } },
-    select: { name: true }
-  })
-  const tagsNameArray = tags.map((t) => t.name)
-
   return await prisma.$transaction(async (prisma) => {
     const relationData = tagId.map((id) => ({
       patch_id: patchId,
@@ -30,16 +24,6 @@ export const handleAddPatchTag = async (
     await prisma.patch_tag.updateMany({
       where: { id: { in: tagId } },
       data: { count: { increment: 1 } }
-    })
-
-    await prisma.patch_history.create({
-      data: {
-        action: 'create',
-        type: 'tag',
-        content: tagsNameArray.toString(),
-        user_id: uid,
-        patch_id: patchId
-      }
     })
     return {}
   })
@@ -64,16 +48,9 @@ export const POST = async (req: NextRequest) => {
 }
 
 export const handleRemovePatchTag = async (
-  input: z.infer<typeof patchTagChangeSchema>,
-  uid: number
+  input: z.infer<typeof patchTagChangeSchema>
 ) => {
   const { patchId, tagId } = input
-
-  const tags = await prisma.patch_tag.findMany({
-    where: { id: { in: tagId } },
-    select: { name: true }
-  })
-  const tagsNameArray = tags.map((t) => t.name)
 
   return await prisma.$transaction(async (prisma) => {
     await prisma.patch_tag_relation.deleteMany({
@@ -88,15 +65,6 @@ export const handleRemovePatchTag = async (
       data: { count: { increment: -1 } }
     })
 
-    await prisma.patch_history.create({
-      data: {
-        action: 'delete',
-        type: 'tag',
-        content: tagsNameArray.toString(),
-        user_id: uid,
-        patch_id: patchId
-      }
-    })
     return {}
   })
 }
@@ -115,6 +83,6 @@ export const PUT = async (req: NextRequest) => {
     return NextResponse.json('网站正在遭受攻击, 目前仅允许创作者创建和更改项目')
   }
 
-  const response = await handleRemovePatchTag(input, payload.uid)
+  const response = await handleRemovePatchTag(input)
   return NextResponse.json(response)
 }

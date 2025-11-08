@@ -39,16 +39,6 @@ export const handlePatchCompanyAction = (type: 'add' | 'delete') => {
         data: { count: { increment: isAdd ? 1 : -1 } }
       })
 
-      await prisma.patch_history.create({
-        data: {
-          action: isAdd ? 'create' : 'delete',
-          type: 'company',
-          content: companiesNameArray.toString(),
-          user_id: uid,
-          patch_id: patchId
-        }
-      })
-
       return {}
     })
   }

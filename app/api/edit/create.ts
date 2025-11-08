@@ -67,16 +67,6 @@ export const createPatch = async (
         }
       })
 
-      await prisma.patch_history.create({
-        data: {
-          action: 'create',
-          type: 'galgame',
-          content: name,
-          user_id: uid,
-          patch_id: newId
-        }
-      })
-
       return newId
     },
     { timeout: 60000 }
