@@ -3,7 +3,7 @@
 import { useMemo, useState } from 'react'
 import DOMPurify from 'isomorphic-dompurify'
 import { Building2, Calendar, Clock, Link, RefreshCw, Tv } from 'lucide-react'
-import { Select, SelectItem, Link as HeroLink } from '@heroui/react'
+import { Select, SelectItem, Link as HeroLink, Chip } from '@heroui/react'
 import { formatDate } from '~/utils/time'
 import { GALGAME_SORT_YEARS_MAP } from '~/constants/galgame'
 import { getPreferredLanguageText } from '~/utils/getPreferredLanguageText'
@@ -98,26 +98,34 @@ export const OverviewSection = ({ detail }: { detail: PatchDetail }) => {
               <span>Bangumi ID: {detail.bid}</span>
             </div>
           )}
-          {!!detail.company.length && (
-            <div className="flex items-center gap-2 text-sm text-default-500">
-              <Building2 className="size-4" />
-              <div className="flex items-center gap-1">
-                <span className="shrink-0">制作会社:</span>
-                <div className="flex flex-wrap items-center gap-2">
-                  {detail.company.map((c) => (
-                    <HeroLink
-                      key={c.id}
-                      underline="always"
-                      href={`/company/${c.id}`}
-                    >
-                      {`${c.name} +${c.count}`}
-                    </HeroLink>
-                  ))}
-                </div>
-              </div>
-            </div>
-          )}
         </div>
+
+        {!!detail.company.length && (
+          <div className="flex text-sm text-default-500 flex-wrap items-center gap-2">
+            <Building2 className="size-4" />
+            <span className="shrink-0">制作会社:</span>
+            {detail.company.map((c) => (
+              <HeroLink
+                size="sm"
+                key={c.id}
+                underline="always"
+                href={`/company/${c.id}`}
+              >
+                {`${c.name} +${c.count}`}
+              </HeroLink>
+            ))}
+          </div>
+        )}
+
+        {!!detail.alias.length && (
+          <div className="flex text-sm text-default-500 flex-wrap items-center gap-2">
+            <Building2 className="size-4" />
+            <span className="shrink-0">别名:</span>
+            {detail.alias.map((a) => (
+              <span key={a.id}>{a.name} · </span>
+            ))}
+          </div>
+        )}
       </div>
     </section>
   )

@@ -41,6 +41,11 @@ export interface PatchDetailCompany {
   count: number
 }
 
+export interface PatchDetailAlias {
+  id: number
+  name: string
+}
+
 export interface PatchRelease {
   id: number
   rid: string
@@ -111,9 +116,9 @@ export interface PatchDetail {
   language: string[]
   engine: string[]
   platform: string[]
-  alias: string[]
-  introduction: KunLanguage
   vndbId: string
+  introduction: KunLanguage
+  alias: PatchDetailAlias[]
   cover: PatchCover[]
   screenshot: PatchScreenshot[]
   tag: PatchDetailTag[]

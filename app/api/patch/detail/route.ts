@@ -20,7 +20,7 @@ export const getPatchDetail = async (
     where: { id: patchId },
     include: {
       user: true,
-      alias: { select: { name: true } },
+      alias: true,
       cover: true,
       screenshot: true,
       tag: {
@@ -59,7 +59,10 @@ export const getPatchDetail = async (
     language: patch.language,
     engine: patch.engine,
     platform: patch.platform,
-    alias: patch.alias.map((a) => a.name),
+    alias: patch.alias.map((a) => ({
+      id: a.id,
+      name: a.name
+    })),
     introduction: {
       'zh-cn': await markdownToHtml(patch.introduction_zh_cn),
       'ja-jp': await markdownToHtml(patch.introduction_ja_jp),

@@ -2,6 +2,7 @@
 
 import { useState } from 'react'
 import Image from 'next/image'
+import { getPreferredLanguageText } from '~/utils/getPreferredLanguageText'
 import type { PatchHeader } from '~/types/api/patch'
 
 interface Props {
@@ -15,7 +16,7 @@ export const PatchBackgroundImage = ({ patch }: Props) => {
     <div className="fixed inset-0 z-[-1] top-0 left-0 object-cover w-full h-full">
       <Image
         src={patch.banner}
-        alt={patch.name}
+        alt={getPreferredLanguageText(patch.name)}
         className={`object-cover w-full h-full transition-opacity duration-500 ${
           imageLoaded ? 'opacity-20' : 'opacity-0'
         }`}
@@ -26,8 +27,7 @@ export const PatchBackgroundImage = ({ patch }: Props) => {
         onLoad={() => setImageLoaded(true)}
       />
 
-      <div className="absolute inset-0 bg-gradient-to-b from-black/30 via-black/10 to-background"></div>
-      <div className="absolute inset-0 bg-gradient-to-t from-background/50 via-background/30 to-transparent"></div>
+      <div className="absolute inset-0 bg-gradient-to-t from-background/50 via-transparent to-transparent"></div>
     </div>
   )
 }
