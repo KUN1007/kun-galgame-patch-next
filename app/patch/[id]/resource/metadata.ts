@@ -4,14 +4,22 @@ import {
   SUPPORTED_LANGUAGE_MAP,
   SUPPORTED_PLATFORM_MAP
 } from '~/constants/resource'
+import { getPreferredLanguageText } from '~/utils/getPreferredLanguageText'
 import type { Metadata } from 'next'
 import type { KunSiteAuthor } from '~/config/config'
-import type { Patch, PatchResource } from '~/types/api/patch'
+import type { PatchHeader, PatchResource } from '~/types/api/patch'
 
 export const generateKunMetadataTemplate = (
-  patch: Patch,
+  patch: PatchHeader,
   resources: PatchResource[]
 ): Metadata => {
+  const patchName = getPreferredLanguageText(patch.name)
+  const patchNameJa = patch.name['ja-jp'] ? patch.name['ja-jp'] : ''
+  const pageTitle =
+    patchNameJa && patchName !== patchNameJa
+      ? `${patchName} | ${patchNameJa} 的下载资源`
+      : `${patchName} 的下载资源`
+
   const responseType = resources.map((res) => res.type).flat()
   const dedupeType = [...new Set(responseType)].map(
     (t) => SUPPORTED_TYPE_MAP[t]
@@ -34,20 +42,18 @@ export const generateKunMetadataTemplate = (
   )
   const uniqueAuthorsName = uniqueAuthors.map((u) => u.name)
 
+  const pageDescription = `${uniqueAuthorsName} 在 ${patch.name} 下发布了 ${dedupeType} 下载资源`
+
   return {
-    title: patch.alias.length
-      ? `${patch.name} | ${patch.alias[0]} 的 下载资源`
-      : `${patch.name} 的 下载资源`,
+    title: pageTitle,
     keywords: [...patch.alias, ...dedupeType, ...dedupeLang, ...dedupePlatform],
     authors: uniqueAuthors,
     creator: patch.user.name,
     publisher: patch.user.name,
-    description: `${uniqueAuthorsName} 在 ${patch.name} 下发布了 ${dedupeType} 下载资源`,
+    description: pageDescription,
     openGraph: {
-      title: patch.alias.length
-        ? `${patch.name} | ${patch.alias[0]} 的 下载资源`
-        : `${patch.name} 的 下载资源`,
-      description: `${uniqueAuthorsName} 在 ${patch.name} 下发布了 ${dedupeType} 下载资源`,
+      title: pageTitle,
+      description: pageDescription,
       type: 'article',
       publishedTime: patch.created,
       modifiedTime: patch.updated,
@@ -56,16 +62,14 @@ export const generateKunMetadataTemplate = (
           url: patch.banner,
           width: 1920,
           height: 1080,
-          alt: patch.name
+          alt: patchName
         }
       ]
     },
     twitter: {
       card: 'summary',
-      title: patch.alias.length
-        ? `${patch.name} | ${patch.alias[0]} 的 下载资源`
-        : `${patch.name} 的 下载资源`,
-      description: `${uniqueAuthorsName} 在 ${patch.name} 下发布了 ${dedupeType} 下载资源`,
+      title: pageTitle,
+      description: pageDescription,
       images: [patch.banner]
     },
     alternates: {

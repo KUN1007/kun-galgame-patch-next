@@ -4,27 +4,12 @@ import {
   kunGetPatchIntroductionActions,
   kunUpdatePatchViewsActions
 } from './actions'
-import { generateKunMetadataTemplate } from './metadata'
 import { PatchContainer } from '~/components/patch/Container'
 import { verifyHeaderCookie } from '~/utils/actions/verifyHeaderCookie'
-import type { Metadata } from 'next'
 
 interface Props {
   children: React.ReactNode
   params: Promise<{ id: string }>
-}
-
-export const generateMetadata = async ({
-  params
-}: Props): Promise<Metadata> => {
-  const { id } = await params
-  const patch = await kunGetPatchActions({
-    patchId: Number(id)
-  })
-  if (typeof patch === 'string') {
-    return {}
-  }
-  return generateKunMetadataTemplate(patch)
 }
 
 export default async function Kun({ params, children }: Props) {

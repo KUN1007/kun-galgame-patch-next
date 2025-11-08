@@ -33,7 +33,15 @@ export async function fetchVndbDetailAndSyncNames(
   vndbId: string | null,
   patchId: number
 ) {
-  if (!vndbId) return null
+  // If there's no VNDB ID, ensure name_ja_jp is cleared per requirement
+  if (!vndbId) {
+    try {
+      await prisma.patch
+        .update({ where: { id: patchId }, data: { name_ja_jp: '' } })
+        .catch(() => {})
+    } catch {}
+    return null
+  }
   try {
     const vnDetail = await vndbGetVnById(vndbId)
     if (vnDetail) {
@@ -45,16 +53,29 @@ export async function fetchVndbDetailAndSyncNames(
         data: vnDetail
       }).catch(() => {})
       const nameEn = vnDetail.title || ''
+      // According to VNDB API docs:
+      // - titles[].lang is a language code and appears at most once per language
+      // - titles[].title is the title in the original script
+      // - alttitle is typically the original-script variant of the main title
+      // We prefer the explicit Japanese title in titles[lang==='ja'],
+      // fallback to alttitle only when olang is 'ja'. Otherwise, empty.
       let nameJa = ''
-      if (Array.isArray(vnDetail.titles)) {
-        const mainJa = vnDetail.titles.find(
-          (t) => t.lang === 'ja' && (t.main || t.official)
-        )
-        nameJa =
-          mainJa?.title ||
-          vnDetail.titles.find((t) => t.lang === 'ja')?.title ||
-          ''
-      }
+      try {
+        const titles = Array.isArray((vnDetail as any).titles)
+          ? (vnDetail as any).titles
+          : []
+        const jaItem = titles.find((t: any) => {
+          const lang = String(t?.lang || '').toLowerCase()
+          const base = lang.split('-')[0]
+          return base === 'ja'
+        })
+        if (jaItem?.title) nameJa = String(jaItem.title)
+        if (!nameJa) {
+          const olang = String((vnDetail as any).olang || '').toLowerCase()
+          const alt = (vnDetail as any).alttitle || ''
+          if (olang === 'ja' && alt) nameJa = String(alt)
+        }
+      } catch {}
       await prisma.patch
         .update({
           where: { id: patchId },
@@ -269,7 +290,8 @@ export async function syncVndbReleasesAndCompanies(
                   height: Array.isArray(img.dims) ? img.dims[1] : 0,
                   sexual: typeof img.sexual === 'number' ? img.sexual : 0,
                   violence: typeof img.violence === 'number' ? img.violence : 0,
-                  votecount: typeof img.votecount === 'number' ? img.votecount : 0,
+                  votecount:
+                    typeof img.votecount === 'number' ? img.votecount : 0,
                   thumbnail_url: img.thumbnail || '',
                   thumb_width: Array.isArray(img.thumbnail_dims)
                     ? img.thumbnail_dims[0]
@@ -286,7 +308,8 @@ export async function syncVndbReleasesAndCompanies(
                   height: Array.isArray(img.dims) ? img.dims[1] : 0,
                   sexual: typeof img.sexual === 'number' ? img.sexual : 0,
                   violence: typeof img.violence === 'number' ? img.violence : 0,
-                  votecount: typeof img.votecount === 'number' ? img.votecount : 0,
+                  votecount:
+                    typeof img.votecount === 'number' ? img.votecount : 0,
                   thumbnail_url: img.thumbnail || '',
                   thumb_width: Array.isArray(img.thumbnail_dims)
                     ? img.thumbnail_dims[0]
