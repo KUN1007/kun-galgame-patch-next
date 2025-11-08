@@ -2,12 +2,10 @@
 
 import { Button, Card, CardBody, Input, Link } from '@heroui/react'
 import { useCreatePatchStore } from '~/store/editStore'
-import { useKunMilkdownStore } from '~/store/milkdownStore'
 import toast from 'react-hot-toast'
 import { kunFetchGet } from '~/utils/kunFetch'
 import { VNDBRegex } from '~/utils/validate'
 import { useState } from 'react'
-import type { VNDBResponse } from '../VNDB'
 import { kunMoyuMoe } from '~/config/moyu-moe'
 
 interface Props {
@@ -17,9 +15,6 @@ interface Props {
 export const VNDBInput = ({ errors }: Props) => {
   const [existPatchId, setExistPatchId] = useState(0)
   const { data, setData } = useCreatePatchStore()
-  const refreshMilkdownContent = useKunMilkdownStore(
-    (state) => state.refreshMilkdownContent
-  )
 
   const handleCheckDuplicate = async () => {
     if (!VNDBRegex.test(data.vndbId)) {
@@ -40,45 +35,6 @@ export const VNDBInput = ({ errors }: Props) => {
     } else {
       toast.success('检测完成, 该游戏并未重复!')
     }
-
-    toast('正在从 VNDB 获取数据...')
-    const vndbResponse = await fetch(`https://api.vndb.org/kana/vn`, {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json'
-      },
-      body: JSON.stringify({
-        filters: ['id', '=', data.vndbId],
-        fields:
-          'title, titles.lang, titles.title, description, aliases, released'
-      })
-    })
-
-    const vndbData: VNDBResponse = await vndbResponse.json()
-    const allTitles = vndbData.results.flatMap((vn) => {
-      const jaTitle = vn.titles.find((t) => t.lang === 'ja')?.title
-      const titlesArray = [
-        ...(jaTitle ? [jaTitle] : []),
-        vn.title,
-        ...vn.titles.filter((t) => t.lang !== 'ja').map((t) => t.title),
-        ...vn.aliases
-      ]
-      return titlesArray
-    })
-
-    setData({
-      ...data,
-      alias: allTitles,
-      introduction: {
-        'en-us': vndbData.results[0].description,
-        'ja-jp': '',
-        'zh-cn': ''
-      },
-      released: vndbData.results[0].released
-    })
-
-    refreshMilkdownContent()
-    toast.success('获取数据成功! 已为您自动添加游戏别名')
   }
 
   return (
@@ -93,20 +49,24 @@ export const VNDBInput = ({ errors }: Props) => {
         isInvalid={!!errors}
         errorMessage={errors}
       />
-      <p className="text-sm ">
-        提示: VNDB ID 需要 VNDB 官网 (vndb.org)
+      <p className="text-sm font-bold">
+        提示: VNDB ID 需要进入{' '}
+        <Link size="sm" href="https://vndb.org/" isExternal showAnchorIcon>
+          VNDB 官网 (vndb.org)
+        </Link>
         获取，当进入对应游戏的页面，游戏页面的 URL (形如
         https://vndb.org/v19658) 中的 v19658 就是 VNDB ID
-      </p>
-      <p className="text-sm text-default-500">
-        我们强烈建议您填写 VNDB ID 以确保游戏不重复, 获取 VNDB ID 将会{' '}
-        <b>覆盖您当前编写的介绍</b>, 并且自动生成游戏发售日期与游戏别名
       </p>
       <p className="text-sm text-default-500">
         <b>
           您可以不填写 VNDB ID 发布游戏, 但是您需要自行检查游戏是否重复
           (如果游戏发生重复, 我们会通知您自行删除)
         </b>
+      </p>
+      <p className="text-sm font-bold text-danger">
+        注意, 没有 VNDB ID 的游戏将会没有任何介绍和标签,
+        直到我们建成数据库之后才可以编辑标签、角色等数据, 无 VNDB ID
+        只能在重新编辑页面编辑游戏名和介绍
       </p>
       <Link
         isExternal

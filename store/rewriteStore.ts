@@ -4,7 +4,7 @@ export interface RewritePatchData {
   id: number
   vndbId: string
   name: KunLanguage
-  introduction: string
+  introduction: KunLanguage
   alias: string[]
   contentLimit: string
   released: string
@@ -25,7 +25,11 @@ const initialState: RewritePatchData = {
     'ja-jp': '',
     'en-us': ''
   },
-  introduction: '',
+  introduction: {
+    'zh-cn': '',
+    'ja-jp': '',
+    'en-us': ''
+  },
   alias: [],
   contentLimit: 'sfw',
   released: ''

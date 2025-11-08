@@ -39,9 +39,17 @@ export const PublishButton = ({ setErrors }: Props) => {
     }
 
     const result = patchCreateSchema.safeParse({
-      ...data,
       banner: localeBannerBlob,
-      alias: JSON.stringify(data.alias)
+      vndbId: data.vndbId,
+      name_zh_cn: data.name['zh-cn'],
+      name_ja_jp: data.name['ja-jp'],
+      name_en_us: data.name['en-us'],
+      introduction_zh_cn: data.introduction['zh-cn'],
+      introduction_ja_jp: data.introduction['ja-jp'],
+      introduction_en_us: data.introduction['en-us'],
+      alias: JSON.stringify(data.alias),
+      released: data.released,
+      contentLimit: data.contentLimit
     })
     if (!result.success) {
       const newErrors: Partial<Record<keyof CreatePatchRequestData, string>> =

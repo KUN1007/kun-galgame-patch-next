@@ -23,7 +23,11 @@ export const PatchContainer = ({ children, patch, intro }: Props) => {
       id: patch.id,
       vndbId: patch.vndbId ?? '',
       name: patch.name,
-      introduction: patch.introduction,
+      introduction: {
+        'zh-cn': intro.introduction || '',
+        'ja-jp': '',
+        'en-us': ''
+      },
       alias: patch.alias,
       released: intro.released,
       contentLimit: patch.content_limit

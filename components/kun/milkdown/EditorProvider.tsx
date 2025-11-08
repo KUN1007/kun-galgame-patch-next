@@ -107,7 +107,7 @@ export const KunEditorProvider = ({
   return (
     <div className="min-h-64" onClick={(e) => e.stopPropagation()}>
       <KunMilkdownPluginsMenu editorInfo={editor} />
-      <div className="relative">
+      <div className="relative mt-2">
         <Milkdown />
       </div>
       {editor.loading && (

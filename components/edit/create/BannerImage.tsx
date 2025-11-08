@@ -41,9 +41,13 @@ export const BannerImage = ({ errors }: Props) => {
   return (
     <div className="space-y-2">
       <h2 className="text-xl">二、预览图片</h2>
-      <p className="text-sm text-default-500">
+      <p>
         注意, <b>您不可以使用 R18 图片作为封面</b>, 如果有, 请更换图片, 打码,
         或者裁剪
+      </p>
+      <p>
+        预览图片实在太影响排版了, 无论如何请尽量寻找一个清晰的图片, 可以直接前往
+        E-Hentai (E 站) 获取
       </p>
       {errors && <p className="text-xs text-danger-500">{errors}</p>}
 
