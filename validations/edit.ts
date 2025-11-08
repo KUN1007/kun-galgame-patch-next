@@ -2,16 +2,14 @@ import { z } from 'zod'
 
 export const patchCreateSchema = z.object({
   banner: z.any(),
-  name: z.string().trim().min(1, { message: '游戏名称是必填项' }).max(1007),
   vndbId: z.string().max(10),
-  introduction: z
-    .string()
-    .trim()
-    .min(10, { message: '游戏介绍是必填项, 最少 10 个字符' })
-    .max(100007, { message: '游戏介绍最多 100007 字' }),
-  alias: z
-    .string()
-    .max(2333, { message: '别名字符串总长度不可超过 3000 个字符' }),
+  name_zh_cn: z.string().trim().max(1007).default(''),
+  name_ja_jp: z.string().trim().max(1007).default(''),
+  name_en_us: z.string().trim().max(1007).default(''),
+  introduction_zh_cn: z.string().trim().max(100007).default(''),
+  introduction_ja_jp: z.string().trim().max(100007).default(''),
+  introduction_en_us: z.string().trim().max(100007).default(''),
+  alias: z.string().max(2333, { message: '别名字符串长度不能超过 3000 字' }),
   released: z
     .string({ message: '发售日期为空, 请点击 检查重复 以从 VNDB 获取数据' })
     .max(30),
@@ -20,30 +18,30 @@ export const patchCreateSchema = z.object({
 
 export const patchUpdateSchema = z.object({
   id: z.coerce.number().min(1).max(9999999),
-  name: z.string().trim().min(1, { message: '游戏名称是必填项' }).max(1007),
   vndbId: z.string().max(10),
-  introduction: z
-    .string()
-    .trim()
-    .min(10, { message: '游戏介绍是必填项, 最少 10 个字符' })
-    .max(100007, { message: '游戏介绍最多 100007 字' }),
+  name_zh_cn: z.string().trim().max(1007).default(''),
+  name_ja_jp: z.string().trim().max(1007).default(''),
+  name_en_us: z.string().trim().max(1007).default(''),
+  introduction_zh_cn: z.string().trim().max(100007).default(''),
+  introduction_ja_jp: z.string().trim().max(100007).default(''),
+  introduction_en_us: z.string().trim().max(100007).default(''),
   alias: z
     .array(
       z
         .string()
         .trim()
-        .min(1, { message: '单个别名至少一个字符' })
-        .max(500, { message: '单个别名至多 500 个字符' })
+        .min(1, { message: '别名不能为空' })
+        .max(500, { message: '长度不能超过 500 字' })
     )
-    .max(30, { message: '您最多使用 30 个别名' }),
+    .max(30, { message: '最多 30 个别名' }),
   released: z
-    .string({ message: '发售日期为空, 请点击 检查重复 以从 VNDB 获取数据' })
+    .string({ message: '必须传入, 否则请传 unknown 与 VNDB 同步' })
     .max(30),
   contentLimit: z.union([z.literal('sfw'), z.literal('nsfw')])
 })
 
 export const duplicateSchema = z.object({
-  vndbId: z.string().regex(/^v\d{1,6}$/, { message: 'VNDB ID 格式无效' })
+  vndbId: z.string().regex(/^v\d{1,6}$/, { message: 'VNDB ID 格式不正确' })
 })
 
 export const imageSchema = z.object({
@@ -51,8 +49,6 @@ export const imageSchema = z.object({
 })
 
 export const editLinkSchema = z.object({
-  name: z.string({ message: '您的输入应为字符串' }),
-  link: z
-    .string({ message: '您的输入应为字符串' })
-    .url({ message: '您输入的链接必须为合法 URL' })
+  name: z.string({ message: '名称不能为空' }),
+  link: z.url({ message: '请输入合法的 URL' }).max(1000)
 })

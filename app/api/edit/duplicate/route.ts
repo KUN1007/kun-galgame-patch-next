@@ -9,7 +9,7 @@ export const duplicate = async (input: z.infer<typeof duplicateSchema>) => {
     where: { vndb_id: input.vndbId }
   })
   if (patch) {
-    return 'VNDB ID 重复, 本游戏已经被发布过了'
+    return { patchId: patch.id }
   }
   return {}
 }

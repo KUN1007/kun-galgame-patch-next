@@ -1,18 +1,21 @@
 'use client'
 
-import { Button, Input, Link } from '@heroui/react'
+import { Button, Card, CardBody, Input, Link } from '@heroui/react'
 import { useCreatePatchStore } from '~/store/editStore'
 import { useKunMilkdownStore } from '~/store/milkdownStore'
 import toast from 'react-hot-toast'
 import { kunFetchGet } from '~/utils/kunFetch'
 import { VNDBRegex } from '~/utils/validate'
+import { useState } from 'react'
 import type { VNDBResponse } from '../VNDB'
+import { kunMoyuMoe } from '~/config/moyu-moe'
 
 interface Props {
   errors: string | undefined
 }
 
 export const VNDBInput = ({ errors }: Props) => {
+  const [existPatchId, setExistPatchId] = useState(0)
   const { data, setData } = useCreatePatchStore()
   const refreshMilkdownContent = useKunMilkdownStore(
     (state) => state.refreshMilkdownContent
@@ -24,11 +27,15 @@ export const VNDBInput = ({ errors }: Props) => {
       return
     }
 
-    const res = await kunFetchGet<KunResponse<{}>>('/edit/duplicate', {
-      vndbId: data.vndbId
-    })
-    if (typeof res === 'string') {
-      toast.error('游戏重复, 该游戏已经有人发布过了')
+    const res = await kunFetchGet<KunResponse<{ patchId: number }>>(
+      '/edit/duplicate',
+      { vndbId: data.vndbId }
+    )
+    if (typeof res !== 'string' && res.patchId) {
+      toast.error(
+        '游戏重复, 该游戏已经有人发布过了, 请直接点击下面的链接前往游戏页面创建补丁资源即可'
+      )
+      setExistPatchId(res.patchId)
       return
     } else {
       toast.success('检测完成, 该游戏并未重复!')
@@ -62,7 +69,11 @@ export const VNDBInput = ({ errors }: Props) => {
     setData({
       ...data,
       alias: allTitles,
-      introduction: vndbData.results[0].description,
+      introduction: {
+        'en-us': vndbData.results[0].description,
+        'ja-jp': '',
+        'zh-cn': ''
+      },
       released: vndbData.results[0].released
     })
 
@@ -119,6 +130,20 @@ export const VNDBInput = ({ errors }: Props) => {
           </Button>
         )}
       </div>
+
+      {existPatchId !== 0 && (
+        <Card>
+          <CardBody>
+            <b className="text-danger-600">
+              游戏重复, 该游戏已经有人发布过了,
+              请直接点击下面的链接前往游戏页面创建补丁资源即可
+            </b>
+            <Link href={`/patch/${existPatchId}/resource`} underline="always">
+              {`${kunMoyuMoe.domain.main}/patch/${existPatchId}/resource`}
+            </Link>
+          </CardBody>
+        </Card>
+      )}
     </div>
   )
 }

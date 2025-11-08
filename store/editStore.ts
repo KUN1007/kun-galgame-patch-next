@@ -2,8 +2,8 @@ import { create } from 'zustand'
 import { persist, createJSONStorage } from 'zustand/middleware'
 
 export interface CreatePatchData {
-  name: string
-  introduction: string
+  name: KunLanguage
+  introduction: KunLanguage
   vndbId: string
   alias: string[]
   released: string
@@ -22,8 +22,16 @@ interface StoreState {
 }
 
 const initialState: CreatePatchData = {
-  name: '',
-  introduction: '',
+  name: {
+    'zh-cn': '',
+    'ja-jp': '',
+    'en-us': ''
+  },
+  introduction: {
+    'zh-cn': '',
+    'ja-jp': '',
+    'en-us': ''
+  },
   vndbId: '',
   alias: [],
   released: '',
@@ -39,7 +47,7 @@ export const useCreatePatchStore = create<StoreState>()(
       resetData: () => set({ data: initialState })
     }),
     {
-      name: 'kun-patch-edit-store',
+      name: 'kun-patch-edit-store-v2',
       storage: createJSONStorage(() => localStorage)
     }
   )

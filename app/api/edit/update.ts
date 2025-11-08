@@ -1,14 +1,26 @@
 import { z } from 'zod'
 import { prisma } from '~/prisma/index'
 import { patchUpdateSchema } from '~/validations/edit'
+import { syncPatchFromApis } from '~/app/api/edit/sync'
 
 export const updatePatch = async (
   input: z.infer<typeof patchUpdateSchema>,
   currentUserUid: number,
   currentUserRole: number
 ) => {
-  const { id, name, vndbId, alias, introduction, released, contentLimit } =
-    input
+  const {
+    id,
+    vndbId,
+    alias,
+    name_zh_cn,
+    name_ja_jp,
+    name_en_us,
+    introduction_zh_cn,
+    introduction_ja_jp,
+    introduction_en_us,
+    released,
+    contentLimit
+  } = input
 
   const patch = await prisma.patch.findUnique({
     where: { id },
@@ -27,25 +39,34 @@ export const updatePatch = async (
     return '您没有权限更新该游戏信息'
   }
 
-  return await prisma.$transaction(async (prisma) => {
-    await prisma.patch_alias.deleteMany({
+  const oldVndbId = patch.vndb_id || null
+
+  const result = await prisma.$transaction(async (tx) => {
+    await tx.patch_alias.deleteMany({
       where: { patch_id: id }
     })
     const aliasData = alias.map((name) => ({
       name,
       patch_id: id
     }))
-    await prisma.patch_alias.createMany({
+    await tx.patch_alias.createMany({
       data: aliasData,
       skipDuplicates: true
     })
 
-    await prisma.patch.update({
+    const displayName = name_en_us || name_ja_jp || name_zh_cn || ''
+    await tx.patch.update({
       where: { id },
       data: {
-        name,
+        name: displayName,
+        name_zh_cn,
+        name_ja_jp,
+        name_en_us,
         vndb_id: vndbId ? vndbId : null,
-        introduction,
+        introduction: introduction_zh_cn,
+        introduction_zh_cn,
+        introduction_ja_jp,
+        introduction_en_us,
         released: released ? released : 'unknown',
         content_limit: contentLimit
       }
@@ -53,4 +74,10 @@ export const updatePatch = async (
 
     return {}
   })
+
+  if ((vndbId || null) !== oldVndbId) {
+    await syncPatchFromApis(id, vndbId || null)
+  }
+
+  return result
 }

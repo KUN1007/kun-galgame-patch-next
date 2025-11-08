@@ -40,18 +40,69 @@ export const CreatePatch = () => {
 
           <BannerImage errors={errors.banner} />
 
-          <div>
+          <div className="space-y-2">
             <h2 className="text-xl">三、游戏名称</h2>
-            <Input
-              isRequired
-              variant="underlined"
-              labelPlacement="outside"
-              placeholder="输入游戏名称, 这会作为游戏的标题"
-              value={data.name}
-              onChange={(e) => setData({ ...data, name: e.target.value })}
-              isInvalid={!!errors.name}
-              errorMessage={errors.name}
-            />
+            <p className="text-sm text-default-500">
+              输入游戏名称, 这会作为游戏的标题, 填写一种语言即可, 多个也可以
+              (我们会根据 VNDB ID 自动同步游戏标题和介绍)
+            </p>
+
+            <div className="grid sm:grid-cols-2 grid-cols-1 gap-2">
+              <Input
+                isRequired
+                labelPlacement="outside"
+                placeholder="日语标题"
+                value={data.name['ja-jp']}
+                onChange={(e) =>
+                  setData({
+                    ...data,
+                    name: {
+                      'en-us': data.name['en-us'],
+                      'ja-jp': e.target.value,
+                      'zh-cn': data.name['zh-cn']
+                    }
+                  })
+                }
+                isInvalid={!!errors.name}
+                errorMessage={errors.name}
+              />
+              <Input
+                isRequired
+                labelPlacement="outside"
+                placeholder="中文标题"
+                value={data.name['zh-cn']}
+                onChange={(e) =>
+                  setData({
+                    ...data,
+                    name: {
+                      'en-us': data.name['en-us'],
+                      'ja-jp': data.name['ja-jp'],
+                      'zh-cn': e.target.value
+                    }
+                  })
+                }
+                isInvalid={!!errors.name}
+                errorMessage={errors.name}
+              />
+              <Input
+                isRequired
+                labelPlacement="outside"
+                placeholder="英语标题"
+                value={data.name['en-us']}
+                onChange={(e) =>
+                  setData({
+                    ...data,
+                    name: {
+                      'en-us': e.target.value,
+                      'ja-jp': data.name['ja-jp'],
+                      'zh-cn': data.name['zh-cn']
+                    }
+                  })
+                }
+                isInvalid={!!errors.name}
+                errorMessage={errors.name}
+              />
+            </div>
           </div>
 
           <PatchIntroduction errors={errors.banner} />

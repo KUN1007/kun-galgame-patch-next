@@ -6,13 +6,14 @@ interface KunEditorProps {
   valueMarkdown: string
   saveMarkdown: (markdown: string) => void
   placeholder?: string
+  language?: Language
 }
 
 export const KunEditor = (props: KunEditorProps) => {
   return (
     <MilkdownProvider>
       <ProsemirrorAdapterProvider>
-        <KunEditorProvider {...props} />
+        <KunEditorProvider {...props} language={props.language ?? 'zh-cn'} />
       </ProsemirrorAdapterProvider>
     </MilkdownProvider>
   )

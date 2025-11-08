@@ -46,7 +46,7 @@ export const PublishButton = ({ setErrors }: Props) => {
     if (!result.success) {
       const newErrors: Partial<Record<keyof CreatePatchRequestData, string>> =
         {}
-      result.error.errors.forEach((err) => {
+      result.error.issues.forEach((err) => {
         if (err.path.length) {
           newErrors[err.path[0] as keyof CreatePatchRequestData] = err.message
           toast.error(err.message)
@@ -60,16 +60,20 @@ export const PublishButton = ({ setErrors }: Props) => {
 
     const formDataToSend = new FormData()
     formDataToSend.append('banner', localeBannerBlob!)
-    formDataToSend.append('name', data.name)
+    formDataToSend.append('name_en_us', data.name['en-us'])
+    formDataToSend.append('name_ja_jp', data.name['ja-jp'])
+    formDataToSend.append('name_zh_cn', data.name['zh-cn'])
     formDataToSend.append('vndbId', data.vndbId)
-    formDataToSend.append('introduction', data.introduction)
+    formDataToSend.append('introduction_en_us', data.introduction['en-us'])
+    formDataToSend.append('introduction_ja_jp', data.introduction['ja-jp'])
+    formDataToSend.append('introduction_zh_cn', data.introduction['zh-cn'])
     formDataToSend.append('contentLimit', data.contentLimit)
     formDataToSend.append('alias', JSON.stringify(data.alias))
     formDataToSend.append('released', data.released)
 
     setCreating(true)
     toast(
-      '正在发布中...由于要上传图片, 可能需要 十秒 左右的时间, 这取决于您的网络环境'
+      '正在发布中...由于要上传图片和同步游戏标签、角色信息等, 可能需要 十秒 左右的时间, 这取决于您的网络环境'
     )
 
     const res = await kunFetchFormData<KunResponse<number>>(
