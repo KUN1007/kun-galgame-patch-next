@@ -47,18 +47,18 @@ export default async function Kun({ params }: Props) {
   const { enableCommentVerify } = await kunGetCommentVerifyStatusActions()
 
   return (
-    <Card>
-      <CardHeader>
-        <h2 className="text-2xl font-medium">游戏评论</h2>
-      </CardHeader>
-      <CardBody>
-        <Comments
-          initialComments={response.comments}
-          total={response.total}
-          id={Number(id)}
-          enableCommentVerify={enableCommentVerify}
-        />
-      </CardBody>
-    </Card>
+    <div>
+      <div className="flex items-center gap-3 mb-4">
+        <div className="w-1 h-6 bg-primary rounded" />
+        <h2 className="text-2xl font-bold text-gray-900">游戏评论</h2>
+      </div>
+
+      <Comments
+        initialComments={response.comments}
+        total={response.total}
+        id={Number(id)}
+        enableCommentVerify={enableCommentVerify}
+      />
+    </div>
   )
 }

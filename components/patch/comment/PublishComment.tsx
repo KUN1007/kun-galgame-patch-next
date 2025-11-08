@@ -19,6 +19,7 @@ import { KunEditor } from '~/components/kun/milkdown/Editor'
 import { Markdown } from '~/components/kun/icons/Markdown'
 import { useKunMilkdownStore } from '~/store/milkdownStore'
 import { KunCaptchaModal } from '~/components/kun/auth/CaptchaModal'
+import { cn } from '~/utils/cn'
 import type { PatchComment } from '~/types/api/patch'
 
 interface CreateCommentProps {
@@ -73,7 +74,11 @@ export const PublishComment = ({
   }
 
   return (
-    <Card>
+    <Card
+      className={cn(
+        'shadow-none border-default-300 border bg-background/20 backdrop-blur-sm'
+      )}
+    >
       <CardHeader className="pb-0 space-x-4">
         <KunAvatar
           uid={user.uid}

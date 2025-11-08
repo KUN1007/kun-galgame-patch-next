@@ -19,7 +19,7 @@ export const PatchHeaderTabs = ({ id }: PatchHeaderProps) => {
       href: `/patch/${id}/introduction`
     },
     { key: 'resource', title: '补丁资源下载', href: `/patch/${id}/resource` },
-    { key: 'comment', title: '评论区', href: `/patch/${id}/comment` }
+    { key: 'comment', title: '游戏评论', href: `/patch/${id}/comment` }
   ]
 
   return (

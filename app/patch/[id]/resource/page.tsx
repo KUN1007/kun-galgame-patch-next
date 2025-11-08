@@ -41,16 +41,14 @@ export default async function Kun({
   }
 
   return (
-    <Card>
-      <CardHeader>
-        <h2 className="text-2xl font-medium">资源链接</h2>
-      </CardHeader>
-      <CardBody className="space-y-4">
-        <div className="text-default-600">
-          <p>
-            请注意, 本站是 Galgame 补丁站, 资源链接指的是 Galgame 补丁资源,
-            我们仅提供 Galgame 补丁的下载
-          </p>
+    <div>
+      <div className="flex items-center gap-3 mb-4">
+        <div className="w-1 h-6 bg-primary rounded" />
+        <h2 className="text-2xl font-bold text-gray-900">资源链接</h2>
+      </div>
+
+      <div className="space-y-4">
+        <div className="text-default-600 space-y-2">
           <p>
             <b>
               请注意, 本站的 Galgame 补丁下载资源均为用户自行上传,
@@ -62,28 +60,19 @@ export default async function Kun({
             <Link showAnchorIcon isExternal href="https://www.kungal.com">
               主站论坛
             </Link>
-          </p>
-          <p>
-            如果您在本站有找不到的 AI 补丁资源, 可以前往友站{' '}
+            , 有找不到的 AI 补丁资源, 可以前往友站{' '}
             <Link showAnchorIcon isExternal href="https://www.ai2.moe/">
               御爱同萌
             </Link>
           </p>
-          <p className="text-danger-500">
-            新功能, 我们更新了网站的通知系统, 如果您点赞了游戏资源,
-            那么将会收到这个游戏下载资源的更新通知 (资源下载链接更新和备注更新)
+          <p>
+            如果您点赞了游戏资源, 那么将会收到这个游戏下载资源的更新通知
+            (资源下载链接更新和备注更新)
           </p>
         </div>
 
         <Resources initialResources={response} id={Number(id)} />
-
-        <Alert
-          color="warning"
-          variant="faded"
-          title="使用补丁前请认真阅读补丁资源的备注（如果有）, 以免产生问题"
-          className="shadow-medium"
-        />
-      </CardBody>
-    </Card>
+      </div>
+    </div>
   )
 }

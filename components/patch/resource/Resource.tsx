@@ -36,6 +36,7 @@ import toast from 'react-hot-toast'
 import { kunCopy } from '~/utils/kunCopy'
 import { kunMoyuMoe } from '~/config/moyu-moe'
 import type { PatchResourceHtml } from '~/types/api/patch'
+import { cn } from '~/utils/cn'
 
 interface Props {
   initialResources: PatchResourceHtml[]
@@ -149,11 +150,12 @@ export const Resources = ({ initialResources, id }: Props) => {
       {resources.map((resource) => (
         <Card
           key={resource.id}
-          className={
+          className={cn(
+            'shadow-none border-default-300 border bg-background/20 backdrop-blur-sm',
             windowHash === `#kun_patch_resource_${resource.id}`
               ? 'border-primary border-3'
               : ''
-          }
+          )}
         >
           <CardBody className="space-y-2">
             <div className="flex items-start justify-between">

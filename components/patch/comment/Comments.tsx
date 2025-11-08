@@ -84,7 +84,12 @@ export const Comments = ({
         <>
           {comments.map((comment) => (
             <div key={comment.id} className={cn('ml-0', 'space-y-4')}>
-              <Card id={`comment-${comment.id}`}>
+              <Card
+                className={cn(
+                  'shadow-none border-default-300 border bg-background/20 backdrop-blur-sm'
+                )}
+                id={`comment-${comment.id}`}
+              >
                 <CardBody>
                   <div className="space-y-2">
                     <div className="flex items-start justify-between">

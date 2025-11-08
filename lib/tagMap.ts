@@ -5524,5 +5524,10 @@ export const TAG_MAP: Record<string, string> = {
   'Septum Ring': '鼻中隔环',
   'Slingshot Micro Bikini': 'Y字型迷你比基尼',
   'Son-in-law': '女婿',
-  'Non-blood-related Son': '非血缘儿子'
+  'Non-blood-related Son': '非血缘儿子',
+
+  // Kun Visual Novel Additition
+  'Sex at School': '学校做爱',
+  'Optional Freeze Window on Losing Focus': '失去焦点时可选择冻结窗口',
+  'Super Deformed CGs': '含有 SD CG'
 }
