@@ -1,7 +1,6 @@
 import { z } from 'zod'
 import { prisma } from '~/prisma/index'
 import { patchUpdateSchema } from '~/validations/edit'
-import { syncPatchFromApis } from '~/app/api/edit/sync'
 
 export const updatePatch = async (
   input: z.infer<typeof patchUpdateSchema>,
@@ -10,7 +9,6 @@ export const updatePatch = async (
 ) => {
   const {
     id,
-    vndbId,
     alias,
     name_zh_cn,
     name_ja_jp,
@@ -39,8 +37,6 @@ export const updatePatch = async (
     return '您没有权限更新该游戏信息'
   }
 
-  const oldVndbId = patch.vndb_id || null
-
   const result = await prisma.$transaction(async (tx) => {
     await tx.patch_alias.deleteMany({
       where: { patch_id: id }
@@ -62,7 +58,6 @@ export const updatePatch = async (
         name_zh_cn,
         name_ja_jp,
         name_en_us,
-        vndb_id: vndbId ? vndbId : null,
         introduction: introduction_zh_cn,
         introduction_zh_cn,
         introduction_ja_jp,
@@ -74,10 +69,6 @@ export const updatePatch = async (
 
     return {}
   })
-
-  if ((vndbId || null) !== oldVndbId) {
-    await syncPatchFromApis(id, vndbId || null)
-  }
 
   return result
 }
