@@ -11,16 +11,10 @@ export const generateKunMetadataTemplate = (detail: PatchDetail): Metadata => {
     selectors: [{ selector: 'p', format: 'inline' }]
   }).slice(0, 170)
 
-  const title = detail.alias.length
-    ? `${patchName} | ${detail.alias[0]}`
-    : `${patchName}`
-
   return {
-    title,
-    keywords: [patchName, ...detail.alias],
+    keywords: [patchName, ...detail.alias.map((a) => a.name)],
     description: patchIntro.slice(0, 170),
     openGraph: {
-      title,
       description: patchIntro.slice(0, 170),
       type: 'article',
       images: [
@@ -34,7 +28,6 @@ export const generateKunMetadataTemplate = (detail: PatchDetail): Metadata => {
     },
     twitter: {
       card: 'summary',
-      title,
       description: patchIntro.slice(0, 170),
       images: [detail.banner]
     },

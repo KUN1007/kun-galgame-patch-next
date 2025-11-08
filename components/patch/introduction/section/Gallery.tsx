@@ -1,6 +1,6 @@
 'use client'
 
-import { Checkbox, Image } from '@heroui/react'
+import { Checkbox, Chip, Image } from '@heroui/react'
 import { useMemo, useState } from 'react'
 import type { PatchDetail } from '~/types/api/patch'
 
@@ -51,6 +51,20 @@ export const GallerySection = ({ detail }: { detail: PatchDetail }) => {
               alt={s.image_id}
               className="w-full h-full object-cover"
             />
+
+            <div className="absolute space-x-2 bottom-2 right-2 z-10">
+              {s.sexual > 0 && (
+                <Chip size="sm" variant="solid" color="warning">
+                  色情
+                </Chip>
+              )}
+
+              {s.violence > 0 && (
+                <Chip size="sm" variant="solid" color="danger">
+                  暴力
+                </Chip>
+              )}
+            </div>
           </div>
         ))}
       </div>

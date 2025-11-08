@@ -1,10 +1,11 @@
 'use client'
 
 import { Tabs, Tab } from '@heroui/tabs'
-import { Chip, Tooltip, Link, Checkbox } from '@heroui/react'
+import { Chip, Tooltip, Link, Checkbox, ScrollShadow } from '@heroui/react'
 import { useMemo, useState } from 'react'
 import { getPreferredLanguageText } from '~/utils/getPreferredLanguageText'
 import type { PatchDetail } from '~/types/api/patch'
+import { KunNull } from '~/components/kun/Null'
 
 export const TagSection = ({ detail }: { detail: PatchDetail }) => {
   const [provider, setProvider] = useState<'vndb' | 'bangumi'>('vndb')
@@ -41,33 +42,41 @@ export const TagSection = ({ detail }: { detail: PatchDetail }) => {
         </div>
       </div>
 
-      <div className="flex flex-wrap gap-2">
-        {tags.map((tag) => (
-          <Tooltip
-            key={`${tag.provider}-${tag.id}`}
-            content={`分类: ${tag.category}`}
-          >
-            <Chip
-              as={Link}
-              href={
-                tag.provider === 'vndb' ? `/tag/${tag.id}` : `/tag/${tag.id}`
-              }
-              color={
-                tag.category === 'content'
-                  ? 'primary'
-                  : tag.category === 'sexual'
-                    ? 'danger'
-                    : 'success'
-              }
-              variant="flat"
+      <ScrollShadow className="max-h-[300px]">
+        <div className="flex flex-wrap gap-2">
+          {tags.map((tag) => (
+            <Tooltip
+              key={`${tag.provider}-${tag.id}`}
+              content={`${tag.count} 个 Galgame 含有此标签`}
             >
-              {`${getPreferredLanguageText(tag.name)}+${tag.count}`}
-              {tag.spoiler_level > 0 ? ' · 剧透' : ''}
-            </Chip>
-          </Tooltip>
-        ))}
-        {tags.length === 0 && <Chip>暂无标签</Chip>}
-      </div>
+              <Chip
+                as={Link}
+                href={
+                  tag.provider === 'vndb' ? `/tag/${tag.id}` : `/tag/${tag.id}`
+                }
+                color={
+                  tag.category === 'content'
+                    ? 'primary'
+                    : tag.category === 'sexual'
+                      ? 'danger'
+                      : 'success'
+                }
+                variant="flat"
+              >
+                {`${getPreferredLanguageText(tag.name)} +${tag.count}`}
+                {tag.spoiler_level > 0 ? (
+                  <span className="font-bold text-warning-600"> *剧透</span>
+                ) : (
+                  ''
+                )}
+              </Chip>
+            </Tooltip>
+          ))}
+          {tags.length === 0 && (
+            <KunNull message="暂无标签, 或者您未开启网站 NSFW 模式" />
+          )}
+        </div>
+      </ScrollShadow>
     </section>
   )
 }

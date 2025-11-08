@@ -7,9 +7,11 @@ import type { PatchHeader } from '~/types/api/patch'
 
 export const generateKunMetadataTemplate = (patch: PatchHeader): Metadata => {
   const patchName = getPreferredLanguageText(patch.name)
-  const pageTitle = patch.alias.length
-    ? `${patchName} | ${patch.alias[0]}`
-    : `${patchName}`
+  const patchNameJa = patch.name['ja-jp'] ? patch.name['ja-jp'] : ''
+  const pageTitle =
+    patchNameJa && patchName !== patchNameJa
+      ? `${patchName} | ${patchNameJa}`
+      : `${patchName}`
 
   if (patch.content_limit === 'nsfw') {
     return generateNullMetadata(pageTitle)

@@ -89,13 +89,39 @@ export const OverviewSection = ({ detail }: { detail: PatchDetail }) => {
           {detail.vndbId && (
             <div className="flex items-center gap-2 text-sm text-default-500">
               <Link className="size-4" />
-              <span>VNDB ID: {detail.vndbId}</span>
+              <span>
+                VNDB ID:{' '}
+                {
+                  <HeroLink
+                    isExternal
+                    showAnchorIcon
+                    underline="always"
+                    href={`https://vndb.org/${detail.vndbId}`}
+                    size="sm"
+                  >
+                    {detail.vndbId}
+                  </HeroLink>
+                }
+              </span>
             </div>
           )}
           {detail.bid && (
             <div className="flex items-center gap-2 text-sm text-default-500">
               <Tv className="size-4" />
-              <span>Bangumi ID: {detail.bid}</span>
+              <div>
+                Bangumi ID:{' '}
+                {
+                  <HeroLink
+                    isExternal
+                    showAnchorIcon
+                    underline="always"
+                    href={`https://bangumi.tv/subject/${detail.bid}`}
+                    size="sm"
+                  >
+                    {detail.bid}
+                  </HeroLink>
+                }
+              </div>
             </div>
           )}
         </div>

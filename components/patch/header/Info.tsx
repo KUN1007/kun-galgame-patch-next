@@ -1,6 +1,6 @@
 'use client'
 
-import { Chip, Tooltip } from '@heroui/react'
+import { Chip, Divider, Tooltip } from '@heroui/react'
 import { KunCardStats } from '~/components/kun/CardStats'
 import { KunUser } from '~/components/kun/floating-card/KunUser'
 import { formatDistanceToNow } from '~/utils/formatDistanceToNow'
@@ -122,6 +122,10 @@ export const PatchHeaderInfo = ({ patch }: PatchHeaderInfoProps) => {
           <Tags patch={patch} />
         </div>
 
+        <PatchHeaderActions patch={patch} />
+
+        <Divider />
+
         <div className="flex flex-col items-start justify-between gap-4 sm:flex-row sm:items-center">
           <KunUser
             user={patch.user}
@@ -152,8 +156,6 @@ export const PatchHeaderInfo = ({ patch }: PatchHeaderInfoProps) => {
             isMobile={false}
           />
         </div>
-
-        <PatchHeaderActions patch={patch} />
       </div>
 
       <Modal
