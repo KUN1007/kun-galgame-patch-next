@@ -365,8 +365,31 @@ export const syncPatchFromApis = async (
       await prisma.patch_cover
         .upsert({
           where: { patch_id_image_id: { patch_id: patchId, image_id: '' } },
-          update: { image_id: '', url: subject.images.large },
-          create: { patch_id: patchId, image_id: '', url: subject.images.large }
+          update: {
+            image_id: '',
+            url: subject.images.large,
+            width: 0,
+            height: 0,
+            sexual: 0,
+            violence: 0,
+            votecount: 0,
+            thumbnail_url: '',
+            thumb_width: 0,
+            thumb_height: 0
+          },
+          create: {
+            patch_id: patchId,
+            image_id: '',
+            url: subject.images.large,
+            width: 0,
+            height: 0,
+            sexual: 0,
+            violence: 0,
+            votecount: 0,
+            thumbnail_url: '',
+            thumb_width: 0,
+            thumb_height: 0
+          }
         })
         .catch(() => {})
     }
