@@ -51,17 +51,18 @@ export async function handleBangumiSubjectAndTags(
     )
     const zhName = subject?.name_cn || ''
     const jaName = (subject as any)?.nameJa || ''
-    await prisma.patch
-      .update({
-        where: { id: patchId },
-        data: {
-          introduction_zh_cn: zhFromSummary,
-          introduction_ja_jp: jaFromSummary,
-          name_zh_cn: zhName,
-          name_ja_jp: jaName
-        }
-      })
-      .catch(() => {})
+    // Only update fields when we actually have a non-empty value to avoid overwriting
+    // VNDB-populated values with empty strings.
+    const patchUpdate: any = {}
+    if (zhFromSummary) patchUpdate.introduction_zh_cn = zhFromSummary
+    if (jaFromSummary) patchUpdate.introduction_ja_jp = jaFromSummary
+    if (zhName) patchUpdate.name_zh_cn = zhName
+    if (jaName) patchUpdate.name_ja_jp = jaName
+    if (Object.keys(patchUpdate).length) {
+      await prisma.patch
+        .update({ where: { id: patchId }, data: patchUpdate })
+        .catch(() => {})
+    }
 
     // create patch_alias from bangumi names and infobox aliases
     try {

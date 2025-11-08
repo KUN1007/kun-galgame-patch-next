@@ -14,6 +14,16 @@ async function vndbPost<T>(path: string, body: any): Promise<T> {
   return (await res.json()) as T
 }
 
+// Normalize VNDB VN id for filters.
+// Accepts 'v1234', 'V1234', '1234' and returns a numeric id when possible.
+function normalizeVnIdForFilter(id: string | number): string | number {
+  if (typeof id === 'number') return id
+  const s = String(id || '').trim()
+  const m = s.match(/^(?:[vV])?(\d+)$/)
+  if (m) return Number(m[1])
+  return s.toLowerCase()
+}
+
 // Basic types (partial)
 export type VndbId = string
 export interface VndbImage {
@@ -92,8 +102,9 @@ export async function vndbFindVnByName(
 }
 
 export async function vndbGetVnById(id: string): Promise<VndbVnDetail | null> {
+  const normId = normalizeVnIdForFilter(id)
   const data = await vndbPost<{ results?: VndbVnDetail[] }>('/vn', {
-    filters: ['id', '=', id],
+    filters: ['id', '=', normId],
     fields:
       // Include alttitle and olang as per VNDB docs so we can
       // accurately resolve the Japanese original title when present.
@@ -134,8 +145,9 @@ export interface VndbRelease {
 export async function vndbGetReleasesByVn(
   vnId: string
 ): Promise<VndbRelease[]> {
+  const normId = normalizeVnIdForFilter(vnId)
   const data = await vndbPost<{ results?: VndbRelease[] }>('/release', {
-    filters: ['vn', '=', ['id', '=', vnId]],
+    filters: ['vn', '=', ['id', '=', normId]],
     fields:
       'id, title, released, platforms, languages{lang,latin,main,mtl,title}, minage, images{id,url,dims,sexual,violence,votecount,thumbnail,thumbnail_dims,type,languages,photo,vn}, producers{developer,publisher,id,name,original,aliases,description,type,lang,extlinks{id,label,name,url}}'
   })
@@ -233,6 +245,7 @@ export async function vndbGetCharactersByIds(
 export async function vndbGetCharactersByVn(
   vnId: string
 ): Promise<VndbCharacterDetail[]> {
+  const normId = normalizeVnIdForFilter(vnId)
   const results: VndbCharacterDetail[] = []
   let page = 1
   while (true) {
@@ -240,7 +253,7 @@ export async function vndbGetCharactersByVn(
       results?: VndbCharacterDetail[]
       more?: boolean
     }>('/character', {
-      filters: ['vn', '=', ['id', '=', vnId]],
+      filters: ['vn', '=', ['id', '=', normId]],
       fields:
         'id, name, original, image{id,url,dims,sexual,violence,votecount}, description, gender, height, weight, bust, waist, hips, cup, age, aliases, vns{id, role}',
       results: 100,
