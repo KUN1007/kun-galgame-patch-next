@@ -39,7 +39,7 @@ export const VNDBInput = ({ errors }: Props) => {
 
   return (
     <div className="flex flex-col w-full space-y-2">
-      <h2 className="text-xl">一、VNDB ID</h2>
+      <h2 className="text-xl">VNDB ID</h2>
       <Input
         variant="underlined"
         labelPlacement="outside"
@@ -67,6 +67,10 @@ export const VNDBInput = ({ errors }: Props) => {
         注意, 没有 VNDB ID 的游戏将会没有任何介绍和标签,
         直到我们建成数据库之后才可以编辑标签、角色等数据, 无 VNDB ID
         只能在重新编辑页面编辑游戏名和介绍
+      </p>
+      <p className="text-lg font-bold text-danger">
+        目前由于技术过于复杂, 为简单起见 VNDB ID 发布后暂时无法更改
+        请您务必在发布游戏之前检查 VNDB 的正确性, 确保不要写错数字
       </p>
       <Link
         isExternal

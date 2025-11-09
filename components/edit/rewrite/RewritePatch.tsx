@@ -81,17 +81,6 @@ export const RewritePatch = () => {
           </div>
         </CardHeader>
         <CardBody className="mt-4 space-y-12">
-          <VNDBInput
-            vndbId={data.vndbId}
-            setVNDBId={(id) =>
-              setData({
-                ...data,
-                vndbId: id
-              })
-            }
-            errors={errors.vndbId}
-          />
-
           <MultiLangNameInput
             name={data.name}
             onChange={(name) => setData({ ...data, name })}

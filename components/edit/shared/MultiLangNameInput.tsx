@@ -8,7 +8,7 @@ interface Props {
 
 export const MultiLangNameInput = ({ name, onChange, error }: Props) => (
   <div className="space-y-2">
-    <h2 className="text-xl">三、游戏名称</h2>
+    <h2 className="text-xl">游戏名称</h2>
     <p className="text-sm text-default-500">写一个就可以, 不写也行, 随便你</p>
     <div className="grid sm:grid-cols-3 grid-cols-1 gap-2">
       <Input

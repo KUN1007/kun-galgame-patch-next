@@ -40,7 +40,7 @@ export const BannerImage = ({ errors }: Props) => {
 
   return (
     <div className="space-y-2">
-      <h2 className="text-xl">二、预览图片</h2>
+      <h2 className="text-xl">预览图片</h2>
       <p>
         注意, <b>您不可以使用 R18 图片作为封面</b>, 如果有, 请更换图片, 打码,
         或者裁剪

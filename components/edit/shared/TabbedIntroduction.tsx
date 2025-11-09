@@ -23,7 +23,7 @@ export const TabbedIntroduction = ({
   return (
     <div className="space-y-2">
       <div className="flex items-center justify-between">
-        <h2 className="text-xl">四、简介</h2>
+        <h2 className="text-xl">简介</h2>
 
         {currentText && (
           <div className="hidden md:flex gap-2 text-sm text-default-500">

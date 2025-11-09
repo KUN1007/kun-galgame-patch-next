@@ -76,10 +76,15 @@ export async function fetchVndbDetailAndSyncNames(
           if (olang === 'ja' && alt) nameJa = String(alt)
         }
       } catch {}
+      const releasedVal = String((vnDetail as any).released || '').trim()
       await prisma.patch
         .update({
           where: { id: patchId },
-          data: { name_en_us: nameEn, name_ja_jp: nameJa }
+          data: {
+            name_en_us: nameEn,
+            name_ja_jp: nameJa,
+            ...(releasedVal ? { released: releasedVal } : {})
+          }
         })
         .catch(() => {})
       try {
