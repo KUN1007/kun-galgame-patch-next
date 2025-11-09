@@ -3,14 +3,9 @@ import { z } from 'zod'
 import { prisma } from '~/prisma'
 import {
   createCompanySchema,
-  getCompanyByIdSchema,
-  updateCompanySchema
+  getCompanyByIdSchema
 } from '~/validations/company'
-import {
-  kunParseGetQuery,
-  kunParsePostBody,
-  kunParsePutBody
-} from '../utils/parseQuery'
+import { kunParseGetQuery, kunParsePostBody } from '../utils/parseQuery'
 import { verifyHeaderCookie } from '~/middleware/_verifyHeaderCookie'
 import { getEnableOnlyCreatorCreateStatus } from '~/app/api/admin/setting/creator/getEnableOnlyCreatorCreateStatus'
 
@@ -48,64 +43,6 @@ export const GET = async (req: NextRequest) => {
   }
 
   const response = await getCompanyById(input)
-  return NextResponse.json(response)
-}
-
-export const rewriteCompany = async (
-  input: z.infer<typeof updateCompanySchema>
-) => {
-  const {
-    companyId,
-    name,
-    primary_language,
-    introduction = '',
-    logoLink = '',
-    alias = [],
-    official_website = [],
-    parent_brand = []
-  } = input
-
-  const existingCompany = await prisma.patch_company.findFirst({
-    where: {
-      OR: [{ name }, { alias: { has: name } }]
-    }
-  })
-  if (existingCompany && existingCompany.id !== companyId) {
-    return '这个会社已经存在了'
-  }
-
-  const newCompany = await prisma.patch_company.update({
-    where: { id: companyId },
-    data: {
-      name,
-      introduction,
-      logo: logoLink,
-      alias,
-      primary_language,
-      official_website,
-      parent_brand
-    }
-  })
-
-  return newCompany
-}
-
-export const PUT = async (req: NextRequest) => {
-  const input = await kunParsePutBody(req, updateCompanySchema)
-  if (typeof input === 'string') {
-    return NextResponse.json(input)
-  }
-
-  const payload = await verifyHeaderCookie(req)
-  if (!payload) {
-    return NextResponse.json('用户未登录')
-  }
-  const { enableOnlyCreatorCreate } = await getEnableOnlyCreatorCreateStatus()
-  if (enableOnlyCreatorCreate && payload.role < 2) {
-    return NextResponse.json('网站正在遭受攻击, 目前仅允许创作者创建和更改项目')
-  }
-
-  const response = await rewriteCompany(input)
   return NextResponse.json(response)
 }
 

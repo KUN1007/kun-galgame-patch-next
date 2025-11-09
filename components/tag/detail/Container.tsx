@@ -4,17 +4,12 @@ import { useEffect, useState } from 'react'
 import { Pagination } from '@heroui/pagination'
 import { kunFetchGet } from '~/utils/kunFetch'
 import { Chip } from '@heroui/chip'
-import { Button } from '@heroui/button'
-import { useDisclosure } from '@heroui/modal'
-import { Pencil } from 'lucide-react'
 import { TagDetail } from '~/types/api/tag'
 import { KunLoading } from '~/components/kun/Loading'
 import { KunHeader } from '~/components/kun/Header'
 import { useMounted } from '~/hooks/useMounted'
 import { GalgameCard } from '~/components/galgame/Card'
 import { KunNull } from '~/components/kun/Null'
-import { EditTagModal } from './EditTagModal'
-import { useRouter } from '@bprogress/next'
 
 interface Props {
   initialTag: TagDetail
@@ -28,13 +23,11 @@ export const TagDetailContainer = ({
   total
 }: Props) => {
   const isMounted = useMounted()
-  const router = useRouter()
   const [page, setPage] = useState(1)
 
   const [tag, setTag] = useState(initialTag)
   const [patches, setPatches] = useState<GalgameCard[]>(initialPatches)
   const [loading, setLoading] = useState(false)
-  const { isOpen, onOpen, onClose } = useDisclosure()
 
   const fetchPatches = async () => {
     setLoading(true)
@@ -60,7 +53,7 @@ export const TagDetailContainer = ({
   }, [page])
 
   return (
-    <div className="w-full my-4">
+    <div className="w-full space-y-8 my-4">
       <KunHeader
         name={tag.name}
         description={tag.introduction}
@@ -68,28 +61,6 @@ export const TagDetailContainer = ({
           <Chip size="lg" color="primary">
             {tag.count} 个补丁
           </Chip>
-        }
-        endContent={
-          <div className="flex justify-between">
-            <Button
-              variant="flat"
-              color="primary"
-              onPress={onOpen}
-              startContent={<Pencil />}
-            >
-              编辑该标签
-            </Button>
-            <EditTagModal
-              tag={tag}
-              isOpen={isOpen}
-              onClose={onClose}
-              onSuccess={(newTag) => {
-                setTag(newTag)
-                onClose()
-                router.refresh()
-              }}
-            />
-          </div>
         }
       />
 

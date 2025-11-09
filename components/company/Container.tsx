@@ -3,11 +3,11 @@
 import { useState, useEffect, useTransition } from 'react'
 import { useDebounce } from 'use-debounce'
 import { Pagination } from '@heroui/pagination'
-import { CompanyHeader } from './CompanyHeader'
 import { SearchCompanies } from './SearchCompanies'
 import { CompanyList } from './CompanyList'
 import { useMounted } from '~/hooks/useMounted'
 import { kunFetchGet, kunFetchPost } from '~/utils/kunFetch'
+import { KunHeader } from '../kun/Header'
 import type { FC } from 'react'
 import type { Company as CompanyType } from '~/types/api/company'
 
@@ -71,9 +71,7 @@ export const Container: FC<Props> = ({ initialCompanies, initialTotal }) => {
 
   return (
     <div className="flex flex-col w-full my-4 space-y-8">
-      <CompanyHeader
-        setNewCompany={(company) => setCompanies([company, ...companies])}
-      />
+      <KunHeader name="会社列表" description="这里是补丁本体游戏中的所有会社" />
 
       <SearchCompanies
         query={query}

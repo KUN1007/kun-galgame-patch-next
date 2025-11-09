@@ -17,7 +17,8 @@ export const uploadCompanyLogo = async (image: ArrayBuffer, id: number) => {
   await uploadImageToS3(`${bucketName}/logo.avif`, logoBuffer)
 }
 
-export const POST = async (req: NextRequest) => {
+// @deprecated
+export const __POST = async (req: NextRequest) => {
   const input = await kunParseFormData(req, uploadLogoSchema)
   if (typeof input === 'string') {
     return NextResponse.json(input)

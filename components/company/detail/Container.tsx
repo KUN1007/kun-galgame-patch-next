@@ -2,19 +2,15 @@
 
 import { useState, useTransition, useEffect } from 'react'
 import { useRouter } from '@bprogress/next'
-import { Button, Chip } from '@heroui/react'
+import { Chip } from '@heroui/react'
 import { useDisclosure } from '@heroui/modal'
 import { Link } from '@heroui/link'
 import { Pagination } from '@heroui/pagination'
-import { Pencil } from 'lucide-react'
 import { useMounted } from '~/hooks/useMounted'
 import { KunHeader } from '~/components/kun/Header'
-import { KunUser } from '~/components/kun/floating-card/KunUser'
 import { KunLoading } from '~/components/kun/Loading'
 import { GalgameCard } from '~/components/galgame/Card'
 import { KunNull } from '~/components/kun/Null'
-import { CompanyFormModal } from '../form/CompanyFormModal'
-import { formatDistanceToNow } from '~/utils/formatDistanceToNow'
 import { kunFetchGet } from '~/utils/kunFetch'
 import { SUPPORTED_LANGUAGE_MAP } from '~/constants/resource'
 import type { CompanyDetail } from '~/types/api/company'
@@ -31,10 +27,7 @@ export const CompanyDetailContainer: FC<Props> = ({
   initialPatches,
   total
 }) => {
-  const { isOpen, onOpen, onClose } = useDisclosure()
-
   const isMounted = useMounted()
-  const router = useRouter()
   const [page, setPage] = useState(1)
 
   const [company, setCompany] = useState(initialCompany)
@@ -72,29 +65,6 @@ export const CompanyDetailContainer: FC<Props> = ({
           <Chip size="lg" color="primary">
             {company.count} 个补丁
           </Chip>
-        }
-        endContent={
-          <div className="flex justify-between">
-            <Button
-              variant="flat"
-              color="primary"
-              onPress={onOpen}
-              startContent={<Pencil />}
-            >
-              编辑会社信息
-            </Button>
-            <CompanyFormModal
-              type="edit"
-              company={company}
-              isOpen={isOpen}
-              onClose={onClose}
-              onSuccess={(newCompany) => {
-                setCompany(newCompany as CompanyDetail)
-                onClose()
-                router.refresh()
-              }}
-            />
-          </div>
         }
       />
 

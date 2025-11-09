@@ -3,11 +3,11 @@
 import { useEffect, useState } from 'react'
 import { useDebounce } from 'use-debounce'
 import { Pagination } from '@heroui/pagination'
-import { TagHeader } from './TagHeader'
 import { SearchTags } from './SearchTag'
 import { TagList } from './TagList'
 import { kunFetchGet, kunFetchPost } from '~/utils/kunFetch'
 import { useMounted } from '~/hooks/useMounted'
+import { KunHeader } from '../kun/Header'
 import type { Tag as TagType } from '~/types/api/tag'
 
 interface Props {
@@ -70,7 +70,7 @@ export const Container = ({ initialTags, initialTotal }: Props) => {
 
   return (
     <div className="flex flex-col w-full my-4 space-y-8">
-      <TagHeader setNewTag={(newTag) => setTags([newTag, ...initialTags])} />
+      <KunHeader name="标签列表" description="这里是补丁中的所有标签" />
 
       <SearchTags
         query={query}

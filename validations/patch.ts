@@ -7,32 +7,6 @@ import {
   SUPPORTED_RESOURCE_LINK
 } from '~/constants/resource'
 
-export const patchTagChangeSchema = z.object({
-  patchId: z.coerce
-    .number({ message: '补丁 ID 必须为数字' })
-    .min(1)
-    .max(9999999),
-  tagId: z
-    .array(
-      z.coerce.number({ message: '标签 ID 必须为数字' }).min(1).max(9999999)
-    )
-    .min(1)
-    .max(107, { message: '一个补丁最多有 107 个标签' })
-})
-
-export const patchCompanyChangeSchema = z.object({
-  patchId: z.coerce
-    .number({ message: '补丁 ID 必须为数字' })
-    .min(1)
-    .max(9999999),
-  companyId: z
-    .array(
-      z.coerce.number({ message: '会社 ID 必须为数字' }).min(1).max(9999999)
-    )
-    .min(1)
-    .max(107, { message: '一个补丁最多有 107 个会社' })
-})
-
 export const getPatchCommentSchema = z.object({
   patchId: z.coerce.number().min(1).max(9999999),
   page: z.coerce.number().min(1).max(9999999),

@@ -1,5 +1,6 @@
 import React, { useRef, useState } from 'react'
 import ReactCrop, { type Crop } from 'react-image-crop'
+// @ts-expect-error kun love ren forever~
 import 'react-image-crop/dist/ReactCrop.css'
 import {
   Avatar,

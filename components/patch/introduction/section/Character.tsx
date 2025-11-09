@@ -6,6 +6,7 @@ import Link from 'next/link'
 import { ROLE_LABELS } from '~/constants/character'
 import { getPreferredLanguageText } from '~/utils/getPreferredLanguageText'
 import type { PatchDetail } from '~/types/api/patch'
+import { cn } from '~/utils/cn'
 
 const ORDER = ['protagonist', 'main', 'side']
 
@@ -54,7 +55,10 @@ export const CharacterSection = ({ detail }: { detail: PatchDetail }) => {
                 removeWrapper
                 src={c.image || '/char.avif'}
                 alt={getPreferredLanguageText(c.name)}
-                className="w-full dark:opacity-50 h-full object-cover object-[50%_top]"
+                className={cn(
+                  'w-full dark:opacity-50 h-full object-cover object-[50%_top]',
+                  c.image ? '' : 'opacity-30!'
+                )}
               />
             </div>
             <CardFooter className="justify-between pr-1 bg-background/60 border-white/20 border-1 overflow-hidden py-1 absolute w-[calc(100%_-_8px)] rounded-large bottom-1 shadow-small ml-1 z-10">
