@@ -1,5 +1,10 @@
 .kun-prose {
-  @apply text-default-800 leading-7 whitespace-pre;
+  @apply text-default-800 leading-7 whitespace-pre-line;
+}
+
+.kun-prose p {
+  @apply py-1;
+  overflow-wrap: break-word;
 }
 
 /* Links */

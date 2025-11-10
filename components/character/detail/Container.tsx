@@ -3,8 +3,8 @@
 import { Chip, Image, Link } from '@heroui/react'
 import { ROLE_LABELS } from '~/constants/character'
 import { getPreferredLanguageText } from '~/utils/getPreferredLanguageText'
-import type { PatchCharacterDetail } from '~/types/api/character'
 import { cn } from '~/utils/cn'
+import type { PatchCharacterDetail } from '~/types/api/character'
 
 interface InfoboxItem {
   key: string

@@ -2,6 +2,7 @@
 
 import { Chip, Image, Link } from '@heroui/react'
 import { getPreferredLanguageText } from '~/utils/getPreferredLanguageText'
+import { ROLE_LABELS } from '~/constants/character'
 import type { PatchPersonDetail } from '~/types/api/person'
 
 export const PersonDetailContainer = ({
@@ -17,18 +18,20 @@ export const PersonDetailContainer = ({
       <h1 className="text-2xl font-bold mb-4">{displayName}</h1>
       <div className="grid grid-cols-1 md:grid-cols-6 gap-6">
         <aside className="md:col-span-1 space-y-4">
-          <div className="shrink-0 size-48 rounded-xl bg-default-100 overflow-hidden flex items-center justify-center">
-            <Image
-              src={person.image || '/person.avif'}
-              alt={getPreferredLanguageText(person.name)}
-              className="w-full h-full object-cover"
-            />
-          </div>
+          {person.image && (
+            <div className="shrink-0 size-48 rounded-xl bg-default-100 overflow-hidden flex items-center justify-center">
+              <Image
+                src={person.image}
+                alt={getPreferredLanguageText(person.name)}
+                className="w-full h-full object-cover"
+              />
+            </div>
+          )}
 
           <div className="flex flex-wrap gap-2">
             {person.roles.map((r) => (
               <Chip key={r} size="sm" variant="flat">
-                {r}
+                {ROLE_LABELS[r]}
               </Chip>
             ))}
           </div>

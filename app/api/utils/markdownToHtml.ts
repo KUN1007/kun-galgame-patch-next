@@ -7,6 +7,20 @@ import remarkRehype from 'remark-rehype'
 import rehypePrism from 'rehype-prism-plus'
 import { unified } from 'unified'
 
+import { visit } from 'unist-util-visit'
+import type { Plugin } from 'unified'
+// import type { Element } from 'hast'
+
+const rehypeKunH1ToH2: Plugin<[], any> = () => {
+  return (tree) => {
+    visit(tree, 'element', (node: any) => {
+      if (node.tagName === 'h1') {
+        node.tagName = 'h2'
+      }
+    })
+  }
+}
+
 export const markdownToHtml = async (markdown: string) => {
   const htmlVFile = await unified()
     .use(remarkParse)
@@ -15,6 +29,8 @@ export const markdownToHtml = async (markdown: string) => {
     .use(remarkFrontmatter)
     .use(remarkGfm)
     .use(rehypePrism, { ignoreMissing: true })
+    .use(rehypeKunH1ToH2)
+    // @ts-expect-error kun love ren 1314~
     .use(rehypeStringify)
     .process(markdown)
 
