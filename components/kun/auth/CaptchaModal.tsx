@@ -16,6 +16,7 @@ import { KunCaptchaCanvas } from './CaptchaCanvas'
 import { KunLoading } from '../Loading'
 import { kunCaptchaErrorMessageMap } from '~/constants/captcha'
 import type { KunCaptchaImage } from './captcha'
+import { kunErrorHandler } from '~/utils/kunErrorHandler'
 
 interface CaptchaModalProps {
   isOpen: boolean
@@ -76,6 +77,7 @@ export const KunCaptchaModal = ({
       { sessionId, selectedIds: Array.from(selectedImages) }
     )
     if (typeof response === 'string') {
+      toast.error(response)
       toast.error(kunCaptchaErrorMessageMap[errorCount])
       loadCaptcha()
     } else {
