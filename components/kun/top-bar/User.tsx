@@ -6,7 +6,6 @@ import { NavbarContent, NavbarItem } from '@heroui/navbar'
 import Link from 'next/link'
 import { Button } from '@heroui/button'
 import { Skeleton } from '@heroui/skeleton'
-import { Tooltip } from '@heroui/tooltip'
 import { useUserStore } from '~/store/userStore'
 import { useRouter } from 'next/navigation'
 import { kunFetchGet } from '~/utils/kunFetch'
@@ -17,8 +16,9 @@ import { KunSearch } from './Search'
 import { UserMessageBell } from './UserMessageBell'
 import { NSFWSwitcher } from './NSFWSwitcher'
 import { kunErrorHandler } from '~/utils/kunErrorHandler'
-import { RandomGalgameButton } from './RandomGalgameButton'
 import type { UserState } from '~/store/userStore'
+import { RandomGalgameButton } from './RandomGalgameButton'
+import { Tooltip } from '@heroui/react'
 
 export const KunTopBarUser = () => {
   const router = useRouter()
@@ -77,15 +77,19 @@ export const KunTopBarUser = () => {
             </NavbarContent>
           )}
 
+          <NSFWSwitcher />
+
           <KunSearch />
 
-          <Tooltip content="随机一部游戏">
-            <RandomGalgameButton isIconOnly variant="light" />
+          <Tooltip disableAnimation content="随机一部游戏">
+            <RandomGalgameButton
+              className="hidden sm:flex"
+              isIconOnly
+              variant="light"
+            />
           </Tooltip>
 
           <ThemeSwitcher />
-
-          <NSFWSwitcher />
 
           {user.name && (
             <>

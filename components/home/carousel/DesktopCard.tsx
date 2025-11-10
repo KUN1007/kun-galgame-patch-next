@@ -47,10 +47,6 @@ export const KunDesktopCard = ({ posts, currentSlide }: Props) => {
                 <h1>{post.title}</h1>
               </Link>
             </div>
-
-            {/* <RandomGalgameButton color="primary" variant="solid">
-              随机一部游戏
-            </RandomGalgameButton> */}
           </div>
 
           <p className="mb-2 text-sm text-foreground/80 line-clamp-1">

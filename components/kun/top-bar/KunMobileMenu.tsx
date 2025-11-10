@@ -6,6 +6,7 @@ import Link from 'next/link'
 import Image from 'next/image'
 import { kunMoyuMoe } from '~/config/moyu-moe'
 import { kunMobileNavItem } from '~/constants/top-bar'
+import { RandomGalgameButton } from './RandomGalgameButton'
 
 export const KunMobileMenu = () => {
   return (
@@ -34,6 +35,10 @@ export const KunMobileMenu = () => {
           </Link>
         </NavbarMenuItem>
       ))}
+
+      <NavbarMenuItem>
+        <RandomGalgameButton variant="flat" color="primary" />
+      </NavbarMenuItem>
     </NavbarMenu>
   )
 }

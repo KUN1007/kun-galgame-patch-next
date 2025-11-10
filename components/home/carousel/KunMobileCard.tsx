@@ -34,10 +34,6 @@ export const KunMobileCard = ({ posts, currentSlide }: Props) => {
               {post.authorName}
             </span>
           </div>
-
-          {/* <RandomGalgameButton color="primary" variant="flat" size="sm">
-            随机一部游戏
-          </RandomGalgameButton> */}
         </div>
 
         <Link
