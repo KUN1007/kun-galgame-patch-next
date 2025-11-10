@@ -31,8 +31,7 @@ export default async function Kun({ params }: Props) {
   }
 
   const nsfwEnable = await getNSFWHeader()
-  const isNSFW =
-    nsfwEnable.content_limit === 'nsfw' || nsfwEnable.content_limit === 'all'
+  const isNSFW = nsfwEnable.content_limit !== 'sfw'
 
   return <PatchDetailIntro isNSFW={isNSFW} detail={detail} />
 }

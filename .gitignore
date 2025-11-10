@@ -57,3 +57,5 @@ refs
 migration/temp
 migration/sync/data
 migration/sync-ts/data
+migration/sync-ts/vn-sync/uploads
+migration/sync-ts/patch

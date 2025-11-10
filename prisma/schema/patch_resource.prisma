@@ -3,6 +3,7 @@ model patch_resource {
   storage     String
   name        String   @default("") @db.VarChar(300)
   model_name  String   @default("") @db.VarChar(1007)
+  localization_group_name  String   @default("") @db.VarChar(1007)
   size        String   @default("") @db.VarChar(107)
   code        String   @default("") @db.VarChar(1007)
   password    String   @default("") @db.VarChar(1007)
