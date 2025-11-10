@@ -1,47 +1,46 @@
-import { Card, CardBody } from '@heroui/card'
-import { Image, Chip } from '@heroui/react'
-import NextLink from 'next/link'
-import type { Char } from '~/types/api/char'
+'use client'
 
-export const CharCard = ({ char }: { char: Char }) => (
-  <Card className="shadow-sm overflow-hidden">
-    <div className="aspect-[3/4] overflow-hidden bg-default-100">
-      <Image
-        src={char.image || '/char.avif'}
-        alt={char.name_zh_cn || char.name_ja_jp}
-        className="w-full h-full object-cover"
-      />
-    </div>
-    <CardBody className="p-3">
-      <h3 className="font-bold text-sm truncate">
-        <NextLink href={`/char/${char.id}`} className="hover:underline">
-          {char.name_zh_cn || char.name_ja_jp || char.name_en_us}
-        </NextLink>
-      </h3>
-      <div className="flex flex-wrap gap-2 mt-2">
-        {char.gender && (
-          <Chip
-            size="sm"
-            color={char.gender === 'female' ? 'danger' : 'primary'}
-          >
-            {char.gender}
-          </Chip>
-        )}
-        {char.role && (
-          <Chip size="sm" color="secondary" variant="flat">
-            {char.role === 'protagonist'
-              ? '主角'
-              : char.role === 'main'
-                ? '主要角色'
-                : '配角'}
-          </Chip>
-        )}
-        {char.roles.slice(0, 2).map((r) => (
-          <Chip key={r} size="sm" variant="flat">
-            {r}
-          </Chip>
-        ))}
-      </div>
-    </CardBody>
-  </Card>
+import { Card, CardFooter } from '@heroui/card'
+import { Chip, Image } from '@heroui/react'
+import Link from 'next/link'
+import { ROLE_LABELS } from '~/constants/character'
+import { getPreferredLanguageText } from '~/utils/getPreferredLanguageText'
+import { cn } from '~/utils/cn'
+import type { PatchCharacter } from '~/types/api/character'
+
+export const CharCard = ({ characters }: { characters: PatchCharacter[] }) => (
+  <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-5 xl:grid-cols-6 gap-4">
+    {characters.map((c) => (
+      <Card
+        isFooterBlurred
+        isPressable
+        as={Link}
+        href={`/character/${c.id}`}
+        key={c.id}
+        className="shadow-sm overflow-hidden"
+      >
+        <div className="aspect-[3/4] overflow-hidden bg-default-100">
+          <Image
+            removeWrapper
+            src={c.image || '/char.avif'}
+            alt={getPreferredLanguageText(c.name)}
+            className={cn(
+              'w-full dark:opacity-50 h-full object-cover object-[50%_top]',
+              c.image ? '' : 'opacity-30!'
+            )}
+          />
+        </div>
+        <CardFooter className="justify-between pr-1 bg-background/60 border-white/20 border-1 overflow-hidden py-1 absolute w-[calc(100%_-_8px)] rounded-large bottom-1 shadow-small ml-1 z-10">
+          <h3 className="font-bold text-sm truncate">
+            {getPreferredLanguageText(c.name)}
+          </h3>
+          {c.role && (
+            <Chip size="sm" color="secondary" variant="flat">
+              {ROLE_LABELS[c.role]}
+            </Chip>
+          )}
+        </CardFooter>
+      </Card>
+    ))}
+  </div>
 )

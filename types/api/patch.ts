@@ -1,5 +1,6 @@
 import { Tag } from './tag'
 import { Company } from './company'
+import { PatchCharacter } from './character'
 
 export interface PatchCover {
   url: string
@@ -56,23 +57,11 @@ export interface PatchRelease {
   minage: number
 }
 
-export interface PatchCharacter {
-  id: number
-  image: string
-  gender: string
-  role?: string
-  roles: string[]
-  name: KunLanguage
-  description: KunLanguage
-  infobox: string
-}
-
 export interface PatchPerson {
   id: number
   image: string
   roles: string[]
   name: KunLanguage
-  description: KunLanguage
 }
 
 export interface PatchHeader {
@@ -80,7 +69,7 @@ export interface PatchHeader {
   vndbId: string | null
   name: KunLanguage
   banner: string
-  introduction: string
+  introductionMarkdown: KunLanguage
   status: number
   view: number
   download: number
@@ -95,6 +84,7 @@ export interface PatchHeader {
   cover: PatchCover[]
   created: string
   updated: string
+  released: string
   _count: {
     favorite_by: number
     contribute_by: number
@@ -126,17 +116,6 @@ export interface PatchDetail {
   release: PatchRelease[]
   char: PatchCharacter[]
   person: PatchPerson[]
-  created: string
-  updated: string
-}
-
-export interface PatchIntroduction {
-  vndbId: string | null
-  introduction: string
-  released: string
-  alias: string[]
-  tag: Tag[]
-  company: Company[]
   created: string
   updated: string
 }

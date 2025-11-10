@@ -1,9 +1,5 @@
 import { ErrorComponent } from '~/components/error/ErrorComponent'
-import {
-  kunGetPatchActions,
-  kunGetPatchIntroductionActions,
-  kunUpdatePatchViewsActions
-} from './actions'
+import { kunGetPatchActions, kunUpdatePatchViewsActions } from './actions'
 import { PatchContainer } from '~/components/patch/Container'
 import { verifyHeaderCookie } from '~/utils/actions/verifyHeaderCookie'
 
@@ -23,7 +19,6 @@ export default async function Kun({ params, children }: Props) {
     kunGetPatchActions({
       patchId: Number(id)
     }),
-    kunGetPatchIntroductionActions({ patchId: Number(id) }),
     kunUpdatePatchViewsActions({ patchId: Number(id) })
   ])
   if (typeof patch === 'string') {
@@ -37,7 +32,7 @@ export default async function Kun({ params, children }: Props) {
   const payload = await verifyHeaderCookie()
 
   return (
-    <PatchContainer patch={patch} intro={intro} uid={payload?.uid}>
+    <PatchContainer patch={patch} uid={payload?.uid}>
       {children}
     </PatchContainer>
   )

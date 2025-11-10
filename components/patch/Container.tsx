@@ -6,16 +6,15 @@ import { PatchHeaderInfo } from './header/Info'
 import { PatchHeaderTabs } from './header/Tabs'
 import { PatchBackgroundImage } from './header/BackgroundImage'
 import { KunAutoImageViewer } from '~/components/kun/image-viewer/AutoImageViewer'
-import type { PatchHeader, PatchIntroduction } from '~/types/api/patch'
+import type { PatchHeader } from '~/types/api/patch'
 
 interface Props {
   children: React.ReactNode
   patch: PatchHeader
-  intro: PatchIntroduction
   uid?: number
 }
 
-export const PatchContainer = ({ children, patch, intro }: Props) => {
+export const PatchContainer = ({ children, patch }: Props) => {
   const { setData } = useRewritePatchStore()
 
   useEffect(() => {
@@ -23,18 +22,14 @@ export const PatchContainer = ({ children, patch, intro }: Props) => {
       id: patch.id,
       vndbId: patch.vndbId ?? '',
       name: patch.name,
-      introduction: {
-        'zh-cn': intro.introduction || '',
-        'ja-jp': '',
-        'en-us': ''
-      },
+      introduction: patch.introductionMarkdown,
       alias: patch.alias,
-      released: intro.released,
+      released: patch.released,
       contentLimit: patch.content_limit
     })
 
     window.scroll(0, 0)
-  }, [patch, intro, setData])
+  }, [patch, setData])
 
   return (
     <div className="w-full space-y-6">

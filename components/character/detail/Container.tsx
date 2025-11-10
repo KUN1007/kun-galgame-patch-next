@@ -2,7 +2,8 @@
 
 import { Chip, Image } from '@heroui/react'
 import NextLink from 'next/link'
-import type { CharDetail } from '~/types/api/char'
+import type { PatchCharacterDetail } from '~/types/api/character'
+import { getPreferredLanguageText } from '~/utils/getPreferredLanguageText'
 
 interface InfoboxItem {
   key: string
@@ -52,10 +53,13 @@ const renderInfobox = (raw: string) => {
   return <div className="space-y-2 mt-4">{rows}</div>
 }
 
-export const CharDetailContainer = ({ char }: { char: CharDetail }) => {
-  const displayName = char.name_zh_cn || char.name_ja_jp || char.name_en_us
-  const intro =
-    char.description_zh_cn || char.description_ja_jp || char.description_en_us
+export const CharDetailContainer = ({
+  char
+}: {
+  char: PatchCharacterDetail
+}) => {
+  const displayName = getPreferredLanguageText(char.name)
+  const intro = getPreferredLanguageText(char.description)
 
   return (
     <div className="w-full my-6">
@@ -171,12 +175,12 @@ export const CharDetailContainer = ({ char }: { char: CharDetail }) => {
                     <div className="aspect-video bg-default-100">
                       <Image
                         src={p.banner}
-                        alt={p.name}
+                        alt={getPreferredLanguageText(p.name)}
                         className="w-full h-full object-cover"
                       />
                     </div>
                     <div className="p-3 text-sm font-medium group-hover:underline truncate">
-                      {p.name}
+                      {getPreferredLanguageText(p.name)}
                     </div>
                   </NextLink>
                 ))}

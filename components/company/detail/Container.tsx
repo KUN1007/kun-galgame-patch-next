@@ -56,7 +56,7 @@ export const CompanyDetailContainer: FC<Props> = ({
   }, [page])
 
   return (
-    <div className="w-full my-4">
+    <div className="w-ful space-y-8 my-4">
       <KunHeader
         name={company.name}
         image={company.logo}

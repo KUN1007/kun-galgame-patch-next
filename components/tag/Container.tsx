@@ -47,14 +47,6 @@ export const Container = ({ initialTags, initialTotal }: Props) => {
   const [debouncedQuery] = useDebounce(query, 500)
   const [searching, setSearching] = useState(false)
 
-  useEffect(() => {
-    if (debouncedQuery) {
-      handleSearch()
-    } else {
-      fetchTags()
-    }
-  }, [debouncedQuery])
-
   const handleSearch = async () => {
     if (!query.trim()) {
       return
@@ -68,16 +60,23 @@ export const Container = ({ initialTags, initialTotal }: Props) => {
     setSearching(false)
   }
 
+  useEffect(() => {
+    if (!isMounted) {
+      return
+    }
+
+    if (debouncedQuery) {
+      handleSearch()
+    } else {
+      fetchTags()
+    }
+  }, [debouncedQuery])
+
   return (
     <div className="flex flex-col w-full my-4 space-y-8">
       <KunHeader name="标签列表" description="这里是补丁中的所有标签" />
 
-      <SearchTags
-        query={query}
-        setQuery={setQuery}
-        handleSearch={handleSearch}
-        searching={searching}
-      />
+      <SearchTags query={query} setQuery={setQuery} searching={searching} />
 
       {!searching && (
         <TagList tags={tags} loading={loading} searching={searching} />

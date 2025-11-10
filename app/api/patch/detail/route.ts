@@ -127,11 +127,6 @@ export const getPatchDetail = async (
           'ja-jp': c.name_ja_jp,
           'en-us': c.name_en_us
         },
-        description: {
-          'zh-cn': c.description_zh_cn,
-          'ja-jp': c.description_ja_jp,
-          'en-us': c.description_en_us
-        },
         infobox: c.infobox
       })),
     person: patch.person_rel
@@ -144,11 +139,6 @@ export const getPatchDetail = async (
           'zh-cn': p.name_zh_cn,
           'ja-jp': p.name_ja_jp,
           'en-us': p.name_en_us
-        },
-        description: {
-          'zh-cn': p.description_zh_cn,
-          'ja-jp': p.description_ja_jp,
-          'en-us': p.description_en_us
         }
       })),
     created: String(patch.created),

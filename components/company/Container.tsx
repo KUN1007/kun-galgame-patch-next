@@ -62,6 +62,10 @@ export const Container: FC<Props> = ({ initialCompanies, initialTotal }) => {
   }
 
   useEffect(() => {
+    if (!isMounted) {
+      return
+    }
+
     if (debouncedQuery) {
       handleSearch()
     } else {

@@ -7,16 +7,17 @@ import { useMounted } from '~/hooks/useMounted'
 import { kunFetchGet, kunFetchPost } from '~/utils/kunFetch'
 import { CharList } from './CharList'
 import { SearchChars } from './SearchChars'
-import type { Char } from '~/types/api/char'
+import type { PatchCharacter } from '~/types/api/character'
+import { KunHeader } from '../kun/Header'
 
 export const CharContainer = ({
   initialChars,
   initialTotal
 }: {
-  initialChars: Char[]
+  initialChars: PatchCharacter[]
   initialTotal: number
 }) => {
-  const [chars, setChars] = useState<Char[]>(initialChars)
+  const [chars, setChars] = useState<PatchCharacter[]>(initialChars)
   const [page, setPage] = useState(1)
   const [total, setTotal] = useState(initialTotal)
   const [loading, startTransition] = useTransition()
@@ -25,16 +26,18 @@ export const CharContainer = ({
   const fetchChars = () => {
     startTransition(async () => {
       const { chars, total } = await kunFetchGet<{
-        chars: Char[]
+        chars: PatchCharacter[]
         total: number
-      }>('/character/all', { page, limit: 100 })
+      }>('/character/all', { page, limit: 72 })
       setChars(chars)
       setTotal(total)
     })
   }
 
   useEffect(() => {
-    if (!isMounted) return
+    if (!isMounted) {
+      return
+    }
     fetchChars()
   }, [page])
 
@@ -43,9 +46,12 @@ export const CharContainer = ({
   const [searching, setSearching] = useState(false)
 
   const handleSearch = async () => {
-    if (!query.trim()) return
+    if (!query.trim()) {
+      return
+    }
+
     setSearching(true)
-    const res = await kunFetchPost<Char[]>('/character/search', {
+    const res = await kunFetchPost<PatchCharacter[]>('/character/search', {
       query: query.split(' ').filter((term) => term.length > 0)
     })
     setChars(res)
@@ -53,19 +59,30 @@ export const CharContainer = ({
   }
 
   useEffect(() => {
-    if (debouncedQuery) handleSearch()
-    else fetchChars()
+    if (!isMounted) {
+      return
+    }
+
+    if (debouncedQuery) {
+      handleSearch()
+    } else {
+      fetchChars()
+    }
   }, [debouncedQuery])
 
   return (
     <div className="flex flex-col w-full my-4 space-y-8">
-      <SearchChars
-        query={query}
-        setQuery={setQuery}
-        handleSearch={handleSearch}
-        searching={searching}
+      <KunHeader
+        name="Galgame 角色列表"
+        description="这里是 Galgame 游戏中出现的所有 Galgame 角色的列表"
       />
-      <CharList chars={chars} loading={loading} searching={searching} />
+
+      <SearchChars query={query} setQuery={setQuery} searching={searching} />
+
+      {!searching && (
+        <CharList chars={chars} loading={loading} searching={searching} />
+      )}
+
       {total > 100 && !query && (
         <div className="flex justify-center">
           <Pagination

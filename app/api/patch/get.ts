@@ -50,7 +50,11 @@ export const getPatchById = async (
       'ja-jp': patch.name_ja_jp,
       'en-us': patch.name_en_us
     },
-    introduction: patch.introduction,
+    introductionMarkdown: {
+      'zh-cn': patch.introduction_zh_cn,
+      'ja-jp': patch.introduction_ja_jp,
+      'en-us': patch.introduction_en_us
+    },
     banner: patch.banner,
     status: patch.status,
     view: patch.view,
@@ -63,6 +67,7 @@ export const getPatchById = async (
     resourceUpdateTime: patch.resource_update_time,
     content_limit: patch.content_limit,
     cover: patch.cover,
+    released: patch.released,
     user: {
       id: patch.user.id,
       name: patch.user.name,

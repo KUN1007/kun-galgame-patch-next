@@ -3,10 +3,11 @@ import { NextRequest, NextResponse } from 'next/server'
 import { prisma } from '~/prisma/index'
 import { searchCharSchema } from '~/validations/char'
 import { kunParsePostBody } from '~/app/api/utils/parseQuery'
+import type { PatchCharacter } from '~/types/api/character'
 
 export const searchChar = async (input: z.infer<typeof searchCharSchema>) => {
   const { query } = input
-  const chars = await prisma.patch_char.findMany({
+  const data = await prisma.patch_char.findMany({
     where: {
       OR: query.map((term) => ({
         OR: [
@@ -29,6 +30,20 @@ export const searchChar = async (input: z.infer<typeof searchCharSchema>) => {
       name_en_us: true
     }
   })
+
+  const chars: PatchCharacter[] = data.map((c) => ({
+    id: c.id,
+    image: c.image,
+    gender: c.gender,
+    role: c.role,
+    roles: c.roles,
+    name: {
+      'zh-cn': c.name_zh_cn,
+      'ja-jp': c.name_ja_jp,
+      'en-us': c.name_en_us
+    }
+  }))
+
   return chars
 }
 

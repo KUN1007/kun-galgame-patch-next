@@ -1,18 +1,14 @@
-export interface Char {
+export interface PatchCharacter {
   id: number
   image: string
   gender: string
   role?: string
   roles: string[]
-  name_zh_cn: string
-  name_ja_jp: string
-  name_en_us: string
+  name: KunLanguage
 }
 
-export interface CharDetail extends Char {
-  description_zh_cn: string
-  description_ja_jp: string
-  description_en_us: string
+export interface PatchCharacterDetail extends PatchCharacter {
+  description: KunLanguage
   birthday: string
   height: number
   weight: number
@@ -25,7 +21,7 @@ export interface CharDetail extends Char {
   alias: string[]
   patches: {
     id: number
-    name: string
+    name: KunLanguage
     banner: string
   }[]
 }

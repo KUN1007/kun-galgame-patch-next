@@ -5,8 +5,8 @@ import { Chip, Image } from '@heroui/react'
 import Link from 'next/link'
 import { ROLE_LABELS } from '~/constants/character'
 import { getPreferredLanguageText } from '~/utils/getPreferredLanguageText'
-import type { PatchDetail } from '~/types/api/patch'
 import { cn } from '~/utils/cn'
+import type { PatchDetail } from '~/types/api/patch'
 
 const ORDER = ['protagonist', 'main', 'side']
 

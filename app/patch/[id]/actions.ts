@@ -5,7 +5,6 @@ import { z } from 'zod'
 import { verifyHeaderCookie } from '~/utils/actions/verifyHeaderCookie'
 import { safeParseSchema } from '~/utils/actions/safeParseSchema'
 import { getPatchById } from '~/app/api/patch/get'
-import { getPatchIntroduction } from '~/app/api/patch/introduction/route'
 import { getPatchDetail } from '~/app/api/patch/detail/route'
 import { getPatchContributor } from '~/app/api/patch/contributor/route'
 import { updatePatchViews } from '~/app/api/patch/views/put'
@@ -24,18 +23,6 @@ export const kunGetPatchActions = cache(
     const payload = await verifyHeaderCookie()
 
     const response = await getPatchById(input, payload?.uid ?? 0)
-    return response
-  }
-)
-
-export const kunGetPatchIntroductionActions = cache(
-  async (params: z.infer<typeof patchIdSchema>) => {
-    const input = safeParseSchema(patchIdSchema, params)
-    if (typeof input === 'string') {
-      return input
-    }
-
-    const response = await getPatchIntroduction(input)
     return response
   }
 )

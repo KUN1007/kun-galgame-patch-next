@@ -9,7 +9,7 @@ export const revalidate = 5
 export const metadata: Metadata = kunMetadata
 
 export default async function CharIndex() {
-  const response = await kunGetActions({ page: 1, limit: 100 })
+  const response = await kunGetActions({ page: 1, limit: 72 })
   if (typeof response === 'string') {
     return <ErrorComponent error={response} />
   }
