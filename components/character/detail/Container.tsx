@@ -1,9 +1,10 @@
 'use client'
 
-import { Chip, Image } from '@heroui/react'
-import NextLink from 'next/link'
-import type { PatchCharacterDetail } from '~/types/api/character'
+import { Chip, Image, Link } from '@heroui/react'
+import { ROLE_LABELS } from '~/constants/character'
 import { getPreferredLanguageText } from '~/utils/getPreferredLanguageText'
+import type { PatchCharacterDetail } from '~/types/api/character'
+import { cn } from '~/utils/cn'
 
 interface InfoboxItem {
   key: string
@@ -64,36 +65,29 @@ export const CharDetailContainer = ({
   return (
     <div className="w-full my-6">
       <h1 className="text-2xl font-bold mb-4">{displayName}</h1>
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+      <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
         <aside className="md:col-span-1 space-y-4">
-          <div className="w-full aspect-[3/4] bg-default-100 rounded-lg overflow-hidden">
+          <div className="aspect-[3/4] overflow-hidden rounded-2xl bg-default-100 border-default-200 border">
             <Image
+              removeWrapper
               src={char.image || '/char.avif'}
-              alt={displayName}
-              className="w-full h-full object-cover object-[50%_top]"
+              alt={getPreferredLanguageText(char.name)}
+              className={cn(
+                'w-full h-full object-cover object-[50%_top]',
+                char.image ? '' : 'opacity-30!'
+              )}
             />
           </div>
+
           <div className="flex flex-wrap gap-2">
-            {char.gender && (
-              <Chip
-                size="sm"
-                color={char.gender === 'female' ? 'danger' : 'primary'}
-              >
-                {char.gender}
-              </Chip>
-            )}
             {char.role && (
               <Chip size="sm" color="secondary" variant="flat">
-                {char.role === 'protagonist'
-                  ? '主角'
-                  : char.role === 'main'
-                    ? '主要角色'
-                    : '配角'}
+                {ROLE_LABELS[char.role]}
               </Chip>
             )}
             {char.roles?.slice(0, 3).map((r) => (
               <Chip key={r} size="sm" variant="flat">
-                {r}
+                {ROLE_LABELS[r]}
               </Chip>
             ))}
           </div>
@@ -155,7 +149,7 @@ export const CharDetailContainer = ({
           </div>
         </aside>
 
-        <main className="md:col-span-2 space-y-6">
+        <main className="md:col-span-3 space-y-6">
           <section>
             <h2 className="text-lg font-semibold mb-2">介绍</h2>
             <div className="text-sm leading-7 text-default-700 whitespace-pre-line">
@@ -163,26 +157,30 @@ export const CharDetailContainer = ({
             </div>
           </section>
           <section>
-            <h2 className="text-lg font-semibold mb-3">参与的 Patch</h2>
+            <h2 className="text-lg font-semibold mb-3">参与的 Galgame</h2>
             {char.patches.length ? (
               <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
                 {char.patches.map((p) => (
-                  <NextLink
+                  <div
                     key={p.id}
-                    href={`/patch/${p.id}`}
-                    className="group rounded-lg overflow-hidden border border-default-200"
+                    className="group rounded-2xl overflow-hidden border border-default-200"
                   >
                     <div className="aspect-video bg-default-100">
                       <Image
                         src={p.banner}
                         alt={getPreferredLanguageText(p.name)}
+                        radius="none"
                         className="w-full h-full object-cover"
                       />
                     </div>
-                    <div className="p-3 text-sm font-medium group-hover:underline truncate">
+                    <Link
+                      size="sm"
+                      href={`/patch/${p.id}`}
+                      className="p-3 truncate"
+                    >
                       {getPreferredLanguageText(p.name)}
-                    </div>
-                  </NextLink>
+                    </Link>
+                  </div>
                 ))}
               </div>
             ) : (

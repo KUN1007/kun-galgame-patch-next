@@ -5,6 +5,7 @@ import {
   SUPPORTED_PLATFORM_MAP
 } from '~/constants/resource'
 import { getPreferredLanguageText } from '~/utils/getPreferredLanguageText'
+import { generateNullMetadata } from '~/utils/noIndex'
 import type { Metadata } from 'next'
 import type { KunSiteAuthor } from '~/config/config'
 import type { PatchHeader, PatchResource } from '~/types/api/patch'
@@ -19,6 +20,10 @@ export const generateKunMetadataTemplate = (
     patchNameJa && patchName !== patchNameJa
       ? `${patchName} | ${patchNameJa} 的下载资源`
       : `${patchName} 的下载资源`
+
+  if (patch.content_limit === 'nsfw') {
+    return generateNullMetadata(pageTitle)
+  }
 
   const responseType = resources.map((res) => res.type).flat()
   const dedupeType = [...new Set(responseType)].map(

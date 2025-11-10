@@ -1,6 +1,6 @@
 import { KunLoading } from '~/components/kun/Loading'
 import { KunNull } from '~/components/kun/Null'
-import { CharCard } from './Card'
+import { CharacterCard } from './Card'
 import type { PatchCharacter } from '~/types/api/character'
 
 export const CharList = ({
@@ -20,5 +20,11 @@ export const CharList = ({
     return <KunNull message="未找到相关内容, 请尝试使用角色的日文原名搜索" />
   }
 
-  return <CharCard characters={chars} />
+  return (
+    <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-5 xl:grid-cols-6 gap-4">
+      {chars.map((c) => (
+        <CharacterCard key={c.id} characters={c} />
+      ))}
+    </div>
+  )
 }

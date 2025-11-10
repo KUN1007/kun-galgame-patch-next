@@ -1,32 +1,24 @@
-import { notFound } from 'next/navigation'
-import { z } from 'zod'
-import type { Metadata } from 'next'
 import { getCharacterById } from '~/app/api/character/route'
 import { CharDetailContainer } from '~/components/character/detail/Container'
-import { generateKunMetadataTemplate } from './metadata'
+import { generateNullMetadata } from '~/utils/noIndex'
+import { ErrorComponent } from '~/components/error/ErrorComponent'
+import type { Metadata } from 'next'
 
-const paramsSchema = z.object({ id: z.coerce.number().min(1) })
-
-export default async function CharDetailPage({
+export default async function Kun({
   params
 }: {
-  params: { id: string }
+  params: Promise<{ id: string }>
 }) {
-  const parsed = paramsSchema.safeParse(params)
-  if (!parsed.success) notFound()
-  const data = await getCharacterById({ characterId: parsed.data.id })
-  if (typeof data === 'string') notFound()
-  return <CharDetailContainer char={data} />
+  const { id } = await params
+  const response = await getCharacterById({ characterId: Number(id) })
+
+  if (typeof response === 'string') {
+    return <ErrorComponent error={response} />
+  }
+
+  return <CharDetailContainer char={response} />
 }
 
-export const generateMetadata = async ({
-  params
-}: {
-  params: { id: string }
-}): Promise<Metadata> => {
-  const parsed = paramsSchema.safeParse(params)
-  if (!parsed.success) return {}
-  const data = await getCharacterById({ characterId: parsed.data.id })
-  if (typeof data === 'string') return {}
-  return generateKunMetadataTemplate(data)
+export const generateMetadata = async (): Promise<Metadata> => {
+  return generateNullMetadata('角色详情')
 }

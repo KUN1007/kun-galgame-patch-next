@@ -3,6 +3,7 @@ import { convert } from 'html-to-text'
 import { getPreferredLanguageText } from '~/utils/getPreferredLanguageText'
 import type { Metadata } from 'next'
 import type { PatchDetail } from '~/types/api/patch'
+import { generateNullMetadata } from '~/utils/noIndex'
 
 export const generateKunMetadataTemplate = (detail: PatchDetail): Metadata => {
   const patchName = getPreferredLanguageText(detail.name)
@@ -15,6 +16,10 @@ export const generateKunMetadataTemplate = (detail: PatchDetail): Metadata => {
     wordwrap: false,
     selectors: [{ selector: 'p', format: 'inline' }]
   }).slice(0, 170)
+
+  if (detail.content_limit === 'nsfw') {
+    return generateNullMetadata(pageTitle)
+  }
 
   return {
     title: pageTitle,
