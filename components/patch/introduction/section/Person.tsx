@@ -1,6 +1,6 @@
 'use client'
 
-import { Chip, Image } from '@heroui/react'
+import { Image } from '@heroui/react'
 import NextLink from 'next/link'
 import { ROLE_ORDER_PERSON, roleLabel } from '~/constants/character'
 import type { PatchDetail } from '~/types/api/patch'

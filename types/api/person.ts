@@ -18,7 +18,7 @@ export interface PatchPersonDetail extends PatchPerson {
   alias: string[]
   patches: {
     id: number
-    name: string
+    name: KunLanguage
     banner: string
   }[]
 }

@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server'
 import { z } from 'zod'
 import { prisma } from '~/prisma'
 import { kunParseGetQuery } from '../utils/parseQuery'
+import type { PatchPersonDetail } from '~/types/api/person'
 
 const personIdSchema = z.object({ personId: z.coerce.number().min(1) })
 
@@ -20,7 +21,9 @@ export const getPersonById = async (input: z.infer<typeof personIdSchema>) => {
   })
   const patches = patchRelations.map((pr) => ({
     id: pr.patch.id,
-    name: pr.patch.name,
+    name_zh_cn: pr.patch.name_zh_cn,
+    name_ja_jp: pr.patch.name_ja_jp,
+    name_en_us: pr.patch.name_en_us,
     banner: pr.patch.banner
   }))
 
@@ -28,14 +31,16 @@ export const getPersonById = async (input: z.infer<typeof personIdSchema>) => {
     id: person.id,
     image: person.image,
     roles: person.roles,
-    language: person.language,
-    links: person.links,
-    name_zh_cn: person.name_zh_cn,
-    name_ja_jp: person.name_ja_jp,
-    name_en_us: person.name_en_us,
-    description_zh_cn: person.description_zh_cn,
-    description_ja_jp: person.description_ja_jp,
-    description_en_us: person.description_en_us,
+    name: {
+      'zh-cn': person.name_zh_cn,
+      'ja-jp': person.name_ja_jp,
+      'en-us': person.name_en_us
+    },
+    description: {
+      'zh-cn': person.description_zh_cn,
+      'ja-jp': person.description_ja_jp,
+      'en-us': person.description_en_us
+    },
     birthday: person.birthday,
     blood_type: person.blood_type,
     birthplace: person.birthplace,
@@ -45,8 +50,16 @@ export const getPersonById = async (input: z.infer<typeof personIdSchema>) => {
     official_website: person.official_website,
     blog: person.blog,
     alias: aliases,
-    patches
-  }
+    patches: patches.map((p) => ({
+      id: p.id,
+      name: {
+        'zh-cn': p.name_zh_cn,
+        'ja-jp': p.name_ja_jp,
+        'en-us': p.name_en_us
+      },
+      banner: p.banner
+    }))
+  } satisfies PatchPersonDetail
 }
 
 export const GET = async (req: NextRequest) => {

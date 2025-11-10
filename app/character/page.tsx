@@ -10,7 +10,7 @@ export const generateMetadata = async (): Promise<Metadata> => {
   return generateNullMetadata('角色列表')
 }
 
-export default async function CharIndex() {
+export default async function Kun() {
   const response = await kunGetActions({ page: 1, limit: 72 })
   if (typeof response === 'string') {
     return <ErrorComponent error={response} />

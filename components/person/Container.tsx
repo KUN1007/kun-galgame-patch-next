@@ -7,16 +7,17 @@ import { useMounted } from '~/hooks/useMounted'
 import { kunFetchGet, kunFetchPost } from '~/utils/kunFetch'
 import { PersonList } from './PersonList'
 import { SearchPersons } from './SearchPersons'
-import type { Person } from '~/types/api/person'
+import type { PatchPerson } from '~/types/api/person'
+import { KunHeader } from '../kun/Header'
 
 export const PersonContainer = ({
   initialPersons,
   initialTotal
 }: {
-  initialPersons: Person[]
+  initialPersons: PatchPerson[]
   initialTotal: number
 }) => {
-  const [persons, setPersons] = useState<Person[]>(initialPersons)
+  const [persons, setPersons] = useState<PatchPerson[]>(initialPersons)
   const [page, setPage] = useState(1)
   const [total, setTotal] = useState(initialTotal)
   const [loading, startTransition] = useTransition()
@@ -25,16 +26,18 @@ export const PersonContainer = ({
   const fetchPersons = () => {
     startTransition(async () => {
       const { persons, total } = await kunFetchGet<{
-        persons: Person[]
+        persons: PatchPerson[]
         total: number
-      }>('/person/all', { page, limit: 100 })
+      }>('/person/all', { page, limit: 72 })
       setPersons(persons)
       setTotal(total)
     })
   }
 
   useEffect(() => {
-    if (!isMounted) return
+    if (!isMounted) {
+      return
+    }
     fetchPersons()
   }, [page])
 
@@ -43,9 +46,12 @@ export const PersonContainer = ({
   const [searching, setSearching] = useState(false)
 
   const handleSearch = async () => {
-    if (!query.trim()) return
+    if (!query.trim()) {
+      return
+    }
+
     setSearching(true)
-    const res = await kunFetchPost<Person[]>('/person/search', {
+    const res = await kunFetchPost<PatchPerson[]>('/person/search', {
       query: query.split(' ').filter((term) => term.length > 0)
     })
     setPersons(res)
@@ -53,23 +59,34 @@ export const PersonContainer = ({
   }
 
   useEffect(() => {
-    if (debouncedQuery) handleSearch()
-    else fetchPersons()
+    if (!isMounted) {
+      return
+    }
+
+    if (debouncedQuery) {
+      handleSearch()
+    } else {
+      fetchPersons()
+    }
   }, [debouncedQuery])
 
   return (
     <div className="flex flex-col w-full my-4 space-y-8">
-      <SearchPersons
-        query={query}
-        setQuery={setQuery}
-        handleSearch={handleSearch}
-        searching={searching}
+      <KunHeader
+        name="Galgame 制作人列表"
+        description="这里是 Galgame 游戏中出现的所有 Galgame 角色的列表, 本页面只是随手写一下, 仍在开发中..."
       />
-      <PersonList persons={persons} loading={loading} searching={searching} />
-      {total > 100 && !query && (
+
+      <SearchPersons query={query} setQuery={setQuery} searching={searching} />
+
+      {!searching && (
+        <PersonList persons={persons} loading={loading} searching={searching} />
+      )}
+
+      {total > 72 && !query && (
         <div className="flex justify-center">
           <Pagination
-            total={Math.ceil(total / 100)}
+            total={Math.ceil(total / 72)}
             page={page}
             onChange={setPage}
             showControls

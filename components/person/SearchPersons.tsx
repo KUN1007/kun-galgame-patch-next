@@ -1,26 +1,25 @@
 import { Input } from '@heroui/input'
+import { KunLoading } from '../kun/Loading'
 
 export const SearchPersons = ({
   query,
   setQuery,
-  handleSearch,
   searching
 }: {
   query: string
   setQuery: (v: string) => void
-  handleSearch: () => void
   searching: boolean
 }) => (
-  <div className="flex items-center gap-4">
+  <>
     <Input
       value={query}
       onValueChange={setQuery}
-      placeholder="搜索人物（支持中/日/英名与别名）"
+      placeholder="输入以自动搜索人物"
       isClearable
       variant="bordered"
-      className="max-w-xl"
       onClear={() => setQuery('')}
       isDisabled={searching}
     />
-  </div>
+    {searching && <KunLoading hint="正在搜索角色数据..." />}
+  </>
 )

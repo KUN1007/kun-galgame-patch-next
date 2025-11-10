@@ -4,6 +4,10 @@ import { generateNullMetadata } from '~/utils/noIndex'
 import { ErrorComponent } from '~/components/error/ErrorComponent'
 import type { Metadata } from 'next'
 
+export const generateMetadata = async (): Promise<Metadata> => {
+  return generateNullMetadata('角色详情')
+}
+
 export default async function Kun({
   params
 }: {
@@ -17,8 +21,4 @@ export default async function Kun({
   }
 
   return <CharDetailContainer char={response} />
-}
-
-export const generateMetadata = async (): Promise<Metadata> => {
-  return generateNullMetadata('角色详情')
 }

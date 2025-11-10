@@ -1,32 +1,24 @@
-import { notFound } from 'next/navigation'
-import { z } from 'zod'
-import type { Metadata } from 'next'
 import { getPersonById } from '~/app/api/person/route'
 import { PersonDetailContainer } from '~/components/person/detail/Container'
-import { generateKunMetadataTemplate } from './metadata'
+import { generateNullMetadata } from '~/utils/noIndex'
+import type { Metadata } from 'next'
+import { ErrorComponent } from '~/components/error/ErrorComponent'
 
-const paramsSchema = z.object({ id: z.coerce.number().min(1) })
-
-export default async function PersonDetailPage({
-  params
-}: {
-  params: { id: string }
-}) {
-  const parsed = paramsSchema.safeParse(params)
-  if (!parsed.success) notFound()
-  const data = await getPersonById({ personId: parsed.data.id })
-  if (typeof data === 'string') notFound()
-  return <PersonDetailContainer person={data} />
+export const generateMetadata = async (): Promise<Metadata> => {
+  return generateNullMetadata('制作人')
 }
 
-export const generateMetadata = async ({
+export default async function Kun({
   params
 }: {
-  params: { id: string }
-}): Promise<Metadata> => {
-  const parsed = paramsSchema.safeParse(params)
-  if (!parsed.success) return {}
-  const data = await getPersonById({ personId: parsed.data.id })
-  if (typeof data === 'string') return {}
-  return generateKunMetadataTemplate(data)
+  params: Promise<{ id: string }>
+}) {
+  const { id } = await params
+  const response = await getPersonById({ personId: Number(id) })
+
+  if (typeof response === 'string') {
+    return <ErrorComponent error={response} />
+  }
+
+  return <PersonDetailContainer person={response} />
 }

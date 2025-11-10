@@ -74,7 +74,7 @@ export const CharContainer = ({
     <div className="flex flex-col w-full my-4 space-y-8">
       <KunHeader
         name="Galgame 角色列表"
-        description="这里是 Galgame 游戏中出现的所有 Galgame 角色的列表"
+        description="这里是 Galgame 游戏中出现的所有 Galgame 角色的列表, 本页面只是随手写一下, 仍在开发中..."
       />
 
       <SearchChars query={query} setQuery={setQuery} searching={searching} />
@@ -83,10 +83,10 @@ export const CharContainer = ({
         <CharList chars={chars} loading={loading} searching={searching} />
       )}
 
-      {total > 100 && !query && (
+      {total > 72 && !query && (
         <div className="flex justify-center">
           <Pagination
-            total={Math.ceil(total / 100)}
+            total={Math.ceil(total / 72)}
             page={page}
             onChange={setPage}
             showControls

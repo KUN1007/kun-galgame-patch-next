@@ -184,7 +184,7 @@ export const CharDetailContainer = ({
                 ))}
               </div>
             ) : (
-              <div className="text-sm text-default-400">暂无参与的 Patch</div>
+              <div className="text-sm text-default-400">暂无参与的 Galgame</div>
             )}
           </section>
         </main>

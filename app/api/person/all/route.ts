@@ -3,12 +3,13 @@ import { NextRequest, NextResponse } from 'next/server'
 import { prisma } from '~/prisma/index'
 import { getPersonSchema } from '~/validations/person'
 import { kunParseGetQuery } from '~/app/api/utils/parseQuery'
+import type { PatchPerson } from '~/types/api/person'
 
 export const getPerson = async (input: z.infer<typeof getPersonSchema>) => {
   const { page, limit } = input
   const offset = (page - 1) * limit
 
-  const [persons, total] = await Promise.all([
+  const [data, total] = await Promise.all([
     prisma.patch_person.findMany({
       take: limit,
       skip: offset,
@@ -24,6 +25,17 @@ export const getPerson = async (input: z.infer<typeof getPersonSchema>) => {
     }),
     prisma.patch_person.count()
   ])
+
+  const persons: PatchPerson[] = data.map((p) => ({
+    id: p.id,
+    image: p.image,
+    roles: p.roles,
+    name: {
+      'zh-cn': p.name_zh_cn,
+      'ja-jp': p.name_ja_jp,
+      'en-us': p.name_en_us
+    }
+  }))
 
   return { persons, total }
 }

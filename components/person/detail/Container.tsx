@@ -1,29 +1,30 @@
 'use client'
 
 import { Chip, Image, Link } from '@heroui/react'
-import NextLink from 'next/link'
-import type { PersonDetail } from '~/types/api/person'
+import { getPreferredLanguageText } from '~/utils/getPreferredLanguageText'
+import type { PatchPersonDetail } from '~/types/api/person'
 
-export const PersonDetailContainer = ({ person }: { person: PersonDetail }) => {
-  const displayName =
-    person.name_zh_cn || person.name_ja_jp || person.name_en_us
-  const intro =
-    person.description_zh_cn ||
-    person.description_ja_jp ||
-    person.description_en_us
+export const PersonDetailContainer = ({
+  person
+}: {
+  person: PatchPersonDetail
+}) => {
+  const displayName = getPreferredLanguageText(person.name)
+  const intro = getPreferredLanguageText(person.description)
 
   return (
     <div className="w-full my-6">
       <h1 className="text-2xl font-bold mb-4">{displayName}</h1>
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+      <div className="grid grid-cols-1 md:grid-cols-6 gap-6">
         <aside className="md:col-span-1 space-y-4">
-          <div className="w-full aspect-[3/4] bg-default-100 rounded-lg overflow-hidden">
+          <div className="shrink-0 size-48 rounded-xl bg-default-100 overflow-hidden flex items-center justify-center">
             <Image
               src={person.image || '/person.avif'}
-              alt={displayName}
-              className="w-full h-full object-cover object-[50%_top]"
+              alt={getPreferredLanguageText(person.name)}
+              className="w-full h-full object-cover"
             />
           </div>
+
           <div className="flex flex-wrap gap-2">
             {person.roles.map((r) => (
               <Chip key={r} size="sm" variant="flat">
@@ -93,7 +94,7 @@ export const PersonDetailContainer = ({ person }: { person: PersonDetail }) => {
           ) : null}
         </aside>
 
-        <main className="md:col-span-2 space-y-6">
+        <main className="md:col-span-5 space-y-6">
           <section>
             <h2 className="text-lg font-semibold mb-2">介绍</h2>
             <div className="text-sm leading-7 text-default-700 whitespace-pre-line">
@@ -101,30 +102,34 @@ export const PersonDetailContainer = ({ person }: { person: PersonDetail }) => {
             </div>
           </section>
           <section>
-            <h2 className="text-lg font-semibold mb-3">参与的 Patch</h2>
+            <h2 className="text-lg font-semibold mb-3">参与的 Galgame</h2>
             {person.patches.length ? (
               <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
                 {person.patches.map((p) => (
-                  <NextLink
+                  <div
                     key={p.id}
-                    href={`/patch/${p.id}`}
-                    className="group rounded-lg overflow-hidden border border-default-200"
+                    className="group rounded-2xl overflow-hidden border border-default-200"
                   >
                     <div className="aspect-video bg-default-100">
                       <Image
                         src={p.banner}
-                        alt={p.name}
+                        alt={getPreferredLanguageText(p.name)}
+                        radius="none"
                         className="w-full h-full object-cover"
                       />
                     </div>
-                    <div className="p-3 text-sm font-medium group-hover:underline truncate">
-                      {p.name}
-                    </div>
-                  </NextLink>
+                    <Link
+                      size="sm"
+                      href={`/patch/${p.id}`}
+                      className="p-3 truncate"
+                    >
+                      {getPreferredLanguageText(p.name)}
+                    </Link>
+                  </div>
                 ))}
               </div>
             ) : (
-              <div className="text-sm text-default-400">暂无参与的 Patch</div>
+              <div className="text-sm text-default-400">暂无参与的 Galgame</div>
             )}
           </section>
         </main>

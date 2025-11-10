@@ -1,18 +1,21 @@
 import { kunGetActions } from './actions'
 import { ErrorComponent } from '~/components/error/ErrorComponent'
-import type { Metadata } from 'next'
 import { PersonContainer } from '~/components/person/Container'
-import { kunMetadata } from './metadata'
+import { generateNullMetadata } from '~/utils/noIndex'
+import type { Metadata } from 'next'
 
 export const revalidate = 5
 
-export const metadata: Metadata = kunMetadata
+export const generateMetadata = async (): Promise<Metadata> => {
+  return generateNullMetadata('制作人列表')
+}
 
-export default async function PersonIndex() {
-  const response = await kunGetActions({ page: 1, limit: 100 })
+export default async function Kun() {
+  const response = await kunGetActions({ page: 1, limit: 72 })
   if (typeof response === 'string') {
     return <ErrorComponent error={response} />
   }
+
   return (
     <PersonContainer
       initialPersons={response.persons}
