@@ -1,10 +1,10 @@
 import { prisma } from '../db/prisma'
 import { vndbGetVnById } from '../api/vndb'
 import { parsePatchFileName, type ParsedPatchFileName } from './parse'
-import { uploadBannerForPatchWebp, uploadPatchFileToS3 } from './upload'
+import { uploadBannerForPatch, uploadPatchFileToS3 } from './upload'
 import { generateFileHash } from '../../../app/api/upload/calculateFileStreamHash'
 import { loadNoteTemplate, renderNoteFromTemplate } from './note'
-import sharp from 'sharp'
+import { sanitizeFileName } from '../../../utils/sanitizeFileName'
 
 export async function pickSfwScreenshotUrl(vn: any): Promise<string | null> {
   if (!vn?.screenshots?.length) return null
@@ -41,7 +41,7 @@ export async function createPatchIfMissing(parsed: ParsedPatchFileName) {
   const nameEn = (vn as any)?.title || ''
   const nameJa = parsed.gameName || deriveJaTitle(vn)
   const releasedRaw = String((vn as any)?.released || '').trim()
-  const released = releasedRaw ? formatDateYMD(releasedRaw) : 'unknown'
+  const released = releasedRaw ? formatDateYYMMDD(releasedRaw) : 'unknown'
 
   const patch = await prisma.patch.create({
     data: {
@@ -66,7 +66,7 @@ export async function createPatchIfMissing(parsed: ParsedPatchFileName) {
     if (screenshotUrl) {
       const res = await fetch(screenshotUrl)
       const arrayBuffer = await res.arrayBuffer()
-      const uploadRes = await uploadBannerForPatchWebp(patch.id, arrayBuffer)
+      const uploadRes = await uploadBannerForPatch(patch.id, arrayBuffer)
       if (typeof uploadRes !== 'string') {
         await prisma.patch.update({
           where: { id: patch.id },
@@ -102,11 +102,11 @@ export async function createPatchResourceForFile(
     gameName: parsed.gameName,
     groupName: parsed.groupName,
     language: parsed.language,
-    publishDate: formatDateYMD(parsed.publishDate),
-    startDate: formatDateYMD(parsed.startDate),
+    publishDate: formatDateYYMMDD(parsed.publishDate),
+    startDate: formatDateYYMMDD(parsed.startDate),
     vndbId: parsed.vndbId,
     platform: parsed.platform,
-    fileName: parsed.fileName
+    fileName: sanitizeFileName(parsed.fileName)
   })
 
   const resource = await prisma.patch_resource.create({
@@ -159,14 +159,14 @@ export async function processOnePatchFile(filePath: string) {
   return await createPatchResourceForFile(patchId, parsed)
 }
 
-export function formatDateYMD(s: string) {
+export function formatDateYYMMDD(s: string) {
   const t = String(s || '').replace(/[^0-9]/g, '')
   if (t.length === 8) {
-    return `${t.slice(0, 4)}-${t.slice(4, 6)}-${t.slice(6, 8)}`
+    return `${t.slice(2, 4)}-${t.slice(4, 6)}-${t.slice(6, 8)}`
   }
   if (t.length === 6) {
-    return `${t.slice(0, 4)}-${t.slice(4, 6)}`
+    return `${t.slice(2, 4)}-${t.slice(4, 6)}`
   }
-  if (t.length === 4) return t
+  if (t.length === 4) return t.slice(2, 4)
   return s
 }

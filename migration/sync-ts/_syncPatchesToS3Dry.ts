@@ -3,6 +3,7 @@ import { readdir, mkdir, copyFile, writeFile } from 'fs/promises'
 import { vndbGetVnById } from './api/vndb'
 import { parsePatchFileName } from './vn-sync/parse'
 import sharp from 'sharp'
+import { sanitizeFileName } from '../../utils/sanitizeFileName'
 
 async function ensureDir(dir: string) {
   await mkdir(dir, { recursive: true })
@@ -35,11 +36,12 @@ export async function syncPatchesToS3Dry(
         results.push({ file: name, ok: false, error: 'Unrecognized filename' })
         continue
       }
-      // Copy patch file for inspection
-      const dstPatchPath = path.posix.join(dstPatchDir, name)
+      // Copy patch file for inspection (sanitized file name)
+      const sanitized = sanitizeFileName(name)
+      const dstPatchPath = path.posix.join(dstPatchDir, sanitized)
       await copyFile(filePath, dstPatchPath)
 
-      // Fetch VN and write banner webp files
+      // Fetch VN and write banner avif files
       const vn = await vndbGetVnById(parsed.vndbId)
       const shotUrl = pickSfwScreenshotUrlLocal(vn)
       if (shotUrl) {
@@ -47,21 +49,16 @@ export async function syncPatchesToS3Dry(
         const ab = await res.arrayBuffer()
         const banner = await sharp(ab)
           .resize(1920, 1080, { fit: 'inside', withoutEnlargement: true })
-          .webp({ quality: 70 })
+          .avif({ quality: 60 })
           .toBuffer()
         const mini = await sharp(ab)
           .resize(460, 259, { fit: 'inside', withoutEnlargement: true })
-          .webp({ quality: 70 })
+          .avif({ quality: 60 })
           .toBuffer()
-        const base = `${parsed.vndbId}`
-        await writeFile(
-          path.posix.join(dstBannerDir, `${base}-banner.webp`),
-          banner
-        )
-        await writeFile(
-          path.posix.join(dstBannerDir, `${base}-banner-mini.webp`),
-          mini
-        )
+        const bannerDir = path.posix.join(dstBannerDir, parsed.vndbId)
+        await ensureDir(bannerDir)
+        await writeFile(path.posix.join(bannerDir, `banner.avif`), banner)
+        await writeFile(path.posix.join(bannerDir, `banner-mini.avif`), mini)
       }
 
       results.push({ file: name, ok: true })
