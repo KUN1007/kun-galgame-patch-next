@@ -2,6 +2,7 @@ import { PatchDetailIntro } from '~/components/patch/introduction/Detail'
 import { kunGetPatchDetailActions } from '../actions'
 import { ErrorComponent } from '~/components/error/ErrorComponent'
 import { generateKunMetadataTemplate } from './metadata'
+import { getNSFWHeader } from '~/utils/actions/getNSFWHeader'
 import type { Metadata } from 'next'
 
 export const revalidate = 5
@@ -23,9 +24,15 @@ export const generateMetadata = async ({
 
 export default async function Kun({ params }: Props) {
   const { id } = await params
+
   const detail = await kunGetPatchDetailActions({ patchId: Number(id) })
   if (typeof detail === 'string') {
     return <ErrorComponent error={detail} />
   }
-  return <PatchDetailIntro detail={detail} />
+
+  const nsfwEnable = await getNSFWHeader()
+  const isNSFW =
+    nsfwEnable.content_limit === 'nsfw' || nsfwEnable.content_limit === 'all'
+
+  return <PatchDetailIntro isNSFW={isNSFW} detail={detail} />
 }

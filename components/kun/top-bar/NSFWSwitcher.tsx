@@ -25,7 +25,7 @@ export const NSFWSwitcher = () => {
   const themeIcon = themeIconMap[settings.kunNsfwEnable] || themeIconMap['all']
 
   return (
-    <Dropdown className="min-w-0">
+    <Dropdown placement="bottom-end" className="min-w-0">
       <Tooltip disableAnimation showArrow closeDelay={0} content="内容显示切换">
         <div className="flex">
           <DropdownTrigger>

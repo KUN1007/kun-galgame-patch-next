@@ -10,15 +10,16 @@ import { GallerySection } from './section/Gallery'
 
 interface Props {
   detail: PatchDetail
+  isNSFW: boolean
 }
 
-export const PatchDetailIntro = ({ detail }: Props) => {
+export const PatchDetailIntro = ({ detail, isNSFW }: Props) => {
   return (
     <div className="space-y-8">
       <OverviewSection detail={detail} />
       <TagSection detail={detail} />
-      <GallerySection detail={detail} />
-      <CharacterSection detail={detail} />
+      <GallerySection isNSFW={isNSFW} detail={detail} />
+      <CharacterSection isNSFW={isNSFW} detail={detail} />
       <PersonSection detail={detail} />
       <ReleaseSection detail={detail} />
     </div>
