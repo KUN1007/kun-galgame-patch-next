@@ -24,7 +24,11 @@ export const UserResourceCard = ({ resource }: Props) => {
         <div className="flex flex-col gap-4 sm:flex-row">
           <div className="relative w-full sm:h-auto sm:w-40">
             <Image
-              src={resource.patchBanner.replace(/\.avif$/, '-mini.avif')}
+              src={
+                resource.patchBanner
+                  ? resource.patchBanner.replace(/\.avif$/, '-mini.avif')
+                  : '/kungalgame.avif'
+              }
               alt={resource.patchName}
               className="object-cover rounded-lg size-full max-h-52"
               radius="lg"

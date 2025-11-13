@@ -109,7 +109,6 @@ export interface PatchDetail {
   vndbId: string
   introduction: KunLanguage
   alias: PatchDetailAlias[]
-  cover: PatchCover[]
   screenshot: PatchScreenshot[]
   tag: PatchDetailTag[]
   company: PatchDetailCompany[]

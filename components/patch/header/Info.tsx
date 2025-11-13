@@ -13,14 +13,13 @@ import { Tags } from './Tags'
 import Image from 'next/image'
 import {
   Button,
-  Image as HeroImage,
   Modal,
   ModalBody,
   ModalContent,
   ModalHeader,
   useDisclosure
 } from '@heroui/react'
-import { useMemo, useState } from 'react'
+import { useMemo } from 'react'
 import { EditBanner } from './EditBanner'
 import type { PatchHeader } from '~/types/api/patch'
 import { getPreferredLanguageText } from '~/utils/getPreferredLanguageText'
@@ -33,41 +32,11 @@ export const PatchHeaderInfo = ({ patch }: PatchHeaderInfoProps) => {
   const { isOpen, onOpen, onOpenChange } = useDisclosure()
   const patchName = useMemo(() => getPreferredLanguageText(patch.name), [])
 
-  const [covers, setCovers] = useState<
-    Array<{
-      image_id: string
-      url: string
-      width: number
-      height: number
-      thumbnail_url: string
-      thumb_width: number
-      thumb_height: number
-    }>
-  >([])
-  const [loadingCovers, setLoadingCovers] = useState(false)
-
-  // TODO:
-  const ensureCovers = async () => {
-    if (covers.length || loadingCovers) return
-    try {
-      setLoadingCovers(true)
-      const res = await fetch(`/api/patch/detail?patchId=${patch.id}`, {
-        cache: 'no-store'
-      })
-      const json = await res.json()
-      const list = Array.isArray(json?.cover) ? json.cover : []
-      setCovers(list)
-    } catch {
-    } finally {
-      setLoadingCovers(false)
-    }
-  }
-
   return (
     <div className="grid grid-cols-1 gap-3 md:grid-cols-3">
       <div className="relative w-full h-full overflow-hidden md:col-span-1 aspect-video rounded-2xl">
         <Image
-          src={patch.banner}
+          src={patch.banner ? patch.banner : '/kungalgame.avif'}
           alt={patchName}
           className="object-cover"
           fill
@@ -77,15 +46,7 @@ export const PatchHeaderInfo = ({ patch }: PatchHeaderInfoProps) => {
         />
 
         <div className="absolute top-2 right-2 z-10">
-          <Button
-            size="sm"
-            color="secondary"
-            variant="flat"
-            onPress={async () => {
-              await ensureCovers()
-              onOpen()
-            }}
-          >
+          <Button size="sm" color="secondary" variant="flat" onPress={onOpen}>
             查看封面
           </Button>
         </div>
@@ -167,25 +128,14 @@ export const PatchHeaderInfo = ({ patch }: PatchHeaderInfoProps) => {
         <ModalContent>
           {() => (
             <ModalContent>
-              <ModalHeader>全部封面（{covers.length}）</ModalHeader>
+              <ModalHeader>全部封面（{patch.cover.length}）</ModalHeader>
               <ModalBody>
-                {loadingCovers && (
-                  <div className="text-sm text-default-500">加载中...</div>
-                )}
-                <div className="grid grid-cols-2 md:grid-cols-3 gap-3">
-                  {covers.map((c) => (
-                    <div
-                      key={c.image_id || c.url}
-                      className="aspect-[4/3] bg-default-100 rounded-lg overflow-hidden"
-                    >
-                      <HeroImage
-                        src={c.url}
-                        alt={c.image_id}
-                        className="w-full h-full object-cover"
-                      />
-                    </div>
-                  ))}
-                  {!covers.length && !loadingCovers && (
+                <div className="flex flex-col gap-3">
+                  {patch.cover.length ? (
+                    patch.cover.map((c) => (
+                      <img key={c.image_id} src={c.url} alt={c.image_id} />
+                    ))
+                  ) : (
                     <div className="text-sm text-default-400">暂无封面</div>
                   )}
                 </div>
