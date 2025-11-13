@@ -38,7 +38,7 @@ export const KunMobileCard = ({ posts, currentSlide }: Props) => {
 
         <Link
           color="foreground"
-          className="text-lg font-bold hover:text-primary-500 line-clamp-1"
+          className="text-lg font-bold hover:text-primary-500 line-clamp-2"
           href={post.link}
         >
           <h1>{post.title}</h1>
