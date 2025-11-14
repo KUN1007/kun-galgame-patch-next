@@ -47,6 +47,7 @@
       }
     ],
     "no-debugger": "off",
+    "no-empty": "off",
     "@typescript-eslint/no-explicit-any": "off",
     "no-console": "warn",
     "sort-imports": 0,

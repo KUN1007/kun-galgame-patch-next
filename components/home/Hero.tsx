@@ -21,7 +21,11 @@ export const HomeHero = () => {
             欢迎来到 {kunMoyuMoe.titleShort}
           </div>
         </Chip>
-        <img className="rounded-2xl" src="/kungalgame-trans.webp" />
+        <img
+          alt={kunMoyuMoe.titleShort}
+          className="rounded-2xl"
+          src="/kungalgame-trans.webp"
+        />
       </div>
 
       <KunCarousel posts={posts} />
