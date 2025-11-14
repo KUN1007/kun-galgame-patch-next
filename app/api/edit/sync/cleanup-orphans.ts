@@ -38,23 +38,12 @@ export const cleanupOrphans = async () => {
 // If executed directly: preview and execute when EXECUTE=1
 if (require.main === module) {
   ;(async () => {
-    const countBeforeChars = await prisma.patch_char.count({
-      where: { AND: [{ patches: { none: {} } }, { voices: { none: {} } }] }
-    })
-    const countBeforePersons = await prisma.patch_person.count({
-      where: { AND: [{ patches: { none: {} } }, { chars: { none: {} } }] }
-    })
-    console.log('Orphan patch_char:', countBeforeChars)
-    console.log('Orphan patch_person:', countBeforePersons)
     if (process.env.EXECUTE === '1') {
       await cleanupOrphans()
-      console.log('Orphan cleanup executed.')
     } else {
-      console.log('Dry run. Set EXECUTE=1 to execute deletion.')
       await prisma.$disconnect()
     }
-  })().catch(async (e) => {
-    console.error(e)
+  })().catch(async () => {
     await prisma.$disconnect()
     process.exit(1)
   })

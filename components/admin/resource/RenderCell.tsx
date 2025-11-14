@@ -7,8 +7,11 @@ import Link from 'next/link'
 import { ResourceEdit } from './ResourceEdit'
 import { KunUser } from '~/components/kun/floating-card/KunUser'
 import type { AdminResource } from '~/types/api/admin'
+import { getPreferredLanguageText } from '~/utils/getPreferredLanguageText'
 
 export const RenderCell = (resource: AdminResource, columnKey: string) => {
+  const galgameName = getPreferredLanguageText(resource.patchName)
+
   switch (columnKey) {
     case 'name':
       return (
@@ -16,7 +19,7 @@ export const RenderCell = (resource: AdminResource, columnKey: string) => {
           href={`/patch/${resource.patchId}/resource`}
           className="font-medium hover:text-primary-500"
         >
-          {resource.patchName}
+          {galgameName}
         </Link>
       )
     case 'user':

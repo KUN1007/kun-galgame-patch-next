@@ -45,7 +45,6 @@ export async function createPatchIfMissing(parsed: ParsedPatchFileName) {
 
   const patch = await prisma.patch.create({
     data: {
-      name: '',
       name_en_us: nameEn || '',
       name_ja_jp: nameJa || '',
       vndb_id: parsed.vndbId,

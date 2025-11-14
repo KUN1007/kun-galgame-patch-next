@@ -14,7 +14,15 @@ export const getGalgame = async (
 
   const where = search
     ? {
-        name: {
+        name_zh_cn: {
+          contains: search,
+          mode: 'insensitive' as const
+        },
+        name_en_us: {
+          contains: search,
+          mode: 'insensitive' as const
+        },
+        name_ja_jp: {
           contains: search,
           mode: 'insensitive' as const
         }
@@ -42,7 +50,11 @@ export const getGalgame = async (
 
   const galgames: AdminGalgame[] = data.map((galgame) => ({
     id: galgame.id,
-    name: galgame.name,
+    name: {
+      'en-us': galgame.name_en_us,
+      'ja-jp': galgame.name_ja_jp,
+      'zh-cn': galgame.name_zh_cn
+    },
     banner: galgame.banner,
     user: galgame.user,
     created: galgame.created

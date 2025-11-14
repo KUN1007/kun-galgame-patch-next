@@ -10,7 +10,10 @@ interface Props {
 export const PatchIntroduction = ({ errors }: Props) => {
   const { data } = useCreatePatchStore()
   const getCurText = () =>
-    data.introduction['zh-cn'] || data.introduction['ja-jp'] || data.introduction['en-us'] || ''
+    data.introduction['zh-cn'] ||
+    data.introduction['ja-jp'] ||
+    data.introduction['en-us'] ||
+    ''
   return (
     <TabbedIntroduction
       storeName="patchCreate"
@@ -20,4 +23,3 @@ export const PatchIntroduction = ({ errors }: Props) => {
     />
   )
 }
-

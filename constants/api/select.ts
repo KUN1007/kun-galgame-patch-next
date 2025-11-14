@@ -1,6 +1,8 @@
 export const GalgameCardSelectField = {
   id: true,
-  name: true,
+  name_en_us: true,
+  name_ja_jp: true,
+  name_zh_cn: true,
   banner: true,
   view: true,
   download: true,

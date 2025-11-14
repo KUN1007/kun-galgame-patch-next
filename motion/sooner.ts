@@ -1,4 +1,6 @@
-export const toastVariants = {
+import type { Variants } from 'framer-motion'
+
+export const toastVariants: Variants = {
   initial: {
     opacity: 0,
     y: -50,
@@ -29,7 +31,7 @@ export const toastVariants = {
   }
 }
 
-export const iconVariants = {
+export const iconVariants: Variants = {
   initial: { scale: 0, rotate: -180 },
   animate: {
     scale: 1,
@@ -43,7 +45,7 @@ export const iconVariants = {
   }
 }
 
-export const textVariants = {
+export const textVariants: Variants = {
   initial: { opacity: 0, x: 20 },
   animate: {
     opacity: 1,

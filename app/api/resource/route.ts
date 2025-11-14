@@ -29,7 +29,9 @@ export const getPatchResource = async (
       include: {
         patch: {
           select: {
-            name: true
+            name_en_us: true,
+            name_ja_jp: true,
+            name_zh_cn: true
           }
         },
         user: {
@@ -62,7 +64,11 @@ export const getPatchResource = async (
     likeCount: resource._count.like_by,
     download: resource.download,
     patchId: resource.patch_id,
-    patchName: resource.patch.name,
+    patchName: {
+      'en-us': resource.patch.name_en_us,
+      'ja-jp': resource.patch.name_ja_jp,
+      'zh-cn': resource.patch.name_zh_cn
+    },
     created: String(resource.created),
     updateTime: resource.update_time,
     user: {

@@ -20,7 +20,9 @@ import { sleep } from './utils/sleep'
 
 export async function processPatch(patch: {
   id: number
-  name: string
+  name_ja_jp: string
+  name_en_us: string
+  name_zh_cn: string
   bid?: number | null
   vndb_id?: string | null
 }) {
@@ -41,7 +43,7 @@ export async function processPatch(patch: {
 
   // Find bangumi subject id
   const subjectId = await findBangumiSubjectId(
-    patch.name,
+    patch.name_ja_jp || patch.name_zh_cn || patch.name_en_us,
     vnDetail,
     patch.bid || null
   )
@@ -69,44 +71,6 @@ export async function processPatch(patch: {
   await persistCharMap(charMap, patch.id)
   await linkVoices(vnDetail, patch.id)
 
-  // Fallback: fill zh_cn introduction from legacy introduction
-  try {
-    const p = await prisma.patch.findUnique({
-      where: { id: patch.id },
-      select: {
-        introduction_zh_cn: true,
-        introduction: true,
-        introduction_en_us: true
-      }
-    })
-    // Normalize function: remove last line if it starts with '[' and trim
-    const normalizeIntro = (txt?: string | null) => {
-      if (!txt) return ''
-      const lines = String(txt).split(/\n+/)
-      if (lines.length) {
-        const last = (lines[lines.length - 1] || '').trim()
-        if (last.startsWith('[')) lines.pop()
-      }
-      return lines.join('\n').trim()
-    }
-    if (p && !p.introduction_zh_cn && p.introduction) {
-      const legacy = normalizeIntro(p.introduction)
-      const en = normalizeIntro(p.introduction_en_us || '')
-      const l10 = legacy.slice(0, 10)
-      const e10 = en.slice(0, 10)
-      // If first 10 chars match, treat as equal, skip write
-      if (legacy && (!l10 || l10 === e10)) {
-        // skip
-      } else if (legacy) {
-        await prisma.patch
-          .update({
-            where: { id: patch.id },
-            data: { introduction_zh_cn: p.introduction }
-          })
-          .catch(() => {})
-      }
-    }
-  } catch {}
   await sleep(250)
 }
 

@@ -34,7 +34,7 @@ export const patchCommentUpdateSchema = z.object({
 })
 
 export const patchResourceCreateSchema = z.object({
-  patchId: z.coerce.number().min(1).max(9999999),
+  patchId: z.coerce.number<number>().min(1).max(9999999),
   storage: z.string().refine((type) => SUPPORTED_RESOURCE_LINK.includes(type), {
     message: '非法的资源链接类型'
   }),

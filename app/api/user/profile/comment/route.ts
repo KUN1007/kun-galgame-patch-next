@@ -44,7 +44,11 @@ export const getUserComment = async (
     like: comment.like_by.length,
     userId: comment.user_id,
     patchId: comment.patch_id,
-    patchName: comment.patch.name,
+    patchName: {
+      'en-us': comment.patch.name_en_us,
+      'ja-jp': comment.patch.name_ja_jp,
+      'zh-cn': comment.patch.name_zh_cn
+    },
     created: String(comment.created),
     quotedUserUid: comment.parent?.user.id,
     quotedUsername: comment.parent?.user.name

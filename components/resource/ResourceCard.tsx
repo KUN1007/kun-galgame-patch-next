@@ -5,6 +5,7 @@ import { Download, Heart } from 'lucide-react'
 import { KunPatchAttribute } from '~/components/kun/PatchAttribute'
 import { KunUser } from '../kun/floating-card/KunUser'
 import { formatDate } from '~/utils/time'
+import { getPreferredLanguageText } from '~/utils/getPreferredLanguageText'
 import type { PatchResource } from '~/types/api/resource'
 
 interface Props {
@@ -12,6 +13,8 @@ interface Props {
 }
 
 export const ResourceCard = ({ resource }: Props) => {
+  const galgameName = getPreferredLanguageText(resource.patchName)
+
   return (
     <Card
       isPressable
@@ -36,7 +39,7 @@ export const ResourceCard = ({ resource }: Props) => {
         </div>
 
         <h2 className="text-lg font-semibold transition-colors line-clamp-2 hover:text-primary-500">
-          {resource.patchName}
+          {galgameName}
         </h2>
 
         {(resource.name || resource.note) && (

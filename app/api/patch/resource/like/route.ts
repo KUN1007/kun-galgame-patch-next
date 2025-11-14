@@ -4,6 +4,7 @@ import { kunParsePutBody } from '~/app/api/utils/parseQuery'
 import { prisma } from '~/prisma/index'
 import { verifyHeaderCookie } from '~/middleware/_verifyHeaderCookie'
 import { createDedupMessage } from '~/app/api/utils/message'
+import { getPreferredLanguageText } from '~/utils/getPreferredLanguageText'
 
 const resourceIdSchema = z.object({
   resourceId: z.coerce
@@ -65,9 +66,14 @@ export const toggleResourceLike = async (
       data: { moemoepoint: { increment: existingLike ? -1 : 1 } }
     })
 
+    const galgameName = getPreferredLanguageText({
+      'en-us': resource.patch.name_en_us,
+      'ja-jp': resource.patch.name_ja_jp,
+      'zh-cn': resource.patch.name_zh_cn
+    })
     await createDedupMessage({
       type: 'likeResource',
-      content: `点赞了您在 ${resource.patch.name} 下发布的补丁资源`,
+      content: `点赞了您在 ${galgameName} 下发布的补丁资源`,
       sender_id: uid,
       recipient_id: resource.user_id,
       link: `/patch/${resource.patch.id}/resource`

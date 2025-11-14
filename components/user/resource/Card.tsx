@@ -4,7 +4,7 @@ import { Image } from '@heroui/image'
 import { formatDistanceToNow } from '~/utils/formatDistanceToNow'
 import Link from 'next/link'
 import { KunPatchAttribute } from '~/components/kun/PatchAttribute'
-
+import { getPreferredLanguageText } from '~/utils/getPreferredLanguageText'
 import type { UserResource as UserResourceType } from '~/types/api/user'
 
 interface Props {
@@ -12,6 +12,8 @@ interface Props {
 }
 
 export const UserResourceCard = ({ resource }: Props) => {
+  const galgameName = getPreferredLanguageText(resource.patchName)
+
   return (
     <Card
       isPressable
@@ -29,7 +31,7 @@ export const UserResourceCard = ({ resource }: Props) => {
                   ? resource.patchBanner.replace(/\.avif$/, '-mini.avif')
                   : '/kungalgame.avif'
               }
-              alt={resource.patchName}
+              alt={galgameName}
               className="object-cover rounded-lg size-full max-h-52"
               radius="lg"
             />
@@ -37,7 +39,7 @@ export const UserResourceCard = ({ resource }: Props) => {
           <div className="flex-1 space-y-3">
             <div className="flex flex-col justify-between gap-2 sm:flex-row sm:items-center">
               <h2 className="text-lg font-semibold transition-colors line-clamp-2 hover:text-primary-500">
-                {resource.patchName}
+                {galgameName}
               </h2>
               <Chip variant="flat">
                 {formatDistanceToNow(resource.created)}

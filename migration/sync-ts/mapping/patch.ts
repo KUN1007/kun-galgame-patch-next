@@ -10,13 +10,17 @@ import { TAG_MAP } from '../../../lib/tagMap'
 
 export async function resolveVndbId(patch: {
   id: number
-  name: string
+  name_ja_jp: string
+  name_en_us: string
+  name_zh_cn: string
   vndb_id?: string | null
 }) {
   let vndbId = patch.vndb_id || null
   if (!vndbId) {
     try {
-      const vn = await vndbFindVnByName(patch.name)
+      const vn = await vndbFindVnByName(
+        patch.name_ja_jp || patch.name_en_us || patch.name_zh_cn
+      )
       if (vn?.id) vndbId = vn.id
     } catch {}
   }

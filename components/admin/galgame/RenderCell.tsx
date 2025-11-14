@@ -5,14 +5,17 @@ import { Image } from '@heroui/image'
 import Link from 'next/link'
 import { formatDistanceToNow } from '~/utils/formatDistanceToNow'
 import { KunUser } from '~/components/kun/floating-card/KunUser'
+import { getPreferredLanguageText } from '~/utils/getPreferredLanguageText'
 import type { AdminGalgame } from '~/types/api/admin'
 
 export const RenderCell = (galgame: AdminGalgame, columnKey: string) => {
+  const galgameName = getPreferredLanguageText(galgame.name)
+
   switch (columnKey) {
     case 'banner':
       return (
         <Image
-          alt={galgame.name}
+          alt={galgameName}
           className="object-cover"
           width={128}
           src={galgame.banner.replace(/\.avif$/, '-mini.avif')}
@@ -25,7 +28,7 @@ export const RenderCell = (galgame: AdminGalgame, columnKey: string) => {
           href={`/patch/${galgame.id}/introduction`}
           className="font-medium hover:text-primary-500"
         >
-          {galgame.name}
+          {galgameName}
         </Link>
       )
     case 'user':

@@ -10,6 +10,7 @@ import { KunPatchAttribute } from '~/components/kun/PatchAttribute'
 import { cn } from '~/utils/cn'
 import { GALGAME_AGE_LIMIT_MAP } from '~/constants/galgame'
 import { formatDistanceToNow } from '~/utils/formatDistanceToNow'
+import { getPreferredLanguageText } from '~/utils/getPreferredLanguageText'
 
 interface Props {
   patch: GalgameCard
@@ -17,6 +18,7 @@ interface Props {
 
 export const GalgameCard = ({ patch }: Props) => {
   const [imageLoaded, setImageLoaded] = useState(false)
+  const galgameName = getPreferredLanguageText(patch.name)
 
   return (
     <Card
@@ -37,7 +39,7 @@ export const GalgameCard = ({ patch }: Props) => {
           />
           <Image
             radius="none"
-            alt={patch.name}
+            alt={galgameName}
             className={cn(
               'size-full object-cover transition-all duration-300',
               imageLoaded ? 'scale-100 opacity-90' : 'scale-105 opacity-0'
@@ -64,7 +66,7 @@ export const GalgameCard = ({ patch }: Props) => {
       </CardHeader>
       <CardBody className="justify-between space-y-2">
         <h2 className="font-semibold transition-colors space-x-2 text-medium sm:text-lg line-clamp-2 hover:text-primary-500">
-          <span>{patch.name}</span>
+          <span>{galgameName}</span>
           <span className="font-normal text-base text-xs text-default-500">
             {formatDistanceToNow(patch.created)}
           </span>

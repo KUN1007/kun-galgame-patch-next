@@ -32,7 +32,7 @@ export const cleanupPatchSideEffects = async (patchId: number) => {
         .update({ where: { id: cid }, data: { count: { decrement: 1 } } })
         .catch(() => {})
     }
-  } catch {}
+  } catch (e) {}
   // Clear tag relations and decrement counts
   try {
     const rels = await prisma.patch_tag_relation.findMany({
@@ -45,7 +45,7 @@ export const cleanupPatchSideEffects = async (patchId: number) => {
         .update({ where: { id: tid }, data: { count: { decrement: 1 } } })
         .catch(() => {})
     }
-  } catch {}
+  } catch (e) {}
   // Clear person/character relations (but keep the global records)
   await prisma.patch_person_relation
     .deleteMany({ where: { patch_id: patchId } })

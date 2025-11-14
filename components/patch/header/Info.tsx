@@ -111,11 +111,7 @@ export const PatchHeaderInfo = ({ patch }: PatchHeaderInfoProps) => {
               }
             }}
           />
-          <KunCardStats
-            patch={{ ...patch, name: patchName }}
-            disableTooltip={false}
-            isMobile={false}
-          />
+          <KunCardStats patch={patch} disableTooltip={false} isMobile={false} />
         </div>
       </div>
 

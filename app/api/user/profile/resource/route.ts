@@ -29,7 +29,11 @@ export const getUserPatchResource = async (
   const resources: UserResource[] = data.map((res) => ({
     id: res.id,
     patchId: res.patch.id,
-    patchName: res.patch.name,
+    patchName: {
+      'en-us': res.patch.name_en_us,
+      'ja-jp': res.patch.name_ja_jp,
+      'zh-cn': res.patch.name_zh_cn
+    },
     patchBanner: res.patch.banner,
     size: res.size,
     type: res.type,

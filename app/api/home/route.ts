@@ -8,7 +8,7 @@ import { getNSFWHeader } from '~/app/api/utils/getNSFWHeader'
 export const getHomeData = async (
   nsfwEnable: Record<string, string | undefined>
 ) => {
-  const [galgames, resourcesData, commentsData] = await Promise.all([
+  const [galgamesData, resourcesData, commentsData] = await Promise.all([
     prisma.patch.findMany({
       orderBy: { created: 'desc' },
       where: nsfwEnable,
@@ -21,7 +21,9 @@ export const getHomeData = async (
       include: {
         patch: {
           select: {
-            name: true
+            name_en_us: true,
+            name_ja_jp: true,
+            name_zh_cn: true
           }
         },
         user: {
@@ -44,7 +46,9 @@ export const getHomeData = async (
       include: {
         patch: {
           select: {
-            name: true
+            name_en_us: true,
+            name_ja_jp: true,
+            name_zh_cn: true
           }
         },
         user: {
@@ -64,6 +68,15 @@ export const getHomeData = async (
     })
   ])
 
+  const galgames: GalgameCard[] = galgamesData.map((g) => ({
+    ...g,
+    name: {
+      'en-us': g.name_en_us,
+      'ja-jp': g.name_ja_jp,
+      'zh-cn': g.name_zh_cn
+    }
+  }))
+
   const resources: HomeResource[] = resourcesData.map((resource) => ({
     id: resource.id,
     storage: resource.storage,
@@ -77,7 +90,11 @@ export const getHomeData = async (
     likeCount: resource._count.like_by,
     download: resource.download,
     patchId: resource.patch_id,
-    patchName: resource.patch.name,
+    patchName: {
+      'en-us': resource.patch.name_en_us,
+      'ja-jp': resource.patch.name_ja_jp,
+      'zh-cn': resource.patch.name_zh_cn
+    },
     created: String(resource.created),
     user: {
       id: resource.user.id,
@@ -91,7 +108,11 @@ export const getHomeData = async (
     id: comment.id,
     user: comment.user,
     content: markdownToText(comment.content).slice(0, 233),
-    patchName: comment.patch.name,
+    patchName: {
+      'en-us': comment.patch.name_en_us,
+      'ja-jp': comment.patch.name_ja_jp,
+      'zh-cn': comment.patch.name_zh_cn
+    },
     patchId: comment.patch_id,
     like: comment._count.like_by,
     created: comment.created

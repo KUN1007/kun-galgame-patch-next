@@ -1,6 +1,7 @@
 import { z } from 'zod'
 import { deleteFileFromS3 } from '~/lib/s3/deleteFileFromS3'
 import { prisma } from '~/prisma/index'
+import { getPreferredLanguageText } from '~/utils/getPreferredLanguageText'
 
 const resourceIdSchema = z.object({
   resourceId: z.coerce
@@ -22,7 +23,9 @@ export const deleteResource = async (
     include: {
       patch: {
         select: {
-          name: true
+          name_en_us: true,
+          name_ja_jp: true,
+          name_zh_cn: true
         }
       }
     }
@@ -42,11 +45,17 @@ export const deleteResource = async (
       where: { id: input.resourceId }
     })
 
+    const galgameName = getPreferredLanguageText({
+      'en-us': patchResource.patch.name_en_us,
+      'ja-jp': patchResource.patch.name_ja_jp,
+      'zh-cn': patchResource.patch.name_zh_cn
+    })
+
     await prisma.admin_log.create({
       data: {
         type: 'delete',
         user_id: uid,
-        content: `管理员 ${admin.name} 删除了一个补丁资源\n\nGalgame 名:\n${patchResource.patch.name}\n\n补丁资源信息:\n${JSON.stringify(patchResource)}`
+        content: `管理员 ${admin.name} 删除了一个补丁资源\n\nGalgame 名:\n${galgameName}\n\n补丁资源信息:\n${JSON.stringify(patchResource)}`
       }
     })
 

@@ -8,7 +8,9 @@ async function main() {
   const patches = await prisma.patch.findMany({})
   for (let i = 0; i < patches.length; i++) {
     const p = patches[i]
-    console.log(`[${i + 1}/${patches.length}] sync patch ${p.id} - ${p.name}`)
+    console.log(
+      `[${i + 1}/${patches.length}] sync patch ${p.id} - ${p.name_ja_jp || p.name_zh_cn || p.name_en_us}`
+    )
     try {
       await processPatch(p)
     } catch (e: any) {

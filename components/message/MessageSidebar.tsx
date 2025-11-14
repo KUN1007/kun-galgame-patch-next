@@ -10,7 +10,6 @@ import {
 } from '@heroui/react'
 import { MessageNav } from '~/components/message/MessageNav'
 import { ChatRoomList } from '~/components/message/chat/ChatRoomList'
-// @ts-expect-error kun love ren forever~
 import './chat/message.css'
 
 export const MessageSidebar = () => {

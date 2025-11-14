@@ -28,14 +28,11 @@ export const createPatch = async (
 
   const newId = await prisma.$transaction(
     async (tx) => {
-      const displayName = name_en_us || name_ja_jp || name_zh_cn || ''
       const patch = await tx.patch.create({
         data: {
-          name: displayName,
           name_zh_cn,
           name_ja_jp,
           name_en_us,
-          introduction: introduction_zh_cn,
           introduction_zh_cn,
           introduction_ja_jp,
           introduction_en_us,

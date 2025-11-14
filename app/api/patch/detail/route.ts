@@ -69,7 +69,6 @@ export const getPatchDetail = async (
       'en-us': await markdownToHtml(patch.introduction_en_us)
     },
     vndbId: patch.vndb_id || '',
-    cover: patch.cover,
     screenshot: patch.screenshot.map((s) => ({
       id: s.id,
       image_id: s.image_id,

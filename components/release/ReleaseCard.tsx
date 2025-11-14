@@ -7,6 +7,7 @@ import { formatDate } from '~/utils/time'
 import { motion } from 'framer-motion'
 import Link from 'next/link'
 import { cn } from '~/utils/cn'
+import { getPreferredLanguageText } from '~/utils/getPreferredLanguageText'
 import type { GalgameReleaseCard } from '~/types/api/release'
 
 interface PatchCardProps {
@@ -15,6 +16,7 @@ interface PatchCardProps {
 
 export const ReleaseCard = ({ patch }: PatchCardProps) => {
   const [imageLoaded, setImageLoaded] = useState(false)
+  const galgameName = getPreferredLanguageText(patch.name)
 
   return (
     <motion.div
@@ -42,7 +44,7 @@ export const ReleaseCard = ({ patch }: PatchCardProps) => {
             />
             <Image
               radius="none"
-              alt={patch.name}
+              alt={galgameName}
               className={cn(
                 'size-full object-cover transition-all duration-300',
                 imageLoaded ? 'scale-100 opacity-90' : 'scale-105 opacity-0'
@@ -60,7 +62,7 @@ export const ReleaseCard = ({ patch }: PatchCardProps) => {
         </CardHeader>
         <CardBody className="justify-between space-y-2">
           <h2 className="font-semibold transition-colors text-medium sm:text-lg line-clamp-2 hover:text-primary-500">
-            {patch.name}
+            {galgameName}
           </h2>
 
           <div className="flex items-center justify-between gap-2">

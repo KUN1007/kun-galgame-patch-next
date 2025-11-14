@@ -1,6 +1,7 @@
 import { Card, CardBody } from '@heroui/card'
 import { formatDate } from '~/utils/time'
 import Link from 'next/link'
+import { getPreferredLanguageText } from '~/utils/getPreferredLanguageText'
 import type { UserContribute } from '~/types/api/user'
 
 interface Props {
@@ -8,6 +9,8 @@ interface Props {
 }
 
 export const UserContributeCard = ({ contribute }: Props) => {
+  const galgameName = getPreferredLanguageText(contribute.patchName)
+
   return (
     <Card
       isPressable
@@ -18,7 +21,7 @@ export const UserContributeCard = ({ contribute }: Props) => {
     >
       <CardBody className="p-4 space-y-3">
         <h2 className="text-lg font-semibold transition-colors line-clamp-2 hover:text-primary-500">
-          {contribute.patchName}
+          {galgameName}
         </h2>
         <p className="text-sm text-default-500">
           贡献于{' '}

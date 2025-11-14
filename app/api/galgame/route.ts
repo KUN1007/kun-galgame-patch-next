@@ -58,7 +58,7 @@ export const getGalgame = async (
     }
   }
 
-  const [galgames, total] = await Promise.all([
+  const [data, total] = await Promise.all([
     prisma.patch.findMany({
       take: limit,
       skip: offset,
@@ -78,6 +78,15 @@ export const getGalgame = async (
       }
     })
   ])
+
+  const galgames: GalgameCard[] = data.map((g) => ({
+    ...g,
+    name: {
+      'en-us': g.name_en_us,
+      'ja-jp': g.name_ja_jp,
+      'zh-cn': g.name_zh_cn
+    }
+  }))
 
   return { galgames, total }
 }

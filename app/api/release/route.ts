@@ -15,7 +15,9 @@ export const getGalgameRelease = async (
     where: { released: { startsWith: `${year}-${month}` } },
     select: {
       id: true,
-      name: true,
+      name_en_us: true,
+      name_ja_jp: true,
+      name_zh_cn: true,
       banner: true,
       released: true,
       _count: {
@@ -28,7 +30,11 @@ export const getGalgameRelease = async (
 
   const galgames: GalgameReleaseCard[] = data.map((gal) => ({
     patchId: gal.id,
-    name: gal.name,
+    name: {
+      'en-us': gal.name_en_us,
+      'ja-jp': gal.name_ja_jp,
+      'zh-cn': gal.name_zh_cn
+    },
     banner: gal.banner,
     released: gal.released,
     resourceCount: gal._count.resource

@@ -7,7 +7,6 @@ import { kunMetadata, kunViewport } from './metadata'
 import { KunBackToTop } from '~/components/kun/BackToTop'
 import Script from 'next/script'
 import type { Metadata, Viewport } from 'next'
-// @ts-expect-error kun love ren forever~
 import '~/styles/index.css'
 
 export const viewport: Viewport = kunViewport

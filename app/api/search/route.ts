@@ -15,7 +15,9 @@ export const searchGalgame = async (input: z.infer<typeof searchSchema>) => {
     where: {
       AND: query.map((q) => ({
         OR: [
-          { name: { contains: q, mode: insensitive } },
+          { name_en_us: { contains: q, mode: insensitive } },
+          { name_ja_jp: { contains: q, mode: insensitive } },
+          { name_zh_cn: { contains: q, mode: insensitive } },
           { vndb_id: { contains: q, mode: insensitive } },
           ...(searchOption.searchInIntroduction
             ? [{ introduction: { contains: q, mode: insensitive } }]
@@ -55,7 +57,9 @@ export const searchGalgame = async (input: z.infer<typeof searchSchema>) => {
     where: {
       AND: query.map((q) => ({
         OR: [
-          { name: { contains: q, mode: insensitive } },
+          { name_en_us: { contains: q, mode: insensitive } },
+          { name_ja_jp: { contains: q, mode: insensitive } },
+          { name_zh_cn: { contains: q, mode: insensitive } },
           { vndb_id: { contains: q, mode: insensitive } },
           ...(searchOption.searchInIntroduction
             ? [{ introduction: { contains: q, mode: insensitive } }]
@@ -91,7 +95,15 @@ export const searchGalgame = async (input: z.infer<typeof searchSchema>) => {
     data
       .flat()
       .reduce(
-        (map, gal) => map.set(gal.id, gal),
+        (map, gal) =>
+          map.set(gal.id, {
+            ...gal,
+            name: {
+              'en-us': gal.name_en_us,
+              'ja-jp': gal.name_ja_jp,
+              'zh-cn': gal.name_zh_cn
+            }
+          }),
         new Map<number, GalgameCard>()
       )
       .values()

@@ -6,6 +6,7 @@ import { Link } from '@heroui/link'
 import { Tooltip } from '@heroui/tooltip'
 import { Heart } from 'lucide-react'
 import { formatDistanceToNow } from '~/utils/formatDistanceToNow'
+import { getPreferredLanguageText } from '~/utils/getPreferredLanguageText'
 import type { UserComment } from '~/types/api/user'
 
 interface Props {
@@ -13,6 +14,8 @@ interface Props {
 }
 
 export const UserCommentCard = ({ comment }: Props) => {
+  const galgameName = getPreferredLanguageText(comment.patchName)
+
   return (
     <Card>
       <CardBody className="space-y-2">
@@ -52,7 +55,7 @@ export const UserCommentCard = ({ comment }: Props) => {
             href={`/patch/${comment.patchId}/comment`}
             target="_blank"
           >
-            {comment.patchName}
+            {galgameName}
           </Link>
         </div>
       </CardBody>

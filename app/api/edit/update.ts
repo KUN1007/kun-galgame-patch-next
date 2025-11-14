@@ -50,15 +50,12 @@ export const updatePatch = async (
       skipDuplicates: true
     })
 
-    const displayName = name_en_us || name_ja_jp || name_zh_cn || ''
     await tx.patch.update({
       where: { id },
       data: {
-        name: displayName,
         name_zh_cn,
         name_ja_jp,
         name_en_us,
-        introduction: introduction_zh_cn,
         introduction_zh_cn,
         introduction_ja_jp,
         introduction_en_us,

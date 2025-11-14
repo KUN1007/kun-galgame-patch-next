@@ -30,7 +30,14 @@ export const getPatchByTag = async (
     })
   ])
 
-  const galgames = data.map((p) => p.patch)
+  const galgames: GalgameCard[] = data.map((g) => ({
+    ...g.patch,
+    name: {
+      'en-us': g.patch.name_en_us,
+      'ja-jp': g.patch.name_ja_jp,
+      'zh-cn': g.patch.name_zh_cn
+    }
+  }))
 
   return { galgames, total }
 }

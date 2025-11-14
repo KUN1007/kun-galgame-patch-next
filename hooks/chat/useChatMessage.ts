@@ -51,7 +51,7 @@ export const useChatMessage = (
 
   const { scrollRef, scrollHeightBeforeUpdate } = useInfiniteScroll<
     HTMLDivElement,
-    KunResponse<ChatMessagesApiResponse>
+    KunResponse<ChatMessage>
   >({
     fetchMore: fetchHistory,
     hasMore: hasMoreHistory,

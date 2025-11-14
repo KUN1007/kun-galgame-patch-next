@@ -1,6 +1,6 @@
 interface GalgameCard {
   id: number
-  name: string
+  name: KunLanguage
   banner: string
   view: number
   download: number

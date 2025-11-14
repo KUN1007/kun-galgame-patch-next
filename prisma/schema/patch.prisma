@@ -1,6 +1,5 @@
 model patch {
   id                   Int      @id @default(autoincrement())
-  name                 String   @db.VarChar(1007)
   name_en_us           String   @db.VarChar(1007) @default("")
   name_zh_cn           String   @db.VarChar(1007) @default("")
   name_ja_jp           String   @db.VarChar(1007) @default("")
@@ -8,8 +7,6 @@ model patch {
   // Bangumi Subject ID
   bid                  Int?     @unique
   banner               String   @default("") @db.VarChar(1007)
-  // deprecated introduction
-  introduction         String   @default("") @db.VarChar(100007)
 
   introduction_zh_cn   String   @default("") @db.VarChar(100007)
   introduction_ja_jp   String   @default("") @db.VarChar(100007)

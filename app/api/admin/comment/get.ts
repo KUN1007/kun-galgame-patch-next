@@ -28,7 +28,9 @@ export const getComment = async (
       include: {
         patch: {
           select: {
-            name: true
+            name_en_us: true,
+            name_ja_jp: true,
+            name_zh_cn: true
           }
         },
         user: {
@@ -52,7 +54,11 @@ export const getComment = async (
     id: comment.id,
     user: comment.user,
     content: markdownToText(comment.content).slice(0, 233),
-    patchName: comment.patch.name,
+    patchName: {
+      'en-us': comment.patch.name_en_us,
+      'ja-jp': comment.patch.name_ja_jp,
+      'zh-cn': comment.patch.name_zh_cn
+    },
     patchId: comment.patch_id,
     like: comment._count.like_by,
     created: comment.created

@@ -3,6 +3,7 @@ import { prisma } from '~/prisma/index'
 import { patchCommentCreateSchema } from '~/validations/patch'
 import { createDedupMessage } from '~/app/api/utils/message'
 import { createMentionMessage } from '~/app/api/utils/createMentionMessage'
+import { getPreferredLanguageText } from '~/utils/getPreferredLanguageText'
 import type { PatchComment } from '~/types/api/patch'
 
 export const createPatchComment = async (
@@ -19,7 +20,9 @@ export const createPatchComment = async (
     include: {
       patch: {
         select: {
-          name: true
+          name_en_us: true,
+          name_ja_jp: true,
+          name_zh_cn: true
         }
       },
       user: {
@@ -46,9 +49,14 @@ export const createPatchComment = async (
     }
   }
 
+  const galgameName = getPreferredLanguageText({
+    'en-us': data.patch.name_en_us,
+    'ja-jp': data.patch.name_ja_jp,
+    'zh-cn': data.patch.name_zh_cn
+  })
   await createMentionMessage(
     input.patchId,
-    data.patch.name,
+    galgameName,
     uid,
     data.user.name,
     input.content

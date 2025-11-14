@@ -4,6 +4,7 @@ import { ThumbsUp } from 'lucide-react'
 import { formatDate } from '~/utils/time'
 import Link from 'next/link'
 import { CommentEdit } from './CommentEdit'
+import { getPreferredLanguageText } from '~/utils/getPreferredLanguageText'
 import type { AdminComment } from '~/types/api/admin'
 
 interface Props {
@@ -32,7 +33,7 @@ export const CommentCard = ({ comment }: Props) => {
                     className="text-primary-500"
                     href={`/patch/${comment.patchId}/comment`}
                   >
-                    {comment.patchName}
+                    {getPreferredLanguageText(comment.patchName)}
                   </Link>
                 </span>
               </div>

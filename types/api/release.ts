@@ -1,6 +1,6 @@
 export interface GalgameReleaseCard {
   patchId: number
-  name: string
+  name: KunLanguage
   banner: string
   released: string
   resourceCount: number

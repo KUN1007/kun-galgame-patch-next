@@ -33,7 +33,7 @@ export interface UserFollow {
 export interface UserResource {
   id: number
   patchId: number
-  patchName: string
+  patchName: KunLanguage
   patchBanner: string
   size: string
   type: string[]
@@ -45,7 +45,7 @@ export interface UserResource {
 export interface UserContribute {
   id: number
   patchId: number
-  patchName: string
+  patchName: KunLanguage
   created: string
 }
 
@@ -55,7 +55,7 @@ export interface UserComment {
   like: number
   userId: number
   patchId: number
-  patchName: string
+  patchName: KunLanguage
   created: string
   quotedUserUid?: number | null
   quotedUsername?: string | null

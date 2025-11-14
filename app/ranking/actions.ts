@@ -80,7 +80,7 @@ export const getPatchRanking = async (
       orderBy = { view: 'desc' }
   }
 
-  const galgames = await prisma.patch.findMany({
+  const data = await prisma.patch.findMany({
     where: {
       status: 0,
       ...nsfwEnable
@@ -89,6 +89,15 @@ export const getPatchRanking = async (
     orderBy,
     take: 60
   })
+
+  const galgames: GalgameCard[] = data.map((g) => ({
+    ...g,
+    name: {
+      'en-us': g.name_en_us,
+      'ja-jp': g.name_ja_jp,
+      'zh-cn': g.name_zh_cn
+    }
+  }))
 
   return galgames
 }

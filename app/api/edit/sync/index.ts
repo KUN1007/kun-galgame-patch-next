@@ -11,18 +11,17 @@ export async function syncPatchFromApis(
       .catch(() => {})
 
     const p = await prisma.patch.findUnique({
-      where: { id: patchId },
-      select: { id: true, name: true, bid: true, vndb_id: true }
+      where: { id: patchId }
     })
     if (!p) return
 
     await processPatch({
       id: p.id,
-      name: p.name,
+      name_en_us: p.name_en_us,
+      name_ja_jp: p.name_ja_jp,
+      name_zh_cn: p.name_zh_cn,
       bid: p.bid ?? null,
       vndb_id: p.vndb_id ?? null
     })
-  } catch (e) {
-    console.error('syncPatchFromApis failed:', e)
-  }
+  } catch (e) {}
 }

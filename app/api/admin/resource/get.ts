@@ -28,7 +28,9 @@ export const getPatchResource = async (
       include: {
         patch: {
           select: {
-            name: true
+            name_en_us: true,
+            name_ja_jp: true,
+            name_zh_cn: true
           }
         },
         user: {
@@ -48,7 +50,11 @@ export const getPatchResource = async (
       id: resource.id,
       name: resource.name,
       modelName: resource.model_name,
-      patchName: resource.patch.name,
+      patchName: {
+        'en-us': resource.patch.name_en_us,
+        'ja-jp': resource.patch.name_ja_jp,
+        'zh-cn': resource.patch.name_zh_cn
+      },
       storage: resource.storage,
       size: resource.size,
       type: resource.type,

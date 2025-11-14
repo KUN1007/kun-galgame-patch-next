@@ -11,7 +11,7 @@ export interface PatchResource {
   likeCount: number
   download: number
   patchId: number
-  patchName: string
+  patchName: KunLanguage
   created: string
   user: KunUser & {
     patchCount: number

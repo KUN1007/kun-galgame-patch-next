@@ -3,6 +3,7 @@ import { KunAvatar } from '~/components/kun/floating-card/KunAvatar'
 import { ThumbsUp } from 'lucide-react'
 import { formatDate } from '~/utils/time'
 import Link from 'next/link'
+import { getPreferredLanguageText } from '~/utils/getPreferredLanguageText'
 import type { PatchComment } from '~/types/api/comment'
 
 interface Props {
@@ -31,7 +32,9 @@ export const CommentCard = ({ comment }: Props) => {
               <h2 className="font-semibold">{comment.user.name}</h2>
               <span className="text-small text-default-500">
                 评论在{' '}
-                <span className="text-primary-500">{comment.patchName}</span>
+                <span className="text-primary-500">
+                  {getPreferredLanguageText(comment.patchName)}
+                </span>
               </span>
             </div>
             <p className="mt-1">{comment.content}</p>

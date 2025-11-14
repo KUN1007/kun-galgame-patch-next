@@ -29,7 +29,12 @@ export const getUserFavorite = async (
   ])
 
   const favorites = data.map((gal) => ({
-    ...gal.patch
+    ...gal.patch,
+    name: {
+      'en-us': gal.patch.name_en_us,
+      'ja-jp': gal.patch.name_ja_jp,
+      'zh-cn': gal.patch.name_zh_cn
+    }
   }))
 
   return { favorites, total }

@@ -2,12 +2,15 @@ import Link from 'next/link'
 import { Card, CardBody } from '@heroui/card'
 import { Image } from '@heroui/image'
 import { KunCardStats } from '~/components/kun/CardStats'
+import { getPreferredLanguageText } from '~/utils/getPreferredLanguageText'
 
 interface Props {
   patch: GalgameCard
 }
 
 export const PatchCard = ({ patch }: Props) => {
+  const galgameName = getPreferredLanguageText(patch.name)
+
   return (
     <Card
       isPressable
@@ -21,14 +24,14 @@ export const PatchCard = ({ patch }: Props) => {
             <Image
               removeWrapper
               src={patch.banner.replace(/\.avif$/, '-mini.avif')}
-              alt={patch.name}
+              alt={galgameName}
               className="object-cover rounded-lg size-full"
               radius="lg"
             />
           </div>
           <div className="flex-1 space-y-3">
             <h2 className="text-lg font-semibold transition-colors line-clamp-2 hover:text-primary-500">
-              {patch.name}
+              {galgameName}
             </h2>
 
             <KunCardStats patch={patch} />

@@ -3,6 +3,7 @@ import { prisma } from '~/prisma/index'
 import { patchResourceCreateSchema } from '~/validations/patch'
 import { uploadPatchResource } from './_helper'
 import { markdownToHtml } from '~/app/api/utils/markdownToHtml'
+import { getPreferredLanguageText } from '~/utils/getPreferredLanguageText'
 import type { CreateMessageType } from '~/types/api/message'
 import type { PatchResourceHtml } from '~/types/api/patch'
 
@@ -24,7 +25,9 @@ export const createPatchResource = async (
   const currentPatch = await prisma.patch.findUnique({
     where: { id: patchId },
     select: {
-      name: true,
+      name_en_us: true,
+      name_ja_jp: true,
+      name_zh_cn: true,
       type: true,
       language: true,
       platform: true,
@@ -105,11 +108,16 @@ export const createPatchResource = async (
       const favoritePatchUserUid = currentPatch.favorite_by.map(
         (like) => like.user.id
       )
+      const galgameName = getPreferredLanguageText({
+        'en-us': currentPatch.name_en_us,
+        'ja-jp': currentPatch.name_ja_jp,
+        'zh-cn': currentPatch.name_zh_cn
+      })
       const noticeMessageData: CreateMessageType[] = favoritePatchUserUid.map(
         (favoriteUid) => {
           return {
             type: 'patchResourceCreate',
-            content: `${newResource.user.name} 在您收藏的 Galgame ${currentPatch.name} 下创建了新的补丁资源\n🎁 ${newResource.name ?? newResource.note.slice(0, 50)}`,
+            content: `${newResource.user.name} 在您收藏的 Galgame ${galgameName} 下创建了新的补丁资源\n🎁 ${newResource.name ?? newResource.note.slice(0, 50)}`,
             sender_id: uid,
             recipient_id: favoriteUid,
             link: `/patch/${patchId}/resource`

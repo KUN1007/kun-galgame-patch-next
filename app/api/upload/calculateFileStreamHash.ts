@@ -11,7 +11,7 @@ export const generateFileHash = async (filePath: string): Promise<string> => {
     const hashInstance = blake3.create({})
     const fileStream = createReadStream(filePath)
     fileStream.on('data', (chunk) => {
-      hashInstance.update(chunk)
+      hashInstance.update(chunk as Buffer<ArrayBufferLike>)
     })
     fileStream.on('end', () => {
       const hashString = bytesToHex(hashInstance.digest())

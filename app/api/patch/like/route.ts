@@ -4,6 +4,7 @@ import { kunParsePutBody } from '~/app/api/utils/parseQuery'
 import { prisma } from '~/prisma/index'
 import { verifyHeaderCookie } from '~/middleware/_verifyHeaderCookie'
 import { createDedupMessage } from '~/app/api/utils/message'
+import { getPreferredLanguageText } from '~/utils/getPreferredLanguageText'
 
 const patchIdSchema = z.object({
   patchId: z.coerce
@@ -61,9 +62,14 @@ export const togglePatchFavorite = async (
         data: { moemoepoint: { increment: existingFavorite ? -1 : 1 } }
       })
 
+      const galgameName = getPreferredLanguageText({
+        'en-us': patch.name_en_us,
+        'ja-jp': patch.name_ja_jp,
+        'zh-cn': patch.name_zh_cn
+      })
       await createDedupMessage({
         type: 'favorite',
-        content: patch.name,
+        content: galgameName,
         sender_id: uid,
         recipient_id: patch.user_id,
         link: `/patch/${patch.id}/introduction`

@@ -49,14 +49,14 @@ export interface AdminCreator {
 
 export interface AdminGalgame {
   id: number
-  name: string
+  name: KunLanguage
   banner: string
   user: KunUser
   created: Date | string
 }
 
 export interface AdminResource extends PatchResourceHtml {
-  patchName: string
+  patchName: KunLanguage
 }
 
 export type AdminComment = PatchComment
