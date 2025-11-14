@@ -29,7 +29,7 @@ export const UserResourceCard = ({ resource }: Props) => {
               src={
                 resource.patchBanner
                   ? resource.patchBanner.replace(/\.avif$/, '-mini.avif')
-                  : '/kungalgame.avif'
+                  : '/kungalgame-trans.webp'
               }
               alt={galgameName}
               className="object-cover rounded-lg size-full max-h-52"

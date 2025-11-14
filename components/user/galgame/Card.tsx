@@ -29,7 +29,7 @@ export const UserGalgameCard = ({ galgame }: Props) => {
               src={
                 galgame.banner
                   ? galgame.banner.replace(/\.avif$/, '-mini.avif')
-                  : '/kungalgame.avif'
+                  : '/kungalgame-trans.webp'
               }
               alt={galgameName}
               className="object-cover rounded-lg size-full max-h-52"

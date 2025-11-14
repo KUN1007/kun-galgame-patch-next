@@ -36,7 +36,7 @@ export const PatchHeaderInfo = ({ patch }: PatchHeaderInfoProps) => {
     <div className="grid grid-cols-1 gap-3 md:grid-cols-3">
       <div className="relative w-full h-full overflow-hidden md:col-span-1 aspect-video rounded-2xl">
         <Image
-          src={patch.banner ? patch.banner : '/kungalgame.avif'}
+          src={patch.banner ? patch.banner : '/kungalgame-trans.webp'}
           alt={patchName}
           className="object-cover"
           fill

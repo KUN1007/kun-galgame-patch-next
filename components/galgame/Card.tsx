@@ -48,7 +48,7 @@ export const GalgameCard = ({ patch }: Props) => {
             src={
               patch.banner
                 ? patch.banner.replace(/\.avif$/, '-mini.avif')
-                : '/kungalgame.avif'
+                : '/kungalgame-trans.webp'
             }
             style={{ aspectRatio: '16/9' }}
             onLoad={() => setImageLoaded(true)}
