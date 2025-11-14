@@ -28,7 +28,7 @@ const menuItems = [
 
 export const KunNavigationMenu = () => {
   return (
-    <div className="absolute inset-0 flex items-center justify-center gap-4 transition-opacity duration-300 opacity-0 group-hover:opacity-100">
+    <div className="absolute inset-0 flex top-4 items-start justify-center gap-4 transition-opacity duration-300 opacity-0 group-hover:opacity-100">
       {menuItems.map(({ href, label, icon: Icon }) => (
         <Tooltip key={label} content={label}>
           <Link isExternal href={href}>

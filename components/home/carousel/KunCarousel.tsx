@@ -57,7 +57,7 @@ export const KunCarousel = ({ posts }: KunCarouselProps) => {
 
   return (
     <div
-      className="relative h-[300px] sm:h-[400px] overflow-hidden group touch-pan-y"
+      className="relative h-[300px] md:h-full overflow-hidden group touch-pan-y"
       onMouseEnter={() => setIsHovered(true)}
       onMouseLeave={() => setIsHovered(false)}
     >
