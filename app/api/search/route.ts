@@ -20,7 +20,11 @@ export const searchGalgame = async (input: z.infer<typeof searchSchema>) => {
           { name_zh_cn: { contains: q, mode: insensitive } },
           { vndb_id: { contains: q, mode: insensitive } },
           ...(searchOption.searchInIntroduction
-            ? [{ introduction: { contains: q, mode: insensitive } }]
+            ? [
+                { introduction_en_us: { contains: q, mode: insensitive } },
+                { introduction_ja_jp: { contains: q, mode: insensitive } },
+                { introduction_zh_cn: { contains: q, mode: insensitive } }
+              ]
             : []),
           ...(searchOption.searchInAlias
             ? [
@@ -62,7 +66,11 @@ export const searchGalgame = async (input: z.infer<typeof searchSchema>) => {
           { name_zh_cn: { contains: q, mode: insensitive } },
           { vndb_id: { contains: q, mode: insensitive } },
           ...(searchOption.searchInIntroduction
-            ? [{ introduction: { contains: q, mode: insensitive } }]
+            ? [
+                { introduction_en_us: { contains: q, mode: insensitive } },
+                { introduction_ja_jp: { contains: q, mode: insensitive } },
+                { introduction_zh_cn: { contains: q, mode: insensitive } }
+              ]
             : []),
           ...(searchOption.searchInAlias
             ? [
