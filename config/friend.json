@@ -26,7 +26,7 @@
     },
     {
       "name": "TouchGal",
-      "avatar": "https://img.touchgalstatic.org/2024/06/8b9411844520240614204452.webp",
+      "avatar": "https://www.touchgal.us/favicon.webp",
       "label": "TouchGal 是一个一站式 Galgame 文化社区。提供Galgame 论坛、Galgame 下载等服务。承诺永久免费, 高质量。为Galgame 爱好者提供一片净土！",
       "link": "https://touchgal.io"
     },
@@ -35,6 +35,12 @@
       "avatar": "https://www.ai2.moe/uploads/monthly_2023_06/logo.png",
       "label": "禦愛同萌！一個以非營利為目的的交流社區",
       "link": "https://www.ai2.moe"
+    },
+    {
+      "name": "书音的图书馆",
+      "avatar": "https://shionlib.com/favicon.ico",
+      "label": "书音的图书馆 - 免费、开源、零门槛的 视觉小说 / Galgame 档案库",
+      "link": "https://shionlib.com/zh/"
     }
   ]
 }
