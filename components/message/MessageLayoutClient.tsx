@@ -2,6 +2,7 @@
 
 import { usePathname } from 'next/navigation'
 import { cn } from '~/utils/cn'
+import { KunHeader } from '../kun/Header'
 import type { ReactNode } from 'react'
 
 interface Props {
@@ -18,10 +19,15 @@ export const MessageLayoutClient = ({ sidebar, children }: Props) => {
     <div className="flex flex-col md:flex-row min-h-[500px] gap-6">
       <div
         className={cn(
-          'transition-all duration-300 md:block md:fixed md:top-65 md:w-64',
+          'transition-all duration-300 md:block md:fixed md:top-32 md:w-64',
           isChatPage ? 'block w-full' : 'hidden'
         )}
       >
+        <KunHeader
+          name="消息中心"
+          description="您可以在这里查看系统通知与私聊"
+        />
+
         {sidebar}
       </div>
 

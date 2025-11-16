@@ -23,11 +23,6 @@ export default async function MessageLayout({
   return (
     <SocketProvider userId={user.uid}>
       <div className="container mx-auto my-4">
-        <KunHeader
-          name="消息中心"
-          description="您可以在这里查看系统通知与私聊"
-        />
-
         <MessageLayoutClient sidebar={<MessageSidebar />}>
           {children}
         </MessageLayoutClient>

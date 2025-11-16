@@ -12,7 +12,7 @@ export const UserSettings = () => {
     <div className="w-full my-4">
       <KunHeader name="账户设置" description="您可以在此处设置您的账户信息" />
 
-      <div className="max-w-3xl m-auto space-y-8">
+      <div className="max-w-3xl m-auto space-y-8 my-4">
         <UserAvatar />
         <Username />
         <Bio />

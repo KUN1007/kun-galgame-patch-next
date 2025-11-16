@@ -69,5 +69,3 @@ export const MessageList = memo(
     )
   }
 )
-
-MessageList.displayName = 'MessageList'

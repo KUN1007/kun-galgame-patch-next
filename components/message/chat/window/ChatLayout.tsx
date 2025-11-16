@@ -19,7 +19,7 @@ export const ChatLayout = ({
   modal
 }: ChatLayoutProps) => {
   return (
-    <Card className="flex flex-col h-full h-[48rem]">
+    <Card className="flex flex-col h-full h-[42rem]">
       {header}
       {messageList}
       <CardFooter className="shrink-0 flex-col">

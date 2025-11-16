@@ -25,7 +25,7 @@ export const MessageSidebar = () => {
   }
 
   return (
-    <Card className="h-full">
+    <Card className="h-full my-4">
       <CardBody className="p-0">
         <div className="flex flex-col h-full kun-list">
           <Accordion disableAnimation itemClasses={itemClasses}>
