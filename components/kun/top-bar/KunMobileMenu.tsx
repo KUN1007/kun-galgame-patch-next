@@ -19,6 +19,7 @@ export const KunMobileMenu = () => {
             width={50}
             height={50}
             priority
+            className="rounded-2xl"
           />
           <p className="ml-4 mr-2 font-bold text-inherit">
             {kunMoyuMoe.creator.name}

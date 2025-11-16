@@ -19,7 +19,7 @@ export default function Kun() {
               alt={kunMoyuMoe.titleShort}
               width={36}
               height={36}
-              className="rounded-full"
+              className="rounded-2xl"
             />
             <span>{kunMoyuMoe.titleShort}</span>
           </div>

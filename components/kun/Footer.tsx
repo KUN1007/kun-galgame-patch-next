@@ -14,6 +14,7 @@ export const KunFooter = () => {
               alt="鲲 Galgame 补丁"
               width={30}
               height={30}
+              className="rounded-full"
             />
             <span>© 2024 鲲 Galgame 补丁</span>
           </Link>
