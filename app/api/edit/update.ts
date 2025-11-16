@@ -33,7 +33,7 @@ export const updatePatch = async (
   if (!patch) {
     return '该 ID 下未找到对应补丁'
   }
-  if (currentUserUid !== patch.user_id || currentUserRole < 2) {
+  if (currentUserUid !== patch.user_id && currentUserRole < 3) {
     return '您没有权限更新该游戏信息'
   }
 

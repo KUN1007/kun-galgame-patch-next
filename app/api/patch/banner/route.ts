@@ -26,6 +26,12 @@ export const updatePatchBanner = async (
   if (typeof res === 'string') {
     return res
   }
+  const imageLink = `${process.env.KUN_VISUAL_NOVEL_IMAGE_BED_URL}/patch/${patch.id}/banner/banner.avif`
+
+  await prisma.patch.update({
+    where: { id: patch.id },
+    data: { banner: imageLink }
+  })
 
   return {}
 }
