@@ -4,7 +4,6 @@ import { cache } from 'react'
 import { z } from 'zod'
 import { safeParseSchema } from '~/utils/actions/safeParseSchema'
 import { verifyHeaderCookie } from '~/utils/actions/verifyHeaderCookie'
-import { getNSFWHeader } from '~/utils/actions/getNSFWHeader'
 import { getPatchResourceDetail } from '~/app/api/resource/detail/route'
 
 const resourceIdSchema = z.object({
@@ -17,17 +16,9 @@ export const kunGetResourceDetailActions = cache(
     if (typeof input === 'string') {
       return input
     }
+    const payload = await verifyHeaderCookie()
 
-    const [payload, nsfwEnable] = await Promise.all([
-      verifyHeaderCookie(),
-      getNSFWHeader()
-    ])
-
-    const response = await getPatchResourceDetail(
-      input,
-      payload?.uid ?? 0,
-      nsfwEnable
-    )
+    const response = await getPatchResourceDetail(input, payload?.uid ?? 0)
     return response
   }
 )

@@ -1,7 +1,6 @@
 import { z } from 'zod'
 import { NextRequest, NextResponse } from 'next/server'
 import { kunParseGetQuery } from '~/app/api/utils/parseQuery'
-import { getNSFWHeader } from '~/app/api/utils/getNSFWHeader'
 import { markdownToHtml } from '~/app/api/utils/markdownToHtml'
 import { prisma } from '~/prisma/index'
 import { verifyHeaderCookie } from '~/middleware/_verifyHeaderCookie'
@@ -93,13 +92,12 @@ const resourceIdSchema = z.object({
 
 export const getPatchResourceDetail = async (
   input: z.infer<typeof resourceIdSchema>,
-  uid: number,
-  nsfwEnable: Record<string, string | undefined>
+  uid: number
 ) => {
   const { resourceId } = input
 
   const resource = await prisma.patch_resource.findFirst({
-    where: { id: resourceId, patch: nsfwEnable },
+    where: { id: resourceId },
     include: {
       user: {
         include: {
@@ -160,8 +158,7 @@ export const getPatchResourceDetail = async (
         id: { not: resourceId },
         patch_id: { not: resource.patch_id },
         status: 0,
-        download: { gt: 500 },
-        patch: nsfwEnable
+        download: { gt: 500 }
       },
       take: 20,
       include: resourcePreviewInclude
@@ -248,13 +245,8 @@ export const GET = async (req: NextRequest) => {
     return NextResponse.json(input)
   }
 
-  const nsfwEnable = getNSFWHeader(req)
   const payload = await verifyHeaderCookie(req)
 
-  const response = await getPatchResourceDetail(
-    input,
-    payload?.uid ?? 0,
-    nsfwEnable
-  )
+  const response = await getPatchResourceDetail(input, payload?.uid ?? 0)
   return NextResponse.json(response)
 }
