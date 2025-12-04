@@ -1,3 +1,5 @@
+import type { PatchResourceHtml } from '~/types/api/patch'
+
 export interface PatchResource {
   id: number
   storage: string
@@ -16,4 +18,36 @@ export interface PatchResource {
   user: KunUser & {
     patchCount: number
   }
+}
+
+export interface ResourcePatchSummary {
+  id: number
+  name: KunLanguage
+  banner: string
+  view: number
+  download: number
+  type: string[]
+  language: string[]
+  platform: string[]
+  content_limit: string
+  released: string
+  alias: string[]
+  company: {
+    id: number
+    name: string
+    logo: string
+    count: number
+  }[]
+  _count: {
+    favorite_by: number
+    contribute_by: number
+    resource: number
+    comment: number
+  }
+}
+
+export interface PatchResourceDetail {
+  resource: PatchResourceHtml
+  patch: ResourcePatchSummary
+  recommendations: PatchResource[]
 }

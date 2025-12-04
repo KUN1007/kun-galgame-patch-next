@@ -19,7 +19,7 @@ export const ResourceCard = ({ resource }: Props) => {
     <Card
       isPressable
       as={Link}
-      href={`/patch/${resource.patchId}/resource`}
+      href={`/resource/${resource.id}`}
       className="w-full"
     >
       <CardBody className="flex flex-col justify-between space-y-2">
