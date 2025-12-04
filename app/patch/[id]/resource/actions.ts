@@ -17,5 +17,5 @@ export const kunGetActions = async (params: z.infer<typeof patchIdSchema>) => {
   const payload = await verifyHeaderCookie()
 
   const response = await getPatchResource(input, payload?.uid ?? 0)
-  return response
+  return { response, payload }
 }

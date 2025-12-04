@@ -19,7 +19,7 @@ export const PatchBackgroundImage = ({ patch }: Props) => {
           src={patch.banner}
           alt={getPreferredLanguageText(patch.name)}
           className={`object-cover w-full h-full transition-opacity duration-500 ${
-            imageLoaded ? 'opacity-20' : 'opacity-0'
+            imageLoaded ? 'opacity-5' : 'opacity-0'
           }`}
           fill
           sizes="100vw"

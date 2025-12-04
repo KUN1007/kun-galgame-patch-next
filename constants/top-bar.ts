@@ -72,8 +72,8 @@ export const KUN_CONTENT_LIMIT_MAP: Record<string, string> = {
 }
 
 export const KUN_CONTENT_LIMIT_LABEL: Record<string, string> = {
-  '': '安全模式',
-  sfw: '安全模式',
+  '': '全年龄',
+  sfw: '全年龄',
   nsfw: '涩涩模式',
   all: 'R18模式'
 }

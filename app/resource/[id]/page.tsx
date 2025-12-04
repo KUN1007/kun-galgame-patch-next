@@ -17,11 +17,11 @@ export const generateMetadata = async ({
   const detail = await kunGetResourceDetailActions({
     resourceId: Number(id)
   })
-  if (typeof detail === 'string') {
+  if (typeof detail === 'string' || typeof detail.response === 'string') {
     return {}
   }
 
-  return generateKunResourceMetadata(detail)
+  return generateKunResourceMetadata(detail.response)
 }
 
 export default async function Kun({ params }: Props) {
@@ -33,6 +33,9 @@ export default async function Kun({ params }: Props) {
   if (typeof detail === 'string') {
     return <ErrorComponent error={detail} />
   }
+  if (typeof detail.response === 'string') {
+    return <ErrorComponent error={detail.response} />
+  }
 
-  return <KunResourceDetail detail={detail} />
+  return <KunResourceDetail detail={detail.response} payload={detail.payload} />
 }

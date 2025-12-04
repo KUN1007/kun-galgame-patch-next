@@ -6,7 +6,8 @@ import Link from 'next/link'
 import Image from 'next/image'
 import { kunMoyuMoe } from '~/config/moyu-moe'
 import { kunMobileNavItem } from '~/constants/top-bar'
-import { RandomGalgameButton } from './RandomGalgameButton'
+import { Divider } from '@heroui/react'
+import { Heart } from 'lucide-react'
 
 export const KunMobileMenu = () => {
   return (
@@ -37,8 +38,25 @@ export const KunMobileMenu = () => {
         </NavbarMenuItem>
       ))}
 
+      <Divider className="my-3" />
+
       <NavbarMenuItem>
-        <RandomGalgameButton variant="flat" color="primary" />
+        <div className="space-y-2">
+          <p>为什么现在的 AI 比人还要 H</p>
+          <Link
+            className="flex items-center gap-2"
+            color="secondary"
+            href="https://s.iloveren.link/s/moyumoe1"
+          >
+            <img
+              src="/a/moyumoe1-button.avif"
+              className="h-11 dark:opacity-80"
+            />
+            <span className="gap-2 flex items-center text-lg text-secondary px-4 py-2 rounded-2xl bg-secondary/15">
+              尝试一下 AI 女友
+            </span>
+          </Link>
+        </div>
       </NavbarMenuItem>
     </NavbarMenu>
   )

@@ -1,11 +1,11 @@
-import { Alert } from '@heroui/alert'
-import { Card, CardBody, CardHeader } from '@heroui/card'
 import { Link } from '@heroui/link'
 import { Resources } from '~/components/patch/resource/Resource'
 import { generateKunMetadataTemplate } from './metadata'
 import { kunGetPatchActions } from '../actions'
 import { kunGetActions } from './actions'
 import { ErrorComponent } from '~/components/error/ErrorComponent'
+import { Image } from '@heroui/image'
+import { kunMoyuMoe } from '~/config/moyu-moe'
 import type { Metadata } from 'next'
 
 export const revalidate = 5
@@ -25,7 +25,7 @@ export const generateMetadata = async ({
     return {}
   }
 
-  return generateKunMetadataTemplate(patch, response)
+  return generateKunMetadataTemplate(patch, response.response)
 }
 
 export default async function Kun({
@@ -65,13 +65,18 @@ export default async function Kun({
               御爱同萌
             </Link>
           </p>
-          <p>
-            如果您点赞了游戏资源, 那么将会收到这个游戏下载资源的更新通知
-            (资源下载链接更新和备注更新)
-          </p>
         </div>
 
-        <Resources initialResources={response} id={Number(id)} />
+        {(!response.payload || response.payload.role < 2) && (
+          <Link target="_blank" href={kunMoyuMoe.ad[0].url}>
+            <Image
+              className="pointer-events-none select-none"
+              src="/a/moyumoe1.avif"
+            />
+          </Link>
+        )}
+
+        <Resources initialResources={response.response} id={Number(id)} />
       </div>
     </div>
   )

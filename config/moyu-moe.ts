@@ -56,5 +56,11 @@ export const kunMoyuMoe: KunSiteConfig = {
       height: 1080,
       alt: '鲲 Galgame 补丁 - 开源 Galgame 补丁资源下载站'
     }
+  ],
+  ad: [
+    {
+      name: 'DZMM',
+      url: 'https://s.iloveren.link/s/moyumoe1'
+    }
   ]
 }

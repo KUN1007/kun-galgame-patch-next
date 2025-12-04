@@ -12,6 +12,11 @@ export interface KunSiteAuthor {
   url: string
 }
 
+export interface KunSiteAD {
+  name: string
+  url: string
+}
+
 export interface KunSiteOpenGraph {
   title: string
   description: string
@@ -45,4 +50,5 @@ export interface KunSiteConfig {
   domain: KunSiteDomain
   og: KunSiteOpenGraph
   images: KunSiteImage[]
+  ad: KunSiteAD[]
 }

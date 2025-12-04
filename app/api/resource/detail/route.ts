@@ -134,7 +134,6 @@ export const getPatchResourceDetail = async (
       }
     }
   })
-
   if (!resource || !resource.patch) {
     return '未找到对应的资源'
   }

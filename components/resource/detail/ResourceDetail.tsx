@@ -1,6 +1,6 @@
 'use client'
 
-import { Card, CardBody } from '@heroui/card'
+import { Card, CardBody, Image } from '@heroui/react'
 import { formatDistanceToNow } from '~/utils/formatDistanceToNow'
 import { getPreferredLanguageText } from '~/utils/getPreferredLanguageText'
 import { PatchSummary } from './PatchSummary'
@@ -11,19 +11,37 @@ import DOMPurify from 'isomorphic-dompurify'
 import { KunUser } from '~/components/kun/floating-card/KunUser'
 import { ResourceLikeButton } from '~/components/patch/resource/ResourceLike'
 import { ResourceDownloadCard } from './DownloadCard'
-import type { PatchResourceDetail } from '~/types/api/resource'
 import { Link } from '@heroui/react'
+import { KunGalgamePayload } from '~/app/api/utils/jwt'
+import { kunMoyuMoe } from '~/config/moyu-moe'
+import type { PatchResourceDetail } from '~/types/api/resource'
 
 interface Props {
   detail: PatchResourceDetail
+  payload: KunGalgamePayload | null
 }
 
-export const KunResourceDetail = ({ detail }: Props) => {
+export const KunResourceDetail = ({ detail, payload }: Props) => {
   const resource = detail.resource
 
   return (
     <div className="space-y-6">
       <PatchSummary patch={detail.patch} />
+
+      {(!payload || payload.role < 2) && (
+        <div className="shadow-xl rounded-2xl hidden sm:block">
+          <a
+            target="_blank"
+            className="h-full w-full"
+            href={kunMoyuMoe.ad[0].url}
+          >
+            <Image
+              className="pointer-events-none select-none"
+              src="/a/moyumoe1.avif"
+            />
+          </a>
+        </div>
+      )}
 
       <div className="grid gap-0 sm:gap-6 lg:grid-cols-3">
         <Card className="col-span-2 border-default-200 border bg-content1/90 shadow-lg backdrop-blur-sm dark:bg-content1/70">
@@ -83,6 +101,17 @@ export const KunResourceDetail = ({ detail }: Props) => {
                 <p>{resource.name}</p>
               )}
             </div>
+
+            {(!payload || payload.role < 2) && (
+              <div className="shadow-xl rounded-2xl block sm:hidden">
+                <a target="_blank" href={kunMoyuMoe.ad[0].url}>
+                  <Image
+                    className="pointer-events-none select-none"
+                    src="/a/moyumoe1.avif"
+                  />
+                </a>
+              </div>
+            )}
 
             <ResourceDownloadCard resource={resource} />
 

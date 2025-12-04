@@ -1,6 +1,5 @@
 'use client'
 
-import Link from 'next/link'
 import { KunTopBarBrand } from './Brand'
 import { KunTopBarUser } from './User'
 import { usePathname } from 'next/navigation'
@@ -10,22 +9,22 @@ import { useEffect, useState } from 'react'
 import {
   Navbar,
   NavbarContent,
-  NavbarItem,
   NavbarMenuToggle,
-  Button,
+  Link,
   Tooltip
 } from '@heroui/react'
 import {
-  ChevronDown,
   Building2,
   Gamepad2,
   Puzzle,
   Tags,
   BookUser,
   Clapperboard,
-  ChartColumnBig
+  ChartColumnBig,
+  Heart
 } from 'lucide-react'
 import { cn } from '~/utils/cn'
+import { kunMoyuMoe } from '~/config/moyu-moe'
 
 export const KunTopBar = () => {
   const pathname = usePathname()
@@ -105,7 +104,13 @@ export const KunTopBar = () => {
             </nav>
           }
         >
-          <Link href="/galgame" className="text-base">
+          <Link
+            href="/galgame"
+            className={cn(
+              'text-base',
+              pathname === '/galgame' ? 'text-primary' : 'text-foreground'
+            )}
+          >
             下载补丁
           </Link>
         </Tooltip>
@@ -123,6 +128,15 @@ export const KunTopBar = () => {
             {item.name}
           </Link>
         ))}
+
+        <Tooltip disableAnimation content="为什么现在的 AI 比人还要 H">
+          <Link color="secondary" className="gap-1" href={kunMoyuMoe.ad[0].url}>
+            <img
+              className="h-10 dark:opacity-80"
+              src="/a/moyumoe1-button.avif"
+            />
+          </Link>
+        </Tooltip>
       </div>
 
       <KunTopBarUser />

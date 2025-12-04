@@ -19,6 +19,6 @@ export const kunGetResourceDetailActions = cache(
     const payload = await verifyHeaderCookie()
 
     const response = await getPatchResourceDetail(input, payload?.uid ?? 0)
-    return response
+    return { response, payload }
   }
 )
