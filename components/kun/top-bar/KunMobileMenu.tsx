@@ -43,9 +43,9 @@ export const KunMobileMenu = () => {
       <NavbarMenuItem>
         <div className="space-y-2">
           <p>为什么现在的 AI 比人还要 H</p>
-          <Link
+          <a
             className="flex items-center gap-2"
-            color="secondary"
+            target="_blank"
             href="https://s.iloveren.link/s/moyumoe1"
           >
             <img
@@ -55,7 +55,7 @@ export const KunMobileMenu = () => {
             <span className="gap-2 flex items-center text-lg text-secondary px-4 py-2 rounded-2xl bg-secondary/15">
               尝试一下 AI 女友
             </span>
-          </Link>
+          </a>
         </div>
       </NavbarMenuItem>
     </NavbarMenu>

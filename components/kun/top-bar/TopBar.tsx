@@ -130,12 +130,12 @@ export const KunTopBar = () => {
         ))}
 
         <Tooltip disableAnimation content="为什么现在的 AI 比人还要 H">
-          <Link color="secondary" className="gap-1" href={kunMoyuMoe.ad[0].url}>
+          <a target="_blank" href={kunMoyuMoe.ad[0].url}>
             <img
               className="h-10 dark:opacity-80"
               src="/a/moyumoe1-button.avif"
             />
-          </Link>
+          </a>
         </Tooltip>
       </div>
 
