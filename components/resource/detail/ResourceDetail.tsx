@@ -21,10 +21,10 @@ export const KunResourceDetail = ({ detail }: Props) => {
   const resource = detail.resource
 
   return (
-    <div className="space-y-10">
+    <div className="space-y-6">
       <PatchSummary patch={detail.patch} />
 
-      <div className="grid gap-8 lg:grid-cols-3">
+      <div className="grid gap-0 sm:gap-6 lg:grid-cols-3">
         <ResourceRecommendations recommendations={detail.recommendations} />
 
         <Card className="col-span-2 border-default-200 border bg-content1/90 shadow-lg backdrop-blur-sm dark:bg-content1/70">

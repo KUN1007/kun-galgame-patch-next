@@ -226,6 +226,7 @@ export const getPatchResourceDetail = async (
       platform: resource.patch.platform,
       content_limit: resource.patch.content_limit,
       released: resource.patch.released,
+      created: resource.patch.created,
       alias: resource.patch.alias.map((alias) => alias.name),
       company: resource.patch.company.map((companyRelation) => ({
         id: companyRelation.company.id,

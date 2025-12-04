@@ -31,6 +31,7 @@ export interface ResourcePatchSummary {
   platform: string[]
   content_limit: string
   released: string
+  created: Date | string
   alias: string[]
   company: {
     id: number

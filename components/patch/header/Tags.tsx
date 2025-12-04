@@ -7,13 +7,14 @@ import {
   SUPPORTED_PLATFORM_MAP,
   SUPPORTED_TYPE_MAP
 } from '~/constants/resource'
-import type { PatchHeader } from '~/types/api/patch'
 
 interface TagsProps {
-  patch: PatchHeader
+  platform: string[]
+  language: string[]
+  type: string[]
 }
 
-export const Tags = ({ patch }: TagsProps) => {
+export const Tags = ({ platform, language, type }: TagsProps) => {
   const container = {
     hidden: { opacity: 0 },
     show: {
@@ -36,24 +37,25 @@ export const Tags = ({ patch }: TagsProps) => {
       initial="hidden"
       animate="show"
     >
-      {patch.platform.length > 0 &&
-        patch.platform.map((platform, index) => (
+      {platform.length > 0 &&
+        platform.map((platform, index) => (
           <motion.div key={platform} variants={item}>
             <Chip
               variant="flat"
               className="transition-all hover:scale-105"
               size="sm"
+              color="success"
             >
               {SUPPORTED_PLATFORM_MAP[platform]}
             </Chip>
           </motion.div>
         ))}
 
-      {patch.language.length > 0 &&
-        patch.language.map((language) => (
+      {language.length > 0 &&
+        language.map((language) => (
           <motion.div key={language} variants={item}>
             <Chip
-              color="primary"
+              color="secondary"
               variant="flat"
               className="transition-all hover:scale-105"
               size="sm"
@@ -63,8 +65,8 @@ export const Tags = ({ patch }: TagsProps) => {
           </motion.div>
         ))}
 
-      {patch.type.length > 0 &&
-        patch.type.map((type) => (
+      {type.length > 0 &&
+        type.map((type) => (
           <motion.div key={type} variants={item}>
             <Chip
               color="primary"

@@ -79,9 +79,11 @@ export const PatchHeaderInfo = ({ patch }: PatchHeaderInfoProps) => {
             ))}
         </div>
 
-        <div className="flex flex-wrap gap-2">
-          <Tags patch={patch} />
-        </div>
+        <Tags
+          platform={patch.platform}
+          language={patch.language}
+          type={patch.type}
+        />
 
         <PatchHeaderActions patch={patch} />
 

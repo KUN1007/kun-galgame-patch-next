@@ -1,8 +1,11 @@
+'use client'
+
 import Image from 'next/image'
-import Link from 'next/link'
 import { Chip } from '@heroui/chip'
 import { KunCardStats } from '~/components/kun/CardStats'
 import { getPreferredLanguageText } from '~/utils/getPreferredLanguageText'
+import { Button, Link } from '@heroui/react'
+import { Tags } from '~/components/patch/header/Tags'
 import type { PatchResourceDetail } from '~/types/api/resource'
 
 export const PatchSummary = ({
@@ -29,52 +32,57 @@ export const PatchSummary = ({
         <div className="absolute inset-0 bg-gradient-to-br from-white via-white/70 to-transparent dark:from-[#030712]/80 dark:via-[#0f172a]/70 dark:to-transparent" />
       </div>
 
-      <div className="relative z-10 grid gap-10 p-8 lg:grid-cols-[2fr_1fr]">
+      <div className="relative z-10 grid gap-10 p-3 sm:p-8 lg:grid-cols-[2fr_1fr]">
         <div className="space-y-4">
-          <p className="text-xs uppercase tracking-[0.4em] text-default-600 dark:text-white/70">
+          <p className="text-xs hidden sm:block uppercase tracking-[0.4em] text-default-600 dark:text-white/70">
             Galgame 补丁资源下载
           </p>
-          <h1 className="text-3xl font-semibold leading-snug text-default-900 dark:text-white sm:text-4xl">
-            {patchName}
+
+          <h1>
+            <Link
+              className="text-2xl font-semibold leading-snug hover:text-primary sm:text-4xl"
+              href={`/patch/${patch.id}/introduction`}
+              color="foreground"
+            >
+              {patchName}
+            </Link>
           </h1>
+
           {alias.length > 0 && (
             <div className="flex flex-wrap gap-2">
               {alias.slice(0, 4).map((name) => (
-                <Chip key={name} size="sm" variant="flat" color="secondary">
+                <Chip key={name} size="sm" variant="flat" color="default">
                   {name}
                 </Chip>
               ))}
             </div>
           )}
 
-          <div className="flex flex-wrap gap-2 text-sm text-default-600 dark:text-white/70">
-            {[patch.released, ...patch.language, ...patch.platform]
-              .filter(Boolean)
-              .map((item, index) => (
-                <span
-                  key={`${item}-${index}`}
-                  className="rounded-full border border-default-200/70 px-3 py-1 dark:border-white/30"
-                >
-                  {item}
-                </span>
-              ))}
-          </div>
+          <Tags
+            platform={patch.platform}
+            language={patch.language}
+            type={patch.type}
+          />
 
           <KunCardStats patch={patch} disableTooltip={false} isMobile={false} />
 
           <div className="flex flex-wrap gap-3 pt-2 text-sm font-medium">
-            <Link
+            <Button
+              color="primary"
+              variant="flat"
               href={`/patch/${patch.id}/introduction`}
-              className="inline-flex items-center rounded-full bg-white/80 px-4 py-2 text-default-900 shadow-sm transition hover:bg-white dark:bg-white/20 dark:text-white dark:hover:bg-white/30"
+              as={Link}
             >
-              查看补丁介绍
-            </Link>
-            <Link
+              查看 Galgame 介绍
+            </Button>
+            <Button
+              color="secondary"
+              variant="flat"
               href={`/patch/${patch.id}/resource`}
-              className="inline-flex items-center rounded-full bg-white/40 px-4 py-2 text-default-900 transition hover:bg-white/60 dark:bg-white/10 dark:text-white dark:hover:bg-white/20"
+              as={Link}
             >
               查看全部资源
-            </Link>
+            </Button>
           </div>
         </div>
 
