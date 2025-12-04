@@ -7,8 +7,6 @@ import { KunUser } from '~/components/kun/floating-card/KunUser'
 import { Download, ChevronDown, ChevronUp, Ban } from 'lucide-react'
 import { formatDistanceToNow } from '~/utils/formatDistanceToNow'
 import { ResourceLikeButton } from './ResourceLike'
-import { ResourceDownloadCard } from './DownloadCard'
-import toast from 'react-hot-toast'
 import type { PatchResourceHtml } from '~/types/api/patch'
 
 interface Props {
@@ -18,25 +16,9 @@ interface Props {
 const COLLAPSED_HEIGHT_PX = 96
 
 export const ResourceDownload = ({ resource }: Props) => {
-  const [showLinks, setShowLinks] = useState<Record<number, boolean>>({})
   const [isNoteExpanded, setIsNoteExpanded] = useState(false)
   const [isNoteOverflowing, setIsNoteOverflowing] = useState(false)
   const noteContentRef = useRef<HTMLDivElement>(null)
-
-  const toggleLinks = (resource: PatchResourceHtml) => {
-    if (resource.status) {
-      toast.error(
-        '这个补丁资源因为可能含有病毒, 或者其它原因, 已被补丁作者或管理员禁止下载, 请等待我们的处理'
-      )
-      return
-    }
-
-    const resourceId = resource.id
-    setShowLinks((prev) => ({
-      ...prev,
-      [resourceId]: !prev[resourceId]
-    }))
-  }
 
   useLayoutEffect(() => {
     const element = noteContentRef.current
@@ -128,7 +110,6 @@ export const ResourceDownload = ({ resource }: Props) => {
             variant={resource.status ? 'solid' : 'flat'}
             isIconOnly
             aria-label={`下载 Galgame 补丁资源`}
-            onPress={() => toggleLinks(resource)}
           >
             {resource.status ? (
               <Ban className="size-4" />
@@ -138,8 +119,6 @@ export const ResourceDownload = ({ resource }: Props) => {
           </Button>
         </div>
       </div>
-
-      {showLinks[resource.id] && <ResourceDownloadCard resource={resource} />}
     </div>
   )
 }

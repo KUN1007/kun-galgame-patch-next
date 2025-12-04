@@ -34,9 +34,5 @@ export default async function Kun({ params }: Props) {
     return <ErrorComponent error={detail} />
   }
 
-  return (
-    <div className="mx-auto w-full max-w-6xl space-y-10 py-6">
-      <KunResourceDetail detail={detail} />
-    </div>
-  )
+  return <KunResourceDetail detail={detail} />
 }
