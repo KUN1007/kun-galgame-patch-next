@@ -18,7 +18,7 @@ export const PatchSummary = ({
   const banner = patch.banner || '/kungalgame-trans.webp'
 
   return (
-    <section className="relative overflow-hidden rounded-3xl border border-default-200 bg-gradient-to-br from-white via-default-50 to-default-100 text-default-900 shadow-lg dark:from-slate-950 dark:via-slate-900 dark:to-slate-800 dark:text-white">
+    <section className="relative overflow-hidden rounded-2xl border border-default-200 bg-gradient-to-br from-white via-default-50 to-default-100 text-default-900 shadow-lg dark:from-slate-950 dark:via-slate-900 dark:to-slate-800 dark:text-white">
       <div className="absolute inset-0">
         <Image
           src={banner}

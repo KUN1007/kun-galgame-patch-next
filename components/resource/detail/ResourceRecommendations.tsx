@@ -11,7 +11,7 @@ export const ResourceRecommendations = ({
   recommendations: PatchResource[]
 }) => {
   return (
-    <Card>
+    <Card className="mt-6 sm:mt-0">
       <CardBody className="space-y-4">
         {recommendations.map((resource) => (
           <Link

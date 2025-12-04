@@ -12,6 +12,7 @@ import { KunUser } from '~/components/kun/floating-card/KunUser'
 import { ResourceLikeButton } from '~/components/patch/resource/ResourceLike'
 import { ResourceDownloadCard } from './DownloadCard'
 import type { PatchResourceDetail } from '~/types/api/resource'
+import { Link } from '@heroui/react'
 
 interface Props {
   detail: PatchResourceDetail
@@ -25,8 +26,6 @@ export const KunResourceDetail = ({ detail }: Props) => {
       <PatchSummary patch={detail.patch} />
 
       <div className="grid gap-0 sm:gap-6 lg:grid-cols-3">
-        <ResourceRecommendations recommendations={detail.recommendations} />
-
         <Card className="col-span-2 border-default-200 border bg-content1/90 shadow-lg backdrop-blur-sm dark:bg-content1/70">
           <CardBody className="space-y-6">
             <div className="space-y-2">
@@ -128,8 +127,18 @@ export const KunResourceDetail = ({ detail }: Props) => {
                 收藏该补丁, 您将会收到补丁资源更新的通知
               </p>
             </div>
+
+            <Link
+              className="ml-auto"
+              underline="always"
+              href={`/patch/${resource.patchId}/comment`}
+            >
+              反馈补丁错误
+            </Link>
           </CardBody>
         </Card>
+
+        <ResourceRecommendations recommendations={detail.recommendations} />
       </div>
     </div>
   )
