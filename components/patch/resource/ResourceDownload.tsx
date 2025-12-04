@@ -2,7 +2,7 @@
 
 import DOMPurify from 'isomorphic-dompurify'
 import { useState, useRef, useLayoutEffect } from 'react'
-import { Button } from '@heroui/react'
+import { Button, Link } from '@heroui/react'
 import { KunUser } from '~/components/kun/floating-card/KunUser'
 import { Download, ChevronDown, ChevronUp, Ban } from 'lucide-react'
 import { formatDistanceToNow } from '~/utils/formatDistanceToNow'
@@ -109,7 +109,10 @@ export const ResourceDownload = ({ resource }: Props) => {
             color={resource.status ? 'danger' : 'primary'}
             variant={resource.status ? 'solid' : 'flat'}
             isIconOnly
+            as={Link}
+            href={`/resource/${resource.id}`}
             aria-label={`下载 Galgame 补丁资源`}
+            disabled={!!resource.status}
           >
             {resource.status ? (
               <Ban className="size-4" />

@@ -30,13 +30,13 @@ import { kunFetchDelete, kunFetchPut } from '~/utils/kunFetch'
 import { PublishResource } from './publish/PublishResource'
 import { EditResourceDialog } from './edit/EditResourceDialog'
 import { useUserStore } from '~/store/userStore'
-import { ResourceInfo } from './ResourceInfo'
 import { ResourceDownload } from './ResourceDownload'
 import toast from 'react-hot-toast'
 import { kunCopy } from '~/utils/kunCopy'
 import { kunMoyuMoe } from '~/config/moyu-moe'
 import type { PatchResourceHtml } from '~/types/api/patch'
 import { cn } from '~/utils/cn'
+import { KunPatchAttribute } from '~/components/kun/PatchAttribute'
 
 interface Props {
   initialResources: PatchResourceHtml[]
@@ -159,7 +159,15 @@ export const Resources = ({ initialResources, id }: Props) => {
         >
           <CardBody className="space-y-2">
             <div className="flex items-start justify-between">
-              <ResourceInfo resource={resource} />
+              <KunPatchAttribute
+                types={resource.type}
+                languages={resource.language}
+                platforms={resource.platform}
+                modelName={resource.modelName}
+                downloadCount={resource.download}
+                storageSize={resource.size}
+                storage={resource.storage}
+              />
 
               <Dropdown>
                 <DropdownTrigger>

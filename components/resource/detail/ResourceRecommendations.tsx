@@ -1,7 +1,8 @@
 import Link from 'next/link'
-import { Card, CardBody, CardHeader } from '@heroui/card'
+import { Card, CardBody } from '@heroui/card'
 import { formatDistanceToNow } from '~/utils/formatDistanceToNow'
 import { getPreferredLanguageText } from '~/utils/getPreferredLanguageText'
+import { markdownToText } from '~/utils/markdownToText'
 import type { PatchResource } from '~/types/api/resource'
 
 export const ResourceRecommendations = ({
@@ -11,39 +12,31 @@ export const ResourceRecommendations = ({
 }) => {
   return (
     <Card>
-      <CardHeader className="flex flex-col items-start gap-1">
-        <h3 className="text-lg font-semibold text-default-900 dark:text-white">
-          同系列 Galgame 补丁资源下载
-        </h3>
-      </CardHeader>
       <CardBody className="space-y-4">
         {recommendations.map((resource) => (
           <Link
             key={resource.id}
             href={`/resource/${resource.id}`}
-            className="block rounded-2xl border border-default-200 p-4 transition hover:border-primary/60"
+            className="block rounded-2xl border border-default-200 p-4 transition hover:border-primary hover:bg-primary-50"
           >
-            <div className="flex items-start justify-between gap-3">
-              <div>
-                <p className="text-base font-semibold text-default-900 dark:text-white">
-                  {resource.name ||
-                    getPreferredLanguageText(resource.patchName)}
-                </p>
-              </div>
-              <div className="text-right text-xs text-default-500 dark:text-default-400">
-                <div>{resource.download} 次下载</div>
-                <div>{resource.likeCount} 个点赞</div>
-              </div>
-            </div>
+            <p className="text-base font-semibold text-default-900 dark:text-white">
+              {resource.name || getPreferredLanguageText(resource.patchName)}
+            </p>
+
             {resource.note && (
               <p className="mt-2 text-sm text-default-500 line-clamp-2 dark:text-default-400">
-                {resource.note}
+                {markdownToText(resource.note)}
               </p>
             )}
             <p className="mt-2 text-xs text-default-400">
-              {formatDistanceToNow(resource.created)} 发布 ·{' '}
-              {resource.user.name}
+              {formatDistanceToNow(resource.created)} ·{' '}
+              {`由 ${resource.user.name} 发布`}
             </p>
+
+            <div className="flex justify-end items-center gap-1 text-xs text-default-500">
+              <div>{resource.download} 次下载</div>·
+              <div>{resource.likeCount} 个点赞</div>
+            </div>
           </Link>
         ))}
       </CardBody>

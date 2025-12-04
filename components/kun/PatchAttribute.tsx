@@ -59,11 +59,6 @@ export const KunPatchAttribute = ({
           {modelName}
         </Chip>
       )}
-      {!!downloadCount && (
-        <Chip variant="flat" color="default" size={size}>
-          {`${downloadCount} 人下载`}
-        </Chip>
-      )}
       {storage && (
         <Chip
           color="secondary"
@@ -74,8 +69,17 @@ export const KunPatchAttribute = ({
         </Chip>
       )}
       {storageSize && (
-        <Chip variant="flat" startContent={<Database className="w-4 h-4" />}>
+        <Chip
+          variant="flat"
+          color="warning"
+          startContent={<Database className="w-4 h-4" />}
+        >
           {storageSize}
+        </Chip>
+      )}
+      {!!downloadCount && (
+        <Chip variant="flat" color="default" size={size}>
+          {`${downloadCount} 人下载`}
         </Chip>
       )}
     </div>
