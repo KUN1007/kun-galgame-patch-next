@@ -8,7 +8,7 @@ export default async function Kun() {
 
   return (
     <div className="container mx-auto my-4 space-y-6">
-      <HomeContainer {...response} />
+      <HomeContainer {...response.response} payload={response.payload} />
     </div>
   )
 }

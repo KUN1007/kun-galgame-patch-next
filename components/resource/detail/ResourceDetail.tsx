@@ -12,8 +12,8 @@ import { KunUser } from '~/components/kun/floating-card/KunUser'
 import { ResourceLikeButton } from '~/components/patch/resource/ResourceLike'
 import { ResourceDownloadCard } from './DownloadCard'
 import { Link } from '@heroui/react'
-import { KunGalgamePayload } from '~/app/api/utils/jwt'
 import { kunMoyuMoe } from '~/config/moyu-moe'
+import type { KunGalgamePayload } from '~/app/api/utils/jwt'
 import type { PatchResourceDetail } from '~/types/api/resource'
 
 interface Props {

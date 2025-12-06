@@ -20,14 +20,16 @@ import {
   Tags,
   BookUser,
   Clapperboard,
-  ChartColumnBig,
-  Heart
+  ChartColumnBig
 } from 'lucide-react'
 import { cn } from '~/utils/cn'
 import { kunMoyuMoe } from '~/config/moyu-moe'
+import { useUserStore } from '~/store/userStore'
 
 export const KunTopBar = () => {
   const pathname = usePathname()
+  const currentUser = useUserStore((state) => state.user)
+
   const [isMenuOpen, setIsMenuOpen] = useState(false)
 
   const items: Array<{ href: string; label: string; icon: React.ReactNode }> = [
@@ -107,7 +109,7 @@ export const KunTopBar = () => {
           <Link
             href="/galgame"
             className={cn(
-              'text-base',
+              'text-base shrink-0',
               pathname === '/galgame' ? 'text-primary' : 'text-foreground'
             )}
           >
@@ -119,7 +121,7 @@ export const KunTopBar = () => {
           <Link
             key={item.href}
             className={cn(
-              'text-base',
+              'text-base shrink-0',
               pathname === item.href ? 'text-primary' : 'text-foreground'
             )}
             href={item.href}
@@ -129,14 +131,16 @@ export const KunTopBar = () => {
           </Link>
         ))}
 
-        <Tooltip disableAnimation content="为什么现在的 AI 比人还要 H">
-          <a target="_blank" href={kunMoyuMoe.ad[0].url}>
-            <img
-              className="h-10 dark:opacity-80"
-              src="/a/moyumoe1-button.avif"
-            />
-          </a>
-        </Tooltip>
+        {(!currentUser.uid || currentUser.role < 2) && (
+          <Tooltip disableAnimation content="为什么现在的 AI 比人还要 H">
+            <a target="_blank" href={kunMoyuMoe.ad[0].url}>
+              <img
+                className="h-10 dark:opacity-80"
+                src="/a/moyumoe1-button.avif"
+              />
+            </a>
+          </Tooltip>
+        )}
       </div>
 
       <KunTopBarUser />

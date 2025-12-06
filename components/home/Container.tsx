@@ -1,22 +1,46 @@
 import { Button } from '@heroui/button'
+import { Image } from '@heroui/image'
 import { ChevronRight } from 'lucide-react'
 import { GalgameCard } from '~/components/galgame/Card'
 import { ResourceCard } from '~/components/resource/ResourceCard'
 import { CommentCard } from '~/components/comment/CommentCard'
 import Link from 'next/link'
 import { HomeHero } from './Hero'
+import { kunMoyuMoe } from '~/config/moyu-moe'
 import type { HomeComment, HomeResource } from '~/types/api/home'
+import type { KunGalgamePayload } from '~/app/api/utils/jwt'
 
 interface Props {
   galgames: GalgameCard[]
   resources: HomeResource[]
   comments: HomeComment[]
+  payload: KunGalgamePayload | null
 }
 
-export const HomeContainer = ({ galgames, resources, comments }: Props) => {
+export const HomeContainer = ({
+  galgames,
+  resources,
+  comments,
+  payload
+}: Props) => {
   return (
-    <div className="mx-auto space-y-16 max-w-7xl">
+    <div className="mx-auto space-y-8 max-w-7xl">
       <HomeHero />
+
+      {(!payload || payload.role < 2) && (
+        <div className="shadow-xl rounded-2xl">
+          <a
+            target="_blank"
+            className="h-full w-full"
+            href={kunMoyuMoe.ad[0].url}
+          >
+            <Image
+              className="pointer-events-none select-none"
+              src="/a/moyumoe1.avif"
+            />
+          </a>
+        </div>
+      )}
 
       <section className="space-y-3 sm:space-y-6">
         <div className="flex items-center space-x-4">

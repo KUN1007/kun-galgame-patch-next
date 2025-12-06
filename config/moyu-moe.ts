@@ -60,7 +60,7 @@ export const kunMoyuMoe: KunSiteConfig = {
   ad: [
     {
       name: 'DZMM',
-      url: 'https://s.iloveren.link/s/moyumoe1'
+      url: 'https://www.xn--i8s951di30azba.com/?rf=8e6ec4cf'
     }
   ]
 }

@@ -20,7 +20,7 @@ export const KunTopBarBrand = () => {
         </div>
       }
     >
-      <NavbarBrand className="hidden mr-16 grow-0 md:flex">
+      <NavbarBrand className="hidden grow-0 md:flex">
         <Link className="flex items-center" href="/">
           <Image
             src="/favicon.webp"
@@ -28,12 +28,17 @@ export const KunTopBarBrand = () => {
             width={50}
             height={50}
             priority
-            className="rounded-2xl"
+            className="rounded-2xl shrink-0"
           />
-          <p className="ml-4 mr-2 font-bold text-inherit">
+          <p className="ml-4 hidden lg:block mr-2 font-bold text-inherit">
             {kunMoyuMoe.creator.name}
           </p>
-          <Chip size="sm" variant="flat" color="primary">
+          <Chip
+            className="hidden lg:flex"
+            size="sm"
+            variant="flat"
+            color="primary"
+          >
             补丁
           </Chip>
         </Link>
