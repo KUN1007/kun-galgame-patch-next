@@ -30,16 +30,23 @@ export const KunResourceDetail = ({ detail, payload }: Props) => {
 
       {(!payload || payload.role < 2) && (
         <div className="shadow-xl rounded-2xl hidden sm:block">
-          <a
-            target="_blank"
-            className="h-full w-full"
-            href={kunMoyuMoe.ad[0].url}
-          >
-            <Image
-              className="pointer-events-none select-none"
-              src="/a/moyumoe1.avif"
-            />
-          </a>
+          <div className="shadow-xl rounded-2xl">
+            <a
+              target="_blank"
+              className="w-full max-h-64 flex items-center justify-center overflow-hidden rounded-2xl bg-black"
+              href={kunMoyuMoe.ad[0].url}
+            >
+              <video
+                className="pointer-events-none select-none w-full"
+                controls
+                autoPlay
+                muted
+                loop
+              >
+                <source src="/a/moyumoe.mp4" type="video/mp4" />
+              </video>
+            </a>
+          </div>
         </div>
       )}
 
@@ -104,12 +111,23 @@ export const KunResourceDetail = ({ detail, payload }: Props) => {
 
             {(!payload || payload.role < 2) && (
               <div className="shadow-xl rounded-2xl block sm:hidden">
-                <a target="_blank" href={kunMoyuMoe.ad[0].url}>
-                  <Image
-                    className="pointer-events-none select-none"
-                    src="/a/moyumoe1.avif"
-                  />
-                </a>
+                <div className="shadow-xl rounded-2xl">
+                  <a
+                    target="_blank"
+                    className="w-full max-h-64 flex items-center justify-center overflow-hidden rounded-2xl bg-black"
+                    href={kunMoyuMoe.ad[0].url}
+                  >
+                    <video
+                      className="pointer-events-none select-none w-full"
+                      controls
+                      autoPlay
+                      muted
+                      loop
+                    >
+                      <source src="/a/moyumoe.mp4" type="video/mp4" />
+                    </video>
+                  </a>
+                </div>
               </div>
             )}
 

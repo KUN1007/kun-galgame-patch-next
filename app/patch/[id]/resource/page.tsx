@@ -4,7 +4,6 @@ import { generateKunMetadataTemplate } from './metadata'
 import { kunGetPatchActions } from '../actions'
 import { kunGetActions } from './actions'
 import { ErrorComponent } from '~/components/error/ErrorComponent'
-import { Image } from '@heroui/image'
 import { kunMoyuMoe } from '~/config/moyu-moe'
 import type { Metadata } from 'next'
 
@@ -68,12 +67,23 @@ export default async function Kun({
         </div>
 
         {(!response.payload || response.payload.role < 2) && (
-          <Link target="_blank" href={kunMoyuMoe.ad[0].url}>
-            <Image
-              className="pointer-events-none select-none"
-              src="/a/moyumoe1.avif"
-            />
-          </Link>
+          <div className="shadow-xl rounded-2xl">
+            <a
+              target="_blank"
+              className="w-full max-h-64 flex items-center justify-center overflow-hidden rounded-2xl bg-black"
+              href={kunMoyuMoe.ad[0].url}
+            >
+              <video
+                className="pointer-events-none select-none w-full"
+                controls
+                autoPlay
+                muted
+                loop
+              >
+                <source src="/a/moyumoe.mp4" type="video/mp4" />
+              </video>
+            </a>
+          </div>
         )}
 
         <Resources initialResources={response.response} id={Number(id)} />

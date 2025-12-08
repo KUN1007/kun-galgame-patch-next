@@ -1,5 +1,4 @@
 import { Button } from '@heroui/button'
-import { Image } from '@heroui/image'
 import { ChevronRight } from 'lucide-react'
 import { GalgameCard } from '~/components/galgame/Card'
 import { ResourceCard } from '~/components/resource/ResourceCard'
@@ -31,13 +30,18 @@ export const HomeContainer = ({
         <div className="shadow-xl rounded-2xl">
           <a
             target="_blank"
-            className="h-full w-full"
+            className="w-full max-h-64 flex items-center justify-center overflow-hidden rounded-2xl bg-black"
             href={kunMoyuMoe.ad[0].url}
           >
-            <Image
-              className="pointer-events-none select-none"
-              src="/a/moyumoe1.avif"
-            />
+            <video
+              className="pointer-events-none select-none w-full"
+              controls
+              autoPlay
+              muted
+              loop
+            >
+              <source src="/a/moyumoe.mp4" type="video/mp4" />
+            </video>
           </a>
         </div>
       )}
