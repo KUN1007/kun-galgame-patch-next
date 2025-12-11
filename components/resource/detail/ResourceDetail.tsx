@@ -34,6 +34,7 @@ export const KunResourceDetail = ({ detail, payload }: Props) => {
             target="_blank"
             className="h-full w-full"
             href={kunMoyuMoe.ad[0].url}
+            rel="noreferrer"
           >
             <Image
               className="pointer-events-none select-none"
@@ -104,7 +105,7 @@ export const KunResourceDetail = ({ detail, payload }: Props) => {
 
             {(!payload || payload.role < 2) && (
               <div className="shadow-xl rounded-2xl block sm:hidden">
-                <a target="_blank" href={kunMoyuMoe.ad[0].url}>
+                <a target="_blank" href={kunMoyuMoe.ad[0].url} rel="noreferrer">
                   <Image
                     className="pointer-events-none select-none"
                     src="/a/moyumoe1.avif"

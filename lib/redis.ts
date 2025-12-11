@@ -5,7 +5,7 @@ const KUN_PATCH_REDIS_PREFIX = 'kun:patch'
 export const redis = new Redis({
   port: parseInt(process.env.REDIS_PORT!),
   host: process.env.REDIS_HOST,
-  password: process.env.REDIS_PASSWORD?.trim() || undefined,
+  password: process.env.REDIS_PASSWORD?.trim() || undefined
 })
 
 export const setKv = async (key: string, value: string, time?: number) => {

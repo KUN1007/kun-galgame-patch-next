@@ -50,6 +50,7 @@ export const KunMobileMenu = () => {
               className="flex items-center gap-2"
               target="_blank"
               href="https://s.iloveren.link/s/moyumoe1"
+              rel="noreferrer"
             >
               <img
                 src="/a/moyumoe1-button.avif"
