@@ -14,7 +14,7 @@ const getMailContent = (
   } else if (type === 'forgot') {
     return `您好, 您正在重置您 鲲 Galgame 补丁站 的密码, 下面是您的重置密码验证码\n${code}\n验证码十分钟内有效`
   } else {
-    return `您好, 您正在更改您 鲲 Galgame 补丁站 的邮箱, 下面是您的新邮箱验证码\n${code}\nn验证码十分钟内有效`
+    return `您好, 您正在更改您 鲲 Galgame 补丁站 的邮箱, 下面是您的新邮箱验证码\n${code}\n验证码十分钟内有效`
   }
 }
 
