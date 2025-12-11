@@ -33,10 +33,12 @@ export const HomeContainer = ({
             target="_blank"
             className="h-full w-full"
             href={kunMoyuMoe.ad[0].url}
+            rel="noreferrer"
           >
             <Image
               className="pointer-events-none select-none"
               src="/a/moyumoe1.avif"
+              alt=""
             />
           </a>
         </div>

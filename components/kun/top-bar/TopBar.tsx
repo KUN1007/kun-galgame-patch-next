@@ -133,10 +133,11 @@ export const KunTopBar = () => {
 
         {(!currentUser.uid || currentUser.role < 2) && (
           <Tooltip disableAnimation content="为什么现在的 AI 比人还要 H">
-            <a target="_blank" href={kunMoyuMoe.ad[0].url}>
+            <a target="_blank" href={kunMoyuMoe.ad[0].url} rel="noreferrer">
               <img
                 className="h-10 dark:opacity-80"
                 src="/a/moyumoe1-button.avif"
+                alt=""
               />
             </a>
           </Tooltip>

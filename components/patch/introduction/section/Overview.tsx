@@ -24,8 +24,8 @@ export const OverviewSection = ({ detail }: { detail: PatchDetail }) => {
 
   const hasIntro = Boolean(
     detail.introduction['zh-cn'] ||
-      detail.introduction['ja-jp'] ||
-      detail.introduction['en-us']
+    detail.introduction['ja-jp'] ||
+    detail.introduction['en-us']
   )
 
   return (

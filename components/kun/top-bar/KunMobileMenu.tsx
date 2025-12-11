@@ -50,10 +50,12 @@ export const KunMobileMenu = () => {
               className="flex items-center gap-2"
               target="_blank"
               href="https://s.iloveren.link/s/moyumoe1"
+              rel="noreferrer"
             >
               <img
                 src="/a/moyumoe1-button.avif"
                 className="h-11 dark:opacity-80"
+                alt=""
               />
               <span className="gap-2 flex items-center text-lg text-secondary px-4 py-2 rounded-2xl bg-secondary/15">
                 尝试一下 AI 女友

@@ -72,6 +72,7 @@ export default async function Kun({
             <Image
               className="pointer-events-none select-none"
               src="/a/moyumoe1.avif"
+              alt=""
             />
           </Link>
         )}
