@@ -24,6 +24,7 @@ export const envSchema = z.object({
   NEXT_PUBLIC_KUN_PATCH_APP_ADDRESS_PROD_PORT: z.string(),
   REDIS_HOST: z.string(),
   REDIS_PORT: z.string(),
+  REDIS_PASSWORD: z.string().optional(),
   JWT_ISS: z.string(),
   JWT_AUD: z.string(),
   JWT_SECRET: z.string(),
