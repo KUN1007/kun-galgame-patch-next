@@ -39,6 +39,7 @@ export const KunResourceDetail = ({ detail, payload }: Props) => {
             <Image
               className="pointer-events-none select-none"
               src="/a/moyumoe1.avif"
+              alt=""
             />
           </a>
         </div>
@@ -109,6 +110,7 @@ export const KunResourceDetail = ({ detail, payload }: Props) => {
                   <Image
                     className="pointer-events-none select-none"
                     src="/a/moyumoe1.avif"
+                    alt=""
                   />
                 </a>
               </div>

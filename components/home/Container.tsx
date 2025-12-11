@@ -38,6 +38,7 @@ export const HomeContainer = ({
             <Image
               className="pointer-events-none select-none"
               src="/a/moyumoe1.avif"
+              alt=""
             />
           </a>
         </div>

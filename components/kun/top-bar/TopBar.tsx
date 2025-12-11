@@ -137,6 +137,7 @@ export const KunTopBar = () => {
               <img
                 className="h-10 dark:opacity-80"
                 src="/a/moyumoe1-button.avif"
+                alt=""
               />
             </a>
           </Tooltip>
