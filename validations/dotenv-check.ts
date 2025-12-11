@@ -34,6 +34,9 @@ export const envSchema = z.object({
   KUN_VISUAL_NOVEL_EMAIL_ACCOUNT: z.string(),
   KUN_VISUAL_NOVEL_EMAIL_PASSWORD: z.string(),
 
+  KUN_VISUAL_NOVEL_EMAIL_TYPE: z.enum(['SMTP', 'RESEND']).optional(),
+  KUN_VISUAL_NOVEL_EMAIL_RESEND_KEY: z.string().optional(),
+
   KUN_VISUAL_NOVEL_IMAGE_BED_ACCESS_KEY: z.string(),
   KUN_VISUAL_NOVEL_IMAGE_BED_SECRET_KEY: z.string(),
   KUN_VISUAL_NOVEL_IMAGE_BED_ENDPOINT: z.string(),
@@ -55,3 +58,4 @@ if (!env.success) {
       JSON.stringify(env.error.format(), null, 4)
   )
 }
+envSchema.safeParse(process.env)

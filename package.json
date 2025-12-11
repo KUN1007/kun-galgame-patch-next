@@ -116,6 +116,7 @@
     "remark-gfm": "^4.0.1",
     "remark-parse": "^11.0.0",
     "remark-rehype": "^11.1.2",
+    "resend": "^6.6.0",
     "rimraf": "^6.0.1",
     "sharp": "^0.34.4",
     "socket.io": "^4.8.1",

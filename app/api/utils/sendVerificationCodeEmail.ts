@@ -1,5 +1,6 @@
 import { createTransport } from 'nodemailer'
 import SMPTransport from 'nodemailer-smtp-transport'
+import { Resend } from 'resend'
 import { getRemoteIp } from './getRemoteIp'
 import { getKv, setKv } from '~/lib/redis'
 import { generateRandomCode } from './generateRandomCode'
@@ -15,6 +16,46 @@ const getMailContent = (
   } else {
     return `您好, 您正在更改您 鲲 Galgame 补丁站 的邮箱, 下面是您的新邮箱验证码\n${code}\nn验证码十分钟内有效`
   }
+}
+
+const sendViaSMTP = async (email: string, subject: string, text: string) => {
+  const transporter = createTransport(
+    SMPTransport({
+      pool: { pool: true },
+      host: process.env.KUN_VISUAL_NOVEL_EMAIL_HOST,
+      port: Number(process.env.KUN_VISUAL_NOVEL_EMAIL_PORT) || 587,
+      secure: false,
+      requireTLS: true,
+      auth: {
+        user: process.env.KUN_VISUAL_NOVEL_EMAIL_ACCOUNT,
+        pass: process.env.KUN_VISUAL_NOVEL_EMAIL_PASSWORD
+      }
+    })
+  )
+
+  const mailOptions = {
+    from: `${process.env.KUN_VISUAL_NOVEL_EMAIL_FROM}<${process.env.KUN_VISUAL_NOVEL_EMAIL_ACCOUNT}>`,
+    sender: process.env.KUN_VISUAL_NOVEL_EMAIL_ACCOUNT,
+    to: email,
+    subject,
+    text
+  }
+
+  await transporter.sendMail(mailOptions)
+}
+
+const sendViaResend = async (email: string, subject: string, text: string) => {
+  const resend = new Resend(process.env.KUN_VISUAL_NOVEL_EMAIL_RESEND_KEY)
+
+  const mailOptions = {
+    from: `${process.env.KUN_VISUAL_NOVEL_EMAIL_FROM}<${process.env.KUN_VISUAL_NOVEL_EMAIL_ACCOUNT}>`,
+    to: email,
+    subject,
+    replyTo: process.env.KUN_VISUAL_NOVEL_EMAIL_ACCOUNT,
+    text
+  }
+
+  await resend.emails.send(mailOptions)
 }
 
 export const sendVerificationCodeEmail = async (
@@ -35,29 +76,18 @@ export const sendVerificationCodeEmail = async (
   await setKv(`limit:email:${email}`, code, 60)
   await setKv(`limit:ip:${ip}`, code, 60)
 
-  const transporter = createTransport(
-    SMPTransport({
-      pool: {
-        pool: true
-      },
-      host: process.env.KUN_VISUAL_NOVEL_EMAIL_HOST,
-      port: Number(process.env.KUN_VISUAL_NOVEL_EMAIL_PORT) || 587,
-      secure: false,
-      requireTLS: true,
-      auth: {
-        user: process.env.KUN_VISUAL_NOVEL_EMAIL_ACCOUNT,
-        pass: process.env.KUN_VISUAL_NOVEL_EMAIL_PASSWORD
-      }
-    })
-  )
+  const subject = '鲲 Galgame 补丁 - 验证码'
+  const text = getMailContent(type, code)
 
-  const mailOptions = {
-    from: `${process.env.KUN_VISUAL_NOVEL_EMAIL_FROM}<${process.env.KUN_VISUAL_NOVEL_EMAIL_ACCOUNT}>`,
-    sender: process.env.KUN_VISUAL_NOVEL_EMAIL_ACCOUNT,
-    to: email,
-    subject: '鲲 Galgame 补丁 - 验证码',
-    text: getMailContent(type, code)
+  const emailType =
+    process.env.KUN_VISUAL_NOVEL_EMAIL_TYPE?.trim().toUpperCase() || 'SMTP'
+
+  switch (emailType) {
+    case 'RESEND':
+      await sendViaResend(email, subject, text)
+      break
+    case 'SMTP':
+      await sendViaSMTP(email, subject, text)
+      break
   }
-
-  transporter.sendMail(mailOptions)
 }
