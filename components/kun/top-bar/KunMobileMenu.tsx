@@ -7,11 +7,9 @@ import Image from 'next/image'
 import { kunMoyuMoe } from '~/config/moyu-moe'
 import { kunMobileNavItem } from '~/constants/top-bar'
 import { Divider } from '@heroui/react'
-import { useUserStore } from '~/store/userStore'
+import { AIEroMobileNav } from '~/components/kun/ad/AIEroMobileNav'
 
 export const KunMobileMenu = () => {
-  const currentUser = useUserStore((state) => state.user)
-
   return (
     <NavbarMenu>
       <NavbarMenuItem>
@@ -42,28 +40,7 @@ export const KunMobileMenu = () => {
 
       <Divider className="my-3" />
 
-      {(!currentUser.uid || currentUser.role < 2) && (
-        <NavbarMenuItem>
-          <div className="space-y-2">
-            <p>为什么现在的 AI 比人还要 H</p>
-            <a
-              className="flex items-center gap-2"
-              target="_blank"
-              href="https://s.iloveren.link/s/moyumoe1"
-              rel="noreferrer"
-            >
-              <img
-                src="/a/moyumoe1-button.avif"
-                className="h-11 dark:opacity-80"
-                alt=""
-              />
-              <span className="gap-2 flex items-center text-lg text-secondary px-4 py-2 rounded-2xl bg-secondary/15">
-                尝试一下 AI 女友
-              </span>
-            </a>
-          </div>
-        </NavbarMenuItem>
-      )}
+      <AIEroMobileNav />
     </NavbarMenu>
   )
 }

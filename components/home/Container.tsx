@@ -7,6 +7,7 @@ import { CommentCard } from '~/components/comment/CommentCard'
 import Link from 'next/link'
 import { HomeHero } from './Hero'
 import { kunMoyuMoe } from '~/config/moyu-moe'
+import { AIEroBanner } from '~/components/kun/ad/AIEroBanner'
 import type { HomeComment, HomeResource } from '~/types/api/home'
 import type { KunGalgamePayload } from '~/app/api/utils/jwt'
 
@@ -27,22 +28,7 @@ export const HomeContainer = ({
     <div className="mx-auto space-y-8 max-w-7xl">
       <HomeHero />
 
-      {(!payload || payload.role < 2) && (
-        <div className="shadow-xl rounded-2xl">
-          <a
-            target="_blank"
-            className="h-full w-full"
-            href={kunMoyuMoe.ad[0].url}
-            rel="noreferrer"
-          >
-            <Image
-              className="pointer-events-none select-none"
-              src="/a/moyumoe1.avif"
-              alt=""
-            />
-          </a>
-        </div>
-      )}
+      <AIEroBanner payload={payload} />
 
       <section className="space-y-3 sm:space-y-6">
         <div className="flex items-center space-x-4">

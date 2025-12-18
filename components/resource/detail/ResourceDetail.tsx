@@ -13,6 +13,7 @@ import { ResourceLikeButton } from '~/components/patch/resource/ResourceLike'
 import { ResourceDownloadCard } from './DownloadCard'
 import { Link } from '@heroui/react'
 import { kunMoyuMoe } from '~/config/moyu-moe'
+import { AIEroBanner } from '~/components/kun/ad/AIEroBanner'
 import type { KunGalgamePayload } from '~/app/api/utils/jwt'
 import type { PatchResourceDetail } from '~/types/api/resource'
 
@@ -28,22 +29,7 @@ export const KunResourceDetail = ({ detail, payload }: Props) => {
     <div className="space-y-6">
       <PatchSummary patch={detail.patch} />
 
-      {(!payload || payload.role < 2) && (
-        <div className="shadow-xl rounded-2xl hidden sm:block">
-          <a
-            target="_blank"
-            className="h-full w-full"
-            href={kunMoyuMoe.ad[0].url}
-            rel="noreferrer"
-          >
-            <Image
-              className="pointer-events-none select-none"
-              src="/a/moyumoe1.avif"
-              alt=""
-            />
-          </a>
-        </div>
-      )}
+      <AIEroBanner className="hidden sm:block" payload={payload} />
 
       <div className="grid gap-0 sm:gap-6 lg:grid-cols-3">
         <Card className="col-span-2 border-default-200 border bg-content1/90 shadow-lg backdrop-blur-sm dark:bg-content1/70">
@@ -104,17 +90,7 @@ export const KunResourceDetail = ({ detail, payload }: Props) => {
               )}
             </div>
 
-            {(!payload || payload.role < 2) && (
-              <div className="shadow-xl rounded-2xl block sm:hidden">
-                <a target="_blank" href={kunMoyuMoe.ad[0].url} rel="noreferrer">
-                  <Image
-                    className="pointer-events-none select-none"
-                    src="/a/moyumoe1.avif"
-                    alt=""
-                  />
-                </a>
-              </div>
-            )}
+            <AIEroBanner className="block sm:hidden" payload={payload} />
 
             <ResourceDownloadCard resource={resource} />
 

@@ -59,8 +59,8 @@ export const kunMoyuMoe: KunSiteConfig = {
   ],
   ad: [
     {
-      name: 'DZMM',
-      url: 'https://www.xn--i8s951di30azba.com/?rf=8e6ec4cf'
+      name: 'AIEro',
+      url: 'https://stats.kungal.org/q/W7Jb6JFlm'
     }
   ]
 }

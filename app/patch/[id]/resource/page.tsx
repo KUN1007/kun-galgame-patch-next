@@ -4,8 +4,7 @@ import { generateKunMetadataTemplate } from './metadata'
 import { kunGetPatchActions } from '../actions'
 import { kunGetActions } from './actions'
 import { ErrorComponent } from '~/components/error/ErrorComponent'
-import { Image } from '@heroui/image'
-import { kunMoyuMoe } from '~/config/moyu-moe'
+import { AIEroBanner } from '~/components/kun/ad/AIEroBanner'
 import type { Metadata } from 'next'
 
 export const revalidate = 5
@@ -67,15 +66,7 @@ export default async function Kun({
           </p>
         </div>
 
-        {(!response.payload || response.payload.role < 2) && (
-          <Link target="_blank" href={kunMoyuMoe.ad[0].url}>
-            <Image
-              className="pointer-events-none select-none"
-              src="/a/moyumoe1.avif"
-              alt=""
-            />
-          </Link>
-        )}
+        <AIEroBanner payload={response.payload} />
 
         <Resources initialResources={response.response} id={Number(id)} />
       </div>
