@@ -11,7 +11,7 @@ export const AIEroNav = () => {
     <>
       {(!currentUser.uid || currentUser.role < 2) && (
         <Tooltip disableAnimation content="为什么现在的 AI 比人还要 H">
-          <a target="_blank" href={kunMoyuMoe.ad[0].url} rel="noreferrer">
+          <a target="_blank" href={kunMoyuMoe.ad[0].url}>
             <img
               className="h-10 dark:opacity-80"
               src="/a/moyumoe1-button.avif"

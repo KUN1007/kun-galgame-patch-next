@@ -17,7 +17,6 @@ export const AIEroBanner = ({ payload, className = '' }: Props) => {
             target="_blank"
             className="h-full w-full"
             href={kunMoyuMoe.ad[0].url}
-            rel="noreferrer"
           >
             <Image
               className="pointer-events-none select-none"

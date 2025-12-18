@@ -15,7 +15,6 @@ export const AIEroMobileNav = () => {
             className="flex items-center gap-2"
             target="_blank"
             href={kunMoyuMoe.ad[0].url}
-            rel="noreferrer"
           >
             <img
               src="/a/moyumoe1-button.avif"
