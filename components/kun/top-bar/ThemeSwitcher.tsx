@@ -66,6 +66,7 @@ export const ThemeSwitcher = () => {
         <div className="flex">
           <DropdownTrigger>
             <Button
+              size="sm"
               isIconOnly
               variant="light"
               aria-label="主题切换"

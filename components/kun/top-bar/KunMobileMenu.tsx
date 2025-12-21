@@ -6,8 +6,6 @@ import Link from 'next/link'
 import Image from 'next/image'
 import { kunMoyuMoe } from '~/config/moyu-moe'
 import { kunMobileNavItem } from '~/constants/top-bar'
-import { Divider } from '@heroui/react'
-import { AIEroMobileNav } from '~/components/kun/ad/AIEroMobileNav'
 
 export const KunMobileMenu = () => {
   return (
@@ -37,10 +35,6 @@ export const KunMobileMenu = () => {
           </Link>
         </NavbarMenuItem>
       ))}
-
-      <Divider className="my-3" />
-
-      <AIEroMobileNav />
     </NavbarMenu>
   )
 }

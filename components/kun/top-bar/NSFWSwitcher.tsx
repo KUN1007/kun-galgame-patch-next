@@ -14,7 +14,7 @@ import {
   KUN_CONTENT_LIMIT_LABEL,
   KUN_CONTENT_LIMIT_MAP
 } from '~/constants/top-bar'
-import type { JSX } from 'react'
+import { useMemo, type JSX } from 'react'
 
 const themeIconMap: Record<string, JSX.Element> = {
   sfw: <ShieldCheck className="size-5" />,
@@ -26,15 +26,27 @@ export const NSFWSwitcher = () => {
   const settings = useSettingStore((state) => state.data)
   const setData = useSettingStore((state) => state.setData)
 
+  const isDanger = useMemo(() => {
+    if (!settings.kunNsfwEnable) {
+      return false
+    }
+    if (settings.kunNsfwEnable === 'sfw') {
+      return false
+    }
+    return true
+  }, [setData])
+
   return (
     <Dropdown placement="bottom-end" className="min-w-0">
       <Tooltip disableAnimation showArrow closeDelay={0} content="内容显示切换">
         <div className="flex">
           <DropdownTrigger>
             <Button
+              size="sm"
               variant="flat"
               aria-label="内容限制"
               className="text-default-500"
+              color={isDanger ? 'danger' : 'success'}
             >
               {KUN_CONTENT_LIMIT_LABEL[settings.kunNsfwEnable]}
             </Button>

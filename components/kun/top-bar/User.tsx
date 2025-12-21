@@ -16,9 +16,9 @@ import { KunSearch } from './Search'
 import { UserMessageBell } from './UserMessageBell'
 import { NSFWSwitcher } from './NSFWSwitcher'
 import { kunErrorHandler } from '~/utils/kunErrorHandler'
-import type { UserState } from '~/store/userStore'
 import { RandomGalgameButton } from './RandomGalgameButton'
 import { Tooltip } from '@heroui/react'
+import type { UserState } from '~/store/userStore'
 
 export const KunTopBarUser = () => {
   const router = useRouter()
@@ -61,16 +61,19 @@ export const KunTopBarUser = () => {
         <>
           {!user.name && (
             <NavbarContent justify="end">
-              <NavbarItem className="hidden lg:flex">
-                <Link href="/login">登录</Link>
-              </NavbarItem>
               <NavbarItem>
                 <Button
-                  as={Link}
+                  size="sm"
                   color="primary"
-                  href="/register"
                   variant="flat"
+                  as={Link}
+                  href="/login"
                 >
+                  登录
+                </Button>
+              </NavbarItem>
+              <NavbarItem className="hidden lg:flex">
+                <Button size="sm" as={Link} color="primary" href="/register">
                   注册
                 </Button>
               </NavbarItem>
@@ -86,10 +89,13 @@ export const KunTopBarUser = () => {
               className="hidden sm:flex"
               isIconOnly
               variant="light"
+              size="sm"
             />
           </Tooltip>
 
-          <ThemeSwitcher />
+          <div className="hidden sm:flex">
+            <ThemeSwitcher />
+          </div>
 
           {user.name && (
             <>

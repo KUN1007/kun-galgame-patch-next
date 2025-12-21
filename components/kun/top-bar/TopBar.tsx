@@ -128,9 +128,9 @@ export const KunTopBar = () => {
             {item.name}
           </Link>
         ))}
-
-        <AIEroNav />
       </div>
+
+      <AIEroNav />
 
       <KunTopBarUser />
 

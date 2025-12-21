@@ -21,6 +21,7 @@ export const KunSearch = () => {
       content="您可以按下 Ctrl + K 快速搜索"
     >
       <Button
+        size="sm"
         isIconOnly
         variant="light"
         aria-label="搜索"
