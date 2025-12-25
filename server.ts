@@ -7,9 +7,15 @@ import { onSocketConnection } from './socket/handler'
 import { KUN_SOCKET_IO_ROUTE } from '~/config/app'
 
 const dev = process.env.NODE_ENV !== 'production'
-const hostname = process.env.NEXT_PUBLIC_KUN_PATCH_APP_ADDRESS_PROD_HOST
+const hostname = dev
+  ? process.env.NEXT_PUBLIC_KUN_PATCH_APP_ADDRESS_DEV_HOST
+  : process.env.NEXT_PUBLIC_KUN_PATCH_APP_ADDRESS_PROD_HOST
 const port =
-  Number(process.env.NEXT_PUBLIC_KUN_PATCH_APP_ADDRESS_PROD_PORT) || 2333
+  Number(
+    dev
+      ? process.env.NEXT_PUBLIC_KUN_PATCH_APP_ADDRESS_DEV_PORT
+      : process.env.NEXT_PUBLIC_KUN_PATCH_APP_ADDRESS_PROD_PORT
+  ) || 2333
 
 const app = next({ dev, hostname, port, turbopack: true })
 const handle = app.getRequestHandler()
