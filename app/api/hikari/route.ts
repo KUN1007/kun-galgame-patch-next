@@ -15,6 +15,7 @@ const DOMAIN_PATTERNS = [
   /^https:\/\/([\w-]+\.)*shionlib\.com$/,
   // TouchGal
   /^https:\/\/([\w-]+\.)*touchgal\.us$/,
+  /^https:\/\/([\w-]+\.)*touchgal\.top$/,
   // Nysoure
   /^https:\/\/([\w-]+\.)*nyne\.dev$/,
   // kungal

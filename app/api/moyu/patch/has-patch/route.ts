@@ -6,7 +6,8 @@ import { getRemoteIp } from '~/app/api/utils/getRemoteIp'
 const DOMAIN_PATTERNS = [
   /^http:\/\/localhost:\d+$/,
   /^http:\/\/127.0.0.1:\d+$/,
-  /^https:\/\/([\w-]+\.)*touchgal\.us$/
+  /^https:\/\/([\w-]+\.)*touchgal\.us$/,
+  /^https:\/\/([\w-]+\.)*touchgal\.top$/
 ]
 
 const RATE_LIMIT_MAX = 10
