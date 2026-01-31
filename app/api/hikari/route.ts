@@ -22,7 +22,11 @@ const DOMAIN_PATTERNS = [
   /^https:\/\/([\w-]+\.)*kungal\.com$/,
   /^https:\/\/([\w-]+\.)*kungal\.org$/,
   // LycorisGal
-  /^https:\/\/([\w-]+\.)*lycorisgal\.com$/
+  /^https:\/\/([\w-]+\.)*lycorisgal\.com$/,
+  // Galgamex
+  /^https:\/\/([\w-]+\.)*galgamex\.net$/,
+  /^https:\/\/([\w-]+\.)*galgamex\.top$/,
+  /^https:\/\/([\w-]+\.)*galgamex\.com$/
 ]
 
 const RATE_LIMIT_MAX = 10000
