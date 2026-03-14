@@ -101,6 +101,7 @@
     "node-cron": "^4.2.1",
     "nodemailer": "^7.0.9",
     "nodemailer-smtp-transport": "^2.7.4",
+    "nuqs": "^2.8.9",
     "react": "^19.2.1",
     "react-dom": "^19.2.1",
     "react-dropzone": "^14.3.8",

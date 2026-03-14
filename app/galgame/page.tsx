@@ -2,40 +2,43 @@ import { CardContainer } from '~/components/galgame/Container'
 import { kunGetActions } from './actions'
 import { ErrorComponent } from '~/components/error/ErrorComponent'
 import { kunMetadata } from './metadata'
-import { Suspense } from 'react'
+import { galgameSearchParamsCache } from '~/components/galgame/_searchParams'
+import { NuqsAdapter } from 'nuqs/adapters/next/app'
 import type { Metadata } from 'next'
+import type { SearchParams } from 'nuqs/server'
 
 export const revalidate = 5
 
 export const metadata: Metadata = kunMetadata
 
 interface Props {
-  searchParams?: Promise<{ page?: number }>
+  searchParams: Promise<SearchParams>
 }
 
 export default async function Kun({ searchParams }: Props) {
-  const res = await searchParams
-  const currentPage = res?.page ? res.page : 1
+  const { page, type, sortField, sortOrder, years, months } =
+    await galgameSearchParamsCache.parse(searchParams)
 
   const response = await kunGetActions({
-    selectedType: 'all',
-    sortField: 'resource_update_time',
-    sortOrder: 'desc',
-    page: currentPage,
+    selectedType: type,
+    sortField,
+    sortOrder,
+    page,
     limit: 24,
-    yearString: JSON.stringify(['all']),
-    monthString: JSON.stringify(['all'])
+    yearString: JSON.stringify(years),
+    monthString: JSON.stringify(months)
   })
+
   if (typeof response === 'string') {
     return <ErrorComponent error={response} />
   }
 
   return (
-    <Suspense>
+    <NuqsAdapter>
       <CardContainer
         initialGalgames={response.galgames}
         initialTotal={response.total}
       />
-    </Suspense>
+    </NuqsAdapter>
   )
 }

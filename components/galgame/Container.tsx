@@ -1,15 +1,16 @@
 'use client'
 
-import { useEffect, useState } from 'react'
-import { Pagination } from '@heroui/pagination'
+import { useEffect, useState, useTransition } from 'react'
+import { useQueryStates } from 'nuqs'
 import { kunFetchGet } from '~/utils/kunFetch'
 import { GalgameCard } from './Card'
 import { FilterBar } from './FilterBar'
 import { useMounted } from '~/hooks/useMounted'
 import { KunLoading } from '~/components/kun/Loading'
 import { KunHeader } from '../kun/Header'
-import { useRouter, useSearchParams } from 'next/navigation'
-import type { SortDirection, SortOption } from './_sort'
+import { KunPagination } from '~/components/kun/KunPagination'
+import { galgameParsers } from './_searchParams'
+import type { SortDirection, SortOption } from './_searchParams'
 
 interface Props {
   initialGalgames: GalgameCard[]
@@ -20,15 +21,15 @@ export const CardContainer = ({ initialGalgames, initialTotal }: Props) => {
   const [galgames, setGalgames] = useState<GalgameCard[]>(initialGalgames)
   const [total, setTotal] = useState(initialTotal)
   const [loading, setLoading] = useState(false)
-  const [selectedType, setSelectedType] = useState<string>('all')
-  const [sortField, setSortField] = useState<SortOption>('resource_update_time')
-  const [sortOrder, setSortOrder] = useState<SortDirection>('desc')
-  const [selectedYears, setSelectedYears] = useState<string[]>(['all'])
-  const [selectedMonths, setSelectedMonths] = useState<string[]>(['all'])
   const isMounted = useMounted()
-  const router = useRouter()
-  const searchParams = useSearchParams()
-  const [page, setPage] = useState(Number(searchParams.get('page')) || 1)
+  const [isPending, startTransition] = useTransition()
+
+  const [params, setParams] = useQueryStates(galgameParsers, {
+    shallow: false,
+    startTransition
+  })
+
+  const { page, type, sortField, sortOrder, years, months } = params
 
   const fetchPatches = async () => {
     setLoading(true)
@@ -37,13 +38,13 @@ export const CardContainer = ({ initialGalgames, initialTotal }: Props) => {
       galgames: GalgameCard[]
       total: number
     }>('/galgame', {
-      selectedType,
+      selectedType: type,
       sortField,
       sortOrder,
       page,
       limit: 24,
-      yearString: JSON.stringify(selectedYears),
-      monthString: JSON.stringify(selectedMonths)
+      yearString: JSON.stringify(years),
+      monthString: JSON.stringify(months)
     })
 
     setGalgames(galgames)
@@ -56,16 +57,35 @@ export const CardContainer = ({ initialGalgames, initialTotal }: Props) => {
       return
     }
     fetchPatches()
-  }, [sortField, sortOrder, selectedType, page, selectedYears, selectedMonths])
+  }, [sortField, sortOrder, type, page, years, months])
 
   const handlePageChange = (newPage: number) => {
-    setPage(newPage)
+    setParams({ page: newPage })
     setTimeout(() => {
       window.scrollTo(0, 0)
     })
-    const params = new URLSearchParams(window.location.search)
-    params.set('page', newPage.toString())
-    router.push(`?${params.toString()}`)
+  }
+
+  const handleTypeChange = (newType: string) => {
+    if (newType) {
+      setParams({ type: newType, page: 1 })
+    }
+  }
+
+  const handleSortFieldChange = (newSortField: SortOption) => {
+    setParams({ sortField: newSortField, page: 1 })
+  }
+
+  const handleSortOrderChange = (newSortOrder: SortDirection) => {
+    setParams({ sortOrder: newSortOrder, page: 1 })
+  }
+
+  const handleYearsChange = (newYears: string[]) => {
+    setParams({ years: newYears, page: 1 })
+  }
+
+  const handleMonthsChange = (newMonths: string[]) => {
+    setParams({ months: newMonths, page: 1 })
   }
 
   return (
@@ -76,23 +96,19 @@ export const CardContainer = ({ initialGalgames, initialTotal }: Props) => {
       />
 
       <FilterBar
-        selectedType={selectedType}
-        setSelectedType={(key) => {
-          if (key) {
-            setSelectedType(key)
-          }
-        }}
+        selectedType={type}
+        setSelectedType={handleTypeChange}
         sortField={sortField}
-        setSortField={setSortField}
+        setSortField={handleSortFieldChange}
         sortOrder={sortOrder}
-        setSortOrder={setSortOrder}
-        selectedYears={selectedYears}
-        setSelectedYears={setSelectedYears}
-        selectedMonths={selectedMonths}
-        setSelectedMonths={setSelectedMonths}
+        setSortOrder={handleSortOrderChange}
+        selectedYears={years}
+        setSelectedYears={handleYearsChange}
+        selectedMonths={months}
+        setSelectedMonths={handleMonthsChange}
       />
 
-      {loading ? (
+      {loading || isPending ? (
         <KunLoading hint="正在获取 Galgame 数据..." />
       ) : (
         <div className="grid grid-cols-2 gap-2 mx-auto mb-8 sm:gap-6 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
@@ -104,13 +120,11 @@ export const CardContainer = ({ initialGalgames, initialTotal }: Props) => {
 
       {total > 24 && (
         <div className="flex justify-center">
-          <Pagination
-            total={Math.ceil(total / 24)}
+          <KunPagination
             page={page}
+            total={Math.ceil(total / 24)}
             onChange={handlePageChange}
-            showControls
-            color="primary"
-            size="lg"
+            isDisabled={loading || isPending}
           />
         </div>
       )}
