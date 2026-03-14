@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from 'react'
 import { kunFetchGet } from '~/utils/kunFetch'
-import { Pagination } from '@heroui/pagination'
+import { KunPagination } from '~/components/kun/KunPagination'
 import { useMounted } from '~/hooks/useMounted'
 import { KunNull } from '~/components/kun/Null'
 import { KunLoading } from '~/components/kun/Loading'
@@ -58,13 +58,11 @@ export const UserContribute = ({ contributes, total, uid }: Props) => {
 
       {total > 20 && (
         <div className="flex justify-center">
-          <Pagination
+          <KunPagination
             total={Math.ceil(total / 20)}
             page={page}
-            onChange={(newPage: number) => setPage(newPage)}
-            showControls
-            color="primary"
-            size="lg"
+            onChange={setPage}
+            isDisabled={loading}
           />
         </div>
       )}

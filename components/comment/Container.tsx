@@ -1,7 +1,7 @@
 'use client'
 
 import { useEffect, useState } from 'react'
-import { Pagination } from '@heroui/pagination'
+import { KunPagination } from '~/components/kun/KunPagination'
 import { kunFetchGet } from '~/utils/kunFetch'
 import { CommentCard } from './CommentCard'
 import { FilterBar } from './FilterBar'
@@ -89,13 +89,11 @@ export const CardContainer = ({ initialComments, initialTotal }: Props) => {
 
       {total > 50 && (
         <div className="flex justify-center">
-          <Pagination
+          <KunPagination
             total={Math.ceil(total / 50)}
             page={page}
             onChange={handlePageChange}
-            showControls
-            color="primary"
-            size="lg"
+            isDisabled={loading}
           />
         </div>
       )}

@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from 'react'
 import { useMounted } from '~/hooks/useMounted'
-import { Pagination } from '@heroui/pagination'
+import { KunPagination } from '~/components/kun/KunPagination'
 import { KunLoading } from '~/components/kun/Loading'
 import { MessageCard } from './MessageCard'
 import { kunFetchGet } from '~/utils/kunFetch'
@@ -70,13 +70,11 @@ export const MessageContainer = ({ initialMessages, total, type }: Props) => {
 
       {total > 30 && (
         <div className="flex justify-center">
-          <Pagination
+          <KunPagination
             total={Math.ceil(total / 30)}
             page={page}
-            onChange={(newPage: number) => setPage(newPage)}
-            showControls
-            color="primary"
-            size="lg"
+            onChange={setPage}
+            isDisabled={loading}
           />
         </div>
       )}

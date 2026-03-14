@@ -4,7 +4,7 @@ import { useEffect, useState } from 'react'
 import { useRouter, useSearchParams } from 'next/navigation'
 import { Input } from '@heroui/input'
 import { Checkbox, Link } from '@heroui/react'
-import { Pagination } from '@heroui/pagination'
+import { KunPagination } from '~/components/kun/KunPagination'
 import { KunLoading } from '~/components/kun/Loading'
 import { Search } from 'lucide-react'
 import { useDebounce } from 'use-debounce'
@@ -188,17 +188,11 @@ export const SearchPage = () => {
 
           {total > 12 && (
             <div className="flex justify-center">
-              <Pagination
+              <KunPagination
                 total={Math.ceil(total / 12)}
                 page={page}
                 onChange={setPage}
-                showControls
-                size="lg"
-                radius="lg"
-                classNames={{
-                  wrapper: 'gap-2',
-                  item: 'w-10 h-10'
-                }}
+                isDisabled={loading}
               />
             </div>
           )}

@@ -1,7 +1,7 @@
 'use client'
 
 import { useEffect, useState } from 'react'
-import { Pagination } from '@heroui/pagination'
+import { KunPagination } from '~/components/kun/KunPagination'
 import { kunFetchGet } from '~/utils/kunFetch'
 import { Chip } from '@heroui/chip'
 import { TagDetail } from '~/types/api/tag'
@@ -89,17 +89,11 @@ export const TagDetailContainer = ({
 
           {total > 24 && (
             <div className="flex justify-center">
-              <Pagination
+              <KunPagination
                 total={Math.ceil(total / 24)}
                 page={page}
                 onChange={setPage}
-                showControls
-                size="lg"
-                radius="lg"
-                classNames={{
-                  wrapper: 'gap-2',
-                  item: 'w-10 h-10'
-                }}
+                isDisabled={loading}
               />
             </div>
           )}

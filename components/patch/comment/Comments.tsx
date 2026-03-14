@@ -3,7 +3,7 @@
 import { useEffect, useState } from 'react'
 import { Card, CardBody } from '@heroui/card'
 import { Button } from '@heroui/button'
-import { Pagination } from '@heroui/pagination'
+import { KunPagination } from '~/components/kun/KunPagination'
 import { KunUser } from '~/components/kun/floating-card/KunUser'
 import { MessageCircle } from 'lucide-react'
 import { formatDistanceToNow } from '~/utils/formatDistanceToNow'
@@ -156,13 +156,11 @@ export const Comments = ({
 
       {totalCount > 30 && (
         <div className="flex justify-center">
-          <Pagination
+          <KunPagination
             total={Math.ceil(totalCount / 30)}
             page={page}
-            onChange={(newPage: number) => setPage(newPage)}
-            showControls
-            color="primary"
-            size="lg"
+            onChange={setPage}
+            isDisabled={loading}
           />
         </div>
       )}

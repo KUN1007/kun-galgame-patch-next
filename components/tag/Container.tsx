@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from 'react'
 import { useDebounce } from 'use-debounce'
-import { Pagination } from '@heroui/pagination'
+import { KunPagination } from '~/components/kun/KunPagination'
 import { SearchTags } from './SearchTag'
 import { TagList } from './TagList'
 import { kunFetchGet, kunFetchPost } from '~/utils/kunFetch'
@@ -84,13 +84,11 @@ export const Container = ({ initialTags, initialTotal }: Props) => {
 
       {total > 100 && !query && (
         <div className="flex justify-center">
-          <Pagination
+          <KunPagination
             total={Math.ceil(total / 100)}
             page={page}
-            onChange={(newPage: number) => setPage(newPage)}
-            showControls
-            color="primary"
-            size="lg"
+            onChange={setPage}
+            isDisabled={loading}
           />
         </div>
       )}

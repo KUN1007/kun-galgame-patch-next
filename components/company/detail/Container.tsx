@@ -5,7 +5,7 @@ import { useRouter } from '@bprogress/next'
 import { Chip } from '@heroui/react'
 import { useDisclosure } from '@heroui/modal'
 import { Link } from '@heroui/link'
-import { Pagination } from '@heroui/pagination'
+import { KunPagination } from '~/components/kun/KunPagination'
 import { useMounted } from '~/hooks/useMounted'
 import { KunHeader } from '~/components/kun/Header'
 import { KunLoading } from '~/components/kun/Loading'
@@ -132,17 +132,11 @@ export const CompanyDetailContainer: FC<Props> = ({
 
           {total > 24 && (
             <div className="flex justify-center">
-              <Pagination
+              <KunPagination
                 total={Math.ceil(total / 24)}
                 page={page}
                 onChange={setPage}
-                showControls
-                size="lg"
-                radius="lg"
-                classNames={{
-                  wrapper: 'gap-2',
-                  item: 'w-10 h-10'
-                }}
+                isDisabled={loading}
               />
             </div>
           )}
