@@ -9,8 +9,8 @@ import { useMounted } from '~/hooks/useMounted'
 import { KunLoading } from '~/components/kun/Loading'
 import { KunHeader } from '../kun/Header'
 import { KunPagination } from '~/components/kun/KunPagination'
-import { galgameParsers } from './_searchParams'
-import type { SortDirection, SortOption } from './_searchParams'
+import { galgameParsers } from '~/components/nuqs/galgame'
+import type { SortDirection, SortOption } from '~/components/nuqs/galgame'
 
 interface Props {
   initialGalgames: GalgameCard[]

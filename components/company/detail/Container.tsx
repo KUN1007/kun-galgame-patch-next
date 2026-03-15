@@ -1,9 +1,8 @@
 'use client'
 
 import { useState, useTransition, useEffect } from 'react'
-import { useRouter } from '@bprogress/next'
+import { useQueryState, parseAsInteger } from 'nuqs'
 import { Chip } from '@heroui/react'
-import { useDisclosure } from '@heroui/modal'
 import { Link } from '@heroui/link'
 import { KunPagination } from '~/components/kun/KunPagination'
 import { useMounted } from '~/hooks/useMounted'
@@ -28,11 +27,18 @@ export const CompanyDetailContainer: FC<Props> = ({
   total
 }) => {
   const isMounted = useMounted()
-  const [page, setPage] = useState(1)
-
-  const [company, setCompany] = useState(initialCompany)
-  const [patches, setPatches] = useState<GalgameCard[]>(initialPatches)
   const [loading, startTransition] = useTransition()
+
+  const [page, setPage] = useQueryState(
+    'page',
+    parseAsInteger.withDefault(1).withOptions({
+      shallow: false,
+      startTransition
+    })
+  )
+
+  const [company] = useState(initialCompany)
+  const [patches, setPatches] = useState<GalgameCard[]>(initialPatches)
 
   const fetchPatches = () => {
     startTransition(async () => {
@@ -54,6 +60,11 @@ export const CompanyDetailContainer: FC<Props> = ({
     }
     fetchPatches()
   }, [page])
+
+  const handlePageChange = (newPage: number) => {
+    setPage(newPage)
+    window.scrollTo(0, 0)
+  }
 
   return (
     <div className="w-ful space-y-8 my-4">
@@ -135,7 +146,7 @@ export const CompanyDetailContainer: FC<Props> = ({
               <KunPagination
                 total={Math.ceil(total / 24)}
                 page={page}
-                onChange={setPage}
+                onChange={handlePageChange}
                 isDisabled={loading}
               />
             </div>

@@ -1,6 +1,7 @@
 'use client'
 
-import { useEffect, useState } from 'react'
+import { useEffect, useState, useTransition } from 'react'
+import { useQueryState, parseAsInteger } from 'nuqs'
 import { KunPagination } from '~/components/kun/KunPagination'
 import { kunFetchGet } from '~/utils/kunFetch'
 import { Chip } from '@heroui/chip'
@@ -23,9 +24,17 @@ export const TagDetailContainer = ({
   total
 }: Props) => {
   const isMounted = useMounted()
-  const [page, setPage] = useState(1)
+  const [isPending, startTransition] = useTransition()
 
-  const [tag, setTag] = useState(initialTag)
+  const [page, setPage] = useQueryState(
+    'page',
+    parseAsInteger.withDefault(1).withOptions({
+      shallow: false,
+      startTransition
+    })
+  )
+
+  const [tag] = useState(initialTag)
   const [patches, setPatches] = useState<GalgameCard[]>(initialPatches)
   const [loading, setLoading] = useState(false)
 
@@ -52,6 +61,11 @@ export const TagDetailContainer = ({
     fetchPatches()
   }, [page])
 
+  const handlePageChange = (newPage: number) => {
+    setPage(newPage)
+    window.scrollTo(0, 0)
+  }
+
   return (
     <div className="w-full space-y-8 my-4">
       <KunHeader
@@ -77,7 +91,7 @@ export const TagDetailContainer = ({
         </div>
       )}
 
-      {loading ? (
+      {loading || isPending ? (
         <KunLoading hint="正在获取 Galgame 中..." />
       ) : (
         <>
@@ -92,8 +106,8 @@ export const TagDetailContainer = ({
               <KunPagination
                 total={Math.ceil(total / 24)}
                 page={page}
-                onChange={setPage}
-                isDisabled={loading}
+                onChange={handlePageChange}
+                isDisabled={loading || isPending}
               />
             </div>
           )}

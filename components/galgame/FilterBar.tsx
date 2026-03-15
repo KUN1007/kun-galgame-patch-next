@@ -23,7 +23,7 @@ import {
   GALGAME_SORT_YEARS_MAP,
   GALGAME_SORT_MONTHS
 } from '~/constants/galgame'
-import type { SortDirection, SortOption } from './_searchParams'
+import type { SortDirection, SortOption } from '~/components/nuqs/galgame'
 
 interface Props {
   selectedType: string

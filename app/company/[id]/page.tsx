@@ -2,12 +2,16 @@ import { generateKunMetadataTemplate } from './metadata'
 import { CompanyDetailContainer } from '~/components/company/detail/Container'
 import { kunGetCompanyByIdActions, kunCompanyGalgameActions } from './actions'
 import { ErrorComponent } from '~/components/error/ErrorComponent'
+import { pageSearchParamsCache } from '~/components/nuqs/page'
+import { NuqsAdapter } from 'nuqs/adapters/next/app'
 import type { Metadata } from 'next'
+import type { SearchParams } from 'nuqs/server'
 
 export const revalidate = 5
 
 interface Props {
   params: Promise<{ id: string }>
+  searchParams: Promise<SearchParams>
 }
 
 export const generateMetadata = async ({
@@ -21,8 +25,9 @@ export const generateMetadata = async ({
   return generateKunMetadataTemplate(company)
 }
 
-export default async function Kun({ params }: Props) {
+export default async function Kun({ params, searchParams }: Props) {
   const { id } = await params
+  const { page } = await pageSearchParamsCache.parse(searchParams)
 
   const company = await kunGetCompanyByIdActions({ companyId: Number(id) })
   if (typeof company === 'string') {
@@ -31,7 +36,7 @@ export default async function Kun({ params }: Props) {
 
   const response = await kunCompanyGalgameActions({
     companyId: Number(id),
-    page: 1,
+    page,
     limit: 24
   })
   if (typeof response === 'string') {
@@ -39,10 +44,12 @@ export default async function Kun({ params }: Props) {
   }
 
   return (
-    <CompanyDetailContainer
-      initialCompany={company}
-      initialPatches={response.galgames}
-      total={response.total}
-    />
+    <NuqsAdapter>
+      <CompanyDetailContainer
+        initialCompany={company}
+        initialPatches={response.galgames}
+        total={response.total}
+      />
+    </NuqsAdapter>
   )
 }
