@@ -26,7 +26,9 @@ const DOMAIN_PATTERNS = [
   // Galgamex
   /^https:\/\/([\w-]+\.)*galgamex\.net$/,
   /^https:\/\/([\w-]+\.)*galgamex\.top$/,
-  /^https:\/\/([\w-]+\.)*galgamex\.com$/
+  /^https:\/\/([\w-]+\.)*galgamex\.com$/,
+  // Sharotto
+  /^https:\/\/([\w-]+\.)*sharotto\.com$/
 ]
 
 const RATE_LIMIT_MAX = 10000
