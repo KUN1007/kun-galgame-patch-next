@@ -10,13 +10,16 @@ model patch_resource {
   note        String   @default("") @db.VarChar(10007)
   hash        String   @default("")
   content     String   @default("")
-  type        String[]
-  language    String[]
-  platform    String[]
+  type        Json     @default("[]") @db.JsonB
+  language    Json     @default("[]") @db.JsonB
+  platform    Json     @default("[]") @db.JsonB
   download    Int      @default(0)
   // 0 - normal, 1 - disable download
   status      Int      @default(0)
   update_time DateTime @default(now())
+
+  // Denormalized count for GORM compatibility
+  like_count Int @default(0)
 
   like_by user_patch_resource_like_relation[]
 
@@ -28,4 +31,3 @@ model patch_resource {
   created DateTime @default(now())
   updated DateTime @updatedAt
 }
-

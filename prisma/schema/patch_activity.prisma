@@ -3,6 +3,9 @@ model patch_comment {
   content String @default("") @db.VarChar(10007)
   edit    String @default("")
 
+  // Denormalized count for GORM compatibility
+  like_count Int @default(0)
+
   like_by user_patch_comment_like_relation[]
 
   reply     patch_comment[] @relation("comment_reply")
@@ -16,4 +19,3 @@ model patch_comment {
   created DateTime @default(now())
   updated DateTime @updatedAt
 }
-

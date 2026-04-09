@@ -17,6 +17,13 @@ model user {
   daily_upload_size Int    @default(0)
   last_login_time   String @default("")
 
+  // Denormalized counts for GORM compatibility (avoid _count subqueries)
+  follower_count  Int @default(0)
+  following_count Int @default(0)
+
+  // OAuth
+  oauth_account oauth_account[]
+
   chat_membership       chat_member[]
   sent_chat_message     chat_message[]          @relation("sent_chat_message")
   seen_chat_message     chat_message_seen[]
@@ -40,6 +47,20 @@ model user {
 
   created DateTime @default(now())
   updated DateTime @updatedAt
+}
+
+model oauth_account {
+  id       Int    @id @default(autoincrement())
+  user_id  Int
+  provider String @default("kun-oauth") @db.VarChar(50)
+  sub      String @unique @db.VarChar(255)
+
+  user user @relation(fields: [user_id], references: [id], onDelete: Cascade)
+
+  created DateTime @default(now())
+  updated DateTime @updatedAt
+
+  @@index([user_id])
 }
 
 model admin_log {

@@ -17,10 +17,16 @@ model patch {
   download             Int      @default(0)
   view                 Int      @default(0)
   resource_update_time DateTime @default(now())
-  type                 String[]
-  language             String[]
-  engine               String[]
-  platform             String[]
+  type                 Json     @default("[]") @db.JsonB
+  language             Json     @default("[]") @db.JsonB
+  engine               Json     @default("[]") @db.JsonB
+  platform             Json     @default("[]") @db.JsonB
+
+  // Denormalized counts for GORM compatibility (avoid _count subqueries)
+  favorite_count   Int @default(0)
+  contribute_count Int @default(0)
+  comment_count    Int @default(0)
+  resource_count   Int @default(0)
 
   cover                patch_cover[]
   screenshot           patch_screenshot[]

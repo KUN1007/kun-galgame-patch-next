@@ -11,7 +11,7 @@ model patch_tag {
   introduction_ja_jp String @default("") @db.VarChar(10007)
   introduction_en_us String @default("") @db.VarChar(10007)
   count        Int      @default(0)
-  alias        String[]
+  alias        Json     @default("[]") @db.JsonB
 
   // content sexual technical
   category    String @default("sexual")

@@ -8,8 +8,8 @@ model patch_release {
   rid         String  @unique @db.VarChar(16)
   title       String  @db.VarChar(1007)
   released    String  @db.VarChar(107) @default("2019-10-07")
-  platforms   String[]
-  languages   String[]
+  platforms   Json    @default("[]") @db.JsonB
+  languages   Json    @default("[]") @db.JsonB
   minage      Int @default(0)
 
   created     DateTime @default(now())
@@ -18,4 +18,3 @@ model patch_release {
   @@index([patch_id])
   @@index([released])
 }
-

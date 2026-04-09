@@ -3,7 +3,7 @@ model patch_char {
   image                String   @default("")  @db.VarChar(1007)
   gender               String   @default("unknown")
   // roles from providers, e.g. voice / scenario / artist
-  roles                String[]
+  roles                Json     @default("[]") @db.JsonB
   // protagonist role for this VN: protagonist/main/side/appears
   role                 String   @default("side")
   // extra attributes

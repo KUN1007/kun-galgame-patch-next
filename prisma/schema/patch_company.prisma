@@ -8,10 +8,10 @@ model patch_company {
   introduction_ja_jp String @default("") @db.VarChar(10007)
   introduction_en_us String @default("") @db.VarChar(10007)
   count            Int      @default(0)
-  primary_language String[]
-  official_website String[]
-  parent_brand     String[]
-  alias            String[]
+  primary_language Json     @default("[]") @db.JsonB
+  official_website Json     @default("[]") @db.JsonB
+  parent_brand     Json     @default("[]") @db.JsonB
+  alias            Json     @default("[]") @db.JsonB
 
   patch_relations patch_company_relation[]
 
