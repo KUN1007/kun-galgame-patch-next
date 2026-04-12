@@ -17,6 +17,45 @@
 BEGIN;
 
 -- ============================================================
+-- Part 0: Fill NULL values with empty arrays before type conversion
+--
+-- Some columns have NULL rows. to_jsonb(NULL) stays NULL, but
+-- the Prisma schema marks these fields as required (no `?`).
+-- Fill NULLs with '{}' (empty text[]) so they become '[]' jsonb.
+-- ============================================================
+
+-- patch table
+UPDATE patch SET type     = '{}' WHERE type     IS NULL;
+UPDATE patch SET language = '{}' WHERE language IS NULL;
+UPDATE patch SET engine   = '{}' WHERE engine   IS NULL;
+UPDATE patch SET platform = '{}' WHERE platform IS NULL;
+
+-- patch_resource table
+UPDATE patch_resource SET type     = '{}' WHERE type     IS NULL;
+UPDATE patch_resource SET language = '{}' WHERE language IS NULL;
+UPDATE patch_resource SET platform = '{}' WHERE platform IS NULL;
+
+-- patch_release table
+UPDATE patch_release SET platforms = '{}' WHERE platforms IS NULL;
+UPDATE patch_release SET languages = '{}' WHERE languages IS NULL;
+
+-- patch_char table
+UPDATE patch_char SET roles = '{}' WHERE roles IS NULL;
+
+-- patch_company table
+UPDATE patch_company SET primary_language = '{}' WHERE primary_language IS NULL;
+UPDATE patch_company SET official_website = '{}' WHERE official_website IS NULL;
+UPDATE patch_company SET parent_brand     = '{}' WHERE parent_brand     IS NULL;
+UPDATE patch_company SET alias            = '{}' WHERE alias            IS NULL;
+
+-- patch_person table
+UPDATE patch_person SET roles = '{}' WHERE roles IS NULL;
+UPDATE patch_person SET links = '{}' WHERE links IS NULL;
+
+-- patch_tag table
+UPDATE patch_tag SET alias = '{}' WHERE alias IS NULL;
+
+-- ============================================================
 -- Part 1: Convert text[] columns to jsonb (zero data loss)
 --
 -- PostgreSQL cannot auto-cast an existing text[] DEFAULT to jsonb,
