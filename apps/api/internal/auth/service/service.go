@@ -3,6 +3,7 @@ package service
 import (
 	"context"
 	crand "crypto/rand"
+	"encoding/hex"
 	"encoding/json"
 	"fmt"
 	"io"
@@ -265,23 +266,5 @@ func (s *AuthService) VerifyPassword(hashedPassword, password string) bool {
 }
 
 func hexDecode(s string) ([]byte, error) {
-	b := make([]byte, len(s)/2)
-	for i := 0; i < len(s); i += 2 {
-		var val byte
-		for j := 0; j < 2; j++ {
-			c := s[i+j]
-			switch {
-			case c >= '0' && c <= '9':
-				val = val*16 + (c - '0')
-			case c >= 'a' && c <= 'f':
-				val = val*16 + (c - 'a' + 10)
-			case c >= 'A' && c <= 'F':
-				val = val*16 + (c - 'A' + 10)
-			default:
-				return nil, fmt.Errorf("invalid hex char: %c", c)
-			}
-		}
-		b[i/2] = val
-	}
-	return b, nil
+	return hex.DecodeString(s)
 }

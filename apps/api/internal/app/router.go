@@ -10,7 +10,7 @@ func (a *App) RegisterRoutes() {
 	auth := middleware.Auth(a.RDB, a.Config.OAuth)
 	optionalAuth := middleware.OptionalAuth(a.RDB, a.Config.OAuth)
 	adminAuth := middleware.RequireRole(3)
-	_ = adminAuth // will be used in Phase 4
+	superAdminAuth := middleware.RequireRole(4)
 
 	// ===== Auth Routes =====
 	authRoutes := api.Group("/auth")
@@ -49,13 +49,10 @@ func (a *App) RegisterRoutes() {
 	patchRoutes.Put("/resource/:resourceId/like", auth, a.PatchHandler.ToggleResourceLike)
 	patchRoutes.Put("/:id/favorite", auth, a.PatchHandler.ToggleFavorite)
 
-	// ===== Common Routes =====
-	api.Get("/home/random", a.PatchHandler.GetRandomPatch)
-
 	// ===== User Routes =====
 	userRoutes := api.Group("/user")
 
-	// Authenticated settings
+	// Authenticated settings (must be before /:uid routes)
 	userRoutes.Put("/username", auth, a.UserHandler.UpdateUsername)
 	userRoutes.Put("/bio", auth, a.UserHandler.UpdateBio)
 	userRoutes.Put("/password", auth, a.UserHandler.UpdatePassword)
@@ -79,14 +76,93 @@ func (a *App) RegisterRoutes() {
 	userRoutes.Delete("/:uid/follow", auth, a.UserHandler.Unfollow)
 
 	// ===== Message Routes =====
-	// TODO: Phase 4
+	msgRoutes := api.Group("/message", auth)
+	msgRoutes.Get("/", a.MessageHandler.GetMessages)
+	msgRoutes.Get("/unread", a.MessageHandler.GetUnreadTypes)
+	msgRoutes.Post("/", a.MessageHandler.CreateMessage)
+	msgRoutes.Put("/read", a.MessageHandler.MarkAsRead)
 
 	// ===== Admin Routes =====
-	// TODO: Phase 4
+	adminRoutes := api.Group("/admin", auth, adminAuth)
+
+	// Comments
+	adminRoutes.Get("/comment", a.AdminHandler.GetComments)
+	adminRoutes.Put("/comment/:id", a.AdminHandler.UpdateComment)
+	adminRoutes.Delete("/comment/:id", a.AdminHandler.DeleteComment)
+
+	// Resources
+	adminRoutes.Get("/resource", a.AdminHandler.GetResources)
+	adminRoutes.Put("/resource/:id", a.AdminHandler.UpdateResource)
+	adminRoutes.Delete("/resource/:id", a.AdminHandler.DeleteResource)
+
+	// Users
+	adminRoutes.Get("/user", a.AdminHandler.GetUsers)
+	adminRoutes.Put("/user/:uid", a.AdminHandler.UpdateUser)
+	adminRoutes.Delete("/user/:uid", superAdminAuth, a.AdminHandler.DeleteUser)
+
+	// Creator applications
+	adminRoutes.Get("/creator", a.AdminHandler.GetCreatorApplications)
+	adminRoutes.Put("/creator/:messageId/approve", a.AdminHandler.ApproveCreator)
+	adminRoutes.Put("/creator/:messageId/decline", a.AdminHandler.DeclineCreator)
+
+	// Settings
+	adminRoutes.Get("/setting/comment-verify", a.AdminHandler.GetCommentVerify)
+	adminRoutes.Put("/setting/comment-verify", a.AdminHandler.SetCommentVerify)
+	adminRoutes.Get("/setting/creator-only", a.AdminHandler.GetCreatorOnly)
+	adminRoutes.Put("/setting/creator-only", a.AdminHandler.SetCreatorOnly)
+	adminRoutes.Get("/setting/register", a.AdminHandler.GetRegisterDisabled)
+	adminRoutes.Put("/setting/register", a.AdminHandler.SetRegisterDisabled)
+
+	// Stats & Logs
+	adminRoutes.Get("/stats", a.AdminHandler.GetStats)
+	adminRoutes.Get("/stats/sum", a.AdminHandler.GetStatsSum)
+	adminRoutes.Get("/log", a.AdminHandler.GetLogs)
 
 	// ===== Metadata Routes =====
-	// TODO: Phase 4
+	// Tags
+	tagRoutes := api.Group("/tag")
+	tagRoutes.Get("/", a.MetadataHandler.GetTags)
+	tagRoutes.Get("/:id", a.MetadataHandler.GetTagByID)
+	tagRoutes.Post("/", auth, a.MetadataHandler.CreateTag)
+	tagRoutes.Get("/:id/patch", optionalAuth, a.MetadataHandler.GetPatchesByTag)
+	tagRoutes.Post("/search", a.MetadataHandler.SearchTags)
 
-	// ===== Chat Routes =====
-	// TODO: Phase 5
+	// Characters
+	charRoutes := api.Group("/character")
+	charRoutes.Get("/", a.MetadataHandler.GetCharacters)
+	charRoutes.Get("/:id", a.MetadataHandler.GetCharByID)
+	charRoutes.Post("/search", a.MetadataHandler.SearchCharacters)
+
+	// Companies
+	companyRoutes := api.Group("/company")
+	companyRoutes.Get("/", a.MetadataHandler.GetCompanies)
+	companyRoutes.Get("/:id", a.MetadataHandler.GetCompanyByID)
+	companyRoutes.Post("/", auth, a.MetadataHandler.CreateCompany)
+	companyRoutes.Get("/:id/patch", optionalAuth, a.MetadataHandler.GetPatchesByCompany)
+	companyRoutes.Post("/search", a.MetadataHandler.SearchCompanies)
+
+	// Persons
+	personRoutes := api.Group("/person")
+	personRoutes.Get("/", a.MetadataHandler.GetPersons)
+	personRoutes.Get("/:id", a.MetadataHandler.GetPersonByID)
+	personRoutes.Post("/search", a.MetadataHandler.SearchPersons)
+
+	// Releases
+	api.Get("/release", a.MetadataHandler.GetReleases)
+
+	// ===== Common Routes =====
+	api.Get("/home", a.CommonHandler.GetHome)
+	api.Get("/home/random", a.PatchHandler.GetRandomPatch)
+	api.Get("/galgame", a.CommonHandler.GetGalgameList)
+	api.Get("/comment", a.CommonHandler.GetGlobalComments)
+	api.Get("/resource", a.CommonHandler.GetGlobalResources)
+	api.Get("/resource/:id", a.CommonHandler.GetResourceDetail)
+
+	// Creator application
+	api.Post("/apply", auth, a.CommonHandler.Apply)
+	api.Get("/apply/status", auth, a.CommonHandler.GetApplyStatus)
+
+	// External APIs
+	api.Get("/hikari", a.CommonHandler.GetHikari)
+	api.Get("/moyu/patch/has-patch", a.CommonHandler.GetMoyuHasPatch)
 }

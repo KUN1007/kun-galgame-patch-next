@@ -3,13 +3,24 @@ package app
 import (
 	"log/slog"
 
+	adminHandler "kun-galgame-patch-api/internal/admin/handler"
+	adminRepo "kun-galgame-patch-api/internal/admin/repository"
+	adminService "kun-galgame-patch-api/internal/admin/service"
 	authHandler "kun-galgame-patch-api/internal/auth/handler"
 	authRepo "kun-galgame-patch-api/internal/auth/repository"
 	authService "kun-galgame-patch-api/internal/auth/service"
+	"kun-galgame-patch-api/internal/common"
 	"kun-galgame-patch-api/internal/infrastructure/cache"
+	cronJobs "kun-galgame-patch-api/internal/infrastructure/cron"
 	"kun-galgame-patch-api/internal/infrastructure/database"
 	"kun-galgame-patch-api/internal/infrastructure/mail"
 	"kun-galgame-patch-api/internal/infrastructure/storage"
+	messageHandler "kun-galgame-patch-api/internal/message/handler"
+	messageRepo "kun-galgame-patch-api/internal/message/repository"
+	messageService "kun-galgame-patch-api/internal/message/service"
+	metadataHandler "kun-galgame-patch-api/internal/metadata/handler"
+	metadataRepo "kun-galgame-patch-api/internal/metadata/repository"
+	metadataService "kun-galgame-patch-api/internal/metadata/service"
 	"kun-galgame-patch-api/internal/middleware"
 	patchHandler "kun-galgame-patch-api/internal/patch/handler"
 	patchRepo "kun-galgame-patch-api/internal/patch/repository"
@@ -28,17 +39,21 @@ import (
 )
 
 type App struct {
-	Fiber   *fiber.App
-	DB      *gorm.DB
-	RDB     *redis.Client
-	S3      *storage.S3Client
-	Mailer  *mail.Mailer
-	Config  *config.Config
+	Fiber  *fiber.App
+	DB     *gorm.DB
+	RDB    *redis.Client
+	S3     *storage.S3Client
+	Mailer *mail.Mailer
+	Config *config.Config
 
 	// Handlers
-	AuthHandler  *authHandler.AuthHandler
-	PatchHandler *patchHandler.PatchHandler
-	UserHandler  *userHandler.UserHandler
+	AuthHandler     *authHandler.AuthHandler
+	PatchHandler    *patchHandler.PatchHandler
+	UserHandler     *userHandler.UserHandler
+	MessageHandler  *messageHandler.MessageHandler
+	AdminHandler    *adminHandler.AdminHandler
+	MetadataHandler *metadataHandler.MetadataHandler
+	CommonHandler   *common.CommonHandler
 }
 
 func New(cfg *config.Config) *App {
@@ -63,6 +78,24 @@ func New(cfg *config.Config) *App {
 	userSvc := userService.New(userRepository, authSvc)
 	userHdl := userHandler.New(userSvc)
 
+	// Message module
+	messageRepository := messageRepo.New(db)
+	messageSvc := messageService.New(messageRepository)
+	messageHdl := messageHandler.New(messageSvc)
+
+	// Admin module
+	adminRepository := adminRepo.New(db)
+	adminSvc := adminService.New(adminRepository, rdb)
+	adminHdl := adminHandler.New(adminSvc)
+
+	// Metadata module
+	metadataRepository := metadataRepo.New(db)
+	metadataSvc := metadataService.New(metadataRepository)
+	metadataHdl := metadataHandler.New(metadataSvc)
+
+	// Common handler (direct DB access for simple aggregation endpoints)
+	commonHdl := common.NewHandler(db)
+
 	// Fiber app
 	app := fiber.New(fiber.Config{
 		BodyLimit:    10 * 1024 * 1024, // 10MB
@@ -72,18 +105,25 @@ func New(cfg *config.Config) *App {
 	app.Use(recover.New())
 	app.Use(middleware.CORS(cfg.CORS))
 
+	// Start cron jobs
+	cronJobs.Start(db)
+
 	slog.Info("Application initialized")
 
 	return &App{
-		Fiber:       app,
-		DB:          db,
-		RDB:         rdb,
-		S3:          s3,
-		Mailer:      mailer,
-		Config:      cfg,
-		AuthHandler:  authHdl,
-		PatchHandler: patchHdl,
-		UserHandler:  userHdl,
+		Fiber:           app,
+		DB:              db,
+		RDB:             rdb,
+		S3:              s3,
+		Mailer:          mailer,
+		Config:          cfg,
+		AuthHandler:     authHdl,
+		PatchHandler:    patchHdl,
+		UserHandler:     userHdl,
+		MessageHandler:  messageHdl,
+		AdminHandler:    adminHdl,
+		MetadataHandler: metadataHdl,
+		CommonHandler:   commonHdl,
 	}
 }
 
