@@ -1,0 +1,14 @@
+{
+  "name": "@apps/api",
+  "private": true,
+  "scripts": {
+    "dev": "air",
+    "build": "go build -o ./build/server ./cmd/server",
+    "start": "./build/server",
+    "format": "gofmt -w -s .",
+    "vet": "go vet ./...",
+    "test": "go test ./...",
+    "tidy": "go mod tidy",
+    "upgo": "go get -u ./... && go mod tidy && go mod verify"
+  }
+}

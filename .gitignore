@@ -1,61 +1,70 @@
-# See https://help.github.com/articles/ignoring-files/ for more about ignoring files.
-
-# dependencies
-/node_modules
-/.pnp
-.pnp.js
-.yarn/install-state.gz
-
-# testing
-/coverage
-
-# next.js
-/.next/
-/out/
-
-# production
-/build
-
-# misc
-.DS_Store
-*.pem
-
-# debug
-npm-debug.log*
-yarn-debug.log*
-yarn-error.log*
-
-# local env files
-.env*.local
-
-# vercel
+# Build / output
+dist
+.output
+.data
+.nuxt
+.nitro
+.cache
 .vercel
+.netlify
+.vinxi
+.turbo
+apps/api/build
 
-# typescript
-*.tsbuildinfo
-next-env.d.ts
-
-# env
+# Environment
 .env
+.env.*
+.env*.local
+.env*.production
+.env.goenv
+!.env.example
 
-# uploads
-/uploads
+# Dependencies
+node_modules
+**/node_modules
+.pnpm-store
 
-# backup
-/backup
+# Logs
+logs
+*.log
 
-# sitemap
-/public/**/*.xml
+# IDE / Editors
+.vs
+.idea
+/.idea
+.settings/
+.project
+.classpath
+*.launch
+.fleet
 
-# IDX
-.idx/.data
+# System files
+.DS_Store
+Thumbs.db
 
-# migration cache
-migration/*.json
+# Temp / misc
+tmp
+gitignore
 
+# Generated files
+apps/web/public/sitemap.xml
+apps/web/public/urls.txt
+public/*.xml
+prisma/generated
+
+# Docs
+docs/milkdown
+docs/milkdown-src
+
+# Backup
+backup
+!scripts/backup
+
+# Prompts
+prompts
+
+# Reference
 refs
-migration/temp
-migration/sync/data
-migration/sync-ts/data
-migration/sync-ts/vn-sync/uploads
-migration/sync-ts/patch
+
+# Nuxt specific
+app.config.timestamp_*.js
