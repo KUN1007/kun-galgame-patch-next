@@ -1,4 +1,4 @@
-import { getPersonById } from '~/app/api/person/route'
+import { kunServerGet } from '~/utils/actions/kunServerFetch'
 import { PersonDetailContainer } from '~/components/person/detail/Container'
 import { generateNullMetadata } from '~/utils/noIndex'
 import type { Metadata } from 'next'
@@ -14,11 +14,12 @@ export default async function Kun({
   params: Promise<{ id: string }>
 }) {
   const { id } = await params
-  const response = await getPersonById({ personId: Number(id) })
 
-  if (typeof response === 'string') {
-    return <ErrorComponent error={response} />
+  try {
+    const response = await kunServerGet<any>('/person/' + id)
+
+    return <PersonDetailContainer person={response} />
+  } catch (error) {
+    return <ErrorComponent error={(error as Error).message} />
   }
-
-  return <PersonDetailContainer person={response} />
 }

@@ -4,7 +4,7 @@ import { cache } from 'react'
 import { z } from 'zod'
 import { safeParseSchema } from '~/utils/actions/safeParseSchema'
 import { verifyHeaderCookie } from '~/utils/actions/verifyHeaderCookie'
-import { getPatchResourceDetail } from '~/app/api/resource/detail/route'
+import { kunServerGet } from '~/utils/actions/kunServerFetch'
 
 const resourceIdSchema = z.object({
   resourceId: z.coerce.number().min(1).max(9999999)
@@ -18,7 +18,14 @@ export const kunGetResourceDetailActions = cache(
     }
     const payload = await verifyHeaderCookie()
 
-    const response = await getPatchResourceDetail(input, payload?.uid ?? 0)
-    return { response, payload }
+    try {
+      const response = await kunServerGet<any>('/resource/' + input.resourceId)
+      return { response, payload }
+    } catch (err) {
+      return {
+        response: `${err instanceof Error ? err.message : err}`,
+        payload
+      }
+    }
   }
 )

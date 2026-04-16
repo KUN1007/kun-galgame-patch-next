@@ -1,20 +1,30 @@
 'use server'
 
-import { getDisableRegisterStatus } from '~/app/api/admin/setting/register/route'
-import { getCommentVerifyStatus } from '~/app/api/admin/setting/comment/getCommentVerifyStatus'
-import { getEnableOnlyCreatorCreateStatus } from '~/app/api/admin/setting/creator/getEnableOnlyCreatorCreateStatus'
+import { kunServerGet } from '~/utils/actions/kunServerFetch'
 
 export const kunGetDisableRegisterStatusActions = async () => {
-  const response = await getDisableRegisterStatus()
-  return response
+  try {
+    const response = await kunServerGet<any>('/admin/setting/register')
+    return response
+  } catch (error) {
+    return (error as Error).message
+  }
 }
 
 export const kunGetCommentVerifyStatusActions = async () => {
-  const response = await getCommentVerifyStatus()
-  return response
+  try {
+    const response = await kunServerGet<any>('/admin/setting/comment-verify')
+    return response
+  } catch (error) {
+    return (error as Error).message
+  }
 }
 
 export const kunGetEnableOnlyCreatorCreateStatus = async () => {
-  const response = await getEnableOnlyCreatorCreateStatus()
-  return response
+  try {
+    const response = await kunServerGet<any>('/admin/setting/creator-only')
+    return response
+  } catch (error) {
+    return (error as Error).message
+  }
 }

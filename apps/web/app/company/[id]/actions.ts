@@ -2,13 +2,11 @@
 
 import { z } from 'zod'
 import { safeParseSchema } from '~/utils/actions/safeParseSchema'
-import { getCompanyById } from '~/app/api/company/route'
-import { getPatchByCompany } from '~/app/api/company/galgame/route'
 import {
   getCompanyByIdSchema,
   getPatchByCompanySchema
 } from '~/validations/company'
-import { getNSFWHeader } from '~/utils/actions/getNSFWHeader'
+import { kunServerGet } from '~/utils/actions/kunServerFetch'
 
 export const kunGetCompanyByIdActions = async (
   params: z.infer<typeof getCompanyByIdSchema>
@@ -18,8 +16,12 @@ export const kunGetCompanyByIdActions = async (
     return input
   }
 
-  const response = await getCompanyById(input)
-  return response
+  try {
+    const response = await kunServerGet<any>('/company/' + input.companyId)
+    return response
+  } catch (err) {
+    return `${err instanceof Error ? err.message : err}`
+  }
 }
 
 export const kunCompanyGalgameActions = async (
@@ -30,8 +32,13 @@ export const kunCompanyGalgameActions = async (
     return input
   }
 
-  const nsfwEnable = await getNSFWHeader()
-
-  const response = await getPatchByCompany(input, nsfwEnable)
-  return response
+  try {
+    const response = await kunServerGet<any>(
+      '/company/' + input.companyId + '/patch',
+      { page: input.page, limit: input.limit }
+    )
+    return response
+  } catch (err) {
+    return `${err instanceof Error ? err.message : err}`
+  }
 }

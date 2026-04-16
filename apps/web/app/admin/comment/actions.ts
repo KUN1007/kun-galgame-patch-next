@@ -2,7 +2,7 @@
 
 import { z } from 'zod'
 import { safeParseSchema } from '~/utils/actions/safeParseSchema'
-import { getComment } from '~/app/api/admin/comment/get'
+import { kunServerGet } from '~/utils/actions/kunServerFetch'
 import { adminPaginationSchema } from '~/validations/admin'
 
 export const kunGetActions = async (
@@ -13,6 +13,10 @@ export const kunGetActions = async (
     return input
   }
 
-  const response = await getComment(input)
-  return response
+  try {
+    const response = await kunServerGet<any>('/admin/comment', input)
+    return response
+  } catch (error) {
+    return (error as Error).message
+  }
 }

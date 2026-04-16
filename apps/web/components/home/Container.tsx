@@ -9,13 +9,13 @@ import { HomeHero } from './Hero'
 import { kunMoyuMoe } from '~/config/moyu-moe'
 import { AIEroBanner } from '~/components/kun/ad/AIEroBanner'
 import type { HomeComment, HomeResource } from '~/types/api/home'
-import type { KunGalgamePayload } from '~/app/api/utils/jwt'
+import type { UserPayload } from '~/utils/actions/verifyHeaderCookie'
 
 interface Props {
   galgames: GalgameCard[]
   resources: HomeResource[]
   comments: HomeComment[]
-  payload: KunGalgamePayload | null
+  payload: UserPayload | null
 }
 
 export const HomeContainer = ({

@@ -1,11 +1,10 @@
 'use server'
 
 import { z } from 'zod'
-import { getPatchComment } from '~/app/api/patch/comment/get'
-import { getCommentVerifyStatus } from '~/app/api/admin/setting/comment/getCommentVerifyStatus'
 import { verifyHeaderCookie } from '~/utils/actions/verifyHeaderCookie'
 import { safeParseSchema } from '~/utils/actions/safeParseSchema'
 import { getPatchCommentSchema } from '~/validations/patch'
+import { kunServerGet } from '~/utils/actions/kunServerFetch'
 
 export const kunGetCommentActions = async (
   params: z.infer<typeof getPatchCommentSchema>
@@ -16,11 +15,22 @@ export const kunGetCommentActions = async (
   }
   const payload = await verifyHeaderCookie()
 
-  const response = await getPatchComment(input, payload?.uid ?? 0)
-  return response
+  try {
+    const response = await kunServerGet<any>(
+      '/patch/' + input.patchId + '/comment',
+      { page: input.page, limit: input.limit }
+    )
+    return response
+  } catch (err) {
+    return `${err instanceof Error ? err.message : err}`
+  }
 }
 
 export const kunGetCommentVerifyStatusActions = async () => {
-  const response = await getCommentVerifyStatus()
-  return response
+  try {
+    const response = await kunServerGet<any>('/admin/setting/comment/verify-status')
+    return response
+  } catch (err) {
+    return `${err instanceof Error ? err.message : err}`
+  }
 }

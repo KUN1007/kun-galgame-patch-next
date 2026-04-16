@@ -3,7 +3,7 @@
 import { z } from 'zod'
 import { getUserInfoSchema } from '~/validations/user'
 import { safeParseSchema } from '~/utils/actions/safeParseSchema'
-import { getUserGalgame } from '~/app/api/user/profile/galgame/route'
+import { kunServerGet } from '~/utils/actions/kunServerFetch'
 
 export const kunGetActions = async (
   params: z.infer<typeof getUserInfoSchema>
@@ -13,6 +13,13 @@ export const kunGetActions = async (
     return input
   }
 
-  const response = await getUserGalgame(input)
-  return response
+  try {
+    const response = await kunServerGet<any>(
+      '/user/' + input.uid + '/patch',
+      { page: input.page, limit: input.limit }
+    )
+    return response
+  } catch (err) {
+    return `${err instanceof Error ? err.message : err}`
+  }
 }

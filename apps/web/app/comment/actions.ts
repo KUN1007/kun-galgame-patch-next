@@ -3,7 +3,7 @@
 import { z } from 'zod'
 import { safeParseSchema } from '~/utils/actions/safeParseSchema'
 import { commentSchema } from '~/validations/comment'
-import { getComment } from '~/app/api/comment/route'
+import { kunServerGet } from '~/utils/actions/kunServerFetch'
 
 export const kunGetActions = async (params: z.infer<typeof commentSchema>) => {
   const input = safeParseSchema(commentSchema, params)
@@ -11,6 +11,10 @@ export const kunGetActions = async (params: z.infer<typeof commentSchema>) => {
     return input
   }
 
-  const response = await getComment(input)
-  return response
+  try {
+    const response = await kunServerGet<any>('/comment', input)
+    return response
+  } catch (err) {
+    return `${err instanceof Error ? err.message : err}`
+  }
 }

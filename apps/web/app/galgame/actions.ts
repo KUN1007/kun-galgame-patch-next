@@ -3,8 +3,7 @@
 import { z } from 'zod'
 import { safeParseSchema } from '~/utils/actions/safeParseSchema'
 import { galgameSchema } from '~/validations/galgame'
-import { getGalgame } from '~/app/api/galgame/route'
-import { getNSFWHeader } from '~/utils/actions/getNSFWHeader'
+import { kunServerGet } from '~/utils/actions/kunServerFetch'
 
 export const kunGetActions = async (params: z.infer<typeof galgameSchema>) => {
   const input = safeParseSchema(galgameSchema, params)
@@ -12,8 +11,10 @@ export const kunGetActions = async (params: z.infer<typeof galgameSchema>) => {
     return input
   }
 
-  const nsfwEnable = await getNSFWHeader()
-
-  const response = await getGalgame(input, nsfwEnable)
-  return response
+  try {
+    const response = await kunServerGet<any>('/galgame', input)
+    return response
+  } catch (err) {
+    return `${err instanceof Error ? err.message : err}`
+  }
 }

@@ -2,10 +2,8 @@
 
 import { z } from 'zod'
 import { safeParseSchema } from '~/utils/actions/safeParseSchema'
-import { getTagById } from '~/app/api/tag/route'
-import { getPatchByTag } from '~/app/api/tag/galgame/route'
 import { getTagByIdSchema, getPatchByTagSchema } from '~/validations/tag'
-import { getNSFWHeader } from '~/utils/actions/getNSFWHeader'
+import { kunServerGet } from '~/utils/actions/kunServerFetch'
 
 export const kunGetTagByIdActions = async (
   params: z.infer<typeof getTagByIdSchema>
@@ -15,8 +13,12 @@ export const kunGetTagByIdActions = async (
     return input
   }
 
-  const response = await getTagById(input)
-  return response
+  try {
+    const response = await kunServerGet<any>('/tag/' + input.tagId)
+    return response
+  } catch (err) {
+    return `${err instanceof Error ? err.message : err}`
+  }
 }
 
 export const kunTagGalgameActions = async (
@@ -27,8 +29,13 @@ export const kunTagGalgameActions = async (
     return input
   }
 
-  const nsfwEnable = await getNSFWHeader()
-
-  const response = await getPatchByTag(input, nsfwEnable)
-  return response
+  try {
+    const response = await kunServerGet<any>(
+      '/tag/' + input.tagId + '/patch',
+      { page: input.page, limit: input.limit }
+    )
+    return response
+  } catch (err) {
+    return `${err instanceof Error ? err.message : err}`
+  }
 }

@@ -4,11 +4,7 @@ import { cache } from 'react'
 import { z } from 'zod'
 import { verifyHeaderCookie } from '~/utils/actions/verifyHeaderCookie'
 import { safeParseSchema } from '~/utils/actions/safeParseSchema'
-import { getPatchById } from '~/app/api/patch/get'
-import { getPatchDetail } from '~/app/api/patch/detail/route'
-import { getPatchContributor } from '~/app/api/patch/contributor/route'
-import { updatePatchViews } from '~/app/api/patch/views/put'
-import { getNSFWHeader } from '~/utils/actions/getNSFWHeader'
+import { kunServerGet, kunServerFetch } from '~/utils/actions/kunServerFetch'
 
 const patchIdSchema = z.object({
   patchId: z.coerce.number().min(1).max(9999999)
@@ -22,8 +18,12 @@ export const kunGetPatchActions = cache(
     }
     const payload = await verifyHeaderCookie()
 
-    const response = await getPatchById(input, payload?.uid ?? 0)
-    return response
+    try {
+      const response = await kunServerGet<any>('/patch/' + input.patchId)
+      return response
+    } catch (err) {
+      return `${err instanceof Error ? err.message : err}`
+    }
   }
 )
 
@@ -34,8 +34,14 @@ export const kunGetContributorActions = cache(
       return input
     }
 
-    const response = await getPatchContributor(input)
-    return response
+    try {
+      const response = await kunServerGet<any>(
+        '/patch/' + input.patchId + '/contributor'
+      )
+      return response
+    } catch (err) {
+      return `${err instanceof Error ? err.message : err}`
+    }
   }
 )
 
@@ -46,9 +52,14 @@ export const kunGetPatchDetailActions = cache(
       return input
     }
 
-    const nsfwEnable = await getNSFWHeader()
-    const response = await getPatchDetail(input, nsfwEnable)
-    return response
+    try {
+      const response = await kunServerGet<any>(
+        '/patch/' + input.patchId + '/detail'
+      )
+      return response
+    } catch (err) {
+      return `${err instanceof Error ? err.message : err}`
+    }
   }
 )
 
@@ -60,5 +71,11 @@ export const kunUpdatePatchViewsActions = async (
     return input
   }
 
-  await updatePatchViews(input.patchId)
+  try {
+    await kunServerFetch<any>('/patch/' + input.patchId + '/view', {
+      method: 'PUT'
+    })
+  } catch (err) {
+    return `${err instanceof Error ? err.message : err}`
+  }
 }

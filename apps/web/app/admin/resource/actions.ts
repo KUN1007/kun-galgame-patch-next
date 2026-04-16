@@ -2,8 +2,8 @@
 
 import { z } from 'zod'
 import { safeParseSchema } from '~/utils/actions/safeParseSchema'
+import { kunServerGet } from '~/utils/actions/kunServerFetch'
 import { adminPaginationSchema } from '~/validations/admin'
-import { getPatchResource } from '~/app/api/admin/resource/get'
 
 export const kunGetActions = async (
   params: z.infer<typeof adminPaginationSchema>
@@ -13,6 +13,10 @@ export const kunGetActions = async (
     return input
   }
 
-  const response = await getPatchResource(input)
-  return response
+  try {
+    const response = await kunServerGet<any>('/admin/resource', input)
+    return response
+  } catch (error) {
+    return (error as Error).message
+  }
 }

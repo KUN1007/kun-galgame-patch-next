@@ -3,7 +3,7 @@
 import { z } from 'zod'
 import { safeParseSchema } from '~/utils/actions/safeParseSchema'
 import { getReleaseSchema } from '~/validations/release'
-import { getGalgameRelease } from '~/app/api/release/route'
+import { kunServerGet } from '~/utils/actions/kunServerFetch'
 
 export const kunGetActions = async (
   params: z.infer<typeof getReleaseSchema>
@@ -13,6 +13,10 @@ export const kunGetActions = async (
     return input
   }
 
-  const response = await getGalgameRelease(input)
-  return response
+  try {
+    const response = await kunServerGet<any>('/release', input)
+    return response
+  } catch (err) {
+    return `${err instanceof Error ? err.message : err}`
+  }
 }

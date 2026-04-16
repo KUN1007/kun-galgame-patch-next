@@ -3,8 +3,7 @@
 import { z } from 'zod'
 import { safeParseSchema } from '~/utils/actions/safeParseSchema'
 import { resourceSchema } from '~/validations/resource'
-import { getPatchResource } from '~/app/api/resource/route'
-import { getNSFWHeader } from '~/utils/actions/getNSFWHeader'
+import { kunServerGet } from '~/utils/actions/kunServerFetch'
 
 export const kunGetActions = async (params: z.infer<typeof resourceSchema>) => {
   const input = safeParseSchema(resourceSchema, params)
@@ -12,8 +11,10 @@ export const kunGetActions = async (params: z.infer<typeof resourceSchema>) => {
     return input
   }
 
-  const nsfwEnable = await getNSFWHeader()
-
-  const response = await getPatchResource(input, nsfwEnable)
-  return response
+  try {
+    const response = await kunServerGet<any>('/resource', input)
+    return response
+  } catch (err) {
+    return `${err instanceof Error ? err.message : err}`
+  }
 }

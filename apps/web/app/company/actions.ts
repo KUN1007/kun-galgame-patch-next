@@ -3,7 +3,7 @@
 import { z } from 'zod'
 import { safeParseSchema } from '~/utils/actions/safeParseSchema'
 import { getCompanySchema } from '~/validations/company'
-import { getCompany } from '~/app/api/company/all/route'
+import { kunServerGet } from '~/utils/actions/kunServerFetch'
 
 export const kunGetActions = async (
   params: z.infer<typeof getCompanySchema>
@@ -13,6 +13,10 @@ export const kunGetActions = async (
     return input
   }
 
-  const response = await getCompany(input)
-  return response
+  try {
+    const response = await kunServerGet<any>('/company', input)
+    return response
+  } catch (err) {
+    return `${err instanceof Error ? err.message : err}`
+  }
 }

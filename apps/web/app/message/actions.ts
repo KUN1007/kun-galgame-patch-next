@@ -4,8 +4,7 @@ import { z } from 'zod'
 import { safeParseSchema } from '~/utils/actions/safeParseSchema'
 import { getMessageSchema } from '~/validations/message'
 import { verifyHeaderCookie } from '~/utils/actions/verifyHeaderCookie'
-import { getMessage } from '~/app/api/message/all/route'
-import { getStatus } from '~/app/api/user/status/route'
+import { kunServerGet } from '~/utils/actions/kunServerFetch'
 
 export const kunGetActions = async (
   params: z.infer<typeof getMessageSchema>
@@ -19,8 +18,12 @@ export const kunGetActions = async (
     return '用户登陆失效'
   }
 
-  const response = await getMessage(input, payload.uid)
-  return response
+  try {
+    const response = await kunServerGet<any>('/message', input)
+    return response
+  } catch (err) {
+    return `${err instanceof Error ? err.message : err}`
+  }
 }
 
 export const kunGetUserInfoActions = async () => {
@@ -28,5 +31,10 @@ export const kunGetUserInfoActions = async () => {
   if (!payload) {
     return '用户登陆失效'
   }
-  return await getStatus(payload.uid)
+
+  try {
+    return await kunServerGet<any>('/auth/me')
+  } catch (err) {
+    return `${err instanceof Error ? err.message : err}`
+  }
 }

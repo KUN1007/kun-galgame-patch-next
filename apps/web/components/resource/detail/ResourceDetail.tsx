@@ -14,12 +14,12 @@ import { ResourceDownloadCard } from './DownloadCard'
 import { Link } from '@heroui/react'
 import { kunMoyuMoe } from '~/config/moyu-moe'
 import { AIEroBanner } from '~/components/kun/ad/AIEroBanner'
-import type { KunGalgamePayload } from '~/app/api/utils/jwt'
+import type { UserPayload } from '~/utils/actions/verifyHeaderCookie'
 import type { PatchResourceDetail } from '~/types/api/resource'
 
 interface Props {
   detail: PatchResourceDetail
-  payload: KunGalgamePayload | null
+  payload: UserPayload | null
 }
 
 export const KunResourceDetail = ({ detail, payload }: Props) => {

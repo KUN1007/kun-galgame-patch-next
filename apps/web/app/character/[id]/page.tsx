@@ -1,4 +1,4 @@
-import { getCharacterById } from '~/app/api/character/route'
+import { kunServerGet } from '~/utils/actions/kunServerFetch'
 import { CharDetailContainer } from '~/components/character/detail/Container'
 import { generateNullMetadata } from '~/utils/noIndex'
 import { ErrorComponent } from '~/components/error/ErrorComponent'
@@ -14,11 +14,12 @@ export default async function Kun({
   params: Promise<{ id: string }>
 }) {
   const { id } = await params
-  const response = await getCharacterById({ characterId: Number(id) })
 
-  if (typeof response === 'string') {
-    return <ErrorComponent error={response} />
+  try {
+    const response = await kunServerGet<any>('/character/' + id)
+
+    return <CharDetailContainer char={response} />
+  } catch (error) {
+    return <ErrorComponent error={(error as Error).message} />
   }
-
-  return <CharDetailContainer char={response} />
 }

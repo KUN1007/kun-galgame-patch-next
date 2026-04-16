@@ -3,7 +3,7 @@
 import { z } from 'zod'
 import { safeParseSchema } from '~/utils/actions/safeParseSchema'
 import { getTagSchema } from '~/validations/tag'
-import { getTag } from '~/app/api/tag/all/route'
+import { kunServerGet } from '~/utils/actions/kunServerFetch'
 
 export const kunGetActions = async (params: z.infer<typeof getTagSchema>) => {
   const input = safeParseSchema(getTagSchema, params)
@@ -11,6 +11,10 @@ export const kunGetActions = async (params: z.infer<typeof getTagSchema>) => {
     return input
   }
 
-  const response = await getTag(input)
-  return response
+  try {
+    const response = await kunServerGet<any>('/tag', input)
+    return response
+  } catch (err) {
+    return `${err instanceof Error ? err.message : err}`
+  }
 }

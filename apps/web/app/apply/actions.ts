@@ -1,11 +1,12 @@
 'use server'
 
-import { verifyHeaderCookie } from '~/utils/actions/verifyHeaderCookie'
-import { getApplyStatus } from '~/app/api/apply/status/route'
+import { kunServerGet } from '~/utils/actions/kunServerFetch'
 
 export const kunGetActions = async () => {
-  const payload = await verifyHeaderCookie()
-
-  const response = await getApplyStatus(payload?.uid ?? 0)
-  return response
+  try {
+    const response = await kunServerGet<any>('/apply/status')
+    return response
+  } catch (error) {
+    return (error as Error).message
+  }
 }

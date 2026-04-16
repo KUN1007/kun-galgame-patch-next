@@ -3,7 +3,7 @@
 import { z } from 'zod'
 import { safeParseSchema } from '~/utils/actions/safeParseSchema'
 import { verifyHeaderCookie } from '~/utils/actions/verifyHeaderCookie'
-import { getPatchResource } from '~/app/api/patch/resource/get'
+import { kunServerGet } from '~/utils/actions/kunServerFetch'
 
 const patchIdSchema = z.object({
   patchId: z.coerce.number().min(1).max(9999999)
@@ -16,6 +16,13 @@ export const kunGetActions = async (params: z.infer<typeof patchIdSchema>) => {
   }
   const payload = await verifyHeaderCookie()
 
-  const response = await getPatchResource(input, payload?.uid ?? 0)
-  return { response, payload }
+  try {
+    const response = await kunServerGet<any>('/patch/' + input.patchId + '/resource')
+    return { response, payload }
+  } catch (err) {
+    return {
+      response: `${err instanceof Error ? err.message : err}`,
+      payload
+    }
+  }
 }

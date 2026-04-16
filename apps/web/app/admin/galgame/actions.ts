@@ -2,8 +2,8 @@
 
 import { z } from 'zod'
 import { safeParseSchema } from '~/utils/actions/safeParseSchema'
+import { kunServerGet } from '~/utils/actions/kunServerFetch'
 import { adminPaginationSchema } from '~/validations/admin'
-import { getGalgame } from '~/app/api/admin/galgame/route'
 
 export const kunGetActions = async (
   params: z.infer<typeof adminPaginationSchema>
@@ -13,6 +13,10 @@ export const kunGetActions = async (
     return input
   }
 
-  const response = await getGalgame(input)
-  return response
+  try {
+    const response = await kunServerGet<any>('/admin/galgame', input)
+    return response
+  } catch (error) {
+    return (error as Error).message
+  }
 }

@@ -1,10 +1,10 @@
 import { Image } from '@heroui/image'
 import { kunMoyuMoe } from '~/config/moyu-moe'
 import { cn } from '~/utils/cn'
-import type { KunGalgamePayload } from '~/app/api/utils/jwt'
+import type { UserPayload } from '~/utils/actions/verifyHeaderCookie'
 
 interface Props {
-  payload: KunGalgamePayload | null
+  payload: UserPayload | null
   className?: string
 }
 
