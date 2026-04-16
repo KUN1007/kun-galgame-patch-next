@@ -1,0 +1,180 @@
+package repository
+
+import (
+	authModel "kun-galgame-patch-api/internal/auth/model"
+	patchModel "kun-galgame-patch-api/internal/patch/model"
+	"kun-galgame-patch-api/internal/user/model"
+
+	"gorm.io/gorm"
+)
+
+type UserRepository struct {
+	db *gorm.DB
+}
+
+func New(db *gorm.DB) *UserRepository {
+	return &UserRepository{db: db}
+}
+
+// ===== User Info =====
+
+func (r *UserRepository) FindByID(id int) (*authModel.User, error) {
+	var user authModel.User
+	err := r.db.First(&user, id).Error
+	return &user, err
+}
+
+func (r *UserRepository) FindByName(name string) (*authModel.User, error) {
+	var user authModel.User
+	err := r.db.Where("LOWER(name) = LOWER(?)", name).First(&user).Error
+	return &user, err
+}
+
+func (r *UserRepository) UpdateFields(userID int, fields map[string]any) error {
+	return r.db.Model(&authModel.User{}).Where("id = ?", userID).Updates(fields).Error
+}
+
+func (r *UserRepository) CountUserPatches(userID int) int64 {
+	var count int64
+	r.db.Model(&patchModel.Patch{}).Where("user_id = ?", userID).Count(&count)
+	return count
+}
+
+func (r *UserRepository) CountUserResources(userID int) int64 {
+	var count int64
+	r.db.Model(&patchModel.PatchResource{}).Where("user_id = ?", userID).Count(&count)
+	return count
+}
+
+func (r *UserRepository) CountUserComments(userID int) int64 {
+	var count int64
+	r.db.Model(&patchModel.PatchComment{}).Where("user_id = ?", userID).Count(&count)
+	return count
+}
+
+func (r *UserRepository) CountUserFavorites(userID int) int64 {
+	var count int64
+	r.db.Model(&patchModel.UserPatchFavoriteRelation{}).Where("user_id = ?", userID).Count(&count)
+	return count
+}
+
+// ===== User Profile Lists =====
+
+func (r *UserRepository) GetUserPatches(userID, offset, limit int) ([]patchModel.Patch, int64, error) {
+	var patches []patchModel.Patch
+	var total int64
+	query := r.db.Model(&patchModel.Patch{}).Where("user_id = ?", userID)
+	query.Count(&total)
+	err := query.Order("created DESC").Offset(offset).Limit(limit).Find(&patches).Error
+	return patches, total, err
+}
+
+func (r *UserRepository) GetUserResources(userID, offset, limit int) ([]patchModel.PatchResource, int64, error) {
+	var resources []patchModel.PatchResource
+	var total int64
+	query := r.db.Model(&patchModel.PatchResource{}).Where("user_id = ?", userID)
+	query.Count(&total)
+	err := query.Order("created DESC").Offset(offset).Limit(limit).
+		Preload("User", func(db *gorm.DB) *gorm.DB {
+			return db.Select("id", "name", "avatar")
+		}).Find(&resources).Error
+	return resources, total, err
+}
+
+func (r *UserRepository) GetUserFavorites(userID, offset, limit int) ([]patchModel.Patch, int64, error) {
+	var patches []patchModel.Patch
+	var total int64
+	subQuery := r.db.Table("user_patch_favorite_relation").Where("user_id = ?", userID).Select("patch_id")
+	query := r.db.Model(&patchModel.Patch{}).Where("id IN (?)", subQuery)
+	query.Count(&total)
+	err := query.Order("created DESC").Offset(offset).Limit(limit).Find(&patches).Error
+	return patches, total, err
+}
+
+func (r *UserRepository) GetUserComments(userID, offset, limit int) ([]patchModel.PatchComment, int64, error) {
+	var comments []patchModel.PatchComment
+	var total int64
+	query := r.db.Model(&patchModel.PatchComment{}).Where("user_id = ?", userID)
+	query.Count(&total)
+	err := query.Order("created DESC").Offset(offset).Limit(limit).Find(&comments).Error
+	return comments, total, err
+}
+
+func (r *UserRepository) GetUserContributions(userID, offset, limit int) ([]patchModel.Patch, int64, error) {
+	var patches []patchModel.Patch
+	var total int64
+	subQuery := r.db.Table("user_patch_contribute_relation").Where("user_id = ?", userID).Select("patch_id")
+	query := r.db.Model(&patchModel.Patch{}).Where("id IN (?)", subQuery)
+	query.Count(&total)
+	err := query.Order("created DESC").Offset(offset).Limit(limit).Find(&patches).Error
+	return patches, total, err
+}
+
+// ===== Follow =====
+
+func (r *UserRepository) FindFollow(followerID, followingID int) (*model.UserFollowRelation, error) {
+	var rel model.UserFollowRelation
+	err := r.db.Where("follower_id = ? AND following_id = ?", followerID, followingID).First(&rel).Error
+	return &rel, err
+}
+
+func (r *UserRepository) CreateFollow(rel *model.UserFollowRelation) error {
+	return r.db.Create(rel).Error
+}
+
+func (r *UserRepository) DeleteFollow(followerID, followingID int) error {
+	return r.db.Where("follower_id = ? AND following_id = ?", followerID, followingID).
+		Delete(&model.UserFollowRelation{}).Error
+}
+
+func (r *UserRepository) UpdateFollowCounts(followerID, followingID, delta int) error {
+	return r.db.Transaction(func(tx *gorm.DB) error {
+		if err := tx.Model(&authModel.User{}).Where("id = ?", followerID).
+			UpdateColumn("following_count", gorm.Expr("GREATEST(following_count + ?, 0)", delta)).Error; err != nil {
+			return err
+		}
+		return tx.Model(&authModel.User{}).Where("id = ?", followingID).
+			UpdateColumn("follower_count", gorm.Expr("GREATEST(follower_count + ?, 0)", delta)).Error
+	})
+}
+
+func (r *UserRepository) GetFollowers(userID, offset, limit int) ([]model.UserBasic, int64, error) {
+	var users []model.UserBasic
+	var total int64
+	subQuery := r.db.Table("user_follow_relation").Where("following_id = ?", userID).Select("follower_id")
+	query := r.db.Table("user").Where("id IN (?)", subQuery)
+	query.Count(&total)
+	err := query.Select("id", "name", "avatar").Offset(offset).Limit(limit).Find(&users).Error
+	return users, total, err
+}
+
+func (r *UserRepository) GetFollowing(userID, offset, limit int) ([]model.UserBasic, int64, error) {
+	var users []model.UserBasic
+	var total int64
+	subQuery := r.db.Table("user_follow_relation").Where("follower_id = ?", userID).Select("following_id")
+	query := r.db.Table("user").Where("id IN (?)", subQuery)
+	query.Count(&total)
+	err := query.Select("id", "name", "avatar").Offset(offset).Limit(limit).Find(&users).Error
+	return users, total, err
+}
+
+// ===== Search =====
+
+func (r *UserRepository) SearchUsers(query string, limit int) ([]model.UserBasic, error) {
+	var users []model.UserBasic
+	err := r.db.Table("user").
+		Where("name ILIKE ?", "%"+query+"%").
+		Select("id", "name", "avatar").
+		Limit(limit).
+		Find(&users).Error
+	return users, err
+}
+
+// ===== Daily =====
+
+func (r *UserRepository) CheckIn(userID int, points int) error {
+	return r.db.Model(&authModel.User{}).Where("id = ?", userID).Updates(map[string]any{
+		"daily_check_in": 1,
+		"moemoepoint":    gorm.Expr("moemoepoint + ?", points),
+	}).Error
+}

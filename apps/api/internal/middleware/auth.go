@@ -1,0 +1,228 @@
+package middleware
+
+import (
+	"context"
+	"crypto/rand"
+	"encoding/hex"
+	"encoding/json"
+	"fmt"
+	"io"
+	"log/slog"
+	"net/http"
+	"strings"
+	"time"
+
+	"kun-galgame-patch-api/pkg/config"
+	"kun-galgame-patch-api/pkg/errors"
+	"kun-galgame-patch-api/pkg/response"
+
+	"github.com/gofiber/fiber/v2"
+	"github.com/redis/go-redis/v9"
+)
+
+type UserInfo struct {
+	UID   int    `json:"uid"`
+	Sub   string `json:"sub"`
+	Name  string `json:"name"`
+	Email string `json:"email"`
+	Role  int    `json:"role"`
+}
+
+type SessionData struct {
+	UserInfo
+	OAuthAccessToken  string `json:"oauth_access_token"`
+	OAuthRefreshToken string `json:"oauth_refresh_token"`
+	OAuthExpiresAt    int64  `json:"oauth_expires_at"`
+}
+
+const (
+	SessionCookieName = "kun_session"
+	SessionTTL        = 7 * 24 * time.Hour
+	SessionPrefix     = "session:"
+	userContextKey    = "user"
+)
+
+func Auth(rdb *redis.Client, oauthCfg config.OAuthConfig) fiber.Handler {
+	return func(c *fiber.Ctx) error {
+		sessionID := c.Cookies(SessionCookieName)
+		if sessionID == "" {
+			return response.Error(c, errors.ErrUnauthorized())
+		}
+
+		data, err := rdb.Get(context.Background(), SessionPrefix+sessionID).Result()
+		if err == redis.Nil {
+			return response.Error(c, errors.ErrAuthExpired())
+		}
+		if err != nil {
+			slog.Error("Redis get session failed", "error", err)
+			return response.Error(c, errors.ErrInternal(""))
+		}
+
+		var session SessionData
+		if err := json.Unmarshal([]byte(data), &session); err != nil {
+			return response.Error(c, errors.ErrInternal(""))
+		}
+
+		// Refresh OAuth token if expiring soon (< 5 minutes)
+		if session.OAuthExpiresAt > 0 && time.Now().Unix() > session.OAuthExpiresAt-300 {
+			go refreshOAuthToken(rdb, oauthCfg, sessionID, &session)
+		}
+
+		c.Locals(userContextKey, &session.UserInfo)
+		return c.Next()
+	}
+}
+
+func OptionalAuth(rdb *redis.Client, oauthCfg config.OAuthConfig) fiber.Handler {
+	return func(c *fiber.Ctx) error {
+		sessionID := c.Cookies(SessionCookieName)
+		if sessionID == "" {
+			return c.Next()
+		}
+
+		data, err := rdb.Get(context.Background(), SessionPrefix+sessionID).Result()
+		if err != nil {
+			return c.Next()
+		}
+
+		var session SessionData
+		if err := json.Unmarshal([]byte(data), &session); err != nil {
+			return c.Next()
+		}
+
+		c.Locals(userContextKey, &session.UserInfo)
+		return c.Next()
+	}
+}
+
+func GetUser(c *fiber.Ctx) *UserInfo {
+	user, ok := c.Locals(userContextKey).(*UserInfo)
+	if !ok {
+		return nil
+	}
+	return user
+}
+
+func MustGetUser(c *fiber.Ctx) *UserInfo {
+	return c.Locals(userContextKey).(*UserInfo)
+}
+
+func GetUID(c *fiber.Ctx) int {
+	user := GetUser(c)
+	if user == nil {
+		return 0
+	}
+	return user.UID
+}
+
+func GetRole(c *fiber.Ctx) int {
+	user := GetUser(c)
+	if user == nil {
+		return 0
+	}
+	return user.Role
+}
+
+// CreateSession creates a new session in Redis and sets the cookie.
+func CreateSession(c *fiber.Ctx, rdb *redis.Client, session *SessionData) error {
+	sessionID, err := generateSessionID()
+	if err != nil {
+		return err
+	}
+
+	data, err := json.Marshal(session)
+	if err != nil {
+		return err
+	}
+
+	if err := rdb.Set(context.Background(), SessionPrefix+sessionID, data, SessionTTL).Err(); err != nil {
+		return err
+	}
+
+	c.Cookie(&fiber.Cookie{
+		Name:     SessionCookieName,
+		Value:    sessionID,
+		MaxAge:   int(SessionTTL.Seconds()),
+		HTTPOnly: true,
+		Secure:   true,
+		SameSite: "Lax",
+		Path:     "/",
+	})
+
+	return nil
+}
+
+// DestroySession removes the session from Redis and clears the cookie.
+func DestroySession(c *fiber.Ctx, rdb *redis.Client) error {
+	sessionID := c.Cookies(SessionCookieName)
+	if sessionID != "" {
+		rdb.Del(context.Background(), SessionPrefix+sessionID)
+	}
+
+	c.Cookie(&fiber.Cookie{
+		Name:     SessionCookieName,
+		Value:    "",
+		MaxAge:   -1,
+		HTTPOnly: true,
+		Secure:   true,
+		SameSite: "Lax",
+		Path:     "/",
+	})
+
+	return nil
+}
+
+func generateSessionID() (string, error) {
+	b := make([]byte, 32)
+	if _, err := rand.Read(b); err != nil {
+		return "", err
+	}
+	return hex.EncodeToString(b), nil
+}
+
+func refreshOAuthToken(rdb *redis.Client, oauthCfg config.OAuthConfig, sessionID string, session *SessionData) {
+	ctx := context.Background()
+	lockKey := "lock:refresh:" + sessionID
+
+	ok, err := rdb.SetNX(ctx, lockKey, 1, 30*time.Second).Result()
+	if err != nil || !ok {
+		return
+	}
+	defer rdb.Del(ctx, lockKey)
+
+	body := fmt.Sprintf("grant_type=refresh_token&refresh_token=%s&client_id=%s&client_secret=%s",
+		session.OAuthRefreshToken, oauthCfg.ClientID, oauthCfg.ClientSecret)
+
+	resp, err := http.Post(
+		oauthCfg.ServerURL+"/oauth/token",
+		"application/x-www-form-urlencoded",
+		strings.NewReader(body),
+	)
+	if err != nil {
+		slog.Error("OAuth token refresh failed", "error", err)
+		return
+	}
+	defer resp.Body.Close()
+
+	if resp.StatusCode != 200 {
+		respBody, _ := io.ReadAll(resp.Body)
+		slog.Error("OAuth token refresh failed", "status", resp.StatusCode, "body", string(respBody))
+		return
+	}
+
+	var tokenResp struct {
+		AccessToken  string `json:"access_token"`
+		RefreshToken string `json:"refresh_token"`
+		ExpiresIn    int64  `json:"expires_in"`
+	}
+	if err := json.NewDecoder(resp.Body).Decode(&tokenResp); err != nil {
+		return
+	}
+
+	session.OAuthAccessToken = tokenResp.AccessToken
+	session.OAuthRefreshToken = tokenResp.RefreshToken
+	session.OAuthExpiresAt = time.Now().Unix() + tokenResp.ExpiresIn
+
+	data, _ := json.Marshal(session)
+	rdb.Set(ctx, SessionPrefix+sessionID, data, SessionTTL)
+}
