@@ -1,4 +1,7 @@
-import { KUN_VISUAL_NOVEL_PATCH_APP_ADDRESS } from '~/config/app'
+import {
+  KUN_VISUAL_NOVEL_PATCH_APP_ADDRESS,
+  KUN_API_BASE_URL
+} from '~/config/app'
 
 type FetchOptions = {
   headers?: Record<string, string>
@@ -6,6 +9,39 @@ type FetchOptions = {
   body?: Record<string, unknown>
   formData?: FormData
 }
+
+// Go backend response envelope
+interface GoApiResponse<T> {
+  code: number
+  message: string
+  data: T
+  total?: number
+}
+
+// Endpoints that have been migrated to the Go Fiber backend.
+// During the migration period, only these routes go to Go; the rest go to Next.js.
+const GO_API_PREFIXES = [
+  '/auth/',
+  '/user/',
+  '/patch/',
+  '/message/',
+  '/admin/',
+  '/tag/',
+  '/character/',
+  '/company/',
+  '/person/',
+  '/release',
+  '/home/',
+  '/galgame',
+  '/comment',
+  '/resource',
+  '/apply',
+  '/hikari',
+  '/moyu/'
+]
+
+const isGoEndpoint = (url: string): boolean =>
+  GO_API_PREFIXES.some((prefix) => url.startsWith(prefix))
 
 const kunFetchRequest = async <T>(
   url: string,
@@ -22,7 +58,10 @@ const kunFetchRequest = async <T>(
           .join('&')
       : ''
 
-    const fullUrl = `${KUN_VISUAL_NOVEL_PATCH_APP_ADDRESS}/api${url}${queryString}`
+    const baseUrl = isGoEndpoint(url)
+      ? KUN_API_BASE_URL
+      : KUN_VISUAL_NOVEL_PATCH_APP_ADDRESS
+    const fullUrl = `${baseUrl}/api${url}${queryString}`
 
     const fetchOptions: RequestInit = {
       method,
@@ -37,16 +76,29 @@ const kunFetchRequest = async <T>(
       fetchOptions.body = formData
     } else if (body) {
       fetchOptions.body = JSON.stringify(body)
+      ;(fetchOptions.headers as Record<string, string>)['Content-Type'] =
+        'application/json'
     }
 
     const response = await fetch(fullUrl, fetchOptions)
-
-    if (!response.ok) {
-      throw new Error(`Kun Fetch error! Status: ${response.status}`)
-    }
-
     const res = await response.json()
 
+    // Handle Go backend {code, message, data} envelope
+    if (
+      res !== null &&
+      typeof res === 'object' &&
+      'code' in res &&
+      'message' in res
+    ) {
+      const apiRes = res as GoApiResponse<T>
+      if (apiRes.code !== 0) {
+        // Return error message string (backwards compatible with KunResponse<T>)
+        return apiRes.message as unknown as T
+      }
+      return apiRes.data
+    }
+
+    // Legacy next-server response (direct data or error string)
     return res
   } catch (error) {
     console.error(`Kun Fetch error: ${error}`)

@@ -68,7 +68,7 @@ type CORSConfig struct {
 func Load() *Config {
 	return &Config{
 		Server: ServerConfig{
-			Port: getEnv("KUN_SERVER_PORT", "1007"),
+			Port: getEnv("KUN_SERVER_PORT", "5214"),
 			Mode: getEnv("KUN_SERVER_MODE", "dev"),
 		},
 		Database: DatabaseConfig{
@@ -109,7 +109,7 @@ func Load() *Config {
 			APIKey: getEnv("MEILISEARCH_API_KEY", ""),
 		},
 		CORS: CORSConfig{
-			AllowOrigins: getEnv("CORS_ALLOW_ORIGINS", "http://localhost:3000"),
+			AllowOrigins: getEnv("CORS_ALLOW_ORIGINS", "http://127.0.0.1:5213"),
 		},
 	}
 }

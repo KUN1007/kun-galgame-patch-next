@@ -15,7 +15,7 @@ const port =
     dev
       ? process.env.NEXT_PUBLIC_KUN_PATCH_APP_ADDRESS_DEV_PORT
       : process.env.NEXT_PUBLIC_KUN_PATCH_APP_ADDRESS_PROD_PORT
-  ) || 2333
+  ) || 5213
 
 const app = next({ dev, hostname, port, turbopack: true })
 const handle = app.getRequestHandler()

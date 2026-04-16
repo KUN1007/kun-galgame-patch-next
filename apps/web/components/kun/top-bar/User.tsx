@@ -27,14 +27,12 @@ export const KunTopBarUser = () => {
   const isMounted = useMounted()
 
   const getUserStatus = async () => {
-    const res = await kunFetchGet<KunResponse<UserState>>('/user/status')
+    const res = await kunFetchGet<KunResponse<UserState>>('/auth/me')
     if (typeof res === 'string') {
-      toast.error(res)
       logout()
-      router.push('/login')
-    } else {
-      setUser({ ...res, mutedMessageTypes: user.mutedMessageTypes ?? [] })
+      return
     }
+    setUser({ ...res, mutedMessageTypes: user.mutedMessageTypes ?? [] })
   }
 
   const getUserUnreadMessage = async () => {

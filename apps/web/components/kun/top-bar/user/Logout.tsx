@@ -25,7 +25,7 @@ export const UserDropdown = () => {
 
   const handleLogOut = async () => {
     setLoading(true)
-    await kunFetchPost<KunResponse<{}>>('/user/status/logout')
+    await kunFetchPost<KunResponse<{}>>('/auth/logout')
     setLoading(false)
     logout()
     router.push('/login')

@@ -6,6 +6,7 @@ import (
 	"time"
 
 	"kun-galgame-patch-api/internal/auth/dto"
+	authModel "kun-galgame-patch-api/internal/auth/model"
 	"kun-galgame-patch-api/internal/auth/service"
 	"kun-galgame-patch-api/internal/middleware"
 	"kun-galgame-patch-api/pkg/errors"
@@ -14,15 +15,17 @@ import (
 
 	"github.com/gofiber/fiber/v2"
 	"github.com/redis/go-redis/v9"
+	"gorm.io/gorm"
 )
 
 type AuthHandler struct {
 	service *service.AuthService
 	rdb     *redis.Client
+	db      *gorm.DB
 }
 
-func New(svc *service.AuthService, rdb *redis.Client) *AuthHandler {
-	return &AuthHandler{service: svc, rdb: rdb}
+func New(svc *service.AuthService, rdb *redis.Client, db *gorm.DB) *AuthHandler {
+	return &AuthHandler{service: svc, rdb: rdb, db: db}
 }
 
 // OAuthCallback POST /api/auth/oauth/callback
@@ -105,20 +108,30 @@ func (h *AuthHandler) Logout(c *fiber.Ctx) error {
 
 // Me GET /api/auth/me
 func (h *AuthHandler) Me(c *fiber.Ctx) error {
-	user := middleware.MustGetUser(c)
+	sessionUser := middleware.MustGetUser(c)
 
-	// Update last login time
-	now := time.Now().Format(time.RFC3339)
+	// Fetch full user from DB for up-to-date info
+	var user authModel.User
+	if err := h.db.First(&user, sessionUser.UID).Error; err != nil {
+		return response.Error(c, errors.ErrNotFound("user not found"))
+	}
+
+	// Update last login time in background
 	go func() {
-		// We don't have direct access to repo here, but we can use the service
-		// For now, this is handled at the service/repo level
-		_ = now
+		h.db.Model(&authModel.User{}).Where("id = ?", user.ID).
+			Update("last_login_time", time.Now().Format(time.RFC3339))
 	}()
 
 	return response.OK(c, dto.MeResponse{
-		UID:  user.UID,
-		Name: user.Name,
-		Role: user.Role,
+		UID:             user.ID,
+		Name:            user.Name,
+		Avatar:          user.Avatar,
+		Bio:             user.Bio,
+		Moemoepoint:     user.Moemoepoint,
+		Role:            user.Role,
+		DailyCheckIn:    user.DailyCheckIn,
+		DailyImageCount: user.DailyImageCount,
+		DailyUploadSize: user.DailyUploadSize,
 	})
 }
 

@@ -66,7 +66,7 @@ func New(cfg *config.Config) *App {
 	// Auth module
 	authRepository := authRepo.New(db)
 	authSvc := authService.New(authRepository, rdb, mailer, cfg.OAuth)
-	authHdl := authHandler.New(authSvc, rdb)
+	authHdl := authHandler.New(authSvc, rdb, db)
 
 	// Patch module
 	patchRepository := patchRepo.New(db)

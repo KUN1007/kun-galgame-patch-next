@@ -20,19 +20,19 @@ export const UserCheckIn = () => {
     setChecking(true)
     const res = await kunFetchPost<
       KunResponse<{
-        randomMoemoepoints: number
+        moemoepoint: number
       }>
-    >('/user/status/check-in')
+    >('/user/check-in')
     kunErrorHandler(res, (value) => {
       showKunSooner(
-        value
-          ? `签到成功! 您今天获得了 ${value.randomMoemoepoints} 萌萌点`
+        value.moemoepoint > 0
+          ? `签到成功! 您今天获得了 ${value.moemoepoint} 萌萌点`
           : '您的运气不好...今天没有获得萌萌点...'
       )
       setUser({
         ...user,
         dailyCheckIn: 1,
-        moemoepoint: user.moemoepoint + value.randomMoemoepoints
+        moemoepoint: user.moemoepoint + value.moemoepoint
       })
     })
     setChecking(false)

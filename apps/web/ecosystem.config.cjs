@@ -4,7 +4,7 @@ module.exports = {
   apps: [
     {
       name: 'kun-visual-novel-patch',
-      port: 2333,
+      port: 5213,
       cwd: path.join(__dirname),
       instances: 1,
       autorestart: true,
