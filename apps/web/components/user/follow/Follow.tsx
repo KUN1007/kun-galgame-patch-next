@@ -10,7 +10,7 @@ import {
   ModalHeader,
   useDisclosure
 } from '@heroui/modal'
-import { kunFetchPost } from '~/utils/kunFetch'
+import { kunFetchPut, kunFetchDelete } from '~/utils/kunFetch'
 import { Check, Plus } from 'lucide-react'
 import { useRouter } from '@bprogress/next'
 import { useUserStore } from '~/store/userStore'
@@ -32,9 +32,7 @@ export const UserFollow = ({ uid, name, follow, fullWidth = true }: Props) => {
 
   const handleUnfollow = async () => {
     setFollowing(true)
-    const res = await kunFetchPost<KunResponse<{}>>('/user/follow/unfollow', {
-      uid
-    })
+    const res = await kunFetchDelete<KunResponse<{}>>(`/user/${uid}/follow`)
     kunErrorHandler(res, () => {
       setIsFollow(false)
       onClose()
@@ -48,9 +46,7 @@ export const UserFollow = ({ uid, name, follow, fullWidth = true }: Props) => {
     if (isFollow) {
       onOpen()
     } else {
-      const res = await kunFetchPost<KunResponse<{}>>('/user/follow/follow', {
-        uid
-      })
+      const res = await kunFetchPut<KunResponse<{}>>(`/user/${uid}/follow`)
       kunErrorHandler(res, () => {})
       setIsFollow(true)
     }

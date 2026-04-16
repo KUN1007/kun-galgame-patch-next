@@ -31,7 +31,7 @@ export const StepOne = ({ setStep, setEmail }: Props) => {
   const handleSendCode = async (data: StepOneFormData) => {
     setLoading(true)
 
-    const res = await kunFetchPost<KunResponse<undefined>>('/forgot/one', {
+    const res = await kunFetchPost<KunResponse<undefined>>('/auth/forgot/send-code', {
       name: data.name
     })
     kunErrorHandler(res, () => {

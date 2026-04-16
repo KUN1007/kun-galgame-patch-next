@@ -14,7 +14,7 @@ export const EnableCommentVerify = ({ enableCommentVerify }: Props) => {
   const [isEnable, setIsEnable] = useState(enableCommentVerify)
 
   const handleSwitch = async (value: boolean) => {
-    const res = await kunFetchPut<KunResponse<{}>>('/admin/setting/comment', {
+    const res = await kunFetchPut<KunResponse<{}>>('/admin/setting/comment-verify', {
       enableCommentVerify: value
     })
     if (typeof res === 'string') {

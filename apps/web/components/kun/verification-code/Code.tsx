@@ -53,7 +53,7 @@ export const EmailVerification = ({ username, email, type }: Props) => {
       })
     } else {
       res = await kunFetchPost<KunResponse<{}>>(
-        '/user/setting/send-reset-email-code',
+        '/auth/email/send-code',
         { email, captcha: code }
       )
     }

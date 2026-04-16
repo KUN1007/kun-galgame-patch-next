@@ -25,8 +25,7 @@ export const UserFavorite = ({ favorites, total, uid }: Props) => {
     const { favorites } = await kunFetchGet<{
       favorites: GalgameCard[]
       total: number
-    }>('/user/profile/favorite', {
-      uid,
+    }>(`/user/${uid}/favorite`, {
       page,
       limit: 20
     })

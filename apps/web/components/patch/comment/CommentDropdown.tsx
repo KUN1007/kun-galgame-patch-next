@@ -42,8 +42,8 @@ export const CommentDropdown = ({ comment, setComments }: Props) => {
   } = useDisclosure()
   const handleStartEdit = async () => {
     const res = await kunFetchGet<KunResponse<{ content: string }>>(
-      '/patch/comment/markdown',
-      { commentId: comment.id }
+      `/patch/comment/${comment.id}/markdown`,
+      {}
     )
     if (typeof res === 'string') {
       toast.error(res)
@@ -60,10 +60,10 @@ export const CommentDropdown = ({ comment, setComments }: Props) => {
     }
 
     setUpdating(true)
-    const res = await kunFetchPut<KunResponse<PatchComment>>('/patch/comment', {
-      commentId,
-      content: editContent.trim()
-    })
+    const res = await kunFetchPut<KunResponse<PatchComment>>(
+      `/patch/comment/${commentId}`,
+      { content: editContent.trim() }
+    )
     kunErrorHandler(res, () => {
       setEditContent('')
       setComments((prev) =>
@@ -88,9 +88,10 @@ export const CommentDropdown = ({ comment, setComments }: Props) => {
   const [deleting, setDeleting] = useState(false)
   const handleDeleteComment = async () => {
     setDeleting(true)
-    const res = await kunFetchDelete<KunResponse<{}>>('/patch/comment', {
-      commentId: comment.id
-    })
+    const res = await kunFetchDelete<KunResponse<{}>>(
+      `/patch/comment/${comment.id}`,
+      {}
+    )
     kunErrorHandler(res, () => {
       onCloseDelete()
       setComments((prev) => prev.filter((com) => com.id !== comment.id))

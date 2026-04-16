@@ -26,8 +26,7 @@ export const UserGalgame = ({ galgames, total, uid }: Props) => {
     const { galgames } = await kunFetchGet<{
       galgames: GalgameCard[]
       total: number
-    }>('/user/profile/galgame', {
-      uid,
+    }>(`/user/${uid}/patch`, {
       page,
       limit: 20
     })

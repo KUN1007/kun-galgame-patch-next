@@ -5,7 +5,7 @@ import { Textarea } from '@heroui/input'
 import { Button } from '@heroui/button'
 import { useUserStore } from '~/store/userStore'
 import { useState } from 'react'
-import { kunFetchPost } from '~/utils/kunFetch'
+import { kunFetchPut } from '~/utils/kunFetch'
 import { bioSchema } from '~/validations/user'
 import toast from 'react-hot-toast'
 
@@ -24,7 +24,7 @@ export const Bio = () => {
       setUser({ ...user, bio })
       setLoading(true)
 
-      await kunFetchPost<KunResponse<{}>>('/user/setting/bio', { bio })
+      await kunFetchPut<KunResponse<{}>>('/user/bio', { bio })
 
       setLoading(false)
       toast.success('更新签名成功')

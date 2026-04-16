@@ -23,7 +23,7 @@ export const VNDBInput = ({ errors }: Props) => {
     }
 
     const res = await kunFetchGet<KunResponse<{ patchId: number }>>(
-      '/edit/duplicate',
+      '/patch/duplicate',
       { vndbId: data.vndbId }
     )
     if (typeof res !== 'string' && res.patchId) {

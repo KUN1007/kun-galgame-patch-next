@@ -52,8 +52,7 @@ export const Comments = ({
     const res = await kunFetchGet<{
       comments: PatchComment[]
       total: number
-    }>('/patch/comment', {
-      patchId: id,
+    }>(`/patch/${id}/comment`, {
       page,
       limit: 30
     })

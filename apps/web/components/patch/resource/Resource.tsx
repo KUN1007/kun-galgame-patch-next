@@ -75,9 +75,10 @@ export const Resources = ({ initialResources, id }: Props) => {
   const [deleting, startDeleting] = useTransition()
   const handleDeleteResource = async () => {
     startDeleting(async () => {
-      await kunFetchDelete<KunResponse<{}>>('/patch/resource', {
-        resourceId: deleteResourceId
-      })
+      await kunFetchDelete<KunResponse<{}>>(
+        `/patch/resource/${deleteResourceId}`,
+        {}
+      )
 
       setResources((prev) =>
         prev.filter((resource) => resource.id !== deleteResourceId)
@@ -104,9 +105,10 @@ export const Resources = ({ initialResources, id }: Props) => {
 
       const nextStatus = disableResource.status === 0 ? 1 : 0
 
-      await kunFetchPut<KunResponse<{}>>('/patch/resource/disable', {
-        resourceId: disableResource.id
-      })
+      await kunFetchPut<KunResponse<{}>>(
+        `/patch/resource/${disableResource.id}/disable`,
+        {}
+      )
       toast.success(
         disableResource.status ? '启用补丁下载成功' : '禁止补丁被下载成功'
       )

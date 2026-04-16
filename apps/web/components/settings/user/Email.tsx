@@ -10,7 +10,7 @@ import { Button } from '@heroui/button'
 import { KeyRound, Mail } from 'lucide-react'
 import { EmailVerification } from '~/components/kun/verification-code/Code'
 import { resetEmailSchema } from '~/validations/user'
-import { kunFetchPost } from '~/utils/kunFetch'
+import { kunFetchPut } from '~/utils/kunFetch'
 import { kunErrorHandler } from '~/utils/kunErrorHandler'
 import toast from 'react-hot-toast'
 
@@ -35,8 +35,8 @@ export const Email = () => {
   const handleUpdateEmail = async () => {
     setLoading(true)
 
-    const res = await kunFetchPost<KunResponse<{}>>(
-      '/user/setting/email',
+    const res = await kunFetchPut<KunResponse<{}>>(
+      '/user/email',
       watch()
     )
     kunErrorHandler(res, () => {

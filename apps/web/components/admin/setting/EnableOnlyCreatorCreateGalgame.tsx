@@ -16,7 +16,7 @@ export const EnableOnlyCreatorCreateGalgame = ({
   const [isEnable, setIsEnable] = useState(enableOnlyCreatorCreate)
 
   const handleSwitch = async (value: boolean) => {
-    const res = await kunFetchPut<KunResponse<{}>>('/admin/setting/creator', {
+    const res = await kunFetchPut<KunResponse<{}>>('/admin/setting/creator-only', {
       enableOnlyCreatorCreate: value
     })
     if (typeof res === 'string') {

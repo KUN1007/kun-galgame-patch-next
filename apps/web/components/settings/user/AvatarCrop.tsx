@@ -76,7 +76,7 @@ export const AvatarCrop = () => {
 
     setLoading(true)
     const res = await kunFetchFormData<KunResponse<{ avatar: string }>>(
-      '/user/setting/avatar',
+      '/user/avatar',
       formData
     )
     if (typeof res === 'string') {

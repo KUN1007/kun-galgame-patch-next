@@ -27,8 +27,7 @@ export const UserResource = ({ resources, total, uid }: Props) => {
     const { resources } = await kunFetchGet<{
       resources: UserResourceType[]
       total: number
-    }>('/user/profile/resource', {
-      uid,
+    }>(`/user/${uid}/resource`, {
       page,
       limit: 20
     })

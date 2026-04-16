@@ -26,8 +26,7 @@ export const UserComment = ({ initComments, total, uid }: Props) => {
     const { comments } = await kunFetchGet<{
       comments: UserCommentType[]
       total: number
-    }>('/user/profile/comment', {
-      uid,
+    }>(`/user/${uid}/comment`, {
       page,
       limit: 20
     })

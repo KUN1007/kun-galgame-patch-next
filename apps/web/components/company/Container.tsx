@@ -28,7 +28,7 @@ export const Container: FC<Props> = ({ initialCompanies, initialTotal }) => {
       const { companies, total } = await kunFetchGet<{
         companies: CompanyType[]
         total: number
-      }>('/company/all', {
+      }>('/company', {
         page,
         limit: 100
       })

@@ -5,7 +5,7 @@ import { Input } from '@heroui/input'
 import { Button } from '@heroui/button'
 import { useUserStore } from '~/store/userStore'
 import { useState } from 'react'
-import { kunFetchPost } from '~/utils/kunFetch'
+import { kunFetchPut } from '~/utils/kunFetch'
 import { kunErrorHandler } from '~/utils/kunErrorHandler'
 import { usernameSchema } from '~/validations/user'
 import {
@@ -39,8 +39,8 @@ export const Username = () => {
 
       setLoading(true)
 
-      const res = await kunFetchPost<KunResponse<{}>>(
-        '/user/setting/username',
+      const res = await kunFetchPut<KunResponse<{}>>(
+        '/user/username',
         { username }
       )
       kunErrorHandler(res, () => {

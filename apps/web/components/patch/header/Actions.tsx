@@ -41,9 +41,10 @@ export const PatchHeaderActions = ({ patch }: PatchHeaderActionsProps) => {
     }
 
     setFavoriteLoading(true)
-    const res = await kunFetchPut<KunResponse<boolean>>('/patch/like', {
-      patchId: patch.id
-    })
+    const res = await kunFetchPut<KunResponse<boolean>>(
+      `/patch/${patch.id}/favorite`,
+      {}
+    )
 
     setFavoriteLoading(false)
     kunErrorHandler(res, (value) => {
@@ -58,9 +59,10 @@ export const PatchHeaderActions = ({ patch }: PatchHeaderActionsProps) => {
 
   const handleDelete = async () => {
     setDeleting(true)
-    const res = await kunFetchDelete<KunResponse<{}>>('/patch', {
-      patchId: patch.id
-    })
+    const res = await kunFetchDelete<KunResponse<{}>>(
+      `/patch/${patch.id}`,
+      {}
+    )
 
     if (typeof res === 'string') {
       toast.error(res)

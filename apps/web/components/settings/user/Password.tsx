@@ -11,7 +11,7 @@ import { Divider } from '@heroui/divider'
 import { Link } from '@heroui/link'
 import toast from 'react-hot-toast'
 import { passwordSchema } from '~/validations/user'
-import { kunFetchPost } from '~/utils/kunFetch'
+import { kunFetchPut } from '~/utils/kunFetch'
 import { kunErrorHandler } from '~/utils/kunErrorHandler'
 type PasswordFormData = z.infer<typeof passwordSchema>
 
@@ -34,8 +34,8 @@ export const Password = () => {
   const handleUpdatePassword = async () => {
     setLoading(true)
 
-    const res = await kunFetchPost<KunResponse<{}>>(
-      '/user/setting/password',
+    const res = await kunFetchPut<KunResponse<{}>>(
+      '/user/password',
       watch()
     )
     kunErrorHandler(res, () => {

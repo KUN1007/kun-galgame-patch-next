@@ -28,7 +28,7 @@ export const CharContainer = ({
       const { chars, total } = await kunFetchGet<{
         chars: PatchCharacter[]
         total: number
-      }>('/character/all', { page, limit: 72 })
+      }>('/character', { page, limit: 72 })
       setChars(chars)
       setTotal(total)
     })

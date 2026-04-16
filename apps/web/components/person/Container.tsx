@@ -28,7 +28,7 @@ export const PersonContainer = ({
       const { persons, total } = await kunFetchGet<{
         persons: PatchPerson[]
         total: number
-      }>('/person/all', { page, limit: 72 })
+      }>('/person', { page, limit: 72 })
       setPersons(persons)
       setTotal(total)
     })

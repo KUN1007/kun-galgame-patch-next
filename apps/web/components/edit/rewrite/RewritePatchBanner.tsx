@@ -31,13 +31,12 @@ export const RewritePatchBanner = ({ patchId, onClose }: Props) => {
     }
 
     const formData = new FormData()
-    formData.append('patchId', patchId.toString())
     formData.append('image', banner)
 
     setUpdating(true)
 
     const res = await kunFetchFormData<KunResponse<{}>>(
-      '/patch/banner',
+      `/patch/${patchId}/banner`,
       formData
     )
     kunErrorHandler(res, () => {

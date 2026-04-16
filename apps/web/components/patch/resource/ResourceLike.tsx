@@ -34,8 +34,8 @@ export const ResourceLikeButton = ({ resource }: Props) => {
     setLoading(true)
 
     const res = await kunFetchPut<KunResponse<boolean>>(
-      '/patch/resource/like',
-      { resourceId: resource.id }
+      `/patch/resource/${resource.id}/like`,
+      {}
     )
 
     setLoading(false)

@@ -85,7 +85,7 @@ export const PublishButton = ({ setErrors }: Props) => {
     )
 
     const res = await kunFetchFormData<KunResponse<number>>(
-      '/edit',
+      '/patch',
       formDataToSend
     )
     kunErrorHandler(res, async (value) => {

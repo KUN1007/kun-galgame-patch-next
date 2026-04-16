@@ -27,7 +27,7 @@ export const Container = ({ initialTags, initialTotal }: Props) => {
     const { tags, total } = await kunFetchGet<{
       tags: TagType[]
       total: number
-    }>('/tag/all', {
+    }>('/tag', {
       page,
       limit: 100
     })

@@ -31,7 +31,7 @@ export const MessageContainer = ({ initialMessages, total, type }: Props) => {
         messages: Message[]
         total: number
       }>
-    >('/message/all', {
+    >('/message', {
       type: type ?? '',
       page,
       limit: 30

@@ -45,8 +45,7 @@ export const CompanyDetailContainer: FC<Props> = ({
       const { galgames } = await kunFetchGet<{
         galgames: GalgameCard[]
         total: number
-      }>('/company/galgame', {
-        companyId: company.id,
+      }>(`/company/${company.id}/patch`, {
         page,
         limit: 24
       })

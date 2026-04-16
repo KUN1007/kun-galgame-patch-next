@@ -115,7 +115,7 @@ export const MentionsListDropdown = () => {
 
   const fetchUsers = async (queryText: string) => {
     startTransition(async () => {
-      const response = await kunFetchGet<KunUser[]>('/user/mention/search', {
+      const response = await kunFetchGet<KunUser[]>('/user/search', {
         query: queryText
       })
       setUsers(response)

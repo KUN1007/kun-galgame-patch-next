@@ -50,9 +50,8 @@ export const PublishComment = ({
   const handlePublishComment = async (code?: string) => {
     setLoading(true)
     const res = await kunFetchPost<KunResponse<PatchComment>>(
-      '/patch/comment',
+      `/patch/${patchId}/comment`,
       {
-        patchId,
         parentId,
         content: content.trim(),
         captcha: code ?? ''
