@@ -33,7 +33,7 @@ func New(repo *repository.AuthRepository, rdb *redis.Client, mailer *mail.Mailer
 	return &AuthService{repo: repo, rdb: rdb, mailer: mailer, oauthCfg: oauthCfg}
 }
 
-// OAuthTokenResponse OAuth token 响应
+// OAuthTokenResponse is the OAuth token response
 type OAuthTokenResponse struct {
 	AccessToken  string `json:"access_token"`
 	RefreshToken string `json:"refresh_token"`
@@ -41,7 +41,7 @@ type OAuthTokenResponse struct {
 	TokenType    string `json:"token_type"`
 }
 
-// OAuthUserInfo OAuth 用户信息
+// OAuthUserInfo is the OAuth user info
 type OAuthUserInfo struct {
 	Sub     string `json:"sub"`
 	Name    string `json:"name"`
@@ -49,7 +49,7 @@ type OAuthUserInfo struct {
 	Picture string `json:"picture"`
 }
 
-// ExchangeCode 用 authorization code 换取 token
+// ExchangeCode exchanges an authorization code for a token
 func (s *AuthService) ExchangeCode(code, codeVerifier string) (*OAuthTokenResponse, error) {
 	body := fmt.Sprintf(
 		"grant_type=authorization_code&code=%s&code_verifier=%s&client_id=%s&client_secret=%s&redirect_uri=%s",
@@ -79,7 +79,7 @@ func (s *AuthService) ExchangeCode(code, codeVerifier string) (*OAuthTokenRespon
 	return &tokenResp, nil
 }
 
-// GetUserInfo 通过 access token 获取 OAuth 用户信息
+// GetUserInfo retrieves OAuth user info using an access token
 func (s *AuthService) GetUserInfo(accessToken string) (*OAuthUserInfo, error) {
 	req, err := http.NewRequest("GET", s.oauthCfg.ServerURL+"/oauth/userinfo", nil)
 	if err != nil {
@@ -106,9 +106,9 @@ func (s *AuthService) GetUserInfo(accessToken string) (*OAuthUserInfo, error) {
 	return &userInfo, nil
 }
 
-// FindOrCreateUser 查找或创建本地用户（OAuth 登录核心逻辑）
+// FindOrCreateUser finds or creates a local user (core OAuth login logic)
 func (s *AuthService) FindOrCreateUser(oauthUser *OAuthUserInfo) (*model.User, error) {
-	// 1. 用 sub 查 oauth_account
+	// 1. Look up oauth_account by sub
 	account, err := s.repo.FindOAuthAccountBySub(oauthUser.Sub)
 	if err == nil {
 		user, err := s.repo.FindUserByID(account.UserID)
@@ -116,17 +116,17 @@ func (s *AuthService) FindOrCreateUser(oauthUser *OAuthUserInfo) (*model.User, e
 			return nil, err
 		}
 		if user.Status == 2 {
-			return nil, fmt.Errorf("该账号已被封禁")
+			return nil, fmt.Errorf("this account has been banned")
 		}
 		return user, nil
 	}
 
-	// 2. 用 email 查 user（老用户迁移）
+	// 2. Look up user by email (legacy user migration)
 	user, err := s.repo.FindUserByEmail(oauthUser.Email)
 	if err == nil {
-		// 老用户，创建 oauth_account 关联
+		// Legacy user, create oauth_account association
 		if user.Status == 2 {
-			return nil, fmt.Errorf("该账号已被封禁")
+			return nil, fmt.Errorf("this account has been banned")
 		}
 		oauthAccount := &model.OAuthAccount{
 			UserID:   user.ID,
@@ -135,7 +135,7 @@ func (s *AuthService) FindOrCreateUser(oauthUser *OAuthUserInfo) (*model.User, e
 		}
 		if err := s.repo.CreateOAuthAccount(oauthAccount); err != nil {
 			slog.Error("failed to create OAuth account for existing user", "error", err, "userId", user.ID)
-			return nil, fmt.Errorf("关联 OAuth 账号失败")
+			return nil, fmt.Errorf("failed to link OAuth account")
 		}
 		slog.Info("Linked OAuth account to existing user", "userId", user.ID, "sub", oauthUser.Sub)
 		return user, nil
@@ -145,7 +145,7 @@ func (s *AuthService) FindOrCreateUser(oauthUser *OAuthUserInfo) (*model.User, e
 		return nil, err
 	}
 
-	// 3. 全新用户
+	// 3. Brand new user
 	newUser := &model.User{
 		Name:   oauthUser.Name,
 		Email:  oauthUser.Email,
@@ -154,7 +154,7 @@ func (s *AuthService) FindOrCreateUser(oauthUser *OAuthUserInfo) (*model.User, e
 		Status: 0,
 	}
 	if err := s.repo.CreateUser(newUser); err != nil {
-		return nil, fmt.Errorf("创建用户失败: %w", err)
+		return nil, fmt.Errorf("failed to create user: %w", err)
 	}
 
 	oauthAccount := &model.OAuthAccount{
@@ -163,14 +163,14 @@ func (s *AuthService) FindOrCreateUser(oauthUser *OAuthUserInfo) (*model.User, e
 		Sub:      oauthUser.Sub,
 	}
 	if err := s.repo.CreateOAuthAccount(oauthAccount); err != nil {
-		return nil, fmt.Errorf("创建 OAuth 关联失败: %w", err)
+		return nil, fmt.Errorf("failed to create OAuth association: %w", err)
 	}
 
 	slog.Info("Created new user via OAuth", "userId", newUser.ID, "sub", oauthUser.Sub)
 	return newUser, nil
 }
 
-// RevokeOAuthToken 吊销 OAuth token
+// RevokeOAuthToken revokes an OAuth token
 func (s *AuthService) RevokeOAuthToken(accessToken string) {
 	body := fmt.Sprintf("token=%s&client_id=%s&client_secret=%s",
 		accessToken, s.oauthCfg.ClientID, s.oauthCfg.ClientSecret)
@@ -187,14 +187,14 @@ func (s *AuthService) RevokeOAuthToken(accessToken string) {
 	resp.Body.Close()
 }
 
-// SendVerificationCode 发送邮箱验证码
+// SendVerificationCode sends an email verification code
 func (s *AuthService) SendVerificationCode(email string) error {
 	ctx := context.Background()
 
-	// 检查发送频率
+	// Check send rate limit
 	rateLimitKey := "sendCode:email:" + email
 	if exists, _ := s.rdb.Exists(ctx, rateLimitKey).Result(); exists > 0 {
-		return fmt.Errorf("验证码发送过于频繁，请 60 秒后再试")
+		return fmt.Errorf("verification code sent too frequently, please try again after 60 seconds")
 	}
 
 	code := fmt.Sprintf("%06d", rand.Intn(1000000))
@@ -203,34 +203,34 @@ func (s *AuthService) SendVerificationCode(email string) error {
 	s.rdb.Set(ctx, codeKey, code, 10*time.Minute)
 	s.rdb.Set(ctx, rateLimitKey, 1, 60*time.Second)
 
-	subject := "KUN 视觉小说补丁 - 验证码"
-	body := fmt.Sprintf(`<p>您的验证码是: <strong>%s</strong></p><p>有效期 10 分钟，请勿泄露给他人。</p>`, code)
+	subject := "KUN Visual Novel Patch - Verification Code"
+	body := fmt.Sprintf(`<p>Your verification code is: <strong>%s</strong></p><p>Valid for 10 minutes. Please do not share it with others.</p>`, code)
 
 	return s.mailer.Send(email, subject, body)
 }
 
-// VerifyCode 验证邮箱验证码
+// VerifyCode verifies an email verification code
 func (s *AuthService) VerifyCode(email, code string) error {
 	ctx := context.Background()
 	codeKey := "verificationCode:" + email
 
 	storedCode, err := s.rdb.Get(ctx, codeKey).Result()
 	if err == redis.Nil {
-		return fmt.Errorf("验证码不存在或已过期")
+		return fmt.Errorf("verification code does not exist or has expired")
 	}
 	if err != nil {
-		return fmt.Errorf("验证码校验失败")
+		return fmt.Errorf("verification code check failed")
 	}
 
 	if storedCode != code {
-		return fmt.Errorf("验证码错误")
+		return fmt.Errorf("incorrect verification code")
 	}
 
 	s.rdb.Del(ctx, codeKey)
 	return nil
 }
 
-// HashPassword 使用 Argon2id 哈希密码
+// HashPassword hashes a password using Argon2id
 func (s *AuthService) HashPassword(password string) string {
 	salt := make([]byte, 16)
 	crand.Read(salt)
@@ -238,7 +238,7 @@ func (s *AuthService) HashPassword(password string) string {
 	return fmt.Sprintf("%x:%x", salt, hash)
 }
 
-// VerifyPassword 验证密码
+// VerifyPassword verifies a password against its hash
 func (s *AuthService) VerifyPassword(hashedPassword, password string) bool {
 	parts := strings.SplitN(hashedPassword, ":", 2)
 	if len(parts) != 2 {

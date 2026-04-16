@@ -1,17 +1,17 @@
 package dto
 
-// OAuthCallbackRequest OAuth 回调请求
+// OAuthCallbackRequest is the OAuth callback request
 type OAuthCallbackRequest struct {
 	Code         string `json:"code" validate:"required"`
 	CodeVerifier string `json:"code_verifier" validate:"required"`
 }
 
-// ForgotSendCodeRequest 忘记密码 - 发送验证码
+// ForgotSendCodeRequest is the request for forgot password - send verification code
 type ForgotSendCodeRequest struct {
 	Name string `json:"name" validate:"required"`
 }
 
-// ForgotResetRequest 忘记密码 - 重置密码
+// ForgotResetRequest is the request for forgot password - reset password
 type ForgotResetRequest struct {
 	Name             string `json:"name" validate:"required"`
 	VerificationCode string `json:"verification_code" validate:"required,len=6"`
@@ -19,12 +19,12 @@ type ForgotResetRequest struct {
 	ConfirmPassword  string `json:"confirm_password" validate:"required,eqfield=NewPassword"`
 }
 
-// SendEmailCodeRequest 发送邮箱修改验证码
+// SendEmailCodeRequest is the request for sending an email change verification code
 type SendEmailCodeRequest struct {
 	Email string `json:"email" validate:"required,email"`
 }
 
-// MeResponse 当前用户信息响应
+// MeResponse is the current user info response
 type MeResponse struct {
 	UID             int    `json:"uid"`
 	Name            string `json:"name"`

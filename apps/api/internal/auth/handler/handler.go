@@ -36,14 +36,14 @@ func (h *AuthHandler) OAuthCallback(c *fiber.Ctx) error {
 	tokenResp, err := h.service.ExchangeCode(req.Code, req.CodeVerifier)
 	if err != nil {
 		slog.Error("OAuth code exchange failed", "error", err)
-		return response.Error(c, errors.ErrBadRequest("OAuth 认证失败"))
+		return response.Error(c, errors.ErrBadRequest("OAuth authentication failed"))
 	}
 
 	// 2. Get user info from OAuth
 	userInfo, err := h.service.GetUserInfo(tokenResp.AccessToken)
 	if err != nil {
 		slog.Error("OAuth get userinfo failed", "error", err)
-		return response.Error(c, errors.ErrBadRequest("获取用户信息失败"))
+		return response.Error(c, errors.ErrBadRequest("failed to get user info"))
 	}
 
 	// 3. Find or create local user
@@ -100,7 +100,7 @@ func (h *AuthHandler) Logout(c *fiber.Ctx) error {
 	}
 
 	middleware.DestroySession(c, h.rdb)
-	return response.OKMessage(c, "已登出")
+	return response.OKMessage(c, "Logged out")
 }
 
 // Me GET /api/auth/me
@@ -133,7 +133,7 @@ func (h *AuthHandler) ForgotSendCode(c *fiber.Ctx) error {
 		return response.Error(c, errors.ErrBadRequest(err.Error()))
 	}
 
-	return response.OKMessage(c, "验证码已发送")
+	return response.OKMessage(c, "Verification code sent")
 }
 
 // ForgotReset POST /api/auth/forgot/reset
@@ -147,7 +147,7 @@ func (h *AuthHandler) ForgotReset(c *fiber.Ctx) error {
 		return response.Error(c, errors.ErrBadRequest(err.Error()))
 	}
 
-	return response.OKMessage(c, "密码已重置")
+	return response.OKMessage(c, "Password has been reset")
 }
 
 // SendEmailCode POST /api/auth/email/send-code
@@ -161,9 +161,9 @@ func (h *AuthHandler) SendEmailCode(c *fiber.Ctx) error {
 		return response.Error(c, errors.ErrBadRequest(err.Error()))
 	}
 
-	return response.OKMessage(c, "验证码已发送")
+	return response.OKMessage(c, "Verification code sent")
 }
 
-func parseJSON(data string, v interface{}) error {
+func parseJSON(data string, v any) error {
 	return json.Unmarshal([]byte(data), v)
 }

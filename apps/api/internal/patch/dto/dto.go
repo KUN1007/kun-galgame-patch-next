@@ -1,6 +1,6 @@
 package dto
 
-// PatchUpdateRequest 更新补丁
+// PatchUpdateRequest is the request body for updating a patch
 type PatchUpdateRequest struct {
 	VndbID           string   `json:"vndb_id" validate:"max=10"`
 	NameZhCn         string   `json:"name_zh_cn" validate:"max=1007"`
@@ -14,13 +14,13 @@ type PatchUpdateRequest struct {
 	ContentLimit     string   `json:"content_limit" validate:"oneof=sfw nsfw"`
 }
 
-// GetPatchCommentRequest 获取评论列表
+// GetPatchCommentRequest is the request for fetching a comment list
 type GetPatchCommentRequest struct {
 	Page  int `query:"page" validate:"required,min=1"`
 	Limit int `query:"limit" validate:"required,min=1,max=30"`
 }
 
-// PatchCommentCreateRequest 创建评论
+// PatchCommentCreateRequest is the request body for creating a comment
 type PatchCommentCreateRequest struct {
 	PatchID  int    `json:"patch_id" validate:"required,min=1"`
 	ParentID *int   `json:"parent_id" validate:"omitempty,min=1"`
@@ -28,12 +28,12 @@ type PatchCommentCreateRequest struct {
 	Captcha  string `json:"captcha" validate:"max=10"`
 }
 
-// PatchCommentUpdateRequest 更新评论
+// PatchCommentUpdateRequest is the request body for updating a comment
 type PatchCommentUpdateRequest struct {
 	Content string `json:"content" validate:"required,min=1,max=10007"`
 }
 
-// PatchResourceCreateRequest 创建资源
+// PatchResourceCreateRequest is the request body for creating a resource
 type PatchResourceCreateRequest struct {
 	PatchID   int      `json:"patch_id" validate:"required,min=1"`
 	Storage   string   `json:"storage" validate:"required"`
@@ -50,12 +50,12 @@ type PatchResourceCreateRequest struct {
 	Platform  []string `json:"platform" validate:"required,min=1,max=10"`
 }
 
-// PatchResourceUpdateRequest 更��资源
+// PatchResourceUpdateRequest is the request body for updating a resource
 type PatchResourceUpdateRequest struct {
 	PatchResourceCreateRequest
 }
 
-// DuplicateCheckRequest 检查 VNDB ID 重复
+// DuplicateCheckRequest is the request for checking VNDB ID duplicates
 type DuplicateCheckRequest struct {
 	VndbID string `query:"vndbId" validate:"required,max=10"`
 }

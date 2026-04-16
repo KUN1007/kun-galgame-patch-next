@@ -2,7 +2,7 @@ package model
 
 import "time"
 
-// User 用户主表
+// User is the main user table
 type User struct {
 	ID              int       `gorm:"primaryKey;autoIncrement" json:"id"`
 	Name            string    `gorm:"uniqueIndex;type:varchar(17);not null" json:"name"`
@@ -27,7 +27,7 @@ type User struct {
 
 func (User) TableName() string { return "user" }
 
-// OAuthAccount OAuth 关联
+// OAuthAccount represents an OAuth association
 type OAuthAccount struct {
 	ID       int       `gorm:"primaryKey;autoIncrement" json:"id"`
 	UserID   int       `gorm:"index;not null" json:"user_id"`

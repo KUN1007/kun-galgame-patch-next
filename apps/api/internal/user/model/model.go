@@ -2,7 +2,7 @@ package model
 
 import "time"
 
-// UserFollowRelation 关注关系
+// UserFollowRelation represents a follow relationship
 type UserFollowRelation struct {
 	ID          int `gorm:"primaryKey;autoIncrement" json:"id"`
 	FollowerID  int `gorm:"uniqueIndex:idx_follow;not null" json:"follower_id"`
@@ -11,7 +11,7 @@ type UserFollowRelation struct {
 
 func (UserFollowRelation) TableName() string { return "user_follow_relation" }
 
-// UserMessage 用户消息
+// UserMessage represents a user message
 type UserMessage struct {
 	ID          int       `gorm:"primaryKey;autoIncrement" json:"id"`
 	Type        string    `gorm:"not null" json:"type"`
@@ -26,7 +26,7 @@ type UserMessage struct {
 
 func (UserMessage) TableName() string { return "user_message" }
 
-// UserBasic 用户基本信息（用于列表展示）
+// UserBasic contains basic user info (used for list display)
 type UserBasic struct {
 	ID     int    `json:"id"`
 	Name   string `json:"name"`

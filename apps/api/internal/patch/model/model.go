@@ -7,10 +7,10 @@ import (
 	"time"
 )
 
-// JSONArray 用于 PostgreSQL jsonb 数组字段
+// JSONArray represents a PostgreSQL jsonb array field
 type JSONArray []string
 
-func (j *JSONArray) Scan(value interface{}) error {
+func (j *JSONArray) Scan(value any) error {
 	if value == nil {
 		*j = JSONArray{}
 		return nil
@@ -29,7 +29,7 @@ func (j JSONArray) Value() (driver.Value, error) {
 	return json.Marshal(j)
 }
 
-// Patch 补丁主表
+// Patch is the main patch table
 type Patch struct {
 	ID                 int       `gorm:"primaryKey;autoIncrement" json:"id"`
 	NameEnUs           string    `gorm:"type:varchar(1007);default:''" json:"name_en_us"`
@@ -69,7 +69,7 @@ type Patch struct {
 
 func (Patch) TableName() string { return "patch" }
 
-// PatchUser 用户简要信息（用于关联查询）
+// PatchUser contains brief user info (used for association queries)
 type PatchUser struct {
 	ID     int    `gorm:"primaryKey" json:"id"`
 	Name   string `json:"name"`
@@ -78,7 +78,7 @@ type PatchUser struct {
 
 func (PatchUser) TableName() string { return "user" }
 
-// PatchResource 补丁资源
+// PatchResource represents a patch resource
 type PatchResource struct {
 	ID                    int       `gorm:"primaryKey;autoIncrement" json:"id"`
 	Storage               string    `gorm:"not null" json:"storage"`
@@ -108,7 +108,7 @@ type PatchResource struct {
 
 func (PatchResource) TableName() string { return "patch_resource" }
 
-// PatchComment 补丁评���
+// PatchComment represents a patch comment
 type PatchComment struct {
 	ID        int       `gorm:"primaryKey;autoIncrement" json:"id"`
 	Content   string    `gorm:"type:varchar(10007);default:''" json:"content"`
@@ -126,7 +126,7 @@ type PatchComment struct {
 
 func (PatchComment) TableName() string { return "patch_comment" }
 
-// PatchAlias 补丁别名
+// PatchAlias represents a patch alias
 type PatchAlias struct {
 	ID      int       `gorm:"primaryKey;autoIncrement" json:"id"`
 	Name    string    `gorm:"type:varchar(1007);index" json:"name"`
@@ -137,7 +137,7 @@ type PatchAlias struct {
 
 func (PatchAlias) TableName() string { return "patch_alias" }
 
-// PatchLink 外部链接
+// PatchLink represents an external link
 type PatchLink struct {
 	ID      int       `gorm:"primaryKey;autoIncrement" json:"id"`
 	PatchID int       `gorm:"uniqueIndex:idx_patch_link;index;not null" json:"patch_id"`
@@ -149,7 +149,7 @@ type PatchLink struct {
 
 func (PatchLink) TableName() string { return "patch_link" }
 
-// PatchCover 封面（VNDB）
+// PatchCover represents a cover image (from VNDB)
 type PatchCover struct {
 	ID           int       `gorm:"primaryKey;autoIncrement" json:"id"`
 	PatchID      int       `gorm:"uniqueIndex:idx_patch_cover;index" json:"patch_id"`
@@ -169,7 +169,7 @@ type PatchCover struct {
 
 func (PatchCover) TableName() string { return "patch_cover" }
 
-// PatchScreenshot 截图（VNDB）
+// PatchScreenshot represents a screenshot (from VNDB)
 type PatchScreenshot struct {
 	ID           int       `gorm:"primaryKey;autoIncrement" json:"id"`
 	PatchID      int       `gorm:"uniqueIndex:idx_patch_screenshot;index" json:"patch_id"`
@@ -190,7 +190,7 @@ type PatchScreenshot struct {
 
 func (PatchScreenshot) TableName() string { return "patch_screenshot" }
 
-// 关联关系表
+// Relation tables
 type UserPatchFavoriteRelation struct {
 	ID      int       `gorm:"primaryKey;autoIncrement" json:"id"`
 	UserID  int       `gorm:"uniqueIndex:idx_user_patch_fav;not null" json:"user_id"`
@@ -231,7 +231,7 @@ type UserPatchResourceLikeRelation struct {
 
 func (UserPatchResourceLikeRelation) TableName() string { return "user_patch_resource_like_relation" }
 
-// PatchTagRel 标签关联（用于 Preload）
+// PatchTagRel represents a tag association (used for Preload)
 type PatchTagRel struct {
 	ID           int       `gorm:"primaryKey;autoIncrement" json:"id"`
 	PatchID      int       `gorm:"uniqueIndex:idx_patch_tag;not null" json:"patch_id"`
@@ -245,7 +245,7 @@ type PatchTagRel struct {
 
 func (PatchTagRel) TableName() string { return "patch_tag_relation" }
 
-// PatchTag 标签
+// PatchTag represents a tag
 type PatchTag struct {
 	ID               int       `gorm:"primaryKey;autoIncrement" json:"id"`
 	Name             string    `gorm:"type:varchar(107)" json:"name"`

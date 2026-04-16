@@ -37,10 +37,10 @@ func (s *PatchService) GetPatchDetail(id int) (*model.Patch, error) {
 func (s *PatchService) UpdatePatch(id, userID, userRole int, update *model.Patch, aliases []string) error {
 	existing, err := s.repo.GetPatchByID(id)
 	if err != nil {
-		return fmt.Errorf("补丁不存在")
+		return fmt.Errorf("patch not found")
 	}
 	if existing.UserID != userID && userRole < 3 {
-		return fmt.Errorf("没有权限修改此补丁")
+		return fmt.Errorf("no permission to modify this patch")
 	}
 
 	existing.NameZhCn = update.NameZhCn
@@ -65,10 +65,10 @@ func (s *PatchService) UpdatePatch(id, userID, userRole int, update *model.Patch
 func (s *PatchService) DeletePatch(id, userID, userRole int) error {
 	patch, err := s.repo.GetPatchByID(id)
 	if err != nil {
-		return fmt.Errorf("补丁不存在")
+		return fmt.Errorf("patch not found")
 	}
 	if patch.UserID != userID && userRole < 4 {
-		return fmt.Errorf("没有权限删除此补丁")
+		return fmt.Errorf("no permission to delete this patch")
 	}
 	return s.repo.DeletePatch(id)
 }
@@ -128,10 +128,10 @@ func (s *PatchService) CreateComment(patchID, userID int, content string, parent
 func (s *PatchService) UpdateComment(commentID, userID int, content string) error {
 	comment, err := s.repo.GetCommentByID(commentID)
 	if err != nil {
-		return fmt.Errorf("评论不存在")
+		return fmt.Errorf("comment not found")
 	}
 	if comment.UserID != userID {
-		return fmt.Errorf("只能编辑自己的评论")
+		return fmt.Errorf("can only edit your own comments")
 	}
 	comment.Content = content
 	comment.Edit = time.Now().Format(time.RFC3339)
@@ -141,10 +141,10 @@ func (s *PatchService) UpdateComment(commentID, userID int, content string) erro
 func (s *PatchService) DeleteComment(commentID, userID, userRole int) error {
 	comment, err := s.repo.GetCommentByID(commentID)
 	if err != nil {
-		return fmt.Errorf("评论不存在")
+		return fmt.Errorf("comment not found")
 	}
 	if comment.UserID != userID && userRole < 3 {
-		return fmt.Errorf("没有权限删除此评论")
+		return fmt.Errorf("no permission to delete this comment")
 	}
 
 	count, _ := s.repo.CountCommentAndReplies(commentID)
@@ -158,7 +158,7 @@ func (s *PatchService) DeleteComment(commentID, userID, userRole int) error {
 func (s *PatchService) ToggleCommentLike(commentID, userID int) (bool, error) {
 	comment, err := s.repo.GetCommentByID(commentID)
 	if err != nil {
-		return false, fmt.Errorf("评论不存在")
+		return false, fmt.Errorf("comment not found")
 	}
 
 	existing, err := s.repo.FindCommentLike(userID, commentID)
@@ -216,7 +216,7 @@ func (s *PatchService) CreateResource(resource *model.PatchResource, userID int)
 	s.repo.EnsureContributor(userID, resource.PatchID)
 
 	// Notify favorited users
-	s.notifyFavoritedUsers(resource.PatchID, userID, resource.ID)
+	s.notifyFavoritedUsers(resource.PatchID, userID)
 
 	return nil
 }
@@ -224,10 +224,10 @@ func (s *PatchService) CreateResource(resource *model.PatchResource, userID int)
 func (s *PatchService) UpdateResource(resourceID, userID int, update *model.PatchResource) error {
 	existing, err := s.repo.GetResourceByID(resourceID)
 	if err != nil {
-		return fmt.Errorf("资源不存在")
+		return fmt.Errorf("resource not found")
 	}
 	if existing.UserID != userID {
-		return fmt.Errorf("只能编辑自己的资源")
+		return fmt.Errorf("can only edit your own resources")
 	}
 
 	existing.Storage = update.Storage
@@ -255,10 +255,10 @@ func (s *PatchService) UpdateResource(resourceID, userID int, update *model.Patc
 func (s *PatchService) DeleteResource(resourceID, userID int) error {
 	resource, err := s.repo.GetResourceByID(resourceID)
 	if err != nil {
-		return fmt.Errorf("资源不存在")
+		return fmt.Errorf("resource not found")
 	}
 	if resource.UserID != userID {
-		return fmt.Errorf("只能删除自己的资源")
+		return fmt.Errorf("can only delete your own resources")
 	}
 
 	if err := s.repo.DeleteResource(resourceID); err != nil {
@@ -274,10 +274,10 @@ func (s *PatchService) DeleteResource(resourceID, userID int) error {
 func (s *PatchService) ToggleResourceDisable(resourceID, userID, userRole int) error {
 	resource, err := s.repo.GetResourceByID(resourceID)
 	if err != nil {
-		return fmt.Errorf("资源不存在")
+		return fmt.Errorf("resource not found")
 	}
 	if resource.UserID != userID && userRole < 3 {
-		return fmt.Errorf("没有权限操作此资源")
+		return fmt.Errorf("no permission to operate on this resource")
 	}
 	return s.repo.ToggleResourceStatus(resourceID)
 }
@@ -285,7 +285,7 @@ func (s *PatchService) ToggleResourceDisable(resourceID, userID, userRole int) e
 func (s *PatchService) IncrementResourceDownload(resourceID int) error {
 	resource, err := s.repo.GetResourceByID(resourceID)
 	if err != nil {
-		return fmt.Errorf("资源不存在")
+		return fmt.Errorf("resource not found")
 	}
 	return s.repo.IncrementResourceDownload(resourceID, resource.PatchID)
 }
@@ -293,7 +293,7 @@ func (s *PatchService) IncrementResourceDownload(resourceID int) error {
 func (s *PatchService) ToggleResourceLike(resourceID, userID int) (bool, error) {
 	resource, err := s.repo.GetResourceByID(resourceID)
 	if err != nil {
-		return false, fmt.Errorf("资源不存在")
+		return false, fmt.Errorf("resource not found")
 	}
 
 	existing, err := s.repo.FindResourceLike(userID, resourceID)
@@ -322,7 +322,7 @@ func (s *PatchService) ToggleResourceLike(resourceID, userID int) (bool, error) 
 func (s *PatchService) ToggleFavorite(patchID, userID int) (bool, error) {
 	patch, err := s.repo.GetPatchByID(patchID)
 	if err != nil {
-		return false, fmt.Errorf("补丁不存在")
+		return false, fmt.Errorf("patch not found")
 	}
 
 	existing, err := s.repo.FindFavorite(userID, patchID)
@@ -355,7 +355,7 @@ func (s *PatchService) GetContributors(patchID int) ([]model.PatchUser, error) {
 	return s.repo.GetContributors(patchID)
 }
 
-// ===== Mention Detection =====
+// ===== Mention detection =====
 
 var mentionRegex = regexp.MustCompile(`\[@[^\]]+\]\(/user/(\d+)/resource\)`)
 
@@ -376,7 +376,7 @@ func (s *PatchService) ExtractMentionUserIDs(content string) []int {
 
 // ===== Notifications (simplified) =====
 
-func (s *PatchService) notifyFavoritedUsers(patchID, senderID, resourceID int) {
+func (s *PatchService) notifyFavoritedUsers(patchID, senderID int) {
 	var userIDs []int
 	s.db.Model(&model.UserPatchFavoriteRelation{}).
 		Where("patch_id = ? AND user_id != ?", patchID, senderID).
@@ -384,7 +384,7 @@ func (s *PatchService) notifyFavoritedUsers(patchID, senderID, resourceID int) {
 
 	for _, uid := range userIDs {
 		s.createDedupMessage(senderID, uid, "patchResourceCreate",
-			fmt.Sprintf("补丁有新资源"),
+			"New resource added to patch",
 			fmt.Sprintf("/patch/%d/resource", patchID))
 	}
 }
@@ -429,7 +429,7 @@ func (s *PatchService) CreateCommentNotification(senderID int, comment *model.Pa
 		parent, err := s.repo.GetCommentByID(*comment.ParentID)
 		if err == nil && parent.UserID != senderID {
 			s.createDedupMessage(senderID, parent.UserID, "comment",
-				"回复了你的评论",
+				"Replied to your comment",
 				fmt.Sprintf("/patch/%d", comment.PatchID))
 		}
 	}
@@ -438,12 +438,12 @@ func (s *PatchService) CreateCommentNotification(senderID int, comment *model.Pa
 func (s *PatchService) CreateLikeCommentNotification(senderID int, comment *model.PatchComment) {
 	if comment.UserID != senderID {
 		s.createDedupMessage(senderID, comment.UserID, "likeComment",
-			"点赞了你的评论",
+			"Liked your comment",
 			fmt.Sprintf("/patch/%d", comment.PatchID))
 	}
 }
 
-// ===== Admin settings check =====
+// ===== Admin Settings Check =====
 
 func (s *PatchService) IsCommentVerifyEnabled() bool {
 	val, err := s.rdb.Get(context.Background(), "admin:enable_comment_verify").Result()

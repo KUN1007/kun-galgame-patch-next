@@ -23,11 +23,11 @@ func New(repo *repository.UserRepository, authSvc *authService.AuthService) *Use
 	return &UserService{repo: repo, authSvc: authSvc}
 }
 
-// GetUserInfo 获取用户公开信息
+// GetUserInfo retrieves public user info
 func (s *UserService) GetUserInfo(uid, currentUID int) (*dto.UserInfoResponse, error) {
 	user, err := s.repo.FindByID(uid)
 	if err != nil {
-		return nil, fmt.Errorf("用户不存在")
+		return nil, fmt.Errorf("user not found")
 	}
 
 	resp := &dto.UserInfoResponse{
@@ -54,24 +54,24 @@ func (s *UserService) GetUserInfo(uid, currentUID int) (*dto.UserInfoResponse, e
 	return resp, nil
 }
 
-// GetUserFloating 悬浮卡片信息
+// GetUserFloating retrieves floating card info
 func (s *UserService) GetUserFloating(uid int) (*dto.UserInfoResponse, error) {
 	return s.GetUserInfo(uid, 0)
 }
 
-// UpdateUsername 修改用户名（-30 萌萌点）
+// UpdateUsername changes the username (costs 30 moemoepoints)
 func (s *UserService) UpdateUsername(userID int, newName string) error {
 	user, err := s.repo.FindByID(userID)
 	if err != nil {
-		return fmt.Errorf("用户不存在")
+		return fmt.Errorf("user not found")
 	}
 	if user.Moemoepoint < 30 {
-		return fmt.Errorf("萌萌点不足（需要 30）")
+		return fmt.Errorf("insufficient moemoepoints (30 required)")
 	}
 
 	existing, _ := s.repo.FindByName(newName)
 	if existing != nil && existing.ID != userID {
-		return fmt.Errorf("用户名已被使用")
+		return fmt.Errorf("username is already taken")
 	}
 
 	return s.repo.UpdateFields(userID, map[string]any{
@@ -80,27 +80,27 @@ func (s *UserService) UpdateUsername(userID int, newName string) error {
 	})
 }
 
-// UpdateBio 修改简介
+// UpdateBio updates the user bio
 func (s *UserService) UpdateBio(userID int, bio string) error {
 	return s.repo.UpdateFields(userID, map[string]any{"bio": bio})
 }
 
-// UpdatePassword 修改密码
+// UpdatePassword changes the user password
 func (s *UserService) UpdatePassword(userID int, oldPassword, newPassword string) error {
 	user, err := s.repo.FindByID(userID)
 	if err != nil {
-		return fmt.Errorf("用户不存在")
+		return fmt.Errorf("user not found")
 	}
 
 	if user.Password != "" && !s.authSvc.VerifyPassword(user.Password, oldPassword) {
-		return fmt.Errorf("旧密码错误")
+		return fmt.Errorf("incorrect old password")
 	}
 
 	hashed := s.authSvc.HashPassword(newPassword)
 	return s.repo.UpdateFields(userID, map[string]any{"password": hashed})
 }
 
-// UpdateEmail 修改邮箱
+// UpdateEmail changes the user email
 func (s *UserService) UpdateEmail(userID int, email, code string) error {
 	if err := s.authSvc.VerifyCode(email, code); err != nil {
 		return err
@@ -108,15 +108,15 @@ func (s *UserService) UpdateEmail(userID int, email, code string) error {
 	return s.repo.UpdateFields(userID, map[string]any{"email": email})
 }
 
-// Follow 关注用户
+// Follow follows a user
 func (s *UserService) Follow(followerID, followingID int) error {
 	if followerID == followingID {
-		return fmt.Errorf("不能关注自己")
+		return fmt.Errorf("cannot follow yourself")
 	}
 
 	_, err := s.repo.FindFollow(followerID, followingID)
 	if err == nil {
-		return fmt.Errorf("已经关注了该用户")
+		return fmt.Errorf("already following this user")
 	}
 
 	rel := &model.UserFollowRelation{FollowerID: followerID, FollowingID: followingID}
@@ -127,32 +127,32 @@ func (s *UserService) Follow(followerID, followingID int) error {
 	return s.repo.UpdateFollowCounts(followerID, followingID, 1)
 }
 
-// Unfollow 取消关注
+// Unfollow unfollows a user
 func (s *UserService) Unfollow(followerID, followingID int) error {
 	if err := s.repo.DeleteFollow(followerID, followingID); err != nil {
-		return fmt.Errorf("未关注该用户")
+		return fmt.Errorf("not following this user")
 	}
 	return s.repo.UpdateFollowCounts(followerID, followingID, -1)
 }
 
-// GetFollowers 获取粉丝列表
+// GetFollowers retrieves the followers list
 func (s *UserService) GetFollowers(uid, page, limit int) ([]model.UserBasic, int64, error) {
 	return s.repo.GetFollowers(uid, (page-1)*limit, limit)
 }
 
-// GetFollowing 获取关注列表
+// GetFollowing retrieves the following list
 func (s *UserService) GetFollowing(uid, page, limit int) ([]model.UserBasic, int64, error) {
 	return s.repo.GetFollowing(uid, (page-1)*limit, limit)
 }
 
-// CheckIn 每日签到
+// CheckIn performs daily check-in
 func (s *UserService) CheckIn(userID int) (int, error) {
 	user, err := s.repo.FindByID(userID)
 	if err != nil {
-		return 0, fmt.Errorf("用户不存在")
+		return 0, fmt.Errorf("user not found")
 	}
 	if user.DailyCheckIn == 1 {
-		return 0, fmt.Errorf("今日已签到")
+		return 0, fmt.Errorf("already checked in today")
 	}
 
 	points := rand.Intn(8) // 0-7
@@ -162,44 +162,44 @@ func (s *UserService) CheckIn(userID int) (int, error) {
 	return points, nil
 }
 
-// SearchUsers 搜索用户（@提及）
+// SearchUsers searches users (for @mentions)
 func (s *UserService) SearchUsers(query string) ([]model.UserBasic, error) {
 	return s.repo.SearchUsers(query, 50)
 }
 
-// GetUserPatches 获取用户的补丁列表
+// GetUserPatches retrieves the user's patch list
 func (s *UserService) GetUserPatches(uid, page, limit int) (any, int64, error) {
 	return s.repo.GetUserPatches(uid, (page-1)*limit, limit)
 }
 
-// GetUserResources 获取用户的资源列表
+// GetUserResources retrieves the user's resource list
 func (s *UserService) GetUserResources(uid, page, limit int) (any, int64, error) {
 	return s.repo.GetUserResources(uid, (page-1)*limit, limit)
 }
 
-// GetUserFavorites 获取用户的收藏列表
+// GetUserFavorites retrieves the user's favorite list
 func (s *UserService) GetUserFavorites(uid, page, limit int) (any, int64, error) {
 	return s.repo.GetUserFavorites(uid, (page-1)*limit, limit)
 }
 
-// GetUserComments 获取用户的评论列表
+// GetUserComments retrieves the user's comment list
 func (s *UserService) GetUserComments(uid, page, limit int) (any, int64, error) {
 	return s.repo.GetUserComments(uid, (page-1)*limit, limit)
 }
 
-// GetUserContributions 获取用户的贡献列表
+// GetUserContributions retrieves the user's contribution list
 func (s *UserService) GetUserContributions(uid, page, limit int) (any, int64, error) {
 	return s.repo.GetUserContributions(uid, (page-1)*limit, limit)
 }
 
-// UpdateLastLoginTime 更新最后登录时间
+// UpdateLastLoginTime updates the last login time
 func (s *UserService) UpdateLastLoginTime(userID int) {
 	s.repo.UpdateFields(userID, map[string]any{
 		"last_login_time": time.Now().Format(time.RFC3339),
 	})
 }
 
-// GetUserByID 获取用户（内部使用）
+// GetUserByID retrieves a user (for internal use)
 func (s *UserService) GetUserByID(uid int) (*authModel.User, error) {
 	return s.repo.FindByID(uid)
 }

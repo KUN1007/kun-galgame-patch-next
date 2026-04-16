@@ -10,21 +10,21 @@ import (
 
 var validate = validator.New()
 
-func ParseAndValidate(c *fiber.Ctx, out interface{}) error {
+func ParseAndValidate(c *fiber.Ctx, out any) error {
 	if err := c.BodyParser(out); err != nil {
-		return fmt.Errorf("请求体解析失败: %w", err)
+		return fmt.Errorf("failed to parse request body: %w", err)
 	}
 	return validateStruct(out)
 }
 
-func ParseQueryAndValidate(c *fiber.Ctx, out interface{}) error {
+func ParseQueryAndValidate(c *fiber.Ctx, out any) error {
 	if err := c.QueryParser(out); err != nil {
-		return fmt.Errorf("查询参数解析失败: %w", err)
+		return fmt.Errorf("failed to parse query parameters: %w", err)
 	}
 	return validateStruct(out)
 }
 
-func validateStruct(s interface{}) error {
+func validateStruct(s any) error {
 	if err := validate.Struct(s); err != nil {
 		if validationErrors, ok := err.(validator.ValidationErrors); ok {
 			var msgs []string
@@ -42,19 +42,19 @@ func formatValidationError(e validator.FieldError) string {
 	field := e.Field()
 	switch e.Tag() {
 	case "required":
-		return fmt.Sprintf("%s 不能为空", field)
+		return fmt.Sprintf("%s is required", field)
 	case "min":
-		return fmt.Sprintf("%s 长度不能小于 %s", field, e.Param())
+		return fmt.Sprintf("%s length must not be less than %s", field, e.Param())
 	case "max":
-		return fmt.Sprintf("%s 长度不能大于 %s", field, e.Param())
+		return fmt.Sprintf("%s length must not be greater than %s", field, e.Param())
 	case "email":
-		return fmt.Sprintf("%s 不是有效的邮箱地址", field)
+		return fmt.Sprintf("%s is not a valid email address", field)
 	case "oneof":
-		return fmt.Sprintf("%s 必须是 [%s] 之一", field, e.Param())
+		return fmt.Sprintf("%s must be one of [%s]", field, e.Param())
 	case "url":
-		return fmt.Sprintf("%s 不是有效的 URL", field)
+		return fmt.Sprintf("%s is not a valid URL", field)
 	default:
-		return fmt.Sprintf("%s 验证失败 (%s)", field, e.Tag())
+		return fmt.Sprintf("%s validation failed (%s)", field, e.Tag())
 	}
 }
 

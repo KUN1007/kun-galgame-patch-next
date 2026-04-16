@@ -25,7 +25,7 @@ func New(svc *service.PatchService) *PatchHandler {
 func getIDParam(c *fiber.Ctx, name string) (int, error) {
 	id, err := strconv.Atoi(c.Params(name))
 	if err != nil || id < 1 {
-		return 0, errors.ErrBadRequest("无效的 ID")
+		return 0, errors.ErrBadRequest("invalid ID")
 	}
 	return id, nil
 }
@@ -41,7 +41,7 @@ func (h *PatchHandler) GetPatch(c *fiber.Ctx) error {
 
 	patch, err := h.service.GetPatch(id)
 	if err != nil {
-		return response.Error(c, errors.ErrNotFound("补丁不存在"))
+		return response.Error(c, errors.ErrNotFound("patch not found"))
 	}
 
 	// Check if favorited by current user
@@ -65,7 +65,7 @@ func (h *PatchHandler) GetPatchDetail(c *fiber.Ctx) error {
 
 	patch, err := h.service.GetPatchDetail(id)
 	if err != nil {
-		return response.Error(c, errors.ErrNotFound("补丁不存在"))
+		return response.Error(c, errors.ErrNotFound("patch not found"))
 	}
 
 	return response.OK(c, patch)
@@ -102,7 +102,7 @@ func (h *PatchHandler) UpdatePatch(c *fiber.Ctx) error {
 		return response.Error(c, errors.ErrBadRequest(err.Error()))
 	}
 
-	return response.OKMessage(c, "补丁已更新")
+	return response.OKMessage(c, "Patch updated")
 }
 
 // DeletePatch DELETE /api/patch/:id
@@ -117,7 +117,7 @@ func (h *PatchHandler) DeletePatch(c *fiber.Ctx) error {
 		return response.Error(c, errors.ErrBadRequest(err.Error()))
 	}
 
-	return response.OKMessage(c, "补丁已删除")
+	return response.OKMessage(c, "Patch deleted")
 }
 
 // CheckDuplicate GET /api/patch/duplicate
@@ -212,7 +212,7 @@ func (h *PatchHandler) UpdateComment(c *fiber.Ctx) error {
 		return response.Error(c, errors.ErrBadRequest(err.Error()))
 	}
 
-	return response.OKMessage(c, "评论已更新")
+	return response.OKMessage(c, "Comment updated")
 }
 
 // DeleteComment DELETE /api/patch/comment/:commentId
@@ -227,7 +227,7 @@ func (h *PatchHandler) DeleteComment(c *fiber.Ctx) error {
 		return response.Error(c, errors.ErrBadRequest(err.Error()))
 	}
 
-	return response.OKMessage(c, "评论已删除")
+	return response.OKMessage(c, "Comment deleted")
 }
 
 // ToggleCommentLike PUT /api/patch/comment/:commentId/like
@@ -255,7 +255,7 @@ func (h *PatchHandler) GetCommentMarkdown(c *fiber.Ctx) error {
 
 	md, err := h.service.GetCommentMarkdown(commentID)
 	if err != nil {
-		return response.Error(c, errors.ErrNotFound("评论不存在"))
+		return response.Error(c, errors.ErrNotFound("comment not found"))
 	}
 
 	return response.OK(c, map[string]string{"markdown": md})
@@ -346,7 +346,7 @@ func (h *PatchHandler) UpdateResource(c *fiber.Ctx) error {
 		return response.Error(c, errors.ErrBadRequest(err.Error()))
 	}
 
-	return response.OKMessage(c, "资源已更新")
+	return response.OKMessage(c, "Resource updated")
 }
 
 // DeleteResource DELETE /api/patch/resource/:resourceId
@@ -361,7 +361,7 @@ func (h *PatchHandler) DeleteResource(c *fiber.Ctx) error {
 		return response.Error(c, errors.ErrBadRequest(err.Error()))
 	}
 
-	return response.OKMessage(c, "资源已删除")
+	return response.OKMessage(c, "Resource deleted")
 }
 
 // ToggleResourceDisable PUT /api/patch/resource/:resourceId/disable

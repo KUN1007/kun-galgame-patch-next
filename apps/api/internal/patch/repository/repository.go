@@ -284,7 +284,7 @@ func (r *PatchRepository) RecalculatePatchAggregates(patchID int) error {
 		}
 	}
 
-	return r.db.Model(&model.Patch{}).Where("id = ?", patchID).Updates(map[string]interface{}{
+	return r.db.Model(&model.Patch{}).Where("id = ?", patchID).Updates(map[string]any{
 		"type":     model.JSONArray(setToSlice(typeSet)),
 		"language": model.JSONArray(setToSlice(langSet)),
 		"platform": model.JSONArray(setToSlice(platSet)),

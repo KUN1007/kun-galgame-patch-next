@@ -9,17 +9,17 @@ import (
 type Response struct {
 	Code    int         `json:"code"`
 	Message string      `json:"message"`
-	Data    interface{} `json:"data"`
+	Data    any `json:"data"`
 }
 
 type PaginatedResponse struct {
 	Code    int         `json:"code"`
 	Message string      `json:"message"`
-	Data    interface{} `json:"data"`
+	Data    any `json:"data"`
 	Total   int64       `json:"total"`
 }
 
-func OK(c *fiber.Ctx, data interface{}) error {
+func OK(c *fiber.Ctx, data any) error {
 	return c.JSON(Response{
 		Code:    0,
 		Message: "OK",
@@ -35,7 +35,7 @@ func OKMessage(c *fiber.Ctx, msg string) error {
 	})
 }
 
-func Paginated(c *fiber.Ctx, data interface{}, total int64) error {
+func Paginated(c *fiber.Ctx, data any, total int64) error {
 	return c.JSON(PaginatedResponse{
 		Code:    0,
 		Message: "OK",

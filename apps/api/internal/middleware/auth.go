@@ -184,8 +184,11 @@ func refreshOAuthToken(rdb *redis.Client, oauthCfg config.OAuthConfig, sessionID
 	ctx := context.Background()
 	lockKey := "lock:refresh:" + sessionID
 
-	ok, err := rdb.SetNX(ctx, lockKey, 1, 30*time.Second).Result()
-	if err != nil || !ok {
+	ok, err := rdb.SetArgs(ctx, lockKey, 1, redis.SetArgs{
+		TTL: 30 * time.Second,
+		Mode: "NX",
+	}).Result()
+	if err != nil || ok != "OK" {
 		return
 	}
 	defer rdb.Del(ctx, lockKey)

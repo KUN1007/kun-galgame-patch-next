@@ -24,7 +24,7 @@ func New(svc *service.UserService) *UserHandler {
 func getUID(c *fiber.Ctx) (int, error) {
 	uid, err := strconv.Atoi(c.Params("uid"))
 	if err != nil || uid < 1 {
-		return 0, errors.ErrBadRequest("无效的用户 ID")
+		return 0, errors.ErrBadRequest("invalid user ID")
 	}
 	return uid, nil
 }
@@ -197,7 +197,7 @@ func (h *UserHandler) UpdateUsername(c *fiber.Ctx) error {
 		return response.Error(c, errors.ErrBadRequest(err.Error()))
 	}
 
-	return response.OKMessage(c, "用户名已更新")
+	return response.OKMessage(c, "Username updated")
 }
 
 // UpdateBio PUT /api/user/bio
@@ -212,7 +212,7 @@ func (h *UserHandler) UpdateBio(c *fiber.Ctx) error {
 		return response.Error(c, errors.ErrBadRequest(err.Error()))
 	}
 
-	return response.OKMessage(c, "简介已更新")
+	return response.OKMessage(c, "Bio updated")
 }
 
 // UpdatePassword PUT /api/user/password
@@ -227,7 +227,7 @@ func (h *UserHandler) UpdatePassword(c *fiber.Ctx) error {
 		return response.Error(c, errors.ErrBadRequest(err.Error()))
 	}
 
-	return response.OKMessage(c, "密码已更新")
+	return response.OKMessage(c, "Password updated")
 }
 
 // UpdateEmail PUT /api/user/email
@@ -242,7 +242,7 @@ func (h *UserHandler) UpdateEmail(c *fiber.Ctx) error {
 		return response.Error(c, errors.ErrBadRequest(err.Error()))
 	}
 
-	return response.OKMessage(c, "邮箱已更新")
+	return response.OKMessage(c, "Email updated")
 }
 
 // Follow PUT /api/user/:uid/follow
@@ -257,7 +257,7 @@ func (h *UserHandler) Follow(c *fiber.Ctx) error {
 		return response.Error(c, errors.ErrBadRequest(err.Error()))
 	}
 
-	return response.OKMessage(c, "已关注")
+	return response.OKMessage(c, "Followed")
 }
 
 // Unfollow DELETE /api/user/:uid/follow
@@ -272,7 +272,7 @@ func (h *UserHandler) Unfollow(c *fiber.Ctx) error {
 		return response.Error(c, errors.ErrBadRequest(err.Error()))
 	}
 
-	return response.OKMessage(c, "已取消关注")
+	return response.OKMessage(c, "Unfollowed")
 }
 
 // GetFollowers GET /api/user/:uid/follower
