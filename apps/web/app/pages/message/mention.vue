@@ -1,0 +1,29 @@
+<script setup lang="ts">
+useKunSeoMeta({
+  title: '@ 消息',
+  description: '查看提到您的消息'
+})
+
+const api = useApi()
+const { data, pending } = await useAsyncData<Message[]>(
+  'message-mention',
+  async () => {
+    const res = await api.get<Message[]>(
+      '/message?type=mention&page=1&limit=50'
+    )
+    return res.code === 0 ? res.data : []
+  },
+  { default: () => [] }
+)
+</script>
+
+<template>
+  <div class="space-y-3">
+    <KunHeader name="@ 消息" description="提到您的消息" />
+    <KunLoading v-if="pending" description="加载中..." />
+    <template v-else-if="data?.length">
+      <MessageCard v-for="m in data" :key="m.id" :msg="m" />
+    </template>
+    <KunNull v-else description="暂无 @ 消息" />
+  </div>
+</template>

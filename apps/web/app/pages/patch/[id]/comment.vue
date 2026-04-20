@@ -1,0 +1,126 @@
+<script setup lang="ts">
+const route = useRoute()
+const api = useApi()
+const userStore = useUserStore()
+
+const patchId = computed(() => Number(route.params.id))
+
+const { data: comments, pending, refresh } = await useAsyncData<PatchPageComment[]>(
+  () => `patch-comments-${patchId.value}`,
+  async () => {
+    const res = await api.get<PatchPageComment[]>(
+      `/patch/${patchId.value}/comment`
+    )
+    return res.code === 0 ? res.data : []
+  },
+  { default: () => [] }
+)
+
+const content = ref('')
+const submitting = ref(false)
+
+const submit = async () => {
+  if (!userStore.user.uid) {
+    useKunMessage('请先登录', 'warn')
+    return
+  }
+  if (!content.value.trim()) {
+    useKunMessage('评论内容不能为空', 'warn')
+    return
+  }
+  submitting.value = true
+  try {
+    const res = await api.post<PatchPageComment>(
+      `/patch/${patchId.value}/comment`,
+      { content: content.value }
+    )
+    if (res.code === 0) {
+      content.value = ''
+      useKunMessage('评论发布成功', 'success')
+      await refresh()
+    } else {
+      useKunMessage(res.message || '发布失败', 'error')
+    }
+  } finally {
+    submitting.value = false
+  }
+}
+
+const renderComment = (c: PatchPageComment): PatchPageComment => c
+</script>
+
+<template>
+  <div class="space-y-6">
+    <div v-if="userStore.user.uid" class="space-y-2">
+      <textarea
+        v-model="content"
+        placeholder="写下你的评论..."
+        rows="3"
+        class="border-default/20 bg-background w-full rounded-lg border p-3 text-sm"
+      />
+      <div class="flex justify-end">
+        <KunButton
+          color="primary"
+          :loading="submitting"
+          :disabled="submitting"
+          @click="submit"
+        >
+          发布评论
+        </KunButton>
+      </div>
+    </div>
+    <div
+      v-else
+      class="border-default/20 rounded-lg border p-4 text-center text-sm"
+    >
+      请
+      <NuxtLink to="/login" class="text-primary hover:underline">登录</NuxtLink>
+      后发表评论
+    </div>
+
+    <KunLoading v-if="pending" description="加载评论中..." />
+    <div v-else-if="comments && comments.length" class="space-y-3">
+      <div
+        v-for="c in comments"
+        :key="c.id"
+        class="border-default/20 space-y-2 rounded-lg border p-4"
+      >
+        <div class="flex items-start gap-3">
+          <KunAvatar :user="c.user" size="sm" />
+          <div class="flex-1 space-y-1">
+            <div class="flex flex-wrap items-center gap-2">
+              <span class="font-semibold">{{ c.user.name }}</span>
+              <span class="text-default-500 text-xs">
+                {{ formatDate(c.created, { isPrecise: true, isShowYear: true }) }}
+              </span>
+            </div>
+            <p class="whitespace-pre-wrap">{{ c.content }}</p>
+            <div class="text-default-500 flex items-center gap-1 text-xs">
+              <KunIcon name="lucide:thumbs-up" class="size-3.5" />
+              {{ c.likeCount }}
+            </div>
+            <div v-if="c.reply?.length" class="mt-3 space-y-2 border-l-2 border-default/20 pl-3">
+              <div
+                v-for="r in c.reply"
+                :key="r.id"
+                class="bg-default-50 rounded p-2 text-sm"
+              >
+                <div class="flex items-center gap-2">
+                  <KunAvatar :user="r.user" size="xs" />
+                  <span class="font-semibold">{{ r.user.name }}</span>
+                  <span class="text-default-500 text-xs">
+                    {{
+                      formatDate(r.created, { isPrecise: true, isShowYear: true })
+                    }}
+                  </span>
+                </div>
+                <p class="mt-1 whitespace-pre-wrap">{{ r.content }}</p>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+    <KunNull v-else description="暂无评论, 快来抢沙发吧~" />
+  </div>
+</template>

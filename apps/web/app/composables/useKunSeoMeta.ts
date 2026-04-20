@@ -1,4 +1,4 @@
-import { kungal } from '~/config/kungal'
+import { kunMoyuMoe } from '~/config/moyu-moe'
 import type {
   ActiveHeadEntry,
   UseHeadOptions,
@@ -28,22 +28,22 @@ export const useKunSeoMeta = (
   options?: NuxtUseHeadOptions
   // eslint-disable-next-line @typescript-eslint/no-invalid-void-type
 ): ActiveHeadEntry<UseSeoMetaInput> | void => {
-  const title = `${input.title?.toString()} - ${kungal.title}`
+  const title = `${input.title?.toString()} - ${kunMoyuMoe.title}`
   const description = input.description?.toString()
   const route = useRoute()
 
-  const pageUrl = `${kungal.domain.main}${route.path}`
+  const pageUrl = `${kunMoyuMoe.domain.main}${route.path}`
   const image = input.ogImage
     ? input.ogImage
-    : kungal.images[0]
-      ? kungal.images[0].fullUrl
+    : kunMoyuMoe.images[0]
+      ? kunMoyuMoe.images[0].url
       : '/kungalgame.webp'
 
   useSeoMeta(
     {
       title,
       description,
-      keywords: kungal.keywords.toString(),
+      keywords: kunMoyuMoe.keywords.toString(),
       ogUrl: pageUrl,
       ogType: input.ogType || 'website',
       ogTitle: title,
@@ -59,15 +59,6 @@ export const useKunSeoMeta = (
     },
     options
   )
-
-  // if (!input.ogImage) {
-  //   defineOgImageComponent('Kun', {
-  //     title: title.split('-')[0] || title,
-  //     description,
-  //     headline: input.ogHeadline,
-  //     icon: input.ogUserAvatar
-  //   })
-  // }
 
   useHead({
     link: [{ rel: 'canonical', href: pageUrl }]

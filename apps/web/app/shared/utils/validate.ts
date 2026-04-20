@@ -14,10 +14,15 @@ export const isValidURL = (url: string) => {
   }
 }
 
-export const isValidEmail = (email: string) => {
-  const regex = /^[^\s@]{1,64}@[^\s@]{1,255}\.[^\s@]{1,24}$/
-  return regex.test(email)
-}
+export const kunEmailRegex = /^[^\s@]{1,64}@[^\s@]{1,255}\.[^\s@]{1,24}$/
+export const isValidEmail = (email: string) => kunEmailRegex.test(email)
+
+export const kunUsernameRegex = /^[\p{L}\p{N}!~_@#$%^&*()+=-]{1,17}$/u
+
+export const kunPasswordRegex =
+  /^(?=.*[a-zA-Z])(?=.*[0-9])[\w!@#$%^&*()+=\\/-]{6,1007}$/
+
+export const kunValidMailConfirmCodeRegex = /^[a-zA-Z0-9]{7}$/
 
 export const isValidName = (name: string) => {
   const invisibleChars = [

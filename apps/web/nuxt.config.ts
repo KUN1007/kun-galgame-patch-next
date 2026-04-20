@@ -25,8 +25,12 @@ export default defineNuxtConfig({
   // Frontend
   css: ['~/styles/index.css'],
 
+  imports: {
+    dirs: ['shared/utils/**']
+  },
+
   pinia: {
-    storesDirs: ['./store/**']
+    storesDirs: ['./stores/**']
   },
 
   piniaPluginPersistedstate: {
@@ -47,7 +51,6 @@ export default defineNuxtConfig({
   },
 
   vite: {
-    // @ts-expect-error ts-expect-error
     plugins: [tailwindcss()]
   },
 
@@ -61,7 +64,12 @@ export default defineNuxtConfig({
     public: {
       apiBase:
         process.env.KUN_VISUAL_NOVEL_NUXT_PUBLIC_API_BASE ||
-        'http://127.0.0.1:9277/api/v1'
+        'http://127.0.0.1:9277/api/v1',
+      oauthServerUrl:
+        process.env.NUXT_PUBLIC_KUN_OAUTH_SERVER_URL ||
+        'http://127.0.0.1:9277/api/v1',
+      oauthClientId: process.env.NUXT_PUBLIC_KUN_OAUTH_CLIENT_ID || '',
+      oauthRedirectUri: process.env.NUXT_PUBLIC_KUN_OAUTH_REDIRECT_URI || ''
     }
   }
 })

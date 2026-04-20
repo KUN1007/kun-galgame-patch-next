@@ -1,4 +1,19 @@
-import { differenceInSeconds, differenceInHours, format } from 'date-fns'
+import {
+  differenceInSeconds,
+  differenceInHours,
+  format,
+  formatDistanceToNow as formatDistanceToNowCore
+} from 'date-fns'
+import { zhCN } from 'date-fns/locale'
+
+export const formatDistanceToNow = (
+  pastTime: number | Date | string
+): string => {
+  return formatDistanceToNowCore(new Date(pastTime), {
+    addSuffix: true,
+    locale: zhCN
+  })
+}
 
 export const formatTimeDifference = (pastTime: number | Date | string) => {
   const now = new Date()

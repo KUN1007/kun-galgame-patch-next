@@ -10,6 +10,7 @@
     "postinstall": "nuxt prepare"
   },
   "dependencies": {
+    "@noble/hashes": "^2.0.1",
     "@nuxt/eslint": "1.15.2",
     "@nuxt/icon": "2.2.1",
     "@nuxt/image": "2.0.0",
@@ -17,14 +18,20 @@
     "@vueuse/core": "^14.2.1",
     "clsx": "^2.1.1",
     "date-fns": "^4.1.0",
+    "gray-matter": "^4.0.3",
     "isomorphic-dompurify": "^3.3.0",
     "localforage": "^1.10.0",
     "nuxt": "^4.3.1",
     "nuxt-schema-org": "^5.0.10",
     "pinia": "^3.0.4",
     "postcss": "^8.5.8",
+    "rehype-stringify": "^10.0.1",
+    "remark-gfm": "^4.0.1",
+    "remark-parse": "^11.0.0",
+    "remark-rehype": "^11.1.2",
     "tailwind-merge": "^3.5.0",
     "tailwindcss": "^4.2.1",
+    "unified": "^11.0.5",
     "vue": "^3.5.29",
     "vue-router": "^4.6.4",
     "zod": "^4.3.6"

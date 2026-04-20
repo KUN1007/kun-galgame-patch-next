@@ -1,5 +1,4 @@
 <script setup lang="ts">
-import { getRandomSticker } from '~/utils/getRandomSticker'
 import type { KunAvatarProps } from './type'
 
 const props = withDefaults(defineProps<KunAvatarProps>(), {

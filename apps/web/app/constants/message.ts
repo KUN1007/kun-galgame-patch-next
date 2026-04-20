@@ -1,0 +1,54 @@
+export const MESSAGE_TYPE = [
+  'apply',
+  'pm',
+  'likeResource',
+  'likeComment',
+  'favorite',
+  'comment',
+  'follow',
+  'pr',
+  'mention',
+  'patchResourceCreate',
+  'patchResourceUpdate',
+  'system',
+  ''
+] as const
+
+export const MESSAGE_TYPE_MAP: Record<string, string> = {
+  apply: '申请',
+  pm: '私聊',
+  likeResource: '点赞资源',
+  likeComment: '点赞评论',
+  favorite: '收藏',
+  comment: '评论',
+  follow: '关注',
+  pr: '更新请求',
+  mention: '提到了您',
+  patchResourceCreate: '创建新补丁',
+  patchResourceUpdate: '更新补丁',
+  system: '系统'
+}
+
+export const READABLE_MESSAGE_MAP: Record<string, string> = {
+  notice: 'all',
+  follow: 'follow',
+  'patch-resource-create': 'patchResourceCreate',
+  'patch-resource-update': 'patchResourceUpdate',
+  mention: 'mention',
+  system: 'system'
+}
+
+export const MESSAGE_TYPE_ICON: Record<string, string> = {
+  system: 'lucide:monitor-cog',
+  pm: 'lucide:mail',
+  likeComment: 'lucide:thumbs-up',
+  likeResource: 'lucide:thumbs-up',
+  favorite: 'lucide:heart',
+  comment: 'lucide:message-circle',
+  pr: 'lucide:git-pull-request-arrow',
+  follow: 'lucide:users',
+  mention: 'lucide:at-sign',
+  patchResourceCreate: 'lucide:plus-circle',
+  patchResourceUpdate: 'lucide:refresh-cw',
+  apply: 'lucide:send'
+}

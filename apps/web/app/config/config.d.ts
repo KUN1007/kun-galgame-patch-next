@@ -1,15 +1,10 @@
 export interface KunSiteDomain {
   main: string
-  forum: string
   imageBed: string
   storage: string
+  kungal: string
   telegram_group: string
-  patch: string
-  backup: string
-  sticker: string
-  nav: string
-  doc: string
-  oss: string
+  cluster: string
 }
 
 export interface KunSiteAuthor {
@@ -32,7 +27,6 @@ export interface KunSiteCreator {
 
 export interface KunSiteImage {
   url: string
-  fullUrl: string
   width: number
   height: number
   alt: string
@@ -40,23 +34,16 @@ export interface KunSiteImage {
 
 export interface KunSiteAD {
   name: string
-  link: string
-  banner: string
-  icon: string
+  url: string
 }
 
 export interface KunSiteConfig {
-  name: string
   title: string
   titleShort: string
-  titleTemplate: string
+  template: string
   description: string
   keywords: string[]
   canonical: string
-  themeColor: string
-  github: string
-  authorGitHub: string
-  validDomain: string[]
   author: KunSiteAuthor[]
   creator: KunSiteCreator
   publisher: KunSiteCreator
