@@ -1,0 +1,1 @@
+type KunOrder = 'asc' | 'desc'
