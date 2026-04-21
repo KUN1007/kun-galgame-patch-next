@@ -1,6 +1,8 @@
 package app
 
 import (
+	"time"
+
 	"kun-galgame-patch-api/internal/middleware"
 )
 
@@ -12,17 +14,28 @@ func (a *App) RegisterRoutes() {
 	adminAuth := middleware.RequireRole(3)
 	superAdminAuth := middleware.RequireRole(4)
 
+	// Rate limits (基于 Redis per-user/per-IP 滚动窗口)
+	checkInRL := middleware.RateLimit(a.RDB, "checkin", 1, 24*time.Hour)
+	usernameRL := middleware.RateLimit(a.RDB, "username", 3, time.Hour)
+	emailRL := middleware.RateLimit(a.RDB, "email", 3, time.Hour)
+	avatarRL := middleware.RateLimit(a.RDB, "avatar", 5, time.Hour)
+	sendCodeRL := middleware.RateLimit(a.RDB, "send-code", 3, time.Hour)
+
 	// ===== Auth Routes =====
 	authRoutes := api.Group("/auth")
 	authRoutes.Post("/oauth/callback", a.AuthHandler.OAuthCallback)
 	authRoutes.Post("/logout", a.AuthHandler.Logout)
 	authRoutes.Get("/me", auth, a.AuthHandler.Me)
-	authRoutes.Post("/forgot/send-code", a.AuthHandler.ForgotSendCode)
+	authRoutes.Post("/forgot/send-code", sendCodeRL, a.AuthHandler.ForgotSendCode)
 	authRoutes.Post("/forgot/reset", a.AuthHandler.ForgotReset)
-	authRoutes.Post("/email/send-code", auth, a.AuthHandler.SendEmailCode)
+	authRoutes.Post("/email/send-code", auth, sendCodeRL, a.AuthHandler.SendEmailCode)
 
 	// ===== Patch Routes =====
 	patchRoutes := api.Group("/patch")
+
+	// Create (multipart/form-data，banner + data JSON)
+	patchRoutes.Post("/", auth, a.PatchHandler.CreatePatch)
+	patchRoutes.Post("/:id/banner", auth, a.PatchHandler.UpdateBanner)
 
 	// Public / optional auth
 	patchRoutes.Get("/duplicate", auth, a.PatchHandler.CheckDuplicate)
@@ -53,11 +66,13 @@ func (a *App) RegisterRoutes() {
 	userRoutes := api.Group("/user")
 
 	// Authenticated settings (must be before /:uid routes)
-	userRoutes.Put("/username", auth, a.UserHandler.UpdateUsername)
+	userRoutes.Put("/username", auth, usernameRL, a.UserHandler.UpdateUsername)
 	userRoutes.Put("/bio", auth, a.UserHandler.UpdateBio)
 	userRoutes.Put("/password", auth, a.UserHandler.UpdatePassword)
-	userRoutes.Put("/email", auth, a.UserHandler.UpdateEmail)
-	userRoutes.Post("/check-in", auth, a.UserHandler.CheckIn)
+	userRoutes.Put("/email", auth, emailRL, a.UserHandler.UpdateEmail)
+	userRoutes.Put("/avatar", auth, avatarRL, a.UserHandler.UpdateAvatar)
+	userRoutes.Post("/image", auth, a.UserHandler.UploadImage)
+	userRoutes.Post("/check-in", auth, checkInRL, a.UserHandler.CheckIn)
 	userRoutes.Get("/search", auth, a.UserHandler.SearchUsers)
 
 	// Public user profiles
@@ -127,12 +142,6 @@ func (a *App) RegisterRoutes() {
 	tagRoutes.Get("/:id/patch", optionalAuth, a.MetadataHandler.GetPatchesByTag)
 	tagRoutes.Post("/search", a.MetadataHandler.SearchTags)
 
-	// Characters
-	charRoutes := api.Group("/character")
-	charRoutes.Get("/", a.MetadataHandler.GetCharacters)
-	charRoutes.Get("/:id", a.MetadataHandler.GetCharByID)
-	charRoutes.Post("/search", a.MetadataHandler.SearchCharacters)
-
 	// Companies
 	companyRoutes := api.Group("/company")
 	companyRoutes.Get("/", a.MetadataHandler.GetCompanies)
@@ -140,15 +149,6 @@ func (a *App) RegisterRoutes() {
 	companyRoutes.Post("/", auth, a.MetadataHandler.CreateCompany)
 	companyRoutes.Get("/:id/patch", optionalAuth, a.MetadataHandler.GetPatchesByCompany)
 	companyRoutes.Post("/search", a.MetadataHandler.SearchCompanies)
-
-	// Persons
-	personRoutes := api.Group("/person")
-	personRoutes.Get("/", a.MetadataHandler.GetPersons)
-	personRoutes.Get("/:id", a.MetadataHandler.GetPersonByID)
-	personRoutes.Post("/search", a.MetadataHandler.SearchPersons)
-
-	// Releases
-	api.Get("/release", a.MetadataHandler.GetReleases)
 
 	// ===== Common Routes =====
 	api.Get("/home", a.CommonHandler.GetHome)
@@ -158,9 +158,32 @@ func (a *App) RegisterRoutes() {
 	api.Get("/resource", a.CommonHandler.GetGlobalResources)
 	api.Get("/resource/:id", a.CommonHandler.GetResourceDetail)
 
+	// ===== Chat Routes (D9: REST only, no WebSocket) =====
+	chatRoutes := api.Group("/chat", auth)
+	chatRoutes.Get("/room", a.ChatHandler.ListRooms)
+	chatRoutes.Post("/room", a.ChatHandler.CreateRoom)
+	chatRoutes.Post("/room/join", a.ChatHandler.JoinRoom)
+	chatRoutes.Get("/room/:link/message", a.ChatHandler.ListMessages)
+	chatRoutes.Post("/room/:link/message", a.ChatHandler.CreateMessage)
+	chatRoutes.Put("/room/:link/seen", a.ChatHandler.MarkSeen)
+	chatRoutes.Put("/message/:id", a.ChatHandler.UpdateMessage)
+	chatRoutes.Delete("/message/:id", a.ChatHandler.DeleteMessage)
+	chatRoutes.Post("/message/:id/reaction", a.ChatHandler.ToggleReaction)
+
+	// ===== Upload Routes (D10: minio-go presigned URL 直传) =====
+	uploadRoutes := api.Group("/upload", auth)
+	uploadRoutes.Post("/small/init", a.UploadHandler.InitSmall)
+	uploadRoutes.Post("/small/complete", a.UploadHandler.CompleteSmall)
+	uploadRoutes.Post("/multipart/init", a.UploadHandler.InitMultipart)
+	uploadRoutes.Post("/multipart/complete", a.UploadHandler.CompleteMultipart)
+	uploadRoutes.Post("/multipart/abort", a.UploadHandler.AbortMultipart)
+
 	// Creator application
 	api.Post("/apply", auth, a.CommonHandler.Apply)
 	api.Get("/apply/status", auth, a.CommonHandler.GetApplyStatus)
+
+	// Full-text search (Meilisearch)
+	api.Post("/search", a.SearchHandler.Search)
 
 	// External APIs
 	api.Get("/hikari", a.CommonHandler.GetHikari)

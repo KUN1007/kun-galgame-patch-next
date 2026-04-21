@@ -113,12 +113,19 @@ Go 端统一包裹为：
 | `/api/patch/contributor?patchId=` | `/api/patch/:id/contributor` | GET | 无 | 获取贡献者列表 |
 | `/api/patch/banner` | `/api/patch/:id/banner` | POST | 必须 | 上传补丁横幅 |
 
-#### 分块上传
+#### 文件上传（D10：minio-go + presigned URL 直传）
 
-| 当前端点 | Go 端点 | 方法 | 认证 | 说明 |
-|---------|---------|------|------|------|
-| `/api/upload/resource` | `/api/upload/chunk` | POST | 必须 | 上传单个分块 |
-| - | `/api/upload/complete` | POST | 必须 | 合并分块（可合入上面的逻辑） |
+老项目的分块 + 服务端合并 + BLAKE3 流程**全部废弃**。新流程：前端直传 S3，服务端只签 URL 和验证。
+
+| Go 端点 | 方法 | 认证 | 说明 |
+|---------|------|------|------|
+| `/api/upload/small/init` | POST | 必须 | 小文件（≤ 200 MB）：签 PresignedPutObject URL |
+| `/api/upload/small/complete` | POST | 必须 | HeadObject 验 size + 限额 + 写 DB |
+| `/api/upload/multipart/init` | POST | 必须 | 大文件（> 200 MB, ≤ 1 GB）：CreateMultipartUpload + 签每个 part URL |
+| `/api/upload/multipart/complete` | POST | 必须 | CompleteMultipartUpload + HeadObject + 写 DB |
+| `/api/upload/multipart/abort` | POST | 必须 | 用户主动放弃 |
+
+详细协议见 `09-risks-and-decisions.md` D10。
 
 ---
 
@@ -337,16 +344,21 @@ Go 端统一包裹为：
 
 ---
 
-### chat 模块（REST 部分）
+### chat 模块（D9：全部 REST，无 WebSocket/Socket.IO）
 
-| 当前端点 | Go 端点 | 方法 | 认证 | 说明 |
-|---------|---------|------|------|------|
-| GET `/api/chat-room` | GET `/api/chat/room` | GET | 必须 | 聊天室列表 |
-| POST `/api/chat-room` | POST `/api/chat/room` | POST | >=4 | 创建群聊 |
-| POST `/api/chat-room/join` | POST `/api/chat/room/join` | POST | 必须 | 加入群聊 |
-| GET `/api/chat-room/message?link=&cursor=&limit=` | GET `/api/chat/room/:link/message` | GET | 必须 | 获取聊天记录 |
+| Go 端点 | 方法 | 认证 | 说明 |
+|---------|------|------|------|
+| `/api/chat/room` | GET | 必须 | 聊天室列表 |
+| `/api/chat/room` | POST | >=4 | 创建群聊 |
+| `/api/chat/room/join` | POST | 必须 | 加入群聊 |
+| `/api/chat/room/:link/message?after=&limit=` | GET | 必须 | 拉取消息（前端 3s 轮询，只拉 id > after 的新消息）|
+| `/api/chat/room/:link/message` | POST | 必须 | 发送消息（取代 socket `chatMessage` 事件）|
+| `/api/chat/message/:id` | PUT | 必须 | 编辑消息（写入 `chat_message_edit_history`）|
+| `/api/chat/message/:id` | DELETE | 必须 | 软删（status=DELETED）|
+| `/api/chat/message/:id/reaction` | POST | 必须 | 表情回应 toggle |
+| `/api/chat/room/:link/seen` | PUT | 必须 | 批量已读 |
 
-WebSocket 端点（Socket.IO 或原生 WS）在 `06-infrastructure-migration.md` 中描述。
+**废弃**（D9 直接砍，不实现）：typing 指示、roomStatus 在线状态、任何实时推送。编辑/删除/表情的变化在前端**不经过轮询同步**，只有刷新页面可见。详见 `09-risks-and-decisions.md` D9。
 
 ---
 

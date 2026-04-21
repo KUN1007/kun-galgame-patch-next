@@ -118,47 +118,6 @@ func (h *MetadataHandler) SearchTags(c *fiber.Ctx) error {
 	return response.OK(c, tags)
 }
 
-// ===== Characters =====
-
-// GetCharacters GET /api/character
-func (h *MetadataHandler) GetCharacters(c *fiber.Ctx) error {
-	var req dto.GetMetadataRequest
-	if err := utils.ParseQueryAndValidate(c, &req); err != nil {
-		return response.Error(c, errors.ErrBadRequest(err.Error()))
-	}
-	chars, total, err := h.service.GetCharacters(req.Page, req.Limit)
-	if err != nil {
-		return response.Error(c, errors.ErrInternal(""))
-	}
-	return response.Paginated(c, chars, total)
-}
-
-// GetCharByID GET /api/character/:id
-func (h *MetadataHandler) GetCharByID(c *fiber.Ctx) error {
-	id, err := getIDParam(c, "id")
-	if err != nil {
-		return response.Error(c, err.(*errors.AppError))
-	}
-	ch, err := h.service.GetCharByID(id)
-	if err != nil {
-		return response.Error(c, errors.ErrNotFound("character not found"))
-	}
-	return response.OK(c, ch)
-}
-
-// SearchCharacters POST /api/character/search
-func (h *MetadataHandler) SearchCharacters(c *fiber.Ctx) error {
-	var req dto.SearchRequest
-	if err := utils.ParseAndValidate(c, &req); err != nil {
-		return response.Error(c, errors.ErrBadRequest(err.Error()))
-	}
-	chars, err := h.service.SearchCharacters(req.Query)
-	if err != nil {
-		return response.Error(c, errors.ErrInternal(""))
-	}
-	return response.OK(c, chars)
-}
-
 // ===== Companies =====
 
 // GetCompanies GET /api/company
@@ -234,58 +193,3 @@ func (h *MetadataHandler) SearchCompanies(c *fiber.Ctx) error {
 	return response.OK(c, companies)
 }
 
-// ===== Persons =====
-
-// GetPersons GET /api/person
-func (h *MetadataHandler) GetPersons(c *fiber.Ctx) error {
-	var req dto.GetMetadataRequest
-	if err := utils.ParseQueryAndValidate(c, &req); err != nil {
-		return response.Error(c, errors.ErrBadRequest(err.Error()))
-	}
-	persons, total, err := h.service.GetPersons(req.Page, req.Limit)
-	if err != nil {
-		return response.Error(c, errors.ErrInternal(""))
-	}
-	return response.Paginated(c, persons, total)
-}
-
-// GetPersonByID GET /api/person/:id
-func (h *MetadataHandler) GetPersonByID(c *fiber.Ctx) error {
-	id, err := getIDParam(c, "id")
-	if err != nil {
-		return response.Error(c, err.(*errors.AppError))
-	}
-	person, err := h.service.GetPersonByID(id)
-	if err != nil {
-		return response.Error(c, errors.ErrNotFound("person not found"))
-	}
-	return response.OK(c, person)
-}
-
-// SearchPersons POST /api/person/search
-func (h *MetadataHandler) SearchPersons(c *fiber.Ctx) error {
-	var req dto.SearchRequest
-	if err := utils.ParseAndValidate(c, &req); err != nil {
-		return response.Error(c, errors.ErrBadRequest(err.Error()))
-	}
-	persons, err := h.service.SearchPersons(req.Query)
-	if err != nil {
-		return response.Error(c, errors.ErrInternal(""))
-	}
-	return response.OK(c, persons)
-}
-
-// ===== Releases =====
-
-// GetReleases GET /api/release
-func (h *MetadataHandler) GetReleases(c *fiber.Ctx) error {
-	var req dto.GetReleaseRequest
-	if err := utils.ParseQueryAndValidate(c, &req); err != nil {
-		return response.Error(c, errors.ErrBadRequest(err.Error()))
-	}
-	releases, err := h.service.GetReleasesByMonth(req.Year, req.Month)
-	if err != nil {
-		return response.Error(c, errors.ErrInternal(""))
-	}
-	return response.OK(c, releases)
-}

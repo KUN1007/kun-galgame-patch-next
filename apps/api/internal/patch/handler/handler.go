@@ -1,6 +1,9 @@
 package handler
 
 import (
+	"encoding/json"
+	"io"
+	"regexp"
 	"strconv"
 
 	"kun-galgame-patch-api/internal/middleware"
@@ -12,7 +15,13 @@ import (
 	"kun-galgame-patch-api/pkg/utils"
 
 	"github.com/gofiber/fiber/v2"
+	"github.com/go-playground/validator/v10"
 )
+
+// 用于非创作者的 VNDB ID 校验（对齐 apps/next-web/validations）
+var vndbIDRegex = regexp.MustCompile(`^v\d+$`)
+
+var patchCreateValidator = validator.New(validator.WithRequiredStructEnabled())
 
 type PatchHandler struct {
 	service *service.PatchService
@@ -31,6 +40,120 @@ func getIDParam(c *fiber.Ctx, name string) (int, error) {
 }
 
 // ===== Patch CRUD =====
+
+// CreatePatch POST /api/patch
+//
+// 请求体：multipart/form-data
+//   - banner：图片文件（server 侧 resize 到 1920x1080 内 + JPEG quality=85）
+//   - data：JSON 字符串，对应 dto.PatchCreateRequest
+//
+// 非创作者（role < 2）必须提供合法 vndb_id；启用 creator-only 时禁止非创作者创建。
+func (h *PatchHandler) CreatePatch(c *fiber.Ctx) error {
+	user := middleware.MustGetUser(c)
+
+	// creator-only 全局开关
+	if h.service.IsCreatorOnlyEnabled() && user.Role < 2 {
+		return response.Error(c, errors.ErrForbidden())
+	}
+
+	// ── 解 multipart：data JSON + banner 文件 ──
+	bannerFile, err := c.FormFile("banner")
+	if err != nil || bannerFile == nil {
+		return response.Error(c, errors.ErrBadRequest("缺少 banner 文件"))
+	}
+	if bannerFile.Size > 10*1024*1024 {
+		return response.Error(c, errors.ErrBadRequest("banner 图片超过 10MB"))
+	}
+
+	dataStr := c.FormValue("data")
+	if dataStr == "" {
+		return response.Error(c, errors.ErrBadRequest("缺少 data 字段"))
+	}
+	var req dto.PatchCreateRequest
+	if err := json.Unmarshal([]byte(dataStr), &req); err != nil {
+		return response.Error(c, errors.ErrBadRequest("data 字段不是合法 JSON"))
+	}
+	if err := patchCreateValidator.Struct(&req); err != nil {
+		return response.Error(c, errors.ErrBadRequest(err.Error()))
+	}
+
+	// 非创作者必须有合法 VNDB ID
+	if user.Role < 2 && !vndbIDRegex.MatchString(req.VndbID) {
+		return response.Error(c, errors.ErrBadRequest("为防止恶意发布，仅限创作者可不填写 VNDB ID"))
+	}
+
+	// 别名清洗
+	aliases := make([]string, 0, len(req.Alias))
+	for _, a := range req.Alias {
+		if a == "" {
+			continue
+		}
+		aliases = append(aliases, a)
+	}
+
+	// 读 banner 字节
+	fh, err := bannerFile.Open()
+	if err != nil {
+		return response.Error(c, errors.ErrBadRequest("读取 banner 失败"))
+	}
+	defer fh.Close()
+	bannerBytes, err := io.ReadAll(fh)
+	if err != nil {
+		return response.Error(c, errors.ErrBadRequest("读取 banner 失败"))
+	}
+
+	id, err := h.service.CreatePatch(c.Context(), user.UID, service.CreatePatchInput{
+		VndbID:           req.VndbID,
+		NameZhCn:         req.NameZhCn,
+		NameJaJp:         req.NameJaJp,
+		NameEnUs:         req.NameEnUs,
+		IntroductionZhCn: req.IntroductionZhCn,
+		IntroductionJaJp: req.IntroductionJaJp,
+		IntroductionEnUs: req.IntroductionEnUs,
+		Alias:            aliases,
+		Released:         req.Released,
+		ContentLimit:     req.ContentLimit,
+	}, bannerBytes)
+	if err != nil {
+		return response.Error(c, errors.ErrBadRequest(err.Error()))
+	}
+
+	return response.OK(c, map[string]int{"id": id})
+}
+
+// UpdateBanner POST /api/patch/:id/banner
+// 请求体 multipart/form-data：banner 图片文件。
+func (h *PatchHandler) UpdateBanner(c *fiber.Ctx) error {
+	patchID, err := getIDParam(c, "id")
+	if err != nil {
+		return response.Error(c, err.(*errors.AppError))
+	}
+	user := middleware.MustGetUser(c)
+
+	bannerFile, err := c.FormFile("banner")
+	if err != nil || bannerFile == nil {
+		return response.Error(c, errors.ErrBadRequest("缺少 banner 文件"))
+	}
+	if bannerFile.Size > 10*1024*1024 {
+		return response.Error(c, errors.ErrBadRequest("banner 图片超过 10MB"))
+	}
+
+	fh, err := bannerFile.Open()
+	if err != nil {
+		return response.Error(c, errors.ErrBadRequest("读取 banner 失败"))
+	}
+	defer fh.Close()
+	bannerBytes, err := io.ReadAll(fh)
+	if err != nil {
+		return response.Error(c, errors.ErrBadRequest("读取 banner 失败"))
+	}
+
+	bannerURL, err := h.service.UpdateBanner(c.Context(), patchID, user.UID, user.Role, bannerBytes)
+	if err != nil {
+		return response.Error(c, errors.ErrBadRequest(err.Error()))
+	}
+	return response.OK(c, map[string]string{"banner": bannerURL})
+}
 
 // GetPatch GET /api/patch/:id
 func (h *PatchHandler) GetPatch(c *fiber.Ctx) error {
@@ -296,7 +419,7 @@ func (h *PatchHandler) CreateResource(c *fiber.Ctx) error {
 		Storage:   req.Storage,
 		Name:      req.Name,
 		ModelName: req.ModelName,
-		Hash:      req.Hash,
+		S3Key:     req.S3Key,
 		Content:   req.Content,
 		Size:      req.Size,
 		Code:      req.Code,
@@ -331,7 +454,7 @@ func (h *PatchHandler) UpdateResource(c *fiber.Ctx) error {
 		Storage:   req.Storage,
 		Name:      req.Name,
 		ModelName: req.ModelName,
-		Hash:      req.Hash,
+		S3Key:     req.S3Key,
 		Content:   req.Content,
 		Size:      req.Size,
 		Code:      req.Code,

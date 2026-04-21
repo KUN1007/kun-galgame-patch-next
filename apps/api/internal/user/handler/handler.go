@@ -1,6 +1,7 @@
 package handler
 
 import (
+	"io"
 	"strconv"
 
 	"kun-galgame-patch-api/internal/middleware"
@@ -12,6 +13,23 @@ import (
 
 	"github.com/gofiber/fiber/v2"
 )
+
+// 读取一个 form 里的单张图片文件字节，附加 10 MB 上限。
+func readImageFormFile(c *fiber.Ctx, field string) ([]byte, error) {
+	f, err := c.FormFile(field)
+	if err != nil || f == nil {
+		return nil, errors.ErrBadRequest("缺少图片文件")
+	}
+	if f.Size > 10*1024*1024 {
+		return nil, errors.ErrBadRequest("图片超过 10MB")
+	}
+	fh, err := f.Open()
+	if err != nil {
+		return nil, errors.ErrBadRequest("读取图片失败")
+	}
+	defer fh.Close()
+	return io.ReadAll(fh)
+}
 
 type UserHandler struct {
 	service *service.UserService
@@ -349,4 +367,34 @@ func (h *UserHandler) SearchUsers(c *fiber.Ctx) error {
 	}
 
 	return response.OK(c, users)
+}
+
+// UpdateAvatar PUT /api/user/avatar
+// multipart/form-data：avatar 图片（≤ 10 MB）。服务端生成 256 + 100 两张 JPEG。
+func (h *UserHandler) UpdateAvatar(c *fiber.Ctx) error {
+	user := middleware.MustGetUser(c)
+	raw, err := readImageFormFile(c, "avatar")
+	if err != nil {
+		return response.Error(c, err.(*errors.AppError))
+	}
+	url, err := h.service.UpdateAvatar(c.Context(), user.UID, raw)
+	if err != nil {
+		return response.Error(c, errors.ErrBadRequest(err.Error()))
+	}
+	return response.OK(c, map[string]string{"avatar": url})
+}
+
+// UploadImage POST /api/user/image
+// 用户个人页配图。受 daily_image_count 限制。
+func (h *UserHandler) UploadImage(c *fiber.Ctx) error {
+	user := middleware.MustGetUser(c)
+	raw, err := readImageFormFile(c, "image")
+	if err != nil {
+		return response.Error(c, err.(*errors.AppError))
+	}
+	url, err := h.service.UploadUserImage(c.Context(), user.UID, raw)
+	if err != nil {
+		return response.Error(c, errors.ErrBadRequest(err.Error()))
+	}
+	return response.OK(c, map[string]string{"url": url})
 }

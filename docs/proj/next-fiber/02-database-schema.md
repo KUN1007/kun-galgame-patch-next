@@ -173,7 +173,7 @@ type Patch struct {
     Updated            time.Time `gorm:"autoUpdateTime" json:"updated"`
 }
 
-// PatchResource 补丁资源
+// PatchResource 补丁资源（D10：hash → blake3，新增 s3_key）
 type PatchResource struct {
     ID                    int       `gorm:"primaryKey;autoIncrement" json:"id"`
     Storage               string    `gorm:"not null" json:"storage"`
@@ -184,7 +184,8 @@ type PatchResource struct {
     Code                  string    `gorm:"type:varchar(1007);default:''" json:"code"`
     Password              string    `gorm:"type:varchar(1007);default:''" json:"password"`
     Note                  string    `gorm:"type:varchar(10007);default:''" json:"note"`
-    Hash                  string    `gorm:"default:''" json:"hash"`
+    Blake3                string    `gorm:"default:''" json:"blake3"`                             // 老数据的 BLAKE3；新数据恒为 ""
+    S3Key                 string    `gorm:"type:varchar(2048);default:''" json:"s3_key"`          // 完整 S3 对象键（D10）
     Content               string    `gorm:"default:''" json:"content"`
     Type                  JSONArray `gorm:"type:jsonb;default:'[]'" json:"type"`
     Language              JSONArray `gorm:"type:jsonb;default:'[]'" json:"language"`

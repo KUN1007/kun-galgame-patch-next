@@ -1,6 +1,7 @@
 package app
 
 import (
+	"context"
 	"log/slog"
 
 	adminHandler "kun-galgame-patch-api/internal/admin/handler"
@@ -9,8 +10,14 @@ import (
 	authHandler "kun-galgame-patch-api/internal/auth/handler"
 	authRepo "kun-galgame-patch-api/internal/auth/repository"
 	authService "kun-galgame-patch-api/internal/auth/service"
+	chatHandler "kun-galgame-patch-api/internal/chat/handler"
+	chatRepo "kun-galgame-patch-api/internal/chat/repository"
+	chatService "kun-galgame-patch-api/internal/chat/service"
 	"kun-galgame-patch-api/internal/common"
+	searchPkg "kun-galgame-patch-api/internal/common/search"
+	uploadPkg "kun-galgame-patch-api/internal/common/upload"
 	"kun-galgame-patch-api/internal/infrastructure/cache"
+	searchInfra "kun-galgame-patch-api/internal/infrastructure/search"
 	cronJobs "kun-galgame-patch-api/internal/infrastructure/cron"
 	"kun-galgame-patch-api/internal/infrastructure/database"
 	"kun-galgame-patch-api/internal/infrastructure/mail"
@@ -54,6 +61,12 @@ type App struct {
 	AdminHandler    *adminHandler.AdminHandler
 	MetadataHandler *metadataHandler.MetadataHandler
 	CommonHandler   *common.CommonHandler
+	UploadHandler   *uploadPkg.Handler
+	ChatHandler     *chatHandler.ChatHandler
+	SearchHandler   *searchPkg.Handler
+
+	// CronStop 在优雅关停时调用以停掉定时任务。
+	CronStop func()
 }
 
 func New(cfg *config.Config) *App {
@@ -62,6 +75,7 @@ func New(cfg *config.Config) *App {
 	rdb := cache.NewRedis(cfg.Redis)
 	s3 := storage.NewS3(cfg.S3)
 	mailer := mail.NewMailer(cfg.Mail)
+	searchClient := searchInfra.New(cfg.Search)
 
 	// Auth module
 	authRepository := authRepo.New(db)
@@ -70,12 +84,12 @@ func New(cfg *config.Config) *App {
 
 	// Patch module
 	patchRepository := patchRepo.New(db)
-	patchSvc := patchService.New(patchRepository, rdb, db)
+	patchSvc := patchService.New(patchRepository, rdb, db, s3)
 	patchHdl := patchHandler.New(patchSvc)
 
 	// User module
 	userRepository := userRepo.New(db)
-	userSvc := userService.New(userRepository, authSvc)
+	userSvc := userService.New(userRepository, authSvc, s3)
 	userHdl := userHandler.New(userSvc)
 
 	// Message module
@@ -96,6 +110,23 @@ func New(cfg *config.Config) *App {
 	// Common handler (direct DB access for simple aggregation endpoints)
 	commonHdl := common.NewHandler(db)
 
+	// Upload module (D10: minio-go presigned URL 直传)
+	uploadSvc := uploadPkg.New(s3, db)
+	uploadHdl := uploadPkg.NewHandler(uploadSvc)
+
+	// Chat module (D9: REST only, no WebSocket)
+	chatRepository := chatRepo.New(db)
+	chatSvc := chatService.New(chatRepository)
+	chatHdl := chatHandler.New(chatSvc)
+
+	// Search module (Meilisearch)
+	searchHdl := searchPkg.New(db, searchClient)
+	// 启动后异步做一次全量索引，避免阻塞 HTTP 启动
+	go searchHdl.ReindexAllPatches(context.Background())
+
+	// Cookie mode：prod 下使用 Secure cookie，dev 下 HTTP 必须关掉
+	middleware.SecureCookies = cfg.Server.Mode == "prod"
+
 	// Fiber app
 	app := fiber.New(fiber.Config{
 		BodyLimit:    10 * 1024 * 1024, // 10MB
@@ -106,7 +137,7 @@ func New(cfg *config.Config) *App {
 	app.Use(middleware.CORS(cfg.CORS))
 
 	// Start cron jobs
-	cronJobs.Start(db)
+	cronStop := cronJobs.Start(db, s3)
 
 	slog.Info("Application initialized")
 
@@ -124,6 +155,10 @@ func New(cfg *config.Config) *App {
 		AdminHandler:    adminHdl,
 		MetadataHandler: metadataHdl,
 		CommonHandler:   commonHdl,
+		UploadHandler:   uploadHdl,
+		ChatHandler:     chatHdl,
+		SearchHandler:   searchHdl,
+		CronStop:        cronStop,
 	}
 }
 
@@ -132,6 +167,6 @@ func globalErrorHandler(c *fiber.Ctx, err error) error {
 		return response.Error(c, appErr)
 	}
 
-	slog.Error("Unhandled error", "error", err, "path", c.Path())
+	slog.Error("Unhandled error", "error", err, "method", c.Method(), "path", c.Path())
 	return response.Error(c, errors.ErrInternal(""))
 }

@@ -38,7 +38,10 @@ func main() {
 
 	log.Println("Shutting down server...")
 	if err := application.Fiber.ShutdownWithContext(context.Background()); err != nil {
-		log.Fatalf("Server forced to shutdown: %v", err)
+		log.Printf("Server forced to shutdown: %v", err)
+	}
+	if application.CronStop != nil {
+		application.CronStop()
 	}
 	log.Println("Server exited")
 }

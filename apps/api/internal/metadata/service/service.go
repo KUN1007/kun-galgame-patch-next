@@ -57,20 +57,6 @@ func (s *MetadataService) SearchTags(queries []string) ([]patchModel.PatchTag, e
 	return s.repo.SearchTags(queries)
 }
 
-// ===== Characters =====
-
-func (s *MetadataService) GetCharacters(page, limit int) ([]metaModel.PatchChar, int64, error) {
-	return s.repo.GetCharacters((page-1)*limit, limit)
-}
-
-func (s *MetadataService) GetCharByID(id int) (*metaModel.PatchChar, error) {
-	return s.repo.GetCharByID(id)
-}
-
-func (s *MetadataService) SearchCharacters(queries []string) ([]metaModel.PatchChar, error) {
-	return s.repo.SearchCharacters(queries)
-}
-
 // ===== Companies =====
 
 func (s *MetadataService) GetCompanies(page, limit int) ([]metaModel.PatchCompany, int64, error) {
@@ -109,22 +95,3 @@ func (s *MetadataService) SearchCompanies(queries []string) ([]metaModel.PatchCo
 	return s.repo.SearchCompanies(queries)
 }
 
-// ===== Persons =====
-
-func (s *MetadataService) GetPersons(page, limit int) ([]metaModel.PatchPerson, int64, error) {
-	return s.repo.GetPersons((page-1)*limit, limit)
-}
-
-func (s *MetadataService) GetPersonByID(id int) (*metaModel.PatchPerson, error) {
-	return s.repo.GetPersonByID(id)
-}
-
-func (s *MetadataService) SearchPersons(queries []string) ([]metaModel.PatchPerson, error) {
-	return s.repo.SearchPersons(queries)
-}
-
-// ===== Releases =====
-
-func (s *MetadataService) GetReleasesByMonth(year, month int) ([]metaModel.PatchRelease, error) {
-	return s.repo.GetReleasesByMonth(year, month)
-}

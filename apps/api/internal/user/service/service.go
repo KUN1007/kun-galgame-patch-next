@@ -1,26 +1,34 @@
 package service
 
 import (
+	"bytes"
+	"context"
 	"fmt"
 	"math/rand"
 	"time"
 
 	authModel "kun-galgame-patch-api/internal/auth/model"
 	authService "kun-galgame-patch-api/internal/auth/service"
+	"kun-galgame-patch-api/internal/infrastructure/storage"
 	"kun-galgame-patch-api/internal/user/dto"
 	"kun-galgame-patch-api/internal/user/model"
 	"kun-galgame-patch-api/internal/user/repository"
+	"kun-galgame-patch-api/pkg/imageutil"
 
 	"gorm.io/gorm"
 )
 
+// 每日个人图片上传限额，对齐 apps/next-web/config/user.ts 的 KUN_PATCH_USER_DAILY_UPLOAD_IMAGE_LIMIT。
+const DailyImageLimit = 20
+
 type UserService struct {
 	repo    *repository.UserRepository
 	authSvc *authService.AuthService
+	s3      *storage.S3Client
 }
 
-func New(repo *repository.UserRepository, authSvc *authService.AuthService) *UserService {
-	return &UserService{repo: repo, authSvc: authSvc}
+func New(repo *repository.UserRepository, authSvc *authService.AuthService, s3 *storage.S3Client) *UserService {
+	return &UserService{repo: repo, authSvc: authSvc, s3: s3}
 }
 
 // GetUserInfo retrieves public user info
@@ -202,4 +210,65 @@ func (s *UserService) UpdateLastLoginTime(userID int) {
 // GetUserByID retrieves a user (for internal use)
 func (s *UserService) GetUserByID(uid int) (*authModel.User, error) {
 	return s.repo.FindByID(uid)
+}
+
+// ─── 头像与配图上传 ──────────────────────────────────
+
+// UpdateAvatar 上传并设置用户头像（256x256 + 100x100 两张 JPEG）。
+func (s *UserService) UpdateAvatar(ctx context.Context, uid int, raw []byte) (string, error) {
+	full, err := imageutil.FitJPEG(raw, 256, 256, 85)
+	if err != nil {
+		return "", err
+	}
+	mini, err := imageutil.FitJPEG(raw, 100, 100, 85)
+	if err != nil {
+		return "", err
+	}
+
+	prefix := fmt.Sprintf("user/avatar/user_%d", uid)
+	avatarKey := prefix + "/avatar.jpg"
+	miniKey := prefix + "/avatar-mini.jpg"
+
+	if err := s.s3.PutObject(ctx, avatarKey, bytes.NewReader(full), int64(len(full)), "image/jpeg"); err != nil {
+		return "", err
+	}
+	if err := s.s3.PutObject(ctx, miniKey, bytes.NewReader(mini), int64(len(mini)), "image/jpeg"); err != nil {
+		return "", err
+	}
+
+	avatarURL := s.s3.PublicURL(avatarKey)
+	if err := s.repo.UpdateFields(uid, map[string]any{"avatar": avatarURL}); err != nil {
+		return "", err
+	}
+	return avatarURL, nil
+}
+
+// UploadUserImage 上传用户个人页配图（1920x1080 内，JPEG q=50）。
+// 受 daily_image_count 限制（对齐原项目 DailyImageLimit）。
+func (s *UserService) UploadUserImage(ctx context.Context, uid int, raw []byte) (string, error) {
+	user, err := s.repo.FindByID(uid)
+	if err != nil {
+		return "", fmt.Errorf("用户不存在")
+	}
+	if user.DailyImageCount >= DailyImageLimit {
+		return "", fmt.Errorf("今日上传图片数量已达 %d 张上限", DailyImageLimit)
+	}
+
+	jpg, err := imageutil.FitJPEG(raw, 1920, 1080, 50)
+	if err != nil {
+		return "", err
+	}
+
+	key := fmt.Sprintf("user_%d/image/%d-%d.jpg", uid, uid, time.Now().UnixMilli())
+	if err := s.s3.PutObject(ctx, key, bytes.NewReader(jpg), int64(len(jpg)), "image/jpeg"); err != nil {
+		return "", err
+	}
+
+	// 扣 daily_image_count
+	if err := s.repo.UpdateFields(uid, map[string]any{
+		"daily_image_count": gorm.Expr("daily_image_count + 1"),
+	}); err != nil {
+		return "", err
+	}
+	return s.s3.PublicURL(key), nil
 }

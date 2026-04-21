@@ -71,6 +71,126 @@
 - GORM 不支持 Prisma 的 `_count` 语法糖
 - 代价是事务中需同步维护计数，但这在 kungal 中已验证可控
 
+### D9: 移除 Socket.IO，聊天改为 REST 轮询（2026-04-21 新增）
+
+**决定**：废弃 `apps/next-socket/` 和 go-socket.io。聊天消息的读写全部走 GET/POST，不再提供实时推送。前端通过定时轮询拉取新消息。
+
+**原因**：
+- 运维开销：独立 Socket.IO 服务需要单独进程、Sticky Session、ping/pong，长尾 bug 多
+- 当前站点聊天量不大，轮询开销可接受
+- 简化前后端部署拓扑，Go Fiber 单服务即可
+- 取消 R5 中「socket 事件协议对齐」风险
+
+**行为变更**：
+- 直接**删除**：`typing` 指示器、`roomStatus` 在线状态、实时推送
+- 保留并 REST 化：消息 CRUD、表情回应（`chat_message_reaction`）、已读标记（`chat_message_seen`）、编辑历史（`chat_message_edit_history`）
+- **不同步老消息的编辑和删除**：轮询只拉 `id > lastMsgId` 的**新消息**，老消息的编辑、删除、表情增减只在用户**手动刷新页面**时可见（用户 Q11 = C）
+
+**REST 端点清单**：
+- `GET    /api/chat/room`
+- `POST   /api/chat/room`（role ≥ 4）
+- `POST   /api/chat/room/join`
+- `GET    /api/chat/room/:link/message?after=&limit=`
+- `POST   /api/chat/room/:link/message`
+- `PUT    /api/chat/message/:id`
+- `DELETE /api/chat/message/:id`（软删，`status=DELETED`）
+- `POST   /api/chat/message/:id/reaction`（toggle）
+- `PUT    /api/chat/room/:link/seen`
+
+**轮询约定**：聊天室激活时每 **3s** 拉 `?after=lastMsgId`；`/unread` 每 **30s** 拉。
+
+**影响**：
+- `apps/next-socket/` 整个目录迁移完成后删除
+- `06-infrastructure-migration.md` 中 WebSocket 章节废弃
+- `00-overview.md` 的 WebSocket 行 → 0 个
+
+**取舍**：前端从"实时"降级到"刷新查看"。若将来需要实时，可在 Fiber 单服务内用原生 WebSocket 重建，无需恢复 socket.io。
+
+### D10: 文件上传去哈希化 + 直传 S3 + minio-go（2026-04-21 新增）
+
+**核心决定**：
+- 服务端**不再计算** BLAKE3 hash
+- 前端**直传 S3**（presigned URL 模式），服务端不中转文件字节
+- SDK 从 `aws-sdk-go-v2` **全部换成** `minio-go`（删除现有 `internal/infrastructure/storage/s3.go` 重写）
+- 小文件 (≤ 200 MB) 用 `PresignedPutObject`；大文件 (> 200 MB, ≤ 1 GB) 用 multipart presigned URL
+- 存储路径格式与老代码 `apps/next-api/patch/resource/_helper.ts:16` 完全一致
+
+**Schema 变更**（见 `apps/api/migrations/002_patch_resource_s3_key.up.sql`）：
+```sql
+-- 1. 老 hash 列改名 blake3，存量 BLAKE3 值保留
+ALTER TABLE patch_resource RENAME COLUMN hash TO blake3;
+
+-- 2. 新增 s3_key 列，存完整 S3 对象键
+ALTER TABLE patch_resource ADD COLUMN s3_key VARCHAR(2048) NOT NULL DEFAULT '';
+
+-- 3. 存量迁移：从 content URL 里剥出 key
+UPDATE patch_resource
+SET s3_key = REGEXP_REPLACE(content, '^https?://[^/]+/[^/]+/', '')
+WHERE storage <> 'user' AND content ~ '^https?://[^/]+/[^/]+/.+';
+```
+
+迁移后：
+- **老数据**：`blake3 = <原 BLAKE3 hex>`，`s3_key = patch/{id}/{blake3}/{fileName}`，S3 路径和下载链接完全不变
+- **新上传**：`blake3 = ""`，`s3_key = patch/{id}/{random64}/{fileName}`，其中 `random64 = [A-Za-z0-9]{64}`（`crypto/rand` 生成）
+- 所有 delete/head 操作直接读 `s3_key`，不再拼路径
+
+`s3_key` 存**完整 S3 对象键**（已确认）。delete/head 直接用 `s3_key`，不再在应用层拼路径。
+
+**上传流程**（前端直传，方案 b）：
+
+```
+小文件 (≤ 200 MB) — PresignedPutObject
+─────────────────────────────────────
+① 前端 POST /api/upload/small/init { patchId, fileName, fileSize }
+   → 服务端校验 role/限额/扩展名 → 生成 s3_key + presigned PUT URL（有效 2h）→ 返回 { s3_key, upload_url }
+② 前端 PUT upload_url （body 为文件）→ S3
+③ 前端 POST /api/upload/small/complete { s3_key, declaredSize }
+   → 服务端 HeadObject 取实际 size → 校验（≤ 1GB + 限额 + 与 declared 一致）
+   → 通过：累加 daily_upload_size，返回 { s3_key, size }
+   → 失败：DeleteObject 清掉，返回错误
+
+大文件 (> 200 MB) — Multipart presigned
+──────────────────────────────────────
+① 前端 POST /api/upload/multipart/init { patchId, fileName, fileSize, partCount }
+   → 服务端 CreateMultipartUpload + 为每个 part 生成 PresignedUploadPart URL（有效 4h）
+   → 返回 { s3_key, upload_id, part_urls: [...] }
+② 前端逐 part PUT（可并发）→ 收集 ETag
+③ 前端 POST /api/upload/multipart/complete { s3_key, upload_id, parts: [{ partNumber, etag }] }
+   → 服务端 CompleteMultipartUpload → HeadObject 验 size
+   → 通过 / 失败同小文件流程
+④ 前端 POST /api/upload/multipart/abort { s3_key, upload_id }（用户主动取消）
+```
+
+**孤儿清理 — 方案 B（Go cron）**：
+- 新增 cron 任务 `cleanupAbortedMultiparts`，每 **6h** 跑一次
+- `ListMultipartUploads` → 过滤 `Initiated > 24h` 的 → 批量 `AbortMultipartUpload`
+
+**每日限额实施**：
+- init 阶段：不预扣（用户 Q6 = 不关心带宽）
+- complete 阶段：用 HeadObject 返回的实际 size 扣减 `daily_upload_size`
+- 每日 100 MB（普通）/ 5 GB（创作者）超限 → Head 后删除文件 + 拒绝
+
+**客户端 Q4 生成**：`crypto/rand` 读 48 字节 → base64 → 取前 64 字符并过滤为 `[A-Za-z0-9]`
+
+**路径规则（沿用老代码）**：
+- 补丁资源：`patch/{patchId}/{s3KeySegment}/{fileName}`
+- 补丁横幅：`patch/{patchId}/banner.webp`（见 `apps/next-api/utils/uploadPatchBanner.ts`）
+- 用户头像：按原 `apps/next-api/user/setting/_upload.ts` 的路径
+- 用户图片：按原 `apps/next-api/user/image/_upload.ts` 的路径
+- 聊天附件：按原聊天代码的路径（Q12 确认：照搬原路径）
+
+> 实现时需实际查阅以上 TS 文件确认精确路径串。
+
+**影响**：
+- `internal/infrastructure/storage/s3.go` **完全重写**，用 `github.com/minio/minio-go/v7`
+- `aws-sdk-go-v2` 相关依赖从 `go.mod` 移除
+- `internal/common/upload/` 从空目录实现为 4-5 个 handler（init/complete/abort × small/multipart）
+- cron 新增 `cleanupAbortedMultiparts` 任务
+- 前端上传组件重写：小文件单 PUT；大文件并发多 PUT + ETag 收集
+- 风险 R3 降为低
+
+**presigned URL 有效期**：PutObject 2h，multipart part 4h
+
 ### D8: Galgame 元数据外移到 Wiki Service（2026-04-21 新增）
 
 **决定**：`patch_char` / `patch_person` / `patch_release` / `patch_media`（cover + screenshot）所有 Prisma 模型及对应 Go 模型、repository、handler **全部废弃**。Galgame 的角色、声优、发售信息、封面、截图统一由独立的 Galgame Wiki Service 管理，本项目通过 `patch.vndb_id` 外键 + `GalgameClient` HTTP 调用获取。

@@ -38,10 +38,6 @@ func (r *PatchRepository) GetPatchDetail(id int) (*model.Patch, error) {
 			return db.Select("id", "name", "avatar")
 		}).
 		Preload("Aliases").
-		Preload("Covers").
-		Preload("Screenshots", func(db *gorm.DB) *gorm.DB {
-			return db.Order("order_no ASC")
-		}).
 		Preload("Tags.Tag").
 		First(&patch, id).Error
 	return &patch, err

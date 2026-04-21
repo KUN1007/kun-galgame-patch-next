@@ -28,8 +28,8 @@ model patch {
   comment_count    Int @default(0)
   resource_count   Int @default(0)
 
-  cover                patch_cover[]
-  screenshot           patch_screenshot[]
+  // NOTE: cover / screenshot / char_rel / person_rel / release 关系按 D8
+  //   (2026-04-21) 决策废弃，Galgame 元数据统一从 Galgame Wiki Service 获取。
 
   company     patch_company_relation[]
   tag         patch_tag_relation[]
@@ -44,10 +44,6 @@ model patch {
 
   resource patch_resource[]     @relation("patch_resource")
   comment  patch_comment[]      @relation("patch_comment")
-
-  char_rel patch_char_relation[]
-  person_rel patch_person_relation[]
-  release  patch_release[]
 
   created DateTime @default(now())
   updated DateTime @updatedAt

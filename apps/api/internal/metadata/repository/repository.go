@@ -71,35 +71,6 @@ func (r *MetadataRepository) SearchTags(queries []string) ([]patchModel.PatchTag
 	return tags, err
 }
 
-// ===== Characters =====
-
-func (r *MetadataRepository) GetCharacters(offset, limit int) ([]metaModel.PatchChar, int64, error) {
-	var chars []metaModel.PatchChar
-	var total int64
-	r.db.Model(&metaModel.PatchChar{}).Count(&total)
-	err := r.db.Order("id DESC").Offset(offset).Limit(limit).Find(&chars).Error
-	return chars, total, err
-}
-
-func (r *MetadataRepository) GetCharByID(id int) (*metaModel.PatchChar, error) {
-	var ch metaModel.PatchChar
-	err := r.db.Preload("Aliases").First(&ch, id).Error
-	return &ch, err
-}
-
-func (r *MetadataRepository) SearchCharacters(queries []string) ([]metaModel.PatchChar, error) {
-	var chars []metaModel.PatchChar
-	query := r.db.Model(&metaModel.PatchChar{})
-
-	for _, q := range queries {
-		like := fmt.Sprintf("%%%s%%", q)
-		query = query.Where("name_zh_cn ILIKE ? OR name_ja_jp ILIKE ? OR name_en_us ILIKE ?", like, like, like)
-	}
-
-	err := query.Limit(100).Find(&chars).Error
-	return chars, err
-}
-
 // ===== Companies =====
 
 func (r *MetadataRepository) GetCompanies(offset, limit int) ([]metaModel.PatchCompany, int64, error) {
@@ -154,41 +125,3 @@ func (r *MetadataRepository) SearchCompanies(queries []string) ([]metaModel.Patc
 	return companies, err
 }
 
-// ===== Persons =====
-
-func (r *MetadataRepository) GetPersons(offset, limit int) ([]metaModel.PatchPerson, int64, error) {
-	var persons []metaModel.PatchPerson
-	var total int64
-	r.db.Model(&metaModel.PatchPerson{}).Count(&total)
-	err := r.db.Order("id DESC").Offset(offset).Limit(limit).Find(&persons).Error
-	return persons, total, err
-}
-
-func (r *MetadataRepository) GetPersonByID(id int) (*metaModel.PatchPerson, error) {
-	var person metaModel.PatchPerson
-	err := r.db.Preload("Aliases").First(&person, id).Error
-	return &person, err
-}
-
-func (r *MetadataRepository) SearchPersons(queries []string) ([]metaModel.PatchPerson, error) {
-	var persons []metaModel.PatchPerson
-	query := r.db.Model(&metaModel.PatchPerson{})
-
-	for _, q := range queries {
-		like := fmt.Sprintf("%%%s%%", q)
-		query = query.Where("name_zh_cn ILIKE ? OR name_ja_jp ILIKE ? OR name_en_us ILIKE ?", like, like, like)
-	}
-
-	err := query.Limit(100).Find(&persons).Error
-	return persons, err
-}
-
-// ===== Releases =====
-
-func (r *MetadataRepository) GetReleasesByMonth(year, month int) ([]metaModel.PatchRelease, error) {
-	var releases []metaModel.PatchRelease
-	prefix := fmt.Sprintf("%04d-%02d", year, month)
-	err := r.db.Where("released LIKE ?", prefix+"%").
-		Order("released ASC").Find(&releases).Error
-	return releases, err
-}

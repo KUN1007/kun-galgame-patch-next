@@ -39,9 +39,3 @@ type GetMetadataRequest struct {
 	Page  int `query:"page" validate:"required,min=1"`
 	Limit int `query:"limit" validate:"required,min=1,max=72"`
 }
-
-// GetReleaseRequest is the request for fetching releases by month
-type GetReleaseRequest struct {
-	Year  int `query:"year" validate:"required,min=1,max=5000"`
-	Month int `query:"month" validate:"required,min=1,max=12"`
-}

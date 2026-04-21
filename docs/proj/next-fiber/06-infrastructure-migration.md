@@ -171,9 +171,13 @@ c.Start()
 
 ---
 
-## 6. WebSocket（聊天系统）
+## 6. WebSocket（聊天系统）~~— **已废弃（D9，2026-04-21）**~~
 
-### 当前使用
+> **本章节作废**。按 D9 决策，Socket.IO/WebSocket 整体不实现，聊天改为 REST 轮询。
+> 本节以下内容仅作历史参考。新的聊天 REST 设计见 `09-risks-and-decisions.md` D9 与
+> `03-api-endpoint-mapping.md` chat 模块节。
+
+### ~~当前使用~~（作废）
 
 库：`socket.io`（服务端）+ `socket.io-client`（客户端）
 

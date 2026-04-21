@@ -123,6 +123,10 @@ func GetRole(c *fiber.Ctx) int {
 	return user.Role
 }
 
+// SecureCookies 是否启用 HTTPS-only cookie。由 app 启动时按环境设置。
+// dev 环境下 HTTP 场景必须关掉，否则浏览器会拒绝写 cookie。
+var SecureCookies = true
+
 // CreateSession creates a new session in Redis and sets the cookie.
 func CreateSession(c *fiber.Ctx, rdb *redis.Client, session *SessionData) error {
 	sessionID, err := generateSessionID()
@@ -144,7 +148,7 @@ func CreateSession(c *fiber.Ctx, rdb *redis.Client, session *SessionData) error 
 		Value:    sessionID,
 		MaxAge:   int(SessionTTL.Seconds()),
 		HTTPOnly: true,
-		Secure:   true,
+		Secure:   SecureCookies,
 		SameSite: "Lax",
 		Path:     "/",
 	})
@@ -164,7 +168,7 @@ func DestroySession(c *fiber.Ctx, rdb *redis.Client) error {
 		Value:    "",
 		MaxAge:   -1,
 		HTTPOnly: true,
-		Secure:   true,
+		Secure:   SecureCookies,
 		SameSite: "Lax",
 		Path:     "/",
 	})

@@ -89,37 +89,45 @@ type MessageType =
 - `s3`：文件存储在 S3
 - 其他值（如 `mega`, `onedrive`, `baidu` 等）：外部链接
 
-### 创建资源流程
+### 创建资源流程（D10）
+
+前端已通过 presigned URL 直传完成文件到 S3，调用此端点只做 DB 落盘：
 
 ```
 1. 验证用户已登录且有权限
 2. 如果是 S3 资源：
-   a. 从 Redis 获取上传缓存（upload:{fileId}）
-   b. 获取文件路径和 hash
-3. 创建 patch_resource 记录（事务内）
+   a. 前端传来 s3_key（完整 S3 对象键）
+   b. 服务端 HeadObject(s3_key) 确认对象存在、size 匹配、在限额内
+      - 不通过 → DeleteObject(s3_key) 清理 + 返回错误
+3. 创建 patch_resource 记录（blake3 = ""，s3_key 填充）（事务内）
 4. 更新 patch 的聚合字段（type, language, platform 去重合并）
 5. 创建 contributor 关系（如果是新贡献者）
 6. 给上传者 +3 萌萌点
-7. 通知所有收藏该补丁的用户（patchResourceCreate 消息）
-8. 更新 patch.resource_count +1
-9. 更新 patch.resource_update_time
+7. 扣减 daily_upload_size
+8. 通知所有收藏该补丁的用户（patchResourceCreate 消息）
+9. 更新 patch.resource_count +1
+10. 更新 patch.resource_update_time
 ```
 
-### 更新资源流程
+### 更新资源流程（D10）
 
 ```
 1. 验证是资源创建者
-2. 如果更换了文件：删除旧 S3 文件，使用新文件
+2. 如果更换了文件：
+   a. 前端用新 s3_key 完成直传
+   b. 服务端 HeadObject 验证
+   c. DeleteObject(old s3_key)
+   d. patch_resource.s3_key 更新为新 key
 3. 更新 patch_resource 记录
 4. 重新计算 patch 的聚合字段（type, language, platform）
 5. 通知所有点赞该资源的用户（patchResourceUpdate 消息）
 ```
 
-### 删除资源流程
+### 删除资源流程（D10）
 
 ```
 1. 验证是资源创建者
-2. 如果是 S3 资源：删除 S3 文件
+2. 如果是 S3 资源：DeleteObject(s3_key)  ← 直接用 DB 里的 s3_key，不再拼路径
 3. 删除 patch_resource 记录
 4. 重新计算 patch 的 type 聚合字段
 5. 给删除者 -3 萌萌点
@@ -356,14 +364,15 @@ await prisma.admin_log.create({
 - 创建者角色为 `OWNER`，其他成员为 `MEMBER`
 - 支持通过链接加入
 
-### 消息操作
+### 消息操作（D9：全部 REST，无实时）
 
-- 发送消息：创建 chat_message + markdown→HTML 渲染 + 更新 chat_room.last_message_time
-- 编辑消息：保存旧内容到 chat_message_edit_history + 更新 content + status='EDITED'
-- 删除消息：仅发送者或 role >= 3 可删除 + 标记 status='DELETED' + deleted_at + deleted_by_id
-- 表情回应：toggle（相同 user+message+emoji 唯一约束）
-- 已读标记：创建 chat_message_seen 记录（user+message 唯一约束）
-- 打字指示：广播给同房间其他成员
+- 发送消息：`POST /chat/room/:link/message`。创建 chat_message + markdown→HTML 渲染 + 更新 chat_room.last_message_time
+- 编辑消息：`PUT /chat/message/:id`。保存旧内容到 chat_message_edit_history + 更新 content + status='EDITED'
+- 删除消息：`DELETE /chat/message/:id`。仅发送者或 role >= 3 可删除 + 标记 status='DELETED' + deleted_at + deleted_by_id
+- 表情回应：`POST /chat/message/:id/reaction`。toggle（相同 user+message+emoji 唯一约束）
+- 已读标记：`PUT /chat/room/:link/seen`。批量插入 chat_message_seen（user+message 唯一约束）
+
+**废弃**：打字指示、在线状态、实时推送。前端 3s 轮询 `GET /chat/room/:link/message?after=lastMsgId` 只拉新消息；老消息的编辑/删除/表情变化**不同步**，刷新页面才看到（详见 09 D9 Q11=C）。
 
 ---
 

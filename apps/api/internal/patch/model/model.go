@@ -60,11 +60,9 @@ type Patch struct {
 	Updated            time.Time `gorm:"autoUpdateTime" json:"updated"`
 
 	// Relations (for Preload)
-	User        *PatchUser       `gorm:"foreignKey:UserID" json:"user,omitempty"`
-	Aliases     []PatchAlias     `gorm:"foreignKey:PatchID" json:"alias,omitempty"`
-	Tags        []PatchTagRel    `gorm:"foreignKey:PatchID" json:"tag,omitempty"`
-	Covers      []PatchCover     `gorm:"foreignKey:PatchID" json:"cover,omitempty"`
-	Screenshots []PatchScreenshot `gorm:"foreignKey:PatchID" json:"screenshot,omitempty"`
+	User    *PatchUser    `gorm:"foreignKey:UserID" json:"user,omitempty"`
+	Aliases []PatchAlias  `gorm:"foreignKey:PatchID" json:"alias,omitempty"`
+	Tags    []PatchTagRel `gorm:"foreignKey:PatchID" json:"tag,omitempty"`
 }
 
 func (Patch) TableName() string { return "patch" }
@@ -78,7 +76,12 @@ type PatchUser struct {
 
 func (PatchUser) TableName() string { return "user" }
 
-// PatchResource represents a patch resource
+// PatchResource represents a patch resource.
+//
+// D10 变更（2026-04-21）：
+//   - 老字段 Hash（BLAKE3）改名为 Blake3，仅保留存量数据，新上传恒为 ""
+//   - 新增 S3Key：完整 S3 对象键，例如 "patch/42/xk9z.../game.zip"，
+//     所有 Put/Head/Delete 操作直接用它，不再应用层拼路径。
 type PatchResource struct {
 	ID                    int       `gorm:"primaryKey;autoIncrement" json:"id"`
 	Storage               string    `gorm:"not null" json:"storage"`
@@ -89,7 +92,8 @@ type PatchResource struct {
 	Code                  string    `gorm:"type:varchar(1007);default:''" json:"code"`
 	Password              string    `gorm:"type:varchar(1007);default:''" json:"password"`
 	Note                  string    `gorm:"type:varchar(10007);default:''" json:"note"`
-	Hash                  string    `gorm:"default:''" json:"hash"`
+	Blake3                string    `gorm:"default:''" json:"blake3"`
+	S3Key                 string    `gorm:"type:varchar(2048);default:''" json:"s3_key"`
 	Content               string    `gorm:"default:''" json:"content"`
 	Type                  JSONArray `gorm:"type:jsonb;default:'[]'" json:"type"`
 	Language              JSONArray `gorm:"type:jsonb;default:'[]'" json:"language"`
@@ -149,46 +153,8 @@ type PatchLink struct {
 
 func (PatchLink) TableName() string { return "patch_link" }
 
-// PatchCover represents a cover image (from VNDB)
-type PatchCover struct {
-	ID           int       `gorm:"primaryKey;autoIncrement" json:"id"`
-	PatchID      int       `gorm:"uniqueIndex:idx_patch_cover;index" json:"patch_id"`
-	ImageID      string    `gorm:"uniqueIndex:idx_patch_cover;type:varchar(107);index" json:"image_id"`
-	URL          string    `gorm:"type:varchar(1007)" json:"url"`
-	Width        int       `json:"width"`
-	Height       int       `json:"height"`
-	Sexual       float64   `json:"sexual"`
-	Violence     float64   `json:"violence"`
-	Votecount    int       `json:"votecount"`
-	ThumbnailURL string    `gorm:"type:varchar(1007)" json:"thumbnail_url"`
-	ThumbWidth   int       `json:"thumb_width"`
-	ThumbHeight  int       `json:"thumb_height"`
-	Created      time.Time `gorm:"autoCreateTime" json:"created"`
-	Updated      time.Time `gorm:"autoUpdateTime" json:"updated"`
-}
-
-func (PatchCover) TableName() string { return "patch_cover" }
-
-// PatchScreenshot represents a screenshot (from VNDB)
-type PatchScreenshot struct {
-	ID           int       `gorm:"primaryKey;autoIncrement" json:"id"`
-	PatchID      int       `gorm:"uniqueIndex:idx_patch_screenshot;index" json:"patch_id"`
-	ImageID      string    `gorm:"uniqueIndex:idx_patch_screenshot;type:varchar(107);index" json:"image_id"`
-	URL          string    `gorm:"type:varchar(1007)" json:"url"`
-	Width        int       `json:"width"`
-	Height       int       `json:"height"`
-	Sexual       float64   `json:"sexual"`
-	Violence     float64   `json:"violence"`
-	Votecount    int       `json:"votecount"`
-	ThumbnailURL string    `gorm:"type:varchar(1007)" json:"thumbnail_url"`
-	ThumbWidth   int       `json:"thumb_width"`
-	ThumbHeight  int       `json:"thumb_height"`
-	OrderNo      int       `gorm:"default:0" json:"order_no"`
-	Created      time.Time `gorm:"autoCreateTime" json:"created"`
-	Updated      time.Time `gorm:"autoUpdateTime" json:"updated"`
-}
-
-func (PatchScreenshot) TableName() string { return "patch_screenshot" }
+// NOTE: PatchCover / PatchScreenshot 按 D8 决策废弃，
+// 由 Galgame Wiki Service 统一管理，不在本项目落库。
 
 // Relation tables
 type UserPatchFavoriteRelation struct {

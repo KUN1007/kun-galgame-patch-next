@@ -65,7 +65,6 @@ func (h *CommonHandler) GetHome(c *fiber.Ctx) error {
 			return db.Select("id", "name", "avatar")
 		}).
 		Preload("Tags.Tag").
-		Preload("Covers").
 		Find(&patches)
 
 	resQ.Order("created DESC").Limit(6).
