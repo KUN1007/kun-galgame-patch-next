@@ -6,7 +6,7 @@
   "type": "module",
   "scripts": {
     "dev:webpack": "next dev --hostname=127.0.0.1 --port=5213",
-    "dev": "next dev --turbo --hostname=127.0.0.1 --port=5213",
+    "dev:turbo": "next dev --turbo --hostname=127.0.0.1 --port=5213",
     "build": "next build",
     "build:sitemap": "esno scripts/generateKunSitemap.ts",
     "preview": "node .next/server/server.js",

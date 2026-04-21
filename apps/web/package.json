@@ -17,6 +17,7 @@
     "@tailwindcss/vite": "^4.2.1",
     "@vueuse/core": "^14.2.1",
     "clsx": "^2.1.1",
+    "cropperjs": "^2.0.1",
     "date-fns": "^4.1.0",
     "gray-matter": "^4.0.3",
     "isomorphic-dompurify": "^3.3.0",

@@ -9,7 +9,6 @@ import (
 	"gorm.io/driver/postgres"
 	"gorm.io/gorm"
 	gormlogger "gorm.io/gorm/logger"
-	"gorm.io/gorm/schema"
 )
 
 func NewPostgres(cfg config.DatabaseConfig, mode string) *gorm.DB {
@@ -20,9 +19,6 @@ func NewPostgres(cfg config.DatabaseConfig, mode string) *gorm.DB {
 
 	db, err := gorm.Open(postgres.Open(cfg.URL), &gorm.Config{
 		SkipDefaultTransaction: true,
-		NamingStrategy: schema.NamingStrategy{
-			SingularTable: true,
-		},
 		Logger: gormlogger.Default.LogMode(logLevel),
 	})
 	if err != nil {

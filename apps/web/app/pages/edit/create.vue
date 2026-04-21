@@ -1,6 +1,4 @@
 <script setup lang="ts">
-import localforage from 'localforage'
-
 useKunSeoMeta({
   title: '创建 Galgame',
   description: '创建一个新的 Galgame 游戏条目'
@@ -17,7 +15,7 @@ const VNDBRegex = /^v\d{1,6}$/
 
 const handleSubmit = async () => {
   errors.value = {}
-  const banner = await localforage.getItem<Blob>('kun-patch-banner')
+  const banner = await getImage('kun-patch-banner')
   if (!banner) {
     useKunMessage('未检测到预览图片', 'error')
     errors.value = { banner: '请上传预览图片' }
@@ -66,7 +64,7 @@ const handleSubmit = async () => {
 
     if (res.code === 0 && res.data) {
       store.resetData()
-      await localforage.removeItem('kun-patch-banner')
+      await deleteImage('kun-patch-banner')
       useKunMessage('发布完成, 正在跳转到游戏页面', 'success')
       await navigateTo(`/patch/${res.data}/introduction`)
     } else {
