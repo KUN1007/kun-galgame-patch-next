@@ -16,8 +16,8 @@
 
 | 维度 | 数量 |
 |------|------|
-| API 端点 | **67 个路由文件**（GET/POST/PUT/DELETE 约 100+ 端点） |
-| Prisma 模型 | **30**（14 个 schema 文件） |
+| API 端点 | **67 个路由文件**（GET/POST/PUT/DELETE 约 100+ 端点，Wiki 化后 Go 端约 85 个） |
+| Prisma 模型 | ~~30（14 个 schema 文件）~~ → **21**（10 个 schema 文件，详见 D8） |
 | 服务端工具函数 | **12 个文件**（`apps/next-server/utils/`） |
 | WebSocket 事件处理 | **5 个**（message/reaction/seen/typing/roomStatus） |
 | 定时任务 | **2 个**（每日重置、每小时清理） |
@@ -152,6 +152,6 @@ apps/api/
 | `user/` | `user/` | 资料、设置、关注、签到、头像 |
 | `message/` | `message/` | 通知消息 CRUD |
 | `admin/` | `admin/` + `apply/` | 管理后台、创作者审批 |
-| `metadata/` | `tag/` + `character/` + `company/` + `person/` + `release/` | 元数据查询/搜索 |
+| `metadata/` | `tag/` + `company/` | 元数据查询/搜索（`character/`、`person/`、`release/` 已外移到 Galgame Wiki，详见 D8） |
 | `chat/` | `chat-room/` + WebSocket 事件 | 聊天室 + 实时消息 |
 | `common/` | `home/` + `search/` + `comment/` + `resource/` + `galgame/` + `hikari/` + `moyu/` | 公共端点 |

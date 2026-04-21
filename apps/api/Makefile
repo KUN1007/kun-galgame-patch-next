@@ -1,4 +1,4 @@
-.PHONY: dev build start test vet format tidy clean
+.PHONY: dev build start test vet format tidy clean migrate migrate-up migrate-down
 
 # Development with hot-reload (requires: go install github.com/air-verse/air@latest)
 dev:
@@ -31,6 +31,18 @@ tidy:
 # Clean build artifacts
 clean:
 	rm -rf ./build ./tmp
+
+# Run all pending migrations (interactive confirmation)
+migrate-up:
+	go run ./cmd/migrate -dir=up
+
+# Roll back the last migration (interactive confirmation)
+migrate-down:
+	go run ./cmd/migrate -dir=down -step=1
+
+# Generic passthrough: `make migrate ARGS="-only=001 -yes"`
+migrate:
+	go run ./cmd/migrate $(ARGS)
 
 # Update dependencies
 update:

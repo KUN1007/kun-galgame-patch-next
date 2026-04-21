@@ -255,13 +255,13 @@ Go 端统一包裹为：
 | GET `/api/tag/galgame?tagId=&page=` | GET `/api/tag/:id/patch` | GET | 可选 | 标签下的补丁 |
 | POST `/api/tag/search` | POST `/api/tag/search` | POST | 无 | 搜索标签 |
 
-#### 角色
+#### ~~角色~~（已废弃，D8）
 
-| 当前端点 | Go 端点 | 方法 | 说明 |
-|---------|---------|------|------|
-| GET `/api/character?page=&limit=` | GET `/api/character` | GET | 角色列表 |
-| GET `/api/character?characterId=` | GET `/api/character/:id` | GET | 角色详情 |
-| POST `/api/character/search` | POST `/api/character/search` | POST | 搜索角色 |
+> **不迁移到 Go**。前端改为从 Galgame Wiki Service 读取角色数据。
+>
+> - ~~GET `/api/character?page=&limit=` → GET `/api/character`~~
+> - ~~GET `/api/character?characterId=` → GET `/api/character/:id`~~
+> - ~~POST `/api/character/search`~~
 
 #### 公司
 
@@ -273,19 +273,17 @@ Go 端统一包裹为：
 | GET `/api/company/galgame?companyId=&page=` | GET `/api/company/:id/patch` | GET | 可选 | 公司下的补丁 |
 | POST `/api/company/search` | POST `/api/company/search` | POST | 无 | 搜索公司 |
 
-#### 人物
+#### ~~人物~~（已废弃，D8）
 
-| 当前端点 | Go 端点 | 方法 | 说明 |
-|---------|---------|------|------|
-| GET `/api/person?page=&limit=` | GET `/api/person` | GET | 人物列表 |
-| GET `/api/person?personId=` | GET `/api/person/:id` | GET | 人物详情 |
-| POST `/api/person/search` | POST `/api/person/search` | POST | 搜索人物 |
+> **不迁移到 Go**。前端改为从 Galgame Wiki Service 读取人物/声优数据。
+>
+> - ~~GET `/api/person?page=&limit=`~~、~~GET `/api/person/:id`~~、~~POST `/api/person/search`~~
 
-#### 发售日历
+#### ~~发售日历~~（已废弃，D8）
 
-| 当前端点 | Go 端点 | 方法 | 说明 |
-|---------|---------|------|------|
-| GET `/api/release?year=&month=` | GET `/api/release` | GET | 月度发售列表 |
+> **不迁移到 Go**。前端改为从 Galgame Wiki Service 查询月度发售列表。
+>
+> - ~~GET `/api/release?year=&month=`~~
 
 ---
 
@@ -361,7 +359,9 @@ WebSocket 端点（Socket.IO 或原生 WS）在 `06-infrastructure-migration.md`
 | user（状态 + 资料 + 设置 + 关注） | 20 |
 | message | 5 |
 | admin（评论 + 资源 + 用户 + 审批 + 设置 + 统计） | 18 |
-| metadata（tag + char + company + person + release） | 15 |
+| metadata（tag + company，**不含 char/person/release**） | 11 |
 | common（首页 + 搜索 + 评论 + 资源 + galgame + 申请 + 外部） | 10 |
 | chat（REST） | 4 |
-| **合计** | **~99** |
+| **合计** | **~95** |
+
+> Galgame 元数据（character / person / release）不统计在内，由 Galgame Wiki Service 独立提供。

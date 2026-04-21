@@ -147,6 +147,7 @@
     "stylelint",
     "Subsampling",
     "superjson",
+    "tablename",
     "tailwindcss",
     "tanstack",
     "testutil",

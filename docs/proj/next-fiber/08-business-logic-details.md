@@ -327,19 +327,18 @@ await prisma.admin_log.create({
 
 ### VNDB 同步（edit/sync）
 
-当补丁有 `vndb_id` 时，从 VNDB API 同步以下数据：
+> **⚠️ 变更（2026-04-21）**：VNDB 同步仅保留**标签**和**公司**两类本地数据的同步；封面、截图、角色、人物、发售信息全部由 Galgame Wiki Service 统一管理，本项目不再复制落盘。
+
+当补丁有 `vndb_id` 时，本地只同步以下数据：
 
 ```
-1. 封面图（patch_cover）
-2. 截图（patch_screenshot）
-3. 角色（patch_char + patch_char_alias + patch_char_relation）
-4. 人物/声优（patch_person + patch_person_alias + patch_person_relation + patch_char_person_relation）
-5. 发售信息（patch_release）
-6. 标签（patch_tag + patch_tag_relation）
-7. 公司（patch_company + patch_company_relation）
+1. 标签（patch_tag + patch_tag_relation）
+2. 公司（patch_company + patch_company_relation）
 ```
 
-同步前会清理现有数据（cleanup），然后重新导入。
+~~封面图（patch_cover）~~、~~截图（patch_screenshot）~~、~~角色（patch_char 等）~~、~~人物/声优（patch_person 等）~~、~~发售信息（patch_release）~~ — 这些前端直接/通过代理向 Galgame Wiki 查询，以 `patch.vndb_id` 为键。
+
+同步前会清理本地的 tag/company 关系，然后重新导入。
 
 ---
 

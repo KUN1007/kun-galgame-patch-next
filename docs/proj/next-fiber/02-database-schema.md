@@ -1,31 +1,46 @@
 # 数据库 Schema 与 GORM 模型映射
 
+> **⚠️ 变更（2026-04-21）：Galgame 元数据外移到 Wiki Service**
+>
+> 以下 Prisma schema 文件的所有模型**不再在本项目中实现**，对应的 Go 模型/仓储/迁移均跳过：
+>
+> - `patch_char.prisma` — `patch_char`, `patch_char_alias`, `patch_char_relation`, `patch_char_person_relation`
+> - `patch_person.prisma` — `patch_person`, `patch_person_alias`, `patch_person_relation`
+> - `patch_release.prisma` — `patch_release`
+> - `patch_media.prisma` — `patch_cover`, `patch_screenshot`
+>
+> 所有 Galgame 元数据（角色、声优/人物、发售信息、封面、截图）统一从 Galgame Wiki Service 通过 `GalgameClient` 获取，详见 `docs/galgame_wiki/integration-guide.md`。本项目只保留「补丁-VNDB ID」绑定关系（即 `patch.vndb_id` 字段），由前端/后端以该字段为 key 去 Wiki API 查询。
+>
+> 同时影响：
+> - `edit/sync/` 中的 VNDB 同步逻辑（cover/screenshot/char/person/release）**全部删除**，创建补丁时不再在本地落盘这些元数据。
+> - Next.js 的 `/api/character`、`/api/person`、`/api/release` 端点**不再迁移到 Go 端**，前端改为直接调 Wiki Service 或通过本服务代理转发。
+> - 原 `apps/api/internal/patch/model/model.go` 中的 `PatchCover`、`PatchScreenshot` 模型**应删除**。
+> - 本项目从 30 个模型缩减到 **21 个**（去掉 10 个元数据模型）。
+
 ## 现有 Prisma Schema 概览
 
-项目有 14 个 Prisma schema 文件，定义 30 个模型：
+项目现余 10 个 Prisma schema 文件，定义 21 个模型（已剔除 Wiki 化的元数据表）：
 
 | Schema 文件 | 模型 | 说明 |
 |------------|------|------|
 | `user.prisma` | user, oauth_account, admin_log, user_follow_relation, user_message, user_patch_favorite_relation, user_patch_contribute_relation, user_patch_comment_like_relation, user_patch_resource_like_relation | 用户 + 关系 + 消息 |
-| `patch.prisma` | patch | 补丁主表 |
+| `patch.prisma` | patch | 补丁主表（仅保留 `vndb_id` 作为 Wiki 外键） |
 | `patch_resource.prisma` | patch_resource | 补丁资源 |
 | `patch_comment.prisma` | patch_comment | 补丁评论 |
 | `patch_tag.prisma` | patch_tag, patch_tag_relation | 标签 + 关联 |
-| `patch_char.prisma` | patch_char, patch_char_alias, patch_char_person_relation, patch_char_relation | 角色 + 声优关联 |
 | `patch_company.prisma` | patch_company, patch_company_relation | 公司 + 关联 |
-| `patch_person.prisma` | patch_person, patch_person_alias, patch_person_relation | 人物 + 关联 |
-| `patch_release.prisma` | patch_release | VNDB 发售信息 |
 | `patch_alias.prisma` | patch_alias | 补丁别名 |
 | `patch_link.prisma` | patch_link | 外部链接 |
-| `patch_media.prisma` | patch_cover, patch_screenshot | 封面 + 截图 |
 | `patch_activity.prisma` | patch_activity | 活动追踪 |
 | `chat.prisma` | chat_room, chat_member, chat_message, chat_message_seen, chat_message_reaction, chat_message_edit_history | 聊天系统 |
+
+已废弃（**不要迁移到 Go**）：`patch_char.prisma`、`patch_person.prisma`、`patch_release.prisma`、`patch_media.prisma`。
 
 ## 已完成的 Schema 变更
 
 以下变更已在 `docs/prisma/MIGRATION_NOTES.md` 中记录并已应用到 Prisma schema：
 
-### String[] → Json @db.JsonB（16 个字段）
+### String[] → Json @db.JsonB（8 个字段，已剔除 Wiki 化字段）
 
 GORM 不原生支持 PostgreSQL `text[]`，统一改为 `jsonb`：
 
@@ -33,11 +48,10 @@ GORM 不原生支持 PostgreSQL `text[]`，统一改为 `jsonb`：
 |------|------|
 | patch | `type`, `language`, `engine`, `platform` |
 | patch_resource | `type`, `language`, `platform` |
-| patch_release | `platforms`, `languages` |
-| patch_char | `roles` |
 | patch_company | `primary_language`, `official_website`, `parent_brand`, `alias` |
-| patch_person | `roles`, `links` |
 | patch_tag | `alias` |
+
+> ~~`patch_release.platforms`、`patch_release.languages`、`patch_char.roles`、`patch_person.roles`、`patch_person.links`~~ — 这些字段随整个模型一起废弃，不需要 Go 端建模。
 
 ### 反范式化计数字段（8 个字段）
 

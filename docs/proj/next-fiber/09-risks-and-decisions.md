@@ -71,6 +71,26 @@
 - GORM 不支持 Prisma 的 `_count` 语法糖
 - 代价是事务中需同步维护计数，但这在 kungal 中已验证可控
 
+### D8: Galgame 元数据外移到 Wiki Service（2026-04-21 新增）
+
+**决定**：`patch_char` / `patch_person` / `patch_release` / `patch_media`（cover + screenshot）所有 Prisma 模型及对应 Go 模型、repository、handler **全部废弃**。Galgame 的角色、声优、发售信息、封面、截图统一由独立的 Galgame Wiki Service 管理，本项目通过 `patch.vndb_id` 外键 + `GalgameClient` HTTP 调用获取。
+
+**原因**：
+- 与 kungal 项目共用同一套 Galgame 元数据，避免多处维护
+- VNDB 同步逻辑原本复杂（见 R6），统一到 Wiki Service 后本项目只需关心「补丁-VNDB ID」绑定
+- Galgame Wiki 有自己的 revision/PR 审阅机制（`docs/galgame_wiki/01-revision-system-design.md`），比本地字段级更新更完善
+
+**影响**：
+- Next.js 端点 `/api/character`、`/api/person`、`/api/release` 不迁移到 Go
+- Next.js 端点 `/api/edit/sync/*`（VNDB 同步）在 Go 端只保留 tag/company 同步
+- 前端补丁详情页的角色/截图/封面/发售信息改为从 Wiki Service 拉取
+- 原 `apps/api/internal/patch/model/model.go` 中 `PatchCover`、`PatchScreenshot` 结构体删除
+- 相关风险 R6（VNDB 同步复杂度）大幅降低
+
+**关联文档**：
+- `docs/galgame_wiki/integration-guide.md` — `GalgameClient` 封装与认证透传
+- `docs/galgame_wiki/api-reference.md` — Wiki Service 端点清单
+
 ---
 
 ## 风险清单
@@ -128,14 +148,16 @@
 - 分模块逐步迁移，每次只切一个模块到 Go
 - 每个模块切换后进行完整的端到端测试
 
-### R6: VNDB 同步逻辑复杂度（中等风险）
+### R6: VNDB 同步逻辑复杂度（已降级，低风险）
 
-**风险**：`edit/sync/` 中的 VNDB 同步涉及 7 种数据类型的清理和重建，关系复杂。
+> **更新（2026-04-21）**：因 D8 决策，cover/screenshot/char/person/release 五类元数据不再在本项目落盘，Go 端只同步 tag/company 两类。该风险大幅降低。
+
+**残余风险**：tag/company 的同步依然需要清理旧关系 + 重新导入，事务一致性要保证。
 
 **缓解措施**：
 1. 优先迁移补丁 CRUD 的核心路径（不含同步）
-2. VNDB 同步作为独立 service 实现，逐个数据类型迁移和测试
-3. 同步失败不影响补丁创建（降级为无元数据状态）
+2. tag/company 同步作为独立 service 实现
+3. 同步失败不影响补丁创建（补丁已有 vndb_id，可通过 Wiki Service 兜底展示）
 
 ---
 
