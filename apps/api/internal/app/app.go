@@ -1,7 +1,6 @@
 package app
 
 import (
-	"context"
 	"log/slog"
 
 	adminHandler "kun-galgame-patch-api/internal/admin/handler"
@@ -16,8 +15,8 @@ import (
 	"kun-galgame-patch-api/internal/common"
 	searchPkg "kun-galgame-patch-api/internal/common/search"
 	uploadPkg "kun-galgame-patch-api/internal/common/upload"
+	galgameClient "kun-galgame-patch-api/internal/galgame/client"
 	"kun-galgame-patch-api/internal/infrastructure/cache"
-	searchInfra "kun-galgame-patch-api/internal/infrastructure/search"
 	cronJobs "kun-galgame-patch-api/internal/infrastructure/cron"
 	"kun-galgame-patch-api/internal/infrastructure/database"
 	"kun-galgame-patch-api/internal/infrastructure/mail"
@@ -25,9 +24,6 @@ import (
 	messageHandler "kun-galgame-patch-api/internal/message/handler"
 	messageRepo "kun-galgame-patch-api/internal/message/repository"
 	messageService "kun-galgame-patch-api/internal/message/service"
-	metadataHandler "kun-galgame-patch-api/internal/metadata/handler"
-	metadataRepo "kun-galgame-patch-api/internal/metadata/repository"
-	metadataService "kun-galgame-patch-api/internal/metadata/service"
 	"kun-galgame-patch-api/internal/middleware"
 	patchHandler "kun-galgame-patch-api/internal/patch/handler"
 	patchRepo "kun-galgame-patch-api/internal/patch/repository"
@@ -59,7 +55,6 @@ type App struct {
 	UserHandler     *userHandler.UserHandler
 	MessageHandler  *messageHandler.MessageHandler
 	AdminHandler    *adminHandler.AdminHandler
-	MetadataHandler *metadataHandler.MetadataHandler
 	CommonHandler   *common.CommonHandler
 	UploadHandler   *uploadPkg.Handler
 	ChatHandler     *chatHandler.ChatHandler
@@ -75,7 +70,7 @@ func New(cfg *config.Config) *App {
 	rdb := cache.NewRedis(cfg.Redis)
 	s3 := storage.NewS3(cfg.S3)
 	mailer := mail.NewMailer(cfg.Mail)
-	searchClient := searchInfra.New(cfg.Search)
+	wiki := galgameClient.New(cfg.GalgameWiki.BaseURL)
 
 	// Auth module
 	authRepository := authRepo.New(db)
@@ -102,11 +97,6 @@ func New(cfg *config.Config) *App {
 	adminSvc := adminService.New(adminRepository, rdb)
 	adminHdl := adminHandler.New(adminSvc)
 
-	// Metadata module
-	metadataRepository := metadataRepo.New(db)
-	metadataSvc := metadataService.New(metadataRepository)
-	metadataHdl := metadataHandler.New(metadataSvc)
-
 	// Common handler (direct DB access for simple aggregation endpoints)
 	commonHdl := common.NewHandler(db)
 
@@ -119,10 +109,8 @@ func New(cfg *config.Config) *App {
 	chatSvc := chatService.New(chatRepository)
 	chatHdl := chatHandler.New(chatSvc)
 
-	// Search module (Meilisearch)
-	searchHdl := searchPkg.New(db, searchClient)
-	// 启动后异步做一次全量索引，避免阻塞 HTTP 启动
-	go searchHdl.ReindexAllPatches(context.Background())
+	// Search module (D11: 委托 Galgame Wiki Service)
+	searchHdl := searchPkg.New(db, wiki)
 
 	// Cookie mode：prod 下使用 Secure cookie，dev 下 HTTP 必须关掉
 	middleware.SecureCookies = cfg.Server.Mode == "prod"
@@ -153,7 +141,6 @@ func New(cfg *config.Config) *App {
 		UserHandler:     userHdl,
 		MessageHandler:  messageHdl,
 		AdminHandler:    adminHdl,
-		MetadataHandler: metadataHdl,
 		CommonHandler:   commonHdl,
 		UploadHandler:   uploadHdl,
 		ChatHandler:     chatHdl,

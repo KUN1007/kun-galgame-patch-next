@@ -641,15 +641,26 @@ PR 详情，包含与 base revision 的差异。
 
 **查询参数**：`page`, `limit`
 
-### GET /tag/search?q=xxx
+### GET /tag/search
 
-搜索标签（按名称和别名）。
+搜索标签。**由 Meilisearch 驱动**，替代原 DB LIKE 实现。详见 [搜索 (Search)](#搜索-search) 章节。
 
-| 参数 | 类型 | 说明 |
-|------|------|------|
-| q | string | 逗号分隔的搜索词，AND 逻辑 |
+| 参数 | 类型 | 默认 | 说明 |
+|------|------|------|------|
+| q | string | `""` | 搜索词；空时按 `galgame_count` 倒序返回热门 tag |
+| category | string | — | `content` / `sexual` / `technical` |
+| limit | int | 50 | max 100 |
 
-返回最多 50 条结果。
+**响应**：
+```json
+{
+  "items": [
+    { "id": 45, "name": "校园", "aliases": ["学园"], "category": "content", "galgame_count": 850 }
+  ],
+  "total": 1,
+  "processing_time_ms": 4
+}
+```
 
 ### GET /tag/multi?tag_ids=1,2,3
 
@@ -661,7 +672,16 @@ PR 详情，包含与 base revision 的差异。
 
 标签详情 + 关联的 galgame 列表。
 
-**查询参数**：`tag_id` (必填), `page`, `limit`, `sort_field`, `sort_order`
+**查询参数**：
+
+| 参数 | 类型 | 必填 | 说明 |
+|------|------|------|------|
+| tag_id | int | 是 | tag 主键 |
+| page | int | 否 | 页码 |
+| limit | int | 否 | 每页数量 |
+| sort_field | string | 否 | `created` / `resource_update_time` / `view` |
+| sort_order | string | 否 | `asc` / `desc` |
+| content_limit | string | 否 | `sfw` / `nsfw` —— 仅返回对应分级 galgame，`total` 同步反映过滤后数量 |
 
 ### PUT /tag
 
@@ -687,13 +707,31 @@ PR 详情，包含与 base revision 的差异。
 
 开发商列表。**查询参数**：`page`, `limit`
 
-### GET /official/search?q=xxx
+### GET /official/search
 
-搜索（按名称和别名）。
+搜索会社。**由 Meilisearch 驱动**，详见 [搜索 (Search)](#搜索-search)。
+
+| 参数 | 类型 | 默认 | 说明 |
+|------|------|------|------|
+| q | string | `""` | 搜索词；空时按 `galgame_count` 倒序 |
+| category | string | — | `company` / `individual` / `amateur` |
+| lang | string | — | 按主语言过滤（`ja`, `en`, `zh-Hans` 等） |
+| limit | int | 50 | max 100 |
 
 ### GET /official/:name
 
-详情 + 关联 galgame。**查询参数**：`official_id` (必填), `page`, `limit`, `sort_field`, `sort_order`
+详情 + 关联 galgame。
+
+**查询参数**：
+
+| 参数 | 类型 | 必填 | 说明 |
+|------|------|------|------|
+| official_id | int | 是 | official 主键 |
+| page | int | 否 | 页码 |
+| limit | int | 否 | 每页数量 |
+| sort_field | string | 否 | `created` / `resource_update_time` / `view` |
+| sort_order | string | 否 | `asc` / `desc` |
+| content_limit | string | 否 | `sfw` / `nsfw`，只返回对应分级 galgame，`total` 同步反映过滤后数量 |
 
 ### PUT /official
 
@@ -721,7 +759,16 @@ PR 详情，包含与 base revision 的差异。
 
 ### GET /engine/:name
 
-详情 + 关联 galgame。**查询参数**：`engine_id` (必填), `page`, `limit`
+详情 + 关联 galgame。
+
+**查询参数**：
+
+| 参数 | 类型 | 必填 | 说明 |
+|------|------|------|------|
+| engine_id | int | 是 | engine 主键 |
+| page | int | 否 | 页码 |
+| limit | int | 否 | 每页数量 |
+| content_limit | string | 否 | `sfw` / `nsfw`，只返回对应分级 galgame，`total` 同步反映过滤后数量 |
 
 ### PUT /engine
 
@@ -799,6 +846,105 @@ PR 详情，包含与 base revision 的差异。
 
 ---
 
+## 搜索 (Search)
+
+由 **Meilisearch** 驱动的搜索，对应 3 个 index：
+
+| Index uid | 对应实体 | 文档数级别 |
+|-----------|---------|-----------|
+| `galgames` | Galgame | ~60k |
+| `galgame_tags` | Tag | ~3k |
+| `galgame_officials` | Official | ~22k |
+
+`/tag/search` 和 `/official/search` 也走这套 —— 本节的能力（typo 容错、高亮、facet 聚合、CJK 分词）对它们同样适用。
+
+**共同特性**：
+- CJK 分词由 Meilisearch Charabia 原生支持（中/日/英/繁中混合友好）
+- Typo 容错：4 字以上 1 个 typo，8 字以上 2 个 typo；`vndb_id` 禁用 typo（必须精确）
+- 响应时间通常 <20ms
+- 所有 GET，**无需认证**
+
+### GET /galgame/search
+
+Galgame 全文搜索 + 多条件过滤。
+
+**查询参数**：
+
+| 参数 | 类型 | 默认 | 说明 |
+|------|------|------|------|
+| q | string | `""` | 搜索词；空时仅按 filter 返回 |
+| status | int (csv) | — | 不传即不过滤；可传 `0` / `0,1,2` 等 |
+| content_limit | `sfw` \| `nsfw` | — | 可选 |
+| age_limit | `all` \| `r18` | — | 可选 |
+| original_language | string (csv) | — | `ja-jp,en-us` 等；逗号分隔 OR |
+| tag_ids | int (csv) | — | AND：galgame 必须同时命中所有 tag |
+| official_ids | int (csv) | — | 同上 |
+| engine_ids | int (csv) | — | 同上 |
+| series_id | int | — | 精确 |
+| released_from | int | — | 年（含）|
+| released_to | int | — | 年（含）|
+| include_intro | bool | `false` | `true` 时把 `intro_*` 四语言简介也纳入搜索 |
+| sort | string | `relevance` | `relevance` / `released_desc` / `released_asc` / `view` / `updated` |
+| page | int | 1 | 1-based |
+| limit | int | 24 | max 100 |
+| facets | bool | `true` | 是否返回 facet 聚合（`age_limit`, `original_language`）|
+| highlight | bool | `true` | 是否返回高亮片段 |
+
+**响应示例**：
+
+```json
+{
+  "code": 0,
+  "message": "成功",
+  "data": {
+    "items": [
+      {
+        "id": 1142,
+        "vndb_id": "v30132",
+        "name_zh_cn": "...",
+        "name_ja_jp": "...",
+        "name_en_us": "Fate/Empire of Dirt",
+        "banner": "https://...",
+        "status": 0,
+        "content_limit": "sfw",
+        "age_limit": "r18",
+        "original_language": "ja-jp",
+        "released": "2020-05",
+        "tag_ids": [1, 2, 5],
+        "official_ids": [7],
+        "_formatted": {
+          "name_en_us": "<mark>Fate</mark>/Empire of Dirt"
+        }
+      }
+    ],
+    "total": 182,
+    "facets": {
+      "age_limit": {"all": 1, "r18": 181},
+      "original_language": {"ja-jp": 61, "en-us": 101, "zh-cn": 7}
+    },
+    "processing_time_ms": 2
+  }
+}
+```
+
+**行为说明**：
+- `tag_ids / official_ids / engine_ids`：多值 **AND**（必须同时命中）
+- `status / original_language`：多值 **OR**
+- `q` 空 + 无 `sort`：返回 `updated_ts` 倒序的近期条目
+- `q` 非空 + 无 `sort`：按相关度排序，相同分时 `view` 倒序
+- `include_intro=true` 会把简介纳入搜索，召回扩大但可能引入噪声（简介里随口提到某个词的 VN 也会被命中）
+- highlight 片段字段包含 `_formatted`，仅在命中的字段上出现
+
+### GET /tag/search
+
+见上方 [标签 (Tag)](#标签-tag) 章节的 `/tag/search`。
+
+### GET /official/search
+
+见上方 [开发商 (Official)](#开发商-official) 章节的 `/official/search`。
+
+---
+
 ## 管理统计 (Admin)
 
 ### GET /admin/stats
@@ -861,6 +1007,35 @@ Wiki 管理统计接口，返回各实体的总量和每日新增计数。
 | galgame_pr | galgame_pr |
 | galgame_revision | galgame_revision |
 
+### GET /admin/galgame
+
+管理视角的 galgame 列表（**可跨 status 查询**，区别于公开的 `/galgame` 只返回 `status=0`）。**需要认证**。
+
+**查询参数**：
+
+| 参数 | 类型 | 默认 | 说明 |
+|------|------|------|------|
+| status | int | — | 不传即不过滤；可传 `0`（已发布）/ `1`（封禁）/ `2`（草稿）|
+| search | string | — | ILIKE 匹配 vndb_id + 4 语言 name |
+| page | int | 1 | |
+| limit | int | 20 | max 100 |
+
+**响应**：`{ items: [...galgame], total: int }`
+
+### GET /admin/galgame/:gid
+
+管理视角的 galgame 详情（任意 status，preload 全部关联）。**需要认证**。返回 `Galgame` 对象含 `Alias`, `Tag.Tag`, `Official.Official`, `Engine.Engine`, `Series`。
+
+### PUT /admin/galgame/:gid/status
+
+修改 galgame 状态（发布 / 封禁 / 撤回草稿）。**需要认证**。
+
+**请求体**：
+
+```json
+{ "status": 0 }   // 0 已发布 | 1 封禁 | 2 草稿
+```
+
 ---
 
 ## 错误码
@@ -895,7 +1070,7 @@ Wiki 管理统计接口，返回各实体的总量和每日新增计数。
 
 | 模块 | 方法 | 路径 | 认证 | 数量 |
 |------|------|------|------|------|
-| **Galgame** | GET | `/galgame`, `/galgame/batch`, `/galgame/check`, `/galgame/user/:uid/stats`, `/galgame/:gid` | 公开 | 5 |
+| **Galgame** | GET | `/galgame`, `/galgame/search`, `/galgame/batch`, `/galgame/check`, `/galgame/user/:uid/stats`, `/galgame/:gid` | 公开 | 6 |
 | | POST/PUT | `/galgame`, `/galgame/:gid` | Bearer | 2 |
 | **Revision** | GET | `/galgame/:gid/revisions`, `.../:rev`, `.../:rev/diff` | 公开 | 3 |
 | | POST | `/galgame/:gid/revert` | Bearer | 1 |
@@ -904,13 +1079,30 @@ Wiki 管理统计接口，返回各实体的总量和每日新增计数。
 | **Link** | GET/POST/DELETE | `/galgame/:gid/links` | 读公开，写Bearer | 3 |
 | **Alias** | GET/POST/DELETE | `/galgame/:gid/aliases` | 读公开，写Bearer | 3 |
 | **Contributor** | GET/DELETE | `/galgame/:gid/contributors` | 读公开，删Bearer | 2 |
-| **Tag** | GET | `/tag`, `/tag/search`, `/tag/multi`, `/tag/:name` | 公开 | 4 |
+| **Tag** | GET | `/tag`, `/tag/search` (MS), `/tag/multi`, `/tag/:name` | 公开 | 4 |
 | | PUT | `/tag` | admin/mod | 1 |
-| **Official** | GET | `/official`, `/official/search`, `/official/:name` | 公开 | 3 |
+| **Official** | GET | `/official`, `/official/search` (MS), `/official/:name` | 公开 | 3 |
 | | PUT | `/official` | admin/mod | 1 |
 | **Engine** | GET | `/engine`, `/engine/:name` | 公开 | 2 |
 | | PUT | `/engine` | admin/mod | 1 |
 | **Series** | GET | `/series`, `/series/search`, `/series/:id` | 公开 | 3 |
 | | POST/PUT/DELETE | `/series`, `/series/modal`, `/series/:id` | Bearer/admin | 4 |
-| **Admin** | GET | `/admin/stats` | 公开 | 1 |
-| | | | **总计** | **49** |
+| **Admin** | GET | `/admin/stats`, `/admin/galgame`, `/admin/galgame/:gid` | Bearer | 3 |
+| | PUT | `/admin/galgame/:gid/status` | Bearer | 1 |
+| | | | **总计** | **54** |
+
+> **标注 (MS) = Meilisearch 驱动**；其余 search 端点（如 `/series/search`）仍基于 Postgres。
+
+---
+
+## 附录：Meilisearch 运维
+
+- **部署**：生产环境运行一个 Meilisearch 实例，通过 `KUN_MEILISEARCH_HOST` 注入到 wiki 服务
+- **Index 前缀**：生产无前缀（`galgames` / `galgame_tags` / `galgame_officials`）；开发/测试可设 `KUN_MEILISEARCH_INDEX_PREFIX=dev_` 避免污染
+- **启动自愈**：wiki 服务 `cmd/galgame` 启动时自动 `EnsureIndexes`（创建 index + patch settings），不推送文档
+- **写入同步**：创建/编辑 galgame、tag、official 时走 write-through goroutine 更新索引；失败只 log，由下方重建兜底
+- **全量重建**：`go run ./cmd/reindex-search [--index=galgames,tags,officials] [--batch=1000]`
+  - 首次部署必跑
+  - `sync-vndb` / `migrate-*` / 批量脚本后必跑（这些脚本不走 write-through）
+  - 建议每周低峰期 cron 跑一次对抗漂移
+- **索引 settings 变更**：改 `internal/platform/galgame/search/settings.go` 重启服务即生效；若影响已有文档解析，再跑一次 `reindex-search`

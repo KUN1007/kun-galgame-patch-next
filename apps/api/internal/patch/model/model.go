@@ -60,9 +60,11 @@ type Patch struct {
 	Updated            time.Time `gorm:"autoUpdateTime" json:"updated"`
 
 	// Relations (for Preload)
-	User    *PatchUser    `gorm:"foreignKey:UserID" json:"user,omitempty"`
-	Aliases []PatchAlias  `gorm:"foreignKey:PatchID" json:"alias,omitempty"`
-	Tags    []PatchTagRel `gorm:"foreignKey:PatchID" json:"tag,omitempty"`
+	//
+	// NOTE: tag / company 关联已按 D11 废弃，元数据统一走 Galgame Wiki。
+	// 前端需要展示时应该通过 patch.vndb_id 调 Wiki /galgame/batch。
+	User    *PatchUser   `gorm:"foreignKey:UserID" json:"user,omitempty"`
+	Aliases []PatchAlias `gorm:"foreignKey:PatchID" json:"alias,omitempty"`
 }
 
 func (Patch) TableName() string { return "patch" }
@@ -197,34 +199,5 @@ type UserPatchResourceLikeRelation struct {
 
 func (UserPatchResourceLikeRelation) TableName() string { return "user_patch_resource_like_relation" }
 
-// PatchTagRel represents a tag association (used for Preload)
-type PatchTagRel struct {
-	ID           int       `gorm:"primaryKey;autoIncrement" json:"id"`
-	PatchID      int       `gorm:"uniqueIndex:idx_patch_tag;not null" json:"patch_id"`
-	TagID        int       `gorm:"uniqueIndex:idx_patch_tag;not null" json:"tag_id"`
-	SpoilerLevel int      `gorm:"default:0" json:"spoiler_level"`
-	Created      time.Time `gorm:"autoCreateTime" json:"created"`
-	Updated      time.Time `gorm:"autoUpdateTime" json:"updated"`
-
-	Tag *PatchTag `gorm:"foreignKey:TagID" json:"tag,omitempty"`
-}
-
-func (PatchTagRel) TableName() string { return "patch_tag_relation" }
-
-// PatchTag represents a tag
-type PatchTag struct {
-	ID               int       `gorm:"primaryKey;autoIncrement" json:"id"`
-	Name             string    `gorm:"type:varchar(107)" json:"name"`
-	Provider         string    `gorm:"type:varchar(31);default:''" json:"provider"`
-	NameEnUs         string    `gorm:"type:varchar(107);default:''" json:"name_en_us"`
-	IntroductionZhCn string    `gorm:"type:varchar(10007);default:''" json:"introduction_zh_cn"`
-	IntroductionJaJp string    `gorm:"type:varchar(10007);default:''" json:"introduction_ja_jp"`
-	IntroductionEnUs string    `gorm:"type:varchar(10007);default:''" json:"introduction_en_us"`
-	Count            int       `gorm:"default:0" json:"count"`
-	Alias            JSONArray `gorm:"type:jsonb;default:'[]'" json:"alias"`
-	Category         string    `gorm:"default:'sexual'" json:"category"`
-	Created          time.Time `gorm:"autoCreateTime" json:"created"`
-	Updated          time.Time `gorm:"autoUpdateTime" json:"updated"`
-}
-
-func (PatchTag) TableName() string { return "patch_tag" }
+// NOTE: PatchTag / PatchTagRel 按 D11（2026-04-21）废弃。
+// tag 元数据统一由 Galgame Wiki 管理，通过 patch.vndb_id → Wiki /galgame/batch 获取。

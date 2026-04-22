@@ -35,11 +35,11 @@
 
 ## 🟡 P1 — 重要缺失
 
-- [x] **`POST /api/search`** — 全文搜索（2026-04-21）
-  - `infrastructure/search/search.go`：Meilisearch client + `EnsurePatchIndex` + `UpsertPatches` + `SearchPatches` + `DeletePatch`
-  - `common/search/search.go`：`POST /api/search` handler + 启动时 `ReindexAllPatches` 全量索引（500/batch，异步非阻塞）
-  - 索引字段：name×3、vndb_id、introduction×3、alias、tags；filterable：content_limit；sortable：created
-  - [ ] patch CRUD 后的增量同步（upsert/delete 钩子）— 未做，启动全量索引目前能覆盖
+- [x] **`POST /api/search`** — 全文搜索（D11，2026-04-21）
+  - 委托 Galgame Wiki `/galgame/search` + 本地 JOIN patch by vndb_id
+  - 本地 Meilisearch 完全移除（`infrastructure/search/` 删除，`meilisearch-go` 依赖去掉）
+  - 返回 `{code, message, data: {items, total}}`，每条含 Wiki 的 galgame 字段 + `has_patch` + 本站 `patch` 对象（如有）
+  - 新增 `internal/galgame/client/client.go` 作为 Wiki Service 的共享 HTTP client
 
 - [x] **`POST /api/user/image`** — 个人页内容图片上传（2026-04-21）
   - 路径 `user_{uid}/image/{uid}-{unix_ms}.jpg`，1920×1080 JPEG q=50
@@ -90,7 +90,7 @@
 
 - [x] **`cmd/migrate/`** 迁移执行器（2026-04-21）：`make migrate-up` / `make migrate-down` / `go run ./cmd/migrate -only=001 -yes`；`_migrations` 表记录已应用文件
 - [x] **`infrastructure/markdown/`** goldmark + GFM 扩展（2026-04-21）— `Render / MustRender` API
-- [x] **`infrastructure/search/`** Meilisearch client（2026-04-21）
+- [x] ~~`infrastructure/search/`~~ — D11 委托 Wiki 后已删除
 - [x] **`internal/constants/`** 业务常量（2026-04-21 补了上传相关；其他后续随模块补）
 - [x] **`middleware/ratelimit.go` 接入路由**（2026-04-21）
   - [x] `POST /user/check-in` (1/24h)

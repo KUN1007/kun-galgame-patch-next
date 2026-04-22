@@ -133,22 +133,10 @@ func (a *App) RegisterRoutes() {
 	adminRoutes.Get("/stats/sum", a.AdminHandler.GetStatsSum)
 	adminRoutes.Get("/log", a.AdminHandler.GetLogs)
 
-	// ===== Metadata Routes =====
-	// Tags
-	tagRoutes := api.Group("/tag")
-	tagRoutes.Get("/", a.MetadataHandler.GetTags)
-	tagRoutes.Get("/:id", a.MetadataHandler.GetTagByID)
-	tagRoutes.Post("/", auth, a.MetadataHandler.CreateTag)
-	tagRoutes.Get("/:id/patch", optionalAuth, a.MetadataHandler.GetPatchesByTag)
-	tagRoutes.Post("/search", a.MetadataHandler.SearchTags)
-
-	// Companies
-	companyRoutes := api.Group("/company")
-	companyRoutes.Get("/", a.MetadataHandler.GetCompanies)
-	companyRoutes.Get("/:id", a.MetadataHandler.GetCompanyByID)
-	companyRoutes.Post("/", auth, a.MetadataHandler.CreateCompany)
-	companyRoutes.Get("/:id/patch", optionalAuth, a.MetadataHandler.GetPatchesByCompany)
-	companyRoutes.Post("/search", a.MetadataHandler.SearchCompanies)
+	// NOTE: /tag/* 和 /company/* 路由按 D11（2026-04-21）废弃。
+	// tag / company 元数据完全由 Galgame Wiki Service 管理；
+	// 前端直接调 Wiki 的 /tag /tag/search /official /official/search 等端点。
+	// "按 tag/company 查补丁" 的需求通过 /api/search + tag_ids/official_ids 参数实现。
 
 	// ===== Common Routes =====
 	api.Get("/home", a.CommonHandler.GetHome)

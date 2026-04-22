@@ -28,11 +28,11 @@ model patch {
   comment_count    Int @default(0)
   resource_count   Int @default(0)
 
-  // NOTE: cover / screenshot / char_rel / person_rel / release 关系按 D8
-  //   (2026-04-21) 决策废弃，Galgame 元数据统一从 Galgame Wiki Service 获取。
+  // NOTE: 以下元数据关系按 D8/D11（2026-04-21）废弃，统一走 Galgame Wiki Service：
+  //   cover / screenshot / char_rel / person_rel / release（D8）
+  //   tag / company（D11）
+  // 本地只保留对外站链接和补丁自身数据。
 
-  company     patch_company_relation[]
-  tag         patch_tag_relation[]
   link        patch_link[]
 
   user_id Int

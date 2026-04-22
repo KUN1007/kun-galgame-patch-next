@@ -17,7 +17,7 @@
 | 维度 | 数量 |
 |------|------|
 | API 端点 | **67 个路由文件**（GET/POST/PUT/DELETE 约 100+ 端点，Wiki 化后 Go 端约 85 个） |
-| Prisma 模型 | ~~30（14 个 schema 文件）~~ → **21**（10 个 schema 文件，详见 D8） |
+| Prisma 模型 | ~~30（14 个 schema 文件）~~ → ~~21（D8）~~ → **17**（8 个 schema 文件；D11 再废 tag + company 4 张表） |
 | 服务端工具函数 | **12 个文件**（`apps/next-server/utils/`） |
 | ~~WebSocket 事件处理~~ | ~~5 个~~ → **0**（D9：全部改 REST，typing/roomStatus 直接废弃） |
 | 定时任务 | **2 个**（每日重置、每小时清理） |
@@ -40,7 +40,7 @@
 | S3 | @aws-sdk/client-s3 | ~~aws-sdk-go-v2~~ → **minio-go v7**（D10） |
 | 密码哈希 | @noble/hashes（Argon2id） | golang.org/x/crypto/argon2 |
 | 文件哈希 | BLAKE3（@noble/hashes） | lukechampine.com/blake3 |
-| 搜索 | Prisma ILIKE + 内存去重 | Meilisearch |
+| 搜索 | Prisma ILIKE + 内存去重 | **委托 Galgame Wiki Service**（D11；本地不再跑 Meilisearch） |
 | 日志 | console | log/slog |
 
 ## 迁移分阶段计划

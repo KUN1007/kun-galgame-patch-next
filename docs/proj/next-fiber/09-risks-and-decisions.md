@@ -71,6 +71,35 @@
 - GORM 不支持 Prisma 的 `_count` 语法糖
 - 代价是事务中需同步维护计数，但这在 kungal 中已验证可控
 
+### D11: tag / company 元数据也外移到 Wiki（2026-04-21 新增）
+
+**决定**：继 D8 之后更进一步，**`patch_tag` / `patch_tag_relation` / `patch_company` / `patch_company_relation` 四张表也全部废弃**。所有 tag / official（原 company）元数据由 Galgame Wiki Service 的 `galgame_tag` / `galgame_official` 表统一维护。
+
+**原因**：
+- Wiki 已经为 60k galgame 维护了 ~3k tag + ~22k official，结构更完善、覆盖更广
+- 搜索质量：Wiki 有 Meilisearch 驱动的 `/tag/search` `/official/search`，CJK 分词 + typo 容错
+- 消除"同一个 tag 被 Wiki 和本站各维护一份"的数据漂移问题
+- 简化：本项目本来只是补丁站，不需要自己建标签体系
+
+**影响**：
+- 删除 Go 模型：`PatchTag` / `PatchTagRel` / `PatchCompany` / `PatchCompanyRelation`
+- 删除整个 `internal/metadata/` 模块（handler/service/repository/dto/model）
+- 删除路由：`/api/tag/*`、`/api/company/*` 全部
+- 删除 `Preload("Tags.Tag")` 相关调用（home / patch detail / admin）
+- `POST /api/search` 改为调 `Wiki /galgame/search` → 本地 JOIN patch by vndb_id
+- 新增 `internal/galgame/client/client.go` 作为 Wiki Service 的共享 HTTP client
+- 本地 Meilisearch 完全去掉：`infrastructure/search/` 删除、`go.mod` 里 `meilisearch-go` 去掉、`.env` 里 `MEILISEARCH_*` 换成 `KUN_GALGAME_WIKI_BASE_URL`
+- SQL 迁移：`003_drop_patch_tag_company.up.sql` 删 4 张表
+
+**前端适配**：
+- 原 `/api/tag`（列表）、`/api/tag/:id`（详情）、`/api/tag/search`、POST `/api/tag` → 直接调 Wiki 的 `/tag`、`/tag/search` 等
+- 原 `/api/company/*` 同理 → Wiki 的 `/official/*`
+- 原 `/api/tag/:id/patch`（按 tag 查补丁）、`/api/company/:id/patch`（按 company 查补丁）→ 走新的 `POST /api/search`，带 `tag_ids` / `official_ids` 参数，一次返回 Wiki galgame + 本站 patch 聚合结果
+
+**D11 之后的模型精简情况**：
+- 本项目只剩 7 张真实表：`user` + OAuth/关注/消息，`patch` + alias + link + resource + comment
+- 所有元数据（galgame / tag / official / engine / series / char / person / release / cover / screenshot）都归 Wiki
+
 ### D9: 移除 Socket.IO，聊天改为 REST 轮询（2026-04-21 新增）
 
 **决定**：废弃 `apps/next-socket/` 和 go-socket.io。聊天消息的读写全部走 GET/POST，不再提供实时推送。前端通过定时轮询拉取新消息。

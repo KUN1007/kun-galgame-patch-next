@@ -9,7 +9,7 @@ type Config struct {
 	OAuth       OAuthConfig
 	S3          S3Config
 	Mail        MailConfig
-	Search      SearchConfig
+	GalgameWiki GalgameWikiConfig
 	CORS        CORSConfig
 }
 
@@ -56,9 +56,9 @@ type MailConfig struct {
 	Password string
 }
 
-type SearchConfig struct {
-	Host   string
-	APIKey string
+// GalgameWikiConfig 指向独立部署的 Galgame Wiki Service（D11）。
+type GalgameWikiConfig struct {
+	BaseURL string // 例如 http://127.0.0.1:9280/api
 }
 
 type CORSConfig struct {
@@ -104,9 +104,8 @@ func Load() *Config {
 			Username: getEnv("KUN_VISUAL_NOVEL_EMAIL_ACCOUNT", ""),
 			Password: getEnv("KUN_VISUAL_NOVEL_EMAIL_PASSWORD", ""),
 		},
-		Search: SearchConfig{
-			Host:   getEnv("MEILISEARCH_HOST", "http://127.0.0.1:7700"),
-			APIKey: getEnv("MEILISEARCH_API_KEY", ""),
+		GalgameWiki: GalgameWikiConfig{
+			BaseURL: getEnv("KUN_GALGAME_WIKI_BASE_URL", "http://127.0.0.1:9280/api"),
 		},
 		CORS: CORSConfig{
 			AllowOrigins: getEnv("CORS_ALLOW_ORIGINS", "http://127.0.0.1:5213"),

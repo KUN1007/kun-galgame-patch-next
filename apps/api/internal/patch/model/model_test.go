@@ -68,10 +68,6 @@ func TestPatchAlias_TableName(t *testing.T) {
 	assert.Equal(t, "patch_alias", model.PatchAlias{}.TableName())
 }
 
-func TestPatchTag_TableName(t *testing.T) {
-	assert.Equal(t, "patch_tag", model.PatchTag{}.TableName())
-}
-
 func TestUserPatchFavoriteRelation_TableName(t *testing.T) {
 	assert.Equal(t, "user_patch_favorite_relation", model.UserPatchFavoriteRelation{}.TableName())
 }
