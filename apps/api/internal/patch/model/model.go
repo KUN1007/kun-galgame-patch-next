@@ -29,27 +29,25 @@ func (j JSONArray) Value() (driver.Value, error) {
 	return json.Marshal(j)
 }
 
-// Patch is the main patch table
+// Patch 是本项目核心表。
+//
+// D12（2026-04-21）：几乎所有游戏元数据（name / introduction / banner / released /
+// content_limit / engine / alias）都迁到 Galgame Wiki。Patch 只保留：
+//   - 与 Wiki 的外键：vndb_id（必填）、galgame_id（Wiki 里的 id，方便批量富化）
+//   - 补丁自身数据：翻译类型 / 支持语言 / 平台 / 计数 / 用户
+//
+// 展示游戏名/封面/介绍时，通过 galgame_id 调 Wiki /galgame/batch 批量拉取。
 type Patch struct {
 	ID                 int       `gorm:"primaryKey;autoIncrement" json:"id"`
-	NameEnUs           string    `gorm:"type:varchar(1007);default:''" json:"name_en_us"`
-	NameZhCn           string    `gorm:"type:varchar(1007);default:''" json:"name_zh_cn"`
-	NameJaJp           string    `gorm:"type:varchar(1007);default:''" json:"name_ja_jp"`
-	VndbID             *string   `gorm:"uniqueIndex;type:varchar(107)" json:"vndb_id"`
+	VndbID             string    `gorm:"uniqueIndex;type:varchar(107);not null" json:"vndb_id"`
+	GalgameID          int       `gorm:"index;not null" json:"galgame_id"`
 	BID                *int      `gorm:"uniqueIndex" json:"bid"`
-	Banner             string    `gorm:"type:varchar(1007);default:''" json:"banner"`
-	IntroductionZhCn   string    `gorm:"type:varchar(100007);default:''" json:"introduction_zh_cn"`
-	IntroductionJaJp   string    `gorm:"type:varchar(100007);default:''" json:"introduction_ja_jp"`
-	IntroductionEnUs   string    `gorm:"type:varchar(100007);default:''" json:"introduction_en_us"`
-	Released           string    `gorm:"type:varchar(107);default:'unknown'" json:"released"`
-	ContentLimit       string    `gorm:"type:varchar(107);default:'sfw'" json:"content_limit"`
 	Status             int       `gorm:"default:0" json:"status"`
 	Download           int       `gorm:"default:0" json:"download"`
 	View               int       `gorm:"default:0" json:"view"`
 	ResourceUpdateTime time.Time `gorm:"autoCreateTime" json:"resource_update_time"`
 	Type               JSONArray `gorm:"type:jsonb;default:'[]'" json:"type"`
 	Language           JSONArray `gorm:"type:jsonb;default:'[]'" json:"language"`
-	Engine             JSONArray `gorm:"type:jsonb;default:'[]'" json:"engine"`
 	Platform           JSONArray `gorm:"type:jsonb;default:'[]'" json:"platform"`
 	FavoriteCount      int       `gorm:"default:0" json:"favorite_count"`
 	ContributeCount    int       `gorm:"default:0" json:"contribute_count"`
@@ -59,12 +57,8 @@ type Patch struct {
 	Created            time.Time `gorm:"autoCreateTime" json:"created"`
 	Updated            time.Time `gorm:"autoUpdateTime" json:"updated"`
 
-	// Relations (for Preload)
-	//
-	// NOTE: tag / company 关联已按 D11 废弃，元数据统一走 Galgame Wiki。
-	// 前端需要展示时应该通过 patch.vndb_id 调 Wiki /galgame/batch。
-	User    *PatchUser   `gorm:"foreignKey:UserID" json:"user,omitempty"`
-	Aliases []PatchAlias `gorm:"foreignKey:PatchID" json:"alias,omitempty"`
+	// Relations（仅 Preload 用，不对应真实列）
+	User *PatchUser `gorm:"foreignKey:UserID" json:"user,omitempty"`
 }
 
 func (Patch) TableName() string { return "patch" }
@@ -132,16 +126,7 @@ type PatchComment struct {
 
 func (PatchComment) TableName() string { return "patch_comment" }
 
-// PatchAlias represents a patch alias
-type PatchAlias struct {
-	ID      int       `gorm:"primaryKey;autoIncrement" json:"id"`
-	Name    string    `gorm:"type:varchar(1007);index" json:"name"`
-	PatchID int       `gorm:"index;not null" json:"patch_id"`
-	Created time.Time `gorm:"autoCreateTime" json:"created"`
-	Updated time.Time `gorm:"autoUpdateTime" json:"updated"`
-}
-
-func (PatchAlias) TableName() string { return "patch_alias" }
+// NOTE: PatchAlias 按 D12（2026-04-21）废弃。游戏别名由 Wiki /galgame/:gid/aliases 管理。
 
 // PatchLink represents an external link
 type PatchLink struct {

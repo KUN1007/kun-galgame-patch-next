@@ -27,7 +27,7 @@ func (r *PatchRepository) GetPatchByID(id int) (*model.Patch, error) {
 	var patch model.Patch
 	err := r.db.Preload("User", func(db *gorm.DB) *gorm.DB {
 		return db.Select("id", "name", "avatar")
-	}).Preload("Aliases").First(&patch, id).Error
+	}).First(&patch, id).Error
 	return &patch, err
 }
 
@@ -37,8 +37,6 @@ func (r *PatchRepository) GetPatchDetail(id int) (*model.Patch, error) {
 		Preload("User", func(db *gorm.DB) *gorm.DB {
 			return db.Select("id", "name", "avatar")
 		}).
-		Preload("Aliases").
-		Preload("Tags.Tag").
 		First(&patch, id).Error
 	return &patch, err
 }
@@ -68,21 +66,7 @@ func (r *PatchRepository) GetRandomPatchID() (int, error) {
 	return id, err
 }
 
-// ===== Patch Aliases =====
-
-func (r *PatchRepository) ReplaceAliases(patchID int, names []string) error {
-	return r.db.Transaction(func(tx *gorm.DB) error {
-		tx.Where("patch_id = ?", patchID).Delete(&model.PatchAlias{})
-		if len(names) == 0 {
-			return nil
-		}
-		aliases := make([]model.PatchAlias, len(names))
-		for i, name := range names {
-			aliases[i] = model.PatchAlias{PatchID: patchID, Name: name}
-		}
-		return tx.Create(&aliases).Error
-	})
-}
+// NOTE: ReplaceAliases 按 D12（2026-04-21）废弃，别名归 Wiki /galgame/:gid/aliases。
 
 // ===== Comments =====
 

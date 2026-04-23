@@ -10,6 +10,7 @@ import (
 	authModel "kun-galgame-patch-api/internal/auth/model"
 	authService "kun-galgame-patch-api/internal/auth/service"
 	"kun-galgame-patch-api/internal/infrastructure/storage"
+	patchModel "kun-galgame-patch-api/internal/patch/model"
 	"kun-galgame-patch-api/internal/user/dto"
 	"kun-galgame-patch-api/internal/user/model"
 	"kun-galgame-patch-api/internal/user/repository"
@@ -176,7 +177,7 @@ func (s *UserService) SearchUsers(query string) ([]model.UserBasic, error) {
 }
 
 // GetUserPatches retrieves the user's patch list
-func (s *UserService) GetUserPatches(uid, page, limit int) (any, int64, error) {
+func (s *UserService) GetUserPatches(uid, page, limit int) ([]patchModel.Patch, int64, error) {
 	return s.repo.GetUserPatches(uid, (page-1)*limit, limit)
 }
 
@@ -186,7 +187,7 @@ func (s *UserService) GetUserResources(uid, page, limit int) (any, int64, error)
 }
 
 // GetUserFavorites retrieves the user's favorite list
-func (s *UserService) GetUserFavorites(uid, page, limit int) (any, int64, error) {
+func (s *UserService) GetUserFavorites(uid, page, limit int) ([]patchModel.Patch, int64, error) {
 	return s.repo.GetUserFavorites(uid, (page-1)*limit, limit)
 }
 
@@ -196,7 +197,7 @@ func (s *UserService) GetUserComments(uid, page, limit int) (any, int64, error) 
 }
 
 // GetUserContributions retrieves the user's contribution list
-func (s *UserService) GetUserContributions(uid, page, limit int) (any, int64, error) {
+func (s *UserService) GetUserContributions(uid, page, limit int) ([]patchModel.Patch, int64, error) {
 	return s.repo.GetUserContributions(uid, (page-1)*limit, limit)
 }
 

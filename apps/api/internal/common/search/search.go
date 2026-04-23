@@ -106,9 +106,7 @@ func (h *Handler) Search(c *fiber.Ctx) error {
 			return response.Error(c, errors.ErrInternal(""))
 		}
 		for i := range patches {
-			if patches[i].VndbID != nil {
-				patchMap[*patches[i].VndbID] = &patches[i]
-			}
+			patchMap[patches[i].VndbID] = &patches[i]
 		}
 	}
 

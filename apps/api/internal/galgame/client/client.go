@@ -221,6 +221,22 @@ func (c *Client) SearchGalgame(ctx context.Context, p SearchGalgameParams) (*Pag
 	return &out, nil
 }
 
+// CheckGalgameByVndbID 调 /galgame/check?vndb_id=xxx，返回 (exists, galgame_id)。
+// 用于 POST /api/patch 前置校验。
+func (c *Client) CheckGalgameByVndbID(ctx context.Context, vndbID string) (exists bool, galgameID int, err error) {
+	q := url.Values{}
+	q.Set("vndb_id", vndbID)
+
+	var out struct {
+		Exists    bool `json:"exists"`
+		GalgameID int  `json:"galgame_id"`
+	}
+	if err := c.get(ctx, "/galgame/check", q, &out); err != nil {
+		return false, 0, err
+	}
+	return out.Exists, out.GalgameID, nil
+}
+
 // GalgameBatch 调 /galgame/batch?ids=1,2,3，批量取轻量 galgame 信息。
 func (c *Client) GalgameBatch(ctx context.Context, ids []int) ([]GalgameBrief, error) {
 	if len(ids) == 0 {

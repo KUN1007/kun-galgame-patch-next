@@ -1,11 +1,11 @@
 package handler
 
 import (
-	"encoding/json"
-	"io"
 	"regexp"
 	"strconv"
 
+	galgameClient "kun-galgame-patch-api/internal/galgame/client"
+	"kun-galgame-patch-api/internal/galgame/enricher"
 	"kun-galgame-patch-api/internal/middleware"
 	"kun-galgame-patch-api/internal/patch/dto"
 	"kun-galgame-patch-api/internal/patch/model"
@@ -15,20 +15,18 @@ import (
 	"kun-galgame-patch-api/pkg/utils"
 
 	"github.com/gofiber/fiber/v2"
-	"github.com/go-playground/validator/v10"
 )
 
-// 用于非创作者的 VNDB ID 校验（对齐 apps/next-web/validations）
+// 非创作者需要 vndb_id；所有情况下我们都要求 vndb_id 格式合法。
 var vndbIDRegex = regexp.MustCompile(`^v\d+$`)
-
-var patchCreateValidator = validator.New(validator.WithRequiredStructEnabled())
 
 type PatchHandler struct {
 	service *service.PatchService
+	wiki    *galgameClient.Client
 }
 
-func New(svc *service.PatchService) *PatchHandler {
-	return &PatchHandler{service: svc}
+func New(svc *service.PatchService, wiki *galgameClient.Client) *PatchHandler {
+	return &PatchHandler{service: svc, wiki: wiki}
 }
 
 func getIDParam(c *fiber.Ctx, name string) (int, error) {
@@ -43,119 +41,34 @@ func getIDParam(c *fiber.Ctx, name string) (int, error) {
 
 // CreatePatch POST /api/patch
 //
-// 请求体：multipart/form-data
-//   - banner：图片文件（server 侧 resize 到 1920x1080 内 + JPEG quality=85）
-//   - data：JSON 字符串，对应 dto.PatchCreateRequest
-//
-// 非创作者（role < 2）必须提供合法 vndb_id；启用 creator-only 时禁止非创作者创建。
+// D12（2026-04-21）：请求体简化为 JSON：{ "vndb_id": "vXXX" }。
+// 服务端会调 Wiki /galgame/check 验证并拿到 galgame_id 回填到本地。
+// 启用 creator-only 时禁止非创作者创建；非创作者必须提供合法 vndb_id（现在本来就必填）。
 func (h *PatchHandler) CreatePatch(c *fiber.Ctx) error {
 	user := middleware.MustGetUser(c)
 
-	// creator-only 全局开关
 	if h.service.IsCreatorOnlyEnabled() && user.Role < 2 {
 		return response.Error(c, errors.ErrForbidden())
 	}
 
-	// ── 解 multipart：data JSON + banner 文件 ──
-	bannerFile, err := c.FormFile("banner")
-	if err != nil || bannerFile == nil {
-		return response.Error(c, errors.ErrBadRequest("缺少 banner 文件"))
-	}
-	if bannerFile.Size > 10*1024*1024 {
-		return response.Error(c, errors.ErrBadRequest("banner 图片超过 10MB"))
-	}
-
-	dataStr := c.FormValue("data")
-	if dataStr == "" {
-		return response.Error(c, errors.ErrBadRequest("缺少 data 字段"))
-	}
 	var req dto.PatchCreateRequest
-	if err := json.Unmarshal([]byte(dataStr), &req); err != nil {
-		return response.Error(c, errors.ErrBadRequest("data 字段不是合法 JSON"))
-	}
-	if err := patchCreateValidator.Struct(&req); err != nil {
+	if err := utils.ParseAndValidate(c, &req); err != nil {
 		return response.Error(c, errors.ErrBadRequest(err.Error()))
 	}
-
-	// 非创作者必须有合法 VNDB ID
-	if user.Role < 2 && !vndbIDRegex.MatchString(req.VndbID) {
-		return response.Error(c, errors.ErrBadRequest("为防止恶意发布，仅限创作者可不填写 VNDB ID"))
+	if !vndbIDRegex.MatchString(req.VndbID) {
+		return response.Error(c, errors.ErrBadRequest("vndb_id 格式不合法（应为 vXXX）"))
 	}
 
-	// 别名清洗
-	aliases := make([]string, 0, len(req.Alias))
-	for _, a := range req.Alias {
-		if a == "" {
-			continue
-		}
-		aliases = append(aliases, a)
-	}
-
-	// 读 banner 字节
-	fh, err := bannerFile.Open()
-	if err != nil {
-		return response.Error(c, errors.ErrBadRequest("读取 banner 失败"))
-	}
-	defer fh.Close()
-	bannerBytes, err := io.ReadAll(fh)
-	if err != nil {
-		return response.Error(c, errors.ErrBadRequest("读取 banner 失败"))
-	}
-
-	id, err := h.service.CreatePatch(c.Context(), user.UID, service.CreatePatchInput{
-		VndbID:           req.VndbID,
-		NameZhCn:         req.NameZhCn,
-		NameJaJp:         req.NameJaJp,
-		NameEnUs:         req.NameEnUs,
-		IntroductionZhCn: req.IntroductionZhCn,
-		IntroductionJaJp: req.IntroductionJaJp,
-		IntroductionEnUs: req.IntroductionEnUs,
-		Alias:            aliases,
-		Released:         req.Released,
-		ContentLimit:     req.ContentLimit,
-	}, bannerBytes)
+	id, err := h.service.CreatePatch(c.Context(), user.UID, req.VndbID)
 	if err != nil {
 		return response.Error(c, errors.ErrBadRequest(err.Error()))
 	}
-
 	return response.OK(c, map[string]int{"id": id})
 }
 
-// UpdateBanner POST /api/patch/:id/banner
-// 请求体 multipart/form-data：banner 图片文件。
-func (h *PatchHandler) UpdateBanner(c *fiber.Ctx) error {
-	patchID, err := getIDParam(c, "id")
-	if err != nil {
-		return response.Error(c, err.(*errors.AppError))
-	}
-	user := middleware.MustGetUser(c)
-
-	bannerFile, err := c.FormFile("banner")
-	if err != nil || bannerFile == nil {
-		return response.Error(c, errors.ErrBadRequest("缺少 banner 文件"))
-	}
-	if bannerFile.Size > 10*1024*1024 {
-		return response.Error(c, errors.ErrBadRequest("banner 图片超过 10MB"))
-	}
-
-	fh, err := bannerFile.Open()
-	if err != nil {
-		return response.Error(c, errors.ErrBadRequest("读取 banner 失败"))
-	}
-	defer fh.Close()
-	bannerBytes, err := io.ReadAll(fh)
-	if err != nil {
-		return response.Error(c, errors.ErrBadRequest("读取 banner 失败"))
-	}
-
-	bannerURL, err := h.service.UpdateBanner(c.Context(), patchID, user.UID, user.Role, bannerBytes)
-	if err != nil {
-		return response.Error(c, errors.ErrBadRequest(err.Error()))
-	}
-	return response.OK(c, map[string]string{"banner": bannerURL})
-}
-
 // GetPatch GET /api/patch/:id
+//
+// D12：返回 patch 本身字段 + Wiki 富化的 galgame 字段 + is_favorite。
 func (h *PatchHandler) GetPatch(c *fiber.Ctx) error {
 	id, err := getIDParam(c, "id")
 	if err != nil {
@@ -167,19 +80,20 @@ func (h *PatchHandler) GetPatch(c *fiber.Ctx) error {
 		return response.Error(c, errors.ErrNotFound("patch not found"))
 	}
 
-	// Check if favorited by current user
+	card := enricher.EnrichPatch(c.Context(), h.wiki, patch)
 	result := map[string]any{
-		"patch":       patch,
+		"patch":       card,
 		"is_favorite": false,
 	}
 	if user := middleware.GetUser(c); user != nil {
 		result["is_favorite"] = h.service.IsFavorited(user.UID, id)
 	}
-
 	return response.OK(c, result)
 }
 
 // GetPatchDetail GET /api/patch/:id/detail
+//
+// D12：同 GetPatch，返回富化后的卡片。
 func (h *PatchHandler) GetPatchDetail(c *fiber.Ctx) error {
 	id, err := getIDParam(c, "id")
 	if err != nil {
@@ -190,11 +104,13 @@ func (h *PatchHandler) GetPatchDetail(c *fiber.Ctx) error {
 	if err != nil {
 		return response.Error(c, errors.ErrNotFound("patch not found"))
 	}
-
-	return response.OK(c, patch)
+	return response.OK(c, enricher.EnrichPatch(c.Context(), h.wiki, patch))
 }
 
 // UpdatePatch PUT /api/patch/:id
+//
+// D12 之后只允许"重新绑定 vndb_id"（仅创建者或 role >= 3 可操作）。
+// 游戏名/介绍/封面等全走 Wiki，本端点不再接受它们。
 func (h *PatchHandler) UpdatePatch(c *fiber.Ctx) error {
 	id, err := getIDParam(c, "id")
 	if err != nil {
@@ -205,26 +121,14 @@ func (h *PatchHandler) UpdatePatch(c *fiber.Ctx) error {
 	if err := utils.ParseAndValidate(c, &req); err != nil {
 		return response.Error(c, errors.ErrBadRequest(err.Error()))
 	}
+	if !vndbIDRegex.MatchString(req.VndbID) {
+		return response.Error(c, errors.ErrBadRequest("vndb_id 格式不合法"))
+	}
 
 	user := middleware.MustGetUser(c)
-	patch := &model.Patch{
-		NameZhCn:         req.NameZhCn,
-		NameJaJp:         req.NameJaJp,
-		NameEnUs:         req.NameEnUs,
-		IntroductionZhCn: req.IntroductionZhCn,
-		IntroductionJaJp: req.IntroductionJaJp,
-		IntroductionEnUs: req.IntroductionEnUs,
-		Released:         req.Released,
-		ContentLimit:     req.ContentLimit,
-	}
-	if req.VndbID != "" {
-		patch.VndbID = &req.VndbID
-	}
-
-	if err := h.service.UpdatePatch(id, user.UID, user.Role, patch, req.Alias); err != nil {
+	if err := h.service.UpdatePatch(c.Context(), id, user.UID, user.Role, req.VndbID); err != nil {
 		return response.Error(c, errors.ErrBadRequest(err.Error()))
 	}
-
 	return response.OKMessage(c, "Patch updated")
 }
 

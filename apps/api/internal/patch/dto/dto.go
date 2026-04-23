@@ -1,32 +1,18 @@
 package dto
 
-// PatchCreateRequest is the JSON payload inside `data` form field of POST /api/patch
-// (FormData also carries a `banner` file field).
+// PatchCreateRequest 创建补丁请求体（D12，2026-04-21）。
+//
+// 游戏元数据（name / introduction / banner / released / content_limit / alias）
+// 全部从 Galgame Wiki 获取，客户端只需要提供 vndb_id。服务端会调 Wiki
+// /galgame/check 验证并拿到 galgame_id 回填到本地。
 type PatchCreateRequest struct {
-	VndbID           string   `json:"vndb_id" validate:"max=10"`
-	NameZhCn         string   `json:"name_zh_cn" validate:"max=1007"`
-	NameJaJp         string   `json:"name_ja_jp" validate:"max=1007"`
-	NameEnUs         string   `json:"name_en_us" validate:"max=1007"`
-	IntroductionZhCn string   `json:"introduction_zh_cn" validate:"max=100007"`
-	IntroductionJaJp string   `json:"introduction_ja_jp" validate:"max=100007"`
-	IntroductionEnUs string   `json:"introduction_en_us" validate:"max=100007"`
-	Alias            []string `json:"alias" validate:"max=30,dive,min=1,max=500"`
-	Released         string   `json:"released" validate:"max=30"`
-	ContentLimit     string   `json:"content_limit" validate:"oneof=sfw nsfw"`
+	VndbID string `json:"vndb_id" validate:"required,max=10"`
 }
 
-// PatchUpdateRequest is the request body for updating a patch
+// PatchUpdateRequest D12 之后补丁本身几乎没有可编辑字段。保留此 DTO 仅用于
+// 重新绑定 vndb_id 的极端情况（比如误链）。
 type PatchUpdateRequest struct {
-	VndbID           string   `json:"vndb_id" validate:"max=10"`
-	NameZhCn         string   `json:"name_zh_cn" validate:"max=1007"`
-	NameJaJp         string   `json:"name_ja_jp" validate:"max=1007"`
-	NameEnUs         string   `json:"name_en_us" validate:"max=1007"`
-	IntroductionZhCn string   `json:"introduction_zh_cn" validate:"max=100007"`
-	IntroductionJaJp string   `json:"introduction_ja_jp" validate:"max=100007"`
-	IntroductionEnUs string   `json:"introduction_en_us" validate:"max=100007"`
-	Alias            []string `json:"alias" validate:"max=30,dive,max=1007"`
-	Released         string   `json:"released" validate:"max=30"`
-	ContentLimit     string   `json:"content_limit" validate:"oneof=sfw nsfw"`
+	VndbID string `json:"vndb_id" validate:"required,max=10"`
 }
 
 // GetPatchCommentRequest is the request for fetching a comment list

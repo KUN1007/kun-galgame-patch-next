@@ -79,13 +79,13 @@ func New(cfg *config.Config) *App {
 
 	// Patch module
 	patchRepository := patchRepo.New(db)
-	patchSvc := patchService.New(patchRepository, rdb, db, s3)
-	patchHdl := patchHandler.New(patchSvc)
+	patchSvc := patchService.New(patchRepository, rdb, db, s3, wiki)
+	patchHdl := patchHandler.New(patchSvc, wiki)
 
 	// User module
 	userRepository := userRepo.New(db)
 	userSvc := userService.New(userRepository, authSvc, s3)
-	userHdl := userHandler.New(userSvc)
+	userHdl := userHandler.New(userSvc, wiki)
 
 	// Message module
 	messageRepository := messageRepo.New(db)
@@ -98,7 +98,7 @@ func New(cfg *config.Config) *App {
 	adminHdl := adminHandler.New(adminSvc)
 
 	// Common handler (direct DB access for simple aggregation endpoints)
-	commonHdl := common.NewHandler(db)
+	commonHdl := common.NewHandler(db, wiki)
 
 	// Upload module (D10: minio-go presigned URL 直传)
 	uploadSvc := uploadPkg.New(s3, db)

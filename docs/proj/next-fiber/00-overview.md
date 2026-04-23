@@ -17,7 +17,7 @@
 | 维度 | 数量 |
 |------|------|
 | API 端点 | **67 个路由文件**（GET/POST/PUT/DELETE 约 100+ 端点，Wiki 化后 Go 端约 85 个） |
-| Prisma 模型 | ~~30（14 个 schema 文件）~~ → ~~21（D8）~~ → **17**（8 个 schema 文件；D11 再废 tag + company 4 张表） |
+| Prisma 模型 | ~~30~~ → ~~21（D8）~~ → ~~17（D11）~~ → **16**（D12 废 patch_alias 并砍 patch 表 10 列） |
 | 服务端工具函数 | **12 个文件**（`apps/next-server/utils/`） |
 | ~~WebSocket 事件处理~~ | ~~5 个~~ → **0**（D9：全部改 REST，typing/roomStatus 直接废弃） |
 | 定时任务 | **2 个**（每日重置、每小时清理） |

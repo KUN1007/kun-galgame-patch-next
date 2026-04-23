@@ -4,6 +4,8 @@ import (
 	"io"
 	"strconv"
 
+	galgameClient "kun-galgame-patch-api/internal/galgame/client"
+	"kun-galgame-patch-api/internal/galgame/enricher"
 	"kun-galgame-patch-api/internal/middleware"
 	"kun-galgame-patch-api/internal/user/dto"
 	"kun-galgame-patch-api/internal/user/service"
@@ -33,10 +35,11 @@ func readImageFormFile(c *fiber.Ctx, field string) ([]byte, error) {
 
 type UserHandler struct {
 	service *service.UserService
+	wiki    *galgameClient.Client
 }
 
-func New(svc *service.UserService) *UserHandler {
-	return &UserHandler{service: svc}
+func New(svc *service.UserService, wiki *galgameClient.Client) *UserHandler {
+	return &UserHandler{service: svc, wiki: wiki}
 }
 
 func getUID(c *fiber.Ctx) (int, error) {
@@ -96,11 +99,11 @@ func (h *UserHandler) GetUserPatches(c *fiber.Ctx) error {
 		req.Limit = 10
 	}
 
-	data, total, err := h.service.GetUserPatches(uid, req.Page, req.Limit)
+	patches, total, err := h.service.GetUserPatches(uid, req.Page, req.Limit)
 	if err != nil {
 		return response.Error(c, errors.ErrInternal(""))
 	}
-	return response.Paginated(c, data, total)
+	return response.Paginated(c, enricher.EnrichPatches(c.Context(), h.wiki, patches), total)
 }
 
 // GetUserResources GET /api/user/:uid/resource
@@ -146,11 +149,11 @@ func (h *UserHandler) GetUserFavorites(c *fiber.Ctx) error {
 		req.Limit = 10
 	}
 
-	data, total, err := h.service.GetUserFavorites(uid, req.Page, req.Limit)
+	patches, total, err := h.service.GetUserFavorites(uid, req.Page, req.Limit)
 	if err != nil {
 		return response.Error(c, errors.ErrInternal(""))
 	}
-	return response.Paginated(c, data, total)
+	return response.Paginated(c, enricher.EnrichPatches(c.Context(), h.wiki, patches), total)
 }
 
 // GetUserComments GET /api/user/:uid/comment
@@ -196,11 +199,11 @@ func (h *UserHandler) GetUserContributions(c *fiber.Ctx) error {
 		req.Limit = 10
 	}
 
-	data, total, err := h.service.GetUserContributions(uid, req.Page, req.Limit)
+	patches, total, err := h.service.GetUserContributions(uid, req.Page, req.Limit)
 	if err != nil {
 		return response.Error(c, errors.ErrInternal(""))
 	}
-	return response.Paginated(c, data, total)
+	return response.Paginated(c, enricher.EnrichPatches(c.Context(), h.wiki, patches), total)
 }
 
 // UpdateUsername PUT /api/user/username

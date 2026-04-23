@@ -1,11 +1,12 @@
 package common
 
 import (
-	"encoding/json"
 	"fmt"
 
-	patchModel "kun-galgame-patch-api/internal/patch/model"
+	galgameClient "kun-galgame-patch-api/internal/galgame/client"
+	"kun-galgame-patch-api/internal/galgame/enricher"
 	"kun-galgame-patch-api/internal/middleware"
+	patchModel "kun-galgame-patch-api/internal/patch/model"
 	userModel "kun-galgame-patch-api/internal/user/model"
 	"kun-galgame-patch-api/pkg/errors"
 	"kun-galgame-patch-api/pkg/response"
@@ -16,69 +17,48 @@ import (
 )
 
 type CommonHandler struct {
-	db *gorm.DB
+	db   *gorm.DB
+	wiki *galgameClient.Client
 }
 
-func NewHandler(db *gorm.DB) *CommonHandler {
-	return &CommonHandler{db: db}
-}
-
-// getNSFWFilter extracts the NSFW filter from the request header
-func getNSFWFilter(c *fiber.Ctx) string {
-	nsfw := c.Get("x-nsfw-header", "{}")
-	var opt struct {
-		ShowNSFW bool `json:"showNSFW"`
-	}
-	json.Unmarshal([]byte(nsfw), &opt)
-	if !opt.ShowNSFW {
-		return "sfw"
-	}
-	return ""
+func NewHandler(db *gorm.DB, wiki *galgameClient.Client) *CommonHandler {
+	return &CommonHandler{db: db, wiki: wiki}
 }
 
 // ===== Home =====
 
 type homeResponse struct {
-	GalgameCards []patchModel.Patch         `json:"galgame_cards"`
+	GalgameCards []enricher.PatchCard       `json:"galgame_cards"`
 	Resources    []patchModel.PatchResource `json:"resources"`
 	Comments     []patchModel.PatchComment  `json:"comments"`
 }
 
 // GetHome GET /api/home
+//
+// D12：NSFW 过滤能力迁到 Wiki 侧（走 /api/search）。本端点只做"本站最近的补丁"展示，
+// 富化后的 galgame 对象里有 content_limit 字段供前端客户端过滤。
 func (h *CommonHandler) GetHome(c *fiber.Ctx) error {
-	filter := getNSFWFilter(c)
-
 	var patches []patchModel.Patch
 	var resources []patchModel.PatchResource
 	var comments []patchModel.PatchComment
 
-	patchQ := h.db.Model(&patchModel.Patch{})
-	resQ := h.db.Model(&patchModel.PatchResource{})
-	commentQ := h.db.Model(&patchModel.PatchComment{})
-
-	if filter != "" {
-		patchQ = patchQ.Where("content_limit = ?", filter)
-	}
-
-	patchQ.Order("created DESC").Limit(12).
+	h.db.Model(&patchModel.Patch{}).Order("created DESC").Limit(12).
 		Preload("User", func(db *gorm.DB) *gorm.DB {
 			return db.Select("id", "name", "avatar")
-		}).
-		Preload("Tags.Tag").
-		Find(&patches)
+		}).Find(&patches)
 
-	resQ.Order("created DESC").Limit(6).
+	h.db.Model(&patchModel.PatchResource{}).Order("created DESC").Limit(6).
 		Preload("User", func(db *gorm.DB) *gorm.DB {
 			return db.Select("id", "name", "avatar")
 		}).Find(&resources)
 
-	commentQ.Order("created DESC").Limit(6).
+	h.db.Model(&patchModel.PatchComment{}).Order("created DESC").Limit(6).
 		Preload("User", func(db *gorm.DB) *gorm.DB {
 			return db.Select("id", "name", "avatar")
 		}).Find(&comments)
 
 	return response.OK(c, homeResponse{
-		GalgameCards: patches,
+		GalgameCards: enricher.EnrichPatches(c.Context(), h.wiki, patches),
 		Resources:    resources,
 		Comments:     comments,
 	})
@@ -92,31 +72,21 @@ type galgameListRequest struct {
 	SortOrder    string `query:"sortOrder" validate:"required,oneof=asc desc"`
 	Page         int    `query:"page" validate:"required,min=1"`
 	Limit        int    `query:"limit" validate:"required,min=1,max=24"`
-	YearString   string `query:"yearString" validate:"max=1007"`
-	MonthString  string `query:"monthString" validate:"max=1007"`
 }
 
 // GetGalgameList GET /api/galgame
+//
+// D12：按游戏发售年月/NSFW 过滤已迁到 Wiki（走 /api/search）。本端点只做 patch 自身
+// 字段的筛选（翻译类型 type）和排序，然后用 Wiki 富化返回。
 func (h *CommonHandler) GetGalgameList(c *fiber.Ctx) error {
 	var req galgameListRequest
 	if err := utils.ParseQueryAndValidate(c, &req); err != nil {
 		return response.Error(c, errors.ErrBadRequest(err.Error()))
 	}
 
-	filter := getNSFWFilter(c)
 	query := h.db.Model(&patchModel.Patch{})
-
-	if filter != "" {
-		query = query.Where("content_limit = ?", filter)
-	}
 	if req.SelectedType != "all" {
 		query = query.Where("type @> ?", fmt.Sprintf(`["%s"]`, req.SelectedType))
-	}
-	if req.YearString != "" && req.YearString != "0" {
-		query = query.Where("released LIKE ?", req.YearString+"%")
-		if req.MonthString != "" && req.MonthString != "0" {
-			query = query.Where("released LIKE ?", req.YearString+"-"+req.MonthString+"%")
-		}
 	}
 
 	var total int64
@@ -128,11 +98,11 @@ func (h *CommonHandler) GetGalgameList(c *fiber.Ctx) error {
 		Preload("User", func(db *gorm.DB) *gorm.DB {
 			return db.Select("id", "name", "avatar")
 		}).Find(&patches).Error
-
 	if err != nil {
 		return response.Error(c, errors.ErrInternal(""))
 	}
-	return response.Paginated(c, patches, total)
+
+	return response.Paginated(c, enricher.EnrichPatches(c.Context(), h.wiki, patches), total)
 }
 
 // ===== Global Comments =====
@@ -179,21 +149,18 @@ type resourceListRequest struct {
 }
 
 // GetGlobalResources GET /api/resource
+//
+// D12：patch.content_limit 已删除，NSFW 过滤能力由 Wiki 侧提供。本端点不再做本地 NSFW 过滤。
 func (h *CommonHandler) GetGlobalResources(c *fiber.Ctx) error {
 	var req resourceListRequest
 	if err := utils.ParseQueryAndValidate(c, &req); err != nil {
 		return response.Error(c, errors.ErrBadRequest(err.Error()))
 	}
 
-	filter := getNSFWFilter(c)
 	var resources []patchModel.PatchResource
 	var total int64
 
 	query := h.db.Model(&patchModel.PatchResource{})
-	if filter != "" {
-		query = query.Joins("JOIN patch ON patch.id = patch_resource.patch_id").
-			Where("patch.content_limit = ?", filter)
-	}
 	query.Count(&total)
 
 	sortField := req.SortField

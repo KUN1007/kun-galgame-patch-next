@@ -33,9 +33,8 @@ func (a *App) RegisterRoutes() {
 	// ===== Patch Routes =====
 	patchRoutes := api.Group("/patch")
 
-	// Create (multipart/form-data，banner + data JSON)
+	// Create（D12 后简化为 JSON { vndb_id } ）
 	patchRoutes.Post("/", auth, a.PatchHandler.CreatePatch)
-	patchRoutes.Post("/:id/banner", auth, a.PatchHandler.UpdateBanner)
 
 	// Public / optional auth
 	patchRoutes.Get("/duplicate", auth, a.PatchHandler.CheckDuplicate)

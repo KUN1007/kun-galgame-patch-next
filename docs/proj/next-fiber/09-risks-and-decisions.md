@@ -71,6 +71,50 @@
 - GORM 不支持 Prisma 的 `_count` 语法糖
 - 代价是事务中需同步维护计数，但这在 kungal 中已验证可控
 
+### D12: patch 表的所有游戏元数据字段也外移（2026-04-21 新增，收尾）
+
+**决定**：`patch` 表里以下**游戏属性**字段全部删除，统一改为通过 `patch.vndb_id` / `patch.galgame_id` 向 Galgame Wiki 拉取：
+
+- `name_en_us / name_zh_cn / name_ja_jp` → Wiki `galgame.name_*`（含 `name_zh_tw`）
+- `introduction_en_us / introduction_zh_cn / introduction_ja_jp` → Wiki `galgame.intro_*`
+- `banner` → Wiki `galgame.banner`
+- `released` → Wiki 的发售日期（用 `/galgame/search?released_from=&released_to=` 过滤）
+- `content_limit` → Wiki `galgame.content_limit`（NSFW 过滤能力转给 Wiki）
+- `engine` → Wiki `galgame.engine_ids`
+
+同时 **`patch_alias` 表整张废弃**（别名也是游戏属性）。
+
+`patch` 表精简后只剩 **patch 自身数据**：`id`、`vndb_id`（NOT NULL）、`galgame_id`（新增）、`bid`、`user_id`、翻译类型/语言/平台（`type / language / platform`）、计数字段、时间戳。
+
+**原因**：
+- 一份元数据两处维护很容易漂移；D8/D11 之后只剩 patch 表还有重复数据
+- Wiki 有版本历史、PR、rebase 等完整的编辑流程，本端做不到也没必要做
+- 减 10 个列 + 1 张表，模型更清晰
+
+**Wiki 调用策略**：
+- 新增 `internal/galgame/client.CheckGalgameByVndbID`：创建 patch 时一次性验证 vndb_id 合法 + 拿到 galgame_id 回填
+- 新增 `internal/galgame/enricher.EnrichPatches`：列表返回前用 `/galgame/batch?ids=g1,g2,g3` 一次拉所有 galgame 信息
+- 响应形状：`{...patch 字段, galgame: {id, vndb_id, name_*, banner, content_limit, ...}}`
+
+**API 变更**：
+- `POST /api/patch`：请求体从 `multipart/form-data(banner + data)` 简化为 `{vndb_id}` JSON
+- `POST /api/patch/:id/banner`：**删除**（banner 从 Wiki 拿）
+- `PUT /api/patch/:id`：简化为"重新绑定 vndb_id"的极少数场景，body 只认 `{vndb_id}`
+- `GET /api/patch/:id`、`/api/patch/:id/detail`、`/api/home`、`/api/galgame`、`/api/user/:uid/patch|favorite|contribute`：全部用 enricher 富化
+- `/api/galgame` 去掉 `yearString/monthString` 参数（按年月筛选交给 `/api/search`）
+- `/api/resource`、`/api/home` 去掉本地 NSFW 过滤（`content_limit` 已不存在；前端改用 `/api/search` 的 NSFW 过滤）
+
+**Schema 迁移**：`004_patch_meta_to_wiki.up.sql`
+- DROP 10 列（name×3 + intro×3 + banner + released + content_limit + engine）
+- DROP patch_alias 表
+- ADD `galgame_id INT NOT NULL DEFAULT 0`
+- ALTER vndb_id SET NOT NULL
+
+**前端适配**：
+- 读取 `patch.galgame.name_zh_cn` / `patch.galgame.banner` 等取代原先的平级字段
+- 创建补丁流程重设：先去 Wiki 建/搜游戏 → 拿到 vndb_id → POST /api/patch
+- 补丁详情页的"角色/截图/发售日期"等从 Wiki 详情端点拉
+
 ### D11: tag / company 元数据也外移到 Wiki（2026-04-21 新增）
 
 **决定**：继 D8 之后更进一步，**`patch_tag` / `patch_tag_relation` / `patch_company` / `patch_company_relation` 四张表也全部废弃**。所有 tag / official（原 company）元数据由 Galgame Wiki Service 的 `galgame_tag` / `galgame_official` 表统一维护。
