@@ -176,3 +176,37 @@ func (r *AdminRepository) CreateLog(adminUID int, logType string, data any) erro
 	}
 	return r.db.Create(log).Error
 }
+
+// ===== Orphan Patches (D12 清理用) =====
+
+// GetOrphanPatches 返回 galgame_id=0（无法在 Wiki 找到对应游戏）的补丁分页列表。
+// 按资源数降序，方便管理员先处理有资源的"重要"孤儿。
+//
+// 分两类：
+//   - vndb_id LIKE 'pending-%'：创建时没填 vndb_id
+//   - vndb_id 形如 vN 但 Wiki 查不到：填错了或 Wiki 里已删
+func (r *AdminRepository) GetOrphanPatches(offset, limit int) ([]patchModel.Patch, int64, error) {
+	var patches []patchModel.Patch
+	var total int64
+	query := r.db.Model(&patchModel.Patch{}).Where("galgame_id = 0")
+	query.Count(&total)
+	err := query.Order("resource_count DESC, comment_count DESC, favorite_count DESC, id ASC").
+		Offset(offset).Limit(limit).
+		Preload("User", func(db *gorm.DB) *gorm.DB {
+			return db.Select("id", "name", "avatar")
+		}).Find(&patches).Error
+	return patches, total, err
+}
+
+// CountOrphanPatches 返回 galgame_id=0 的总数，分 pending / 真实格式但 Wiki 缺失两类。
+func (r *AdminRepository) CountOrphanPatches() (pendingCount, badVndbCount int64, err error) {
+	if err := r.db.Model(&patchModel.Patch{}).
+		Where("galgame_id = 0 AND vndb_id LIKE 'pending-%'").
+		Count(&pendingCount).Error; err != nil {
+		return 0, 0, err
+	}
+	err = r.db.Model(&patchModel.Patch{}).
+		Where("galgame_id = 0 AND vndb_id NOT LIKE 'pending-%'").
+		Count(&badVndbCount).Error
+	return
+}

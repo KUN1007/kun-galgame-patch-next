@@ -7,7 +7,8 @@ import (
 )
 
 func (a *App) RegisterRoutes() {
-	api := a.Fiber.Group("/api")
+	// API 版本化前缀，与前端 apiBase=http://host/api/v1 对齐
+	api := a.Fiber.Group("/api/v1")
 
 	auth := middleware.Auth(a.RDB, a.Config.OAuth)
 	optionalAuth := middleware.OptionalAuth(a.RDB, a.Config.OAuth)
@@ -131,6 +132,9 @@ func (a *App) RegisterRoutes() {
 	adminRoutes.Get("/stats", a.AdminHandler.GetStats)
 	adminRoutes.Get("/stats/sum", a.AdminHandler.GetStatsSum)
 	adminRoutes.Get("/log", a.AdminHandler.GetLogs)
+
+	// D12：Wiki 里查不到 galgame 的"孤儿补丁"，给 admin 人工处理
+	adminRoutes.Get("/patch/orphans", a.AdminHandler.GetOrphanPatches)
 
 	// NOTE: /tag/* 和 /company/* 路由按 D11（2026-04-21）废弃。
 	// tag / company 元数据完全由 Galgame Wiki Service 管理；

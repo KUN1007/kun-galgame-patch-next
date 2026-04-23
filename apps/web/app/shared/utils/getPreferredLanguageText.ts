@@ -1,7 +1,11 @@
 export const getPreferredLanguageText = (
-  language: KunLanguage,
+  language: KunLanguage | null | undefined,
   locale?: Language
 ): string => {
+  if (!language) {
+    return ''
+  }
+
   const languagePriority: Record<Language, Language[]> = {
     'en-us': ['en-us', 'ja-jp', 'zh-tw', 'zh-cn'],
     'ja-jp': ['ja-jp', 'en-us', 'zh-tw', 'zh-cn'],

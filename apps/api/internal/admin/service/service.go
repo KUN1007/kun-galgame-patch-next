@@ -174,3 +174,15 @@ func (s *AdminService) GetStatsSum() *dto.AdminStatsSumResponse {
 func (s *AdminService) GetLogs(page, limit int) (any, int64, error) {
 	return s.repo.GetLogs((page-1)*limit, limit)
 }
+
+// ===== Orphan Patches (D12) =====
+
+// GetOrphanPatches 返回 galgame_id=0 的孤儿补丁列表。
+func (s *AdminService) GetOrphanPatches(page, limit int) ([]patchModel.Patch, int64, error) {
+	return s.repo.GetOrphanPatches((page-1)*limit, limit)
+}
+
+// CountOrphanPatches 返回孤儿补丁分类计数。
+func (s *AdminService) CountOrphanPatches() (pending, badVndb int64, err error) {
+	return s.repo.CountOrphanPatches()
+}

@@ -17,7 +17,7 @@ interface ApiError {
 
 export const useApi = () => {
   const config = useRuntimeConfig()
-  const baseUrl = config.public.apiBase || 'http://127.0.0.1:9277/api/v1'
+  const baseUrl = config.public.apiBase || 'http://127.0.0.1:5214/api/v1'
   const accessToken = useCookie('access_token')
 
   const getAuthHeaders = (): Record<string, string> => {

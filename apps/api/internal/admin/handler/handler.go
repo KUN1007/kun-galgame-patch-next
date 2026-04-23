@@ -316,3 +316,32 @@ func (h *AdminHandler) GetLogs(c *fiber.Ctx) error {
 	}
 	return response.Paginated(c, logs, total)
 }
+
+// ===== Orphan Patches (D12) =====
+
+// GetOrphanPatches GET /api/admin/patch/orphans
+//
+// 列出所有 galgame_id=0 的补丁，即 Wiki 里查不到对应游戏的"孤儿"。
+// 管理员可以针对每条：
+//   - 通过 PUT /api/patch/:id 重绑正确的 vndb_id（会再调 Wiki /galgame/check 验证）
+//   - 或 DELETE /api/patch/:id 删除
+//   - 若 vndb_id 真实存在但 Wiki 还没建，先去 Wiki 创建该游戏再回来重绑
+//
+// 响应在 `items` 旁边额外给 pending_count（vndb_id 空=pending-N）和 bad_vndb_count（vndb_id 格式对但 Wiki 缺失）。
+func (h *AdminHandler) GetOrphanPatches(c *fiber.Ctx) error {
+	var req dto.AdminPaginationRequest
+	if err := utils.ParseQueryAndValidate(c, &req); err != nil {
+		return response.Error(c, errors.ErrBadRequest(err.Error()))
+	}
+	items, total, err := h.service.GetOrphanPatches(req.Page, req.Limit)
+	if err != nil {
+		return response.Error(c, errors.ErrInternal(""))
+	}
+	pending, badVndb, _ := h.service.CountOrphanPatches()
+	return response.OK(c, map[string]any{
+		"items":           items,
+		"total":           total,
+		"pending_count":   pending,
+		"bad_vndb_count":  badVndb,
+	})
+}

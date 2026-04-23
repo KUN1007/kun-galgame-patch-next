@@ -28,9 +28,9 @@ func NewHandler(db *gorm.DB, wiki *galgameClient.Client) *CommonHandler {
 // ===== Home =====
 
 type homeResponse struct {
-	GalgameCards []enricher.PatchCard       `json:"galgame_cards"`
-	Resources    []patchModel.PatchResource `json:"resources"`
-	Comments     []patchModel.PatchComment  `json:"comments"`
+	Galgames  []enricher.GalgameCard     `json:"galgames"`
+	Resources []patchModel.PatchResource `json:"resources"`
+	Comments  []patchModel.PatchComment  `json:"comments"`
 }
 
 // GetHome GET /api/home
@@ -58,9 +58,9 @@ func (h *CommonHandler) GetHome(c *fiber.Ctx) error {
 		}).Find(&comments)
 
 	return response.OK(c, homeResponse{
-		GalgameCards: enricher.EnrichPatches(c.Context(), h.wiki, patches),
-		Resources:    resources,
-		Comments:     comments,
+		Galgames:  enricher.EnrichPatches(c.Context(), h.wiki, patches),
+		Resources: resources,
+		Comments:  comments,
 	})
 }
 

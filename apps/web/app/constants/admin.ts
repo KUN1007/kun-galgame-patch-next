@@ -44,6 +44,7 @@ export const ADMIN_MENU = [
   { name: '创作者管理', href: '/admin/creator', icon: 'lucide:badge-check' },
   { name: '补丁资源管理', href: '/admin/resource', icon: 'lucide:puzzle' },
   { name: 'Galgame 管理', href: '/admin/galgame', icon: 'lucide:gamepad-2' },
+  { name: '孤儿补丁', href: '/admin/orphans', icon: 'lucide:unlink' },
   { name: '评论管理', href: '/admin/comment', icon: 'lucide:message-square' },
   { name: '管理日志', href: '/admin/log', icon: 'lucide:file-clock' },
   { name: '网站设置', href: '/admin/setting', icon: 'lucide:settings' }

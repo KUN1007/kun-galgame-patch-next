@@ -62,9 +62,11 @@ export default defineNuxtConfig({
 
   runtimeConfig: {
     public: {
+      // 本项目 Go Fiber API（不是 KUN OAuth）。Go 端口从 apps/api/.env 的 KUN_SERVER_PORT 读，dev 默认 5214。
       apiBase:
         process.env.KUN_VISUAL_NOVEL_NUXT_PUBLIC_API_BASE ||
-        'http://127.0.0.1:9277/api/v1',
+        'http://127.0.0.1:5214/api/v1',
+      // KUN OAuth（独立服务，端口 9277，勿混淆）
       oauthServerUrl:
         process.env.NUXT_PUBLIC_KUN_OAUTH_SERVER_URL ||
         'http://127.0.0.1:9277/api/v1',
