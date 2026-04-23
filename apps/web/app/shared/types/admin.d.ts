@@ -37,13 +37,8 @@ interface AdminCreator {
   created: Date | string
 }
 
-interface AdminGalgame {
-  id: number
-  name: KunLanguage
-  banner: string
-  user: KunUser
-  created: Date | string
-}
+// NOTE: AdminGalgame 和对应的 /admin/galgame 页面按 D12 已废弃。
+// 补丁管理通过 /admin/orphans 和 /admin/resource 完成。
 
 interface AdminResourceItem {
   id: number

@@ -102,7 +102,10 @@ func (h *CommonHandler) GetGalgameList(c *fiber.Ctx) error {
 		return response.Error(c, errors.ErrInternal(""))
 	}
 
-	return response.Paginated(c, enricher.EnrichPatches(c.Context(), h.wiki, patches), total)
+	return response.OK(c, map[string]any{
+		"galgames": enricher.EnrichPatches(c.Context(), h.wiki, patches),
+		"total":    total,
+	})
 }
 
 // ===== Global Comments =====

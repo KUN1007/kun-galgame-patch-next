@@ -23,9 +23,7 @@ const displayName = computed(() =>
 
 useKunSeoMeta({
   title: displayName.value || `补丁 ${patchId.value}`,
-  description: patch.value
-    ? getPreferredLanguageText(patch.value.introductionMarkdown)
-    : ''
+  description: displayName.value ? `${displayName.value} 的补丁下载` : ''
 })
 
 onMounted(async () => {

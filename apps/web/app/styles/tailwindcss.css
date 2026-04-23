@@ -511,6 +511,16 @@
 }
 
 @layer utilities {
+  html,
+  body {
+    /* 根容器要有实色背景，否则 .kun-dark-mode 只改了 CSS 变量、
+       DOM 上没有人真正 paint 暗色，浏览器默认白色会透下来。
+       注意：不用 hsla()，因为根背景不需要透明（无下层可透） */
+    background-color: hsl(var(--background));
+    color: hsl(var(--foreground));
+    min-height: 100vh;
+  }
+
   body {
     font-family:
       -apple-system,

@@ -10,10 +10,10 @@ export const keyLabelMap: Record<string, string> = {
   '/about': '关于我们',
   '/admin/comment': '评论管理',
   '/admin/creator': '创作者管理',
-  '/admin/galgame': 'Galgame 管理',
   '/admin/log': '管理日志',
   '/admin': '管理页面',
   '/admin/resource': '补丁资源管理',
+  '/admin/orphans': '孤儿补丁',
   '/admin/setting': '管理系统设置',
   '/admin/user': '用户管理',
   '/apply': '创作者申请',
@@ -36,10 +36,6 @@ export const keyLabelMap: Record<string, string> = {
   '/resource': '资源下载',
   '/search': '搜索',
   '/settings/user': '用户设置',
-  '/tag': '补丁标签',
-  '/tag/[id]': '标签详情',
-  '/company': '会社分类',
-  '/company/[id]': '会社详情',
   '/user/[id]/comment': '用户评论',
   '/user/[id]/contribute': '用户贡献',
   '/user/[id]/favorite': '用户收藏',
@@ -47,4 +43,4 @@ export const keyLabelMap: Record<string, string> = {
   '/user/[id]/resource': '用户资源'
 }
 
-export const dynamicRoutes = ['patch', 'tag', 'company', 'user']
+export const dynamicRoutes = ['patch', 'user']

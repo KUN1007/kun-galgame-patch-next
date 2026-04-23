@@ -3,12 +3,11 @@ export interface KunNavItem {
   href: string
 }
 
+// NOTE: /tag, /company, /character, /person, /release 已按 D8/D11/D12 废弃，
+// 这些元数据统一由 Galgame Wiki Service 托管（galgame.kungal.com）。
 export const kunNavItem: KunNavItem[] = [
   { name: '下载', href: '/galgame' },
   { name: '发布', href: '/edit/create' },
-  { name: '标签', href: '/tag' },
-  { name: '会社', href: '/company' },
-  { name: '新作', href: '/release' },
   { name: '排行', href: '/ranking/user' },
   { name: '关于', href: '/about' }
 ]
@@ -48,9 +47,5 @@ export interface KunTopBarCategoryItem {
 export const kunTopBarCategories: KunTopBarCategoryItem[] = [
   { href: '/galgame', label: 'Galgame 列表', icon: 'lucide:gamepad-2' },
   { href: '/resource', label: '最新补丁列表', icon: 'lucide:puzzle' },
-  { href: '/tag', label: 'Galgame 标签列表', icon: 'lucide:tags' },
-  { href: '/company', label: 'Galgame 会社列表', icon: 'lucide:building-2' },
-  { href: '/character', label: 'Galgame 角色列表', icon: 'lucide:book-user' },
-  { href: '/person', label: 'Galgame 制作人列表', icon: 'lucide:clapperboard' },
   { href: '/ranking', label: 'Galgame 排行', icon: 'lucide:chart-column-big' }
 ]

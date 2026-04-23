@@ -66,9 +66,16 @@ func (h *PatchHandler) CreatePatch(c *fiber.Ctx) error {
 	return response.OK(c, map[string]int{"id": id})
 }
 
+// headerCard 把 GalgameCard + is_favorite 扁平化，贴合前端 PatchHeader 形状。
+type headerCard struct {
+	enricher.GalgameCard
+	IsFavorite bool `json:"isFavorite"`
+}
+
 // GetPatch GET /api/patch/:id
 //
-// D12：返回 patch 本身字段 + Wiki 富化的 galgame 字段 + is_favorite。
+// D12：直接返回 GalgameCard 扁平结构（不再套 patch / is_favorite 两层）。
+// 前端 PatchHeader = GalgameCard + isFavorite。
 func (h *PatchHandler) GetPatch(c *fiber.Ctx) error {
 	id, err := getIDParam(c, "id")
 	if err != nil {
@@ -80,20 +87,16 @@ func (h *PatchHandler) GetPatch(c *fiber.Ctx) error {
 		return response.Error(c, errors.ErrNotFound("patch not found"))
 	}
 
-	card := enricher.EnrichPatch(c.Context(), h.wiki, patch)
-	result := map[string]any{
-		"patch":       card,
-		"is_favorite": false,
-	}
+	card := headerCard{GalgameCard: enricher.EnrichPatch(c.Context(), h.wiki, patch)}
 	if user := middleware.GetUser(c); user != nil {
-		result["is_favorite"] = h.service.IsFavorited(user.UID, id)
+		card.IsFavorite = h.service.IsFavorited(user.UID, id)
 	}
-	return response.OK(c, result)
+	return response.OK(c, card)
 }
 
 // GetPatchDetail GET /api/patch/:id/detail
 //
-// D12：同 GetPatch，返回富化后的卡片。
+// D12：详情富化走 Wiki /galgame/:gid，多拿 intro / tag_ids / official_ids。
 func (h *PatchHandler) GetPatchDetail(c *fiber.Ctx) error {
 	id, err := getIDParam(c, "id")
 	if err != nil {
@@ -104,7 +107,7 @@ func (h *PatchHandler) GetPatchDetail(c *fiber.Ctx) error {
 	if err != nil {
 		return response.Error(c, errors.ErrNotFound("patch not found"))
 	}
-	return response.OK(c, enricher.EnrichPatch(c.Context(), h.wiki, patch))
+	return response.OK(c, enricher.EnrichPatchDetail(c.Context(), h.wiki, patch))
 }
 
 // UpdatePatch PUT /api/patch/:id

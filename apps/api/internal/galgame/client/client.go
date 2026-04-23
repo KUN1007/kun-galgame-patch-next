@@ -221,6 +221,69 @@ func (c *Client) SearchGalgame(ctx context.Context, p SearchGalgameParams) (*Pag
 	return &out, nil
 }
 
+// GalgameFull 是 /galgame/:gid 返回的完整 galgame（含 intro / tag_ids / official_ids）。
+// 详情页富化用。
+type GalgameFull struct {
+	ID               int    `json:"id"`
+	VndbID           string `json:"vndb_id"`
+	NameEnUs         string `json:"name_en_us"`
+	NameZhCn         string `json:"name_zh_cn"`
+	NameJaJp         string `json:"name_ja_jp"`
+	NameZhTw         string `json:"name_zh_tw"`
+	Banner           string `json:"banner"`
+	IntroEnUs        string `json:"intro_en_us"`
+	IntroZhCn        string `json:"intro_zh_cn"`
+	IntroJaJp        string `json:"intro_ja_jp"`
+	IntroZhTw        string `json:"intro_zh_tw"`
+	ContentLimit     string `json:"content_limit"`
+	AgeLimit         string `json:"age_limit"`
+	OriginalLanguage string `json:"original_language"`
+	View             int    `json:"view"`
+	SeriesID         *int   `json:"series_id"`
+	Alias            []struct {
+		ID   int    `json:"id"`
+		Name string `json:"name"`
+	} `json:"alias"`
+	Tag []struct {
+		GalgameID    int `json:"galgame_id"`
+		TagID        int `json:"tag_id"`
+		SpoilerLevel int `json:"spoiler_level"`
+		Tag          Tag `json:"tag"`
+	} `json:"tag"`
+	Official []struct {
+		GalgameID  int      `json:"galgame_id"`
+		OfficialID int      `json:"official_id"`
+		Official   Official `json:"official"`
+	} `json:"official"`
+	Engine []struct {
+		GalgameID int    `json:"galgame_id"`
+		EngineID  int    `json:"engine_id"`
+		Engine    map[string]any `json:"engine"`
+	} `json:"engine"`
+	Link []struct {
+		ID   int    `json:"id"`
+		Name string `json:"name"`
+		Link string `json:"link"`
+	} `json:"link"`
+	Created string `json:"created"`
+	Updated string `json:"updated"`
+}
+
+// GalgameDetailEnvelope 是 /galgame/:gid 的 data 壳，wiki 在 data 下又套了一层 galgame + users。
+type GalgameDetailEnvelope struct {
+	Galgame GalgameFull            `json:"galgame"`
+	Users   map[string]any         `json:"users"`
+}
+
+// GetGalgame 调 /galgame/:gid，详情页富化用。
+func (c *Client) GetGalgame(ctx context.Context, gid int) (*GalgameDetailEnvelope, error) {
+	var out GalgameDetailEnvelope
+	if err := c.get(ctx, fmt.Sprintf("/galgame/%d", gid), nil, &out); err != nil {
+		return nil, err
+	}
+	return &out, nil
+}
+
 // CheckGalgameByVndbID 调 /galgame/check?vndb_id=xxx，返回 (exists, galgame_id)。
 // 用于 POST /api/patch 前置校验。
 func (c *Client) CheckGalgameByVndbID(ctx context.Context, vndbID string) (exists bool, galgameID int, err error) {

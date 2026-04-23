@@ -1,21 +1,13 @@
 import { defineStore } from 'pinia'
 
+// D12（2026-04-21）：游戏元数据（name / introduction / banner / released /
+// content_limit / alias）由 Galgame Wiki 统一维护。发布补丁只需 vndb_id。
 export interface CreatePatchData {
-  name: KunLanguage
-  introduction: KunLanguage
   vndbId: string
-  alias: string[]
-  released: string
-  contentLimit: string
 }
 
 const initialState: CreatePatchData = {
-  name: { 'zh-cn': '', 'ja-jp': '', 'en-us': '', 'zh-tw': '' },
-  introduction: { 'zh-cn': '', 'ja-jp': '', 'en-us': '', 'zh-tw': '' },
-  vndbId: '',
-  alias: [],
-  released: '',
-  contentLimit: 'sfw'
+  vndbId: ''
 }
 
 export const useCreatePatchStore = defineStore('edit-create-patch', {

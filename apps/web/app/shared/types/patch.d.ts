@@ -1,14 +1,20 @@
+// D8 / D11 / D12 后（2026-04-21），patch 相关类型大幅精简：
+//   - cover/screenshot/char/person/release 由 Galgame Wiki 管理（D8）
+//   - tag/company 也归 Wiki（D11）
+//   - patch 自身不再存 name/introduction/banner/released/content_limit/engine/alias（D12）
+//
+// 后端 enricher 把 patch + Wiki galgame 合并成下面的形状返回。
+
 interface GalgameCard {
   id: number
   name: KunLanguage
-  vndbId: string | null
+  vndbId: string
   bid: number | null
   banner: string
   view: number
   download: number
   type: string[]
   language: string[]
-  engine: string[]
   platform: string[]
   content_limit: KunContentLimit
   status: number
@@ -20,114 +26,35 @@ interface GalgameCard {
     resource: number
     comment: number
   }
-}
-
-interface PatchCover {
-  url: string
-  image_id: string
-  width: number
-  height: number
-  thumbnail_url: string
-  thumb_width: number
-  thumb_height: number
-}
-
-interface PatchScreenshot {
-  id: number
-  image_id: string
-  url: string
-  width: number
-  height: number
-  sexual: number
-  violence: number
-  thumbnail_url: string
-  thumb_width: number
-  thumb_height: number
-  order_no: number
-}
-
-interface PatchDetailTag {
-  id: number
-  name: KunLanguage
-  category: string
-  spoiler_level: number
-  provider: string
-  count: number
-}
-
-interface PatchDetailCompany {
-  id: number
-  name: string
-  logo: string
-  count: number
-}
-
-interface PatchDetailAlias {
-  id: number
-  name: string
-}
-
-interface PatchRelease {
-  id: number
-  rid: string
-  title: string
-  released: string
-  platforms: string[]
-  languages: string[]
-  minage: number
-}
-
-interface PatchHeader {
-  id: number
-  vndbId: string | null
-  name: KunLanguage
-  banner: string
-  introductionMarkdown: KunLanguage
-  status: number
-  view: number
-  download: number
-  alias: string[]
-  type: string[]
-  language: string[]
-  platform: string[]
-  isFavorite: boolean
-  resourceUpdateTime: string | Date
-  content_limit: string
-  user: KunUser
-  cover: PatchCover[]
-  created: string
-  updated: string
-  released: string
-  _count: {
-    favorite_by: number
-    contribute_by: number
-    resource: number
-    comment: number
+  user?: KunUser
+  // 可选：Wiki 的原始 galgame 对象（含 age_limit、original_language 等）
+  galgame?: {
+    id: number
+    vndb_id: string
+    name_en_us: string
+    name_zh_cn: string
+    name_ja_jp: string
+    name_zh_tw: string
+    banner: string
+    content_limit: string
+    age_limit: string
+    original_language: string
+    user_id: number
+    resource_update_time: string
   }
 }
 
-interface PatchDetail {
-  id: number
-  bid: number | null
-  name: KunLanguage
-  banner: string
-  content_limit: string
-  view: number
-  download: number
-  released: string
-  type: string[]
-  language: string[]
-  engine: string[]
-  platform: string[]
-  vndbId: string
-  introduction: KunLanguage
-  alias: PatchDetailAlias[]
-  screenshot: PatchScreenshot[]
-  tag: PatchDetailTag[]
-  company: PatchDetailCompany[]
-  release: PatchRelease[]
-  char: PatchCharacter[]
-  person: PatchPerson[]
-  created: string
+// 补丁头部（/patch/:id）—— 现在等同于 GalgameCard + is_favorite。
+interface PatchHeader extends GalgameCard {
+  isFavorite: boolean
+}
+
+// 补丁详情（/patch/:id/detail）—— GalgameCard 基础上再附一份 Wiki 的完整 galgame 信息。
+// introductionMarkdown 由后端调 Wiki /galgame/:gid 补上。
+interface PatchDetail extends GalgameCard {
+  introductionMarkdown: KunLanguage
   updated: string
+  wikiTagIds: number[]       // Wiki 的 galgame_tag ID 列表（前端可按需再调 /tag 拉详情）
+  wikiOfficialIds: number[]  // Wiki 的 galgame_official ID 列表
+  wikiEngineIds: number[]
 }

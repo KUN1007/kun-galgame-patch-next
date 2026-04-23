@@ -27,15 +27,15 @@ const handleCheckDuplicate = async () => {
   }
   checking.value = true
   try {
-    const res = await api.get<{ patchId: number }>(
+    const res = await api.get<{ exists: boolean }>(
       `/patch/duplicate?vndbId=${vndbId.value}`
     )
-    if (res.code === 0 && res.data?.patchId) {
+    if (res.code === 0 && res.data?.exists) {
       useKunMessage(
-        '游戏重复, 该游戏已经有人发布过了, 请直接前往游戏页面创建补丁资源',
+        '游戏重复, 该游戏已经有人发布过了, 请在 Galgame 详情页添加补丁资源',
         'error'
       )
-      existPatchId.value = res.data.patchId
+      existPatchId.value = 1
     } else {
       useKunMessage('检测完成, 该游戏并未重复!', 'success')
       existPatchId.value = 0

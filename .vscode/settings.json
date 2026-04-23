@@ -125,6 +125,7 @@
     "pcid",
     "persistedstate",
     "phid",
+    "pinia",
     "PKCE",
     "pnpx",
     "postbuild",

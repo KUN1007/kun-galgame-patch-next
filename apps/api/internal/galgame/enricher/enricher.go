@@ -97,7 +97,7 @@ func EnrichPatches(ctx context.Context, wiki *galgameClient.Client, patches []pa
 	return cards
 }
 
-// EnrichPatch 单条富化（详情页用）。
+// EnrichPatch 单条富化（头部卡片用，不含 intro/tag/official）。
 func EnrichPatch(ctx context.Context, wiki *galgameClient.Client, p *patchModel.Patch) GalgameCard {
 	if p == nil {
 		return GalgameCard{}
@@ -113,6 +113,66 @@ func EnrichPatch(ctx context.Context, wiki *galgameClient.Client, p *patchModel.
 	}
 	applyGalgame(&card, &briefs[0])
 	return card
+}
+
+// PatchDetailCard 详情页用：基础 GalgameCard + Wiki 里的 intro / tag_ids / official_ids / engine_ids。
+// 用一次 /galgame/:gid 调用拉取。
+type PatchDetailCard struct {
+	GalgameCard
+	IntroductionMarkdown KunLanguage `json:"introductionMarkdown"`
+	Updated              time.Time   `json:"updated"`
+	WikiTagIDs           []int       `json:"wikiTagIds"`
+	WikiOfficialIDs      []int       `json:"wikiOfficialIds"`
+	WikiEngineIDs        []int       `json:"wikiEngineIds"`
+}
+
+// EnrichPatchDetail 详情页富化：比 EnrichPatch 多一次 /galgame/:gid 请求拿 intro/关联 ID。
+func EnrichPatchDetail(ctx context.Context, wiki *galgameClient.Client, p *patchModel.Patch) PatchDetailCard {
+	base := PatchDetailCard{}
+	if p == nil {
+		return base
+	}
+	base.GalgameCard = baseCard(p)
+	base.Updated = p.Updated
+
+	if wiki == nil || p.GalgameID <= 0 {
+		return base
+	}
+	env, err := wiki.GetGalgame(ctx, p.GalgameID)
+	if err != nil {
+		slog.Warn("Wiki 详情富化失败", "patch_id", p.ID, "galgame_id", p.GalgameID, "error", err)
+		return base
+	}
+
+	g := &env.Galgame
+	// name / banner / content_limit 等基础字段补上
+	base.Name = KunLanguage{
+		EnUs: g.NameEnUs,
+		JaJp: g.NameJaJp,
+		ZhCn: g.NameZhCn,
+		ZhTw: g.NameZhTw,
+	}
+	base.Banner = g.Banner
+	base.ContentLimit = g.ContentLimit
+
+	base.IntroductionMarkdown = KunLanguage{
+		EnUs: g.IntroEnUs,
+		JaJp: g.IntroJaJp,
+		ZhCn: g.IntroZhCn,
+		ZhTw: g.IntroZhTw,
+	}
+
+	for _, t := range g.Tag {
+		base.WikiTagIDs = append(base.WikiTagIDs, t.TagID)
+	}
+	for _, o := range g.Official {
+		base.WikiOfficialIDs = append(base.WikiOfficialIDs, o.OfficialID)
+	}
+	for _, e := range g.Engine {
+		base.WikiEngineIDs = append(base.WikiEngineIDs, e.EngineID)
+	}
+
+	return base
 }
 
 // ─── helpers ──────────────────────────────────────
