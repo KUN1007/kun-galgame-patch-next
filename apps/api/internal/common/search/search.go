@@ -1,10 +1,10 @@
-// Package search 实现 POST /api/search：委托 Galgame Wiki 做全文搜索，
-// 再用返回的 vndb_id 在本地查出有哪些补丁。
+// Package search implements POST /api/search: delegate full-text search to the
+// Galgame Wiki, then look up which patches exist locally for the returned vndb_ids.
 //
-// 设计（D11，2026-04-21）：
-//   - 搜索/召回全交给 Wiki（60k galgame + Meilisearch + CJK 分词）
-//   - 本站只回答"这些 galgame 在本站有没有补丁"
-//   - 本地不再索引，不再同步
+// Design (D11, 2026-04-21):
+//   - Search/retrieval is fully delegated to Wiki (60k galgame + Meilisearch + CJK tokenization)
+//   - This service only answers "do these galgames have patches here"
+//   - No local index, no local sync
 package search
 
 import (
@@ -21,19 +21,19 @@ import (
 	"gorm.io/gorm"
 )
 
-// Handler 处理 /api/search 请求。
+// Handler handles /api/search requests.
 type Handler struct {
 	db   *gorm.DB
 	wiki *galgameClient.Client
 }
 
-// New 构造 Handler。
+// New constructs a Handler.
 func New(db *gorm.DB, wiki *galgameClient.Client) *Handler {
 	return &Handler{db: db, wiki: wiki}
 }
 
-// SearchRequest 搜索请求体。
-// 支持 Wiki 侧的大部分 filter 参数，直接透传。
+// SearchRequest is the search request body.
+// It supports most of Wiki's filter parameters, passed through directly.
 type SearchRequest struct {
 	Q            string `json:"q" validate:"max=200"`
 	TagIDs       []int  `json:"tag_ids" validate:"omitempty,max=20,dive,min=1"`
@@ -49,7 +49,7 @@ type SearchRequest struct {
 	Limit        int    `json:"limit" validate:"required,min=1,max=50"`
 }
 
-// SearchHit 是返回给前端的单条结果：Wiki 的 galgame 信息 + 本站是否有补丁。
+// SearchHit is a single result returned to the frontend: Wiki galgame info plus whether this service has a patch.
 type SearchHit struct {
 	galgameClient.GalgameHit
 	HasPatch bool                   `json:"has_patch"`
@@ -63,10 +63,10 @@ func (h *Handler) Search(c *fiber.Ctx) error {
 		return response.Error(c, errors.ErrBadRequest(err.Error()))
 	}
 
-	// NSFW 过滤：对齐 common/handler.go 的规则
+	// NSFW filter: align with common/handler.go rules
 	contentLimit := getNSFWFilter(c)
 
-	// 调 Wiki 搜索
+	// Call Wiki search
 	params := galgameClient.SearchGalgameParams{
 		Q:             req.Q,
 		ContentLimit:  contentLimit,
@@ -88,7 +88,7 @@ func (h *Handler) Search(c *fiber.Ctx) error {
 		return response.Error(c, errors.ErrInternal("搜索服务暂不可用"))
 	}
 
-	// 提取 vndb_id，查本地 patch 表
+	// Extract vndb_ids and look up the local patch table
 	vndbIDs := make([]string, 0, len(wikiResult.Items))
 	for _, item := range wikiResult.Items {
 		if item.VndbID != "" {
@@ -110,7 +110,7 @@ func (h *Handler) Search(c *fiber.Ctx) error {
 		}
 	}
 
-	// 合并：按 Wiki 相关度顺序，给每条打上 has_patch + patch 详情
+	// Merge: preserve Wiki's relevance order; stamp each hit with has_patch + patch details
 	hits := make([]SearchHit, 0, len(wikiResult.Items))
 	for _, item := range wikiResult.Items {
 		h := SearchHit{GalgameHit: item}
@@ -124,7 +124,7 @@ func (h *Handler) Search(c *fiber.Ctx) error {
 	return response.Paginated(c, hits, wikiResult.Total)
 }
 
-// getNSFWFilter 对齐 common/handler.go 的解析。
+// getNSFWFilter aligns with the parsing in common/handler.go.
 func getNSFWFilter(c *fiber.Ctx) string {
 	nsfw := c.Get("x-nsfw-header", "{}")
 	var opt struct {

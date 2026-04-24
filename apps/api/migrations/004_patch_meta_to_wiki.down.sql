@@ -1,4 +1,4 @@
--- 004 DOWN: 回滚 D12。恢复 patch 表的游戏元数据列 + patch_alias 表（空数据）。
+-- 004 DOWN: Roll back D12. Restore the galgame metadata columns on patch and the patch_alias table (no data).
 
 BEGIN;
 

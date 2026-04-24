@@ -16,7 +16,7 @@ import (
 	"github.com/gofiber/fiber/v2"
 )
 
-// 读取一个 form 里的单张图片文件字节，附加 10 MB 上限。
+// Read the bytes of a single image file from a form, with a 10 MB size cap.
 func readImageFormFile(c *fiber.Ctx, field string) ([]byte, error) {
 	f, err := c.FormFile(field)
 	if err != nil || f == nil {
@@ -373,7 +373,7 @@ func (h *UserHandler) SearchUsers(c *fiber.Ctx) error {
 }
 
 // UpdateAvatar PUT /api/user/avatar
-// multipart/form-data：avatar 图片（≤ 10 MB）。服务端生成 256 + 100 两张 JPEG。
+// multipart/form-data: avatar image (<= 10 MB). The server generates two JPEGs at 256 and 100.
 func (h *UserHandler) UpdateAvatar(c *fiber.Ctx) error {
 	user := middleware.MustGetUser(c)
 	raw, err := readImageFormFile(c, "avatar")
@@ -388,7 +388,7 @@ func (h *UserHandler) UpdateAvatar(c *fiber.Ctx) error {
 }
 
 // UploadImage POST /api/user/image
-// 用户个人页配图。受 daily_image_count 限制。
+// Images used on the user's personal page. Rate-limited by daily_image_count.
 func (h *UserHandler) UploadImage(c *fiber.Ctx) error {
 	user := middleware.MustGetUser(c)
 	raw, err := readImageFormFile(c, "image")

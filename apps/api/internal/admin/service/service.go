@@ -177,12 +177,12 @@ func (s *AdminService) GetLogs(page, limit int) (any, int64, error) {
 
 // ===== Orphan Patches (D12) =====
 
-// GetOrphanPatches 返回 galgame_id=0 的孤儿补丁列表。
+// GetOrphanPatches returns the list of orphan patches with galgame_id=0.
 func (s *AdminService) GetOrphanPatches(page, limit int) ([]patchModel.Patch, int64, error) {
 	return s.repo.GetOrphanPatches((page-1)*limit, limit)
 }
 
-// CountOrphanPatches 返回孤儿补丁分类计数。
+// CountOrphanPatches returns orphan patch counts by category.
 func (s *AdminService) CountOrphanPatches() (pending, badVndb int64, err error) {
 	return s.repo.CountOrphanPatches()
 }

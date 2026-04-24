@@ -1,13 +1,14 @@
--- 001 DOWN: 重建已删除的 Wiki 化元数据表（仅结构，数据无法恢复）
+-- 001 DOWN: Recreate the dropped Wiki-migrated metadata tables (schema only; data cannot be restored)
 --
--- ⚠️ 注意：这是 D8 决策的单向迁移。数据已外移到 Galgame Wiki Service，
---   该 down 脚本仅用于 schema 回滚应急，不会恢复任何业务数据。
---   若要拿回历史数据，需从 Galgame Wiki Service 导出再导入。
+-- Warning: this is a one-way migration under decision D8. The data has moved
+--   to the Galgame Wiki Service; this down script is for emergency schema
+--   rollback only and will not restore any business data.
+--   To retrieve historical data, export it from the Galgame Wiki Service and re-import.
 
 BEGIN;
 
 -- ─────────────────────────────────────────────────
--- 主表：patch_char
+-- Main table: patch_char
 -- ─────────────────────────────────────────────────
 CREATE TABLE IF NOT EXISTS patch_char (
     id                    SERIAL PRIMARY KEY,
@@ -37,7 +38,7 @@ CREATE TABLE IF NOT EXISTS patch_char (
 );
 
 -- ─────────────────────────────────────────────────
--- 主表：patch_person
+-- Main table: patch_person
 -- ─────────────────────────────────────────────────
 CREATE TABLE IF NOT EXISTS patch_person (
     id                 SERIAL PRIMARY KEY,
@@ -67,7 +68,7 @@ CREATE TABLE IF NOT EXISTS patch_person (
 );
 
 -- ─────────────────────────────────────────────────
--- 主表：patch_release（VNDB 发售信息）
+-- Main table: patch_release (VNDB release info)
 -- ─────────────────────────────────────────────────
 CREATE TABLE IF NOT EXISTS patch_release (
     id         SERIAL PRIMARY KEY,
@@ -85,7 +86,7 @@ CREATE INDEX IF NOT EXISTS idx_patch_release_patch_id ON patch_release(patch_id)
 CREATE INDEX IF NOT EXISTS idx_patch_release_released ON patch_release(released);
 
 -- ─────────────────────────────────────────────────
--- 主表：patch_cover（VNDB 封面图）
+-- Main table: patch_cover (VNDB cover images)
 -- ─────────────────────────────────────────────────
 CREATE TABLE IF NOT EXISTS patch_cover (
     id             SERIAL PRIMARY KEY,
@@ -108,7 +109,7 @@ CREATE INDEX IF NOT EXISTS idx_patch_cover_patch_id ON patch_cover(patch_id);
 CREATE INDEX IF NOT EXISTS idx_patch_cover_image_id ON patch_cover(image_id);
 
 -- ─────────────────────────────────────────────────
--- 主表：patch_screenshot（VNDB 截图）
+-- Main table: patch_screenshot (VNDB screenshots)
 -- ─────────────────────────────────────────────────
 CREATE TABLE IF NOT EXISTS patch_screenshot (
     id             SERIAL PRIMARY KEY,
@@ -132,7 +133,7 @@ CREATE INDEX IF NOT EXISTS idx_patch_screenshot_patch_id ON patch_screenshot(pat
 CREATE INDEX IF NOT EXISTS idx_patch_screenshot_image_id ON patch_screenshot(image_id);
 
 -- ─────────────────────────────────────────────────
--- 别名表
+-- Alias tables
 -- ─────────────────────────────────────────────────
 CREATE TABLE IF NOT EXISTS patch_char_alias (
     id            SERIAL PRIMARY KEY,
@@ -157,7 +158,7 @@ CREATE INDEX IF NOT EXISTS idx_patch_person_alias_person_id ON patch_person_alia
 CREATE INDEX IF NOT EXISTS idx_patch_person_alias_name      ON patch_person_alias(name);
 
 -- ─────────────────────────────────────────────────
--- 关联表
+-- Association tables
 -- ─────────────────────────────────────────────────
 CREATE TABLE IF NOT EXISTS patch_char_relation (
     id            SERIAL PRIMARY KEY,

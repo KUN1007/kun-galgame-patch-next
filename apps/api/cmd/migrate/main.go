@@ -1,13 +1,13 @@
-// cmd/migrate 在 migrations/ 目录下查找 `NNN_name.{up,down}.sql` 文件，
-// 按前缀排序执行，并用 `_migrations` 表记录已应用的迁移。
+// cmd/migrate looks for `NNN_name.{up,down}.sql` files under migrations/,
+// executes them in prefix order, and records applied migrations in `_migrations`.
 //
-// 用法示例：
+// Usage examples:
 //
-//	go run ./cmd/migrate                     # 执行所有未应用的 up 迁移
-//	go run ./cmd/migrate -dir=down -step=1   # 回滚最后一个迁移
-//	go run ./cmd/migrate -only=001           # 只跑 001
-//	go run ./cmd/migrate -exclude=005,006    # 跳过 005/006
-//	go run ./cmd/migrate -yes                # 跳过确认提示
+//	go run ./cmd/migrate                     # run all pending up migrations
+//	go run ./cmd/migrate -dir=down -step=1   # roll back the last migration
+//	go run ./cmd/migrate -only=001           # run only 001
+//	go run ./cmd/migrate -exclude=005,006    # skip 005/006
+//	go run ./cmd/migrate -yes                # skip confirmation prompt
 package main
 
 import (
@@ -103,9 +103,9 @@ func main() {
 // ─── helpers ─────────────────────────────────────────────
 
 type migration struct {
-	path string // 完整文件路径
+	path string // full file path
 	base string // basename (e.g. 001_drop.up.sql)
-	name string // 不含方向后缀 (e.g. 001_drop)
+	name string // without direction suffix (e.g. 001_drop)
 }
 
 func parseSet(csv string) map[string]bool {
@@ -236,14 +236,14 @@ func confirm() bool {
 	return answer == "y" || answer == "yes"
 }
 
-// redactURL 把 postgres://user:pass@host/db 的密码换成 ***
+// redactURL replaces the password in postgres://user:pass@host/db with ***
 func redactURL(u string) string {
 	at := strings.Index(u, "@")
 	if at < 0 {
 		return u
 	}
 	colon := strings.LastIndex(u[:at], ":")
-	// 期望 scheme://user:pass@... 即至少两个冒号
+	// Expect scheme://user:pass@... i.e. at least two colons
 	scheme := strings.Index(u, "://")
 	if colon < 0 || scheme < 0 || colon <= scheme+2 {
 		return u

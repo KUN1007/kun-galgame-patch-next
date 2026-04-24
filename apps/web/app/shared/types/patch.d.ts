@@ -1,9 +1,9 @@
-// D8 / D11 / D12 后（2026-04-21），patch 相关类型大幅精简：
-//   - cover/screenshot/char/person/release 由 Galgame Wiki 管理（D8）
-//   - tag/company 也归 Wiki（D11）
-//   - patch 自身不再存 name/introduction/banner/released/content_limit/engine/alias（D12）
+// After D8 / D11 / D12 (2026-04-21), patch-related types are significantly slimmed:
+//   - cover/screenshot/char/person/release are owned by the Galgame Wiki (D8)
+//   - tag/company also belong to Wiki (D11)
+//   - patch itself no longer stores name/introduction/banner/released/content_limit/engine/alias (D12)
 //
-// 后端 enricher 把 patch + Wiki galgame 合并成下面的形状返回。
+// The backend enricher merges patch + Wiki galgame into the shape below.
 
 interface GalgameCard {
   id: number
@@ -27,7 +27,7 @@ interface GalgameCard {
     comment: number
   }
   user?: KunUser
-  // 可选：Wiki 的原始 galgame 对象（含 age_limit、original_language 等）
+  // Optional: raw Wiki galgame object (includes age_limit, original_language, etc.)
   galgame?: {
     id: number
     vndb_id: string
@@ -44,17 +44,17 @@ interface GalgameCard {
   }
 }
 
-// 补丁头部（/patch/:id）—— 现在等同于 GalgameCard + is_favorite。
+// Patch header (/patch/:id) -- now equivalent to GalgameCard + is_favorite.
 interface PatchHeader extends GalgameCard {
   isFavorite: boolean
 }
 
-// 补丁详情（/patch/:id/detail）—— GalgameCard 基础上再附一份 Wiki 的完整 galgame 信息。
-// introductionMarkdown 由后端调 Wiki /galgame/:gid 补上。
+// Patch detail (/patch/:id/detail) -- GalgameCard plus Wiki's full galgame info.
+// introductionMarkdown is filled in by the backend via Wiki /galgame/:gid.
 interface PatchDetail extends GalgameCard {
   introductionMarkdown: KunLanguage
   updated: string
-  wikiTagIds: number[]       // Wiki 的 galgame_tag ID 列表（前端可按需再调 /tag 拉详情）
-  wikiOfficialIds: number[]  // Wiki 的 galgame_official ID 列表
+  wikiTagIds: number[]       // list of Wiki galgame_tag IDs (frontend can call /tag for details as needed)
+  wikiOfficialIds: number[]  // list of Wiki galgame_official IDs
   wikiEngineIds: number[]
 }

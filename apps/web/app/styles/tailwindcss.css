@@ -513,9 +513,11 @@
 @layer utilities {
   html,
   body {
-    /* 根容器要有实色背景，否则 .kun-dark-mode 只改了 CSS 变量、
-       DOM 上没有人真正 paint 暗色，浏览器默认白色会透下来。
-       注意：不用 hsla()，因为根背景不需要透明（无下层可透） */
+    /* The root container needs a solid background; otherwise .kun-dark-mode
+       only changes CSS variables and nothing in the DOM actually paints the
+       dark color, so the browser default white bleeds through.
+       Note: do not use hsla() here since the root background does not need
+       transparency (there is nothing behind it). */
     background-color: hsl(var(--background));
     color: hsl(var(--foreground));
     min-height: 100vh;

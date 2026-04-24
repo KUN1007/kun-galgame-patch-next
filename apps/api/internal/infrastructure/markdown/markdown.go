@@ -1,7 +1,8 @@
-// Package markdown 提供 markdown → sanitized HTML 的渲染。
+// Package markdown provides markdown-to-sanitized-HTML rendering.
 //
-// 用于补丁评论、聊天消息、资源描述等用户可编辑的富文本场景。
-// 当前使用 goldmark + GFM 扩展；未来可按需引入数学、spoiler、图片懒加载等。
+// Used for user-editable rich text such as patch comments, chat messages, and
+// resource descriptions. Currently uses goldmark + GFM extensions; math,
+// spoiler, lazy image loading etc. can be added as needed.
 package markdown
 
 import (
@@ -13,10 +14,10 @@ import (
 	"github.com/yuin/goldmark/renderer/html"
 )
 
-// md 单例，开箱即用的 GFM 配置。
+// md is a singleton with out-of-the-box GFM configuration.
 var md = goldmark.New(
 	goldmark.WithExtensions(
-		extension.GFM,         // 表格、删除线、自动链接、任务列表
+		extension.GFM,         // tables, strikethrough, autolinks, task lists
 		extension.Linkify,
 		extension.Strikethrough,
 		extension.Table,
@@ -28,12 +29,13 @@ var md = goldmark.New(
 	goldmark.WithRendererOptions(
 		html.WithHardWraps(),
 		html.WithXHTML(),
-		// 用户输入可能含 HTML，但 goldmark 默认不会渲染 raw HTML，
-		// 这里保持默认（安全）。如果需要放开，调用方自己做 sanitize。
+		// User input may contain HTML, but goldmark does not render raw HTML by
+		// default; we keep the default (safe). Callers who need to allow it
+		// should sanitize themselves.
 	),
 )
 
-// Render 把 markdown 文本渲染为 HTML。返回的 HTML 字符串可以直接写进模板。
+// Render renders markdown text to HTML. The returned HTML string can be written into templates directly.
 func Render(src string) (string, error) {
 	var buf bytes.Buffer
 	if err := md.Convert([]byte(src), &buf); err != nil {
@@ -42,7 +44,7 @@ func Render(src string) (string, error) {
 	return buf.String(), nil
 }
 
-// MustRender 渲染失败时返回原文（作降级处理）。
+// MustRender returns the original text on render failure (as a fallback).
 func MustRender(src string) string {
 	out, err := Render(src)
 	if err != nil {

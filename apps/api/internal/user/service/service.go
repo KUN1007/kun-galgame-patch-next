@@ -19,7 +19,7 @@ import (
 	"gorm.io/gorm"
 )
 
-// 每日个人图片上传限额，对齐 apps/next-web/config/user.ts 的 KUN_PATCH_USER_DAILY_UPLOAD_IMAGE_LIMIT。
+// Daily personal image upload limit, aligned with KUN_PATCH_USER_DAILY_UPLOAD_IMAGE_LIMIT in apps/next-web/config/user.ts.
 const DailyImageLimit = 20
 
 type UserService struct {
@@ -213,9 +213,9 @@ func (s *UserService) GetUserByID(uid int) (*authModel.User, error) {
 	return s.repo.FindByID(uid)
 }
 
-// ─── 头像与配图上传 ──────────────────────────────────
+// ─── Avatar and user image uploads ───────────────────
 
-// UpdateAvatar 上传并设置用户头像（256x256 + 100x100 两张 JPEG）。
+// UpdateAvatar uploads and sets the user avatar (two JPEGs: 256x256 + 100x100).
 func (s *UserService) UpdateAvatar(ctx context.Context, uid int, raw []byte) (string, error) {
 	full, err := imageutil.FitJPEG(raw, 256, 256, 85)
 	if err != nil {
@@ -244,8 +244,8 @@ func (s *UserService) UpdateAvatar(ctx context.Context, uid int, raw []byte) (st
 	return avatarURL, nil
 }
 
-// UploadUserImage 上传用户个人页配图（1920x1080 内，JPEG q=50）。
-// 受 daily_image_count 限制（对齐原项目 DailyImageLimit）。
+// UploadUserImage uploads an image for the user's personal page (fit within 1920x1080, JPEG q=50).
+// Rate-limited by daily_image_count (aligned with the original project's DailyImageLimit).
 func (s *UserService) UploadUserImage(ctx context.Context, uid int, raw []byte) (string, error) {
 	user, err := s.repo.FindByID(uid)
 	if err != nil {
@@ -265,7 +265,7 @@ func (s *UserService) UploadUserImage(ctx context.Context, uid int, raw []byte) 
 		return "", err
 	}
 
-	// 扣 daily_image_count
+	// Decrement daily_image_count
 	if err := s.repo.UpdateFields(uid, map[string]any{
 		"daily_image_count": gorm.Expr("daily_image_count + 1"),
 	}); err != nil {

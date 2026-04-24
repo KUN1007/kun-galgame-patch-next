@@ -30,16 +30,16 @@ func New(repo *repository.PatchRepository, rdb *redis.Client, db *gorm.DB, s3 *s
 
 // ===== Patch =====
 
-// CreatePatch 处理 POST /api/patch（D12，2026-04-21）。
+// CreatePatch handles POST /api/patch (D12, 2026-04-21).
 //
-// 客户端只需提供 vndb_id，服务端：
-//  1. 调 Wiki /galgame/check?vndb_id=... 校验存在并拿到 galgame_id
-//  2. 检查本地是否已有同 vndb_id 的 patch
-//  3. 事务：创建 patch 行 + 用户 +3 萌萌点 + 登记 contributor
+// The client only provides vndb_id; the server:
+//  1. Calls Wiki /galgame/check?vndb_id=... to verify existence and fetch galgame_id
+//  2. Checks whether a patch with the same vndb_id already exists locally
+//  3. In one transaction: create the patch row, award +3 moemoepoint to the user, register contributor
 //
-// 不再上传 banner（banner 从 Wiki 直接拿）。
+// No banner upload (banner is fetched directly from Wiki).
 func (s *PatchService) CreatePatch(ctx context.Context, uid int, vndbID string) (int, error) {
-	// 1. Wiki 侧查一遍：必须存在，同时拿到 galgame_id
+	// 1. Check with Wiki: must exist, and get galgame_id
 	exists, galgameID, err := s.wiki.CheckGalgameByVndbID(ctx, vndbID)
 	if err != nil {
 		return 0, fmt.Errorf("调用 Wiki 校验 vndb_id 失败: %w", err)
@@ -48,12 +48,12 @@ func (s *PatchService) CreatePatch(ctx context.Context, uid int, vndbID string) 
 		return 0, fmt.Errorf("Galgame Wiki 中不存在 vndb_id=%s 的游戏，请先在 Wiki 创建", vndbID)
 	}
 
-	// 2. 本地去重
+	// 2. Local dedup
 	if existing, _ := s.repo.FindPatchByVndbID(vndbID); existing != nil && existing.ID != 0 {
 		return 0, fmt.Errorf("该 VNDB ID 已经存在对应的补丁")
 	}
 
-	// 3. 事务
+	// 3. Transaction
 	var patchID int
 	txErr := s.db.Transaction(func(tx *gorm.DB) error {
 		p := &model.Patch{
@@ -66,13 +66,13 @@ func (s *PatchService) CreatePatch(ctx context.Context, uid int, vndbID string) 
 		}
 		patchID = p.ID
 
-		// 用户激励：+3 萌萌点
+		// User reward: +3 moemoepoint
 		if err := tx.Table("user").Where("id = ?", uid).
 			UpdateColumn("moemoepoint", gorm.Expr("moemoepoint + 3")).Error; err != nil {
 			return fmt.Errorf("更新用户积分失败: %w", err)
 		}
 
-		// 登记 contributor
+		// Register contributor
 		if err := tx.Create(&model.UserPatchContributeRelation{
 			UserID: uid, PatchID: p.ID,
 		}).Error; err != nil {
@@ -98,8 +98,8 @@ func (s *PatchService) GetPatchDetail(id int) (*model.Patch, error) {
 	return s.repo.GetPatchDetail(id)
 }
 
-// UpdatePatch D12 之后只允许"重新绑定 vndb_id"（极少数场景，如误链）。
-// 会重新调 Wiki 校验并刷新 galgame_id。
+// UpdatePatch: after D12, only "rebind vndb_id" is allowed (a rare case, e.g. a mislinked entry).
+// Re-validates via Wiki and refreshes galgame_id.
 func (s *PatchService) UpdatePatch(ctx context.Context, id, userID, userRole int, vndbID string) error {
 	existing, err := s.repo.GetPatchByID(id)
 	if err != nil {

@@ -1,7 +1,8 @@
-// Package imageutil 提供轻量的图片处理工具：解码 → fit-inside 缩放 → JPEG 编码。
+// Package imageutil offers a lightweight image toolchain: decode -> fit-inside resize -> JPEG encode.
 //
-// 用于上传 banner / avatar / 用户配图等场景。原项目用 sharp + avif，Go 端先用 JPEG
-// 做兼容性和易用性的平衡，将来需要 AVIF/WebP 输出可以替换。
+// Used for uploading banners, avatars, user images, etc. The original project
+// used sharp + avif; the Go side starts with JPEG as a balance of compatibility
+// and simplicity, and can be swapped for AVIF/WebP output later.
 package imageutil
 
 import (
@@ -16,8 +17,9 @@ import (
 	_ "golang.org/x/image/webp"
 )
 
-// FitJPEG 解码任意常见格式（JPG/PNG/GIF/WebP）的图片字节，按 fit-inside 缩放到
-// (maxW, maxH) 以内，不放大，使用 Lanczos 滤波器，再以 JPEG quality 编码。
+// FitJPEG decodes image bytes in any common format (JPG/PNG/GIF/WebP), resizes
+// fit-inside to within (maxW, maxH) (no upscaling) using the Lanczos filter,
+// and encodes as JPEG with the given quality.
 func FitJPEG(raw []byte, maxW, maxH, quality int) ([]byte, error) {
 	img, _, err := image.Decode(bytes.NewReader(raw))
 	if err != nil {

@@ -35,8 +35,9 @@ type homeResponse struct {
 
 // GetHome GET /api/home
 //
-// D12：NSFW 过滤能力迁到 Wiki 侧（走 /api/search）。本端点只做"本站最近的补丁"展示，
-// 富化后的 galgame 对象里有 content_limit 字段供前端客户端过滤。
+// D12: NSFW filtering has moved to Wiki (via /api/search). This endpoint only
+// shows "recent patches on this service"; the enriched galgame objects carry
+// a content_limit field for the frontend to filter on the client.
 func (h *CommonHandler) GetHome(c *fiber.Ctx) error {
 	var patches []patchModel.Patch
 	var resources []patchModel.PatchResource
@@ -76,8 +77,9 @@ type galgameListRequest struct {
 
 // GetGalgameList GET /api/galgame
 //
-// D12：按游戏发售年月/NSFW 过滤已迁到 Wiki（走 /api/search）。本端点只做 patch 自身
-// 字段的筛选（翻译类型 type）和排序，然后用 Wiki 富化返回。
+// D12: Filtering by release date/NSFW has moved to Wiki (via /api/search). This
+// endpoint only filters by patch-local fields (translation type) and sorts,
+// then enriches the result via Wiki before returning.
 func (h *CommonHandler) GetGalgameList(c *fiber.Ctx) error {
 	var req galgameListRequest
 	if err := utils.ParseQueryAndValidate(c, &req); err != nil {
@@ -153,7 +155,7 @@ type resourceListRequest struct {
 
 // GetGlobalResources GET /api/resource
 //
-// D12：patch.content_limit 已删除，NSFW 过滤能力由 Wiki 侧提供。本端点不再做本地 NSFW 过滤。
+// D12: patch.content_limit has been removed; NSFW filtering is provided by Wiki. This endpoint no longer does local NSFW filtering.
 func (h *CommonHandler) GetGlobalResources(c *fiber.Ctx) error {
 	var req resourceListRequest
 	if err := utils.ParseQueryAndValidate(c, &req); err != nil {

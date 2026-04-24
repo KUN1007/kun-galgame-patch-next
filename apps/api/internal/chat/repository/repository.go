@@ -1,4 +1,4 @@
-// Package repository 聊天模块的数据访问层。
+// Package repository is the data access layer for the chat module.
 package repository
 
 import (
@@ -20,14 +20,14 @@ func New(db *gorm.DB) *ChatRepository {
 
 // ─── Room ───────────────────────────────────────────
 
-// FindRoomByLink 按链接查房间。
+// FindRoomByLink looks up a room by its link.
 func (r *ChatRepository) FindRoomByLink(link string) (*model.ChatRoom, error) {
 	var room model.ChatRoom
 	err := r.db.Where("link = ?", link).First(&room).Error
 	return &room, err
 }
 
-// ListRoomsByUser 列出某用户加入的所有房间，按最后消息时间倒序。
+// ListRoomsByUser lists all rooms a user has joined, ordered by last message time desc.
 func (r *ChatRepository) ListRoomsByUser(uid int) ([]model.ChatRoom, error) {
 	var rooms []model.ChatRoom
 	err := r.db.
@@ -38,7 +38,7 @@ func (r *ChatRepository) ListRoomsByUser(uid int) ([]model.ChatRoom, error) {
 	return rooms, err
 }
 
-// CreateRoom 创建群聊，并把 owner 作为第一个成员写入。
+// CreateRoom creates a group room and inserts the owner as the first member.
 func (r *ChatRepository) CreateRoom(ownerUID int, name, link, avatar string) (*model.ChatRoom, error) {
 	room := &model.ChatRoom{
 		Name:   name,
@@ -59,7 +59,7 @@ func (r *ChatRepository) CreateRoom(ownerUID int, name, link, avatar string) (*m
 	return room, err
 }
 
-// IsMember 某用户是否是某房间成员。
+// IsMember reports whether a user is a member of a given room.
 func (r *ChatRepository) IsMember(uid, roomID int) (bool, error) {
 	var count int64
 	err := r.db.Model(&model.ChatMember{}).
@@ -68,7 +68,7 @@ func (r *ChatRepository) IsMember(uid, roomID int) (bool, error) {
 	return count > 0, err
 }
 
-// AddMember 加入房间，已加入则幂等 OK。
+// AddMember joins a room; idempotent if already a member.
 func (r *ChatRepository) AddMember(uid, roomID int) error {
 	return r.db.Clauses(clause.OnConflict{DoNothing: true}).Create(&model.ChatMember{
 		UserID:     uid,
@@ -79,7 +79,7 @@ func (r *ChatRepository) AddMember(uid, roomID int) error {
 
 // ─── Message ────────────────────────────────────────
 
-// ListMessages 按 id > after 拉新消息，limit 上限 100。
+// ListMessages fetches new messages with id > after, capped at 100.
 func (r *ChatRepository) ListMessages(roomID, after, limit int) ([]model.ChatMessage, error) {
 	var msgs []model.ChatMessage
 	err := r.db.
@@ -90,7 +90,7 @@ func (r *ChatRepository) ListMessages(roomID, after, limit int) ([]model.ChatMes
 	return msgs, err
 }
 
-// CreateMessage 写消息 + 更新房间 last_message_time（事务）。
+// CreateMessage writes the message and updates the room's last_message_time (in a transaction).
 func (r *ChatRepository) CreateMessage(m *model.ChatMessage) error {
 	return r.db.Transaction(func(tx *gorm.DB) error {
 		if err := tx.Create(m).Error; err != nil {
@@ -101,14 +101,14 @@ func (r *ChatRepository) CreateMessage(m *model.ChatMessage) error {
 	})
 }
 
-// GetMessage 按 ID 拿单条消息。
+// GetMessage fetches a single message by ID.
 func (r *ChatRepository) GetMessage(id int) (*model.ChatMessage, error) {
 	var m model.ChatMessage
 	err := r.db.First(&m, id).Error
 	return &m, err
 }
 
-// UpdateMessageContent 编辑消息 + 写入编辑历史（事务）。
+// UpdateMessageContent edits a message and writes the edit history (in a transaction).
 func (r *ChatRepository) UpdateMessageContent(m *model.ChatMessage, oldContent, newContent string) error {
 	return r.db.Transaction(func(tx *gorm.DB) error {
 		if err := tx.Create(&model.ChatMessageEditHistory{
@@ -124,7 +124,7 @@ func (r *ChatRepository) UpdateMessageContent(m *model.ChatMessage, oldContent, 
 	})
 }
 
-// SoftDeleteMessage 软删消息。
+// SoftDeleteMessage soft-deletes a message.
 func (r *ChatRepository) SoftDeleteMessage(id, deletedByUID int, deletedAt any) error {
 	return r.db.Model(&model.ChatMessage{}).Where("id = ?", id).Updates(map[string]any{
 		"status":        "DELETED",
@@ -135,19 +135,19 @@ func (r *ChatRepository) SoftDeleteMessage(id, deletedByUID int, deletedAt any) 
 
 // ─── Reactions ──────────────────────────────────────
 
-// ToggleReaction 切换表情回应。返回 added: true 表示新增，false 表示取消。
+// ToggleReaction toggles an emoji reaction. added=true means added, false means removed.
 func (r *ChatRepository) ToggleReaction(messageID, uid int, emoji string) (added bool, err error) {
 	var existing model.ChatMessageReaction
 	err = r.db.Where("chat_message_id = ? AND user_id = ? AND emoji = ?", messageID, uid, emoji).
 		First(&existing).Error
 	if err == nil {
-		// 已有 → 取消
+		// Already exists -> remove
 		return false, r.db.Delete(&existing).Error
 	}
 	if err != gorm.ErrRecordNotFound {
 		return false, err
 	}
-	// 没有 → 新增
+	// Not present -> add
 	return true, r.db.Create(&model.ChatMessageReaction{
 		ChatMessageID: messageID,
 		UserID:        uid,
@@ -157,13 +157,13 @@ func (r *ChatRepository) ToggleReaction(messageID, uid int, emoji string) (added
 
 // ─── Seen ───────────────────────────────────────────
 
-// MarkSeen 批量写已读。重复插入用 OnConflict DoNothing 忽略。
+// MarkSeen writes seen markers in bulk. Duplicate inserts are ignored via OnConflict DoNothing.
 func (r *ChatRepository) MarkSeen(roomID, uid int, messageIDs []int) error {
 	if len(messageIDs) == 0 {
 		return nil
 	}
 
-	// 只对属于这个 room 的消息有效，先过滤
+	// Only accept messages that belong to this room; filter first
 	var validIDs []int
 	if err := r.db.Model(&model.ChatMessage{}).
 		Where("chat_room_id = ? AND id IN ?", roomID, messageIDs).

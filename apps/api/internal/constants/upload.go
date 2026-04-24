@@ -1,40 +1,40 @@
-// Package constants 集中放业务常量。上传相关的阈值原样从 apps/next-web/config/upload.ts 搬过来。
+// Package constants centralizes business constants. Upload-related thresholds are copied verbatim from apps/next-web/config/upload.ts.
 package constants
 
 import "time"
 
-// 单文件阈值。
+// Per-file size thresholds.
 const (
-	// MaxSmallFileSize：走单次 PutObject 的阈值（≤ 200 MB）
+	// MaxSmallFileSize: threshold that uses single-shot PutObject (<= 200 MB)
 	MaxSmallFileSize int64 = 200 * 1024 * 1024
 
-	// MaxLargeFileSize：整个上传流程允许的单文件上限（1 GB）
+	// MaxLargeFileSize: upper bound for a single file across the whole upload flow (1 GB)
 	MaxLargeFileSize int64 = 1 * 1024 * 1024 * 1024
 
-	// MultipartPartSize：大文件分片大小（10 MiB，S3 推荐值）
+	// MultipartPartSize: chunk size for large-file multipart upload (10 MiB, S3 recommended)
 	MultipartPartSize int64 = 10 * 1024 * 1024
 )
 
-// 每日限额。
+// Daily quotas.
 const (
 	UserDailyUploadLimit    int64 = 100 * 1024 * 1024       // 100 MB
 	CreatorDailyUploadLimit int64 = 5 * 1024 * 1024 * 1024  // 5 GB
 )
 
-// Presigned URL 有效期。
+// Presigned URL lifetimes.
 const (
 	PresignPutObjectTTL  = 2 * time.Hour
 	PresignUploadPartTTL = 4 * time.Hour
 )
 
-// AllowedResourceExtensions 对齐 apps/next-web/constants/resource.ts
+// AllowedResourceExtensions aligns with apps/next-web/constants/resource.ts
 var AllowedResourceExtensions = []string{".zip", ".rar", ".7z"}
 
-// S3KeyRandomLength 是 s3_key 路径里随机段的字符数（对齐老 BLAKE3 hex 长度）。
+// S3KeyRandomLength is the length of the random segment in s3_key paths (aligned with the legacy BLAKE3 hex length).
 const S3KeyRandomLength = 64
 
-// MultipartUploadOrphanTTL 超过此时长仍未完成的 multipart 会被 cron 清理。
+// MultipartUploadOrphanTTL: multipart uploads unfinished past this duration are cleaned up by cron.
 const MultipartUploadOrphanTTL = 24 * time.Hour
 
-// AbortedMultipartCleanupInterval cron 跑清理的频率。
+// AbortedMultipartCleanupInterval is how often the cleanup cron runs.
 const AbortedMultipartCleanupInterval = 6 * time.Hour

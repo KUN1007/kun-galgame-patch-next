@@ -1,4 +1,4 @@
-// Package cron 集中管理定时任务。
+// Package cron centralizes all cron jobs.
 package cron
 
 import (
@@ -13,15 +13,15 @@ import (
 	"gorm.io/gorm"
 )
 
-// Start 启动所有定时任务，返回 stop 函数用于优雅关停。
+// Start starts all cron jobs and returns a stop function for graceful shutdown.
 //
-// 任务清单：
-//  1. 每日 00:00 重置 user 表的 daily_image_count / daily_check_in / daily_upload_size
-//  2. 每 6 小时清理 S3 里超过 24h 仍未完成的 multipart upload（D10 方案 B）
+// Job list:
+//  1. Daily 00:00: reset daily_image_count / daily_check_in / daily_upload_size on the user table
+//  2. Every 6 hours: clean up S3 multipart uploads still unfinished after 24h (D10 plan B)
 func Start(db *gorm.DB, s3 *storage.S3Client) func() {
 	c := cron.New()
 
-	// ── 每日 00:00 重置限额字段 ───────────────────────
+	// ── Daily 00:00: reset quota fields ───────────────
 	if _, err := c.AddFunc("0 0 * * *", func() {
 		result := db.Table("user").Where(
 			"daily_image_count <> 0 OR daily_check_in <> 0 OR daily_upload_size <> 0",
@@ -39,7 +39,7 @@ func Start(db *gorm.DB, s3 *storage.S3Client) func() {
 		slog.Error("注册每日重置任务失败", "error", err)
 	}
 
-	// ── 每 6 小时清理 S3 未完成 multipart ──────────────
+	// ── Every 6 hours: clean up unfinished S3 multipart uploads ──
 	if _, err := c.AddFunc("0 */6 * * *", func() {
 		cleanupAbortedMultiparts(s3)
 	}); err != nil {
@@ -56,7 +56,7 @@ func Start(db *gorm.DB, s3 *storage.S3Client) func() {
 	}
 }
 
-// cleanupAbortedMultiparts 扫描 bucket 下所有 multipart，abort 掉超过 24h 仍没完成的那些。
+// cleanupAbortedMultiparts scans all multipart uploads in the bucket and aborts any that have been pending for more than 24h.
 func cleanupAbortedMultiparts(s3 *storage.S3Client) {
 	if s3 == nil || !s3.Ready() {
 		return

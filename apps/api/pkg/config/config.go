@@ -56,9 +56,9 @@ type MailConfig struct {
 	Password string
 }
 
-// GalgameWikiConfig 指向独立部署的 Galgame Wiki Service（D11）。
+// GalgameWikiConfig points at the separately deployed Galgame Wiki Service (D11).
 type GalgameWikiConfig struct {
-	BaseURL string // 例如 http://127.0.0.1:9280/api
+	BaseURL string // e.g. http://127.0.0.1:9280/api
 }
 
 type CORSConfig struct {

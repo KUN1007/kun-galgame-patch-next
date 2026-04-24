@@ -66,7 +66,7 @@ func (r *PatchRepository) GetRandomPatchID() (int, error) {
 	return id, err
 }
 
-// NOTE: ReplaceAliases 按 D12（2026-04-21）废弃，别名归 Wiki /galgame/:gid/aliases。
+// NOTE: ReplaceAliases is deprecated per D12 (2026-04-21). Aliases are owned by Wiki /galgame/:gid/aliases.
 
 // ===== Comments =====
 

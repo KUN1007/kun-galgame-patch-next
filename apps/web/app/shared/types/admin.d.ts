@@ -37,8 +37,8 @@ interface AdminCreator {
   created: Date | string
 }
 
-// NOTE: AdminGalgame 和对应的 /admin/galgame 页面按 D12 已废弃。
-// 补丁管理通过 /admin/orphans 和 /admin/resource 完成。
+// NOTE: AdminGalgame and the corresponding /admin/galgame page are deprecated per D12.
+// Patch management is handled via /admin/orphans and /admin/resource.
 
 interface AdminResourceItem {
   id: number

@@ -1,15 +1,16 @@
-// Package model 定义聊天相关的 GORM 模型。
+// Package model defines GORM models for the chat module.
 //
-// 按 D9（2026-04-21）决策，不再有 WebSocket/Socket.IO，所有读写走 REST。
-// 数据表保留原 Prisma schema，只是不再实时推送。
+// Per decision D9 (2026-04-21), WebSocket/Socket.IO is no longer used; all reads
+// and writes go through REST. The tables retain the original Prisma schema,
+// just without real-time push.
 package model
 
 import "time"
 
-// ChatRoom 聊天室（私聊 / 群聊）。
+// ChatRoom is a chat room (private or group).
 //
-//   - Type = "PRIVATE"：私聊，Link 格式为 "{minUid}-{maxUid}"
-//   - Type = "GROUP"：群聊，Link 为可分享链接
+//   - Type = "PRIVATE": private chat, Link format is "{minUid}-{maxUid}"
+//   - Type = "GROUP": group chat, Link is a shareable link
 type ChatRoom struct {
 	ID              int       `gorm:"primaryKey;autoIncrement" json:"id"`
 	Name            string    `gorm:"type:varchar(107)" json:"name"`
@@ -23,7 +24,7 @@ type ChatRoom struct {
 
 func (ChatRoom) TableName() string { return "chat_room" }
 
-// ChatMember 聊天室成员。
+// ChatMember is a chat room member.
 type ChatMember struct {
 	ID         int       `gorm:"primaryKey;autoIncrement" json:"id"`
 	Role       string    `gorm:"default:'MEMBER'" json:"role"` // OWNER / ADMIN / MEMBER
@@ -35,7 +36,7 @@ type ChatMember struct {
 
 func (ChatMember) TableName() string { return "chat_member" }
 
-// ChatMessage 聊天消息。
+// ChatMessage is a chat message.
 type ChatMessage struct {
 	ID          int        `gorm:"primaryKey;autoIncrement" json:"id"`
 	Content     string     `gorm:"type:varchar(2000);default:''" json:"content"`
@@ -52,7 +53,7 @@ type ChatMessage struct {
 
 func (ChatMessage) TableName() string { return "chat_message" }
 
-// ChatMessageSeen 消息已读状态（某用户看过某条消息）。
+// ChatMessageSeen is the seen state of a message (a given user has read a given message).
 type ChatMessageSeen struct {
 	ID            int       `gorm:"primaryKey;autoIncrement" json:"id"`
 	ChatMessageID int       `gorm:"uniqueIndex:idx_user_msg_seen;not null" json:"chat_message_id"`
@@ -62,7 +63,7 @@ type ChatMessageSeen struct {
 
 func (ChatMessageSeen) TableName() string { return "chat_message_seen" }
 
-// ChatMessageReaction 消息表情回应。
+// ChatMessageReaction is an emoji reaction on a message.
 type ChatMessageReaction struct {
 	ID            int       `gorm:"primaryKey;autoIncrement" json:"id"`
 	Emoji         string    `gorm:"type:varchar(10);uniqueIndex:idx_user_msg_emoji" json:"emoji"`
@@ -74,7 +75,7 @@ type ChatMessageReaction struct {
 
 func (ChatMessageReaction) TableName() string { return "chat_message_reaction" }
 
-// ChatMessageEditHistory 消息编辑历史。
+// ChatMessageEditHistory is the edit history of a message.
 type ChatMessageEditHistory struct {
 	ID              int       `gorm:"primaryKey;autoIncrement" json:"id"`
 	PreviousContent string    `gorm:"type:varchar(2000)" json:"previous_content"`

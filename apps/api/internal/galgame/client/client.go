@@ -1,10 +1,12 @@
-// Package client 封装 Galgame Wiki Service 的 HTTP 调用。
+// Package client wraps the HTTP calls to the Galgame Wiki Service.
 //
-// 背景（D8 / D11）：本项目（patch 站）不再在本地落库 galgame / tag / official 等元数据，
-// 统一通过 vndb_id 调用 Wiki Service 获取。Wiki 的搜索基于 Meilisearch，
-// 支持 CJK 分词、typo 容错、facet 聚合，远比本项目内的 ILIKE 或本地索引好用。
+// Background (D8 / D11): this project (the patch service) no longer stores
+// galgame / tag / official metadata locally; instead it fetches it from the
+// Wiki Service by vndb_id. Wiki's search is backed by Meilisearch with CJK
+// tokenization, typo tolerance and facet aggregation, far better than in-repo
+// ILIKE or a local index.
 //
-// 参考：docs/galgame_wiki/api-reference.md
+// See docs/galgame_wiki/api-reference.md.
 package client
 
 import (
@@ -19,13 +21,13 @@ import (
 	"time"
 )
 
-// Client 调 Wiki Service 的薄封装。
+// Client is a thin wrapper around calls to the Wiki Service.
 type Client struct {
 	baseURL string
 	http    *http.Client
 }
 
-// New 构造 Client。baseURL 形如 http://127.0.0.1:9280/api
+// New constructs a Client. baseURL looks like http://127.0.0.1:9280/api
 func New(baseURL string) *Client {
 	return &Client{
 		baseURL: strings.TrimRight(baseURL, "/"),
@@ -33,22 +35,22 @@ func New(baseURL string) *Client {
 	}
 }
 
-// wikiResponse 是 Wiki 所有 JSON 响应的统一外壳。
+// wikiResponse is the common envelope for all Wiki JSON responses.
 type wikiResponse[T any] struct {
 	Code    int    `json:"code"`
 	Message string `json:"message"`
 	Data    T      `json:"data"`
 }
 
-// Paginated 是 Wiki 分页响应里 data 字段的形状。
+// Paginated is the shape of the data field in Wiki paginated responses.
 type Paginated[T any] struct {
 	Items []T   `json:"items"`
 	Total int64 `json:"total"`
 }
 
-// ─── 模型（只保留本项目用得到的字段） ──────────────────
+// ─── Models (only the fields this project uses) ─────
 
-// GalgameHit 是 Wiki /galgame/search 返回的单项。
+// GalgameHit is a single item returned from Wiki /galgame/search.
 type GalgameHit struct {
 	ID               int    `json:"id"`
 	VndbID           string `json:"vndb_id"`
@@ -68,7 +70,7 @@ type GalgameHit struct {
 	EngineIDs        []int  `json:"engine_ids"`
 }
 
-// GalgameBrief 是 /galgame/batch 返回的轻量形状。
+// GalgameBrief is the lightweight shape returned by /galgame/batch.
 type GalgameBrief struct {
 	ID                 int    `json:"id"`
 	VndbID             string `json:"vndb_id"`
@@ -84,7 +86,7 @@ type GalgameBrief struct {
 	ResourceUpdateTime string `json:"resource_update_time"`
 }
 
-// Tag 是 Wiki 的 galgame_tag。
+// Tag is Wiki's galgame_tag.
 type Tag struct {
 	ID            int      `json:"id"`
 	Name          string   `json:"name"`
@@ -93,7 +95,7 @@ type Tag struct {
 	GalgameCount  int      `json:"galgame_count"`
 }
 
-// Official 是 Wiki 的 galgame_official（开发商/发行商）。
+// Official is Wiki's galgame_official (developer/publisher).
 type Official struct {
 	ID           int      `json:"id"`
 	Name         string   `json:"name"`
@@ -105,9 +107,9 @@ type Official struct {
 	GalgameCount int      `json:"galgame_count"`
 }
 
-// ─── 通用 GET ────────────────────────────────────────
+// ─── Generic GET ─────────────────────────────────────
 
-// get 发起 GET，解析 {code, message, data} 外壳并把 data 反序列化到 out。
+// get sends a GET request, parses the {code, message, data} envelope and unmarshals data into out.
 func (c *Client) get(ctx context.Context, path string, query url.Values, out any) error {
 	u := c.baseURL + path
 	if len(query) > 0 {
@@ -146,14 +148,14 @@ func (c *Client) get(ctx context.Context, path string, query url.Values, out any
 	return nil
 }
 
-// ─── 高阶方法 ────────────────────────────────────────
+// ─── High-level methods ──────────────────────────────
 
-// SearchGalgameParams 是 /galgame/search 的查询参数。
+// SearchGalgameParams are query parameters for /galgame/search.
 type SearchGalgameParams struct {
 	Q               string
 	ContentLimit    string // sfw / nsfw
 	AgeLimit        string // all / r18
-	OriginalLang    string // csv，例如 "ja-jp,en-us"
+	OriginalLang    string // csv, e.g. "ja-jp,en-us"
 	TagIDs          []int
 	OfficialIDs     []int
 	EngineIDs       []int
@@ -166,7 +168,7 @@ type SearchGalgameParams struct {
 	Limit           int
 }
 
-// SearchGalgame 调 /galgame/search。
+// SearchGalgame calls /galgame/search.
 func (c *Client) SearchGalgame(ctx context.Context, p SearchGalgameParams) (*Paginated[GalgameHit], error) {
 	q := url.Values{}
 	if p.Q != "" {
@@ -221,8 +223,8 @@ func (c *Client) SearchGalgame(ctx context.Context, p SearchGalgameParams) (*Pag
 	return &out, nil
 }
 
-// GalgameFull 是 /galgame/:gid 返回的完整 galgame（含 intro / tag_ids / official_ids）。
-// 详情页富化用。
+// GalgameFull is the full galgame returned from /galgame/:gid (including intro / tag_ids / official_ids).
+// Used to enrich detail pages.
 type GalgameFull struct {
 	ID               int    `json:"id"`
 	VndbID           string `json:"vndb_id"`
@@ -269,13 +271,13 @@ type GalgameFull struct {
 	Updated string `json:"updated"`
 }
 
-// GalgameDetailEnvelope 是 /galgame/:gid 的 data 壳，wiki 在 data 下又套了一层 galgame + users。
+// GalgameDetailEnvelope is the data envelope for /galgame/:gid. Wiki nests another layer of galgame + users under data.
 type GalgameDetailEnvelope struct {
 	Galgame GalgameFull            `json:"galgame"`
 	Users   map[string]any         `json:"users"`
 }
 
-// GetGalgame 调 /galgame/:gid，详情页富化用。
+// GetGalgame calls /galgame/:gid; used to enrich detail pages.
 func (c *Client) GetGalgame(ctx context.Context, gid int) (*GalgameDetailEnvelope, error) {
 	var out GalgameDetailEnvelope
 	if err := c.get(ctx, fmt.Sprintf("/galgame/%d", gid), nil, &out); err != nil {
@@ -284,8 +286,8 @@ func (c *Client) GetGalgame(ctx context.Context, gid int) (*GalgameDetailEnvelop
 	return &out, nil
 }
 
-// CheckGalgameByVndbID 调 /galgame/check?vndb_id=xxx，返回 (exists, galgame_id)。
-// 用于 POST /api/patch 前置校验。
+// CheckGalgameByVndbID calls /galgame/check?vndb_id=xxx and returns (exists, galgame_id).
+// Used as a pre-check for POST /api/patch.
 func (c *Client) CheckGalgameByVndbID(ctx context.Context, vndbID string) (exists bool, galgameID int, err error) {
 	q := url.Values{}
 	q.Set("vndb_id", vndbID)
@@ -300,7 +302,7 @@ func (c *Client) CheckGalgameByVndbID(ctx context.Context, vndbID string) (exist
 	return out.Exists, out.GalgameID, nil
 }
 
-// GalgameBatch 调 /galgame/batch?ids=1,2,3，批量取轻量 galgame 信息。
+// GalgameBatch calls /galgame/batch?ids=1,2,3 to fetch lightweight galgame info in bulk.
 func (c *Client) GalgameBatch(ctx context.Context, ids []int) ([]GalgameBrief, error) {
 	if len(ids) == 0 {
 		return nil, nil
@@ -315,14 +317,14 @@ func (c *Client) GalgameBatch(ctx context.Context, ids []int) ([]GalgameBrief, e
 	return out, nil
 }
 
-// TagSearchResult 是 /tag/search 的响应（注意：它不套在 Paginated 里，total 在外层）。
+// TagSearchResult is the response from /tag/search (note: it is not wrapped in Paginated; total is at the top level).
 type TagSearchResult struct {
 	Items            []Tag `json:"items"`
 	Total            int64 `json:"total"`
 	ProcessingTimeMs int64 `json:"processing_time_ms"`
 }
 
-// SearchTag 调 /tag/search。
+// SearchTag calls /tag/search.
 func (c *Client) SearchTag(ctx context.Context, q, category string, limit int) (*TagSearchResult, error) {
 	params := url.Values{}
 	if q != "" {
@@ -341,14 +343,14 @@ func (c *Client) SearchTag(ctx context.Context, q, category string, limit int) (
 	return &out, nil
 }
 
-// OfficialSearchResult 是 /official/search 的响应。
+// OfficialSearchResult is the response from /official/search.
 type OfficialSearchResult struct {
 	Items            []Official `json:"items"`
 	Total            int64      `json:"total"`
 	ProcessingTimeMs int64      `json:"processing_time_ms"`
 }
 
-// SearchOfficial 调 /official/search。
+// SearchOfficial calls /official/search.
 func (c *Client) SearchOfficial(ctx context.Context, q, category, lang string, limit int) (*OfficialSearchResult, error) {
 	params := url.Values{}
 	if q != "" {

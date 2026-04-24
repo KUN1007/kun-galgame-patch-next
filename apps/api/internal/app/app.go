@@ -60,7 +60,7 @@ type App struct {
 	ChatHandler     *chatHandler.ChatHandler
 	SearchHandler   *searchPkg.Handler
 
-	// CronStop 在优雅关停时调用以停掉定时任务。
+	// CronStop is called during graceful shutdown to stop the cron jobs.
 	CronStop func()
 }
 
@@ -100,7 +100,7 @@ func New(cfg *config.Config) *App {
 	// Common handler (direct DB access for simple aggregation endpoints)
 	commonHdl := common.NewHandler(db, wiki)
 
-	// Upload module (D10: minio-go presigned URL 直传)
+	// Upload module (D10: minio-go presigned URL direct upload)
 	uploadSvc := uploadPkg.New(s3, db)
 	uploadHdl := uploadPkg.NewHandler(uploadSvc)
 
@@ -109,10 +109,10 @@ func New(cfg *config.Config) *App {
 	chatSvc := chatService.New(chatRepository)
 	chatHdl := chatHandler.New(chatSvc)
 
-	// Search module (D11: 委托 Galgame Wiki Service)
+	// Search module (D11: delegate to Galgame Wiki Service)
 	searchHdl := searchPkg.New(db, wiki)
 
-	// Cookie mode：prod 下使用 Secure cookie，dev 下 HTTP 必须关掉
+	// Cookie mode: use Secure cookies in prod; must be off for HTTP in dev
 	middleware.SecureCookies = cfg.Server.Mode == "prod"
 
 	// Fiber app

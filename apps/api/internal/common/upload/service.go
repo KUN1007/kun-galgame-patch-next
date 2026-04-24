@@ -1,11 +1,13 @@
-// Package upload 封装补丁资源的上传流程（D10，2026-04-21）。
+// Package upload encapsulates the patch resource upload flow (D10, 2026-04-21).
 //
-// 两条独立路径：
-//   - 小文件（≤ 200 MB）：PresignPutObject 一次搞定
-//   - 大文件（> 200 MB, ≤ 1 GB）：multipart init / part presign / complete / abort
+// Two independent paths:
+//   - Small files (<= 200 MB): PresignPutObject in one shot
+//   - Large files (> 200 MB, <= 1 GB): multipart init / part presign / complete / abort
 //
-// 上传成功后，前端拿到 s3_key，调用 POST /api/patch/:id/resource 入库。
-// 每日限额（daily_upload_size）在 complete 阶段按 HeadObject 返回的实际 size 扣减。
+// After a successful upload, the frontend receives the s3_key and calls
+// POST /api/patch/:id/resource to persist the record. The daily quota
+// (daily_upload_size) is decremented at the complete stage based on the actual
+// size returned by HeadObject.
 package upload
 
 import (
@@ -26,26 +28,27 @@ import (
 	"gorm.io/gorm"
 )
 
-// Service 组合 S3 客户端和 DB（用于限额校验/扣减）。
+// Service combines the S3 client and DB (used for quota checks and deductions).
 type Service struct {
 	s3 *storage.S3Client
 	db *gorm.DB
 }
 
-// New 构造 Service。
+// New constructs a Service.
 func New(s3 *storage.S3Client, db *gorm.DB) *Service {
 	return &Service{s3: s3, db: db}
 }
 
-// ─── s3_key 生成 ─────────────────────────────────────
+// ─── s3_key generation ───────────────────────────────
 
 var (
 	s3KeyAlphabet   = []byte("ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789")
-	fileNameInvalid = regexp.MustCompile(`[^\p{L}\p{N}_\-]`) // 与 apps/next-web/utils/sanitizeFileName.ts 一致
+	fileNameInvalid = regexp.MustCompile(`[^\p{L}\p{N}_\-]`) // matches apps/next-web/utils/sanitizeFileName.ts
 )
 
-// sanitizeFileName 对齐原 TS 版 sanitizeFileName：保留字母数字下划线连字符，去掉所有其他字符，
-// 保留扩展名，basename 裁到 100 字符以内。
+// sanitizeFileName mirrors the original TS sanitizeFileName: keep letters,
+// digits, underscore and hyphen; strip all other characters; preserve the
+// extension; truncate the basename to 100 characters.
 func sanitizeFileName(name string) string {
 	ext := filepath.Ext(name)
 	base := strings.TrimSuffix(name, ext)
@@ -56,7 +59,7 @@ func sanitizeFileName(name string) string {
 	return base + ext
 }
 
-// randomSegment 返回一个 length 字符的 [A-Za-z0-9] 随机串，替代老的 BLAKE3 hash 段。
+// randomSegment returns a length-char [A-Za-z0-9] random string, replacing the legacy BLAKE3 hash segment.
 func randomSegment(length int) (string, error) {
 	b := make([]byte, length)
 	max := big.NewInt(int64(len(s3KeyAlphabet)))
@@ -70,7 +73,7 @@ func randomSegment(length int) (string, error) {
 	return string(b), nil
 }
 
-// buildPatchResourceKey 构造 "patch/{patchId}/{random64}/{fileName}" 完整 S3 对象键。
+// buildPatchResourceKey builds the full S3 object key "patch/{patchId}/{random64}/{fileName}".
 func buildPatchResourceKey(patchID int, fileName string) (string, error) {
 	seg, err := randomSegment(constants.S3KeyRandomLength)
 	if err != nil {
@@ -79,9 +82,9 @@ func buildPatchResourceKey(patchID int, fileName string) (string, error) {
 	return fmt.Sprintf("patch/%d/%s/%s", patchID, seg, sanitizeFileName(fileName)), nil
 }
 
-// ─── 校验（auth 之外的业务规则） ─────────────────────────
+// ─── Validation (business rules beyond auth) ─────────
 
-// validatePreUpload 在 init 阶段做预检：扩展名、上限、每日限额（基于声明 size）。
+// validatePreUpload pre-checks at init time: extension, size cap, daily quota (based on declared size).
 func (s *Service) validatePreUpload(uid int, fileName string, declaredSize int64) error {
 	if declaredSize <= 0 || declaredSize > constants.MaxLargeFileSize {
 		return fmt.Errorf("文件大小超过 1GB 上限")
@@ -111,10 +114,10 @@ func (s *Service) dailyLimit(role int) int64 {
 	return constants.UserDailyUploadLimit
 }
 
-// verifyAndFinalize 在 complete 阶段被 small/multipart 共用：
-//  1. HeadObject 确认对象确实存在
-//  2. 实际 size 与声明 size 比对（不一致 → 删除 + 报错）
-//  3. 累加 daily_upload_size（原子 UPDATE）
+// verifyAndFinalize is shared by small and multipart completion:
+//  1. HeadObject confirms the object really exists
+//  2. Compare actual size with declared size (mismatch -> delete + error)
+//  3. Increment daily_upload_size (atomic UPDATE)
 func (s *Service) verifyAndFinalize(ctx context.Context, uid int, s3Key string, declared int64) (int64, error) {
 	info, err := s.s3.StatObject(ctx, s3Key)
 	if err != nil {
@@ -148,9 +151,9 @@ func (s *Service) verifyAndFinalize(ctx context.Context, uid int, s3Key string, 
 	return actual, nil
 }
 
-// ─── 对外动作 ────────────────────────────────────────
+// ─── Public actions ──────────────────────────────────
 
-// InitSmall 小文件 init：生成 s3_key 和 presigned PUT URL。
+// InitSmall initializes a small-file upload: generate s3_key and a presigned PUT URL.
 func (s *Service) InitSmall(ctx context.Context, uid int, req SmallInitRequest) (*SmallInitResponse, error) {
 	if req.FileSize > constants.MaxSmallFileSize {
 		return nil, fmt.Errorf("小文件上限 200MB，请走 multipart")
@@ -170,7 +173,7 @@ func (s *Service) InitSmall(ctx context.Context, uid int, req SmallInitRequest) 
 	return &SmallInitResponse{S3Key: key, UploadURL: u}, nil
 }
 
-// CompleteSmall 小文件 complete：HeadObject + 扣限额。
+// CompleteSmall completes a small-file upload: HeadObject + quota deduction.
 func (s *Service) CompleteSmall(ctx context.Context, uid int, req SmallCompleteRequest) (*CompleteResponse, error) {
 	size, err := s.verifyAndFinalize(ctx, uid, req.S3Key, req.DeclaredSize)
 	if err != nil {
@@ -179,7 +182,7 @@ func (s *Service) CompleteSmall(ctx context.Context, uid int, req SmallCompleteR
 	return &CompleteResponse{S3Key: req.S3Key, Size: size}, nil
 }
 
-// InitMultipart 大文件 init：CreateMultipartUpload + 为每个 part 签 URL。
+// InitMultipart initializes a large-file upload: CreateMultipartUpload + presign a URL for every part.
 func (s *Service) InitMultipart(ctx context.Context, uid int, req MultipartInitRequest) (*MultipartInitResponse, error) {
 	if req.FileSize <= constants.MaxSmallFileSize {
 		return nil, fmt.Errorf("≤ 200MB 请走 /upload/small")
@@ -202,7 +205,7 @@ func (s *Service) InitMultipart(ctx context.Context, uid int, req MultipartInitR
 	for i := 1; i <= req.PartCount; i++ {
 		u, err := s.s3.PresignUploadPart(ctx, key, uploadID, i, constants.PresignUploadPartTTL)
 		if err != nil {
-			// 签一半失败 → 直接 abort 上传，让客户端重来
+			// Failed mid-signing -> abort the upload so the client can retry
 			_ = s.s3.AbortMultipart(ctx, key, uploadID)
 			return nil, fmt.Errorf("签 part %d 失败: %w", i, err)
 		}
@@ -212,7 +215,7 @@ func (s *Service) InitMultipart(ctx context.Context, uid int, req MultipartInitR
 	return &MultipartInitResponse{S3Key: key, UploadID: uploadID, PartURLs: urls}, nil
 }
 
-// CompleteMultipart 大文件 complete：CompleteMultipartUpload + HeadObject + 扣限额。
+// CompleteMultipart completes a large-file upload: CompleteMultipartUpload + HeadObject + quota deduction.
 func (s *Service) CompleteMultipart(ctx context.Context, uid int, req MultipartCompleteRequest) (*CompleteResponse, error) {
 	parts := make([]storage.CompletedPart, 0, len(req.Parts))
 	for _, p := range req.Parts {
@@ -230,14 +233,14 @@ func (s *Service) CompleteMultipart(ctx context.Context, uid int, req MultipartC
 	return &CompleteResponse{S3Key: req.S3Key, Size: size}, nil
 }
 
-// AbortMultipart 客户端主动取消 multipart。
+// AbortMultipart cancels a multipart upload on client request.
 func (s *Service) AbortMultipart(ctx context.Context, req MultipartAbortRequest) error {
 	return s.s3.AbortMultipart(ctx, req.S3Key, req.UploadID)
 }
 
-// ─── minio 错误代码辅助 ──────────────────────────────
+// ─── minio error code helpers ────────────────────────
 
-// IsMinioNotFound 在其他层判断"对象不存在"时用。
+// IsMinioNotFound is used by other layers to detect "object not found".
 func IsMinioNotFound(err error) bool {
 	if err == nil {
 		return false

@@ -1,8 +1,9 @@
-// Package service 聊天模块的业务逻辑层。
+// Package service is the business logic layer for the chat module.
 //
-// D9（2026-04-21）：所有读写走 REST，不再有实时推送。
-// 前端 3s 轮询 GetMessages(after=lastMsgId) 拉新消息；
-// 编辑/删除/表情状态变化不通过轮询同步，仅刷新页面可见。
+// D9 (2026-04-21): all reads and writes go through REST; no real-time push.
+// The frontend polls GetMessages(after=lastMsgId) every 3s for new messages;
+// edits/deletes/reaction state changes are not synced via polling and are only
+// visible after a page refresh.
 package service
 
 import (
@@ -26,18 +27,18 @@ func New(repo *repository.ChatRepository) *ChatService {
 
 // ─── Room ───────────────────────────────────────────
 
-// ListRooms 列出用户加入的所有房间。
+// ListRooms lists all rooms the user has joined.
 func (s *ChatService) ListRooms(uid int) ([]model.ChatRoom, error) {
 	return s.repo.ListRoomsByUser(uid)
 }
 
-// CreateGroupRoom 创建群聊。仅 role >= 4 有权（在 handler 层校验）。
+// CreateGroupRoom creates a group chat. Only role >= 4 is allowed (checked in the handler layer).
 func (s *ChatService) CreateGroupRoom(ownerUID int, name, avatar string) (*model.ChatRoom, error) {
-	link := xid.New().String() // 20 字符有序唯一 id
+	link := xid.New().String() // 20-char sortable unique id
 	return s.repo.CreateRoom(ownerUID, name, link, avatar)
 }
 
-// JoinRoomByLink 通过链接加入房间。
+// JoinRoomByLink joins a room via its link.
 func (s *ChatService) JoinRoomByLink(uid int, link string) (*model.ChatRoom, error) {
 	room, err := s.repo.FindRoomByLink(link)
 	if err != nil {
@@ -51,9 +52,9 @@ func (s *ChatService) JoinRoomByLink(uid int, link string) (*model.ChatRoom, err
 
 // ─── Messages ───────────────────────────────────────
 
-// GetMessages 轮询拉取新消息。
+// GetMessages polls for new messages.
 //
-// 先用 link 拿 room 并校验成员身份，再按 after/limit 拉。
+// Resolves the room by link and checks membership first, then fetches by after/limit.
 func (s *ChatService) GetMessages(uid int, link string, after, limit int) ([]model.ChatMessage, error) {
 	room, err := s.resolveRoomForMember(uid, link)
 	if err != nil {
@@ -62,7 +63,7 @@ func (s *ChatService) GetMessages(uid int, link string, after, limit int) ([]mod
 	return s.repo.ListMessages(room.ID, after, limit)
 }
 
-// CreateMessage 发送消息，更新房间的 last_message_time。
+// CreateMessage sends a message and updates the room's last_message_time.
 func (s *ChatService) CreateMessage(uid int, link string, content, fileURL string, replyToID *int) (*model.ChatMessage, error) {
 	room, err := s.resolveRoomForMember(uid, link)
 	if err != nil {
@@ -85,7 +86,7 @@ func (s *ChatService) CreateMessage(uid int, link string, content, fileURL strin
 	return msg, nil
 }
 
-// UpdateMessage 编辑消息。只有发送者本人可编辑。
+// UpdateMessage edits a message. Only the sender may edit.
 func (s *ChatService) UpdateMessage(uid, messageID int, newContent string) error {
 	m, err := s.repo.GetMessage(messageID)
 	if err != nil {
@@ -100,7 +101,7 @@ func (s *ChatService) UpdateMessage(uid, messageID int, newContent string) error
 	return s.repo.UpdateMessageContent(m, m.Content, newContent)
 }
 
-// DeleteMessage 软删消息。发送者或 role >= 3 可删。
+// DeleteMessage soft-deletes a message. Sender or role >= 3 may delete.
 func (s *ChatService) DeleteMessage(uid, role, messageID int) error {
 	m, err := s.repo.GetMessage(messageID)
 	if err != nil {
@@ -113,7 +114,7 @@ func (s *ChatService) DeleteMessage(uid, role, messageID int) error {
 	return s.repo.SoftDeleteMessage(messageID, uid, now)
 }
 
-// ToggleReaction 切换表情回应。
+// ToggleReaction toggles an emoji reaction.
 func (s *ChatService) ToggleReaction(uid, messageID int, emoji string) (bool, error) {
 	if _, err := s.repo.GetMessage(messageID); err != nil {
 		return false, fmt.Errorf("消息不存在")
@@ -121,7 +122,7 @@ func (s *ChatService) ToggleReaction(uid, messageID int, emoji string) (bool, er
 	return s.repo.ToggleReaction(messageID, uid, emoji)
 }
 
-// MarkSeen 批量已读。
+// MarkSeen marks messages as seen in bulk.
 func (s *ChatService) MarkSeen(uid int, link string, messageIDs []int) error {
 	room, err := s.resolveRoomForMember(uid, link)
 	if err != nil {
@@ -132,7 +133,7 @@ func (s *ChatService) MarkSeen(uid int, link string, messageIDs []int) error {
 
 // ─── helpers ────────────────────────────────────────
 
-// resolveRoomForMember 取 room 并确认 uid 是其成员，否则返回错误。
+// resolveRoomForMember fetches the room and confirms uid is a member, else returns an error.
 func (s *ChatService) resolveRoomForMember(uid int, link string) (*model.ChatRoom, error) {
 	room, err := s.repo.FindRoomByLink(link)
 	if err != nil {
@@ -148,5 +149,5 @@ func (s *ChatService) resolveRoomForMember(uid int, link string) (*model.ChatRoo
 	return room, nil
 }
 
-// IsNotFound 对外提供 ErrRecordNotFound 判断，便于上层区分业务错误。
+// IsNotFound exposes an ErrRecordNotFound check for callers to distinguish business errors.
 func IsNotFound(err error) bool { return err == gorm.ErrRecordNotFound }

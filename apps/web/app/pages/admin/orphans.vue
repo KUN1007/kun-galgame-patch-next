@@ -5,7 +5,7 @@ const api = useApi()
 const page = ref(1)
 const limit = 20
 
-// 单条补丁（只列出富化前需要的本地字段）
+// A single patch (only the local fields needed before enrichment)
 interface OrphanPatch {
   id: number
   vndb_id: string
@@ -22,8 +22,8 @@ interface OrphanPatch {
 interface OrphanListResponse {
   items: OrphanPatch[]
   total: number
-  pending_count: number      // vndb_id = 'pending-N' 的条数
-  bad_vndb_count: number     // vndb_id 格式对但 Wiki 查不到的条数
+  pending_count: number      // count of rows with vndb_id = 'pending-N'
+  bad_vndb_count: number     // count of rows whose vndb_id is well-formed but missing in Wiki
 }
 
 const { data, pending, refresh } = await useAsyncData<OrphanListResponse>(
@@ -43,7 +43,7 @@ watch(page, () => refresh())
 
 const totalPages = computed(() => Math.ceil((data.value?.total ?? 0) / limit))
 
-// 按 row 保存 "正在编辑的 vndb_id"
+// Per-row "vndb_id currently being edited"
 const editVndbID = reactive<Record<number, string>>({})
 const submitting = reactive<Record<number, boolean>>({})
 
@@ -103,7 +103,7 @@ const vndbLink = (v: string) =>
       </p>
     </div>
 
-    <!-- 统计卡片 -->
+    <!-- Stats cards -->
     <div class="grid gap-3 sm:grid-cols-3">
       <KunCard :bordered="true">
         <p class="text-default-500 text-xs">总计</p>
@@ -134,7 +134,7 @@ const vndbLink = (v: string) =>
     <div v-else class="space-y-3">
       <KunCard v-for="p in data?.items" :key="p.id" :bordered="true">
         <div class="flex flex-col gap-3 lg:flex-row lg:items-start">
-          <!-- 左：基本信息 -->
+          <!-- Left: basic info -->
           <div class="flex-1 space-y-2">
             <div class="flex flex-wrap items-center gap-2">
               <span class="font-mono text-default-500 text-sm">
@@ -182,7 +182,7 @@ const vndbLink = (v: string) =>
             </div>
           </div>
 
-          <!-- 右：操作区 -->
+          <!-- Right: actions -->
           <div class="flex flex-col gap-2 lg:w-96">
             <div class="flex items-center gap-2">
               <KunInput

@@ -1,16 +1,16 @@
 package dto
 
-// PatchCreateRequest 创建补丁请求体（D12，2026-04-21）。
+// PatchCreateRequest is the create-patch request body (D12, 2026-04-21).
 //
-// 游戏元数据（name / introduction / banner / released / content_limit / alias）
-// 全部从 Galgame Wiki 获取，客户端只需要提供 vndb_id。服务端会调 Wiki
-// /galgame/check 验证并拿到 galgame_id 回填到本地。
+// All game metadata (name / introduction / banner / released / content_limit / alias)
+// comes from the Galgame Wiki; the client only needs to supply vndb_id. The server
+// calls Wiki /galgame/check to verify and fetch the galgame_id to persist locally.
 type PatchCreateRequest struct {
 	VndbID string `json:"vndb_id" validate:"required,max=10"`
 }
 
-// PatchUpdateRequest D12 之后补丁本身几乎没有可编辑字段。保留此 DTO 仅用于
-// 重新绑定 vndb_id 的极端情况（比如误链）。
+// PatchUpdateRequest: after D12, the patch itself has almost no editable fields.
+// This DTO is kept only for the edge case of rebinding vndb_id (e.g. a mislinked entry).
 type PatchUpdateRequest struct {
 	VndbID string `json:"vndb_id" validate:"required,max=10"`
 }
@@ -36,9 +36,10 @@ type PatchCommentUpdateRequest struct {
 
 // PatchResourceCreateRequest is the request body for creating a resource.
 //
-// D10 变更（2026-04-21）：不再有 Hash（BLAKE3）字段。
-// S3 资源上传后前端拿到 s3_key（完整对象键），在这里回传；服务端会 HeadObject 校验。
-// 外部链接资源（storage != "s3"）则 s3_key 留空，content 直接填外链。
+// D10 change (2026-04-21): the Hash (BLAKE3) field is gone.
+// After uploading the S3 resource, the frontend receives s3_key (full object key)
+// and submits it here; the server verifies via HeadObject.
+// For external-link resources (storage != "s3") leave s3_key empty and put the link in content.
 type PatchResourceCreateRequest struct {
 	PatchID   int      `json:"patch_id" validate:"required,min=1"`
 	Storage   string   `json:"storage" validate:"required"`

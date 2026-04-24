@@ -9,12 +9,12 @@ import (
 	"github.com/gofiber/fiber/v2"
 )
 
-// Handler 暴露 5 个 HTTP 端点。
+// Handler exposes 5 HTTP endpoints.
 type Handler struct {
 	svc *Service
 }
 
-// NewHandler 构造 Handler。
+// NewHandler constructs a Handler.
 func NewHandler(svc *Service) *Handler {
 	return &Handler{svc: svc}
 }

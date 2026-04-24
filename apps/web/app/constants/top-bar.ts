@@ -3,8 +3,8 @@ export interface KunNavItem {
   href: string
 }
 
-// NOTE: /tag, /company, /character, /person, /release 已按 D8/D11/D12 废弃，
-// 这些元数据统一由 Galgame Wiki Service 托管（galgame.kungal.com）。
+// NOTE: /tag, /company, /character, /person, /release are deprecated per D8/D11/D12.
+// Their metadata is owned by the Galgame Wiki Service (galgame.kungal.com).
 export const kunNavItem: KunNavItem[] = [
   { name: '下载', href: '/galgame' },
   { name: '发布', href: '/edit/create' },

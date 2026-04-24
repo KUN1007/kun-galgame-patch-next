@@ -29,14 +29,15 @@ func (j JSONArray) Value() (driver.Value, error) {
 	return json.Marshal(j)
 }
 
-// Patch 是本项目核心表。
+// Patch is the core table of this project.
 //
-// D12（2026-04-21）：几乎所有游戏元数据（name / introduction / banner / released /
-// content_limit / engine / alias）都迁到 Galgame Wiki。Patch 只保留：
-//   - 与 Wiki 的外键：vndb_id（必填）、galgame_id（Wiki 里的 id，方便批量富化）
-//   - 补丁自身数据：翻译类型 / 支持语言 / 平台 / 计数 / 用户
+// D12 (2026-04-21): almost all galgame metadata (name / introduction / banner /
+// released / content_limit / engine / alias) has moved to the Galgame Wiki.
+// Patch now only keeps:
+//   - Foreign keys to Wiki: vndb_id (required), galgame_id (Wiki's id, for easy bulk enrichment)
+//   - Patch-specific data: translation type / supported languages / platforms / counts / user
 //
-// 展示游戏名/封面/介绍时，通过 galgame_id 调 Wiki /galgame/batch 批量拉取。
+// To display game name/banner/introduction, call Wiki /galgame/batch in bulk by galgame_id.
 type Patch struct {
 	ID                 int       `gorm:"primaryKey;autoIncrement" json:"id"`
 	VndbID             string    `gorm:"uniqueIndex;type:varchar(107);not null" json:"vndb_id"`
@@ -57,7 +58,7 @@ type Patch struct {
 	Created            time.Time `gorm:"autoCreateTime" json:"created"`
 	Updated            time.Time `gorm:"autoUpdateTime" json:"updated"`
 
-	// Relations（仅 Preload 用，不对应真实列）
+	// Relations (Preload only, not real columns)
 	User *PatchUser `gorm:"foreignKey:UserID" json:"user,omitempty"`
 }
 
@@ -74,10 +75,12 @@ func (PatchUser) TableName() string { return "user" }
 
 // PatchResource represents a patch resource.
 //
-// D10 变更（2026-04-21）：
-//   - 老字段 Hash（BLAKE3）改名为 Blake3，仅保留存量数据，新上传恒为 ""
-//   - 新增 S3Key：完整 S3 对象键，例如 "patch/42/xk9z.../game.zip"，
-//     所有 Put/Head/Delete 操作直接用它，不再应用层拼路径。
+// D10 change (2026-04-21):
+//   - The legacy Hash (BLAKE3) field is renamed to Blake3; kept only for existing
+//     data. New uploads always leave it "".
+//   - Added S3Key: the full S3 object key, e.g. "patch/42/xk9z.../game.zip".
+//     All Put/Head/Delete operations use it directly; the application no longer
+//     builds paths itself.
 type PatchResource struct {
 	ID                    int       `gorm:"primaryKey;autoIncrement" json:"id"`
 	Storage               string    `gorm:"not null" json:"storage"`
@@ -126,7 +129,7 @@ type PatchComment struct {
 
 func (PatchComment) TableName() string { return "patch_comment" }
 
-// NOTE: PatchAlias 按 D12（2026-04-21）废弃。游戏别名由 Wiki /galgame/:gid/aliases 管理。
+// NOTE: PatchAlias is deprecated per D12 (2026-04-21). Game aliases are managed by Wiki /galgame/:gid/aliases.
 
 // PatchLink represents an external link
 type PatchLink struct {
@@ -140,8 +143,8 @@ type PatchLink struct {
 
 func (PatchLink) TableName() string { return "patch_link" }
 
-// NOTE: PatchCover / PatchScreenshot 按 D8 决策废弃，
-// 由 Galgame Wiki Service 统一管理，不在本项目落库。
+// NOTE: PatchCover / PatchScreenshot are deprecated per decision D8.
+// They are owned by the Galgame Wiki Service and not persisted in this project.
 
 // Relation tables
 type UserPatchFavoriteRelation struct {
@@ -184,5 +187,5 @@ type UserPatchResourceLikeRelation struct {
 
 func (UserPatchResourceLikeRelation) TableName() string { return "user_patch_resource_like_relation" }
 
-// NOTE: PatchTag / PatchTagRel 按 D11（2026-04-21）废弃。
-// tag 元数据统一由 Galgame Wiki 管理，通过 patch.vndb_id → Wiki /galgame/batch 获取。
+// NOTE: PatchTag / PatchTagRel are deprecated per D11 (2026-04-21).
+// Tag metadata is owned by the Galgame Wiki; fetch it via patch.vndb_id -> Wiki /galgame/batch.

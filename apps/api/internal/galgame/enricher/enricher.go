@@ -1,7 +1,8 @@
-// Package enricher 把本地 patch 结果富化为前端直接消费的形状。
+// Package enricher enriches local patch rows into the shape the frontend consumes directly.
 //
-// D12（2026-04-21）：patch 表不再存游戏元数据，通过 galgame_id 向 Wiki /galgame/batch
-// 批量拉取后，组装成前端 GalgameCard 期望的结构：
+// D12 (2026-04-21): the patch table no longer stores galgame metadata. It is
+// fetched in bulk from Wiki /galgame/batch by galgame_id and assembled into the
+// structure the frontend GalgameCard expects:
 //
 //	{
 //	  id, vndbId, bid, banner, view, download,
@@ -9,10 +10,10 @@
 //	  type, language, platform,
 //	  content_limit, status, created, resourceUpdateTime,
 //	  _count: { favorite_by, contribute_by, resource, comment },
-//	  galgame: { ...Wiki 原始字段，供详情页可选使用 }
+//	  galgame: { ...raw Wiki fields, optionally used by the detail page }
 //	}
 //
-// Wiki 失败时字符串字段为空、_count 仍真实，保证前端不崩溃。
+// When Wiki fails, string fields are empty but _count stays accurate so the frontend does not break.
 package enricher
 
 import (
@@ -24,7 +25,7 @@ import (
 	patchModel "kun-galgame-patch-api/internal/patch/model"
 )
 
-// KunLanguage 对齐前端 KunLanguage（4 语言）。
+// KunLanguage mirrors the frontend KunLanguage (4 languages).
 type KunLanguage struct {
 	EnUs string `json:"en-us"`
 	JaJp string `json:"ja-jp"`
@@ -32,7 +33,7 @@ type KunLanguage struct {
 	ZhTw string `json:"zh-tw"`
 }
 
-// Counts 对齐前端的 `_count` 嵌套对象。
+// Counts mirrors the frontend `_count` nested object.
 type Counts struct {
 	FavoriteBy   int `json:"favorite_by"`
 	ContributeBy int `json:"contribute_by"`
@@ -40,8 +41,8 @@ type Counts struct {
 	Comment      int `json:"comment"`
 }
 
-// GalgameCard 是前端 `interface GalgameCard` 的 Go 镜像。
-// JSON tag 严格对齐前端期望的 key（含 camelCase 的 `vndbId` / `resourceUpdateTime`）。
+// GalgameCard is the Go mirror of the frontend `interface GalgameCard`.
+// JSON tags strictly match the keys the frontend expects (including camelCase `vndbId` / `resourceUpdateTime`).
 type GalgameCard struct {
 	ID                 int                          `json:"id"`
 	Name               KunLanguage                  `json:"name"`
@@ -62,9 +63,9 @@ type GalgameCard struct {
 	Galgame            *galgameClient.GalgameBrief  `json:"galgame,omitempty"`
 }
 
-// EnrichPatches 把一批本地 patch + Wiki 富化到前端可直接渲染的 GalgameCard 列表。
+// EnrichPatches enriches a batch of local patches with Wiki data into GalgameCards the frontend can render directly.
 //
-// 单次 /galgame/batch 调用覆盖全部 galgame_id。Wiki 失败时仅本地字段可用（name 为空串）。
+// A single /galgame/batch call covers all galgame_ids. If Wiki fails, only local fields are available (name is empty strings).
 func EnrichPatches(ctx context.Context, wiki *galgameClient.Client, patches []patchModel.Patch) []GalgameCard {
 	cards := make([]GalgameCard, len(patches))
 	for i := range patches {
@@ -97,7 +98,7 @@ func EnrichPatches(ctx context.Context, wiki *galgameClient.Client, patches []pa
 	return cards
 }
 
-// EnrichPatch 单条富化（头部卡片用，不含 intro/tag/official）。
+// EnrichPatch enriches a single patch (for the header card; no intro/tag/official).
 func EnrichPatch(ctx context.Context, wiki *galgameClient.Client, p *patchModel.Patch) GalgameCard {
 	if p == nil {
 		return GalgameCard{}
@@ -115,8 +116,8 @@ func EnrichPatch(ctx context.Context, wiki *galgameClient.Client, p *patchModel.
 	return card
 }
 
-// PatchDetailCard 详情页用：基础 GalgameCard + Wiki 里的 intro / tag_ids / official_ids / engine_ids。
-// 用一次 /galgame/:gid 调用拉取。
+// PatchDetailCard is for the detail page: the base GalgameCard plus intro / tag_ids / official_ids / engine_ids from Wiki.
+// Fetched with a single /galgame/:gid call.
 type PatchDetailCard struct {
 	GalgameCard
 	IntroductionMarkdown KunLanguage `json:"introductionMarkdown"`
@@ -126,7 +127,7 @@ type PatchDetailCard struct {
 	WikiEngineIDs        []int       `json:"wikiEngineIds"`
 }
 
-// EnrichPatchDetail 详情页富化：比 EnrichPatch 多一次 /galgame/:gid 请求拿 intro/关联 ID。
+// EnrichPatchDetail enriches the detail page: one extra /galgame/:gid call on top of EnrichPatch to get intro/associated IDs.
 func EnrichPatchDetail(ctx context.Context, wiki *galgameClient.Client, p *patchModel.Patch) PatchDetailCard {
 	base := PatchDetailCard{}
 	if p == nil {
@@ -145,7 +146,7 @@ func EnrichPatchDetail(ctx context.Context, wiki *galgameClient.Client, p *patch
 	}
 
 	g := &env.Galgame
-	// name / banner / content_limit 等基础字段补上
+	// Fill in basic fields like name / banner / content_limit
 	base.Name = KunLanguage{
 		EnUs: g.NameEnUs,
 		JaJp: g.NameJaJp,
@@ -193,7 +194,7 @@ func collectGalgameIDs(patches []patchModel.Patch) []int {
 	return ids
 }
 
-// baseCard 从 patch 生成卡片的本地字段部分（Name/Banner 等 Wiki 字段先留空）。
+// baseCard builds the local-field portion of the card from a patch (Wiki-owned fields like Name/Banner start empty).
 func baseCard(p *patchModel.Patch) GalgameCard {
 	return GalgameCard{
 		ID:                 p.ID,
@@ -217,7 +218,7 @@ func baseCard(p *patchModel.Patch) GalgameCard {
 	}
 }
 
-// applyGalgame 把 Wiki 的 galgame 信息合并到卡片上。
+// applyGalgame merges the Wiki galgame info into a card.
 func applyGalgame(card *GalgameCard, g *galgameClient.GalgameBrief) {
 	card.Name = KunLanguage{
 		EnUs: g.NameEnUs,

@@ -7,7 +7,7 @@ import (
 )
 
 func (a *App) RegisterRoutes() {
-	// API 版本化前缀，与前端 apiBase=http://host/api/v1 对齐
+	// Versioned API prefix, aligned with the frontend apiBase=http://host/api/v1
 	api := a.Fiber.Group("/api/v1")
 
 	auth := middleware.Auth(a.RDB, a.Config.OAuth)
@@ -15,7 +15,7 @@ func (a *App) RegisterRoutes() {
 	adminAuth := middleware.RequireRole(3)
 	superAdminAuth := middleware.RequireRole(4)
 
-	// Rate limits (基于 Redis per-user/per-IP 滚动窗口)
+	// Rate limits (Redis-backed per-user/per-IP rolling window)
 	checkInRL := middleware.RateLimit(a.RDB, "checkin", 1, 24*time.Hour)
 	usernameRL := middleware.RateLimit(a.RDB, "username", 3, time.Hour)
 	emailRL := middleware.RateLimit(a.RDB, "email", 3, time.Hour)
@@ -34,7 +34,7 @@ func (a *App) RegisterRoutes() {
 	// ===== Patch Routes =====
 	patchRoutes := api.Group("/patch")
 
-	// Create（D12 后简化为 JSON { vndb_id } ）
+	// Create (after D12, simplified to JSON { vndb_id })
 	patchRoutes.Post("/", auth, a.PatchHandler.CreatePatch)
 
 	// Public / optional auth
@@ -133,13 +133,13 @@ func (a *App) RegisterRoutes() {
 	adminRoutes.Get("/stats/sum", a.AdminHandler.GetStatsSum)
 	adminRoutes.Get("/log", a.AdminHandler.GetLogs)
 
-	// D12：Wiki 里查不到 galgame 的"孤儿补丁"，给 admin 人工处理
+	// D12: "orphan patches" whose galgame is missing in Wiki, for admin manual handling
 	adminRoutes.Get("/patch/orphans", a.AdminHandler.GetOrphanPatches)
 
-	// NOTE: /tag/* 和 /company/* 路由按 D11（2026-04-21）废弃。
-	// tag / company 元数据完全由 Galgame Wiki Service 管理；
-	// 前端直接调 Wiki 的 /tag /tag/search /official /official/search 等端点。
-	// "按 tag/company 查补丁" 的需求通过 /api/search + tag_ids/official_ids 参数实现。
+	// NOTE: /tag/* and /company/* routes are deprecated per D11 (2026-04-21).
+	// tag / company metadata is fully owned by the Galgame Wiki Service;
+	// the frontend calls Wiki endpoints like /tag /tag/search /official /official/search directly.
+	// "Find patches by tag/company" is served via /api/search with tag_ids/official_ids params.
 
 	// ===== Common Routes =====
 	api.Get("/home", a.CommonHandler.GetHome)
@@ -161,7 +161,7 @@ func (a *App) RegisterRoutes() {
 	chatRoutes.Delete("/message/:id", a.ChatHandler.DeleteMessage)
 	chatRoutes.Post("/message/:id/reaction", a.ChatHandler.ToggleReaction)
 
-	// ===== Upload Routes (D10: minio-go presigned URL 直传) =====
+	// ===== Upload Routes (D10: minio-go presigned URL direct upload) =====
 	uploadRoutes := api.Group("/upload", auth)
 	uploadRoutes.Post("/small/init", a.UploadHandler.InitSmall)
 	uploadRoutes.Post("/small/complete", a.UploadHandler.CompleteSmall)

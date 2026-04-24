@@ -123,8 +123,8 @@ func GetRole(c *fiber.Ctx) int {
 	return user.Role
 }
 
-// SecureCookies 是否启用 HTTPS-only cookie。由 app 启动时按环境设置。
-// dev 环境下 HTTP 场景必须关掉，否则浏览器会拒绝写 cookie。
+// SecureCookies controls whether HTTPS-only cookies are enabled. Set by the app at startup based on environment.
+// In dev over HTTP this must be off, otherwise the browser refuses to store the cookie.
 var SecureCookies = true
 
 // CreateSession creates a new session in Redis and sets the cookie.

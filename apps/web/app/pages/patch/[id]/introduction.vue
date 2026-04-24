@@ -43,7 +43,7 @@ const langOptions = [
   { value: 'en-us', label: 'English' }
 ]
 
-// Wiki 前端基址（用于跳转到 Wiki 的 galgame 详情页）
+// Wiki frontend origin (used to link to the Wiki galgame detail page)
 const config = useRuntimeConfig()
 const wikiOrigin =
   ((config.public as { wikiOrigin?: string }).wikiOrigin as string) ??
@@ -127,8 +127,9 @@ const wikiOrigin =
       </div>
     </section>
 
-    <!-- 标签 / 会社 / 角色 / 制作人 / 截图 / 发行版本 全部由 Galgame Wiki 管理，
-         此处只给出 ID 概览和跳转入口，详情请前往 Wiki。 -->
+    <!-- Tags / officials / characters / staff / screenshots / releases are all
+         owned by the Galgame Wiki. We only surface an ID overview and a link
+         here; see Wiki for the full details. -->
     <section v-if="detail.galgame">
       <div class="mb-4 flex items-center gap-3">
         <div class="bg-primary h-6 w-1 rounded" />

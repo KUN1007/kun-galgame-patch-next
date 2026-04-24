@@ -17,7 +17,7 @@ import (
 	"github.com/gofiber/fiber/v2"
 )
 
-// 非创作者需要 vndb_id；所有情况下我们都要求 vndb_id 格式合法。
+// Non-creators need a vndb_id; in all cases we require a well-formed vndb_id.
 var vndbIDRegex = regexp.MustCompile(`^v\d+$`)
 
 type PatchHandler struct {
@@ -41,9 +41,10 @@ func getIDParam(c *fiber.Ctx, name string) (int, error) {
 
 // CreatePatch POST /api/patch
 //
-// D12（2026-04-21）：请求体简化为 JSON：{ "vndb_id": "vXXX" }。
-// 服务端会调 Wiki /galgame/check 验证并拿到 galgame_id 回填到本地。
-// 启用 creator-only 时禁止非创作者创建；非创作者必须提供合法 vndb_id（现在本来就必填）。
+// D12 (2026-04-21): the request body is simplified to JSON { "vndb_id": "vXXX" }.
+// The server calls Wiki /galgame/check to verify and fetch the galgame_id to persist locally.
+// When creator-only is enabled, non-creators are forbidden from creating; non-creators must
+// supply a valid vndb_id (which is now always required anyway).
 func (h *PatchHandler) CreatePatch(c *fiber.Ctx) error {
 	user := middleware.MustGetUser(c)
 
@@ -66,7 +67,7 @@ func (h *PatchHandler) CreatePatch(c *fiber.Ctx) error {
 	return response.OK(c, map[string]int{"id": id})
 }
 
-// headerCard 把 GalgameCard + is_favorite 扁平化，贴合前端 PatchHeader 形状。
+// headerCard flattens GalgameCard + is_favorite to match the frontend PatchHeader shape.
 type headerCard struct {
 	enricher.GalgameCard
 	IsFavorite bool `json:"isFavorite"`
@@ -74,8 +75,8 @@ type headerCard struct {
 
 // GetPatch GET /api/patch/:id
 //
-// D12：直接返回 GalgameCard 扁平结构（不再套 patch / is_favorite 两层）。
-// 前端 PatchHeader = GalgameCard + isFavorite。
+// D12: return the flat GalgameCard structure directly (no longer wrapped in patch / is_favorite layers).
+// Frontend PatchHeader = GalgameCard + isFavorite.
 func (h *PatchHandler) GetPatch(c *fiber.Ctx) error {
 	id, err := getIDParam(c, "id")
 	if err != nil {
@@ -96,7 +97,7 @@ func (h *PatchHandler) GetPatch(c *fiber.Ctx) error {
 
 // GetPatchDetail GET /api/patch/:id/detail
 //
-// D12：详情富化走 Wiki /galgame/:gid，多拿 intro / tag_ids / official_ids。
+// D12: detail enrichment goes through Wiki /galgame/:gid to additionally fetch intro / tag_ids / official_ids.
 func (h *PatchHandler) GetPatchDetail(c *fiber.Ctx) error {
 	id, err := getIDParam(c, "id")
 	if err != nil {
@@ -112,8 +113,8 @@ func (h *PatchHandler) GetPatchDetail(c *fiber.Ctx) error {
 
 // UpdatePatch PUT /api/patch/:id
 //
-// D12 之后只允许"重新绑定 vndb_id"（仅创建者或 role >= 3 可操作）。
-// 游戏名/介绍/封面等全走 Wiki，本端点不再接受它们。
+// After D12 this only permits "rebinding vndb_id" (creator or role >= 3 only).
+// Game name/introduction/banner etc. all live in Wiki; this endpoint no longer accepts them.
 func (h *PatchHandler) UpdatePatch(c *fiber.Ctx) error {
 	id, err := getIDParam(c, "id")
 	if err != nil {

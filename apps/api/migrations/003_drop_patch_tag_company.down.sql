@@ -1,6 +1,7 @@
--- 003 DOWN: 重建 patch_tag / patch_company 表结构（不含数据）
+-- 003 DOWN: Recreate the patch_tag / patch_company table structure (no data)
 --
--- ⚠️ 注意：和 001 一样是单向迁移。数据已迁到 Galgame Wiki，该 down 只为 schema 回滚应急。
+-- Warning: like 001, this is a one-way migration. Data has moved to the
+-- Galgame Wiki; this down script is only for emergency schema rollback.
 
 BEGIN;
 

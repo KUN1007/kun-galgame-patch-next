@@ -1,12 +1,12 @@
-// cmd/backfill-galgame-id 把本地 patch 表里 galgame_id=0 的行，按 vndb_id 去
-// Galgame Wiki 查询一次，把 galgame_id 回填回来（D12 收尾工具）。
+// cmd/backfill-galgame-id queries Galgame Wiki for each local patch row with
+// galgame_id=0 (keyed by vndb_id) and backfills galgame_id (D12 cleanup tool).
 //
-// 用法：
+// Usage:
 //
-//	go run ./cmd/backfill-galgame-id                  # 跑所有 galgame_id=0 的
-//	go run ./cmd/backfill-galgame-id -dry-run         # 只打印计划，不改库
-//	go run ./cmd/backfill-galgame-id -concurrency=8   # 并发度（默认 4）
-//	go run ./cmd/backfill-galgame-id -limit=100       # 只处理前 N 条（调试用）
+//	go run ./cmd/backfill-galgame-id                  # process all rows with galgame_id=0
+//	go run ./cmd/backfill-galgame-id -dry-run         # print plan only, do not write DB
+//	go run ./cmd/backfill-galgame-id -concurrency=8   # concurrency (default 4)
+//	go run ./cmd/backfill-galgame-id -limit=100       # only process first N rows (for debugging)
 package main
 
 import (
@@ -44,12 +44,12 @@ func main() {
 
 	ctx := context.Background()
 
-	// 预览总量
+	// Preview total count
 	var total int64
 	db.Model(&patchModel.Patch{}).Where("galgame_id = 0").Count(&total)
 	slog.Info("待回填数量", "missing", total, "dry_run", *dryRun, "concurrency", *concurrency, "limit", *limit)
 
-	// 读所有需要回填的 patch（vndb_id + id）
+	// Read all patches that need backfill (vndb_id + id)
 	var patches []patchModel.Patch
 	q := db.Model(&patchModel.Patch{}).Select("id", "vndb_id").Where("galgame_id = 0").Order("id ASC")
 	if *limit > 0 {
@@ -64,7 +64,7 @@ func main() {
 		return
 	}
 
-	// 并发 channel
+	// Concurrency channel
 	jobs := make(chan patchModel.Patch)
 	var (
 		wg      sync.WaitGroup
@@ -107,7 +107,7 @@ func main() {
 		}()
 	}
 
-	// 生产者：每 100 条打一次进度
+	// Producer: log progress every 100 rows
 	go func() {
 		for i, p := range patches {
 			jobs <- p

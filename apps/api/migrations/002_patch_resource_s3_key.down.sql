@@ -1,8 +1,9 @@
--- 002 DOWN: 回滚 patch_resource 的 D10 schema 变更
+-- 002 DOWN: Roll back the D10 schema changes to patch_resource
 --
--- ⚠️ 注意：回滚会丢失新上传行的"随机 s3_key 段"信息
---   （因为旧 hash 列原本存的是 BLAKE3，回滚后 s3_key 里的随机串无处落脚）。
---   只适用于迁移后未产生新 S3 上传的场景。
+-- Warning: rolling back loses the "random s3_key segment" info from any newly
+--   uploaded rows (the old hash column stored BLAKE3, leaving nowhere for the
+--   random portion of s3_key to land after rollback).
+--   Only safe when no new S3 uploads have happened since the migration.
 
 BEGIN;
 

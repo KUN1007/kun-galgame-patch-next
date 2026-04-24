@@ -1,6 +1,6 @@
-// Package handler 聊天模块的 HTTP handlers。
+// Package handler contains HTTP handlers for the chat module.
 //
-// D9（2026-04-21）：9 个 REST 端点，不涉及 WebSocket。
+// D9 (2026-04-21): 9 REST endpoints, no WebSocket involved.
 package handler
 
 import (
@@ -44,7 +44,7 @@ func (h *ChatHandler) ListRooms(c *fiber.Ctx) error {
 	return response.OK(c, rooms)
 }
 
-// CreateRoom POST /api/chat/room   （role ≥ 4）
+// CreateRoom POST /api/chat/room   (role >= 4)
 func (h *ChatHandler) CreateRoom(c *fiber.Ctx) error {
 	user := middleware.MustGetUser(c)
 	if user.Role < 4 {

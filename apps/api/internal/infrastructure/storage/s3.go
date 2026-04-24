@@ -1,11 +1,11 @@
-// Package storage 用 minio-go v7 封装 S3 / S3-兼容（Backblaze B2 / MinIO / R2 等）操作。
+// Package storage wraps S3 / S3-compatible (Backblaze B2 / MinIO / R2 etc.) operations using minio-go v7.
 //
-// 设计要点（D10，2026-04-21）：
-//   - 前端直传模式：服务端只签 presigned URL，不经手文件字节
-//   - 小文件：PresignedPutObject
-//   - 大文件：NewMultipartUpload → 每个 part 签 PresignedUploadPart URL → CompleteMultipartUpload
-//   - 上传后用 StatObject 验 size（= HeadObject）
-//   - 孤儿清理：ListIncompleteUploads + RemoveIncompleteUpload（cron 周期跑）
+// Design notes (D10, 2026-04-21):
+//   - Client direct-upload model: the server only signs presigned URLs and never handles file bytes
+//   - Small files: PresignedPutObject
+//   - Large files: NewMultipartUpload -> presign PresignedUploadPart URL per part -> CompleteMultipartUpload
+//   - After upload, use StatObject (= HeadObject) to verify size
+//   - Orphan cleanup: ListIncompleteUploads + RemoveIncompleteUpload (run periodically by cron)
 package storage
 
 import (
@@ -24,15 +24,15 @@ import (
 	"github.com/minio/minio-go/v7/pkg/credentials"
 )
 
-// S3Client 包装 minio.Client，提供 presigned URL / multipart / head / delete 操作。
+// S3Client wraps minio.Client and provides presigned URL / multipart / head / delete operations.
 type S3Client struct {
 	client    *minio.Client
 	core      *minio.Core
 	bucket    string
-	publicURL string // 公开下载前缀：如 "https://s3.us-east-005.backblazeb2.com/kun-galgame-patch"
+	publicURL string // public download prefix, e.g. "https://s3.us-east-005.backblazeb2.com/kun-galgame-patch"
 }
 
-// NewS3 按 config 初始化客户端。cfg.Endpoint 为空时返回禁用的占位实例（dev 无 S3 也能启动）。
+// NewS3 initializes a client from config. When cfg.Endpoint is empty it returns a disabled placeholder (so dev can start without S3).
 func NewS3(cfg config.S3Config) *S3Client {
 	if cfg.Endpoint == "" {
 		slog.Warn("S3 未配置，storage 模块处于禁用状态")
@@ -63,8 +63,8 @@ func NewS3(cfg config.S3Config) *S3Client {
 	}
 }
 
-// parseEndpoint 把完整 URL（"https://s3.xxx.com"）拆成 host 和 TLS 开关，
-// minio-go 要求 host 部分无 scheme。
+// parseEndpoint splits a full URL ("https://s3.xxx.com") into host and TLS flag;
+// minio-go requires the host part to have no scheme.
 func parseEndpoint(raw string) (host string, secure bool, err error) {
 	if !strings.Contains(raw, "://") {
 		return raw, true, nil
@@ -76,10 +76,10 @@ func parseEndpoint(raw string) (host string, secure bool, err error) {
 	return u.Host, u.Scheme == "https", nil
 }
 
-// Ready 报告 client 是否已配置。未配置时所有操作返回 ErrNotConfigured。
+// Ready reports whether the client has been configured. When not configured, all operations return ErrNotConfigured.
 func (c *S3Client) Ready() bool { return c.client != nil }
 
-// ErrNotConfigured 在 S3 未配置时返回。
+// ErrNotConfigured is returned when S3 is not configured.
 var ErrNotConfigured = errors.New("S3 client 未配置")
 
 func (c *S3Client) check() error {
@@ -89,20 +89,20 @@ func (c *S3Client) check() error {
 	return nil
 }
 
-// Bucket 返回 bucket 名，给上层（handler）拼 key 用。
+// Bucket returns the bucket name for upper layers (handlers) to build keys.
 func (c *S3Client) Bucket() string { return c.bucket }
 
-// PublicURL 返回某 s3_key 对应的公开下载 URL。
+// PublicURL returns the public download URL for the given s3_key.
 func (c *S3Client) PublicURL(s3Key string) string {
 	return c.publicURL + "/" + s3Key
 }
 
 // ─────────────────────────────────────────────────────────────
-// 小文件：PresignedPutObject
+// Small files: PresignedPutObject
 // ─────────────────────────────────────────────────────────────
 
-// PresignPutObject 为给定 s3_key 生成一个有效期 ttl 的上传 URL。
-// 客户端直接 PUT 到返回的 URL 即可完成上传。
+// PresignPutObject generates an upload URL with TTL ttl for the given s3_key.
+// The client can PUT directly to the returned URL to complete the upload.
 func (c *S3Client) PresignPutObject(ctx context.Context, s3Key string, ttl time.Duration) (string, error) {
 	if err := c.check(); err != nil {
 		return "", err
@@ -115,10 +115,10 @@ func (c *S3Client) PresignPutObject(ctx context.Context, s3Key string, ttl time.
 }
 
 // ─────────────────────────────────────────────────────────────
-// 大文件 multipart：init / sign-parts / complete / abort
+// Large-file multipart: init / sign-parts / complete / abort
 // ─────────────────────────────────────────────────────────────
 
-// InitMultipart 发起一个新的 multipart upload，返回 uploadID。
+// InitMultipart starts a new multipart upload and returns the uploadID.
 func (c *S3Client) InitMultipart(ctx context.Context, s3Key string) (string, error) {
 	if err := c.check(); err != nil {
 		return "", err
@@ -130,7 +130,7 @@ func (c *S3Client) InitMultipart(ctx context.Context, s3Key string) (string, err
 	return uploadID, nil
 }
 
-// PresignUploadPart 为 multipart 的某个 part 生成 presigned URL（partNumber 从 1 开始）。
+// PresignUploadPart generates a presigned URL for one part of a multipart upload (partNumber starts at 1).
 func (c *S3Client) PresignUploadPart(ctx context.Context, s3Key, uploadID string, partNumber int, ttl time.Duration) (string, error) {
 	if err := c.check(); err != nil {
 		return "", err
@@ -146,13 +146,13 @@ func (c *S3Client) PresignUploadPart(ctx context.Context, s3Key, uploadID string
 	return u.String(), nil
 }
 
-// CompletedPart 是 multipart 完成请求里的一个 part。
+// CompletedPart is a single part inside a multipart completion request.
 type CompletedPart struct {
 	PartNumber int    `json:"part_number"`
 	ETag       string `json:"etag"`
 }
 
-// CompleteMultipart 把所有 part 合并为最终对象。parts 不需要预先排序。
+// CompleteMultipart merges all parts into the final object. parts does not need to be pre-sorted.
 func (c *S3Client) CompleteMultipart(ctx context.Context, s3Key, uploadID string, parts []CompletedPart) error {
 	if err := c.check(); err != nil {
 		return err
@@ -171,7 +171,7 @@ func (c *S3Client) CompleteMultipart(ctx context.Context, s3Key, uploadID string
 	return nil
 }
 
-// AbortMultipart 放弃某个未完成的 multipart。
+// AbortMultipart aborts an in-progress multipart upload.
 func (c *S3Client) AbortMultipart(ctx context.Context, s3Key, uploadID string) error {
 	if err := c.check(); err != nil {
 		return err
@@ -183,11 +183,12 @@ func (c *S3Client) AbortMultipart(ctx context.Context, s3Key, uploadID string) e
 }
 
 // ─────────────────────────────────────────────────────────────
-// 对象元信息 + 删除
+// Object metadata + delete
 // ─────────────────────────────────────────────────────────────
 
-// PutObject 服务端直接上传（用于 banner 这类需要先做图像处理的场景）。
-// 小对象用，走服务端出口带宽；大文件请走 presigned URL 路径。
+// PutObject performs server-side upload (used e.g. for banners where image
+// processing must happen first). Intended for small objects (consumes server
+// egress bandwidth); for large files use the presigned URL path.
 func (c *S3Client) PutObject(ctx context.Context, s3Key string, reader io.Reader, size int64, contentType string) error {
 	if err := c.check(); err != nil {
 		return err
@@ -201,7 +202,7 @@ func (c *S3Client) PutObject(ctx context.Context, s3Key string, reader io.Reader
 	return nil
 }
 
-// StatObject 对应 S3 HeadObject，拿到对象 size/etag/contentType 等。
+// StatObject maps to S3 HeadObject, returning size/etag/contentType of the object.
 func (c *S3Client) StatObject(ctx context.Context, s3Key string) (minio.ObjectInfo, error) {
 	if err := c.check(); err != nil {
 		return minio.ObjectInfo{}, err
@@ -209,7 +210,7 @@ func (c *S3Client) StatObject(ctx context.Context, s3Key string) (minio.ObjectIn
 	return c.client.StatObject(ctx, c.bucket, s3Key, minio.StatObjectOptions{})
 }
 
-// IsNotFound 判断 StatObject/DeleteObject 返回的 error 是否为"对象不存在"。
+// IsNotFound reports whether an error from StatObject/DeleteObject is "object not found".
 func IsNotFound(err error) bool {
 	if err == nil {
 		return false
@@ -217,7 +218,7 @@ func IsNotFound(err error) bool {
 	return minio.ToErrorResponse(err).Code == "NoSuchKey"
 }
 
-// DeleteObject 删除对象。不存在时也返回 nil（幂等）。
+// DeleteObject deletes an object. Returns nil even if the object does not exist (idempotent).
 func (c *S3Client) DeleteObject(ctx context.Context, s3Key string) error {
 	if err := c.check(); err != nil {
 		return err
@@ -230,17 +231,17 @@ func (c *S3Client) DeleteObject(ctx context.Context, s3Key string) error {
 }
 
 // ─────────────────────────────────────────────────────────────
-// 孤儿 multipart 清理（cron 用）
+// Orphan multipart cleanup (used by cron)
 // ─────────────────────────────────────────────────────────────
 
-// IncompleteUpload 代表一个未完成的 multipart，用于 cron 清理。
+// IncompleteUpload represents an unfinished multipart upload for cron-based cleanup.
 type IncompleteUpload struct {
 	Key       string
 	UploadID  string
 	Initiated time.Time
 }
 
-// ListIncompleteUploads 列出所有未完成的 multipart。prefix 可以限定范围，为空则列整个 bucket。
+// ListIncompleteUploads lists all unfinished multipart uploads. prefix narrows the scope; if empty, the whole bucket is listed.
 func (c *S3Client) ListIncompleteUploads(ctx context.Context, prefix string) ([]IncompleteUpload, error) {
 	if err := c.check(); err != nil {
 		return nil, err
@@ -259,7 +260,7 @@ func (c *S3Client) ListIncompleteUploads(ctx context.Context, prefix string) ([]
 	return out, nil
 }
 
-// RemoveIncompleteUpload 中止一个进行中的 multipart（清理）。
+// RemoveIncompleteUpload aborts an in-progress multipart upload (cleanup).
 func (c *S3Client) RemoveIncompleteUpload(ctx context.Context, s3Key string) error {
 	if err := c.check(); err != nil {
 		return err
