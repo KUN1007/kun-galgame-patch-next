@@ -15,16 +15,16 @@ const VNDBRegex = /^v\d{1,6}$/
 const handleSubmit = async () => {
   errors.value = {}
 
-  if (!VNDBRegex.test(store.data.vndbId)) {
+  if (!VNDBRegex.test(store.data.vndb_id)) {
     useKunMessage('VNDB ID 格式不正确（应为 vXXX, 如 v19658）', 'error')
-    errors.value = { vndbId: '格式不正确' }
+    errors.value = { vndb_id: '格式不正确' }
     return
   }
 
   submitting.value = true
   try {
     const res = await api.post<{ id: number }>('/patch', {
-      vndb_id: store.data.vndbId
+      vndb_id: store.data.vndb_id
     })
 
     if (res.code === 0 && res.data?.id) {
@@ -82,7 +82,7 @@ const handleSubmit = async () => {
         </template>
 
         <div class="mt-4 space-y-10">
-          <EditCreateVNDBInput :errors="errors.vndbId" />
+          <EditCreateVNDBInput :errors="errors.vndb_id" />
           <KunButton
             type="submit"
             color="primary"

@@ -155,9 +155,38 @@ func (s *PatchService) GetRandomPatchID() (int, error) {
 
 // ===== Comments =====
 
-func (s *PatchService) GetComments(patchID, page, limit int) ([]model.PatchComment, int64, error) {
+// GetComments returns a page of top-level comments (plus their replies) and marks
+// each comment/reply with is_liked=true for the given currentUID (0 = anonymous).
+func (s *PatchService) GetComments(patchID, currentUID, page, limit int) ([]model.PatchComment, int64, error) {
 	offset := (page - 1) * limit
-	return s.repo.GetComments(patchID, offset, limit)
+	comments, total, err := s.repo.GetComments(patchID, offset, limit)
+	if err != nil || currentUID == 0 || len(comments) == 0 {
+		return comments, total, err
+	}
+
+	// Collect all comment IDs (top-level + replies) in one pass.
+	ids := make([]int, 0, len(comments))
+	for i := range comments {
+		ids = append(ids, comments[i].ID)
+		for j := range comments[i].Replies {
+			ids = append(ids, comments[i].Replies[j].ID)
+		}
+	}
+	liked, err := s.repo.GetLikedCommentIDs(currentUID, ids)
+	if err != nil {
+		return comments, total, nil
+	}
+	likedSet := make(map[int]bool, len(liked))
+	for _, id := range liked {
+		likedSet[id] = true
+	}
+	for i := range comments {
+		comments[i].IsLiked = likedSet[comments[i].ID]
+		for j := range comments[i].Replies {
+			comments[i].Replies[j].IsLiked = likedSet[comments[i].Replies[j].ID]
+		}
+	}
+	return comments, total, nil
 }
 
 func (s *PatchService) CreateComment(patchID, userID int, content string, parentID *int) (*model.PatchComment, error) {

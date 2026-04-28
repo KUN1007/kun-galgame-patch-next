@@ -17,10 +17,10 @@ const { data: detail } = await useAsyncData<PatchDetail | null>(
 const lang = ref<Language>('zh-cn')
 
 const pickInitialLang = () => {
-  if (!detail.value?.introductionMarkdown) return 'zh-cn' as Language
+  if (!detail.value?.introduction_markdown) return 'zh-cn' as Language
   const langs: Language[] = ['zh-cn', 'ja-jp', 'en-us']
   return (
-    langs.find((l) => detail.value!.introductionMarkdown[l]) ?? ('zh-cn' as Language)
+    langs.find((l) => detail.value!.introduction_markdown[l]) ?? ('zh-cn' as Language)
   )
 }
 
@@ -29,9 +29,9 @@ watchEffect(() => {
 })
 
 const introHtml = computed(() => {
-  if (!detail.value?.introductionMarkdown) return ''
+  if (!detail.value?.introduction_markdown) return ''
   const text = getPreferredLanguageText(
-    detail.value.introductionMarkdown,
+    detail.value.introduction_markdown,
     lang.value
   )
   return DOMPurify.sanitize(text)
@@ -82,17 +82,17 @@ const wikiOrigin =
             更新时间: {{ formatDate(detail.updated, { isShowYear: true }) }}
           </span>
         </div>
-        <div v-if="detail.vndbId" class="flex items-center gap-2 text-sm">
+        <div v-if="detail.vndb_id" class="flex items-center gap-2 text-sm">
           <KunIcon name="lucide:link" class="size-4" />
           <span>
             VNDB ID:
             <a
-              :href="`https://vndb.org/${detail.vndbId}`"
+              :href="`https://vndb.org/${detail.vndb_id}`"
               target="_blank"
               rel="noopener noreferrer"
               class="text-primary hover:underline"
             >
-              {{ detail.vndbId }}
+              {{ detail.vndb_id }}
             </a>
           </span>
         </div>
@@ -127,58 +127,74 @@ const wikiOrigin =
       </div>
     </section>
 
-    <!-- Tags / officials / characters / staff / screenshots / releases are all
-         owned by the Galgame Wiki. We only surface an ID overview and a link
-         here; see Wiki for the full details. -->
-    <section v-if="detail.galgame">
+    <!-- Tags & officials (developers/publishers) come pre-resolved from Wiki by the
+         backend enricher — see apps/api/internal/galgame/enricher/enricher.go. -->
+    <section v-if="detail.tags?.length">
       <div class="mb-4 flex items-center gap-3">
         <div class="bg-primary h-6 w-1 rounded" />
-        <h2 class="text-2xl font-bold">更多信息</h2>
+        <h2 class="text-2xl font-bold">标签</h2>
       </div>
-      <div class="text-default-600 space-y-2 text-sm">
-        <p>
-          标签、会社、角色、制作人员、截图、发行版本等详细信息由
-          <a
-            :href="`${wikiOrigin}/galgame/${detail.galgame.id}`"
-            target="_blank"
-            rel="noopener noreferrer"
-            class="text-primary hover:underline"
-          >
-            Galgame Wiki
-          </a>
-          统一维护。
-        </p>
-        <div
-          v-if="detail.wikiTagIds?.length"
-          class="flex flex-wrap items-center gap-2"
+      <div class="flex flex-wrap gap-2">
+        <a
+          v-for="t in detail.tags"
+          :key="t.id"
+          :href="`${wikiOrigin}/tag/${t.id}`"
+          target="_blank"
+          rel="noopener noreferrer"
         >
-          <span class="text-default-500 shrink-0">标签 ID:</span>
           <KunBadge
-            v-for="id in detail.wikiTagIds"
-            :key="id"
-            size="sm"
+            :color="t.spoiler_level > 0 ? 'warning' : 'primary'"
             variant="flat"
-            color="primary"
-          >
-            #{{ id }}
-          </KunBadge>
-        </div>
-        <div
-          v-if="detail.wikiOfficialIds?.length"
-          class="flex flex-wrap items-center gap-2"
-        >
-          <span class="text-default-500 shrink-0">发行商 ID:</span>
-          <KunBadge
-            v-for="id in detail.wikiOfficialIds"
-            :key="id"
             size="sm"
-            variant="flat"
-            color="success"
           >
-            #{{ id }}
+            <KunIcon
+              v-if="t.spoiler_level > 0"
+              name="lucide:eye-off"
+              class="size-3.5"
+            />
+            {{ t.name }}
           </KunBadge>
-        </div>
+        </a>
       </div>
+    </section>
+
+    <section v-if="detail.officials?.length">
+      <div class="mb-4 flex items-center gap-3">
+        <div class="bg-primary h-6 w-1 rounded" />
+        <h2 class="text-2xl font-bold">会社</h2>
+      </div>
+      <div class="flex flex-wrap gap-2">
+        <a
+          v-for="o in detail.officials"
+          :key="o.id"
+          :href="`${wikiOrigin}/official/${o.id}`"
+          target="_blank"
+          rel="noopener noreferrer"
+        >
+          <KunBadge color="success" variant="flat" size="sm">
+            {{ o.name }}
+            <span v-if="o.category" class="text-default-500 text-xs">
+              · {{ o.category }}
+            </span>
+          </KunBadge>
+        </a>
+      </div>
+    </section>
+
+    <!-- Wiki link footer for richer info (characters, staff, screenshots, releases). -->
+    <section v-if="detail.galgame">
+      <p class="text-default-500 text-sm">
+        角色、制作人员、截图、发行版本等更多信息请查看
+        <a
+          :href="`${wikiOrigin}/galgame/${detail.galgame.id}`"
+          target="_blank"
+          rel="noopener noreferrer"
+          class="text-primary hover:underline"
+        >
+          Galgame Wiki
+        </a>
+        。
+      </p>
     </section>
   </div>
 

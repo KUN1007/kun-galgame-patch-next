@@ -7,9 +7,7 @@ import (
 
 	"kun-galgame-patch-api/internal/admin/dto"
 	"kun-galgame-patch-api/internal/admin/repository"
-	authModel "kun-galgame-patch-api/internal/auth/model"
 	patchModel "kun-galgame-patch-api/internal/patch/model"
-	userModel "kun-galgame-patch-api/internal/user/model"
 
 	"github.com/redis/go-redis/v9"
 )
@@ -69,7 +67,7 @@ func (s *AdminService) DeleteResource(resourceID, adminUID int) error {
 
 // ===== Users =====
 
-func (s *AdminService) GetUsers(search string, page, limit int) ([]authModel.User, int64, error) {
+func (s *AdminService) GetUsers(search string, page, limit int) ([]repository.AdminUserView, int64, error) {
 	return s.repo.GetUsers(search, (page-1)*limit, limit)
 }
 
@@ -110,7 +108,7 @@ func (s *AdminService) DeleteUser(uid, adminUID int) error {
 
 // ===== Creator Applications =====
 
-func (s *AdminService) GetCreatorApplications(page, limit int) ([]userModel.UserMessage, int64, error) {
+func (s *AdminService) GetCreatorApplications(page, limit int) ([]repository.CreatorApplicationItem, int64, error) {
 	return s.repo.GetCreatorApplications((page-1)*limit, limit)
 }
 

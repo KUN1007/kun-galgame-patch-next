@@ -12,6 +12,7 @@ export const stepOneSchema = z.object({
     )
 })
 
+// Field names align with POST /api/v1/auth/forgot/reset (snake_case).
 export const stepTwoSchema = z.object({
   name: z
     .string()
@@ -22,14 +23,14 @@ export const stepTwoSchema = z.object({
         message: '非法的用户名，用户名为 1~17 位任意字符'
       })
     ),
-  verificationCode: z
+  verification_code: z
     .string()
-    .regex(kunValidMailConfirmCodeRegex, { message: '邮箱验证码格式无效' }),
-  newPassword: z.string().regex(kunPasswordRegex, {
+    .regex(kunValidMailConfirmCodeRegex, { message: '邮箱验证码为 6 位数字' }),
+  new_password: z.string().regex(kunPasswordRegex, {
     message:
       '新密码格式错误, 密码的长度为 6 到 1007 位，必须包含至少一个英文字符和一个数字，可以选择性的包含 @!#$%^&*()_-+=\\/ 等特殊字符'
   }),
-  confirmPassword: z.string().regex(kunPasswordRegex, {
+  confirm_password: z.string().regex(kunPasswordRegex, {
     message:
       '确认密码格式错误, 密码的长度为 6 到 1007 位，必须包含至少一个英文字符和一个数字，可以选择性的包含 @!#$%^&*()_-+=\\/ 等特殊字符'
   })

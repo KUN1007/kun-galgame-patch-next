@@ -22,7 +22,9 @@ export const kunUsernameRegex = /^[\p{L}\p{N}!~_@#$%^&*()+=-]{1,17}$/u
 export const kunPasswordRegex =
   /^(?=.*[a-zA-Z])(?=.*[0-9])[\w!@#$%^&*()+=\\/-]{6,1007}$/
 
-export const kunValidMailConfirmCodeRegex = /^[a-zA-Z0-9]{7}$/
+// Email verification codes are 6-digit numeric strings — see
+// apps/api/internal/auth/service.go SendVerificationCode.
+export const kunValidMailConfirmCodeRegex = /^[0-9]{6}$/
 
 export const isValidName = (name: string) => {
   const invisibleChars = [
@@ -96,7 +98,7 @@ export const isValidPassword = (pwd: string) => {
 }
 
 export const isValidMailConfirmCode = (code: string) => {
-  const regex = /^[a-zA-Z0-9]{7}$/
+  const regex = /^[0-9]{6}$/
   return regex.test(code)
 }
 

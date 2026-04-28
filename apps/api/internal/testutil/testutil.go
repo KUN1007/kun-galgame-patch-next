@@ -110,8 +110,18 @@ func ParseResponse(t *testing.T, resp *http.Response) response.Response {
 	return r
 }
 
-// ParsePaginatedResponse reads and parses the paginated JSON response body
-func ParsePaginatedResponse(t *testing.T, resp *http.Response) response.PaginatedResponse {
+// PaginatedResponseBody matches the on-wire shape { code, message, data: { items, total } }.
+type PaginatedResponseBody struct {
+	Code    int    `json:"code"`
+	Message string `json:"message"`
+	Data    struct {
+		Items json.RawMessage `json:"items"`
+		Total int64           `json:"total"`
+	} `json:"data"`
+}
+
+// ParsePaginatedResponse reads and parses the paginated JSON response body.
+func ParsePaginatedResponse(t *testing.T, resp *http.Response) PaginatedResponseBody {
 	t.Helper()
 	body, err := io.ReadAll(resp.Body)
 	if err != nil {
@@ -119,7 +129,7 @@ func ParsePaginatedResponse(t *testing.T, resp *http.Response) response.Paginate
 	}
 	defer resp.Body.Close()
 
-	var r response.PaginatedResponse
+	var r PaginatedResponseBody
 	if err := json.Unmarshal(body, &r); err != nil {
 		t.Fatalf("failed to parse paginated response: %s, body: %s", err, string(body))
 	}

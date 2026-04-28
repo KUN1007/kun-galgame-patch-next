@@ -10,8 +10,10 @@ const api = useApi()
 const page = ref(1)
 const limit = 30
 
+// /admin/creator returns the standard paginated envelope { items, total };
+// see apps/api/pkg/response/response.go.
 interface ListResponse {
-  creators: AdminCreator[]
+  items: AdminCreator[]
   total: number
 }
 
@@ -21,19 +23,38 @@ const { data, pending, refresh } = await useAsyncData<ListResponse>(
     const res = await api.get<ListResponse>(
       `/admin/creator?page=${page.value}&limit=${limit}`
     )
-    return res.code === 0 ? res.data : { creators: [], total: 0 }
+    return res.code === 0 ? res.data : { items: [], total: 0 }
   },
-  { default: () => ({ creators: [], total: 0 }) }
+  { default: () => ({ items: [], total: 0 }) }
 )
 
 watch(page, () => refresh())
 
 const totalPages = computed(() => Math.ceil((data.value?.total ?? 0) / limit))
 
-const handleAction = async (id: number, action: 'approve' | 'decline') => {
-  const res = await api.put(`/admin/creator/${id}`, { action })
+// Backend exposes /approve and /decline as separate endpoints, with different
+// required bodies: approve takes { uid }, decline takes { reason }.
+const handleApprove = async (c: AdminCreator) => {
+  if (!c.sender) {
+    useKunMessage('申请缺少用户信息，无法批准', 'error')
+    return
+  }
+  const res = await api.put(`/admin/creator/${c.id}/approve`, {
+    uid: c.sender.id
+  })
   if (res.code === 0) {
-    useKunMessage(action === 'approve' ? '已同意' : '已拒绝', 'success')
+    useKunMessage('已同意', 'success')
+    await refresh()
+  } else {
+    useKunMessage(res.message || '操作失败', 'error')
+  }
+}
+
+const handleDecline = async (c: AdminCreator) => {
+  const reason = window.prompt('拒绝原因（可留空）') ?? ''
+  const res = await api.put(`/admin/creator/${c.id}/decline`, { reason })
+  if (res.code === 0) {
+    useKunMessage('已拒绝', 'success')
     await refresh()
   } else {
     useKunMessage(res.message || '操作失败', 'error')
@@ -47,11 +68,7 @@ const handleAction = async (id: number, action: 'approve' | 'decline') => {
 
     <KunLoading v-if="pending" description="加载中..." />
     <div v-else class="space-y-3">
-      <KunCard
-        v-for="c in data?.creators"
-        :key="c.id"
-        :bordered="true"
-      >
+      <KunCard v-for="c in data?.items" :key="c.id" :bordered="true">
         <div class="flex flex-wrap items-start gap-3">
           <KunAvatar v-if="c.sender" :user="c.sender" size="md" />
           <div class="flex-1 space-y-2">
@@ -72,22 +89,18 @@ const handleAction = async (id: number, action: 'approve' | 'decline') => {
             </div>
             <p class="text-sm whitespace-pre-wrap">{{ c.content }}</p>
             <p class="text-default-500 text-xs">
-              已发布补丁数: {{ c.patchResourceCount }}
+              已发布资源数: {{ c.resource_count }}
             </p>
           </div>
           <div v-if="c.status === 0" class="flex gap-2">
-            <KunButton
-              color="success"
-              size="sm"
-              @click="handleAction(c.id, 'approve')"
-            >
+            <KunButton color="success" size="sm" @click="handleApprove(c)">
               同意
             </KunButton>
             <KunButton
               color="danger"
               variant="light"
               size="sm"
-              @click="handleAction(c.id, 'decline')"
+              @click="handleDecline(c)"
             >
               拒绝
             </KunButton>
@@ -97,7 +110,7 @@ const handleAction = async (id: number, action: 'approve' | 'decline') => {
     </div>
 
     <KunNull
-      v-if="!pending && !data?.creators?.length"
+      v-if="!pending && !data?.items?.length"
       description="暂无创作者申请"
     />
 

@@ -3,8 +3,9 @@ const route = useRoute()
 const api = useApi()
 const userId = computed(() => Number(route.params.id))
 
+// The backend returns the standard paginated envelope { items, total }.
 interface ListResponse {
-  resources: UserResourceItem[]
+  items: UserResourceItem[]
   total: number
 }
 
@@ -14,35 +15,35 @@ const { data, pending } = await useAsyncData<ListResponse>(
     const res = await api.get<ListResponse>(
       `/user/${userId.value}/resource?page=1&limit=20`
     )
-    return res.code === 0 ? res.data : { resources: [], total: 0 }
+    return res.code === 0 ? res.data : { items: [], total: 0 }
   },
-  { default: () => ({ resources: [], total: 0 }) }
+  { default: () => ({ items: [], total: 0 }) }
 )
 </script>
 
 <template>
   <div>
     <KunLoading v-if="pending" description="加载中..." />
-    <div v-else-if="data?.resources?.length" class="space-y-3">
+    <div v-else-if="data?.items?.length" class="space-y-3">
       <NuxtLink
-        v-for="r in data.resources"
+        v-for="r in data.items"
         :key="r.id"
-        :to="`/patch/${r.patchId}/resource`"
+        :to="`/patch/${r.patch_id}/resource`"
         class="border-default/20 bg-background hover:bg-default-100 flex gap-4 rounded-lg border p-4 transition-colors"
       >
         <img
           :src="
-            r.patchBanner
-              ? r.patchBanner.replace(/\.avif$/, '-mini.avif')
+            r.patch_banner
+              ? r.patch_banner.replace(/\.avif$/, '-mini.avif')
               : '/kungalgame-trans.webp'
           "
-          :alt="getPreferredLanguageText(r.patchName)"
+          :alt="getPreferredLanguageText(r.patch_name)"
           class="bg-default-100 h-24 w-40 shrink-0 rounded object-cover"
         />
         <div class="flex-1 space-y-2">
           <div class="flex flex-wrap items-center justify-between gap-2">
             <h3 class="hover:text-primary-500 text-lg font-semibold line-clamp-2">
-              {{ getPreferredLanguageText(r.patchName) }}
+              {{ getPreferredLanguageText(r.patch_name) }}
             </h3>
             <KunBadge variant="flat">
               {{ formatDistanceToNow(r.created) }}

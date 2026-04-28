@@ -5,7 +5,11 @@
 // just without real-time push.
 package model
 
-import "time"
+import (
+	"time"
+
+	patchModel "kun-galgame-patch-api/internal/patch/model"
+)
 
 // ChatRoom is a chat room (private or group).
 //
@@ -32,6 +36,8 @@ type ChatMember struct {
 	ChatRoomID int       `gorm:"uniqueIndex:idx_user_room;not null" json:"chat_room_id"`
 	Created    time.Time `gorm:"autoCreateTime" json:"created"`
 	Updated    time.Time `gorm:"autoUpdateTime" json:"updated"`
+
+	User *patchModel.PatchUser `gorm:"foreignKey:UserID;references:ID" json:"user,omitempty"`
 }
 
 func (ChatMember) TableName() string { return "chat_member" }
@@ -49,6 +55,8 @@ type ChatMessage struct {
 	ReplyToID   *int       `json:"reply_to_id"`
 	Created     time.Time  `gorm:"autoCreateTime" json:"created"`
 	Updated     time.Time  `gorm:"autoUpdateTime" json:"updated"`
+
+	Sender *patchModel.PatchUser `gorm:"foreignKey:SenderID;references:ID" json:"sender,omitempty"`
 }
 
 func (ChatMessage) TableName() string { return "chat_message" }

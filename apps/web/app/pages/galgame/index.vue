@@ -20,8 +20,10 @@ useKunSeoMeta({
 
 const page = ref(Number(route.query.page ?? 1))
 const selectedType = ref(String(route.query.type ?? 'all'))
-const sortField = ref(String(route.query.sortField ?? 'resource_update_time'))
-const sortOrder = ref(String(route.query.sortOrder ?? 'desc'))
+const sortField = ref(String(route.query.sort_field ?? 'resource_update_time'))
+const sortOrder = ref(String(route.query.sort_order ?? 'desc'))
+// `year` is reserved for a future Wiki-side filter; the patch backend's
+// galgameListRequest currently only filters by translation type and sorts.
 const selectedYear = ref(String(route.query.year ?? 'all'))
 
 const limit = 24
@@ -34,11 +36,16 @@ interface ListResponse {
 const { data, pending, refresh } = await useAsyncData<ListResponse>(
   'galgame-list',
   async () => {
-    const res = await api.get<ListResponse>(
-      `/galgame?selectedType=${selectedType.value}&sortField=${sortField.value}&sortOrder=${sortOrder.value}&page=${page.value}&limit=${limit}&yearString=${encodeURIComponent(
-        JSON.stringify([selectedYear.value])
-      )}&monthString=${encodeURIComponent(JSON.stringify(['all']))}`
-    )
+    // Query params are snake_case to match apps/api/internal/common/handler.go
+    // galgameListRequest.
+    const params = new URLSearchParams({
+      selected_type: selectedType.value,
+      sort_field: sortField.value,
+      sort_order: sortOrder.value,
+      page: String(page.value),
+      limit: String(limit)
+    })
+    const res = await api.get<ListResponse>(`/galgame?${params.toString()}`)
     if (res.code !== 0) return { galgames: [], total: 0 }
     return res.data
   },
@@ -71,8 +78,8 @@ const updateQuery = async () => {
     query: {
       page: page.value,
       type: selectedType.value,
-      sortField: sortField.value,
-      sortOrder: sortOrder.value,
+      sort_field: sortField.value,
+      sort_order: sortOrder.value,
       year: selectedYear.value
     }
   })

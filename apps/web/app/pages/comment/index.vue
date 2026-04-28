@@ -11,20 +11,25 @@ useKunSeoMeta({
 const page = ref(Number(route.query.page ?? 1))
 const limit = 20
 
+// commentListRequest requires sort_field / sort_order.
 interface ListResponse {
-  comments: PatchComment[]
+  items: PatchComment[]
   total: number
 }
 
 const { data, pending, refresh } = await useAsyncData<ListResponse>(
   'comment-list',
   async () => {
-    const res = await api.get<ListResponse>(
-      `/comment?page=${page.value}&limit=${limit}`
-    )
-    return res.code === 0 ? res.data : { comments: [], total: 0 }
+    const params = new URLSearchParams({
+      sort_field: 'created',
+      sort_order: 'desc',
+      page: String(page.value),
+      limit: String(limit)
+    })
+    const res = await api.get<ListResponse>(`/comment?${params.toString()}`)
+    return res.code === 0 ? res.data : { items: [], total: 0 }
   },
-  { default: () => ({ comments: [], total: 0 }) }
+  { default: () => ({ items: [], total: 0 }) }
 )
 
 const totalPages = computed(() => Math.ceil((data.value?.total ?? 0) / limit))
@@ -42,13 +47,13 @@ const onChangePage = async (v: number) => {
     <KunLoading v-if="pending" description="加载评论中..." />
     <div v-else class="space-y-4">
       <CommentCard
-        v-for="c in data?.comments"
+        v-for="c in data?.items"
         :key="c.id"
         :comment="c"
       />
     </div>
     <KunNull
-      v-if="!pending && !data?.comments?.length"
+      v-if="!pending && !data?.items?.length"
       description="暂无评论"
     />
     <div v-if="totalPages > 1" class="flex justify-center">

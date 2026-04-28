@@ -5,16 +5,26 @@ const userStore = useUserStore()
 
 const patchId = computed(() => Number(route.params.id))
 
-const { data: comments, pending, refresh } = await useAsyncData<PatchPageComment[]>(
+// /patch/:id/comment requires page+limit and returns the standard paginated
+// envelope { items, total } (apps/api/internal/patch/dto/dto.go
+// GetPatchCommentRequest marks both as required).
+interface CommentListResponse {
+  items: PatchPageComment[]
+  total: number
+}
+
+const { data, pending, refresh } = await useAsyncData<CommentListResponse>(
   () => `patch-comments-${patchId.value}`,
   async () => {
-    const res = await api.get<PatchPageComment[]>(
-      `/patch/${patchId.value}/comment`
+    const res = await api.get<CommentListResponse>(
+      `/patch/${patchId.value}/comment?page=1&limit=30`
     )
-    return res.code === 0 ? res.data : []
+    return res.code === 0 ? res.data : { items: [], total: 0 }
   },
-  { default: () => [] }
+  { default: () => ({ items: [], total: 0 }) }
 )
+
+const comments = computed(() => data.value?.items ?? [])
 
 const content = ref('')
 const submitting = ref(false)
@@ -97,7 +107,7 @@ const renderComment = (c: PatchPageComment): PatchPageComment => c
             <p class="whitespace-pre-wrap">{{ c.content }}</p>
             <div class="text-default-500 flex items-center gap-1 text-xs">
               <KunIcon name="lucide:thumbs-up" class="size-3.5" />
-              {{ c.likeCount }}
+              {{ c.like_count }}
             </div>
             <div v-if="c.reply?.length" class="mt-3 space-y-2 border-l-2 border-default/20 pl-3">
               <div

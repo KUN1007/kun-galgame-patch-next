@@ -321,6 +321,62 @@ REDIS_PORT=6379
 - 系统依赖：
   - libvips：`sudo pacman -S libvips`（Arch）/ `apt install libvips-dev`（Debian）
 
+### 调用方本地 dev 环境
+
+每个调用方（kungal / moyu / galgame wiki）在本地跑联调时，需要能访问到 image_service 实例。提供一个 **可 copy-paste 的 Docker Compose 片段**：
+
+```yaml
+# docker-compose.image-service.yaml （调用方可直接 include）
+services:
+  kun-minio:
+    image: minio/minio:latest
+    command: server /data --console-address ":9001"
+    ports:
+      - "9000:9000"
+      - "9001:9001"
+    environment:
+      MINIO_ROOT_USER: minioadmin
+      MINIO_ROOT_PASSWORD: minioadmin
+    volumes:
+      - kun-minio-data:/data
+
+  kun-minio-setup:
+    image: minio/mc:latest
+    depends_on:
+      - kun-minio
+    entrypoint: >
+      /bin/sh -c "
+      sleep 2;
+      mc alias set local http://kun-minio:9000 minioadmin minioadmin;
+      mc mb -p local/kun-images-dev;
+      mc anonymous set download local/kun-images-dev;
+      "
+
+  kun-image-service:
+    image: kun-oauth-admin/image-service:latest    # 或 build 本地
+    ports:
+      - "9278:9278"
+    env_file:
+      - ./.env.image-service.dev
+    depends_on:
+      - kun-minio
+
+volumes:
+  kun-minio-data:
+```
+
+### 调用方侧 `.env.example` 新增
+
+```env
+# Image Service (调用方使用)
+KUN_IMAGE_SERVICE_BASE_URL=http://127.0.0.1:9278
+KUN_IMAGE_CDN_BASE=http://127.0.0.1:9000/kun-images-dev    # dev 直连 MinIO，无 CDN
+KUN_IMAGE_OAUTH_CLIENT_ID=<your_client_id>
+KUN_IMAGE_OAUTH_CLIENT_SECRET=<your_client_secret>
+```
+
+生产环境的 `KUN_IMAGE_CDN_BASE` 替换为真实 CDN 域名。
+
 ### CI 补充
 
 - Lint + Vet（已有）

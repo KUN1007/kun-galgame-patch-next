@@ -6,11 +6,12 @@
 
 | # | 文件 | 内容 |
 |---|------|------|
-| 01 | [design.md](./01-design.md) | 背景、目标、核心架构决策、关键权衡 |
+| 01 | [design.md](./01-design.md) | 背景、目标、服务边界、核心架构决策、关键权衡 |
 | 02 | [storage-and-schema.md](./02-storage-and-schema.md) | 对象存储路径设计、数据库 schema、站点配置、变体命名 |
 | 03 | [api-design.md](./03-api-design.md) | 对外 API 接口规范（上传、元信息、reference-ping） |
 | 04 | [migration-plan.md](./04-migration-plan.md) | 从三个旧站点迁移到新服务的分阶段计划 |
-| 05 | [engineering-plan.md](./05-engineering-plan.md) | 工程里程碑 V1–V4、交付物、验收标准 |
+| 05 | [engineering-plan.md](./05-engineering-plan.md) | 工程里程碑 V1–V4、交付物、验收标准、本地 dev 环境 |
+| 06 | [integration-guide.md](./06-integration-guide.md) | **调用方视角**：OAuth 注册、业务库 migration、SDK、降级策略、cron |
 
 ## 一句话总结
 
@@ -34,7 +35,7 @@ V1 上线**必须**包含以下一揽子，少一块就会翻车：
 1. OAuth Client Credentials 鉴权
 2. sha256 内容寻址 + `images` 表 + `image_site_usage` 审计
 3. 压缩管线：`webp@82` / `fit 1920×1080` / strip EXIF
-4. 预生成固定变体（总共 5 个：avatar×2、banner×2、topic×1）
+4. 预生成固定变体（总共 6 个：avatar×3（含 main/256/100）、banner×2、topic×1）
 5. Redis day-window 配额限制
 6. `POST /image/reference-ping`
 

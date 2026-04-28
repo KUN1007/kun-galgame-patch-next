@@ -63,5 +63,5 @@ type PatchResourceUpdateRequest struct {
 
 // DuplicateCheckRequest is the request for checking VNDB ID duplicates
 type DuplicateCheckRequest struct {
-	VndbID string `query:"vndbId" validate:"required,max=10"`
+	VndbID string `query:"vndb_id" validate:"required,max=10"`
 }

@@ -1,30 +1,29 @@
+// Backend returns flat snake_case counts (not a nested _count wrapper).
+// See apps/api/internal/user/dto/dto.go UserInfoResponse.
 interface UserInfo {
   id: number
-  requestUserUid: number
   name: string
-  email: string
+  email?: string
   avatar: string
   bio: string
   role: number
   status: number
-  registerTime: string
   moemoepoint: number
-  follower: number
-  following: number
-  isFollow: boolean
-  _count: {
-    patch: number
-    patch_resource: number
-    patch_comment: number
-    patch_favorite: number
-  }
+  register_time: string
+  follower_count: number
+  following_count: number
+  patch_count: number
+  resource_count: number
+  comment_count: number
+  favorite_count: number
+  is_followed: boolean
 }
 
 interface UserResourceItem {
   id: number
-  patchId: number
-  patchName: KunLanguage
-  patchBanner: string
+  patch_id: number
+  patch_name: KunLanguage
+  patch_banner: string
   size: string
   type: string[]
   language: string[]
@@ -34,8 +33,8 @@ interface UserResourceItem {
 
 interface UserContribute {
   id: number
-  patchId: number
-  patchName: KunLanguage
+  patch_id: number
+  patch_name: KunLanguage
   created: string
 }
 
@@ -43,12 +42,12 @@ interface UserComment {
   id: number
   content: string
   like: number
-  userId: number
-  patchId: number
-  patchName: KunLanguage
+  user_id: number
+  patch_id: number
+  patch_name: KunLanguage
   created: string
-  quotedUserUid?: number | null
-  quotedUsername?: string | null
+  quoted_user_uid?: number | null
+  quoted_username?: string | null
 }
 
 interface UserFavoriteItem extends GalgameCard {}

@@ -50,6 +50,26 @@ func (s *ChatService) JoinRoomByLink(uid int, link string) (*model.ChatRoom, err
 	return room, nil
 }
 
+// RoomDetail is the shape returned by GET /api/v1/chat/room/:link:
+// room metadata plus the full member list with each user's profile.
+type RoomDetail struct {
+	model.ChatRoom
+	Member []model.ChatMember `json:"member"`
+}
+
+// GetRoomDetail returns the room and its members. Caller must be a member.
+func (s *ChatService) GetRoomDetail(uid int, link string) (*RoomDetail, error) {
+	room, err := s.resolveRoomForMember(uid, link)
+	if err != nil {
+		return nil, err
+	}
+	members, err := s.repo.ListMembers(room.ID)
+	if err != nil {
+		return nil, err
+	}
+	return &RoomDetail{ChatRoom: *room, Member: members}, nil
+}
+
 // ─── Messages ───────────────────────────────────────
 
 // GetMessages polls for new messages.

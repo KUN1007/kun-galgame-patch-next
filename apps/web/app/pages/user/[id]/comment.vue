@@ -4,7 +4,7 @@ const api = useApi()
 const userId = computed(() => Number(route.params.id))
 
 interface ListResponse {
-  comments: UserComment[]
+  items: UserComment[]
   total: number
 }
 
@@ -14,26 +14,26 @@ const { data, pending } = await useAsyncData<ListResponse>(
     const res = await api.get<ListResponse>(
       `/user/${userId.value}/comment?page=1&limit=20`
     )
-    return res.code === 0 ? res.data : { comments: [], total: 0 }
+    return res.code === 0 ? res.data : { items: [], total: 0 }
   },
-  { default: () => ({ comments: [], total: 0 }) }
+  { default: () => ({ items: [], total: 0 }) }
 )
 </script>
 
 <template>
   <div>
     <KunLoading v-if="pending" description="加载中..." />
-    <div v-else-if="data?.comments?.length" class="space-y-3">
+    <div v-else-if="data?.items?.length" class="space-y-3">
       <NuxtLink
-        v-for="c in data.comments"
+        v-for="c in data.items"
         :key="c.id"
-        :to="`/patch/${c.patchId}/comment`"
+        :to="`/patch/${c.patch_id}/comment`"
         class="border-default/20 bg-background hover:bg-default-100 block rounded-lg border p-4 transition-colors"
       >
         <div class="text-default-500 mb-1 text-sm">
           评论在
           <span class="text-primary">
-            {{ getPreferredLanguageText(c.patchName) }}
+            {{ getPreferredLanguageText(c.patch_name) }}
           </span>
         </div>
         <p class="whitespace-pre-wrap line-clamp-3">{{ c.content }}</p>

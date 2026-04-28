@@ -8,7 +8,7 @@ const page = ref(1)
 const limit = 30
 
 interface ListResponse {
-  logs: AdminLog[]
+  items: AdminLog[]
   total: number
 }
 
@@ -18,9 +18,9 @@ const { data, pending, refresh } = await useAsyncData<ListResponse>(
     const res = await api.get<ListResponse>(
       `/admin/log?page=${page.value}&limit=${limit}`
     )
-    return res.code === 0 ? res.data : { logs: [], total: 0 }
+    return res.code === 0 ? res.data : { items: [], total: 0 }
   },
-  { default: () => ({ logs: [], total: 0 }) }
+  { default: () => ({ items: [], total: 0 }) }
 )
 
 watch(page, () => refresh())
@@ -34,7 +34,7 @@ const totalPages = computed(() => Math.ceil((data.value?.total ?? 0) / limit))
     <KunLoading v-if="pending" description="加载中..." />
     <div v-else class="space-y-2">
       <div
-        v-for="l in data?.logs"
+        v-for="l in data?.items"
         :key="l.id"
         class="border-default/20 bg-background flex items-start gap-3 rounded-lg border p-3"
       >
@@ -57,7 +57,7 @@ const totalPages = computed(() => Math.ceil((data.value?.total ?? 0) / limit))
     </div>
 
     <KunNull
-      v-if="!pending && !data?.logs?.length"
+      v-if="!pending && !data?.items?.length"
       description="暂无日志"
     />
 

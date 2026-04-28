@@ -79,15 +79,28 @@ func (r *ChatRepository) AddMember(uid, roomID int) error {
 
 // ─── Message ────────────────────────────────────────
 
-// ListMessages fetches new messages with id > after, capped at 100.
+// ListMessages fetches new messages with id > after, capped by limit, newest-first
+// but returned in ascending order so the frontend can append to the bottom of the
+// transcript directly.
 func (r *ChatRepository) ListMessages(roomID, after, limit int) ([]model.ChatMessage, error) {
 	var msgs []model.ChatMessage
 	err := r.db.
 		Where("chat_room_id = ? AND id > ?", roomID, after).
 		Order("id ASC").
 		Limit(limit).
+		Preload("Sender").
 		Find(&msgs).Error
 	return msgs, err
+}
+
+// ListMembers returns all members of a room with their user profile preloaded.
+func (r *ChatRepository) ListMembers(roomID int) ([]model.ChatMember, error) {
+	var members []model.ChatMember
+	err := r.db.Where("chat_room_id = ?", roomID).
+		Preload("User").
+		Order("created ASC").
+		Find(&members).Error
+	return members, err
 }
 
 // CreateMessage writes the message and updates the room's last_message_time (in a transaction).

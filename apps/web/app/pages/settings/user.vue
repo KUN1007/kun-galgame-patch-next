@@ -70,8 +70,8 @@ const handleSavePassword = async () => {
   passwordLoading.value = true
   try {
     const res = await api.put('/user/password', {
-      oldPassword: passwordForm.oldPassword,
-      newPassword: passwordForm.newPassword
+      old_password: passwordForm.oldPassword,
+      new_password: passwordForm.newPassword
     })
     if (res.code === 0) {
       useKunMessage('修改密码成功', 'success')
@@ -96,8 +96,10 @@ const handleSendEmailCode = async () => {
   }
   sendingEmail.value = true
   try {
-    const res = await api.post('/user/email/send-code', {
-      newEmail: emailForm.newEmail
+    // The backend endpoint lives under /auth (not /user) and expects snake_case
+    // `email` (see apps/api/internal/auth/dto/dto.go SendEmailCodeRequest).
+    const res = await api.post('/auth/email/send-code', {
+      email: emailForm.newEmail
     })
     if (res.code === 0) {
       useKunMessage('验证码已发送至新邮箱', 'success')
@@ -117,7 +119,7 @@ const handleSaveEmail = async () => {
   try {
     const res = await api.put('/user/email', {
       code: emailForm.code,
-      newEmail: emailForm.newEmail
+      email: emailForm.newEmail
     })
     if (res.code === 0) {
       useKunMessage('邮箱修改成功', 'success')

@@ -35,15 +35,17 @@
 
 | preset | 变体集 | 说明 |
 |--------|--------|------|
-| `avatar` | `[100]` | 100×100 头像缩略图 |
+| `avatar` | `[256, 100]` | 256×256 方形头像（用于常规展示）+ 100×100 小头像（评论、历史兼容） |
 | `galgame_banner` | `[mini]` | 460×259 banner 缩略图 |
 | `topic` | `[]` | 无变体，仅主图 |
+
+**avatar 保留 256 变体**是为了对齐 moyu / kungal 历史头像的 256×256 cover 语义；100×100 兼容旧版评论列表等小头像使用场景。详见 [04-migration-plan.md](./04-migration-plan.md)。
 
 未来新增 preset 或新变体：加进 preset 配置，跑一次回填脚本补齐已有图的变体（或者按需触发）。
 
 ### 生命周期策略
 
-对象存储配置（S3 Lifecycle / R2 Lifecycle）：
+图片服务的清理 worker 根据 `last_referenced_at` 降级存储：
 
 | 规则 | 触发条件 | 动作 |
 |------|---------|------|
@@ -51,7 +53,18 @@
 | IA → Archive | `last_referenced_at` > 180 天未更新 | 转归档存储（R2 没这层可跳过） |
 | 软删 → 物理删 | `deleted_at < now - 30d` | 物理删除 |
 
-实现方式：**图片服务的清理 worker** 显式调用 S3 `PutObjectLifecycleConfiguration` 或直接 `CopyObject` 到低频存储类，不依赖对象存储自身的 "last access" 特性（因为很多 S3 兼容存储不支持）。
+#### ⚠️ TTL 语义澄清：针对"真正无人引用的孤儿"，不是"60 天没被访问"
+
+- `last_referenced_at` **不是** CDN/最终用户的访问时间
+- `last_referenced_at` **是** 调用方 `POST /image/reference-ping` 的刷新时间
+- **只要调用方每天 ping 自己库里还在用的 hash，`last_referenced_at` 就永远新**，永远不会触发冷存储
+- 触发冷存储的前提是：**所有调用方都不再 ping 此 hash**（也就是所有业务库外键都已指向别的图或清空）
+
+所以"用户半年不登录" ≠ "他的头像进冷存储"。只要 kungal 的每日 cron 还把他的 `avatar_image_hash` 加入 ping 清单，头像就一直在热存储。
+
+#### 实现方式
+
+图片服务的清理 worker 显式调用 S3 `CopyObject` 到低频存储类（不依赖对象存储自身的 "last access" 特性——很多 S3 兼容存储不支持该特性）。
 
 ## PostgreSQL Schema
 
@@ -228,10 +241,16 @@ main_pipeline:
 presets:
   avatar:
     variants:
+      - name: "256"
+        width: 256
+        height: 256
+        fit: cover             # 裁剪方形，填满 256×256（对齐历史 moyu/kungal 头像）
+        format: webp
+        quality: 82
       - name: "100"
         width: 100
         height: 100
-        fit: cover             # 裁剪方形，填满 100×100
+        fit: cover             # 裁剪方形，填满 100×100（评论区等小头像）
         format: webp
         quality: 82
     allowed_mime:

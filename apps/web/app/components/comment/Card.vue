@@ -6,14 +6,16 @@ interface Props {
 const props = defineProps<Props>()
 
 const patchName = computed(() =>
-  getPreferredLanguageText(props.comment.patchName)
+  props.comment.patch_name
+    ? getPreferredLanguageText(props.comment.patch_name)
+    : ''
 )
 </script>
 
 <template>
   <KunCard
     is-pressable
-    :href="`/patch/${props.comment.patchId}/comment`"
+    :href="`/patch/${props.comment.patch_id}/comment`"
     class-name="w-full"
   >
     <div class="flex gap-4">
@@ -30,7 +32,7 @@ const patchName = computed(() =>
         <div class="mt-2 flex items-center gap-4">
           <div class="text-small text-default-500 flex items-center gap-1">
             <KunIcon name="lucide:thumbs-up" class="size-3.5" />
-            {{ props.comment.like }}
+            {{ props.comment.like_count }}
           </div>
           <span class="text-small text-default-500">
             {{

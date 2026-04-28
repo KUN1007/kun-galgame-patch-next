@@ -70,7 +70,7 @@ func (h *PatchHandler) CreatePatch(c *fiber.Ctx) error {
 // headerCard flattens GalgameCard + is_favorite to match the frontend PatchHeader shape.
 type headerCard struct {
 	enricher.GalgameCard
-	IsFavorite bool `json:"isFavorite"`
+	IsFavorite bool `json:"is_favorite"`
 }
 
 // GetPatch GET /api/patch/:id
@@ -190,7 +190,8 @@ func (h *PatchHandler) GetComments(c *fiber.Ctx) error {
 		return response.Error(c, errors.ErrBadRequest(err.Error()))
 	}
 
-	comments, total, err := h.service.GetComments(id, req.Page, req.Limit)
+	currentUID := middleware.GetUID(c)
+	comments, total, err := h.service.GetComments(id, currentUID, req.Page, req.Limit)
 	if err != nil {
 		return response.Error(c, errors.ErrInternal(""))
 	}

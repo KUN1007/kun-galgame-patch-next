@@ -15,7 +15,7 @@ const link = computed(() => String(route.params.link))
 const { data: room } = await useAsyncData<ChatRoomDetail | null>(
   () => `chat-room-${link.value}`,
   async () => {
-    const res = await api.get<ChatRoomDetail>(`/chat-room/${link.value}`)
+    const res = await api.get<ChatRoomDetail>(`/chat/room/${link.value}`)
     return res.code === 0 ? res.data : null
   }
 )
@@ -26,6 +26,12 @@ const sending = ref(false)
 const loading = ref(false)
 const scrollArea = ref<HTMLElement | null>(null)
 
+// The backend returns messages in ascending id order and expects the client
+// to pass `after=<last id>` for incremental polling.
+const lastSeenId = computed(() =>
+  messages.value.length ? messages.value[messages.value.length - 1].id : 0
+)
+
 const scrollToBottom = async () => {
   await nextTick()
   if (scrollArea.value) {
@@ -33,20 +39,24 @@ const scrollToBottom = async () => {
   }
 }
 
+const appendMessages = (incoming: ChatMessageItem[]) => {
+  if (!incoming.length) return
+  const wasAtBottom = scrollArea.value
+    ? scrollArea.value.scrollHeight - scrollArea.value.scrollTop - scrollArea.value.clientHeight < 80
+    : true
+  messages.value = [...messages.value, ...incoming]
+  if (wasAtBottom) scrollToBottom()
+}
+
 const fetchMessages = async (silent = false) => {
   if (!room.value) return
   if (!silent) loading.value = true
   try {
-    const res = await api.get<{ messages: ChatMessageItem[] }>(
-      `/chat-room/${link.value}/message?limit=50`
+    const res = await api.get<ChatMessageItem[]>(
+      `/chat/room/${link.value}/message?after=${lastSeenId.value}&limit=50`
     )
     if (res.code === 0) {
-      const next = res.data.messages ?? []
-      const wasAtBottom = scrollArea.value
-        ? scrollArea.value.scrollHeight - scrollArea.value.scrollTop - scrollArea.value.clientHeight < 80
-        : true
-      messages.value = next
-      if (wasAtBottom) scrollToBottom()
+      appendMessages(res.data ?? [])
     }
   } finally {
     if (!silent) loading.value = false
@@ -59,14 +69,13 @@ const sendMessage = async () => {
   sending.value = true
   try {
     const res = await api.post<ChatMessageItem>(
-      `/chat-room/${link.value}/message`,
+      `/chat/room/${link.value}/message`,
       { content }
     )
     if (res.code === 0) {
       input.value = ''
       if (res.data) {
-        messages.value = [...messages.value, res.data]
-        await scrollToBottom()
+        appendMessages([res.data])
       } else {
         await fetchMessages(true)
       }
@@ -154,12 +163,12 @@ onBeforeUnmount(() => pause())
             :class="
               cn(
                 'flex gap-2',
-                m.senderId === userStore.user.uid ? 'justify-end' : ''
+                m.sender_id === userStore.user.uid ? 'justify-end' : ''
               )
             "
           >
             <KunAvatar
-              v-if="m.senderId !== userStore.user.uid"
+              v-if="m.sender_id !== userStore.user.uid"
               :user="m.sender"
               size="sm"
             />
@@ -167,24 +176,24 @@ onBeforeUnmount(() => pause())
               :class="
                 cn(
                   'max-w-[70%] space-y-1',
-                  m.senderId === userStore.user.uid ? 'text-right' : ''
+                  m.sender_id === userStore.user.uid ? 'text-right' : ''
                 )
               "
             >
               <div
                 class="text-default-500 flex items-center gap-2 text-xs"
                 :class="{
-                  'justify-end': m.senderId === userStore.user.uid
+                  'justify-end': m.sender_id === userStore.user.uid
                 }"
               >
-                <span class="font-medium">{{ m.sender.name }}</span>
+                <span class="font-medium">{{ m.sender?.name }}</span>
                 <span>{{ formatDistanceToNow(m.created) }}</span>
               </div>
               <div
                 :class="
                   cn(
                     'inline-block rounded-lg px-3 py-2 whitespace-pre-wrap',
-                    m.senderId === userStore.user.uid
+                    m.sender_id === userStore.user.uid
                       ? 'bg-primary text-primary-foreground'
                       : 'bg-default-100 text-foreground'
                   )
@@ -194,7 +203,7 @@ onBeforeUnmount(() => pause())
               </div>
             </div>
             <KunAvatar
-              v-if="m.senderId === userStore.user.uid"
+              v-if="m.sender_id === userStore.user.uid"
               :user="m.sender"
               size="sm"
               :is-navigation="false"

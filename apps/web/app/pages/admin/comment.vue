@@ -6,7 +6,7 @@ const page = ref(1)
 const limit = 30
 
 interface ListResponse {
-  comments: PatchComment[]
+  items: PatchComment[]
   total: number
 }
 
@@ -16,9 +16,9 @@ const { data, pending, refresh } = await useAsyncData<ListResponse>(
     const res = await api.get<ListResponse>(
       `/admin/comment?page=${page.value}&limit=${limit}`
     )
-    return res.code === 0 ? res.data : { comments: [], total: 0 }
+    return res.code === 0 ? res.data : { items: [], total: 0 }
   },
-  { default: () => ({ comments: [], total: 0 }) }
+  { default: () => ({ items: [], total: 0 }) }
 )
 
 watch(page, () => refresh())
@@ -42,11 +42,7 @@ const handleDelete = async (id: number) => {
     <h1 class="text-2xl font-bold">评论管理</h1>
     <KunLoading v-if="pending" description="加载中..." />
     <div v-else class="space-y-3">
-      <KunCard
-        v-for="c in data?.comments"
-        :key="c.id"
-        :bordered="true"
-      >
+      <KunCard v-for="c in data?.items" :key="c.id" :bordered="true">
         <div class="flex items-start gap-3">
           <KunAvatar :user="c.user" size="sm" />
           <div class="flex-1 space-y-1">
@@ -55,10 +51,10 @@ const handleDelete = async (id: number) => {
               <span class="text-default-500">
                 在
                 <NuxtLink
-                  :to="`/patch/${c.patchId}/comment`"
+                  :to="`/patch/${c.patch_id}/comment`"
                   class="text-primary hover:underline"
                 >
-                  {{ getPreferredLanguageText(c.patchName) }}
+                  补丁 #{{ c.patch_id }}
                 </NuxtLink>
               </span>
               <span class="text-default-400 text-xs">
@@ -82,7 +78,7 @@ const handleDelete = async (id: number) => {
     </div>
 
     <KunNull
-      v-if="!pending && !data?.comments?.length"
+      v-if="!pending && !data?.items?.length"
       description="暂无评论"
     />
 

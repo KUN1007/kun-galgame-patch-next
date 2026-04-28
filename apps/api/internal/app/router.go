@@ -154,6 +154,7 @@ func (a *App) RegisterRoutes() {
 	chatRoutes.Get("/room", a.ChatHandler.ListRooms)
 	chatRoutes.Post("/room", a.ChatHandler.CreateRoom)
 	chatRoutes.Post("/room/join", a.ChatHandler.JoinRoom)
+	chatRoutes.Get("/room/:link", a.ChatHandler.GetRoomDetail)
 	chatRoutes.Get("/room/:link/message", a.ChatHandler.ListMessages)
 	chatRoutes.Post("/room/:link/message", a.ChatHandler.CreateMessage)
 	chatRoutes.Put("/room/:link/seen", a.ChatHandler.MarkSeen)

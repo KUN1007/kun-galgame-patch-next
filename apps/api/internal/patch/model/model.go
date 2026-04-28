@@ -124,7 +124,11 @@ type PatchComment struct {
 	Updated   time.Time `gorm:"autoUpdateTime" json:"updated"`
 
 	User    *PatchUser     `gorm:"foreignKey:UserID" json:"user,omitempty"`
-	Replies []PatchComment `gorm:"foreignKey:ParentID" json:"reply,omitempty"`
+	Replies []PatchComment `gorm:"foreignKey:ParentID" json:"reply"`
+
+	// IsLiked is populated per-request from the current user's like relation.
+	// Not a DB column.
+	IsLiked bool `gorm:"-" json:"is_liked"`
 }
 
 func (PatchComment) TableName() string { return "patch_comment" }

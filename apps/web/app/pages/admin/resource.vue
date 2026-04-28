@@ -6,7 +6,7 @@ const page = ref(1)
 const limit = 30
 
 interface ListResponse {
-  resources: AdminResourceItem[]
+  items: AdminResourceItem[]
   total: number
 }
 
@@ -16,9 +16,9 @@ const { data, pending, refresh } = await useAsyncData<ListResponse>(
     const res = await api.get<ListResponse>(
       `/admin/resource?page=${page.value}&limit=${limit}`
     )
-    return res.code === 0 ? res.data : { resources: [], total: 0 }
+    return res.code === 0 ? res.data : { items: [], total: 0 }
   },
-  { default: () => ({ resources: [], total: 0 }) }
+  { default: () => ({ items: [], total: 0 }) }
 )
 
 watch(page, () => refresh())
@@ -55,16 +55,16 @@ const handleDelete = async (id: number) => {
         </thead>
         <tbody>
           <tr
-            v-for="r in data?.resources"
+            v-for="r in data?.items"
             :key="r.id"
             class="border-default/20 hover:bg-default-50 border-b"
           >
             <td class="px-3 py-2">
               <NuxtLink
-                :to="`/patch/${r.patchId}/resource`"
+                :to="`/patch/${r.patch_id}/resource`"
                 class="text-primary hover:underline"
               >
-                {{ getPreferredLanguageText(r.patchName) }}
+                补丁 #{{ r.patch_id }}
               </NuxtLink>
             </td>
             <td class="px-3 py-2">{{ r.name || '—' }}</td>
@@ -92,7 +92,7 @@ const handleDelete = async (id: number) => {
     </div>
 
     <KunNull
-      v-if="!pending && !data?.resources?.length"
+      v-if="!pending && !data?.items?.length"
       description="暂无资源"
     />
 

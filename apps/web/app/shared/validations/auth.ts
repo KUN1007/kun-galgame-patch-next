@@ -29,7 +29,7 @@ export const registerSchema = z.object({
       })
     ),
   code: z.string().regex(kunValidMailConfirmCodeRegex, {
-    message: '非法的邮箱验证码，验证码为 7 位数字和大小写字母组合'
+    message: '非法的邮箱验证码，验证码为 6 位数字'
   }),
   password: z.string().trim().regex(kunPasswordRegex, {
     message:

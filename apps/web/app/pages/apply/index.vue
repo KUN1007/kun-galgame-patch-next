@@ -11,16 +11,18 @@ if (userStore.user.role > 1) {
   await navigateTo('/apply/success', { redirectCode: 302 })
 }
 
-const { data } = await useAsyncData<{ count: number; role: number }>(
+const { data } = await useAsyncData<{ resource_count: number; role: number }>(
   'apply-status',
   async () => {
-    const res = await api.get<{ count: number; role: number }>('/apply')
-    return res.code === 0 ? res.data : { count: 0, role: 1 }
+    const res = await api.get<{ resource_count: number; role: number }>(
+      '/apply/status'
+    )
+    return res.code === 0 ? res.data : { resource_count: 0, role: 1 }
   },
-  { default: () => ({ count: 0, role: 1 }) }
+  { default: () => ({ resource_count: 0, role: 1 }) }
 )
 
-const count = computed(() => data.value?.count ?? 0)
+const count = computed(() => data.value?.resource_count ?? 0)
 const progress = computed(() => Math.min((count.value / 3) * 100, 100))
 const canApply = computed(() => count.value >= 3)
 

@@ -3,54 +3,38 @@ import { ADMIN_STATS_SUM_MAP, ADMIN_STATS_MAP } from '~/constants/admin'
 
 const api = useApi()
 
+const emptySum: SumData = {
+  user_count: 0,
+  galgame_count: 0,
+  resource_count: 0,
+  comment_count: 0
+}
+
 const { data: sum } = await useAsyncData<SumData>(
   'admin-stats-sum',
   async () => {
     const res = await api.get<SumData>('/admin/stats/sum')
-    return res.code === 0
-      ? res.data
-      : {
-          userCount: 0,
-          galgameCount: 0,
-          patchResourceCount: 0,
-          patchCommentCount: 0
-        }
+    return res.code === 0 ? res.data : { ...emptySum }
   },
-  {
-    default: () => ({
-      userCount: 0,
-      galgameCount: 0,
-      patchResourceCount: 0,
-      patchCommentCount: 0
-    })
-  }
+  { default: () => ({ ...emptySum }) }
 )
 
 const days = ref(7)
+const emptyOverview: OverviewData = {
+  new_user: 0,
+  new_active_user: 0,
+  new_galgame: 0,
+  new_resource: 0,
+  new_comment: 0
+}
 
 const { data: overview, pending, refresh } = await useAsyncData<OverviewData>(
   'admin-stats-overview',
   async () => {
     const res = await api.get<OverviewData>(`/admin/stats?days=${days.value}`)
-    return res.code === 0
-      ? res.data
-      : {
-          newUser: 0,
-          newActiveUser: 0,
-          newGalgame: 0,
-          newPatchResource: 0,
-          newComment: 0
-        }
+    return res.code === 0 ? res.data : { ...emptyOverview }
   },
-  {
-    default: () => ({
-      newUser: 0,
-      newActiveUser: 0,
-      newGalgame: 0,
-      newPatchResource: 0,
-      newComment: 0
-    })
-  }
+  { default: () => ({ ...emptyOverview }) }
 )
 
 watch(days, () => refresh())

@@ -2,18 +2,18 @@
 //
 // D12 (2026-04-21): the patch table no longer stores galgame metadata. It is
 // fetched in bulk from Wiki /galgame/batch by galgame_id and assembled into the
-// structure the frontend GalgameCard expects:
+// structure the frontend GalgameCard expects. All JSON keys are snake_case:
 //
 //	{
-//	  id, vndbId, bid, banner, view, download,
+//	  id, vndb_id, bid, banner, view, download,
 //	  name: { "en-us", "ja-jp", "zh-cn", "zh-tw" },
 //	  type, language, platform,
-//	  content_limit, status, created, resourceUpdateTime,
-//	  _count: { favorite_by, contribute_by, resource, comment },
+//	  content_limit, status, created, resource_update_time,
+//	  count: { favorite_by, contribute_by, resource, comment },
 //	  galgame: { ...raw Wiki fields, optionally used by the detail page }
 //	}
 //
-// When Wiki fails, string fields are empty but _count stays accurate so the frontend does not break.
+// When Wiki fails, string fields are empty but `count` stays accurate so the frontend does not break.
 package enricher
 
 import (
@@ -42,25 +42,25 @@ type Counts struct {
 }
 
 // GalgameCard is the Go mirror of the frontend `interface GalgameCard`.
-// JSON tags strictly match the keys the frontend expects (including camelCase `vndbId` / `resourceUpdateTime`).
+// All JSON tags are snake_case to match the backend-wide convention.
 type GalgameCard struct {
-	ID                 int                          `json:"id"`
-	Name               KunLanguage                  `json:"name"`
-	VndbID             string                       `json:"vndbId"`
-	BID                *int                         `json:"bid"`
-	Banner             string                       `json:"banner"`
-	View               int                          `json:"view"`
-	Download           int                          `json:"download"`
-	Type               patchModel.JSONArray         `json:"type"`
-	Language           patchModel.JSONArray         `json:"language"`
-	Platform           patchModel.JSONArray         `json:"platform"`
-	ContentLimit       string                       `json:"content_limit"`
-	Status             int                          `json:"status"`
-	Created            time.Time                    `json:"created"`
-	ResourceUpdateTime time.Time                    `json:"resourceUpdateTime"`
-	Count              Counts                       `json:"_count"`
-	User               *patchModel.PatchUser        `json:"user,omitempty"`
-	Galgame            *galgameClient.GalgameBrief  `json:"galgame,omitempty"`
+	ID                 int                         `json:"id"`
+	Name               KunLanguage                 `json:"name"`
+	VndbID             string                      `json:"vndb_id"`
+	BID                *int                        `json:"bid"`
+	Banner             string                      `json:"banner"`
+	View               int                         `json:"view"`
+	Download           int                         `json:"download"`
+	Type               patchModel.JSONArray        `json:"type"`
+	Language           patchModel.JSONArray        `json:"language"`
+	Platform           patchModel.JSONArray        `json:"platform"`
+	ContentLimit       string                      `json:"content_limit"`
+	Status             int                         `json:"status"`
+	Created            time.Time                   `json:"created"`
+	ResourceUpdateTime time.Time                   `json:"resource_update_time"`
+	Count              Counts                      `json:"count"`
+	User               *patchModel.PatchUser       `json:"user,omitempty"`
+	Galgame            *galgameClient.GalgameBrief `json:"galgame,omitempty"`
 }
 
 // EnrichPatches enriches a batch of local patches with Wiki data into GalgameCards the frontend can render directly.
@@ -116,15 +116,36 @@ func EnrichPatch(ctx context.Context, wiki *galgameClient.Client, p *patchModel.
 	return card
 }
 
-// PatchDetailCard is for the detail page: the base GalgameCard plus intro / tag_ids / official_ids / engine_ids from Wiki.
-// Fetched with a single /galgame/:gid call.
+// PatchDetailTag is the lightweight tag shape surfaced to the patch detail page.
+// Wiki returns spoiler_level alongside the tag, so we flatten it onto the same row.
+type PatchDetailTag struct {
+	ID           int      `json:"id"`
+	Name         string   `json:"name"`
+	Aliases      []string `json:"aliases,omitempty"`
+	Category     string   `json:"category"`
+	SpoilerLevel int      `json:"spoiler_level"`
+}
+
+// PatchDetailOfficial is the lightweight company / publisher shape for the patch detail page.
+type PatchDetailOfficial struct {
+	ID       int      `json:"id"`
+	Name     string   `json:"name"`
+	Aliases  []string `json:"aliases,omitempty"`
+	Category string   `json:"category"`
+	Lang     string   `json:"lang"`
+}
+
+// PatchDetailCard is for the detail page: the base GalgameCard plus intro and the
+// resolved Wiki tags / officials / engine IDs. We embed the full tag/official
+// objects (rather than just IDs) so the frontend can render names without a
+// second round-trip to the Wiki Service.
 type PatchDetailCard struct {
 	GalgameCard
-	IntroductionMarkdown KunLanguage `json:"introductionMarkdown"`
-	Updated              time.Time   `json:"updated"`
-	WikiTagIDs           []int       `json:"wikiTagIds"`
-	WikiOfficialIDs      []int       `json:"wikiOfficialIds"`
-	WikiEngineIDs        []int       `json:"wikiEngineIds"`
+	IntroductionMarkdown KunLanguage           `json:"introduction_markdown"`
+	Updated              time.Time             `json:"updated"`
+	Tags                 []PatchDetailTag      `json:"tags"`
+	Officials            []PatchDetailOfficial `json:"officials"`
+	WikiEngineIDs        []int                 `json:"wiki_engine_ids"`
 }
 
 // EnrichPatchDetail enriches the detail page: one extra /galgame/:gid call on top of EnrichPatch to get intro/associated IDs.
@@ -164,10 +185,22 @@ func EnrichPatchDetail(ctx context.Context, wiki *galgameClient.Client, p *patch
 	}
 
 	for _, t := range g.Tag {
-		base.WikiTagIDs = append(base.WikiTagIDs, t.TagID)
+		base.Tags = append(base.Tags, PatchDetailTag{
+			ID:           t.Tag.ID,
+			Name:         t.Tag.Name,
+			Aliases:      t.Tag.Aliases,
+			Category:     t.Tag.Category,
+			SpoilerLevel: t.SpoilerLevel,
+		})
 	}
 	for _, o := range g.Official {
-		base.WikiOfficialIDs = append(base.WikiOfficialIDs, o.OfficialID)
+		base.Officials = append(base.Officials, PatchDetailOfficial{
+			ID:       o.Official.ID,
+			Name:     o.Official.Name,
+			Aliases:  o.Official.Aliases,
+			Category: o.Official.Category,
+			Lang:     o.Official.Lang,
+		})
 	}
 	for _, e := range g.Engine {
 		base.WikiEngineIDs = append(base.WikiEngineIDs, e.EngineID)

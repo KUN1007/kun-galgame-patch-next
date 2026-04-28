@@ -9,7 +9,7 @@ const api = useApi()
 const { data: rooms, pending } = await useAsyncData<ChatRoomSummary[]>(
   'chat-rooms',
   async () => {
-    const res = await api.get<ChatRoomSummary[]>('/chat-room')
+    const res = await api.get<ChatRoomSummary[]>('/chat/room')
     return res.code === 0 ? res.data : []
   },
   { default: () => [] }
@@ -51,19 +51,13 @@ const { data: rooms, pending } = await useAsyncData<ChatRoomSummary[]>(
             />
             <span class="font-medium truncate">{{ room.name }}</span>
           </div>
-          <p class="text-default-500 text-xs truncate">
-            {{
-              room.lastMessage
-                ? `${room.lastMessage.senderName}: ${room.lastMessage.content}`
-                : '暂无消息'
-            }}
-          </p>
+          <p class="text-default-500 text-xs truncate">最近聊天室</p>
         </div>
         <span
-          v-if="room.lastMessageTime"
+          v-if="room.last_message_time"
           class="text-default-400 shrink-0 text-xs"
         >
-          {{ formatDistanceToNow(room.lastMessageTime) }}
+          {{ formatDistanceToNow(room.last_message_time) }}
         </span>
       </NuxtLink>
     </template>

@@ -39,12 +39,12 @@ const props = withDefaults(defineProps<Props>(), {
       "
     >
       <KunIcon name="lucide:heart" class="size-4" />
-      <span>{{ formatNumber(props.patch._count.favorite_by || 0) }}</span>
+      <span>{{ formatNumber(props.patch.count.favorite_by || 0) }}</span>
     </div>
 
     <div class="flex items-center gap-1">
       <KunIcon name="lucide:puzzle" class="size-4" />
-      <span>{{ formatNumber(props.patch._count.resource || 0) }}</span>
+      <span>{{ formatNumber(props.patch.count.resource || 0) }}</span>
     </div>
 
     <div
@@ -56,7 +56,7 @@ const props = withDefaults(defineProps<Props>(), {
       "
     >
       <KunIcon name="lucide:message-square" class="size-4" />
-      <span>{{ formatNumber(props.patch._count.comment || 0) }}</span>
+      <span>{{ formatNumber(props.patch.count.comment || 0) }}</span>
     </div>
   </div>
 </template>

@@ -128,7 +128,7 @@ func (h *Handler) Search(c *fiber.Ctx) error {
 func getNSFWFilter(c *fiber.Ctx) string {
 	nsfw := c.Get("x-nsfw-header", "{}")
 	var opt struct {
-		ShowNSFW bool `json:"showNSFW"`
+		ShowNSFW bool `json:"show_nsfw"`
 	}
 	_ = json.Unmarshal([]byte(nsfw), &opt)
 	if !opt.ShowNSFW {

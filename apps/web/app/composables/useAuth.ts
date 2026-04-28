@@ -1,127 +1,91 @@
+// useAuth wraps the session-cookie auth surface exposed by apps/api.
+//
+// There is no JWT / access_token on the client — authentication is a
+// server-held Redis session keyed by the httpOnly `kun_session` cookie set by
+// POST /auth/oauth/callback. All methods here return the raw ApiResponse so
+// callers can inspect code/message.
 export const useAuth = () => {
   const api = useApi()
   const userStore = useUserStore()
 
-  const accessToken = useCookie('access_token', {
-    maxAge: 60 * 15, // 15 minutes
-    sameSite: 'lax',
-  })
-
-  // Note: refresh_token is managed by the backend as an httpOnly cookie.
-  // We cannot read it from JS, which is the point — it's secure from XSS.
-
-  const setAccessToken = (token: string) => {
-    accessToken.value = token
-  }
-
-  const clearAuth = () => {
-    accessToken.value = null
-    userStore.clearUser()
-  }
-
-  const login = async (account: string, password: string) => {
-    const response = await api.post<LoginResponse>('/auth/login', {
-      account,
-      password,
+  // OAuth callback: the frontend receives { code, code_verifier } from the
+  // OAuth provider redirect and forwards them to the backend, which creates
+  // the session cookie and returns the current user profile.
+  const oauthCallback = async (code: string, code_verifier: string) => {
+    const res = await api.post<UserState>('/auth/oauth/callback', {
+      code,
+      code_verifier
     })
-    if (response.code === 0) {
-      setAccessToken(response.data.access_token)
-      userStore.setUser(response.data.user)
+    if (res.code === 0 && res.data) {
+      userStore.setUser(res.data)
     }
-    return response
-  }
-
-  const register = async (name: string, email: string, password: string) => {
-    const response = await api.post<User>('/auth/register', {
-      name,
-      email,
-      password,
-    })
-    return response
+    return res
   }
 
   const logout = async () => {
     try {
       await api.post('/auth/logout')
     } finally {
-      clearAuth()
+      userStore.logout()
       navigateTo('/auth/login')
     }
   }
 
-  const refreshAccessToken = async () => {
-    try {
-      // Backend reads refresh_token from httpOnly cookie automatically
-      const response = await api.post<RefreshResponse>('/auth/refresh')
-      if (response.code === 0) {
-        setAccessToken(response.data.access_token)
-        return true
-      }
-    } catch {
-      clearAuth()
-    }
-    return false
-  }
-
+  // Refresh the cached user profile from /auth/me. Returns null when the
+  // session is gone / expired.
   const fetchUser = async () => {
-    if (!accessToken.value) {
-      // No access token — try refreshing (httpOnly cookie may still be valid)
-      const refreshed = await refreshAccessToken()
-      if (!refreshed) return null
-    }
-
-    try {
-      const response = await api.get<User>('/auth/me')
-      if (response.code === 0) {
-        userStore.setUser(response.data)
-        return response.data
-      }
-    } catch {
-      // Try to refresh token
-      const refreshed = await refreshAccessToken()
-      if (refreshed) {
-        return fetchUser()
-      }
+    const res = await api.get<UserState>('/auth/me')
+    if (res.code === 0 && res.data) {
+      userStore.setUser(res.data)
+      return res.data
     }
     return null
   }
 
-  const forgotPassword = async (email: string) => {
-    return api.post('/auth/password/forgot', { email })
-  }
+  // ===== Forgot password (public) =====
 
-  const resetPassword = async (token: string, password: string) => {
-    return api.post('/auth/password/reset', { token, password })
-  }
+  const forgotSendCode = (name: string) =>
+    api.post('/auth/forgot/send-code', { name })
 
-  const changePassword = async (oldPassword: string, newPassword: string) => {
-    return api.put('/auth/password', {
-      old_password: oldPassword,
-      new_password: newPassword,
+  const forgotReset = (
+    name: string,
+    verification_code: string,
+    new_password: string,
+    confirm_password: string
+  ) =>
+    api.post('/auth/forgot/reset', {
+      name,
+      verification_code,
+      new_password,
+      confirm_password
     })
-  }
 
-  const sendEmailChangeCode = async (newEmail: string) => {
-    return api.post('/auth/email/send-code', { new_email: newEmail })
-  }
+  // ===== Email change (requires login) =====
 
-  const changeEmail = async (code: string, newEmail: string) => {
-    return api.put('/auth/email', { code, new_email: newEmail })
-  }
+  // Sends a 6-digit verification code to the NEW email address.
+  const sendEmailChangeCode = (email: string) =>
+    api.post('/auth/email/send-code', { email })
+
+  // Commits the email change with the code the user received.
+  const updateEmail = (email: string, code: string) =>
+    api.put('/user/email', { email, code })
+
+  // ===== Password change (requires login) =====
+
+  const updatePassword = (old_password: string, new_password: string) =>
+    api.put('/user/password', { old_password, new_password })
 
   return {
     user: computed(() => userStore.user),
     isLoggedIn: computed(() => userStore.isLoggedIn),
     isAdmin: computed(() => userStore.isAdmin),
-    login,
-    register,
+    oauthCallback,
     logout,
     fetchUser,
-    refreshAccessToken,
-    forgotPassword,
-    resetPassword,
-    changePassword,
+    forgotSendCode,
+    forgotReset,
     sendEmailChangeCode,
-    changeEmail,
+    updateEmail,
+    updatePassword
   }
 }

@@ -17,14 +17,17 @@ const { data: detail, pending } = await useAsyncData<PatchResourceDetail | null>
 )
 
 const noteHtml = computed(() => {
-  if (!detail.value?.resource.noteHtml) return ''
-  return DOMPurify.sanitize(detail.value.resource.noteHtml)
+  if (!detail.value?.resource.note_html) return ''
+  return DOMPurify.sanitize(detail.value.resource.note_html)
 })
 
+// The `patch` field may be null if the owning patch has been deleted mid-flight.
+const patchName = computed(() =>
+  detail.value?.patch ? getPreferredLanguageText(detail.value.patch.name) : ''
+)
+
 useKunSeoMeta({
-  title: detail.value
-    ? `${getPreferredLanguageText(detail.value.patch.name)} - 资源下载`
-    : '资源详情',
+  title: patchName.value ? `${patchName.value} - 资源下载` : '资源详情',
   description: detail.value?.resource.name ?? ''
 })
 </script>
@@ -40,13 +43,13 @@ useKunSeoMeta({
             <h1 class="mb-2 text-2xl font-bold">
               {{ detail.resource.name || '补丁资源' }}
             </h1>
-            <div class="text-default-500 mb-4 text-sm">
+            <div v-if="detail.patch" class="text-default-500 mb-4 text-sm">
               来自:
               <NuxtLink
                 :to="`/patch/${detail.patch.id}/introduction`"
                 class="text-primary hover:underline"
               >
-                {{ getPreferredLanguageText(detail.patch.name) }}
+                {{ patchName }}
               </NuxtLink>
             </div>
 
@@ -54,7 +57,7 @@ useKunSeoMeta({
               :types="detail.resource.type"
               :languages="detail.resource.language"
               :platforms="detail.resource.platform"
-              :model-name="detail.resource.modelName"
+              :model-name="detail.resource.model_name"
               :storage="detail.resource.storage"
               :storage-size="detail.resource.size"
             />
@@ -74,10 +77,10 @@ useKunSeoMeta({
               <div v-if="detail.resource.password">
                 解压密码: <code>{{ detail.resource.password }}</code>
               </div>
-              <div v-if="detail.resource.hash" class="break-all">
-                Hash: {{ detail.resource.hash }}
+              <div v-if="detail.resource.blake3" class="break-all">
+                Hash: {{ detail.resource.blake3 }}
                 <NuxtLink
-                  :to="`/check-hash?hash=${detail.resource.hash}&content=${encodeURIComponent(detail.resource.content || '')}`"
+                  :to="`/check-hash?hash=${detail.resource.blake3}&content=${encodeURIComponent(detail.resource.content || '')}`"
                   class="text-primary ml-2 hover:underline"
                 >
                   校验文件
@@ -93,7 +96,7 @@ useKunSeoMeta({
               <div class="text-default-500 flex items-center gap-4 text-sm">
                 <div class="flex items-center gap-1">
                   <KunIcon name="lucide:heart" class="size-4" />
-                  {{ detail.resource.likeCount }}
+                  {{ detail.resource.like_count }}
                 </div>
                 <div class="flex items-center gap-1">
                   <KunIcon name="lucide:download" class="size-4" />
@@ -115,7 +118,7 @@ useKunSeoMeta({
           </div>
         </div>
 
-        <div>
+        <div v-if="detail.patch">
           <KunCard :bordered="true">
             <h3 class="mb-3 text-lg font-bold">Galgame 信息</h3>
             <NuxtLink
@@ -125,18 +128,18 @@ useKunSeoMeta({
               <img
                 v-if="detail.patch.banner"
                 :src="detail.patch.banner.replace(/\.avif$/, '-mini.avif')"
-                :alt="getPreferredLanguageText(detail.patch.name)"
+                :alt="patchName"
                 class="bg-default-100 mb-3 aspect-video w-full rounded object-cover"
               />
               <div class="hover:text-primary-500 font-semibold">
-                {{ getPreferredLanguageText(detail.patch.name) }}
+                {{ patchName }}
               </div>
             </NuxtLink>
             <div class="text-default-500 mt-3 space-y-1 text-sm">
               <div>浏览: {{ formatNumber(detail.patch.view) }}</div>
               <div>下载: {{ formatNumber(detail.patch.download) }}</div>
-              <div>收藏: {{ detail.patch._count.favorite_by }}</div>
-              <div>资源数: {{ detail.patch._count.resource }}</div>
+              <div>收藏: {{ detail.patch.count.favorite_by }}</div>
+              <div>资源数: {{ detail.patch.count.resource }}</div>
             </div>
           </KunCard>
         </div>

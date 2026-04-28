@@ -61,6 +61,20 @@ func (h *ChatHandler) CreateRoom(c *fiber.Ctx) error {
 	return response.OK(c, room)
 }
 
+// GetRoomDetail GET /api/chat/room/:link
+//
+// Returns the room plus its full member list (with each user's profile).
+// Caller must be a member.
+func (h *ChatHandler) GetRoomDetail(c *fiber.Ctx) error {
+	user := middleware.MustGetUser(c)
+	link := c.Params("link")
+	detail, err := h.svc.GetRoomDetail(user.UID, link)
+	if err != nil {
+		return response.Error(c, errors.ErrBadRequest(err.Error()))
+	}
+	return response.OK(c, detail)
+}
+
 // JoinRoom POST /api/chat/room/join
 func (h *ChatHandler) JoinRoom(c *fiber.Ctx) error {
 	user := middleware.MustGetUser(c)

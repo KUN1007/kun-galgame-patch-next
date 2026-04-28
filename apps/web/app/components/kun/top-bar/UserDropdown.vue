@@ -20,7 +20,7 @@ const handleLogout = async () => {
 }
 
 const handleCheckIn = async () => {
-  if (checking.value || userStore.user.dailyCheckIn) return
+  if (checking.value || userStore.user.daily_check_in) return
   checking.value = true
   try {
     const res = await api.post<{ moemoepoint: number }>('/user/check-in')
@@ -33,8 +33,7 @@ const handleCheckIn = async () => {
         gained > 0 ? 'success' : 'info'
       )
       userStore.setUser({
-        ...userStore.user,
-        dailyCheckIn: 1,
+        daily_check_in: 1,
         moemoepoint: userStore.user.moemoepoint + gained
       })
     } else {
@@ -104,14 +103,14 @@ const handleCheckIn = async () => {
       <button
         type="button"
         class="text-secondary hover:bg-secondary/10 flex w-full items-center justify-between rounded px-2 py-2 text-sm disabled:opacity-50"
-        :disabled="!!userStore.user.dailyCheckIn || checking"
+        :disabled="!!userStore.user.daily_check_in || checking"
         @click="handleCheckIn"
       >
         <span class="flex items-center gap-2">
           <KunIcon name="lucide:calendar-check" class="size-4" />
           今日签到
         </span>
-        <span v-if="userStore.user.dailyCheckIn" class="text-xs">
+        <span v-if="userStore.user.daily_check_in" class="text-xs">
           签到过啦
         </span>
         <KunIcon

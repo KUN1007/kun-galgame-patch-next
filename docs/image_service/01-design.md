@@ -34,6 +34,21 @@
 - ❌ 不做面向最终用户的公开上传端点
 - ❌ 不支持调用方主动删图（见决策 0）
 
+## 服务边界 — 管什么 / 不管什么
+
+三个调用方的历史上传种类不一，明确哪些走 image_service、哪些不走，避免 "图片服务能不能接收补丁 zip" 这种困惑：
+
+| 上传类型 | 文件类型 | 归属 |
+|---------|---------|------|
+| 用户头像 | PNG / JPG / WebP | ✅ image_service（preset=`avatar`） |
+| 用户 topic / 个人页图片 | PNG / JPG / WebP / GIF（首帧） | ✅ image_service（preset=`topic`） |
+| galgame 封面 / banner | PNG / JPG / WebP | ✅ image_service（preset=`galgame_banner`） |
+| 补丁资源 / 游戏压缩包 | .zip / .rar / .7z / .iso | ❌ **不归 image_service**，走各站自己的 S3 presigned 直传 |
+| 视频 / 音频 / PDF / 其他文件 | 任意非图片 | ❌ 不归 image_service |
+| 补丁 banner（moyu 历史） | —— | 已废除，改从 galgame wiki 的 `galgame.banner` 读取 |
+
+**硬规则**：image_service 只接受 `image/*` MIME（经 magic number 嗅探确认），上传输出**恒定为 WebP**。任何非图片文件请走调用方自己的直传链路。
+
 ## 整体架构
 
 ```
@@ -120,6 +135,8 @@ UPDATE images.last_referenced_at = NOW()
 
 **副产品**：调用方漏 ping 最坏浪费一点冷存储，不丢数据。
 
+**合规删除例外**：用户行使"被遗忘权"等法规要求强制删除头像时，走 **admin-only 的硬删路径**（`DELETE /admin/image/:hash?force=true&reason=...`，需 `image:admin` scope，V3 实现，写审计日志）。这是**唯一**允许主动物理删除的通道，不对普通调用方开放。V1 / V2 阶段如确有合规诉求，可以手动 SQL + 对象存储 CLI 操作，但必须记录。
+
 ### 决策 1：鉴权复用 OAuth，不引入新凭证
 
 **选择**：不新增 API Key / 上传 ticket，沿用本仓库已有的 OAuth 基础设施。
@@ -161,11 +178,11 @@ UPDATE images.last_referenced_at = NOW()
 
 | entity | preset | 主图 | 额外变体 |
 |--------|--------|------|---------|
-| 用户头像 | `avatar` | 原尺寸 webp（用户上传多大存多大，但 ≤1920×1080） | 100×100 webp |
-| galgame banner | `galgame_banner` | fit 1920×1080 webp | 460×259 webp |
+| 用户头像 | `avatar` | fit 1920×1080 webp | 256×256 webp（cover）+ 100×100 webp（cover） |
+| galgame banner | `galgame_banner` | fit 1920×1080 webp | 460×259 webp（cover） |
 | topic 图床 | `topic` | fit 1920×1080 webp | 无 |
 
-V1 总共 **5 个固定变体产物**。
+V1 总共 **6 个固定变体产物**（含主图）。avatar 保留 256 变体是为了与 moyu / kungal 历史头像的 256×256 cover 语义对齐（见 [02-storage-and-schema.md](./02-storage-and-schema.md#preset-配置)）。
 
 **理由**：
 

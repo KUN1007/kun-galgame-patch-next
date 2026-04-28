@@ -7,16 +7,15 @@ import (
 )
 
 type Response struct {
-	Code    int         `json:"code"`
-	Message string      `json:"message"`
-	Data    any `json:"data"`
+	Code    int    `json:"code"`
+	Message string `json:"message"`
+	Data    any    `json:"data"`
 }
 
-type PaginatedResponse struct {
-	Code    int         `json:"code"`
-	Message string      `json:"message"`
-	Data    any `json:"data"`
-	Total   int64       `json:"total"`
+// PaginatedData is the inner payload for a paginated response: { items, total }.
+type PaginatedData struct {
+	Items any   `json:"items"`
+	Total int64 `json:"total"`
 }
 
 func OK(c *fiber.Ctx, data any) error {
@@ -35,12 +34,13 @@ func OKMessage(c *fiber.Ctx, msg string) error {
 	})
 }
 
-func Paginated(c *fiber.Ctx, data any, total int64) error {
-	return c.JSON(PaginatedResponse{
+// Paginated emits { code, message, data: { items, total } }.
+// Nullish items are normalized to an empty slice to keep the shape stable for the frontend.
+func Paginated(c *fiber.Ctx, items any, total int64) error {
+	return c.JSON(Response{
 		Code:    0,
 		Message: "OK",
-		Data:    data,
-		Total:   total,
+		Data:    PaginatedData{Items: items, Total: total},
 	})
 }
 

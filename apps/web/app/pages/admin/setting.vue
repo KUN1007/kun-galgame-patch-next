@@ -3,70 +3,86 @@ useKunSeoMeta({ title: '网站设置' })
 
 const api = useApi()
 
-interface SettingData {
-  disableRegister: boolean
-  enableCommentVerify: boolean
-  enableOnlyCreatorCreate: boolean
+// Each toggle is a separate endpoint on the backend — see
+// apps/api/internal/app/router.go /admin/setting/* routes.
+// `register` is phrased negatively ({disabled}) while the other two are
+// positive ({enabled}); we normalize everything to a {value, key} shape here.
+type SettingKey = 'register' | 'comment-verify' | 'creator-only'
+
+interface SettingDefinition {
+  key: SettingKey
+  name: string
+  description: string
+  // Whether the underlying backend flag is phrased as "disabled" (true=off behaviour).
+  isInverse: boolean
 }
 
-const { data, pending, refresh } = await useAsyncData<SettingData>(
-  'admin-setting',
-  async () => {
-    const res = await api.get<SettingData>('/admin/setting')
-    return res.code === 0
-      ? res.data
-      : {
-          disableRegister: false,
-          enableCommentVerify: false,
-          enableOnlyCreatorCreate: false
-        }
+const definitions: SettingDefinition[] = [
+  {
+    key: 'register',
+    name: '禁止注册',
+    description: '开启后新用户将无法通过普通注册流程加入本站',
+    isInverse: true
   },
   {
-    default: () => ({
-      disableRegister: false,
-      enableCommentVerify: false,
-      enableOnlyCreatorCreate: false
-    })
+    key: 'comment-verify',
+    name: '评论需要审核',
+    description: '开启后新评论需要管理员审核通过才能显示',
+    isInverse: false
+  },
+  {
+    key: 'creator-only',
+    name: '仅创作者可以发布 Galgame',
+    description: '开启后非创作者无法发布新的 Galgame 条目',
+    isInverse: false
   }
-)
+]
 
-const updating = reactive<Record<string, boolean>>({})
+const values = reactive<Record<SettingKey, boolean>>({
+  register: false,
+  'comment-verify': false,
+  'creator-only': false
+})
+const updating = reactive<Record<SettingKey, boolean>>({
+  register: false,
+  'comment-verify': false,
+  'creator-only': false
+})
 
-const toggle = async (key: keyof SettingData) => {
-  updating[key] = true
-  try {
-    const res = await api.put('/admin/setting', {
-      key,
-      value: !(data.value as any)[key]
+const { pending, refresh } = await useAsyncData('admin-setting', async () => {
+  const results = await Promise.all(
+    definitions.map(async (def) => {
+      const res = await api.get<{ enabled?: boolean; disabled?: boolean }>(
+        `/admin/setting/${def.key}`
+      )
+      if (res.code !== 0) return [def.key, false] as const
+      const raw = def.isInverse ? res.data?.disabled : res.data?.enabled
+      return [def.key, !!raw] as const
     })
+  )
+  for (const [key, value] of results) {
+    values[key] = value
+  }
+  return values
+})
+
+const toggle = async (def: SettingDefinition) => {
+  updating[def.key] = true
+  try {
+    const next = !values[def.key]
+    const res = await api.put(`/admin/setting/${def.key}`, { enabled: next })
     if (res.code === 0) {
+      values[def.key] = next
       useKunMessage('已更新', 'success')
-      await refresh()
     } else {
       useKunMessage(res.message || '更新失败', 'error')
     }
   } finally {
-    updating[key] = false
+    updating[def.key] = false
   }
 }
 
-const settings = [
-  {
-    key: 'disableRegister' as const,
-    name: '禁止注册',
-    description: '开启后新用户将无法通过普通注册流程加入本站'
-  },
-  {
-    key: 'enableCommentVerify' as const,
-    name: '评论需要审核',
-    description: '开启后新评论需要管理员审核通过才能显示'
-  },
-  {
-    key: 'enableOnlyCreatorCreate' as const,
-    name: '仅创作者可以发布 Galgame',
-    description: '开启后非创作者无法发布新的 Galgame 条目'
-  }
-]
+void refresh
 </script>
 
 <template>
@@ -75,20 +91,16 @@ const settings = [
 
     <KunLoading v-if="pending" description="加载中..." />
     <div v-else class="space-y-4">
-      <KunCard
-        v-for="s in settings"
-        :key="s.key"
-        :bordered="true"
-      >
+      <KunCard v-for="def in definitions" :key="def.key" :bordered="true">
         <div class="flex items-center justify-between gap-4">
           <div class="flex-1">
-            <h3 class="text-lg font-medium">{{ s.name }}</h3>
-            <p class="text-default-500 text-sm">{{ s.description }}</p>
+            <h3 class="text-lg font-medium">{{ def.name }}</h3>
+            <p class="text-default-500 text-sm">{{ def.description }}</p>
           </div>
           <KunSwitch
-            :model-value="!!data?.[s.key]"
-            :disabled="updating[s.key]"
-            @update:model-value="toggle(s.key)"
+            :model-value="values[def.key]"
+            :disabled="updating[def.key]"
+            @update:model-value="toggle(def)"
           />
         </div>
       </KunCard>

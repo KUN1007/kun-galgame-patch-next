@@ -1,0 +1,337 @@
+# 06 — 调用方接入指南
+
+本篇是**从调用方视角**（kungal / moyu / galgame wiki / 未来的站点）写的接入 checklist。平台侧文档在 01–05 章，本篇只讲"我这个站要接入 image_service，我应该干什么"。
+
+## 接入前置条件
+
+- ✅ 本站已经是已注册的 OAuth Client（在 `oauth_client` 表里有一行）
+- ✅ image_service V1 已经上线并能访问
+- ✅ 本站后端有 cron 能力（能跑每日定时任务）
+- ✅ 本站业务库是 Postgres / MySQL（支持加字段）
+
+## 一、注册图片服务能力
+
+在 `kun_oauth_admin` 的 `oauth_client` 表上，为本站的 Client 记录追加图片服务相关字段。
+
+### 各站推荐值
+
+#### kungal
+
+```sql
+UPDATE oauth_client SET
+  image_enabled = true,
+  image_site_key = 'kungal',
+  image_allowed_presets = ARRAY['avatar', 'topic'],
+  image_quota_daily = 10000,                  -- 每日 10k 张
+  image_quota_bytes_daily = 10737418240,      -- 10GB
+  image_max_file_size = 10485760              -- 单文件 10MB
+WHERE client_id = '<kungal_client_id>';
+```
+
+同时给 `oauth_client_scope`（或等价的 scope 表）加 `image:upload`、`image:read`。
+
+#### moyu
+
+```sql
+UPDATE oauth_client SET
+  image_enabled = true,
+  image_site_key = 'moyu',
+  image_allowed_presets = ARRAY['avatar', 'topic'],   -- moyu 不用 galgame_banner
+  image_quota_daily = 5000,
+  image_quota_bytes_daily = 5368709120,      -- 5GB
+  image_max_file_size = 10485760
+WHERE client_id = '<moyu_client_id>';
+```
+
+#### galgame wiki
+
+```sql
+UPDATE oauth_client SET
+  image_enabled = true,
+  image_site_key = 'galgame_wiki',
+  image_allowed_presets = ARRAY['galgame_banner'],    -- wiki 只用 banner
+  image_quota_daily = 2000,
+  image_quota_bytes_daily = 5368709120,
+  image_max_file_size = 20971520             -- banner 允许 20MB
+WHERE client_id = '<galgame_wiki_client_id>';
+```
+
+新站点接入时，平台团队把上面这份 UPDATE 作为"新站准入"的模板。
+
+## 二、业务库 migration
+
+### 需要加的字段（按调用方业务实体逐一）
+
+对每个"持有图片"的业务实体，加一个 `*_image_hash CHAR(64)` 字段。保留原 `*_url` 字段作为阶段 3 的回退兜底。
+
+#### kungal / moyu — `user` 表
+
+```sql
+ALTER TABLE "user"
+    ADD COLUMN avatar_image_hash CHAR(64);
+
+-- 保留原 avatar VARCHAR 字段，暂不删（回退用）；
+-- 可改名提示它是 legacy：
+ALTER TABLE "user" RENAME COLUMN avatar TO avatar_url_legacy;
+```
+
+#### kungal / moyu — topic 图床
+
+topic 图床不迁移（见 [04-migration-plan.md](./04-migration-plan.md#topic-图床的特殊处理)），所以 topic 实体不需要加 `image_hash` 字段到老记录。**新发的 topic 帖**若在正文 markdown 里使用 image_service，URL 直接落在 markdown 文本里，业务库不需单独建字段。
+
+#### galgame wiki — `galgame` 表
+
+```sql
+ALTER TABLE galgame
+    ADD COLUMN banner_image_hash CHAR(64);
+
+-- 原 banner 字段保留作回退：
+ALTER TABLE galgame RENAME COLUMN banner TO banner_url_legacy;
+```
+
+### 索引
+
+```sql
+CREATE INDEX idx_user_avatar_hash ON "user"(avatar_image_hash) WHERE avatar_image_hash IS NOT NULL;
+CREATE INDEX idx_galgame_banner_hash ON galgame(banner_image_hash) WHERE banner_image_hash IS NOT NULL;
+```
+
+## 三、Go SDK 用法
+
+### 安装
+
+```bash
+go get api/pkg/imageclient@latest
+```
+
+（V2 阶段正式提供；V1 期间可以直接 HTTP 调用）
+
+### Singleton 初始化
+
+**关键**：SDK 必须是 singleton，token 内部缓存。不要每次上传都 new 一个 Client。
+
+```go
+// apps/api/internal/infrastructure/image/client.go
+package image
+
+import (
+    "sync"
+    "time"
+
+    "api/pkg/config"
+    "api/pkg/imageclient"
+)
+
+var (
+    once   sync.Once
+    shared *imageclient.Client
+)
+
+func Shared(cfg config.ImageConfig) *imageclient.Client {
+    once.Do(func() {
+        shared = imageclient.New(imageclient.Config{
+            BaseURL:      cfg.ServiceBaseURL,           // http://127.0.0.1:9278
+            CDNBase:      cfg.CDNBase,                  // https://cdn.example.com/img
+            ClientID:     cfg.OAuthClientID,
+            ClientSecret: cfg.OAuthClientSecret,
+            TokenTTL:     50 * time.Minute,             // token 默认 1h，留 10min 余量
+        })
+    })
+    return shared
+}
+```
+
+### 上传
+
+```go
+cli := image.Shared(cfg)
+
+result, err := cli.Upload(ctx, imageclient.UploadRequest{
+    File:     fileReader,
+    Filename: "avatar.png",
+    Preset:   "avatar",
+})
+if err != nil {
+    return nil, fmt.Errorf("image upload: %w", err)
+}
+
+// result.Hash          → 存入业务库
+// result.URL           → 主图 CDN URL
+// result.VariantURLs   → map[string]string，如 {"256": "...", "100": "..."}
+```
+
+### 构造变体 URL（已有 hash）
+
+```go
+main  := cli.MainURL(hash)           // https://cdn/.../abcd.webp
+thumb := cli.VariantURL(hash, "100") // https://cdn/.../abcd_100.webp
+```
+
+SDK 内部就是纯字符串拼接（V1 无签名），O(1)。
+
+## 四、错误处理与降级策略
+
+### 硬规则：**硬失败，不本地兜底**
+
+image_service 不可用时，本站**必须返回 503**（或业务错误码），**禁止**回退到本地 S3 上传或写本地磁盘。理由：
+
+- 不同调用方各行其是会让数据一致性彻底崩溃（有的站传到本地磁盘、有的落到旧桶，审计和迁移都做不了）
+- 服务降级最多几分钟，不值得引入永久分裂
+- 硬失败让问题立刻可见，运维能第一时间处理
+
+```go
+result, err := cli.Upload(ctx, req)
+if err != nil {
+    // ❌ 禁止: 回退到本地 S3 / 本地磁盘
+    // if errors.Is(err, imageclient.ErrServiceUnavailable) {
+    //     return uploadToLocalS3(req)
+    // }
+
+    // ✅ 正确: 返回 503 给前端
+    return c.Status(503).JSON(fiber.Map{
+        "error": "image service temporarily unavailable, please retry",
+    })
+}
+```
+
+### 配额超限（429）
+
+用户友好的错误提示：
+
+```go
+if errors.Is(err, imageclient.ErrQuotaExceeded) {
+    return c.Status(429).JSON(fiber.Map{
+        "error": "每日上传配额已用完，请明天再试",
+    })
+}
+```
+
+### 审核拒绝（V3 上线后才会出现）
+
+V1 / V2 期间 image_service 永远不会返回 422（审核全通过）。V3 上线后如果出现：
+
+```go
+if errors.Is(err, imageclient.ErrModerationRejected) {
+    return c.Status(422).JSON(fiber.Map{
+        "error": "图片内容不符合规范",
+    })
+}
+```
+
+## 五、`/healthz` 级联策略
+
+### 硬规则：image_service 依赖不可用 ≠ 本站不可用
+
+本站的 `/healthz` **不要** cascade 检查 image_service 的健康。理由：
+
+- image_service 挂了 → 本站只是"不能上传新图"（降级功能）
+- image_service 挂了 → 本站其他功能（登录、浏览、发帖纯文字、已上传的图的展示）全部正常
+- 如果 cascade 检查导致本站的 `/healthz` 返回 503，负载均衡会把本站也摘掉，故障范围放大
+
+**正确做法**：在本站加一个独立的 `/healthz/image` 端点做 image_service 的可达性检查，供监控系统使用，但不影响主 `/healthz`：
+
+```go
+app.Get("/healthz", func(c *fiber.Ctx) error {
+    // 只检查本站强依赖：PG / Redis
+    return c.JSON(fiber.Map{"status": "ok"})
+})
+
+app.Get("/healthz/image", func(c *fiber.Ctx) error {
+    if err := imageclient.Shared(cfg).Health(c.Context()); err != nil {
+        return c.Status(503).JSON(fiber.Map{"status": "degraded", "error": err.Error()})
+    }
+    return c.JSON(fiber.Map{"status": "ok"})
+})
+```
+
+## 六、环境变量 checklist
+
+调用方 `.env` / `.env.example`：
+
+```env
+# Image Service
+KUN_IMAGE_SERVICE_BASE_URL=https://image.api.example.com    # 生产；dev 用 http://127.0.0.1:9278
+KUN_IMAGE_CDN_BASE=https://cdn.example.com/img              # 生产；dev 用 http://127.0.0.1:9000/kun-images-dev
+KUN_IMAGE_OAUTH_CLIENT_ID=<your_oauth_client_id>
+KUN_IMAGE_OAUTH_CLIENT_SECRET=<your_oauth_client_secret>
+```
+
+本地 dev 期间可以直接 include 平台提供的 `docker-compose.image-service.yaml`（见 [05-engineering-plan.md](./05-engineering-plan.md#调用方本地-dev-环境)）。
+
+## 七、Cron 配置
+
+必须每日跑一次 `reference-ping` 避免图片被清理，详见 [04-migration-plan.md](./04-migration-plan.md#调用方-cron-清单每站必备)。
+
+## 八、前端改造
+
+### URL 解析函数（处理回退）
+
+```ts
+// kungal/moyu/wiki 通用
+export function resolveImageUrl(
+  hash: string | null,
+  legacy: string | null,
+  variant?: string
+): string {
+  if (hash) {
+    return variant
+      ? imageVariantUrl(hash, variant)
+      : imageMainUrl(hash)
+  }
+  if (legacy) return legacy
+  return DEFAULT_PLACEHOLDER
+}
+
+// 调用点
+<img :src="resolveImageUrl(user.avatar_image_hash, user.avatar_url_legacy, '256')" />
+```
+
+### 上传组件
+
+前端不直接调 image_service（V1 无 CORS、无前端直传）。上传走本站后端代传：
+
+```ts
+// 前端
+const fd = new FormData()
+fd.append('avatar', file)
+await $fetch('/api/user/avatar', { method: 'POST', body: fd })
+
+// 本站后端 /api/user/avatar handler 里调用 imageclient.Upload
+```
+
+V2 如开启前端直传，前端改为直接 `POST` 到 `/image/upload`，带 user JWT。
+
+## 九、上线 checklist（每站独立）
+
+- [ ] `oauth_client` 表追加 image_* 字段并配好推荐值
+- [ ] 本站业务库加 `*_image_hash` 字段 + 保留 `*_url_legacy` 字段
+- [ ] 本站后端 `.env` 配 `KUN_IMAGE_*` 环境变量
+- [ ] 本站后端 import `imageclient` 并配 singleton
+- [ ] 本站上传逻辑改调 `imageclient.Upload`，错误 hardfail 返回 503
+- [ ] 本站前端 URL 解析函数实现回退
+- [ ] 本站加每日 cron 跑 `reference-ping`
+- [ ] 本站 `/healthz/image` 端点接监控（不要 cascade 到主 `/healthz`）
+- [ ] 走一遍 dev 环境联调（用 Docker Compose 跑起本地 image_service）
+- [ ] 先灰度 1% 流量 / 内部员工账号 24h，再放量
+
+## 常见问题
+
+### Q: 上传失败后应该重试吗？
+
+A: 5xx 错误可以重试（指数退避，最多 3 次）；4xx 错误不要重试（配额、参数错误，重试也不会好）。
+
+### Q: 我的 OAuth token 过期了怎么办？
+
+A: SDK 内部自动缓存 token 并在过期前 10min 刷新。不要手动管理 token。
+
+### Q: 一张图上传后，后来 preset 需要新变体怎么办？
+
+A: 用同一张图以新 preset 再传一次。image_service 会命中去重，只补新变体。`deduplicated: true` 表示节省了 decode 成本。
+
+### Q: 我能不能把补丁压缩包也传上来？
+
+A: 不能。image_service 只接 `image/*` MIME（magic number 嗅探）。压缩包走各站自己的 S3 presigned 直传。详见 [01-design.md 服务边界](./01-design.md#服务边界--管什么--不管什么)。
+
+### Q: 用户注销帐号，他的头像会被删吗？
+
+A: 不会立刻删。调用方把 `avatar_image_hash` 清空或记录帐号已注销；`reference-ping` 下一次不再 ping 此 hash；image_service 等 TTL 到期后自然清理。合规删除请走 V3 的 admin 硬删路径。

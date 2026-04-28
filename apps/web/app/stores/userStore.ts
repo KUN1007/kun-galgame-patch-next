@@ -1,5 +1,7 @@
 import { defineStore } from 'pinia'
 
+// Mirrors GET /api/v1/auth/me (and /oauth/callback) MeResponse. Keys are
+// snake_case to match the wire format verbatim; no client-side remapping.
 export interface UserState {
   uid: number
   name: string
@@ -8,11 +10,11 @@ export interface UserState {
   moemoepoint: number
   role: number
 
-  dailyCheckIn: number
-  dailyImageLimit: number
-  dailyUploadLimit: number
+  daily_check_in: number
+  daily_image_count: number
+  daily_upload_size: number
 
-  mutedMessageTypes: string[]
+  muted_message_types: string[]
 }
 
 const initialUserState: UserState = {
@@ -22,10 +24,10 @@ const initialUserState: UserState = {
   bio: '',
   moemoepoint: 0,
   role: 1,
-  dailyCheckIn: 1,
-  dailyImageLimit: 0,
-  dailyUploadLimit: 0,
-  mutedMessageTypes: []
+  daily_check_in: 1,
+  daily_image_count: 0,
+  daily_upload_size: 0,
+  muted_message_types: []
 }
 
 export const useUserStore = defineStore('user', {
@@ -33,22 +35,23 @@ export const useUserStore = defineStore('user', {
     user: { ...initialUserState }
   }),
   actions: {
-    setUser(user: UserState) {
+    setUser(user: Partial<UserState>) {
       this.user = {
+        ...this.user,
         ...user,
-        mutedMessageTypes: this.user.mutedMessageTypes
+        muted_message_types: this.user.muted_message_types
       }
     },
     toggleMutedMessageType(type: string) {
-      const muted = this.user.mutedMessageTypes
-      this.user.mutedMessageTypes = muted.includes(type)
+      const muted = this.user.muted_message_types
+      this.user.muted_message_types = muted.includes(type)
         ? muted.filter((t) => t !== type)
         : [...muted, type]
     },
     logout() {
       this.user = {
         ...initialUserState,
-        mutedMessageTypes: this.user.mutedMessageTypes
+        muted_message_types: this.user.muted_message_types
       }
     }
   },

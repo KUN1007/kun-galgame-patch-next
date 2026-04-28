@@ -111,7 +111,7 @@ const tabs = computed(() => [
           >
             <KunUser
               :user="patch.user"
-              :description="`资源更新于 ${formatDistanceToNow(patch.resourceUpdateTime)}`"
+              :description="`资源更新于 ${formatDistanceToNow(patch.resource_update_time)}`"
             />
             <KunCardStats
               :patch="{ ...patch, created: patch.created }"

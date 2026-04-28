@@ -10,7 +10,7 @@ const userStore = useUserStore()
 
 const hasUnread = computed(() =>
   props.unreadMessageTypes.some(
-    (type) => !userStore.user.mutedMessageTypes?.includes(type)
+    (type) => !userStore.user.muted_message_types?.includes(type)
   )
 )
 

@@ -45,8 +45,10 @@ const toggleFollow = async () => {
   if (!user.value) return
   followLoading.value = true
   try {
-    const method = user.value.isFollow ? 'delete' : 'post'
-    const res = await api[method](`/user/${user.value.id}/follow`)
+    // Backend uses PUT to follow and DELETE to unfollow — see router.go.
+    const res = user.value.is_followed
+      ? await api.delete(`/user/${user.value.id}/follow`)
+      : await api.put(`/user/${user.value.id}/follow`)
     if (res.code === 0) {
       await refresh()
     } else {
@@ -72,8 +74,8 @@ const toggleFollow = async () => {
               </KunBadge>
 
               <div class="text-default-500 mt-2 flex gap-4 text-sm">
-                <span>粉丝 {{ user.follower }}</span>
-                <span>关注 {{ user.following }}</span>
+                <span>粉丝 {{ user.follower_count }}</span>
+                <span>关注 {{ user.following_count }}</span>
               </div>
             </div>
           </div>
@@ -88,7 +90,7 @@ const toggleFollow = async () => {
               <KunIcon name="lucide:calendar" class="size-4" />
               加入于
               {{
-                formatDate(user.registerTime, {
+                formatDate(user.register_time, {
                   isShowYear: true,
                   isPrecise: true
                 })
@@ -108,13 +110,13 @@ const toggleFollow = async () => {
             </NuxtLink>
             <template v-else>
               <KunButton
-                :variant="user.isFollow ? 'flat' : 'solid'"
+                :variant="user.is_followed ? 'flat' : 'solid'"
                 color="primary"
                 full-width
                 :loading="followLoading"
                 @click="toggleFollow"
               >
-                {{ user.isFollow ? '已关注' : '关注' }}
+                {{ user.is_followed ? '已关注' : '关注' }}
               </KunButton>
               <KunButton color="primary" variant="bordered" full-width>
                 <KunIcon name="lucide:message-circle" class="size-4" />
@@ -130,7 +132,7 @@ const toggleFollow = async () => {
               <KunIcon name="lucide:puzzle" class="text-primary size-6" />
               <div>
                 <div class="text-xl font-bold">
-                  {{ user._count.patch_resource }}
+                  {{ user.resource_count }}
                 </div>
                 <div class="text-default-500 text-xs">补丁资源</div>
               </div>
@@ -141,7 +143,7 @@ const toggleFollow = async () => {
               <KunIcon name="lucide:gamepad-2" class="text-primary size-6" />
               <div>
                 <div class="text-xl font-bold">
-                  {{ user._count.patch }}
+                  {{ user.patch_count }}
                 </div>
                 <div class="text-default-500 text-xs">Galgame</div>
               </div>
@@ -152,7 +154,7 @@ const toggleFollow = async () => {
               <KunIcon name="lucide:message-circle" class="text-primary size-6" />
               <div>
                 <div class="text-xl font-bold">
-                  {{ user._count.patch_comment }}
+                  {{ user.comment_count }}
                 </div>
                 <div class="text-default-500 text-xs">评论</div>
               </div>
@@ -163,7 +165,7 @@ const toggleFollow = async () => {
               <KunIcon name="lucide:star" class="text-primary size-6" />
               <div>
                 <div class="text-xl font-bold">
-                  {{ user._count.patch_favorite }}
+                  {{ user.favorite_count }}
                 </div>
                 <div class="text-default-500 text-xs">收藏</div>
               </div>

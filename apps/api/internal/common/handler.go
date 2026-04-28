@@ -68,9 +68,9 @@ func (h *CommonHandler) GetHome(c *fiber.Ctx) error {
 // ===== Galgame List =====
 
 type galgameListRequest struct {
-	SelectedType string `query:"selectedType" validate:"required,min=1,max=107"`
-	SortField    string `query:"sortField" validate:"required,oneof=resource_update_time created view download"`
-	SortOrder    string `query:"sortOrder" validate:"required,oneof=asc desc"`
+	SelectedType string `query:"selected_type" validate:"required,min=1,max=107"`
+	SortField    string `query:"sort_field" validate:"required,oneof=resource_update_time created view download"`
+	SortOrder    string `query:"sort_order" validate:"required,oneof=asc desc"`
 	Page         int    `query:"page" validate:"required,min=1"`
 	Limit        int    `query:"limit" validate:"required,min=1,max=24"`
 }
@@ -113,8 +113,8 @@ func (h *CommonHandler) GetGalgameList(c *fiber.Ctx) error {
 // ===== Global Comments =====
 
 type commentListRequest struct {
-	SortField string `query:"sortField" validate:"required,oneof=created like_count"`
-	SortOrder string `query:"sortOrder" validate:"required,oneof=asc desc"`
+	SortField string `query:"sort_field" validate:"required,oneof=created like_count"`
+	SortOrder string `query:"sort_order" validate:"required,oneof=asc desc"`
 	Page      int    `query:"page" validate:"required,min=1"`
 	Limit     int    `query:"limit" validate:"required,min=1,max=50"`
 }
@@ -147,8 +147,8 @@ func (h *CommonHandler) GetGlobalComments(c *fiber.Ctx) error {
 // ===== Global Resources =====
 
 type resourceListRequest struct {
-	SortField string `query:"sortField" validate:"required,oneof=update_time created download like_count"`
-	SortOrder string `query:"sortOrder" validate:"required,oneof=asc desc"`
+	SortField string `query:"sort_field" validate:"required,oneof=update_time created download like_count"`
+	SortOrder string `query:"sort_order" validate:"required,oneof=asc desc"`
 	Page      int    `query:"page" validate:"required,min=1"`
 	Limit     int    `query:"limit" validate:"required,min=1,max=50"`
 }
@@ -186,6 +186,10 @@ func (h *CommonHandler) GetGlobalResources(c *fiber.Ctx) error {
 }
 
 // GetResourceDetail GET /api/resource/:id
+//
+// Returns the resource with its owning patch enriched via Wiki, plus up to 5
+// recommended resources from the same patch. The frontend renders the patch
+// header (name / banner / vndb_id) from the `patch` field.
 func (h *CommonHandler) GetResourceDetail(c *fiber.Ctx) error {
 	resourceID := c.Params("id")
 	var resource patchModel.PatchResource
@@ -195,6 +199,17 @@ func (h *CommonHandler) GetResourceDetail(c *fiber.Ctx) error {
 		return response.Error(c, errors.ErrNotFound("resource not found"))
 	}
 
+	// Fetch the owning patch and enrich it via Wiki so the frontend has
+	// name / banner / vndb_id without making a separate call.
+	var patch patchModel.Patch
+	var patchCard *enricher.GalgameCard
+	if err := h.db.Preload("User", func(db *gorm.DB) *gorm.DB {
+		return db.Select("id", "name", "avatar")
+	}).First(&patch, resource.PatchID).Error; err == nil {
+		card := enricher.EnrichPatch(c.Context(), h.wiki, &patch)
+		patchCard = &card
+	}
+
 	// Get up to 5 recommendations from the same patch
 	var recs []patchModel.PatchResource
 	h.db.Where("patch_id = ? AND id != ?", resource.PatchID, resource.ID).
@@ -202,6 +217,7 @@ func (h *CommonHandler) GetResourceDetail(c *fiber.Ctx) error {
 
 	return response.OK(c, map[string]any{
 		"resource":        resource,
+		"patch":           patchCard,
 		"recommendations": recs,
 	})
 }

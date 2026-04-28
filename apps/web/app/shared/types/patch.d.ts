@@ -3,12 +3,13 @@
 //   - tag/company also belong to Wiki (D11)
 //   - patch itself no longer stores name/introduction/banner/released/content_limit/engine/alias (D12)
 //
+// All JSON keys are snake_case to match the backend wire format exactly.
 // The backend enricher merges patch + Wiki galgame into the shape below.
 
 interface GalgameCard {
   id: number
   name: KunLanguage
-  vndbId: string
+  vndb_id: string
   bid: number | null
   banner: string
   view: number
@@ -19,8 +20,8 @@ interface GalgameCard {
   content_limit: KunContentLimit
   status: number
   created: Date | string
-  resourceUpdateTime: Date | string
-  _count: {
+  resource_update_time: Date | string
+  count: {
     favorite_by: number
     contribute_by: number
     resource: number
@@ -44,17 +45,35 @@ interface GalgameCard {
   }
 }
 
-// Patch header (/patch/:id) -- now equivalent to GalgameCard + is_favorite.
+// Patch header (/patch/:id) -- GalgameCard + is_favorite.
 interface PatchHeader extends GalgameCard {
-  isFavorite: boolean
+  is_favorite: boolean
 }
 
 // Patch detail (/patch/:id/detail) -- GalgameCard plus Wiki's full galgame info.
-// introductionMarkdown is filled in by the backend via Wiki /galgame/:gid.
+// introduction_markdown is filled in by the backend via Wiki /galgame/:gid; the
+// enricher also resolves tags/officials by name on the server side so the frontend
+// can render labels directly.
+interface PatchDetailTag {
+  id: number
+  name: string
+  aliases?: string[]
+  category: string
+  spoiler_level: number
+}
+
+interface PatchDetailOfficial {
+  id: number
+  name: string
+  aliases?: string[]
+  category: string
+  lang: string
+}
+
 interface PatchDetail extends GalgameCard {
-  introductionMarkdown: KunLanguage
+  introduction_markdown: KunLanguage
   updated: string
-  wikiTagIds: number[]       // list of Wiki galgame_tag IDs (frontend can call /tag for details as needed)
-  wikiOfficialIds: number[]  // list of Wiki galgame_official IDs
-  wikiEngineIds: number[]
+  tags: PatchDetailTag[]
+  officials: PatchDetailOfficial[]
+  wiki_engine_ids: number[]
 }

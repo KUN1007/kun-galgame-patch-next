@@ -11,7 +11,7 @@ const searchQuery = ref('')
 const limit = 30
 
 interface ListResponse {
-  users: AdminUser[]
+  items: AdminUser[]
   total: number
 }
 
@@ -21,9 +21,9 @@ const { data, pending, refresh } = await useAsyncData<ListResponse>(
     const res = await api.get<ListResponse>(
       `/admin/user?page=${page.value}&limit=${limit}&search=${encodeURIComponent(searchQuery.value)}`
     )
-    return res.code === 0 ? res.data : { users: [], total: 0 }
+    return res.code === 0 ? res.data : { items: [], total: 0 }
   },
-  { default: () => ({ users: [], total: 0 }) }
+  { default: () => ({ items: [], total: 0 }) }
 )
 
 const debouncedRefresh = useDebounceFn(() => {
@@ -69,7 +69,7 @@ const totalPages = computed(() => Math.ceil((data.value?.total ?? 0) / limit))
         </thead>
         <tbody>
           <tr
-            v-for="u in data?.users"
+            v-for="u in data?.items"
             :key="u.id"
             class="border-default/20 hover:bg-default-50 border-b"
           >
@@ -97,7 +97,7 @@ const totalPages = computed(() => Math.ceil((data.value?.total ?? 0) / limit))
               </KunBadge>
             </td>
             <td class="text-default-500 px-3 py-2 text-xs">
-              补丁 {{ u._count.patch }} / 资源 {{ u._count.patch_resource }}
+              补丁 {{ u.patch_count }} / 资源 {{ u.resource_count }}
             </td>
             <td class="px-3 py-2">
               <NuxtLink
@@ -113,7 +113,7 @@ const totalPages = computed(() => Math.ceil((data.value?.total ?? 0) / limit))
     </div>
 
     <KunNull
-      v-if="!pending && !data?.users?.length"
+      v-if="!pending && !data?.items?.length"
       description="暂无用户数据"
     />
 

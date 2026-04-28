@@ -69,12 +69,19 @@ func TestPaginated(t *testing.T) {
 	require.NoError(t, err)
 
 	body := readBody(t, resp)
-	var r response.PaginatedResponse
+	var r struct {
+		Code    int    `json:"code"`
+		Message string `json:"message"`
+		Data    struct {
+			Items []int `json:"items"`
+			Total int64 `json:"total"`
+		} `json:"data"`
+	}
 	json.Unmarshal(body, &r)
 
 	assert.Equal(t, 0, r.Code)
-	assert.Equal(t, int64(100), r.Total)
-	assert.NotNil(t, r.Data)
+	assert.Equal(t, int64(100), r.Data.Total)
+	assert.Equal(t, []int{1, 2, 3}, r.Data.Items)
 }
 
 func TestError(t *testing.T) {

@@ -3,11 +3,11 @@ import { defineStore } from 'pinia'
 // D12 (2026-04-21): galgame metadata (name / introduction / banner / released /
 // content_limit / alias) is owned by the Galgame Wiki. Publishing a patch only needs vndb_id.
 export interface CreatePatchData {
-  vndbId: string
+  vndb_id: string
 }
 
 const initialState: CreatePatchData = {
-  vndbId: ''
+  vndb_id: ''
 }
 
 export const useCreatePatchStore = defineStore('edit-create-patch', {

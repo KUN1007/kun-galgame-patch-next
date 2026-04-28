@@ -3,9 +3,9 @@ interface RankingUser {
   name: string
   avatar: string
   moemoepoint: number
-  patchCount: number
-  resourceCount: number
-  commentCount: number
+  patch_count: number
+  resource_count: number
+  comment_count: number
 }
 
 interface RankingPatch {
@@ -14,7 +14,7 @@ interface RankingPatch {
   banner: string
   view: number
   download: number
-  _count?: {
+  count?: {
     favorite_by?: number
     resource?: number
     comment?: number

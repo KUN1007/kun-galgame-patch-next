@@ -10,10 +10,8 @@ const mounted = ref(false)
 const fetchUserStatus = async () => {
   const res = await api.get<UserState>('/auth/me')
   if (res.code === 0) {
-    userStore.setUser({
-      ...res.data,
-      mutedMessageTypes: userStore.user.mutedMessageTypes ?? []
-    })
+    // setUser merges into the existing state and preserves muted_message_types.
+    userStore.setUser(res.data)
   } else {
     userStore.logout()
   }

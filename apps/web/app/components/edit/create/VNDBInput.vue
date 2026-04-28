@@ -15,9 +15,11 @@ const checking = ref(false)
 
 const VNDBRegex = /^v\d{1,6}$/
 
+// Local camelCase name for the v-model binding; the underlying store uses
+// snake_case to align with the backend wire format.
 const vndbId = computed({
-  get: () => store.data.vndbId,
-  set: (v: string) => store.setData({ vndbId: v })
+  get: () => store.data.vndb_id,
+  set: (v: string) => store.setData({ vndb_id: v })
 })
 
 const handleCheckDuplicate = async () => {
@@ -27,8 +29,9 @@ const handleCheckDuplicate = async () => {
   }
   checking.value = true
   try {
+    // DTO tag is `json:"vndb_id"` — match that on the query string.
     const res = await api.get<{ exists: boolean }>(
-      `/patch/duplicate?vndbId=${vndbId.value}`
+      `/patch/duplicate?vndb_id=${vndbId.value}`
     )
     if (res.code === 0 && res.data?.exists) {
       useKunMessage(

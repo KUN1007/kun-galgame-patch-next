@@ -42,7 +42,7 @@ const { data: resources, pending } = await useAsyncData<PatchResource[]>(
           :types="r.type"
           :languages="r.language"
           :platforms="r.platform"
-          :model-name="r.modelName"
+          :model-name="r.model_name"
           :storage="r.storage"
           size="sm"
         />
@@ -59,10 +59,10 @@ const { data: resources, pending } = await useAsyncData<PatchResource[]>(
           <span v-if="r.password">解压密码: {{ r.password }}</span>
         </div>
 
-        <div v-if="r.hash" class="text-default-400 break-all text-xs">
-          Hash: {{ r.hash }}
+        <div v-if="r.blake3" class="text-default-400 break-all text-xs">
+          Hash: {{ r.blake3 }}
           <NuxtLink
-            :to="`/check-hash?hash=${r.hash}&content=${encodeURIComponent(r.content || '')}`"
+            :to="`/check-hash?hash=${r.blake3}&content=${encodeURIComponent(r.content || '')}`"
             class="text-primary ml-2 hover:underline"
           >
             校验文件
@@ -75,7 +75,7 @@ const { data: resources, pending } = await useAsyncData<PatchResource[]>(
           <div class="flex items-center gap-4">
             <div class="flex items-center gap-1">
               <KunIcon name="lucide:heart" class="size-4" />
-              {{ r.likeCount }}
+              {{ r.like_count }}
             </div>
             <div class="flex items-center gap-1">
               <KunIcon name="lucide:download" class="size-4" />
