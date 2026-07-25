@@ -208,7 +208,29 @@ func (r *PatchRepository) UpdateComment(comment *model.PatchComment) error {
 }
 
 func (r *PatchRepository) DeleteComment(id int) error {
-	return r.db.Delete(&model.PatchComment{}, id).Error
+	// Same no-FK problem as DeletePatch: notifications deep-link to a comment as
+	// /patch/:pid/comment#comment-:cid, and patch_comment.parent_id CASCADEs
+	// RECURSIVELY, so deleting one comment can take a whole reply subtree with
+	// it — every notification anchored to any of them then lands on the comment
+	// list with nothing highlighted. Resolve the subtree the CASCADE is about to
+	// take and drop those rows in the SAME tx, BEFORE the delete. (Migration 026
+	// is the one-time sweep for rows that pre-date this.)
+	return r.db.Transaction(func(tx *gorm.DB) error {
+		if err := tx.Exec(
+			`WITH RECURSIVE doomed AS (
+			   SELECT id FROM patch_comment WHERE id = ?
+			   UNION
+			   SELECT c.id FROM patch_comment c JOIN doomed d ON c.parent_id = d.id
+			 )
+			 DELETE FROM user_message
+			 WHERE link ~ '#comment-[0-9]+$'
+			   AND substring(link FROM '#comment-([0-9]+)$')::int IN (SELECT id FROM doomed)`,
+			id,
+		).Error; err != nil {
+			return err
+		}
+		return tx.Delete(&model.PatchComment{}, id).Error
+	})
 }
 
 // CountCommentAndReplies counts a comment + its direct replies, restricted to

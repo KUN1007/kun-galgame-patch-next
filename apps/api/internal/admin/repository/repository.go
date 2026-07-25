@@ -61,32 +61,11 @@ func (r *AdminRepository) UpdateComment(commentID int, content string) error {
 		Update("content", content).Error
 }
 
-func (r *AdminRepository) DeleteComment(commentID int) error {
-	// Mirror PatchService.DeleteComment so the denormalized patch.comment_count
-	// stays consistent after admin moderation (the plain Delete left it drifting
-	// upward). Only approved (status=0) rows were ever added to the count, so
-	// subtract only the approved comment + its direct approved replies.
-	return r.db.Transaction(func(tx *gorm.DB) error {
-		var comment patchModel.PatchComment
-		if err := tx.First(&comment, commentID).Error; err != nil {
-			return err
-		}
-		var count int64
-		tx.Model(&patchModel.PatchComment{}).
-			Where("(id = ? OR parent_id = ?) AND status = 0", commentID, commentID).
-			Count(&count)
-		if err := tx.Delete(&patchModel.PatchComment{}, commentID).Error; err != nil {
-			return err
-		}
-		if count > 0 {
-			if err := tx.Model(&patchModel.Patch{}).Where("id = ?", comment.GalgameID).
-				UpdateColumn("comment_count", gorm.Expr("GREATEST(comment_count - ?, 0)", count)).Error; err != nil {
-				return err
-			}
-		}
-		return nil
-	})
-}
+// Deleting a comment as an admin has no repository method here on purpose:
+// AdminService.DeleteComment delegates to PatchService.DeleteComment, which owns
+// the full side-effect set (comment_count, the author notification + reason, the
+// audit log, and the dangling-anchor cleanup). A local mirror was removed once it
+// went unused — re-adding one would silently drop those side effects.
 
 // ===== Resources =====
 
