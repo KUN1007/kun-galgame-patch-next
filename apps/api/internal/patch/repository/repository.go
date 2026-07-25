@@ -73,17 +73,24 @@ func (r *PatchRepository) UpdatePatch(patch *model.Patch) error {
 
 func (r *PatchRepository) DeletePatch(id int) error {
 	// user_message has NO FK to patch / patch_resource, so the DB CASCADE that
-	// wipes the owned rows leaves notification rows dangling — their links
-	// (/patch/:id/resource and each resource's /resource/:rid) would then 404.
-	// Delete them in the SAME tx, BEFORE the patch (and its CASCADE'd resources)
-	// go away, so the resource ids are still resolvable. (See migration 019 for
-	// the one-time cleanup of pre-existing dangling rows.)
+	// wipes the owned rows leaves notification rows dangling — every link into
+	// the patch would then 404. Delete them in the SAME tx, BEFORE the patch
+	// (and its CASCADE'd resources) go away, so the resource ids are still
+	// resolvable. (Migrations 019 + 025 are the one-time cleanups of rows that
+	// pre-date this.)
+	//
+	// Match EVERY link shape under the patch, not just /patch/:id/resource:
+	// notifications are also written at /patch/:id/introduction (favorite +
+	// galgame-sync), /patch/:id/comment[#comment-:cid] and bare /patch/:id.
+	// The trailing slash in the LIKE keeps id prefixes apart (/patch/249/… must
+	// not match patch 2498).
 	return r.db.Transaction(func(tx *gorm.DB) error {
 		if err := tx.Exec(
 			`DELETE FROM user_message
 			 WHERE link = ?
+			    OR link LIKE ?
 			    OR link IN (SELECT '/resource/' || id FROM patch_resource WHERE galgame_id = ?)`,
-			fmt.Sprintf("/patch/%d/resource", id), id,
+			fmt.Sprintf("/patch/%d", id), fmt.Sprintf("/patch/%d/%%", id), id,
 		).Error; err != nil {
 			return err
 		}
@@ -102,12 +109,6 @@ func (r *PatchRepository) GetPatchLiveArtifactUUIDs(patchID int) ([]string, erro
 		Where("galgame_id = ? AND artifact_uuid <> ''", patchID).
 		Pluck("artifact_uuid", &uuids).Error
 	return uuids, err
-}
-
-func (r *PatchRepository) FindPatchByVndbID(vndbID string) (*model.Patch, error) {
-	var patch model.Patch
-	err := r.db.Where("vndb_id = ?", vndbID).First(&patch).Error
-	return &patch, err
 }
 
 func (r *PatchRepository) IncrementView(id int) error {

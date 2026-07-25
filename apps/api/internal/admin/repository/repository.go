@@ -490,9 +490,50 @@ func (r *AdminRepository) PurgeUser(userID int, purgeOwnedPatches bool) error {
 			return err
 		}
 
+		// 1c. Notifications pointing at content this purge is about to remove.
+		//     user_message has no FK, so neither the patch CASCADE (step 2) nor
+		//     the user-row CASCADE (step 3) can reach it — without this the
+		//     links 404 for whoever received them. Must run BEFORE the deletes,
+		//     while the ids are still resolvable. (Same shapes as
+		//     PatchRepository.DeletePatch; migrations 019 + 025 clean up rows
+		//     that pre-date this.)
+		//
+		//     Resource links first: step 3's user-row CASCADE removes EVERY
+		//     patch_resource authored by U, including ones on other people's
+		//     patches, so this is not limited to the force-deleted patches.
+		if err := tx.Exec(
+			`DELETE FROM user_message
+			 WHERE link IN (SELECT '/resource/' || id FROM patch_resource WHERE user_id = ?)`,
+			userID,
+		).Error; err != nil {
+			return err
+		}
+
 		// 2. Force-delete owned patches if requested (CASCADEs their resources,
 		//    comments, links, fav/contribute relations; clears patch RESTRICT).
 		if purgeOwnedPatches && ownedPatches > 0 {
+			// Every link into a patch that is about to disappear, plus the
+			// /resource/:id links of resources the patch CASCADE will take
+			// (authored by anyone, so the user_id sweep above misses them).
+			if err := tx.Exec(
+				`DELETE FROM user_message m
+				 USING patch p
+				 WHERE p.user_id = ?
+				   AND (m.link = '/patch/' || p.id OR m.link LIKE '/patch/' || p.id || '/%')`,
+				userID,
+			).Error; err != nil {
+				return err
+			}
+			if err := tx.Exec(
+				`DELETE FROM user_message
+				 WHERE link IN (
+				   SELECT '/resource/' || r.id FROM patch_resource r
+				   JOIN patch p ON p.id = r.galgame_id WHERE p.user_id = ?
+				 )`,
+				userID,
+			).Error; err != nil {
+				return err
+			}
 			if err := tx.Where("user_id = ?", userID).Delete(&patchModel.Patch{}).Error; err != nil {
 				return err
 			}
