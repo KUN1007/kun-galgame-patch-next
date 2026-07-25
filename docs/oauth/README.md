@@ -48,6 +48,7 @@
 | 10 | [app-directory.md](./10-app-directory.md) | 🚧 **应用目录（生态一键登录 / App Directory）**：注册/登录时展示「拥有一个鲲 Galgame 账号即可一键登录以下网站」。每个 OAuth client 一个 opt-in `listed` 开关 + `logo_url`/`tagline`/`display_order`；公开只读 `GET /oauth/ecosystem` 返回 `listed` client 的展示字段；下游 modal / OAuth 注册页展示「生态 strip」。对应业界 App Launcher 模式（无 OAuth 标准，属产品元数据）|
 | 11 | [roles.md](./11-roles.md) | ⚖️ **角色与能力语义（权威定义，Tier A）**：全站五角色 `user`/`creator`/`moderator`/`admin`/`ren` 的唯一权威来源。`roles` claim = 角色名集合（普通用户为空数组，`user` 隐式）；管理轴逐级包含 `moderator ⊂ admin ⊂ ren`，`creator` 为正交的「直接发布」能力；**下游必须遵守的 MUST 规则** + 授予矩阵 + 当前 kungal/moyu 对 `ren` 的合规差距（必须整改）|
 | 12 | [site-roles.md](./12-site-roles.md) | 🧩 **站点域角色（site-scoped roles，权威定义，Tier A）**：让账号**只在某一个站点**持职（如「letmoe 的 moderator」），是 11 五角色契约的**加法扩展**（不改其语义）。`site_roles` claim = 按签发 client 站点定界的扁平角色名数组（access token / userinfo / `/users/batch` 三处出现）；下游**并入**既有角色集喂能力函数；名策略禁 `user`/`admin`/`ren`（安全不变量）+ 允许自定义捆名；授予/撤销仅 OAuth 后台（`admin`/`ren`）|
+| 13 | [standard-wire-migration.md](./13-standard-wire-migration.md) | 🚨 **协议端点线格式标准化迁移指南（第三方必读）**：`/oauth/{token,userinfo,revoke}` 的响应从自家 `{code,message,data}` 信封改为 RFC 6749 / RFC 6750 标准裸 JSON。含前后对照、**零停机双格式兼容读取器**（TS / Go / Kotlin 示例）、可离线自测的 fixture，以及三个必须做对的错误判定（`invalid_token` 视为凭据已死、只有 5xx 与未知错误算瞬态、封禁是 HTTP 403）|
 
 ### 完整接入指南
 

@@ -71,20 +71,35 @@ Header 携带 `typ: at+jwt`（RFC 9068 access token 类型标记）；claims：
 | 15009 | 400 | 需要 PKCE | public client 没传 code_verifier |
 | 15011 | 400 | 不支持的授权类型 | `grant_type` 本身不被实现（仅 `authorization_code` / `refresh_token`） |
 
-### 标准 wire 格式下的错误（RFC 6749）
+### 协议端点的线格式（RFC 6749 / 6750）——**唯一格式，无开关**
 
-OP 切换 `KUN_OIDC_STANDARD_WIRE` 后，`/oauth/token`、`/oauth/userinfo`、`/oauth/revoke` 的错误改为标准 OAuth 错误对象 `{"error": "...", "error_description": "..."}`（不再有 `code` 字段）。错误字符串与上表错误码的对应：
+> ⏳ **生效时间**：本节描述的是**切换后**的形状。切换尚未执行 —— 生产目前仍返回
+> `{code,message,data}` 信封。切换将在所有在线接入方确认完成兼容改造后进行，时间另行公告。
+> **迁移方式（零停机）见 [13-standard-wire-migration.md](./13-standard-wire-migration.md)**，
+> 请不要在切换前就改成只读标准格式。
 
-| `error` | 对应错误码 | RP 处理 |
-|---------|-----------|---------|
-| `invalid_client` | 15001 / 15008 | 配置错误（client_id / secret），refresh 已死 |
-| `invalid_grant` | 15002 / 15003 / 15004 / 10002 / 10003 / 10014 | 授权凭据无效或会话已死 → 强制重新登录 |
-| `unauthorized_client` | 15005 | client 未被允许该 grant → refresh 已死 |
-| `invalid_scope` | 15006 | scope 配置错误 |
-| `unsupported_grant_type` | 15011 | 请求 bug（grant_type 写错） |
-| `invalid_request` | 其他 | 请求格式问题 |
+`/oauth/token`、`/oauth/userinfo`、`/oauth/revoke` 属于 RFC 6749 / RFC 6750 / RFC 7009 与 OIDC Core，**不使用本仓库的 `{code,message,data}` 信封**：
 
-> 一方 RP 的宽容读取器必须把 `invalid_grant` / `unauthorized_client` / `invalid_client` 分类为「refresh 已死」（清会话、要求重新登录），**未知字符串才当瞬态错误重试** —— 否则死会话会无限重试。
+- **成功**：裸顶层 JSON（`{"access_token": "...", ...}`）。`/oauth/revoke` 按 RFC 7009 §2.2 返回 **200 空 body**。
+- **失败**：`/oauth/token` 用 RFC 6749 §5.2 错误对象 `{"error", "error_description"}`；`/oauth/userinfo` 用 RFC 6750 §3（`WWW-Authenticate` 挑战头 + 同形状 body），这是 OIDC Core §5.3.3 的要求。
+
+> 上表的数字错误码**只适用于自家端点**（`/auth/me`、`/users/*` 等），协议端点不会返回它们。这里保留对应关系，是为了让既有 RP 的错误分类逻辑能一一映射过去。
+
+| `error` | HTTP | 对应旧错误码 | RP 处理 |
+|---------|------|-------------|---------|
+| `invalid_client` | 401 | 15001 / 15008 | 配置错误（client_id / secret），refresh 已死 |
+| `invalid_grant` | 400 | 15002 / 15003 / 15004 / 10003 / 10014 | 授权凭据无效或会话已死 → 强制重新登录 |
+| `invalid_token` | 401 | 10002 | **仅 `/oauth/userinfo`**：bearer token 已失效 → 刷新或重新登录 |
+| `unauthorized_client` | 400 | 15005 | client 未被允许该 grant → refresh 已死 |
+| `invalid_scope` | 400 | 15006 | scope 配置错误 |
+| `unsupported_grant_type` | 400 | 15011 | 请求 bug（grant_type 写错） |
+| `invalid_request` | 400 | 其他 | 请求格式问题 |
+| `server_error` | 500 | — | OP 内部故障 → **瞬态**，保留会话并重试 |
+
+> RP 的错误分类必须满足三条，否则会出现实际事故：
+> 1. `invalid_grant` / `unauthorized_client` / `invalid_client` / `invalid_token` → 「凭据已死」，清会话、要求重新登录。
+> 2. **未知字符串和 5xx 才当瞬态重试**。把 `invalid_token` 漏成未知，死会话会被无限重试且永不重新认证。
+> 3. **封禁没有对应的 RFC 6750 错误码**，OP 用 **HTTP 403** 表示。要保留「封禁页」而非退化成重新登录循环，就必须按状态码判定。
 
 ### 认证错误 (10xxx)
 
