@@ -59,42 +59,17 @@ func New(repo *repository.PatchRepository, setting *settingService.Service, db *
 
 // ===== Patch =====
 
-// CreatePatch handles POST /api/patch (D12, 2026-04-21).
+// CreatePatchByGalgameID registers a local patch carrier by catalog galgame_id
+// — the path the publish wizard ("选择此条目") uses, and since 2026-07 the only
+// one: POST /api/patch no longer accepts a vndb_id (see PatchHandler.CreatePatch).
+// Keying on the id also covers 原创/同人 works with NO vndb_id (their row stores
+// a deterministic `wiki-<id>` placeholder, the same one ensureLocalPatch uses).
 //
-// Strict policy: vndb_id MUST already exist on the NextMoe catalog. We do not
-// POST /galgame on behalf of the user -- galgame metadata curation is
-// pushed to the galgame frontend (which has the search-and-pick UI for
-// tag/official/engine that we don't want to re-implement here).
-//
-// When galgame returns "not found" we surface ErrGalgameMissing so the
-// handler can map to AppError 44001 and the frontend renders a "前往 Wiki
-// 创建" CTA with the vndb_id pre-filled.
-//
-// Steps:
-//  1. galgame /galgame/check?vndb_id=... -> exists + galgame_id (or 44001)
-//  2. Local dedup on vndb_id
-//  3. One transaction: insert patch with id=galgame_id, +3 moemoepoint,
-//     register contributor.
-func (s *PatchService) CreatePatch(ctx context.Context, userID int, vndbID string) (int, error) {
-	// Legacy vndb_id path: map vndb_id → galgame_id via galgame, then register by id.
-	// The FE now prefers CreatePatchByGalgameID (it also handles 原创 works that
-	// have no vndb_id, which this path cannot).
-	exists, galgameID, err := s.galgame.CheckGalgameByVndbID(ctx, vndbID)
-	if err != nil {
-		return 0, fmt.Errorf("调用 galgame 校验 vndb_id 失败: %w", err)
-	}
-	if !exists {
-		// Sentinel error so the handler can map this to 44001 (typed AppError).
-		return 0, ErrGalgameMissing
-	}
-	return s.createPatchRow(ctx, userID, galgameID, vndbID)
-}
-
-// CreatePatchByGalgameID registers a local patch carrier directly by galgame
-// galgame_id — the path the publish wizard ("选择此条目") uses. Unlike the vndb_id
-// path it works for 原创/同人 works with NO vndb_id (their row stores a
-// deterministic `wiki-<id>` placeholder, the same one ensureLocalPatch uses).
-// Verifies the galgame is publicly published (anonymous batch → status=0 only).
+// Verifies the galgame is publicly published — the batch read is served by the
+// /v1 public face, which returns status=0 rows only, so an unclaimed VNDB draft
+// (status=2) is correctly rejected here with ErrGalgameMissing → AppError 44001,
+// and the frontend renders its "提交新作" CTA. Claiming a draft is a different
+// entry point (POST /galgame/:gid/claim), which publishes it first.
 func (s *PatchService) CreatePatchByGalgameID(ctx context.Context, userID, galgameID int) (int, error) {
 	briefs, err := s.galgame.GalgameBatch(ctx, []int{galgameID}, "")
 	if err != nil {
@@ -485,17 +460,6 @@ func (s *PatchService) SoftDeleteArtifacts(ctx context.Context, uuids []string) 
 			slog.Warn("SoftDeleteArtifacts: 软删 artifact 失败", "artifact_uuid", uuid, "error", err)
 		}
 	}
-}
-
-func (s *PatchService) CheckDuplicate(vndbID string) (bool, error) {
-	_, err := s.repo.FindPatchByVndbID(vndbID)
-	if err == gorm.ErrRecordNotFound {
-		return false, nil
-	}
-	if err != nil {
-		return false, err
-	}
-	return true, nil
 }
 
 func (s *PatchService) IncrementView(id int) error {

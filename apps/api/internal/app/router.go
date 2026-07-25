@@ -72,11 +72,11 @@ func (a *App) RegisterRoutes() {
 	// ===== Patch Routes =====
 	patchRoutes := api.Group("/patch")
 
-	// Create (after D12, simplified to JSON { vndb_id })
+	// Create: register a local carrier for an already-published galgame,
+	// JSON { galgame_id }. The publish wizard's "选择此条目" is the only caller.
 	patchRoutes.Post("/", auth, a.PatchHandler.CreatePatch)
 
 	// Public / optional auth
-	patchRoutes.Get("/duplicate", auth, a.PatchHandler.CheckDuplicate)
 	patchRoutes.Get("/:id", optionalAuth, a.PatchHandler.GetPatch)
 	patchRoutes.Get("/:id/detail", optionalAuth, a.PatchHandler.GetPatchDetail)
 	patchRoutes.Get("/:id/comment", optionalAuth, a.PatchHandler.GetComments)

@@ -2,17 +2,14 @@ package dto
 
 import "time"
 
-// PatchCreateRequest is the create-patch request body (D12, 2026-04-21).
+// PatchCreateRequest is the create-patch request body.
 //
-// All game metadata (name / introduction / banner / released / content_limit / alias)
-// comes from the Galgame Wiki; the client only needs to supply vndb_id. The server
-// calls Wiki /galgame/check to verify and fetch the galgame_id to persist locally.
+// All game metadata (name / introduction / banner / released / content_limit /
+// alias) comes from the catalog; the client only supplies the galgame_id the
+// publish wizard picked. The legacy vndb_id form was dropped in 2026-07 — see
+// PatchHandler.CreatePatch for why.
 type PatchCreateRequest struct {
-	// GalgameID is the preferred input (the publish wizard sends it): register a
-	// carrier directly by Wiki galgame_id, which works for 原创/同人 works that have
-	// no vndb_id. VndbID is the legacy fallback when galgame_id is absent.
-	GalgameID int    `json:"galgame_id"`
-	VndbID    string `json:"vndb_id" validate:"max=20"`
+	GalgameID int `json:"galgame_id" validate:"required,min=1"`
 }
 
 // PatchUpdateRequest: after D12, the patch itself has almost no editable fields.
@@ -88,11 +85,6 @@ type PatchResourceCreateRequest struct {
 type PatchResourceUpdateRequest struct {
 	PatchResourceCreateRequest
 	Reason string `json:"reason" validate:"max=500"`
-}
-
-// DuplicateCheckRequest is the request for checking VNDB ID duplicates
-type DuplicateCheckRequest struct {
-	VndbID string `query:"vndb_id" validate:"required,max=20"`
 }
 
 // ResourceFileHistoryRequest paginates the public resource file-history.

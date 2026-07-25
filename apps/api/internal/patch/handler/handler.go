@@ -90,8 +90,16 @@ func (h *PatchHandler) ensureCanPublishGalgame(c fiber.Ctx) *errors.AppError {
 
 // CreatePatch POST /api/patch
 //
-// D12 (2026-04-21): the request body is simplified to JSON { "vndb_id": "vXXX" }.
-// The server calls galgame /galgame/check to verify and fetch the galgame_id to persist locally.
+// Body is JSON { "galgame_id": N } — register a local carrier for a galgame
+// that is ALREADY published on the catalog. galgame_id (not vndb_id) is the key
+// because 原创/同人 works have none; their row stores a synthetic `wiki-<id>`.
+//
+// The legacy vndb_id form was removed in 2026-07: nothing sent it after the
+// publish wizard switched to galgame_id, and it was actively harmful — it
+// resolved through /v1/galgame/lookup, which DOES see unclaimed status=2 VNDB
+// drafts, so it could register a carrier on a draft that the read faces then
+// refuse to serve, producing a patch page with no metadata at all. Claiming a
+// draft goes through POST /galgame/:gid/claim, which publishes it first.
 //
 // Publish gate: by default any logged-in user may create a patch. The admin
 // "creator_only" toggle narrows publishing to the trusted-publisher set
@@ -107,23 +115,15 @@ func (h *PatchHandler) CreatePatch(c fiber.Ctx) error {
 	if err := utils.ParseAndValidate(c, &req); err != nil {
 		return response.Error(c, errors.ErrBadRequest(err.Error()))
 	}
-
-	var id int
-	var err error
-	if req.GalgameID > 0 {
-		// Preferred path: register by galgame_id (handles 原创 works with no
-		// vndb_id, which the legacy vndb path 400s on with "VndbID is required").
-		id, err = h.service.CreatePatchByGalgameID(c.Context(), user.ID, req.GalgameID)
-	} else {
-		if !vndbIDRegex.MatchString(req.VndbID) {
-			return response.Error(c, errors.ErrBadRequest("请提供 galgame_id 或合法的 vndb_id（vXXX）"))
-		}
-		id, err = h.service.CreatePatch(c.Context(), user.ID, req.VndbID)
+	if req.GalgameID <= 0 {
+		return response.Error(c, errors.ErrBadRequest("请提供 galgame_id"))
 	}
+
+	id, err := h.service.CreatePatchByGalgameID(c.Context(), user.ID, req.GalgameID)
 	if err != nil {
-		// Distinct error code so the frontend can render a "前往 Wiki 创建"
-		// CTA when the vndb_id is missing on galgame, vs the generic toast for
-		// any other failure (e.g. duplicate vndb_id locally).
+		// Distinct error code so the frontend can render a "提交新作" CTA when
+		// the galgame isn't publicly visible on the catalog, vs the generic
+		// toast for any other failure (e.g. duplicate vndb_id locally).
 		if stderrors.Is(err, service.ErrGalgameMissing) {
 			return response.Error(c, errors.ErrGalgameNotFound(""))
 		}
@@ -254,21 +254,6 @@ func (h *PatchHandler) DeletePatch(c fiber.Ctx) error {
 	}
 
 	return response.OKMessage(c, "Patch deleted")
-}
-
-// CheckDuplicate GET /api/patch/duplicate
-func (h *PatchHandler) CheckDuplicate(c fiber.Ctx) error {
-	var req dto.DuplicateCheckRequest
-	if err := utils.ParseQueryAndValidate(c, &req); err != nil {
-		return response.Error(c, errors.ErrBadRequest(err.Error()))
-	}
-
-	exists, err := h.service.CheckDuplicate(req.VndbID)
-	if err != nil {
-		return response.Error(c, errors.ErrInternal(""))
-	}
-
-	return response.OK(c, map[string]bool{"exists": exists})
 }
 
 // IncrementView PUT /api/patch/:id/view
