@@ -208,8 +208,11 @@ func (s *AuthService) GetUserInfo(accessToken string) (*OAuthUserInfo, error) {
 	defer resp.Body.Close()
 
 	// Tolerant reader: envelope {code,message,data:userinfo} OR standard-wire
-	// top-level userinfo JSON. Banned still surfaces as the enveloped 10014
-	// (middleware.Auth's house error, unaffected by the wire cutover) or HTTP 403.
+	// top-level userinfo JSON. Banned arrives either as the enveloped 10014 or
+	// — once /oauth/userinfo speaks RFC 6750, whose error codes have no
+	// "banned" — as a bare HTTP 403, which is why the status check below is
+	// load-bearing rather than belt-and-braces. Everything else keys on the
+	// HTTP status, so this path is already wire-shape agnostic.
 	respBody, _ := io.ReadAll(resp.Body)
 	var env struct {
 		Code    *int            `json:"code"`
