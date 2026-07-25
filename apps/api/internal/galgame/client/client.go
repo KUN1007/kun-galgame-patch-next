@@ -48,11 +48,14 @@ func (e *GalgameError) Error() string {
 //     BFF-side adaptation layer (public_dto.go + the taxonomy reshapers below)
 //     projects the curated /v1 records back onto this client's DTOs so moyu's
 //     own API output stays byte-stable. Gated by the internal-tier X-API-Key
-//     (galgame:read scope); personalized reads add the user JWT (dual cred).
+//     (galgame:read scope). NOTE: /v1 serves PUBLISHED works only — it does not
+//     honour `status`, so anything that must see status=2 VNDB drafts or a
+//     caller's own pending submissions belongs on the internal face below.
 //   - internalBase = {base}/internal — the internal-tier platform-workflow face,
 //     gated by an X-API-Key. What STAYS here: the JWT personal reads (/galgame/
-//     mine, /galgame/messages/mine), the user-stats read, the S2S cron message
-//     feed, the taxonomy revision-history reads, AND (since wave 06a) the user
+//     mine, /galgame/messages/mine), the publish picker's status=0,2 +
+//     include_pending search, the user-stats read, the S2S cron message feed,
+//     the taxonomy revision-history reads, AND (since wave 06a) the user
 //     write set — galgame submit / draft update+delete / claim / image upload /
 //     links+aliases relation edits. Personalized reads and user writes carry
 //     dual credentials (X-API-Key = client identity; Authorization: Bearer =

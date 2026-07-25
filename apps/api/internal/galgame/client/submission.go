@@ -256,6 +256,17 @@ func (c *Client) ListMyGalgames(ctx context.Context, accessToken string, status 
 // non-empty access token, galgame decodes the JWT and additionally surfaces the
 // caller's own status ∈ {3,4} matches in `pending`. Anonymous calls behave
 // like the regular search.
+//
+// DO NOT move this to the /v1 public face. It is a PLATFORM-WORKFLOW read
+// (B bucket), not a public read: the publish wizard's whole job is to surface
+// claimable VNDB drafts (status=2) and the caller's own pending submissions,
+// and /v1 exposes published works ONLY — it silently ignores `status=0,2`.
+// Open-API phase 2 wave 07 (e8927569) mis-bucketed it into the A-bucket /v1
+// migration, which hid 52k of the catalog's 63k entries from the picker: every
+// unclaimed VNDB game fell through to "没有找到匹配的条目", so users hit
+// 提交新作 and created blank duplicates of drafts that already existed
+// (prod 2026-07-24: galgame 63091/63092/63097/63098 duplicated 13555/10143/
+// 27451/9867). Scenario B of the wizard (认领并发布) only works on this face.
 func (c *Client) SearchGalgameForPublish(ctx context.Context, accessToken, q string, limit int) (*SearchPending, error) {
 	params := url.Values{}
 	if q != "" {
@@ -264,27 +275,26 @@ func (c *Client) SearchGalgameForPublish(ctx context.Context, accessToken, q str
 	if limit > 0 {
 		params.Set("limit", strconv.Itoa(limit))
 	}
-	params.Set("include_pending", "1")
+	params.Set("include_pending", "true")
 	// Publish wizard surfaces published games (0) AND claimable VNDB drafts (2);
 	// without status=2 it can't find the bulk of the catalog (unclaimed drafts).
 	params.Set("status", "0,2")
-	// include=meta lifts the thin item to the full hit shape; facets/highlight
-	// are opt-in on /v1 (omitted = off) so the default response stays frozen.
-	params.Set("include", "meta")
+	params.Set("facets", "false")
+	params.Set("highlight", "false")
 
-	u := c.v1Base + "/galgame/search?" + params.Encode()
+	base, apiKey := c.readTarget("/galgame/search")
+	u := base + "/galgame/search?" + params.Encode()
 	req, err := http.NewRequestWithContext(ctx, http.MethodGet, u, nil)
 	if err != nil {
 		return nil, fmt.Errorf("build galgame search: %w", err)
 	}
 	// Dual credential: the (optional) user JWT rides Authorization to surface
-	// the caller's own pending drafts (optionalJWT on /v1/galgame/search); the
-	// service key rides X-API-Key.
+	// the caller's own pending drafts; the service key rides X-API-Key.
 	if accessToken != "" {
 		req.Header.Set("Authorization", "Bearer "+accessToken)
 	}
-	if c.apiKey != "" {
-		req.Header.Set("X-API-Key", c.apiKey)
+	if apiKey != "" {
+		req.Header.Set("X-API-Key", apiKey)
 	}
 	resp, err := c.http.Do(req)
 	if err != nil {
@@ -295,29 +305,22 @@ func (c *Client) SearchGalgameForPublish(ctx context.Context, accessToken, q str
 	if err != nil {
 		return nil, fmt.Errorf("read galgame response: %w", err)
 	}
-	var env galgameResponse[v1SearchData]
+	var env galgameResponse[SearchPending]
 	if err := json.Unmarshal(raw, &env); err != nil {
 		return nil, fmt.Errorf("decode galgame envelope: %w (body=%s)", err, truncate(string(raw), 200))
 	}
 	if env.Code != 0 {
 		return nil, &GalgameError{Code: env.Code, Message: env.Message}
 	}
-	// Project the /v1 curated items back onto the moyu GalgameHit shape.
-	// Normalize nil → [] so frontend code doing `results.pending.length` is safe.
-	out := SearchPending{
-		Items:   []GalgameHit{},
-		Pending: []GalgameHit{},
-		Total:   env.Data.Total,
+	// Normalize: a nil slice marshals back to JSON `null`, which crashes
+	// frontend code doing `results.pending.length`. Guarantee `[]`.
+	if env.Data.Items == nil {
+		env.Data.Items = []GalgameHit{}
 	}
-	for i := range env.Data.Items {
-		out.Items = append(out.Items, v1ItemToHit(&env.Data.Items[i]))
+	if env.Data.Pending == nil {
+		env.Data.Pending = []GalgameHit{}
 	}
-	if env.Data.Pending != nil {
-		for i := range *env.Data.Pending {
-			out.Pending = append(out.Pending, v1ItemToHit(&(*env.Data.Pending)[i]))
-		}
-	}
-	return &out, nil
+	return &env.Data, nil
 }
 
 // GetMyGalgameMessages proxies GET /galgame/messages/mine (Bearer). Used by the

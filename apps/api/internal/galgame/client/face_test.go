@@ -6,7 +6,8 @@ package client
 // vndb lookup + the taxonomy reads (tag/official/engine/series list/search/
 // detail) + the galgame links/aliases edit-prefill reads — hits the {base}/v1
 // public face + X-API-Key. The B-bucket platform-workflow reads (/galgame/mine,
-// /galgame/messages/mine, taxonomy /:id/revisions), the S2S message feed, and
+// /galgame/messages/mine, the publish picker's status=0,2 search, taxonomy
+// /:id/revisions), the S2S message feed, and
 // the user write set (submit / draft update+delete / claim / image upload /
 // links+aliases relation edits, wave 06a) stay on {base}/internal + key; only
 // the staff taxonomy CRUD/revert + /admin/* stay on legacy {base}/api. The
@@ -18,6 +19,7 @@ import (
 	"context"
 	"net/http"
 	"net/http/httptest"
+	"net/url"
 	"sync"
 	"testing"
 )
@@ -26,6 +28,7 @@ import (
 type faceRecorder struct {
 	mu     sync.Mutex
 	path   string
+	query  url.Values
 	apiKey string
 	auth   string
 }
@@ -35,6 +38,7 @@ func (r *faceRecorder) server(t *testing.T) *httptest.Server {
 	srv := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, req *http.Request) {
 		r.mu.Lock()
 		r.path = req.URL.Path
+		r.query = req.URL.Query()
 		r.apiKey = req.Header.Get("X-API-Key")
 		r.auth = req.Header.Get("Authorization")
 		r.mu.Unlock()
@@ -105,12 +109,18 @@ func TestFaceSelection_WithKey(t *testing.T) {
 		}
 	})
 
-	t.Run("publish search (include_pending) → v1 + key + user JWT", func(t *testing.T) {
+	// Platform-workflow read: the publish picker needs status=0,2 (claimable VNDB
+	// drafts) + the caller's own pending submissions, neither of which the /v1
+	// public face serves. Pinning the face here so it is never re-migrated.
+	t.Run("publish search (include_pending) → internal + key + user JWT", func(t *testing.T) {
 		if _, err := c.SearchGalgameForPublish(ctx, "user-jwt", "q", 0); err != nil {
 			t.Fatalf("SearchGalgameForPublish: %v", err)
 		}
-		if rec.path != "/v1/galgame/search" {
-			t.Errorf("path = %q, want /v1/galgame/search", rec.path)
+		if rec.path != "/internal/galgame/search" {
+			t.Errorf("path = %q, want /internal/galgame/search", rec.path)
+		}
+		if got := rec.query.Get("status"); got != "0,2" {
+			t.Errorf("status = %q, want 0,2 (claimable VNDB drafts must be searchable)", got)
 		}
 		if rec.apiKey != "nm_test_key" {
 			t.Errorf("X-API-Key = %q, want nm_test_key", rec.apiKey)
