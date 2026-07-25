@@ -99,7 +99,13 @@ const toc = computed<KunTOCItem[]>(() => detail.value?.toc ?? [])
 
     <article class="min-w-0">
       <AboutBlogHeader :frontmatter="detail.frontmatter" />
-      <div ref="contentEl" class="kun-prose mt-6" v-html="html" />
+      <!-- kun-prose-normal restores the article-sized paragraph rhythm (my-4);
+           the base .kun-prose spacing is tuned for short comment bodies. -->
+      <div
+        ref="contentEl"
+        class="kun-prose kun-prose-normal mt-6"
+        v-html="html"
+      />
       <AboutNavigation :prev="detail.prev" :next="detail.next" />
     </article>
 
@@ -110,89 +116,3 @@ const toc = computed<KunTOCItem[]>(() => detail.value?.toc ?? [])
     </aside>
   </div>
 </template>
-
-<style>
-.kun-prose {
-  line-height: 1.75;
-}
-.kun-prose h1,
-.kun-prose h2,
-.kun-prose h3,
-.kun-prose h4 {
-  margin-top: 1.5em;
-  margin-bottom: 0.6em;
-  font-weight: 700;
-  scroll-margin-top: 6rem;
-}
-.kun-prose h1 {
-  font-size: 1.875rem;
-}
-.kun-prose h2 {
-  font-size: 1.5rem;
-}
-.kun-prose h3 {
-  font-size: 1.25rem;
-}
-.kun-prose p {
-  margin: 1em 0;
-}
-.kun-prose a {
-  color: var(--color-primary);
-  text-decoration: underline;
-}
-.kun-prose .kun-mention {
-  color: var(--color-primary);
-  font-weight: 500;
-  text-decoration: none;
-}
-.kun-prose ul,
-.kun-prose ol {
-  margin: 1em 0;
-  padding-left: 1.5rem;
-}
-.kun-prose ul {
-  list-style: disc;
-}
-.kun-prose ol {
-  list-style: decimal;
-}
-.kun-prose code {
-  padding: 0.15em 0.4em;
-  border-radius: 0.25rem;
-  background: color-mix(in oklab, var(--color-default) 20%, transparent);
-  font-size: 0.9em;
-}
-.kun-prose pre {
-  margin: 1em 0;
-  padding: 1em;
-  border-radius: 0.5rem;
-  background: color-mix(in oklab, var(--color-default) 15%, transparent);
-  overflow: auto;
-}
-.kun-prose pre code {
-  background: none;
-  padding: 0;
-}
-.kun-prose blockquote {
-  margin: 1em 0;
-  padding: 0.5em 1em;
-  border-left: 3px solid var(--color-primary);
-  color: var(--color-foreground);
-  opacity: 0.85;
-}
-.kun-prose img {
-  margin: 1em auto;
-  max-width: 100%;
-  border-radius: 0.5rem;
-}
-.kun-prose table {
-  border-collapse: collapse;
-  margin: 1em 0;
-  width: 100%;
-}
-.kun-prose th,
-.kun-prose td {
-  padding: 0.5rem 0.75rem;
-  border: 1px solid color-mix(in oklab, var(--color-default) 30%, transparent);
-}
-</style>

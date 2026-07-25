@@ -6,7 +6,7 @@
      to shrink below its content's intrinsic width so a `<pre>` code block scrolls
      (overflow-x-auto) instead of forcing the flex item — and the card — wider.
      For flex items that WRAP .kun-prose (comment cards), add min-w-0 there too. */
-  @apply text-default-800 leading-7 text-inherit min-w-0;
+  @apply text-default-800 min-w-0 leading-7 text-inherit;
 
   /* Paragraphs */
   & p {
@@ -21,6 +21,14 @@
 
   & .anchor {
     @apply text-default-800 hover:text-primary-500 no-underline;
+  }
+
+  /* @mention chips. The backend stamps `class="kun-mention"` on every resolved
+     [@name](/user/:id) link (markdown.go's mention renderer), so this reads as a
+     name chip rather than a body link: no underline, no break-all. Two classes
+     (0,2,0) outrank the plain `& a` above (0,1,1). */
+  & .kun-mention {
+    @apply text-primary-500 hover:text-primary-600 font-medium no-underline;
   }
 
   /* Headings */
@@ -64,32 +72,44 @@
     @apply border-primary-200 bg-primary-50/50 text-default-800 my-8 rounded-r-lg border-l-4 py-1 pr-4 pl-6 font-medium;
   }
 
-  /* Tables */
+  /* Tables. The backend emits a BARE `<table>` — there is no wrapper element to
+     hang a scroll container off — so the table carries its own frame AND its own
+     horizontal scrolling: `block` + `w-max` + `max-w-full` (the GitHub-markdown
+     technique) lets a wide table scroll inside the prose column instead of
+     widening the page, and makes the rounded corners clip the header fill.
+     Cells keep their `table-cell` display, so columns still line up. */
+  & table {
+    @apply border-default-200 my-8 block w-max max-w-full border-collapse border-spacing-0 overflow-x-auto rounded-lg border text-sm;
+  }
+
+  & thead {
+    @apply bg-default-50/50;
+  }
+
+  & th {
+    @apply border-default-200 text-default-700 px-4 py-3 text-left text-sm font-semibold tracking-wide whitespace-nowrap uppercase;
+  }
+
+  & td {
+    @apply border-default-200 text-default-600 border-b px-4 py-3 whitespace-nowrap;
+  }
+
+  & tr:last-child td {
+    @apply border-b-0;
+  }
+
+  & tr:hover {
+    @apply bg-default-50/50 transition-colors duration-200;
+  }
+
+  /* Server-rendered wrapper, should a future renderer emit it: the container
+     takes over the scrolling, so the table reverts to a normal full-width
+     `display: table` and stops scrolling itself. */
   & .kun-table-container {
     @apply w-full overflow-x-auto;
 
     & table {
-      @apply border-default-200 my-8 w-full min-w-[600px] border-collapse border-spacing-0 overflow-hidden rounded-lg border text-sm;
-    }
-
-    & thead {
-      @apply bg-default-50/50;
-    }
-
-    & th {
-      @apply border-default-200 text-default-700 px-4 py-3 text-left text-sm font-semibold tracking-wide whitespace-nowrap uppercase;
-    }
-
-    & td {
-      @apply border-default-200 text-default-600 border-b px-4 py-3 whitespace-nowrap;
-    }
-
-    & tr:last-child td {
-      @apply border-b-0;
-    }
-
-    & tr:hover {
-      @apply bg-default-50/50 transition-colors duration-200;
+      @apply table w-full max-w-none min-w-[600px] overflow-visible;
     }
   }
 
@@ -287,11 +307,11 @@
  *
  * Written with BOTH classes (.kun-prose.kun-prose-compact, which KunContent's
  * `compact` always sets together) so its (0,2,1) specificity beats the base
- * `.kun-prose img` AND the doc page's non-scoped global `.kun-prose img
- * { margin: 1em auto }` (centering that leaks onto every .kun-prose), regardless
- * of stylesheet load order. Stickers (small inline w-32) are excluded. Only
+ * `.kun-prose img` regardless of stylesheet load order — the compact override
+ * must not depend on this file's internal ordering to win.
+ * Stickers (small inline w-32) are excluded. Only
  * compact prose (comments / chat) is affected — article prose (resource notes,
  * galgame 简介, docs) keeps its full-size images. */
 .kun-prose.kun-prose-compact img:not([alt='Sticker']) {
-  @apply my-3 mx-0 block max-h-72 w-auto max-w-full object-contain object-left;
+  @apply mx-0 my-3 block max-h-72 w-auto max-w-full object-contain object-left;
 }
