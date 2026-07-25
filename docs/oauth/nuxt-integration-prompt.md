@@ -76,7 +76,7 @@ runtimeConfig: {
   client_id={clientId}&
   redirect_uri={redirectUri}&
   response_type=code&
-  scope=openid+profile&
+  scope=openid+profile+email&
   state={state}&
   code_challenge={codeChallenge}&
   code_challenge_method=S256
@@ -127,6 +127,8 @@ runtimeConfig: {
   }
 }
 ```
+
+> `name` / `picture` 需要 `profile` scope，`email` 需要 `email` scope——**没申请的字段整个键都不会出现**（不是空串）。不要用兜底值合成假邮箱；详见 [01-oauth-endpoints.md](./01-oauth-endpoints.md#get-oauthuserinfo)。
 
 4. 用 `sub`（用户UUID）在本站数据库查找或创建用户
 5. 创建本站 session

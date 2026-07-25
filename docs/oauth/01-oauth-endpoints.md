@@ -58,7 +58,7 @@
     "token_type": "Bearer",
     "expires_in": 900,
     "refresh_token": "kx3v9q…（不透明随机串）",
-    "scope": "openid profile"
+    "scope": "openid profile email"
   }
 }
 ```
@@ -70,7 +70,13 @@
 | expires_in | 900 秒（15 分钟） |
 | refresh_token | **不透明随机串**（不是 JWT，不要尝试解析/解码它）。有效期以服务端 session 为准（默认 90 天，admin 可按 client 调整）。每次刷新会轮换 |
 | scope | 可选，回显授权时的 scope |
-| id_token | 可选（授权带 `openid` scope 时返回），RS256 签名的 OIDC id_token，用 `{issuer}/oauth/jwks` 验签 |
+| id_token | 可选（授权带 `openid` scope 时返回），RS256 签名的 OIDC id_token，用 `{issuer}/oauth/jwks` 验签。**只含 `iss`/`sub`/`aud`/`exp`/`iat`（+ 授权时带了 `nonce` 则回显 `nonce`）** |
+
+> **⚠️ id_token 里没有 `email` / `name` / `picture`**
+>
+> 它只用来「向你证明这是谁」（`sub`），身份属性一律走 [GET /oauth/userinfo](#get-oauthuserinfo)——这是 OIDC Core §5.4 对授权码流程的推荐做法。
+>
+> 影响面：如果你用的 RP 库默认**只读 id_token 的 claims**（常见于 AppAuth 等原生/移动端接入，或把 `idToken: true` 当唯一 profile 来源的配置），那么无论申请了什么 scope，你都拿不到邮箱和昵称——**必须额外调一次 /oauth/userinfo**。
 
 > **refresh_token 是不透明的**：服务端按值匹配（DB 查找），从不验签。历史上它曾是 JWT——已签发的旧 JWT 格式 refresh_token 依然有效（同样按值匹配），但新签发的一律是随机串，**不要**依赖其内部结构（例如解析过期时间——请以刷新失败作为过期信号）。
 
@@ -90,7 +96,7 @@
 | redirect_uri | 是 | 回调地址，必须与注册时一致 |
 | response_type | 是 | 固定 `code` |
 | state | 是 | 随机字符串，防 CSRF |
-| scope | 否 | 权限范围，空格分隔 |
+| scope | 否 | 权限范围，空格分隔。常用 `openid profile email`；**要邮箱就必须带 `email`**（client 的 `allowed_scopes` 勾了只代表允许申请），要昵称 / 头像必须带 `profile`。请求了不在 `allowed_scopes` 内的 scope → 15006 |
 | code_challenge | 否 | PKCE code challenge |
 | code_challenge_method | 否 | `S256`（默认）或 `plain` |
 | prompt | 否 | `login` = 强制重新登录（即使 OP 仍有会话也不静默放行）；见 [07-logout.md](./07-logout.md) |
@@ -140,9 +146,21 @@
 
 `id`、`sub`、`roles` 始终返回（不被 scope 过滤）—— 因为这三项已经在 JWT 里，调用方既然能用这个 JWT 调 /userinfo，就已经拿到了这些信息，再隐藏没有意义。`name`、`email`、`picture` 按 OIDC 标准受 `profile` / `email` scope 控制。
 
+> **⚠️ 没授权的字段是「整个键不存在」，不是空字符串**
+>
+> `name` / `email` / `picture` 都带 `omitempty`。只申请 `openid profile` 时，响应里**根本没有 `email` 这个键**——不是 `"email": ""`。
+>
+> 如果你的用户表要求邮箱非空，请申请 `email` scope；**不要**写 `email: userinfo.email ?? \`${sub}@你的域\`` 这类兜底去合成假邮箱。（真实事故：某接入方因此把名下全部用户的邮箱写成了 `<用户>@<占位域>`，用户看到的「我的邮箱」全是假的，且此后无法用邮箱找回。）
+
+> **⚠️ scope 在授权那一刻定下，刷新令牌不会改变它**
+>
+> 给 client 的 `allowed_scopes` 勾上 `email` 只代表「**允许**申请」；真正决定返回什么的是 `/oauth/authorize` 的 `scope` 参数。
+>
+> `scope` 在换码时随会话持久化，`refresh_token` 续签沿用同一份。所以补申请 `email` 之后，必须**重新走一遍授权码流程**（让已登录用户重新授权一次）——继续用旧 `refresh_token` 换出来的 access token 仍然是老 scope，`email` 依旧不会出现。
+
 > **跨服务接入提示**：kungal/moyu/galgame_wiki 后端处理 OAuth callback 时，应该在登录环节就拿 `id` 入库（作为本地 user 表的主键 / 外键），不要只存 `sub` —— 后续业务表关联、`/users/batch` 批量回拉、SDK 缓存键，全部基于 `id` 整数键。
 >
-> 想拿更全字段（如 `moemoepoint`、`bio`、`avatar_image_hash`）可以走 [GET /auth/me](./02-user-profile.md#get-authme)；想批量回拉多个用户走 [GET /users/batch](./03-cross-service.md#get-usersbatch)。
+> 想拿更全字段（如 `moemoepoint`、`bio`、`avatar_image_hash`）可以走 [GET /auth/me](./02-user-profile.md#get-authme)——但注意它的 `email` 与这里**受同一个 `email` scope 门控**（2026-07-24 起），不是绕过 scope 的后门。想批量回拉多个用户走 [GET /users/batch](./03-cross-service.md#get-usersbatch)（不返回 email）。
 
 ---
 

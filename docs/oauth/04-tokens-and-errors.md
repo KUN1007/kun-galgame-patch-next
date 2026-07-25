@@ -20,7 +20,7 @@ Header 携带 `typ: at+jwt`（RFC 9068 access token 类型标记）；claims：
   "name": "用户名",
   "roles": ["admin", "ren"],
   "site_roles": ["moderator"],
-  "scope": "openid profile",
+  "scope": "openid profile email",
   "site_id": 2,
   "client_id": "签发给的 OAuth client",
   "iss": "https://oauth.kungal.com",
@@ -34,7 +34,10 @@ Header 携带 `typ: at+jwt`（RFC 9068 access token 类型标记）；claims：
 
 - `iss` 固定为 OP issuer（`{issuer}/.well-known/openid-configuration` 的 `issuer`）。
 - `aud` 是资源方标识 = 该 client 绑定站点的域名（RFC 9068 audience 限制）；client 未绑定站点时省略。**下游现有的站点校验仍以 `site_id` 为准**，`aud` 供标准校验器使用。
-- `scope` / `site_id` / `client_id` / `site_roles` 在对应值为空时省略。
+- `scope` / `site_id` / `client_id` / `site_roles` / `email` 在对应值为空时省略。
+- ⚠️ **`email` claim 受 `email` scope 门控（2026-07-24 起）**：授权时没申请 `email` → **这个 claim 根本不在 token 里**（上面示例的 `scope` 带了 `email` 才有它）。此前它无条件签入，于是只申请 `openid profile` 的 client 把 token base64 解开就能读到 `/oauth/userinfo` 刻意不给的邮箱——**不需要任何密钥就能绕过隐私门控**。现在 token claim / userinfo / `/auth/me` **三处同一条规则**。
+- `name` 仍**不受门控**（展示字段，任何 client 本来就能通过 [`/users/batch`](./03-cross-service.md#get-usersbatch) 拿到）。
+- **不要把 access token 的 claims 当用户资料源**：`/oauth/userinfo`（受 scope 门控、字段语义稳定、能反映吊销与封禁）才是权威来源；access token 请当作不透明凭证 + 一个 `exp`。
 
 签名算法：HS256（现状）。OIDC 切换（`KUN_OIDC_SIGN_ASYMMETRIC`）后改为 **ES256**（header 带 `kid`，公钥见 `{issuer}/oauth/jwks`）；切换窗口内两种签名都会被各服务接受，**下游把 access_token 当不透明字符串用即可**，不要对签名算法做硬编码假设。
 

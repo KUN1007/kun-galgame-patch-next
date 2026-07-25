@@ -61,8 +61,8 @@ OAuth 的用户自助 API 在设计上分两层。下游接入时**不要**把�
 
 | 端点 | 方法 | 层级 | 鉴权 | 用途 |
 |------|------|------|------|------|
-| `/auth/me` | GET | — | Bearer | 读自己完整资料 |
-| `/auth/me` | PATCH | 展示 | Bearer | 改 name / avatar / bio |
+| `/auth/me` | GET | — | Bearer | 读自己完整资料（`email` 受 `email` scope 门控，见下） |
+| `/auth/me` | PATCH | 展示 | Bearer | 改 name / avatar / bio（响应同 GET，`email` 同样门控） |
 | `/auth/me/avatar` | POST | 展示 | Bearer | 上传头像 multipart |
 | `/auth/email/send-code` | POST | 身份 | Bearer（仅 OAuth 前端） | 发送邮箱变更验证码到**旧**邮箱 |
 | `/auth/email` | PUT | 身份 | Bearer（仅 OAuth 前端） | 用验证码确认改邮箱 |
@@ -72,7 +72,19 @@ OAuth 的用户自助 API 在设计上分两层。下游接入时**不要**把�
 
 ## GET /auth/me
 
-获取当前登录用户的完整资料。与 `/oauth/userinfo` 的区别：`/auth/me` 是面向 OAuth 自己前端的内部端点，无 scope 过滤、字段更全（含 moemoepoint）。下游服务若用得着也可以调。
+获取当前登录用户的完整资料。与 `/oauth/userinfo` 的区别：`/auth/me` 是面向 OAuth 自己前端的内部端点，字段更全（含 `moemoepoint` / `bio` / `avatar_image_hash` / `status`）。下游服务若用得着也可以调。
+
+> **⚠️ 2026-07-24 变更：`email` 受 `email` scope 门控**
+>
+> 此前 `/auth/me` 对 email **完全不过滤**，于是只申请 `openid profile` 的 client 能在这里读到 [/oauth/userinfo](./01-oauth-endpoints.md#get-oauthuserinfo) 刻意不给的邮箱——那个 scope 门控形同虚设。现在 **userinfo / `/auth/me` / access token 的 `email` claim 三处同一条规则**：
+>
+> - token 的 scope 含 `email` → 返回真实邮箱；
+> - token 的 scope 不含 `email` → **返回空字符串 `""`**（注意与 userinfo 不同：userinfo 是**整个键缺失**，`/auth/me` 是**键在、值为空**，因为该字段无 `omitempty`，老调用方按 string 读）；
+> - token **没有 scope**（账号中心密码登录签发的 token，从未协商过 scope）→ 返回真实邮箱，账号设置页照常显示自己的邮箱。
+>
+> 其余字段（`name` / `avatar` / `bio` / `moemoepoint` / `status` / `roles`）**不受门控**——它们是展示字段，任何 client 本来就能通过 [`/users/batch`](./03-cross-service.md#get-usersbatch) 拿到，门控它们只会平白打断下游而不增加任何隐私。
+>
+> 需要邮箱的接入方：在 `/oauth/authorize` 的 `scope` 里带上 `email`，并**重新走一次授权码流程**（旧 refresh_token 沿用授权时的老 scope）。
 
 **请求头**：`Authorization: Bearer <access_token>`
 

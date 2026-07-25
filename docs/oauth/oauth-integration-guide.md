@@ -52,7 +52,7 @@
 | `/oauth/token` | POST | 不需要 | 用授权码/刷新令牌换取 access token |
 | `/oauth/userinfo` | GET | Bearer Token | 获取用户信息 |
 | `/oauth/revoke` | POST | 不需要 | 吊销令牌 |
-| `/auth/me` | GET | Bearer Token | 获取当前用户完整资料（与 userinfo 互补：无 scope 过滤、字段更全） |
+| `/auth/me` | GET | Bearer Token | 获取当前用户完整资料（与 userinfo 互补：字段更全，含 moemoepoint / bio；`email` 与 userinfo 受**同一个** `email` scope 门控） |
 | `/auth/me` | PATCH | Bearer Token | 修改 name / avatar / avatar_image_hash / bio |
 | `/auth/password` | PUT | Bearer Token | 修改密码（需旧密码） |
 | `/auth/email/send-code` + `/auth/email` | POST + PUT | Bearer Token | 修改邮箱（带验证码两步） |
@@ -135,7 +135,9 @@ const params = new URLSearchParams({
   client_id: 'your-client-id',
   redirect_uri: 'https://www.kungal.com/auth/callback',
   response_type: 'code',
-  scope: 'openid profile',
+  // 要邮箱就必须在这里申请 email —— client 的 allowed_scopes 勾上
+  // email 只是「允许申请」，不申请就不会返回。见下方「关于 scope」。
+  scope: 'openid profile email',
   state,
   code_challenge: codeChallenge,
   code_challenge_method: 'S256',
@@ -205,8 +207,8 @@ export default defineEventHandler(async (event) => {
   //     "access_token": "eyJhbGc...",
   //     "token_type": "Bearer",
   //     "expires_in": 900,
-  //     "refresh_token": "eyJhbGc...",
-  //     "scope": "openid profile"
+  //     "refresh_token": "kx3v9q…（不透明随机串，不要解析）",
+  //     "scope": "openid profile email"   // 回显授权时的 scope
   //   }
   // }
 
@@ -236,6 +238,16 @@ const userInfo = await $fetch('https://oauth.kungal.com/api/v1/oauth/userinfo', 
 //   }
 // }
 ```
+
+> **⚠️ 关于 scope：上面这份响应里有 `email`，前提是你在步骤 3 申请了 `email` scope**
+>
+> 三件事最容易踩：
+>
+> 1. **`allowed_scopes` ≠ 已申请**。管理端给你的 client 勾上 `email` 只代表「允许申请」；真正决定返回什么的是 `/oauth/authorize` 的 `scope` 参数。没申请 → `email` **这个键在响应里根本不存在**（`omitempty`），不是 `"email": ""`。
+> 2. **别合成假邮箱**。如果你的用户表要求邮箱非空，请申请 `email` scope，**不要**写 `email: userInfo.email ?? \`${sub}@占位域\`` 之类的兜底——那会让全站用户的「我的邮箱」变成假地址，且此后无法凭邮箱找回账号。
+> 3. **补申请后必须重新授权**。`scope` 在换码时随会话持久化，`refresh_token` 续签沿用同一份；只改前端申请的 scope、继续用旧 refresh_token，邮箱依旧不会出现。让已登录用户重新走一次授权码流程。
+>
+> 另外：**id_token 里没有 `email` / `name` / `picture`**（只有 `iss`/`sub`/`aud`/`exp`/`iat` + `nonce`）。如果你用的 RP 库默认只读 id_token 的 claims（AppAuth 等原生 / 移动端接入常见），必须**额外调一次 `/oauth/userinfo`**，否则拿不到任何身份属性。
 
 ### 步骤 6：在本站创建/关联用户
 
@@ -483,7 +495,7 @@ await $fetch('https://oauth.kungal.com/api/v1/oauth/revoke', {
 
 ## 6. JWT Access Token 结构
 
-如果你需要在不调用 userinfo 端点的情况下解析用户信息，可以直接解码 JWT：
+access token 的结构（完整 claim 列表见 [04-tokens-and-errors.md](./04-tokens-and-errors.md)）：
 
 ```json
 {
@@ -491,15 +503,18 @@ await $fetch('https://oauth.kungal.com/api/v1/oauth/revoke', {
   "email": "kun@kungal.com",
   "name": "KUN",
   "roles": ["user", "admin"],
+  "scope": "openid profile email",
   "exp": 1700000000,
   "iat": 1699999100,
   "nbf": 1699999100
 }
 ```
 
-- **签名算法**：HS256
+- **签名算法**：`HS256` **或** `ES256`（取决于 OP 当前的签名模式；`ES256` 时 JWS header 带 `kid`，公钥在 `{issuer}/oauth/jwks`）。**不要硬编码 alg**，也不要假设它永远是 HS256。
 - **有效期**：15 分钟
-- **重要**：不要在客户端验证签名（你没有 JWT secret），仅用于读取 claims。需要验证时请调用 `/oauth/userinfo`。
+- **不要在客户端验证签名**（HS256 模式下你没有 secret），仅用于读取 claims；需要权威校验时调用 `/oauth/userinfo`（token 被吊销 / 用户被封禁也只有它能反映出来）。
+- **`email` claim 受 `email` scope 门控（2026-07-24 起）**：没申请 `email` → 这个 claim **不在 token 里**（此前无条件携带，是能绕过 userinfo 隐私门控的口子，已封）。`name` 不受门控。
+- **不要把 access token 的 claims 当作用户资料来源**：请一律以 `/oauth/userinfo`（受 scope 约束、字段语义稳定、能反映吊销与封禁）为准，把 access token 当作不透明凭证 + 一个 `exp`。
 
 ---
 
@@ -533,6 +548,20 @@ await $fetch('https://oauth.kungal.com/api/v1/oauth/revoke', {
 | 15006 | 400 | 无效的 scope | 请求的 scope 不在 client 的 `allowed_scopes` 内 |
 | 15008 | 400 | 无效的 client secret | confidential client 漏传或填错 secret，见 §4.1 条件 2 |
 | 15009 | 400 | 需要 PKCE | public client 没传 code_verifier |
+
+### 不报错、但结果不对
+
+这些不会给你任何错误码——流程全程 `code = 0`，只是数据不是你以为的那份。
+
+| 症状 | 原因 | 处理 |
+|------|------|------|
+| **用户邮箱变成 `<用户>@<某占位域>` 之类的假地址** | 你没拿到 `email`，而你的代码用兜底值合成了一个。根因见下三行 | 先按下面三条查，**然后清理已被写坏的存量邮箱**（假地址会让用户无法凭邮箱找回账号） |
+| userinfo 响应里**没有 `email` 键** | 授权时没申请 `email` scope（`allowed_scopes` 勾了 ≠ 申请了） | `/oauth/authorize` 的 `scope` 带上 `email` |
+| 已经改了 scope，邮箱还是不出现 | `scope` 在换码时随会话持久化，`refresh_token` 续签沿用老 scope | 让已登录用户**重新走一次授权码流程**（不是刷新） |
+| id_token 解出来只有 `sub`，没有邮箱和昵称 | id_token 只做身份认证，**不含** `email`/`name`/`picture` | 额外调 `/oauth/userinfo`（AppAuth 等原生 / 移动端接入尤其容易漏） |
+| `/auth/me` 的 `email` 是 `""` | 同一个 `email` scope 门控（2026-07-24 起，此前不过滤） | 同上：申请 `email` scope 并重新授权 |
+| 解开 access token 也没有 `email` claim | 同一个门控（2026-07-24 起，此前无条件携带） | 同上；且**不要**把 token claims 当资料源，改调 `/oauth/userinfo` |
+| 用户名 / 头像拿不到 | 没申请 `profile` scope | `scope` 带上 `profile` |
 
 ---
 
@@ -568,7 +597,7 @@ const handleLogin = async () => {
     client_id: config.public.oauthClientId,
     redirect_uri: config.public.oauthRedirectUri,
     response_type: 'code',
-    scope: 'openid profile',
+    scope: 'openid profile email',
     state,
     code_challenge: codeChallenge,
     code_challenge_method: 'S256',

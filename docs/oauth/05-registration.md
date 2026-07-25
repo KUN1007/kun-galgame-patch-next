@@ -236,7 +236,7 @@ const handleOAuthRegister = async () => {
     client_id: config.public.oauthClientId,
     redirect_uri: config.public.oauthRedirectUri,
     response_type: 'code',
-    scope: 'openid profile',
+    scope: 'openid profile email',
     state,
     code_challenge: codeChallenge,
     code_challenge_method: 'S256'
