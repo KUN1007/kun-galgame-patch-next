@@ -207,36 +207,22 @@ func (s *AuthService) GetUserInfo(accessToken string) (*OAuthUserInfo, error) {
 	}
 	defer resp.Body.Close()
 
-	// Tolerant reader: envelope {code,message,data:userinfo} OR standard-wire
-	// top-level userinfo JSON. Banned arrives either as the enveloped 10014 or
-	// — once /oauth/userinfo speaks RFC 6750, whose error codes have no
-	// "banned" — as a bare HTTP 403, which is why the status check below is
-	// load-bearing rather than belt-and-braces. Everything else keys on the
-	// HTTP status, so this path is already wire-shape agnostic.
+	// /oauth/userinfo is an OIDC protocol endpoint: the body IS the userinfo
+	// object (RFC 6750 / OIDC Core §5.3.3), and failures are
+	// {error,error_description} with a WWW-Authenticate challenge.
+	//
+	// A ban has no RFC 6750 error code, so it arrives as a bare HTTP 403 — the
+	// status check below is load-bearing, not belt-and-braces.
 	respBody, _ := io.ReadAll(resp.Body)
-	var env struct {
-		Code    *int            `json:"code"`
-		Message string          `json:"message"`
-		Data    json.RawMessage `json:"data"`
-	}
-	_ = json.Unmarshal(respBody, &env)
 
-	if (env.Code != nil && *env.Code == 10014) || resp.StatusCode == http.StatusForbidden {
+	if resp.StatusCode == http.StatusForbidden {
 		return nil, ErrUserBanned
 	}
 	if resp.StatusCode != 200 {
 		return nil, fmt.Errorf("OAuth userinfo request failed (%d): %s", resp.StatusCode, string(respBody))
 	}
-	payload := env.Data
-	if env.Code != nil {
-		if *env.Code != 0 {
-			return nil, fmt.Errorf("OAuth userinfo error code=%d: %s", *env.Code, env.Message)
-		}
-	} else {
-		payload = json.RawMessage(respBody)
-	}
 	var info OAuthUserInfo
-	if err := json.Unmarshal(payload, &info); err != nil {
+	if err := json.Unmarshal(respBody, &info); err != nil {
 		return nil, fmt.Errorf("decode userinfo: %w", err)
 	}
 	return &info, nil
@@ -306,26 +292,19 @@ func (s *AuthService) oauthPostJSON(path string, body any, out any) error {
 
 	respBody, _ := io.ReadAll(resp.Body)
 
-	// Tolerant reader (expand→contract for the OAuth server's standard-wire
-	// cutover): accept BOTH the legacy {code,message,data} envelope AND the
-	// spec-compliant top-level JSON. `code` is present iff it's the envelope; a
-	// standard error object carries `error`/`error_description`.
-	var env struct {
-		Code             *int            `json:"code"`
-		Message          string          `json:"message"`
-		Data             json.RawMessage `json:"data"`
-		Error            string          `json:"error"`
-		ErrorDescription string          `json:"error_description"`
+	// These are OAuth protocol endpoints (/oauth/token, /oauth/revoke): the body
+	// IS the payload (RFC 6749 §5.1), and failures are {error,error_description}
+	// (§5.2). RFC 7009 revoke answers 200 with an empty body.
+	var oauthErr struct {
+		Error            string `json:"error"`
+		ErrorDescription string `json:"error_description"`
 	}
-	_ = json.Unmarshal(respBody, &env) // best-effort; body may be non-JSON on 5xx
+	_ = json.Unmarshal(respBody, &oauthErr) // best-effort; body may be non-JSON on 5xx
 
 	if resp.StatusCode != 200 {
-		msg := env.ErrorDescription
+		msg := oauthErr.ErrorDescription
 		if msg == "" {
-			msg = env.Error
-		}
-		if msg == "" {
-			msg = env.Message
+			msg = oauthErr.Error
 		}
 		if msg == "" {
 			msg = truncate(string(respBody), 500)
@@ -333,15 +312,7 @@ func (s *AuthService) oauthPostJSON(path string, body any, out any) error {
 		return fmt.Errorf("OAuth %s failed (%d): %s", path, resp.StatusCode, msg)
 	}
 
-	// respPayload = the envelope's data, or the whole body when standard-wire.
-	respPayload := env.Data
-	if env.Code != nil {
-		if *env.Code != 0 {
-			return fmt.Errorf("OAuth %s error code=%d: %s", path, *env.Code, env.Message)
-		}
-	} else {
-		respPayload = json.RawMessage(respBody)
-	}
+	respPayload := json.RawMessage(respBody)
 	if out == nil || len(respPayload) == 0 {
 		return nil
 	}

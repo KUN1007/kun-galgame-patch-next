@@ -603,18 +603,9 @@ func refreshOAuthToken(ctx context.Context, rdb *redis.Client, oauthCfg config.O
 	defer resp.Body.Close()
 
 	respBody, _ := io.ReadAll(resp.Body)
-	// Tolerant reader (standard-wire cutover, mirrors service.go oauthPostJSON):
-	// the body is either the legacy {code,message,data} envelope (`code` key
-	// present) or the OAuth server's spec-compliant top-level JSON, whose errors
-	// are RFC 6749 {error,error_description} objects.
+	// /oauth/token is an OAuth protocol endpoint: the body IS the token response
+	// (RFC 6749 §5.1), and failures are {error,error_description} (§5.2).
 	var env struct {
-		Code    *int   `json:"code"`
-		Message string `json:"message"`
-		Data    struct {
-			AccessToken  string `json:"access_token"`
-			RefreshToken string `json:"refresh_token"`
-			ExpiresIn    int64  `json:"expires_in"`
-		} `json:"data"`
 		Error            string `json:"error"`
 		ErrorDescription string `json:"error_description"`
 		AccessToken      string `json:"access_token"`
@@ -623,21 +614,19 @@ func refreshOAuthToken(ctx context.Context, rdb *redis.Client, oauthCfg config.O
 	}
 	_ = json.Unmarshal(respBody, &env)
 
+	// Map the RFC error string onto the failure class the check below branches
+	// on: invalid_grant / unauthorized_client (grant not allowed) and
+	// invalid_client all mean the refresh token is permanently dead.
 	code := 0
-	msg := env.Message
-	if env.Code != nil {
-		code = *env.Code
-	} else if env.Error != "" {
-		// Map the standard error string back to the envelope code the check
-		// below branches on: invalid_grant / unauthorized_client (grant not
-		// allowed, legacy 15005) / invalid_client all mean refresh-dead.
-		switch env.Error {
-		case "invalid_grant", "unauthorized_client":
-			code = 15005
-		case "invalid_client":
-			code = 15008
-		}
-		msg = env.ErrorDescription
+	msg := env.ErrorDescription
+	switch env.Error {
+	case "invalid_grant", "unauthorized_client":
+		code = 15005
+	case "invalid_client":
+		code = 15008
+	}
+	if msg == "" {
+		msg = env.Error
 	}
 
 	// Permanent reject: 401/403 (RFC 6749 invalid_grant style) or the
@@ -668,12 +657,9 @@ func refreshOAuthToken(ctx context.Context, rdb *redis.Client, oauthCfg config.O
 		return fmt.Errorf("oauth refresh code=%d msg=%s", code, msg)
 	}
 
-	access, refresh, expires := env.Data.AccessToken, env.Data.RefreshToken, env.Data.ExpiresIn
-	if access == "" {
-		access, refresh, expires = env.AccessToken, env.RefreshToken, env.ExpiresIn
-	}
-	// A 200 with no token in either shape is malformed — treat as transient
-	// rather than storing an empty access token into the session.
+	access, refresh, expires := env.AccessToken, env.RefreshToken, env.ExpiresIn
+	// A 200 with no token is malformed — treat as transient rather than storing
+	// an empty access token into the session.
 	if access == "" {
 		return fmt.Errorf("oauth refresh returned no access_token body=%s", truncate(string(respBody), 200))
 	}

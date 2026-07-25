@@ -44,8 +44,7 @@
   2. **`GET /oauth/userinfo`** 响应的 `site_roles` 字段(按调用所用 token 的站点)。
   3. **`GET /users/batch`**(S2S,见 [03](./03-cross-service.md))每个 brief 的 `site_roles` 字段
      (按**请求方 client** 的站点)。
-- **wire 模式无关**:legacy 与标准 OIDC wire(`KUN_OIDC_STANDARD_WIRE`)下携带方式一致——它就是
-  access token 里的一个自定义 claim。
+- **wire 无关**:线格式怎么变都不影响它——它就是 access token 里的一个自定义 claim。
 
 ## 3. 可授予的角色名策略（权威）
 
