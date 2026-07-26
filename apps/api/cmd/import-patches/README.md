@@ -2,10 +2,10 @@
 
 Bulk-import standardized Chinese-patch archives into moyu, replacing the old
 standalone `sync-patch` tool. Per file: parse the legacy filename → map VNDB id
-to a Wiki `galgame_id` (identities are shared: `patch.id == galgame_id`) → ensure
-the local patch carrier → upload the bytes through the **artifact service**
-(init → PUT straight to B2 from disk → complete; **no blake3**) → insert an
-artifact-backed `patch_resource`.
+to a catalog `galgame_id` (identities are shared: `patch.id == galgame_id`) →
+ensure the local patch carrier → upload the bytes through the **artifact
+service** (init → PUT straight to B2 from disk → complete; **no blake3**) →
+insert an artifact-backed `patch_resource`.
 
 Internal archive job: every row is owned by `--user-id` (default **2310**) and it
 **skips the moemoepoint award + favorited-user notifications** that
@@ -18,7 +18,7 @@ imported for a galgame (dedup on `(galgame_id, name)`, `name` = sanitized filena
 |------|---------|---------|
 | `--dir` | `./patch` | directory of `.rar/.zip/.7z` archives |
 | `--delete-list` | "" | path to an increment's `delete_list.txt`; its superseded files' archive-owned resources are removed **before** the import phase (mirrors `delete_old.py`) |
-| `--dry-run` | false | probe only: parse + wiki-check + dedup, **no upload/write/delete** |
+| `--dry-run` | false | probe only: parse + catalog-check + dedup + 0-byte skip, **no upload/write/delete** |
 | `--user-id` | 2310 | archive account that owns imported patches/resources |
 | `--vndb` | "" | comma-separated VNDB ids to restrict imports to, e.g. `v14,v36` |
 | `--limit` | 0 | process at most N recognized files (0 = all; for testing) |
@@ -28,28 +28,50 @@ resource is never touched. `art.Delete` soft-deletes the artifact blob, the row
 is hard-deleted (FK cascades take likes / favorites / history), and aggregates
 are recomputed.
 
-## Wiki drafts (status=2) — post-run remediation
+## Catalog drafts (status=2) — post-run remediation
 
-`CheckGalgameByVndbID` returns `exists=true` even for **unclaimed VNDB drafts**
-(wiki `status=2`, auto-created by `sync-vndb`). The importer happily creates
-patches on them, but wiki's public `/galgame/batch` + `/galgame/:id` return
-**status=0 only**, so those galgames — and their imported resources — are
-**invisible on moyu** (homepage / list / detail) until published. Claiming needs
-a user/admin JWT the S2S importer can't obtain, so the run instead **detects and
-reports** the drafts at the end with the exact fix:
+`CheckGalgameByVndbID` (`GET /v1/galgame/lookup`) returns `exists=true` even for
+**unclaimed VNDB drafts** (`status=2`, auto-created by infra's `sync-vndb`). That
+is load-bearing and slightly surprising: lookup is the **only** `/v1` endpoint
+that answers for drafts — its repository query carries no status filter, while
+`/v1` search, batch and detail all serve `status=0` only. Roughly **52k of the
+catalog's ~63k galgames are drafts**, so if lookup ever gains a status filter
+this tool degrades *silently* to `catalog-missing` for most of the archive
+(a skip, not an error). See infra `GalgameRepository.ExistsByVNDBID`, plus the
+two sibling incidents `8ce01e86` and `f52b84d4`.
 
+The flip side: the importer happily creates patches on drafts, but since the
+public read faces only serve `status=0`, those galgames — and their imported
+resources — are **invisible on moyu** (homepage / list / detail) until published.
+Claiming needs a user JWT the S2S importer can't obtain, so the run instead
+**detects and reports** the drafts at the end with the exact fix:
+
+```sql
+-- 1. on the catalog galgame DB (prod: kun_catalog; local dev: kun_galgame_wiki)
+UPDATE galgame SET status=0 WHERE id IN (<ids>) AND status=2;
 ```
-UPDATE galgame SET status=0 WHERE id IN (<ids>) AND status=2;   -- on kun_galgame_wiki
-reindex-search --index=galgames                                 -- rebuild Meilisearch
+```bash
+# 2. REQUIRED — rebuild Meilisearch so they're findable
+reindex-search --index=galgames
 ```
 
-Run both after any import that logs `UNPUBLISHED wiki drafts`. (`status 2→0` via
-raw SQL skips the search write-through hook, hence the reindex.)
+Run both after any import that logs `UNPUBLISHED catalog drafts`.
+
+Step 2 is not optional. The UI path (`POST /galgame/:gid/claim`) files a status
+`2→0` proposal through the catalog **edit engine**, which auto-merges and fires
+`OnMerge` — contributor recording *and* the search reindex. The raw `UPDATE`
+bypasses all of it. Bypassing is safe (the engine is read-through: it loads its
+snapshot from the live `galgame` row, not a projection, so a later edit sees the
+new status rather than reverting it) but it leaves no revision in the edit log
+and, without step 2, a Meilisearch index that still hides the galgame.
 
 Config is read from the environment (`godotenv.Load()` + `config.Load()`), same
 keys as `moyu-api`: `KUN_DATABASE_URL`, `KUN_ARTIFACT_SERVICE_BASE_URL`,
 `KUN_ARTIFACT_OAUTH_CLIENT_ID/_SECRET` (fall back to `OAUTH_CLIENT_ID/_SECRET`),
-`KUN_NEXTMOE_API_BASE`, `KUN_SERVER_MODE`.
+`KUN_NEXTMOE_API_BASE` + **`KUN_NEXTMOE_API_KEY`**, `KUN_SERVER_MODE`. The
+catalog key is mandatory (the legacy `/api` rollback valve was retired in
+open-API phase 2 wave 05); the run aborts up front if either is missing, the
+same fail-fast `app.New` does.
 
 ## Build (static, for scp to prod)
 
@@ -74,14 +96,14 @@ sudo docker inspect -f '{{range .Config.Env}}{{println .}}{{end}}' \
   kun-visual-novel-patch-ndxhtp-moyu-api-1 > /srv/import/moyu.env
 chmod 600 /srv/import/moyu.env
 
-# 2. dry-run probe (read-only: parse + wiki + dedup)
+# 2. dry-run probe (read-only: parse + catalog + dedup)
 sudo docker run --rm --network dokploy-network --env-file /srv/import/moyu.env \
   -v /srv/import/import-patches:/import-patches:ro \
   -v /srv/import/patches:/patches:ro \
   --entrypoint /import-patches ghcr.io/kunmoe/moyu-api:latest \
   --dir /patches --dry-run
 
-# 3. sample import (1–2 known-on-wiki ids), verify, then full run
+# 3. sample import (1–2 ids known to be published in the catalog), verify, then full run
 sudo docker run --rm --network dokploy-network --env-file /srv/import/moyu.env \
   -v /srv/import/import-patches:/import-patches:ro \
   -v /srv/import/patches:/patches:ro \

@@ -23,12 +23,12 @@ import (
 type status string
 
 const (
-	statusOK           status = "ok"
-	statusSkipped      status = "skipped"
-	statusDryRun       status = "dry-run"
-	statusUnrecognized status = "unrecognized"
-	statusWikiMissing  status = "wiki-missing"
-	statusFailed       status = "failed"
+	statusOK             status = "ok"
+	statusSkipped        status = "skipped"
+	statusDryRun         status = "dry-run"
+	statusUnrecognized   status = "unrecognized"
+	statusCatalogMissing status = "catalog-missing"
+	statusFailed         status = "failed"
 )
 
 type fileResult struct {
@@ -39,8 +39,8 @@ type fileResult struct {
 
 // Importer holds the minimal wiring for the archive import: DB + repo (the
 // controlled subset of PatchService.CreateResource writes, MINUS moemoepoint and
-// notifications per the internal-account requirement), the Wiki client (vndb_id
-// -> galgame_id), and the artifact client (large-file upload).
+// notifications per the internal-account requirement), the catalog galgame
+// client (vndb_id -> galgame_id), and the artifact client (large-file upload).
 type Importer struct {
 	db      *gorm.DB
 	repo    *patchRepo.PatchRepository
@@ -49,11 +49,23 @@ type Importer struct {
 	userID  int
 	dryRun  bool
 	// touched collects every galgame_id we resolved (published or draft) so the
-	// run can flag the ones still at wiki status=2 afterwards. CheckGalgameByVndbID
-	// returns exists=true even for unclaimed VNDB drafts, so a naive import creates
-	// patches on galgames the public wiki batch/detail won't return → invisible on
-	// moyu. We can't claim them here (needs a user/admin JWT the S2S importer
-	// lacks), so we DETECT + report them with the exact remediation instead.
+	// run can flag the ones still at catalog status=2 afterwards.
+	//
+	// LOAD-BEARING: CheckGalgameByVndbID (/v1/galgame/lookup) is the ONE /v1
+	// endpoint that still answers for unclaimed VNDB drafts — its repository
+	// query (infra GalgameRepository.ExistsByVNDBID) carries no status filter,
+	// while /v1 search, batch and detail all serve status=0 only. The whole
+	// archive import depends on that: ~52k of catalog's ~63k galgames are
+	// status=2 drafts, so if lookup ever gains a status filter this tool
+	// SILENTLY degrades to "vndb not in catalog" for most of the archive —
+	// a skip, not an error, invisible unless you read the summary. See the
+	// sibling incidents: 8ce01e86 (publish picker) and f52b84d4, which calls
+	// this lookup asymmetry out by name.
+	//
+	// The flip side is that a naive import creates patches on galgames the
+	// public read faces won't return → invisible on moyu. We can't claim them
+	// here (needs a user JWT the S2S importer lacks), so we DETECT + report
+	// them with the exact remediation instead.
 	touched map[int]struct{}
 }
 
@@ -67,12 +79,12 @@ func (imp *Importer) processFile(ctx context.Context, path string) fileResult {
 
 	exists, galgameID, err := imp.galgame.CheckGalgameByVndbID(ctx, p.VndbID)
 	if err != nil {
-		return fileResult{name, statusFailed, "wiki check: " + err.Error()}
+		return fileResult{name, statusFailed, "catalog check: " + err.Error()}
 	}
 	if !exists {
-		// Premise: vndb_id is expected to exist on the Wiki; a miss is the rare
-		// case — record it for manual review, never crash the batch.
-		return fileResult{name, statusWikiMissing, "vndb " + p.VndbID + " not on wiki"}
+		// Premise: vndb_id is expected to exist in the catalog; a miss is the
+		// rare case — record it for manual review, never crash the batch.
+		return fileResult{name, statusCatalogMissing, "vndb " + p.VndbID + " not in catalog"}
 	}
 	if imp.touched != nil {
 		imp.touched[galgameID] = struct{}{}
@@ -87,19 +99,22 @@ func (imp *Importer) processFile(ctx context.Context, path string) fileResult {
 		return fileResult{name, statusSkipped, "already imported"}
 	}
 
-	// dry-run stops here — everything above is read-only.
-	if imp.dryRun {
-		return fileResult{name, statusDryRun, fmt.Sprintf("would import -> galgame %d", galgameID)}
-	}
-
+	// Skip empty placeholder files: the archive's create_empty_files.py
+	// materializes 0-byte stand-ins for files shipped in earlier increments.
+	// Checked BEFORE the dry-run return, not after: an increment carries a lot
+	// of these, and probing them as "would import" made the dry-run totals
+	// disagree with the real run they exist to predict.
 	fi, err := os.Stat(path)
 	if err != nil {
 		return fileResult{name, statusFailed, err.Error()}
 	}
-	// Skip empty placeholder files: the archive's create_empty_files.py
-	// materializes 0-byte stand-ins for files shipped in earlier increments.
 	if fi.Size() == 0 {
 		return fileResult{name, statusSkipped, "empty placeholder file"}
+	}
+
+	// dry-run stops here — everything above is read-only.
+	if imp.dryRun {
+		return fileResult{name, statusDryRun, fmt.Sprintf("would import -> galgame %d", galgameID)}
 	}
 
 	// Writes begin here — create the patch carrier only for a real import.
@@ -130,7 +145,11 @@ func (imp *Importer) ensurePatch(ctx context.Context, galgameID int, vndbID stri
 		return fmt.Errorf("get patch: %w", err)
 	}
 
-	// Mirror the Wiki release_date locally (best-effort; a wiki blip leaves NULL).
+	// Mirror the catalog release_date locally. Best-effort, and for a DRAFT it
+	// is not merely best-effort but systematically NULL: GetGalgame reads
+	// /v1/galgame/:id, which 404s on status=2. Not worth a second lookup — the
+	// operator publishes the drafts we report at the end of the run, and the
+	// A-lite backfill (cmd/backfill-release-date) fills them in afterwards.
 	var releaseDate *time.Time
 	if env, gErr := imp.galgame.GetGalgame(ctx, galgameID, ""); gErr == nil && env != nil && env.Galgame.ReleaseDate != nil {
 		releaseDate = utils.ParseGalgameReleaseDate(*env.Galgame.ReleaseDate)
@@ -217,7 +236,7 @@ func (imp *Importer) createResource(galgameID int, p *parsedPatch, sanitized, uu
 // processDelete mirrors one archive "delete old file" entry (delete_list.txt):
 // the increment supersedes an older patch file, so the matching moyu resource
 // should go too. Resolve the superseded filename the same way as import
-// (parse → wiki → galgame_id), find the ARCHIVE-owned row (guarded to
+// (parse → catalog → galgame_id), find the ARCHIVE-owned row (guarded to
 // user_id == imp.userID so a user-uploaded resource is never touched), soft-
 // delete the artifact blob, hard-delete the row (FK cascades take likes /
 // favorites / history / revisions), and fix the aggregates.
@@ -233,10 +252,10 @@ func (imp *Importer) processDelete(ctx context.Context, rawLine string) fileResu
 	}
 	exists, galgameID, err := imp.galgame.CheckGalgameByVndbID(ctx, p.VndbID)
 	if err != nil {
-		return fileResult{name, statusFailed, "wiki check: " + err.Error()}
+		return fileResult{name, statusFailed, "catalog check: " + err.Error()}
 	}
 	if !exists {
-		return fileResult{name, statusWikiMissing, "vndb " + p.VndbID + " not on wiki"}
+		return fileResult{name, statusCatalogMissing, "vndb " + p.VndbID + " not in catalog"}
 	}
 
 	sanitized := sanitizeFileName(name)
@@ -271,11 +290,22 @@ func (imp *Importer) processDelete(ctx context.Context, rawLine string) fileResu
 	return fileResult{name, statusOK, fmt.Sprintf("deleted resource %d (galgame %d)", res.ID, galgameID)}
 }
 
-// unpublishedDrafts returns the touched galgame_ids that the public wiki batch
+// unpublishedDrafts returns the touched galgame_ids that the public /v1 batch
 // does NOT return — i.e. still at status=2 (unclaimed VNDB draft). Their imported
 // resources are invisible on moyu (homepage/list/detail read only published
-// galgames) until they're published. Claiming needs a user/admin JWT the S2S
-// importer has no way to obtain, so we surface them for the operator to publish.
+// galgames) until they're published. Claiming needs a user JWT the S2S importer
+// has no way to obtain, so we surface them for the operator to publish.
+//
+// The list is "resolved but not publicly readable", which is broader than
+// "draft": a galgame the catalog has since deleted or merged away also fails to
+// come back from batch. Same symptom (imported resources nobody can see), but
+// publishing is not the fix and no shipped tool covers it — the admin orphan
+// view pre-filters on a malformed vndb_id shape, so a well-formed id whose
+// galgame vanished is explicitly out of its scope (admin repository orphanCond),
+// and cmd/remap-patch-ids is a spent one-time schema migration, not a repointer.
+// Those need a manual cross-DB repoint. The tell is the remediation UPDATE
+// itself: it is guarded by AND status=2, so an id that reports 0 rows updated
+// was never a draft.
 func (imp *Importer) unpublishedDrafts(ctx context.Context) []int {
 	if len(imp.touched) == 0 {
 		return nil
@@ -292,7 +322,7 @@ func (imp *Importer) unpublishedDrafts(ctx context.Context) []int {
 		}
 		briefs, err := imp.galgame.GalgameBatch(ctx, ids[i:end], "all")
 		if err != nil {
-			slog.Warn("draft check: wiki batch failed (skipping this chunk)", "err", err)
+			slog.Warn("draft check: catalog batch failed (skipping this chunk)", "err", err)
 			continue
 		}
 		for j := range briefs {

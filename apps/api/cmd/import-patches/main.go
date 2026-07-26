@@ -1,10 +1,10 @@
 // cmd/import-patches bulk-imports a directory of standardized Chinese-patch
 // archives (`.rar/.zip/.7z`, legacy naming unchanged) into moyu, replacing the
 // old standalone sync-patch tool. Per file it: parses the name, maps the VNDB id
-// to a Wiki galgame_id (identities are shared: patch.id == galgame_id), ensures
-// the local patch carrier exists, uploads the bytes through the centralized
-// artifact service (init -> PUT straight to B2 from disk -> complete; NO blake3),
-// and inserts an artifact-backed patch_resource.
+// to a catalog galgame_id (identities are shared: patch.id == galgame_id),
+// ensures the local patch carrier exists, uploads the bytes through the
+// centralized artifact service (init -> PUT straight to B2 from disk ->
+// complete; NO blake3), and inserts an artifact-backed patch_resource.
 //
 // It is an INTERNAL archive job: all rows are owned by --user-id (default 2310)
 // and it deliberately skips the moemoepoint award + favorited-user notifications
@@ -18,7 +18,7 @@
 //
 // Deploy: cross-compile static (CGO_ENABLED=0 GOOS=linux) and run on the same
 // docker network as the moyu/infra stack (dokploy-network) so the internal
-// service DNS names (artifact / galgame / postgres) resolve, with egress for the
+// service DNS names (artifact / catalog / postgres) resolve, with egress for the
 // B2 PUT. Config comes from the moyu-api env (godotenv.Load + config.Load).
 //
 // Usage:
@@ -58,7 +58,7 @@ func main() {
 
 	dir := flag.String("dir", "./patch", "directory of patch archives to import")
 	deleteList := flag.String("delete-list", "", "path to a delete_list.txt of superseded filenames to remove (runs before import)")
-	dryRun := flag.Bool("dry-run", false, "probe only: parse + wiki-check + dedup, no upload/write/delete")
+	dryRun := flag.Bool("dry-run", false, "probe only: parse + catalog-check + dedup, no upload/write/delete")
 	userID := flag.Int("user-id", 2310, "archive account user_id that owns the imported patches/resources")
 	vndbFilter := flag.String("vndb", "", "comma-separated VNDB ids to restrict imports to (e.g. v14,v36)")
 	limit := flag.Int("limit", 0, "process at most N recognized files (0 = all; for testing)")
@@ -72,6 +72,18 @@ func main() {
 		if v = strings.TrimSpace(v); v != "" {
 			only[v] = true
 		}
+	}
+
+	// Same fail-fast as app.validateConfig: the internal-tier X-API-Key became
+	// mandatory when the legacy /api rollback valve was retired (open-API phase 2
+	// wave 05). Without this check a key-less env file still builds a client, and
+	// every file fails with an opaque "catalog check: ..." only after the whole
+	// directory has been walked. The key alone is checked because
+	// KUN_NEXTMOE_API_BASE carries a dev default, so config.Load never yields an
+	// empty one.
+	if cfg.NextMoeAPI.APIKey == "" {
+		slog.Error("KUN_NEXTMOE_API_KEY is required: the catalog galgame read face is gated by the internal-tier key")
+		os.Exit(1)
 	}
 
 	db := database.NewPostgres(cfg.Database, cfg.Server.Mode)
@@ -100,12 +112,12 @@ func main() {
 
 	ctx := context.Background()
 	counts := map[status]int{}
-	var wikiMissing, failed []fileResult
+	var catalogMissing, failed []fileResult
 	tally := func(phase string, r fileResult) {
 		counts[r.status]++
 		switch r.status {
-		case statusWikiMissing:
-			wikiMissing = append(wikiMissing, r)
+		case statusCatalogMissing:
+			catalogMissing = append(catalogMissing, r)
 		case statusFailed:
 			failed = append(failed, r)
 		}
@@ -171,32 +183,40 @@ func main() {
 		tally("import", imp.processFile(ctx, path))
 	}
 
-	// Flag imported galgames still at wiki status=2 (unclaimed VNDB draft): their
-	// resources are invisible on moyu until published. We can't claim from the S2S
-	// importer, so report them + the exact remediation.
+	// Flag imported galgames still at catalog status=2 (unclaimed VNDB draft):
+	// their resources are invisible on moyu until published. We can't claim from
+	// the S2S importer, so report them + the exact remediation.
+	//
+	// Publishing by hand is a deliberate bypass of the catalog edit engine (the
+	// UI path, POST /galgame/:gid/claim, files a status 2->0 proposal that
+	// auto-merges and fires OnMerge). Safe, because the engine is read-through —
+	// it loads its snapshot from the live galgame row rather than a projection,
+	// so a later edit sees the new status and won't revert it — but it does skip
+	// the revision log and the OnMerge side effects. Search reindex is one of
+	// those effects, which is why step 2 is mandatory, not optional.
 	if drafts := imp.unpublishedDrafts(ctx); len(drafts) > 0 {
 		idList := make([]string, len(drafts))
 		for i, id := range drafts {
 			idList[i] = strconv.Itoa(id)
 		}
 		csv := strings.Join(idList, ",")
-		slog.Warn("UNPUBLISHED wiki drafts (status=2) — these galgames + their imported resources are INVISIBLE on moyu until published",
+		slog.Warn("UNPUBLISHED catalog drafts (status=2) — these galgames + their imported resources are INVISIBLE on moyu until published",
 			"count", len(drafts), "galgame_ids", csv)
-		slog.Warn("remediation 1/2 — on kun_galgame_wiki DB run:",
+		slog.Warn("remediation 1/2 — on the catalog galgame DB (prod: kun_catalog; local dev: kun_galgame_wiki) run:",
 			"sql", "UPDATE galgame SET status=0 WHERE id IN ("+csv+") AND status=2;")
-		slog.Warn("remediation 2/2 — rebuild search so they're findable:",
+		slog.Warn("remediation 2/2 — REQUIRED, the raw UPDATE bypasses the edit engine's reindex hook:",
 			"cmd", "reindex-search --index=galgames")
 	}
 
 	slog.Info("summary",
 		"ok", counts[statusOK], "dry-run", counts[statusDryRun], "skipped", counts[statusSkipped],
-		"unrecognized", counts[statusUnrecognized], "wiki-missing", counts[statusWikiMissing],
+		"unrecognized", counts[statusUnrecognized], "catalog-missing", counts[statusCatalogMissing],
 		"failed", counts[statusFailed])
 
-	if len(wikiMissing) > 0 {
-		slog.Warn("VNDB ids not found on Wiki (need manual review):")
-		for _, r := range wikiMissing {
-			slog.Warn("  wiki-missing", "file", r.file, "detail", r.msg)
+	if len(catalogMissing) > 0 {
+		slog.Warn("VNDB ids not found in the catalog (need manual review):")
+		for _, r := range catalogMissing {
+			slog.Warn("  catalog-missing", "file", r.file, "detail", r.msg)
 		}
 	}
 	if len(failed) > 0 {
