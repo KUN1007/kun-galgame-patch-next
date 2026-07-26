@@ -199,20 +199,18 @@ export default defineEventHandler(async (event) => {
     },
   })
 
-  // response 结构：
+  // response 结构（裸 RFC 6749 §5.1，无信封）：
   // {
-  //   "code": 0,
-  //   "message": "成功",
-  //   "data": {
-  //     "access_token": "eyJhbGc...",
-  //     "token_type": "Bearer",
-  //     "expires_in": 900,
-  //     "refresh_token": "kx3v9q…（不透明随机串，不要解析）",
-  //     "scope": "openid profile email"   // 回显授权时的 scope
-  //   }
+  //   "access_token": "eyJhbGc...",
+  //   "token_type": "Bearer",
+  //   "expires_in": 900,
+  //   "refresh_token": "kx3v9q…（不透明随机串，不要解析）",
+  //   "scope": "openid profile email",  // 回显授权时的 scope
+  //   "id_token": "eyJhbGc..."          // 仅在申请了 openid scope 时返回
   // }
+  // 失败为 {"error": "...", "error_description": "..."}。
 
-  return response.data
+  return response
 })
 ```
 
@@ -225,18 +223,18 @@ const userInfo = await $fetch('https://oauth.kungal.com/api/v1/oauth/userinfo', 
   },
 })
 
-// 返回：
+// 返回（裸 OIDC userinfo 对象，无信封）：
 // {
-//   "code": 0,
-//   "message": "成功",
-//   "data": {
-//     "sub": "550e8400-e29b-41d4-a716-446655440000",  // 用户 UUID（唯一标识）
-//     "name": "KUN",
-//     "email": "kun@kungal.com",
-//     "picture": "https://...",
-//     "updated_at": 1234567890
-//   }
+//   "id": 12345,
+//   "sub": "550e8400-e29b-41d4-a716-446655440000",  // 用户 UUID（唯一标识）
+//   "name": "KUN",
+//   "email": "kun@kungal.com",
+//   "picture": "https://...",
+//   "roles": ["user"],
+//   "updated_at": 1234567890
 // }
+// 失败走 RFC 6750：带 WWW-Authenticate 头 + {"error","error_description"}；
+// 封禁是 HTTP 403。
 ```
 
 > **⚠️ 关于 scope：上面这份响应里有 `email`，前提是你在步骤 3 申请了 `email` scope**
@@ -520,7 +518,18 @@ access token 的结构（完整 claim 列表见 [04-tokens-and-errors.md](./04-t
 
 ## 7. 错误处理
 
-所有 API 响应格式：
+**协议端点**（`/oauth/token`、`/oauth/userinfo`、`/oauth/revoke`）失败时返回 RFC 6749 §5.2 /
+RFC 6750 §3.1 错误对象，**没有 `code`**：
+
+```json
+{ "error": "invalid_grant", "error_description": "无效的授权码" }
+```
+
+分类规则见 [04-tokens-and-errors.md](./04-tokens-and-errors.md)：`invalid_token` /
+`invalid_grant` / `invalid_client` / `unauthorized_client` = 凭据已死（清会话重登），
+**只有 5xx 和未知字符串才算瞬态可重试**，封禁是 HTTP 403。
+
+**其余端点**用 house 信封，`code = 0` 表示成功，非零表示错误：
 
 ```json
 {
@@ -529,8 +538,6 @@ access token 的结构（完整 claim 列表见 [04-tokens-and-errors.md](./04-t
   "data": { ... }
 }
 ```
-
-`code = 0` 表示成功，非零表示错误。
 
 ### OAuth 相关错误码
 

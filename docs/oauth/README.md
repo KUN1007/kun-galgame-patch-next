@@ -61,6 +61,20 @@
 
 ## 响应格式
 
+本平台有**两种线格式，按端点划分**，不要混用：
+
+**① OAuth/OIDC 协议端点**（`/oauth/token`、`/oauth/userinfo`、`/oauth/revoke`）——
+遵循 RFC 6749 / 6750 / 7009，**裸顶层 JSON，没有信封**：
+
+```json
+{ "access_token": "...", "token_type": "Bearer", "expires_in": 900 }
+```
+
+失败为 `{"error": "invalid_grant", "error_description": "..."}`。标准 OIDC 客户端库
+可直接对接，无需任何自定义解包。
+
+**② 其余所有端点**（`/auth/me`、`/users/*`、`/oauth/ecosystem` 等）——house 信封：
+
 ```json
 {
   "code": 0,        // 0 = 成功，非零 = 错误码

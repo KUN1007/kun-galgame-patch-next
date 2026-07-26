@@ -51,17 +51,18 @@
 
 ```json
 {
-  "code": 0,
-  "message": "成功",
-  "data": {
-    "access_token": "eyJhbGc...",
-    "token_type": "Bearer",
-    "expires_in": 900,
-    "refresh_token": "kx3v9q…（不透明随机串）",
-    "scope": "openid profile email"
-  }
+  "access_token": "eyJhbGc...",
+  "token_type": "Bearer",
+  "expires_in": 900,
+  "refresh_token": "kx3v9q…（不透明随机串）",
+  "scope": "openid profile email",
+  "id_token": "eyJhbGc...（仅在申请了 openid scope 时返回）"
 }
 ```
+
+> 裸 RFC 6749 §5.1 顶层 JSON，**没有 `{code,message,data}` 信封**。失败是 §5.2 的
+> `{"error": "...", "error_description": "..."}`。详见
+> [04-tokens-and-errors.md](./04-tokens-and-errors.md#协议端点的线格式rfc-6749--6750唯一格式无开关)。
 
 | 字段 | 说明 |
 |------|------|
@@ -117,19 +118,19 @@
 
 ```json
 {
-  "code": 0,
-  "message": "成功",
-  "data": {
-    "id": 12345,
-    "sub": "550e8400-e29b-41d4-a716-446655440000",
-    "name": "KUN",
-    "email": "kun@kungal.com",
-    "picture": "https://...",
-    "roles": ["user", "admin"],
-    "updated_at": 1234567890
-  }
+  "id": 12345,
+  "sub": "550e8400-e29b-41d4-a716-446655440000",
+  "name": "KUN",
+  "email": "kun@kungal.com",
+  "picture": "https://...",
+  "roles": ["user", "admin"],
+  "updated_at": 1234567890
 }
 ```
+
+> 裸 OIDC userinfo 对象，**没有信封**。失败走 RFC 6750 §3：响应带
+> `WWW-Authenticate: Bearer realm="kungal", error="invalid_token", ...` 头，
+> body 为 `{"error": "...", "error_description": "..."}`；**封禁是 HTTP 403**。
 
 | 字段 | 说明 |
 |------|------|
@@ -175,6 +176,9 @@
   "token": "要吊销的 refresh_token"
 }
 ```
+
+**成功响应**：HTTP 200，**body 为空**（RFC 7009 §2.2 —— 无论令牌是否存在都一样，
+否则这个端点会变成探测令牌是否有效的 oracle）。无条件 `res.json()` 的客户端要先判空。
 
 ---
 

@@ -256,7 +256,83 @@ curl -s https://oauth.kungal.com/oauth/jwks | jq .
 如果出现意外，我们可以回滚（回滚会让已经改成只读标准格式的站点受影响，所以请务必在第 3 步之前
 保留兼容分支）。
 
-## 7. 参考
+## 7. 接 Auth0 的（Custom Social Connection 的「Fetch User Profile Script」）
+
+如果你是把我们接进 **Auth0**，Auth0 会要你填一段 **Fetch User Profile Script**。
+
+### 先看看你能不能不写这段脚本
+
+我们现在是完整的标准 OIDC Provider（discovery + JWKS + id_token + 规范 token/userinfo）。
+Auth0 的 **Enterprise → OpenID Connect** 连接类型只需要填 discovery 地址，**不需要任何脚本**：
+
+```
+https://oauth.kungal.com/.well-known/openid-configuration
+```
+
+这是推荐做法 —— 没有自定义代码就没有会过期的自定义代码。
+
+### 如果你已经建成 Custom Social Connection
+
+那就必须填脚本。配置：
+
+| 字段 | 值 |
+|------|-----|
+| Authorization URL | `https://oauth.kungal.com/api/v1/oauth/authorize` |
+| Token URL | `https://oauth.kungal.com/api/v1/oauth/token` |
+| Scope | `openid profile email` |
+
+Fetch User Profile Script：
+
+```js
+function fetchUserProfile(accessToken, context, callback) {
+  request.get(
+    {
+      url: 'https://oauth.kungal.com/api/v1/oauth/userinfo',
+      headers: {
+        Authorization: 'Bearer ' + accessToken,
+        Accept: 'application/json'
+      }
+    },
+    function (err, resp, body) {
+      if (err) return callback(err)
+      if (resp.statusCode !== 200) {
+        return callback(new Error('userinfo ' + resp.statusCode + ': ' + body))
+      }
+
+      var p
+      try {
+        p = JSON.parse(body)
+      } catch (e) {
+        return callback(new Error('userinfo returned non-JSON: ' + body))
+      }
+
+      // 响应就是裸 userinfo 对象，字段直接在顶层 —— 不要写 p.data.xxx
+      callback(null, {
+        user_id: p.sub,          // OIDC subject（UUID），稳定唯一标识
+        nickname: p.name,
+        name: p.name,
+        picture: p.picture,
+        email: p.email,          // 没申请 email scope 时这个键根本不存在
+        email_verified: !!p.email,
+        kungal_id: p.id,         // 我们的整数用户 ID，需要就留着
+        roles: p.roles
+      })
+    }
+  )
+}
+```
+
+### 三个容易踩的点
+
+1. **不要写 `p.data.access_token` / `p.data.sub`。** 协议端点没有信封（2026-07-25 之前有，
+   现在没有了）。
+2. **不要合成假邮箱。** 没申请 `email` scope 时 `email` 这个键**不存在**，不是空串。
+   写 `email: p.email || (p.sub + '@你的域')` 会让你名下全部用户的邮箱变成假地址 ——
+   这是真实发生过的事故，用户此后无法凭邮箱找回账号。要邮箱就申请 `email` scope。
+3. **`Authorization` 头的 scheme 大小写我们不再敏感**（RFC 7235 §2.1），`bearer` / `Bearer`
+   都行。但请求头名必须是 `Authorization`。
+
+## 8. 参考
 
 - 错误码与线格式契约：[04-tokens-and-errors.md](./04-tokens-and-errors.md)
 - 协议端点说明：[01-oauth-endpoints.md](./01-oauth-endpoints.md)

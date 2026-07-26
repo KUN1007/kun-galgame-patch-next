@@ -110,21 +110,19 @@ runtimeConfig: {
 }
 ```
 
-3. 用返回的 `data.access_token` 调用 `/oauth/userinfo` 获取用户信息：
+3. 用返回的 `access_token` 调用 `/oauth/userinfo` 获取用户信息：
 
 ```json
 // GET /oauth/userinfo, Authorization: Bearer <access_token>
-// 响应:
+// 响应（裸 OIDC userinfo 对象，无信封）:
 {
-  "code": 0,
-  "message": "成功",
-  "data": {
-    "sub": "用户UUID（唯一标识）",
-    "name": "用户名",
-    "email": "邮箱",
-    "picture": "头像URL",
-    "updated_at": 1234567890
-  }
+  "id": 12345,
+  "sub": "用户UUID（唯一标识）",
+  "name": "用户名",
+  "email": "邮箱",
+  "picture": "头像URL",
+  "roles": ["user"],
+  "updated_at": 1234567890
 }
 ```
 
@@ -161,7 +159,13 @@ POST /oauth/revoke
 
 ## API 响应格式
 
-所有 OAuth Server 的 API 响应使用统一格式：
+**两种格式，按端点划分**：
+
+`/oauth/token`、`/oauth/userinfo`、`/oauth/revoke` 是 OAuth/OIDC 协议端点，遵循
+RFC 6749 / 6750 / 7009 —— **裸顶层 JSON，没有信封**，失败为
+`{"error": "...", "error_description": "..."}`。
+
+其余端点（`/auth/me`、`/users/*` 等）用 house 信封：
 
 ```json
 {
@@ -170,8 +174,6 @@ POST /oauth/revoke
   "data": { ... }
 }
 ```
-
-包括 `/oauth/token` 和 `/oauth/userinfo`，实际数据都在 `data` 字段中。
 
 ## 错误处理
 
