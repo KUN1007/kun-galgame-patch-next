@@ -74,6 +74,56 @@
   user-select: none;
 }
 
+/* ── Loading placeholder (editor-vue 0.31.0) ───────────────────────────── */
+/* <KunEditor> mounts its body client-side only; the server render and the first
+   paint emit `.kun-editor__loading` > 3× `.kun-editor__skeleton` instead, which
+   then hydrates cleanly and is swapped out once Milkdown is ready. Without
+   rules here those are three zero-height divs — the area collapses exactly like
+   it did before 0.31.0, so this is required, not decorative.
+
+   Deliberately NOT a copy of upstream's reference styling: that animates a
+   `linear-gradient` sweep across `background-position`, and a background
+   gradient is forbidden here. A solid fill with an opacity pulse reads the
+   same. `oklch(var(--default-200))` is the raw token triplet — `--color-*` does
+   NOT exist at runtime (Tailwind v4 inlines @theme colors into the utilities it
+   generates and never emits the bare variable), which is why the rest of this
+   file's colors are silently dead; don't copy that pattern here. */
+.kun-editor__loading {
+  padding: 0.75rem 0;
+}
+
+.kun-editor__skeleton {
+  height: 0.85rem;
+  margin: 0.6rem 0;
+  border-radius: 4px;
+  background-color: oklch(var(--default-200));
+  animation: kun-editor-skeleton-pulse 1.2s ease-in-out infinite;
+}
+
+.kun-editor__skeleton:nth-child(2) {
+  width: 85%;
+}
+
+.kun-editor__skeleton:nth-child(3) {
+  width: 60%;
+}
+
+@keyframes kun-editor-skeleton-pulse {
+  0%,
+  100% {
+    opacity: 1;
+  }
+  50% {
+    opacity: 0.45;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .kun-editor__skeleton {
+    animation: none;
+  }
+}
+
 /* ── Selection bubble toolbar (floats over a text selection) ────────────── */
 /* Positioned by floating-ui (absolute left/top); visibility via data-show. */
 .kun-editor__bubble {
