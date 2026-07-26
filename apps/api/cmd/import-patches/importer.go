@@ -316,10 +316,7 @@ func (imp *Importer) unpublishedDrafts(ctx context.Context) []int {
 	}
 	published := make(map[int]struct{}, len(ids))
 	for i := 0; i < len(ids); i += 80 {
-		end := i + 80
-		if end > len(ids) {
-			end = len(ids)
-		}
+		end := min(i+80, len(ids))
 		briefs, err := imp.galgame.GalgameBatch(ctx, ids[i:end], "all")
 		if err != nil {
 			slog.Warn("draft check: catalog batch failed (skipping this chunk)", "err", err)

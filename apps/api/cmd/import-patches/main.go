@@ -68,7 +68,7 @@ func main() {
 	logger.Init(cfg.Server.Mode)
 
 	only := map[string]bool{}
-	for _, v := range strings.Split(*vndbFilter, ",") {
+	for v := range strings.SplitSeq(*vndbFilter, ",") {
 		if v = strings.TrimSpace(v); v != "" {
 			only[v] = true
 		}
