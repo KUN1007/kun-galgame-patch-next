@@ -165,11 +165,20 @@ const goToMine = async () => {
 
 // ─── Scenario D: submit a new galgame ─────────────────
 //
-// No vndb_id field by design: Galgame Wiki's daily `sync-vndb` cron already
-// maintains EVERY VNDB entry as a claimable status=2 draft. So anything that
-// fell through the search to this form is, by definition, not in VNDB —
-// asking for a VNDB ID here is logically impossible (and would only ever
-// collide → 20004). VNDB games are reached via the "认领并发布" (claim) path.
+// No vndb_id field by design: Galgame Wiki's daily `sync-vndb` cron maintains
+// (nearly) every VNDB entry as a claimable status=2 draft, so anything that
+// fell through the search to this form is either genuinely not in VNDB, or in
+// the one excluded residue: cancelled entries with NO release date (~1k
+// date-less vaporware — users realistically never submit these). Asking for a
+// VNDB ID here would only ever collide → 20004. VNDB games are reached via
+// the "认领并发布" (claim) path.
+//
+// History: before 2026-07 the sync skipped ALL cancelled entries (~2.4k,
+// including ~1.5k actually-shipped games like v1912 EDEN), which broke this
+// premise and let users mint no-vndb_id entries for games that ARE in VNDB
+// (the 2026-07-24 duplicate-draft failure mode). Fixed in infra
+// (cancelledVaporware gate) + backfilled via `sync-vndb --full`; entries
+// created through this form during that window may still lack a vndb_id.
 
 interface SubmitForm {
   name_zh_cn: string
