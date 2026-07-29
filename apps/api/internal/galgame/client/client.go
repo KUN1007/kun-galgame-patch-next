@@ -24,6 +24,13 @@ import (
 	"time"
 )
 
+// galgameCodeNotFound is the envelope business code the galgame/catalog faces
+// use for "no such row". The client mints it itself in the one place a read
+// resolves to nothing locally (an unregistered gid, or a work whose claim is
+// not live), so every caller's existing "is this a 404?" branch keeps working
+// without learning about the two-hop resolution behind it.
+const galgameCodeNotFound = 404
+
 // GalgameError is returned by write methods on the Client when the galgame service
 // envelope reports a non-zero `code`. It carries the wire-level (code,
 // message) so the outer handler can transparently forward them — per
@@ -40,21 +47,24 @@ func (e *GalgameError) Error() string {
 
 // Client is a thin wrapper around calls to the NextMoe catalog service (galgame
 // surface). It derives three faces from one host base:
-//   - v1Base       = {base}/v1       — the FROZEN /v1 public data contract
-//     (curated shapes). Since open-API phase 2 wave 07 (route-B endgame) the
-//     galgame READ set consumes this face: search / batch / detail / month
-//     calendar, plus the taxonomy reads (tag/official list/search/detail,
-//     engine list, series list). Wave A1 additionally moved the vndb reverse
-//     lookup off the deprecated galgame surface onto the CATALOG surface
-//     (/v1/catalog/lookup), which shares this base + key. A BFF-side adaptation
-//     layer (public_dto.go + the taxonomy reshapers below) projects the curated
-//     /v1 records back onto this client's DTOs so moyu's own API output stays
-//     byte-stable. Gated by the internal-tier X-API-Key (galgame:read +
-//     galgame:nsfw scopes). NOTE: the /v1 GALGAME surface serves PUBLISHED works
-//     only — it does not honour `status`, so anything that must see status=2
-//     VNDB drafts or a caller's own pending submissions belongs on the internal
-//     face below. The one exception is the catalog lookup above: its claimed_by
-//     projection is status-blind and therefore DOES answer for drafts.
+//
+//   - v1Base       = {base}/v1       — the public data contract. Since wave
+//     A2-2 the whole galgame READ set consumes the CATALOG face under it
+//     (/v1/catalog/*): works list + detail, the release calendar, the works
+//     product search, the taxonomy browse reads and the reverse lookup. The
+//     deprecated /v1/galgame product face is no longer called at all — that
+//     surface carries Deprecation + Sunset 2026-10-31 headers and is being
+//     taken down. A BFF-side adaptation layer (catalog_dto.go / catalog_map.go
+//     / catalog_resolve.go) projects the registry's records back onto this
+//     client's DTOs so moyu's own API output stays stable. Gated by the
+//     internal-tier X-API-Key (galgame:read + galgame:nsfw scopes).
+//
+//     TWO-HOP READS: the catalog addresses works by its own id while moyu is
+//     gid-native, so a gid-keyed read resolves through the reverse lookup first
+//     and hydrates second (see catalog_resolve.go). The claim pointer's `state`
+//     that comes back is what replaced the wiki `status` filter — reads gate on
+//     state == live, which is also the ban gate.
+//
 //   - internalBase = {base}/internal — the internal-tier platform-workflow face,
 //     gated by an X-API-Key. What STAYS here: the JWT personal reads (/galgame/
 //     mine, /galgame/messages/mine), the publish picker's status=0,2 +
@@ -64,6 +74,7 @@ func (e *GalgameError) Error() string {
 //     links+aliases relation edits. Personalized reads and user writes carry
 //     dual credentials (X-API-Key = client identity; Authorization: Bearer =
 //     user identity, which the catalog's jwtAuth validates itself).
+//
 //   - legacyBase   = {base}/api      — the legacy face; only the staff taxonomy
 //     family (tag/official/engine/series CRUD + revert) and /admin/* stay here.
 //
@@ -78,6 +89,10 @@ type Client struct {
 	legacyBase   string
 	apiKey       string
 	http         *http.Client
+	// gids caches the wiki gid -> catalog work id mapping the catalog reads
+	// resolve through (see catalog_resolve.go). Identity only: the volatile
+	// claim state is always read fresh from the hydration call.
+	gids *gidMap
 }
 
 // NewWithKey constructs a Client that routes read-set calls (and the S2S cron
@@ -95,6 +110,7 @@ func NewWithKey(baseURL, apiKey string) *Client {
 		legacyBase:   base + "/api",
 		apiKey:       apiKey,
 		http:         &http.Client{Timeout: 10 * time.Second},
+		gids:         newGIDMap(),
 	}
 }
 
@@ -187,53 +203,33 @@ type Paginated[T any] struct {
 
 // ─── Models (only the fields this project uses) ─────
 
-// GalgameHit is a single item returned from galgame /galgame/search.
-//
-// U1 (2026-05-18): the old `released string` field is gone; galgame now exposes
-// `release_date` (YYYY-MM-DD string or null) + `release_date_tba` (bool).
-// The search query params `released_from / released_to / sort=released_*`
-// remain unchanged on galgame side (year-based filter/sort over the derived
-// `released_year` index field).
-type GalgameHit struct {
-	ID                  int     `json:"id"`
-	VndbID              string  `json:"vndb_id"`
-	NameEnUs            string  `json:"name_en_us"`
-	NameZhCn            string  `json:"name_zh_cn"`
-	NameJaJp            string  `json:"name_ja_jp"`
-	NameZhTw            string  `json:"name_zh_tw"`
-	Banner              string  `json:"banner"`
-	ContentLimit        string  `json:"content_limit"`
-	AgeLimit            string  `json:"age_limit"`
-	OriginalLanguage    string  `json:"original_language"`
-	ReleaseDate         *string `json:"release_date"`
-	ReleaseDateTBA      bool    `json:"release_date_tba"`
-	EffectiveBannerHash string  `json:"effective_banner_hash"`
-	// EffectiveBanner{Width,Height,Thumbhash} are the pinned cover's intrinsic
-	// metadata, filled at read time by the galgame/galgame service (omitempty until
-	// its backfill runs). Let a card reserve the right aspect ratio + show a
-	// ThumbHash blur-up without a second roundtrip.
-	EffectiveBannerWidth     int               `json:"effective_banner_width,omitempty"`
-	EffectiveBannerHeight    int               `json:"effective_banner_height,omitempty"`
-	EffectiveBannerThumbhash string            `json:"effective_banner_thumbhash,omitempty"`
-	Covers                   []CoverInput      `json:"covers"`
-	Screenshots              []ScreenshotInput `json:"screenshots"`
-	View                     int               `json:"view"`
-	Status                   int               `json:"status"`
-	TagIDs                   []int             `json:"tag_ids"`
-	OfficialIDs              []int             `json:"official_ids"`
-	EngineIDs                []int             `json:"engine_ids"`
-}
-
-// GalgameBrief is the lightweight shape returned by /galgame/batch.
-// U1: includes release_date / release_date_tba (see GalgameHit comment).
+// GalgameBrief is the lightweight galgame shape the enricher consumes. Since
+// wave A2-2 it is sourced from the catalog works list
+// (GET /v1/catalog/works?ids=&include=names,covers,refs) rather than the
+// deprecated wiki batch face; the field set is unchanged except where the
+// catalog genuinely has no counterpart (see ClaimState, and the retired
+// user_id / resource_update_time — both wiki product state, which the registry
+// refuses to mirror by design).
 type GalgameBrief struct {
-	ID     int    `json:"id"`
-	VndbID string `json:"vndb_id"`
-	// Status: 0 = published, 2 = unclaimed vndb_draft. The galgame calendar now
-	// returns both (status IN (0,2)) so consumers can surface claimable drafts;
-	// moyu (a patch site with no claim flow) shows published only — see the
-	// calendar handlers' published-only filter.
-	Status           int     `json:"status"`
+	// ID is the WIKI galgame id (gid) — moyu's own key space, read off the
+	// catalog row's claim pointer. Zero when the work has no wiki entry, which
+	// only the full-population lanes (calendar) can produce.
+	ID int `json:"id"`
+	// CatalogWorkID is the registry's own id for this work. Surfaced so a
+	// consumer can deep-link the canonical record; moyu never keys on it (R3:
+	// one id space per lane, and moyu's is the gid).
+	CatalogWorkID int64  `json:"catalog_work_id,omitempty"`
+	VndbID        string `json:"vndb_id"`
+	// ClaimState is the catalog's claim VISIBILITY vocabulary — live | draft |
+	// hidden, or "" when no wiki entry claims this work at all. It replaces the
+	// wiki `status` int the deprecated face carried (A2-2 / R7).
+	//
+	// It is the ban gate: the deprecated face served status=0 only, so its
+	// published-only filter silently doubled as moyu's "don't render withdrawn
+	// entries" rule. Lanes that used to inherit that filter now gate on
+	// state == live explicitly; the calendar, which deliberately surfaced
+	// claimable drafts, keeps draft and drops only hidden.
+	ClaimState       string  `json:"claim_state"`
 	NameEnUs         string  `json:"name_en_us"`
 	NameZhCn         string  `json:"name_zh_cn"`
 	NameJaJp         string  `json:"name_ja_jp"`
@@ -243,23 +239,49 @@ type GalgameBrief struct {
 	AgeLimit         string  `json:"age_limit"`
 	OriginalLanguage string  `json:"original_language"`
 	ReleaseDate      *string `json:"release_date"`
-	ReleaseDateTBA   bool    `json:"release_date_tba"`
-	// ReleasePrecision marks how to read ReleaseDate (day/month/year/tba/unknown);
-	// ReleaseDate is normalized so this MUST be read alongside it (a "2026-06-01"
-	// may be June 1st OR "some day in June"). Only the calendar endpoints
-	// (/galgame/calendar*) return it — /galgame/batch does NOT, so omitempty keeps
-	// it absent there. See docs/galgame_wiki/01-galgame.md §release_precision.
+	// ReleasePrecision marks how to read ReleaseDate (day/month/year).
+	// ReleaseDate is NORMALIZED — a "2026-06-01" may be June 1st OR "some day in
+	// June" — so this MUST be read alongside it. The catalog states the same
+	// fact by carrying a partial-ISO date whose length is its precision; the
+	// adapter re-splits it into this pair so moyu's own contract is unchanged.
 	ReleasePrecision    string `json:"release_precision,omitempty"`
 	EffectiveBannerHash string `json:"effective_banner_hash"`
-	// EffectiveBanner{Width,Height,Thumbhash}: pinned cover's intrinsic metadata
-	// (see GalgameHit). Drives card aspect-ratio + blur-up on list/feed pages.
+	// EffectiveBanner{Width,Height,Thumbhash}: the pinned key art's intrinsic
+	// metadata. Drives card aspect-ratio + ThumbHash blur-up on list/feed pages.
 	EffectiveBannerWidth     int               `json:"effective_banner_width,omitempty"`
 	EffectiveBannerHeight    int               `json:"effective_banner_height,omitempty"`
 	EffectiveBannerThumbhash string            `json:"effective_banner_thumbhash,omitempty"`
 	Covers                   []CoverInput      `json:"covers"`
 	Screenshots              []ScreenshotInput `json:"screenshots"`
-	UserID                   int               `json:"user_id"`
-	ResourceUpdateTime       string            `json:"resource_update_time"`
+}
+
+// GalgameHit is a single item returned from the works product search. It is a
+// superset of the brief; the id-array fields have no counterpart on the search
+// row and stay nil, exactly as they did on the deprecated face's thin item.
+type GalgameHit struct {
+	ID            int    `json:"id"`
+	CatalogWorkID int64  `json:"catalog_work_id,omitempty"`
+	VndbID        string `json:"vndb_id"`
+	// ClaimState — see GalgameBrief.ClaimState.
+	ClaimState               string            `json:"claim_state"`
+	NameEnUs                 string            `json:"name_en_us"`
+	NameZhCn                 string            `json:"name_zh_cn"`
+	NameJaJp                 string            `json:"name_ja_jp"`
+	NameZhTw                 string            `json:"name_zh_tw"`
+	Banner                   string            `json:"banner"`
+	ContentLimit             string            `json:"content_limit"`
+	AgeLimit                 string            `json:"age_limit"`
+	OriginalLanguage         string            `json:"original_language"`
+	ReleaseDate              *string           `json:"release_date"`
+	EffectiveBannerHash      string            `json:"effective_banner_hash"`
+	EffectiveBannerWidth     int               `json:"effective_banner_width,omitempty"`
+	EffectiveBannerHeight    int               `json:"effective_banner_height,omitempty"`
+	EffectiveBannerThumbhash string            `json:"effective_banner_thumbhash,omitempty"`
+	Covers                   []CoverInput      `json:"covers"`
+	Screenshots              []ScreenshotInput `json:"screenshots"`
+	TagIDs                   []int             `json:"tag_ids"`
+	OfficialIDs              []int             `json:"official_ids"`
+	EngineIDs                []int             `json:"engine_ids"`
 }
 
 // Tag is galgame's galgame_tag.
@@ -444,67 +466,101 @@ func (c *Client) getV1(ctx context.Context, path string, query url.Values, out a
 
 // ─── High-level methods ──────────────────────────────
 
-// SearchGalgameParams are query parameters for /galgame/search.
+// SearchGalgameParams are query parameters for the works product search.
+//
+// Since wave A2-2 these are projected onto GET /v1/catalog/works/search, whose
+// filter names and types are the catalog works-list parameters verbatim. Two
+// shape differences are enforced here rather than papered over:
+//
+//   - OfficialIDs / EngineIDs are at most ONE id each. The catalog expresses
+//     `label_id=` / `engine_id=` as single values; ANDing several is not
+//     something the face can do, so a longer list is a caller error the search
+//     handler rejects loudly instead of quietly using the first.
+//   - TagIDs are at most 10 (the catalog's own multi-value ceiling), ANDed.
+//
+// `Status` is gone: the catalog has no wiki status machine, and the
+// published-only population the old `status=0` selected is now expressed by the
+// claim-state gate the search face applies for us.
 type SearchGalgameParams struct {
 	Q            string
-	Status       string // csv of statuses, e.g. "0" = published only; "" = no filter
-	ContentLimit string // sfw / nsfw
+	ContentLimit string // sfw / nsfw / all
 	AgeLimit     string // all / r18
-	OriginalLang string // csv, e.g. "ja-jp,en-us"
+	OriginalLang string // csv of product locales, e.g. "ja-jp,en-us"
 	TagIDs       []int
 	OfficialIDs  []int
 	EngineIDs    []int
 	SeriesID     int
 	ReleasedFrom int
 	ReleasedTo   int
-	IncludeIntro bool
-	Sort         string // relevance / released_desc / released_asc / view / updated
+	Sort         string // relevance / released_desc / released_asc / updated / popularity
 	Page         int
 	Limit        int
 }
 
-// SearchGalgame calls /galgame/search.
+// searchSortForCatalog maps moyu's sort token to the catalog search face's.
+//
+// `view` has no successor: the wiki counted moyu-side page views, which the
+// registry does not keep. The catalog's `popularity` (log-damped upstream
+// collect/download counts) is the ranking that replaced it, and the deprecated
+// face already used popularity as its tiebreaker — so `view` maps there rather
+// than 400-ing an existing caller.
+func searchSortForCatalog(sort string) string {
+	switch strings.TrimSpace(sort) {
+	case "", "relevance":
+		return ""
+	case "view":
+		return "popularity"
+	default:
+		return sort
+	}
+}
+
+// SearchGalgame runs the works product search on GET /v1/catalog/works/search.
+//
+// The result's `total` is now trustworthy in a way the deprecated face's was
+// not: the wiki search compiled its content filter into the re-hydration SQL
+// but NOT into the Meili filter, so `total` counted rows the caller could not
+// see and every sfw consumer's pagination was lossy. The catalog compiles one
+// expression for total, items and facets alike.
 func (c *Client) SearchGalgame(ctx context.Context, p SearchGalgameParams) (*Paginated[GalgameHit], error) {
 	q := url.Values{}
 	if p.Q != "" {
 		q.Set("q", p.Q)
 	}
-	if p.Status != "" {
-		// docs/galgame_wiki/05-search.md: status csv; omit = no filter.
-		q.Set("status", p.Status)
+	// The content axis: moyu's content_limit picks the nsfw switch and, for the
+	// nsfw-only case, the rating filter. age_limit=r18 narrows to r18 the same
+	// way — the wiki's two axes collapse onto the catalog's one.
+	gate := gateFor(p.ContentLimit)
+	if p.AgeLimit == "r18" {
+		gate.nsfw = true
+		gate.contentRating = "r18"
 	}
-	if p.ContentLimit != "" {
-		q.Set("content_limit", p.ContentLimit)
-	}
-	if p.AgeLimit != "" {
-		q.Set("age_limit", p.AgeLimit)
-	}
-	if p.OriginalLang != "" {
-		q.Set("original_language", p.OriginalLang)
+	gate.apply(q)
+
+	if lang := joinCatalogLangs(p.OriginalLang); lang != "" {
+		q.Set("olang", lang)
 	}
 	if len(p.TagIDs) > 0 {
-		q.Set("tag_ids", joinInts(p.TagIDs))
+		q.Set("tag_id", joinInts(p.TagIDs))
 	}
 	if len(p.OfficialIDs) > 0 {
-		q.Set("official_ids", joinInts(p.OfficialIDs))
+		q.Set("label_id", strconv.Itoa(p.OfficialIDs[0]))
 	}
 	if len(p.EngineIDs) > 0 {
-		q.Set("engine_ids", joinInts(p.EngineIDs))
+		q.Set("engine_id", strconv.Itoa(p.EngineIDs[0]))
 	}
 	if p.SeriesID > 0 {
 		q.Set("series_id", strconv.Itoa(p.SeriesID))
 	}
+	// moyu's release filter is year-granular; the catalog's is a date bound.
 	if p.ReleasedFrom > 0 {
-		q.Set("released_from", strconv.Itoa(p.ReleasedFrom))
+		q.Set("released_after", yearLowerBound(p.ReleasedFrom))
 	}
 	if p.ReleasedTo > 0 {
-		q.Set("released_to", strconv.Itoa(p.ReleasedTo))
+		q.Set("released_before", yearUpperBound(p.ReleasedTo))
 	}
-	if p.IncludeIntro {
-		q.Set("include_intro", "true")
-	}
-	if p.Sort != "" {
-		q.Set("sort", p.Sort)
+	if s := searchSortForCatalog(p.Sort); s != "" {
+		q.Set("sort", s)
 	}
 	if p.Page > 0 {
 		q.Set("page", strconv.Itoa(p.Page))
@@ -512,27 +568,62 @@ func (c *Client) SearchGalgame(ctx context.Context, p SearchGalgameParams) (*Pag
 	if p.Limit > 0 {
 		q.Set("limit", strconv.Itoa(p.Limit))
 	}
-	// include=meta carries the flat scalar block (vndb_id/status/content_limit/
-	// view/…) the thin item omits; facets/highlight are opt-in on /v1 (omitted =
-	// off), so the default response stays byte-frozen.
-	q.Set("include", "meta")
+	// names + refs lift the search row to the brief moyu renders: the four
+	// localized titles, and the vndb anchor the caller joins its local patch
+	// rows on. covers gives the card its key art.
+	q.Set("include", "names,covers,refs")
 
-	var data v1SearchData
-	if err := c.getV1(ctx, "/galgame/search", q, &data); err != nil {
+	var data catalogWorksSearchData
+	if err := c.getV1(ctx, "/catalog/works/search", q, &data); err != nil {
 		return nil, err
 	}
 	out := Paginated[GalgameHit]{Total: data.Total}
 	for i := range data.Items {
-		out.Items = append(out.Items, v1ItemToHit(&data.Items[i]))
+		it := &data.Items[i]
+		// A withdrawn wiki entry must not surface in search results — the
+		// deprecated face's published-only population made that automatic.
+		if !it.ClaimedBy.renderable() {
+			continue
+		}
+		out.Items = append(out.Items, catalogItemToHit(it))
 	}
 	return &out, nil
 }
 
-// GalgameFull is the full galgame returned from /galgame/:gid (including intro / tag_ids / official_ids).
-// Used to enrich detail pages.
+// GalgameFullTag is one tag edge on a galgame detail record.
+type GalgameFullTag struct {
+	GalgameID int `json:"galgame_id"`
+	TagID     int `json:"tag_id"`
+	// SpoilerLevel is the EDGE's spoiler level (0 none / 1 minor / 2 major) —
+	// per work-tag pair, not per tag. The catalog serves it as a first-class
+	// field since A2-1e (R8); before that it was the wiki's own column.
+	SpoilerLevel int `json:"spoiler_level"`
+	Tag          Tag `json:"tag"`
+}
+
+// GalgameFullOfficial is one label ("official") attribution on a detail record.
+type GalgameFullOfficial struct {
+	GalgameID  int      `json:"galgame_id"`
+	OfficialID int      `json:"official_id"`
+	Official   Official `json:"official"`
+}
+
+// GalgameFull is the full galgame detail record used to enrich detail pages.
+// Since wave A2-2 it is sourced from GET /v1/catalog/works/{id}.
+//
+// Three blocks the deprecated shape carried are gone because nothing read them
+// and the catalog expresses them differently anyway: `alias` (the detail's
+// alias rows — the edit-prefill lane that read them retired in A1), `engine`
+// (moyu surfaced only the bare ids, which no frontend ever rendered) and `link`
+// (same, retired with the links prefill lane). `view` and `series_id` go with
+// them: view is a wiki counter the registry does not keep, and nothing read
+// series_id.
 type GalgameFull struct {
-	ID               int     `json:"id"`
-	VndbID           string  `json:"vndb_id"`
+	ID            int    `json:"id"`
+	CatalogWorkID int64  `json:"catalog_work_id,omitempty"`
+	VndbID        string `json:"vndb_id"`
+	// ClaimState — see GalgameBrief.ClaimState.
+	ClaimState       string  `json:"claim_state"`
 	NameEnUs         string  `json:"name_en_us"`
 	NameZhCn         string  `json:"name_zh_cn"`
 	NameJaJp         string  `json:"name_ja_jp"`
@@ -546,50 +637,29 @@ type GalgameFull struct {
 	AgeLimit         string  `json:"age_limit"`
 	OriginalLanguage string  `json:"original_language"`
 	ReleaseDate      *string `json:"release_date"`
-	ReleaseDateTBA   bool    `json:"release_date_tba"`
-	View             int     `json:"view"`
-	SeriesID         *int    `json:"series_id"`
-	Alias            []struct {
-		ID   int    `json:"id"`
-		Name string `json:"name"`
-	} `json:"alias"`
-	Tag []struct {
-		GalgameID    int `json:"galgame_id"`
-		TagID        int `json:"tag_id"`
-		SpoilerLevel int `json:"spoiler_level"`
-		Tag          Tag `json:"tag"`
-	} `json:"tag"`
-	Official []struct {
-		GalgameID  int      `json:"galgame_id"`
-		OfficialID int      `json:"official_id"`
-		Official   Official `json:"official"`
-	} `json:"official"`
-	Engine []struct {
-		GalgameID int            `json:"galgame_id"`
-		EngineID  int            `json:"engine_id"`
-		Engine    map[string]any `json:"engine"`
-	} `json:"engine"`
-	Link []struct {
-		ID   int    `json:"id"`
-		Name string `json:"name"`
-		Link string `json:"link"`
-	} `json:"link"`
+
+	Tag      []GalgameFullTag      `json:"tag"`
+	Official []GalgameFullOfficial `json:"official"`
+
 	EffectiveBannerHash string `json:"effective_banner_hash"`
-	// EffectiveBanner{Width,Height,Thumbhash}: pinned cover's intrinsic metadata
-	// (see GalgameHit). Drives the detail-page banner's aspect-ratio + blur-up.
+	// EffectiveBanner{Width,Height,Thumbhash}: pinned key art's intrinsic
+	// metadata. Drives the detail-page banner's aspect-ratio + blur-up.
 	EffectiveBannerWidth     int               `json:"effective_banner_width,omitempty"`
 	EffectiveBannerHeight    int               `json:"effective_banner_height,omitempty"`
 	EffectiveBannerThumbhash string            `json:"effective_banner_thumbhash,omitempty"`
 	Covers                   []CoverInput      `json:"covers"`
 	Screenshots              []ScreenshotInput `json:"screenshots"`
-	Created                  string            `json:"created"`
-	Updated                  string            `json:"updated"`
+	// Created is the REGISTRY row's creation instant, not the wiki entry's:
+	// when this identity entered the catalog. It is the closest honest successor
+	// to the wiki `created` the detail page used to print, and it is what the
+	// catalog has (A2-1e / R9).
+	Created string `json:"created"`
+	Updated string `json:"updated"`
 }
 
-// GalgameDetailEnvelope is the data envelope for /galgame/:gid. galgame nests another layer of galgame + users under data.
+// GalgameDetailEnvelope is the data envelope for a galgame detail read.
 type GalgameDetailEnvelope struct {
-	Galgame GalgameFull    `json:"galgame"`
-	Users   map[string]any `json:"users"`
+	Galgame GalgameFull `json:"galgame"`
 }
 
 // GetGalgame calls /galgame/:gid; used to enrich detail pages.
@@ -600,28 +670,34 @@ type GalgameDetailEnvelope struct {
 // When the row exists but doesn't match the filter, galgame returns 404 (same
 // shape as a missing ID) — caller treats both as not-found.
 func (c *Client) GetGalgame(ctx context.Context, gid int, contentLimit string) (*GalgameDetailEnvelope, error) {
-	q := url.Values{}
-	// The detail-level include tokens that reconstruct the fields the enricher
-	// reads off GalgameFull. tag_refs/official_refs/engine_refs require
-	// include=taxonomy alongside (W1a add-only sub-keys).
-	q.Set("include", "intro,taxonomy,tag_refs,official_refs,engine_refs,meta,covers,screenshots")
-	// "" = permissive/no-filter (the bridge single-detail default) → /v1 "all";
-	// sfw/nsfw/all pass through (see v1ContentLimit).
-	q.Set("content_limit", v1ContentLimit(contentLimit))
-	var g v1Galgame
-	if err := c.getV1(ctx, fmt.Sprintf("/galgame/%d", gid), q, &g); err != nil {
+	catalogID, found, err := c.resolveGID(ctx, gid)
+	if err != nil {
 		return nil, err
 	}
-	// The /v1 detail is a flat aggregate (no nested users roster); moyu resolves
-	// the entry creator locally from galgame.user_id via its own user store, so
-	// the users map is intentionally left empty (W3 census: unconsumed).
-	return &GalgameDetailEnvelope{Galgame: v1GalgameToFull(&g)}, nil
-}
+	if !found {
+		return nil, &GalgameError{Code: galgameCodeNotFound, Message: "galgame not found"}
+	}
 
-// catalogSiteGalgameWiki is the catalog claim pointer's `site` value for the
-// galgame-wiki product face — the ONE site whose claimed_by.work_id is a wiki
-// gid (what this client's callers mean by "galgame id").
-const catalogSiteGalgameWiki = "galgame_wiki"
+	q := url.Values{}
+	gateFor(contentLimit).apply(q)
+	// spoilers=2 asks for the COMPLETE tag set, spoiler-flagged rows included.
+	// That is deliberate: moyu does its own spoiler filtering client-side (three
+	// modes plus a "N hidden" counter), so it needs every edge and its level —
+	// letting the face filter would silently empty the counter.
+	q.Set("spoilers", "2")
+
+	var w catalogWork
+	if err := c.getV1(ctx, fmt.Sprintf("/catalog/works/%d", catalogID), q, &w); err != nil {
+		return nil, err
+	}
+	// The deprecated detail served published entries only, so a draft or a
+	// withdrawn entry read as 404 to every caller. Preserve that exactly: the
+	// claim state is the successor of that filter.
+	if !w.ClaimedBy.live() {
+		return nil, &GalgameError{Code: galgameCodeNotFound, Message: "galgame not found"}
+	}
+	return &GalgameDetailEnvelope{Galgame: catalogWorkToFull(&w)}, nil
+}
 
 // CheckGalgameByVndbID resolves a VNDB id to the wiki entry that owns it and
 // returns (exists, galgame_id). Used as a pre-check by the patch service's
@@ -684,16 +760,17 @@ func (c *Client) CheckGalgameByVndbID(ctx context.Context, vndbID string) (exist
 
 // BatchMaxIDs is the largest `ids` set GalgameBatch may be handed in one call.
 //
-// It is a WIRE LIMIT, not a tuning knob: /v1/galgame/batch clamps with
-// `if len(ids) > 100 { ids = ids[:100] }` — it TRUNCATES SILENTLY rather than
-// erroring, so an over-long call returns a short list that is indistinguishable
-// from "the wiki doesn't have those ids". Callers that chunk MUST step by this
-// constant; a caller that hands over more is not slow, it is WRONG.
+// It is a WIRE LIMIT, not a tuning knob: both hops enforce it — the reverse
+// lookup takes at most 100 pairs and GET /v1/catalog/works at most 100 ids, and
+// each answers 400 rather than truncating. Callers that chunk MUST step by this
+// constant.
 //
-// Successor note (wave A2-2): the catalog face this eventually re-anchors on
-// (GET /v1/catalog/works?ids=) answers `400 at most 100 ids` instead, so the
-// same mistake there fails loudly. Keep the chunking anyway — the cap is the
-// same 100 on both faces.
+// History worth keeping: the DEPRECATED batch face this replaced clamped with
+// `if len(ids) > 100 { ids = ids[:100] }` — a silent truncation, so an
+// over-long call came back short and indistinguishable from "the wiki doesn't
+// have those ids". That is how the admin orphan view fabricated orphans for
+// years. GalgameBatch now rejects an over-long slice itself rather than relying
+// on the far side to complain.
 const BatchMaxIDs = 100
 
 // GalgameBatch calls /galgame/batch?ids=1,2,3 to fetch lightweight galgame info in bulk.
@@ -710,23 +787,44 @@ func (c *Client) GalgameBatch(ctx context.Context, ids []int, contentLimit strin
 	if len(ids) == 0 {
 		return nil, nil
 	}
-	q := url.Values{}
-	q.Set("ids", joinInts(ids))
-	// include=meta lifts the thin item to the full brief the callers consume
-	// (vndb_id/status/content_limit/user_id/…); view=detail is intentionally NOT
-	// used — it drops the meta block the brief needs.
-	q.Set("include", "meta")
-	// "" = permissive/no-filter → /v1 "all" (see v1ContentLimit); sfw/nsfw/all
-	// pass through. Always set so the /v1 sfw default never silently filters.
-	q.Set("content_limit", v1ContentLimit(contentLimit))
+	if len(ids) > CatalogWorksIDsMax {
+		return nil, fmt.Errorf("GalgameBatch: %d ids exceeds the %d-id ceiling — chunk by client.CatalogWorksIDsMax", len(ids), CatalogWorksIDsMax)
+	}
+	byGID, err := c.resolveGIDs(ctx, ids)
+	if err != nil {
+		return nil, err
+	}
+	if len(byGID) == 0 {
+		return nil, nil
+	}
+	catalogIDs := make([]int64, 0, len(byGID))
+	for _, id := range byGID {
+		catalogIDs = append(catalogIDs, id)
+	}
 
-	var data v1BatchData
-	if err := c.getV1(ctx, "/galgame/batch", q, &data); err != nil {
+	q := url.Values{}
+	q.Set("ids", joinInt64s(catalogIDs))
+	// names + covers + refs is the exact set the brief maps from: the four
+	// localized titles, the pinned key art with its dimensions/thumbhash, and
+	// the vndb anchor.
+	q.Set("include", "names,covers,refs")
+	q.Set("limit", strconv.Itoa(CatalogWorksIDsMax))
+	gateFor(contentLimit).apply(q)
+
+	var data catalogWorksListData
+	if err := c.getV1(ctx, "/catalog/works", q, &data); err != nil {
 		return nil, err
 	}
 	out := make([]GalgameBrief, 0, len(data.Items))
 	for i := range data.Items {
-		out = append(out, v1ItemToBrief(&data.Items[i]))
+		it := &data.Items[i]
+		// Published-only, exactly as the deprecated batch was: a draft or a
+		// withdrawn wiki entry simply does not come back, and every caller's
+		// "missing from the result" branch keeps its existing meaning.
+		if !it.ClaimedBy.live() {
+			continue
+		}
+		out = append(out, catalogItemToBrief(it))
 	}
 	return out, nil
 }
@@ -736,17 +834,20 @@ func (c *Client) GalgameBatch(ctx context.Context, ids []int, contentLimit strin
 // endpoint for a "本月新作 / 发售月表" view. content_limit is EXACT-match here
 // (sfw / nsfw only — there is no combined "all"); the caller fans out + merges.
 
-// GalgameCalendar is the data field of GET /galgame/calendar (one ISO month,
-// day + month precision, released + upcoming mixed, ascending by date).
+// GalgameCalendar is one ISO month of the release calendar (day + month
+// precision, released + upcoming mixed, ascending by date).
 type GalgameCalendar struct {
 	Month string              `json:"month"`
 	Today string              `json:"today"`
 	Items []GalgameBrief      `json:"items"`
-	Links map[string]string   `json:"links"`
 	Meta  GalgameCalendarMeta `json:"meta"`
 }
 
-// GalgameCalendarMeta carries the month-nav bounds for GET /galgame/calendar.
+// GalgameCalendarMeta carries the month-nav frame.
+//
+// MinMonth / MaxMonth are computed under the CALLER'S own population gates, so
+// "the newest month with anything in it" means the newest month this caller can
+// see something in — an sfw and an nsfw reader can legitimately differ.
 type GalgameCalendarMeta struct {
 	PrevMonth string `json:"prev_month"`
 	NextMonth string `json:"next_month"`
@@ -757,22 +858,87 @@ type GalgameCalendarMeta struct {
 	Count     int    `json:"count"`
 }
 
-// GetGalgameCalendar fetches one ISO month. month is strict "YYYY-MM" or "" for
-// the current month (JST, galgame-side). contentLimit is "sfw" / "nsfw" (exact) or
-// "" to omit (galgame defaults sfw).
+// calendarPageLimit is the calendar bucket's per-page ceiling. A month can hold
+// more works than that under the full-catalog population, so the reader below
+// walks the keyset cursor to exhaustion — the frontend groups the whole month by
+// day and has no pagination of its own.
+const calendarPageLimit = 100
+
+// calendarMaxPages bounds that walk. At 100 rows a page this is 5,000 works in
+// one month, which no month approaches; the bound exists so a cursor bug cannot
+// turn one page render into an unbounded fetch loop.
+const calendarMaxPages = 50
+
+// GetGalgameCalendar fetches one ISO month from GET /v1/catalog/calendar. month
+// is strict "YYYY-MM" or "" for the current month (JST, server-side).
+//
+// POPULATION CHANGE (refs/proj/126 P1, ratified): the bucket is now the whole
+// catalog — every galgame the registry knows, not only the ~64k with a wiki
+// entry. Works with no wiki entry come back with an empty ClaimState and no
+// gid; the frontend renders them as "not on the forum yet" cards.
 func (c *Client) GetGalgameCalendar(ctx context.Context, month, contentLimit string) (*GalgameCalendar, error) {
-	q := url.Values{}
-	if month != "" {
-		q.Set("month", month)
+	out := &GalgameCalendar{}
+	cursor := ""
+	for page := 0; page < calendarMaxPages; page++ {
+		q := url.Values{}
+		if month != "" {
+			q.Set("month", month)
+		}
+		q.Set("include", "names,covers,refs")
+		q.Set("limit", strconv.Itoa(calendarPageLimit))
+		if cursor != "" {
+			q.Set("cursor", cursor)
+		}
+		gateFor(contentLimit).apply(q)
+
+		var data catalogCalendarData
+		if err := c.getV1(ctx, "/catalog/calendar", q, &data); err != nil {
+			return nil, err
+		}
+		if page == 0 {
+			out.Month = data.Month
+			out.Today = data.Meta.Today
+			out.Meta = GalgameCalendarMeta{
+				PrevMonth: shiftMonth(data.Month, -1),
+				NextMonth: shiftMonth(data.Month, +1),
+				HasPrev:   derefBool(data.Meta.HasPrev),
+				HasNext:   derefBool(data.Meta.HasNext),
+				MinMonth:  data.Meta.MinMonth,
+				MaxMonth:  data.Meta.MaxMonth,
+				Count:     int(data.Count),
+			}
+		}
+		for i := range data.Items {
+			it := &data.Items[i]
+			// A withdrawn wiki entry is never renderable. Drafts STAY — the
+			// calendar has always surfaced claimable ones, and that is now
+			// expressed by ClaimState == draft rather than by status == 2.
+			if !it.ClaimedBy.renderable() {
+				continue
+			}
+			out.Items = append(out.Items, catalogItemToBrief(it))
+		}
+		if data.NextCursor == nil || *data.NextCursor == "" {
+			break
+		}
+		cursor = *data.NextCursor
 	}
-	if contentLimit != "" {
-		q.Set("content_limit", contentLimit)
+	return out, nil
+}
+
+// derefBool reads an optional wire bool, defaulting to false.
+func derefBool(p *bool) bool { return p != nil && *p }
+
+// shiftMonth moves a "YYYY-MM" by n months. The catalog's calendar meta answers
+// whether a previous/next non-empty month EXISTS but not which one it is, and
+// the month grid only ever steps by one — so the neighbour is arithmetic, not
+// data, and computing it here keeps a round-trip off the page.
+func shiftMonth(month string, n int) string {
+	t, err := time.Parse("2006-01", month)
+	if err != nil {
+		return ""
 	}
-	var out GalgameCalendar
-	if err := c.getV1(ctx, "/galgame/calendar", q, &out); err != nil {
-		return nil, err
-	}
-	return &out, nil
+	return t.AddDate(0, n, 0).Format("2006-01")
 }
 
 // NOTE: the sibling "year-only, month TBD" (/calendar/pending) and "release date
@@ -780,6 +946,49 @@ func (c *Client) GetGalgameCalendar(ctx context.Context, month, contentLimit str
 // rendered the month lane, so the two client methods, their moyu handlers and
 // their routes were census-verified dead and deleted. The month lane above is
 // the whole calendar surface.
+
+// GalgameMeta is one row of the ownership-meta batch: who owns a wiki entry and
+// what state it is in. Deliberately NOT a brief — no cover, no intro, no
+// release data. Ownership is not content.
+type GalgameMeta struct {
+	GID    int `json:"gid"`
+	UserID int `json:"user_id"`
+	// Status is the wiki's own state machine (0 published / 1 banned / 2 vndb
+	// draft / 3 pending / 4 declined). It legitimately lives on this face — the
+	// SURVIVING wiki face — and must never be read from the catalog, which
+	// refuses to mirror another service's states (R2).
+	Status int `json:"status"`
+}
+
+// GetGalgameMeta reads GET /internal/galgame/meta?ids= — the ownership-meta
+// batch on the surviving platform-workflow face (A2-1e area B, R2 lane ①).
+//
+// moyu uses it for the WRITE lifecycle only: stamping a lazily-materialized
+// stub row's placeholder owner, and the one-time backfill of the frozen
+// entry-creator snapshot. Display lanes must NOT call it per read — the creator
+// badge reads moyu's own snapshot column (R12), because wiki-era authorship is
+// frozen at the archive and does not want a live dependency.
+//
+// It is STATUS-BLIND, which is exactly why it exists: the published-only reads
+// answer nothing for an unpublished entry, so an owner assertion built on them
+// degrades to "not the owner" and locks the true owner out.
+func (c *Client) GetGalgameMeta(ctx context.Context, gids []int) ([]GalgameMeta, error) {
+	if len(gids) == 0 {
+		return nil, nil
+	}
+	if len(gids) > CatalogWorksIDsMax {
+		return nil, fmt.Errorf("GetGalgameMeta: %d ids exceeds the %d-id ceiling", len(gids), CatalogWorksIDsMax)
+	}
+	var out struct {
+		Items []GalgameMeta `json:"items"`
+	}
+	q := url.Values{}
+	q.Set("ids", joinInts(gids))
+	if err := c.get(ctx, "/galgame/meta", q, &out); err != nil {
+		return nil, err
+	}
+	return out.Items, nil
+}
 
 // ─── Write methods (require user OAuth access_token) ───
 //

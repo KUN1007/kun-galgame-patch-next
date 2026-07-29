@@ -129,6 +129,16 @@ type Patch struct {
 	// the placeholder owner and get no reward. Gating-only — never sent to the FE.
 	IsStub bool `gorm:"default:false" json:"-"`
 
+	// CreatorID is the FROZEN snapshot of the wiki entry's creator (an OAuth
+	// user id), used only to render the 词条创建者 badge. Null = unknown.
+	//
+	// It is a snapshot rather than a live read because the canonical catalog
+	// face moyu reads since wave A2-2 does not carry another product's user
+	// model, and wiki-era authorship is frozen at the archive anyway
+	// (refs/proj/106 R2/R12). Filled by cmd/backfill-patch-creator for existing
+	// rows and by ensureLocalPatch for new ones; see migration 027.
+	CreatorID *int `gorm:"column:creator_id" json:"-"`
+
 	// Local mirror of Wiki galgame.release_date (PG `date`, day precision).
 	// Populated on patch creation + a one-time backfill (A-lite sync). Drives
 	// sort/filter by 发售日期 on GET /api/galgame — see migration 010 +

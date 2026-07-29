@@ -78,11 +78,14 @@ type GalgameCard struct {
 	// this galgame on moyu / uploaded its patches). It is moyu-owned data and
 	// is what owner-gating (edit/delete) keys on. NOT the entry creator.
 	User *patchModel.PatchUser `json:"user,omitempty"`
-	// Creator is the GALGAME ENTRY CREATOR — the single source of truth owned by
-	// NextMoe catalog (galgame.user_id, surfaced as GalgameBrief.UserID). Resolved
-	// from the same OAuth user directory as User; kept SEPARATE so the "谁创建了
-	// 这个词条" position uses galgame's value (aligned with kungal) while the patch
-	// publisher stays its own thing. Nil when galgame has no creator / lookup miss.
+	// Creator is the GALGAME ENTRY CREATOR, read from moyu's own frozen snapshot
+	// column (patch.creator_id, migration 027) rather than from upstream: the
+	// canonical catalog face carries no product user model, and wiki-era
+	// authorship is frozen at the archive (refs/proj/106 R2/R12). Resolved from
+	// the same OAuth user directory as User but kept SEPARATE, so the "谁创建了
+	// 这个词条" position and the patch publisher never overwrite each other. Nil
+	// when the snapshot is unset (never backfilled, or an entry created after
+	// the wiki face retired) or the OAuth lookup misses.
 	Creator *patchModel.PatchUser       `json:"creator,omitempty"`
 	Galgame *galgameClient.GalgameBrief `json:"galgame,omitempty"`
 }
@@ -277,6 +280,15 @@ func BuildPatchSummaryMap(ctx context.Context, galgame *galgameClient.Client, db
 	return out
 }
 
+// resolveUserPtr is resolveUser for an optional id — the shape the frozen
+// creator snapshot has (null = never backfilled / unknown).
+func resolveUserPtr(ctx context.Context, users *userclient.Client, id *int) *patchModel.PatchUser {
+	if id == nil {
+		return nil
+	}
+	return resolveUser(ctx, users, *id)
+}
+
 // PatchSummaryDB is the minimal access surface BuildPatchSummaryMap needs.
 // Callers typically supply a thin wrapper around their *gorm.DB so this
 // package stays free of gorm imports.
@@ -321,11 +333,11 @@ func EnrichPatch(ctx context.Context, galgame *galgameClient.Client, users *user
 		return nil
 	}
 	applyGalgame(&card, &briefs[0])
-	// 词条创建者 = galgame.user_id (单一可信源，与 kungal 对齐)。applyGalgame
-	// 已把 brief 挂到 card.Galgame，其 UserID 即创建者；与发布者分开解析，互不覆盖。
-	if card.Galgame != nil {
-		card.Creator = resolveUser(ctx, users, card.Galgame.UserID)
-	}
+	// 词条创建者 = the FROZEN local snapshot (patch.creator_id), not a live read:
+	// the canonical catalog face carries no product user model, so wiki-era
+	// authorship is recorded once and kept (refs/proj/106 R12, migration 027).
+	// Resolved separately from the publisher so the two never overwrite.
+	card.Creator = resolveUserPtr(ctx, users, p.CreatorID)
 	return &card
 }
 
@@ -363,7 +375,6 @@ type PatchDetailCard struct {
 	Updated              time.Time             `json:"updated"`
 	Tags                 []PatchDetailTag      `json:"tags"`
 	Officials            []PatchDetailOfficial `json:"officials"`
-	WikiEngineIDs        []int                 `json:"wiki_engine_ids"`
 }
 
 // EnrichPatchDetail enriches the detail page: one extra /galgame/:gid call on top of EnrichPatch to get intro/associated IDs.
@@ -380,11 +391,10 @@ func EnrichPatchDetail(ctx context.Context, galgame *galgameClient.Client, users
 	base.Updated = p.Updated
 	// Initialize the galgame-derived slices to non-nil so an empty set serializes
 	// as [] (not JSON null). The FE types declare them as non-optional arrays
-	// (tags/officials/wiki_engine_ids); a null would break any .map/.length the
-	// detail page does without a guard. Applies to every return path below.
+	// (tags/officials); a null would break any .map/.length the detail page does
+	// without a guard. Applies to every return path below.
 	base.Tags = []PatchDetailTag{}
 	base.Officials = []PatchDetailOfficial{}
-	base.WikiEngineIDs = []int{}
 
 	base.User = resolveUser(ctx, users, p.UserID) // 补丁发布者 (moyu patch.user_id)
 
@@ -446,7 +456,6 @@ func EnrichPatchDetail(ctx context.Context, galgame *galgameClient.Client, users
 		AgeLimit:                 g.AgeLimit,
 		OriginalLanguage:         g.OriginalLanguage,
 		ReleaseDate:              g.ReleaseDate,
-		ReleaseDateTBA:           g.ReleaseDateTBA,
 		EffectiveBannerHash:      g.EffectiveBannerHash,
 		EffectiveBannerWidth:     g.EffectiveBannerWidth,
 		EffectiveBannerHeight:    g.EffectiveBannerHeight,
@@ -473,10 +482,6 @@ func EnrichPatchDetail(ctx context.Context, galgame *galgameClient.Client, users
 			Lang:     o.Official.Lang,
 		})
 	}
-	for _, e := range g.Engine {
-		base.WikiEngineIDs = append(base.WikiEngineIDs, e.EngineID)
-	}
-
 	return base
 }
 
@@ -562,10 +567,9 @@ func CardFromBrief(g *galgameClient.GalgameBrief) GalgameCard {
 }
 
 // CalendarCard is a release-calendar entry: a GalgameCard built straight from the
-// galgame calendar brief — which carries release_date + release_precision + covers,
-// fields /galgame/batch does NOT return, so the calendar path must NOT re-batch —
-// plus HasPatch: whether moyu has a local patch row for this galgame. HasPatch
-// drives the card's link (moyu /patch/:id when true, the galgame entry otherwise).
+// calendar brief — which carries release_date + release_precision + the key art
+// already, so the calendar path must NOT re-batch — plus HasPatch: whether moyu
+// holds a local patch row for this galgame. HasPatch drives the card's link.
 type CalendarCard struct {
 	GalgameCard
 	HasPatch bool `json:"has_patch"`
@@ -573,25 +577,35 @@ type CalendarCard struct {
 	// calendar card can render an inline 收藏 toggle with the right initial state.
 	// false for anonymous viewers.
 	IsFavorite bool `json:"is_favorite"`
-	// Status mirrors the galgame status: 0 = published, 2 = unclaimed VNDB
-	// draft. The calendar surfaces both; the FE renders a published card (links to
-	// /patch/:id) vs a 未发布 draft card (routes to the publish wizard to 认领).
-	Status int `json:"status"`
+	// ClaimState is the catalog's claim visibility for this work, and it decides
+	// which of THREE cards the frontend renders (it replaced the wiki `status`
+	// int in wave A2-2):
+	//
+	//	live  — a published wiki entry; the normal card, linking to /patch/:id.
+	//	draft — an unpublished wiki entry; the 未发布 card, routing to the
+	//	        publish wizard to claim it. (This is the old status == 2.)
+	//	""    — NO wiki entry at all. New with the full-catalog population
+	//	        (refs/proj/126 P1): the calendar now covers every galgame the
+	//	        registry knows, not just the ones the wiki has an entry for, so
+	//	        this card says "not on the forum yet" and has no gid to link to.
+	//
+	// `hidden` never reaches here — the client drops withdrawn entries.
+	ClaimState string `json:"claim_state"`
 }
 
-// EnrichCalendarBriefs turns galgame calendar briefs into CalendarCards. There is no
-// galgame re-fetch (the briefs are already complete, incl. release_date /
+// EnrichCalendarBriefs turns calendar briefs into CalendarCards. There is no
+// re-fetch (the briefs are already complete, incl. release_date /
 // release_precision) and no patch-stats overlay (the calendar card is
 // release-centric, not stats-centric) — only HasPatch is stamped from the set of
-// galgame ids moyu holds a local patch row for. release_date / release_precision
-// stay reachable on each card's nested `galgame` object.
+// galgame ids moyu holds a local patch row for. A brief with no gid (a work with
+// no wiki entry) can have no local patch by construction.
 func EnrichCalendarBriefs(briefs []galgameClient.GalgameBrief, hasPatch map[int]bool) []CalendarCard {
 	cards := make([]CalendarCard, 0, len(briefs))
 	for i := range briefs {
 		cards = append(cards, CalendarCard{
 			GalgameCard: CardFromBrief(&briefs[i]),
 			HasPatch:    hasPatch[briefs[i].ID],
-			Status:      briefs[i].Status,
+			ClaimState:  briefs[i].ClaimState,
 		})
 	}
 	return cards
@@ -621,8 +635,10 @@ func GalgameOnlyCard(ctx context.Context, galgame *galgameClient.Client, users *
 		return nil
 	}
 	card := CardFromBrief(brief) // IsOnForum stays false (galgame-only)
-	// 词条创建者 = galgame.user_id; the header's creator chip reads it.
-	card.Creator = resolveUser(ctx, users, brief.UserID)
+	// No creator badge here BY CONSTRUCTION: the entry-creator snapshot lives on
+	// moyu's own patch row (migration 027) and this card exists precisely because
+	// there is no such row. Rather than a live wiki read for a badge, the card
+	// renders without one — the frontend already has an anonymous fallback.
 	return &card
 }
 
@@ -662,7 +678,6 @@ func GalgameOnlyDetail(ctx context.Context, galgame *galgameClient.Client, users
 	}
 	base.Tags = []PatchDetailTag{}
 	base.Officials = []PatchDetailOfficial{}
-	base.WikiEngineIDs = []int{}
 	base.IntroductionMarkdown = KunLanguage{EnUs: g.IntroEnUs, JaJp: g.IntroJaJp, ZhCn: g.IntroZhCn, ZhTw: g.IntroZhTw}
 	base.IntroductionHTML = KunLanguage{
 		EnUs: markdown.MustRender(g.IntroEnUs),
@@ -682,7 +697,6 @@ func GalgameOnlyDetail(ctx context.Context, galgame *galgameClient.Client, users
 		AgeLimit:                 g.AgeLimit,
 		OriginalLanguage:         g.OriginalLanguage,
 		ReleaseDate:              g.ReleaseDate,
-		ReleaseDateTBA:           g.ReleaseDateTBA,
 		EffectiveBannerHash:      g.EffectiveBannerHash,
 		EffectiveBannerWidth:     g.EffectiveBannerWidth,
 		EffectiveBannerHeight:    g.EffectiveBannerHeight,
@@ -707,9 +721,6 @@ func GalgameOnlyDetail(ctx context.Context, galgame *galgameClient.Client, users
 			Category: o.Official.Category,
 			Lang:     o.Official.Lang,
 		})
-	}
-	for _, e := range g.Engine {
-		base.WikiEngineIDs = append(base.WikiEngineIDs, e.EngineID)
 	}
 	return base
 }

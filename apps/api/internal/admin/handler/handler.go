@@ -434,13 +434,13 @@ func (h *AdminHandler) GetOrphanPatches(c fiber.Ctx) error {
 	// (it renders via id-based enrichment). content_limit="" makes the batch
 	// permissive (returns every id incl. NSFW): we want EXISTENCE, not visibility.
 	//
-	// The chunk size is NOT free tuning: /v1/galgame/batch SILENTLY TRUNCATES to
-	// the first 100 ids (`if len(ids) > 100 { ids = ids[:100] }`) instead of
-	// erroring, so any chunk larger than that drops its tail — and every dropped
-	// id then reads as "Wiki doesn't have it" = a FALSE ORPHAN on the admin page.
-	// This loop used to step by 500, i.e. it verified 100 of every 500 candidates
-	// and fabricated orphans out of the other 400. Latent only because the
-	// candidate set (malformed/placeholder vndb_id rows) has stayed under 100.
+	// The chunk size is NOT free tuning. It used to step by 500 against a face
+	// that SILENTLY TRUNCATED to the first 100 ids, so it verified 100 of every
+	// 500 candidates and fabricated orphans out of the other 400 — every dropped
+	// id reads as "the catalog doesn't have it" here. Since the wave-A2-2
+	// re-anchor the ceiling is enforced by a 400 instead of a truncation, so the
+	// same mistake would now fail loudly; the chunking stays because the ceiling
+	// itself has not moved.
 	candidateIDs, err := h.service.GetOrphanCandidateIDs()
 	if err != nil {
 		return response.Error(c, errors.ErrInternal(""))

@@ -278,15 +278,38 @@ func (s *PatchService) ensureLocalPatch(ctx context.Context, id int) (*model.Pat
 		vndb = fmt.Sprintf("wiki-%d", id)
 	}
 
-	// Pure stats STUB row (is_stub=true): user_id is the galgame entry creator as a
-	// placeholder owner, to be adopted by the first real publish (createPatchRow).
-	// ON CONFLICT DO NOTHING makes concurrent first-interactions idempotent; we
-	// always re-read the canonical row afterwards.
-	row := &model.Patch{ID: id, VndbID: vndb, UserID: brief.UserID, IsStub: true}
-	// Don't let a freshly-recorded row (no resources yet) jump to the top of the
-	// "最近更新" sort — inherit the galgame's real resource_update_time from galgame.
-	if t, pErr := time.Parse(time.RFC3339, brief.ResourceUpdateTime); pErr == nil {
-		row.ResourceUpdateTime = t
+	// The entry creator: still the stub row's placeholder owner (adopted by the
+	// first real publish in createPatchRow), and now also the frozen creator
+	// snapshot the badge renders (migration 027).
+	//
+	// It comes from the SURVIVING wiki face's ownership-meta read, not from the
+	// catalog: "who owns this wiki entry" is wiki product state, which the
+	// registry refuses to mirror (refs/proj/106 R2 lane ①). This is a write
+	// path, so one extra credentialed call on first interaction is cheap — and
+	// the read is status-blind, so it answers for unpublished entries too.
+	creatorID := 0
+	if metas, mErr := s.galgame.GetGalgameMeta(ctx, []int{id}); mErr == nil {
+		for i := range metas {
+			if metas[i].GID == id {
+				creatorID = metas[i].UserID
+				break
+			}
+		}
+	} else {
+		slog.Warn("读取 galgame 归属元信息失败，stub 行将无创建者", "galgame_id", id, "error", mErr)
+	}
+
+	// Pure stats STUB row (is_stub=true). ON CONFLICT DO NOTHING makes concurrent
+	// first-interactions idempotent; we always re-read the canonical row after.
+	//
+	// resource_update_time is stamped NOW rather than inherited: it used to copy
+	// the wiki's own value, which the catalog does not carry (it is moyu-shaped
+	// data about moyu's resources, ruled moyu-owned in R12). "Now" is the honest
+	// answer for a row moyu is materializing at this instant, and the row has no
+	// resources yet, so the "最近更新" sort it feeds is not misled either way.
+	row := &model.Patch{ID: id, VndbID: vndb, UserID: creatorID, IsStub: true}
+	if creatorID > 0 {
+		row.CreatorID = &creatorID
 	}
 	// The galgame's owner (galgame user id) may never have logged into moyu, so there
 	// may be no local user anchor row — without one this insert fails

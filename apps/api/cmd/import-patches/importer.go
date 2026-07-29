@@ -149,8 +149,9 @@ func (imp *Importer) ensurePatch(ctx context.Context, galgameID int, vndbID stri
 	}
 
 	// Mirror the catalog release_date locally. Best-effort, and for a DRAFT it
-	// is not merely best-effort but systematically NULL: GetGalgame reads
-	// /v1/galgame/:id, which 404s on status=2. Not worth a second lookup — the
+	// is not merely best-effort but systematically NULL: GetGalgame gates on the
+	// claim being `live`, so an unpublished entry answers not-found (the same
+	// verdict the published-only read used to give). Not worth a second lookup — the
 	// operator publishes the drafts we report at the end of the run, and the
 	// A-lite backfill (cmd/backfill-release-date) fills them in afterwards.
 	var releaseDate *time.Time
@@ -293,11 +294,17 @@ func (imp *Importer) processDelete(ctx context.Context, rawLine string) fileResu
 	return fileResult{name, statusOK, fmt.Sprintf("deleted resource %d (galgame %d)", res.ID, galgameID)}
 }
 
-// unpublishedDrafts returns the touched galgame_ids that the public /v1 batch
-// does NOT return — i.e. still at status=2 (unclaimed VNDB draft). Their imported
-// resources are invisible on moyu (homepage/list/detail read only published
-// galgames) until they're published. Claiming needs a user JWT the S2S importer
-// has no way to obtain, so we surface them for the operator to publish.
+// unpublishedDrafts returns the touched galgame_ids whose catalog claim is NOT
+// `live` — i.e. still an unclaimed VNDB draft (or withdrawn). Their imported
+// resources are invisible on moyu (homepage/list/detail read published entries
+// only) until they're published. Claiming needs a user JWT the S2S importer has
+// no way to obtain, so we surface them for the operator to publish.
+//
+// Wave A2-2 moved this off "absent from the published-only batch" onto the
+// claim state the catalog now publishes directly (refs/proj/106 R7). Same
+// verdict, one round-trip instead of two, and — the real gain — the answer is
+// now a value we read rather than an absence we interpret, so a chunk that
+// fails outright is distinguishable from a chunk that is all drafts.
 //
 // The list is "resolved but not publicly readable", which is broader than
 // "draft": a galgame the catalog has since deleted or merged away also fails to
@@ -320,13 +327,21 @@ func (imp *Importer) unpublishedDrafts(ctx context.Context) []int {
 	published := make(map[int]struct{}, len(ids))
 	for i := 0; i < len(ids); i += 80 {
 		end := min(i+80, len(ids))
-		briefs, err := imp.galgame.GalgameBatch(ctx, ids[i:end], "all")
+		states, err := imp.galgame.ClaimStates(ctx, ids[i:end])
 		if err != nil {
-			slog.Warn("draft check: catalog batch failed (skipping this chunk)", "err", err)
+			slog.Warn("draft check: catalog claim lookup failed (skipping this chunk)", "err", err)
+			// Treat the whole chunk as published rather than as drafts: a
+			// transient lookup failure must not print a remediation list telling
+			// an operator to publish entries that are already published.
+			for _, id := range ids[i:end] {
+				published[id] = struct{}{}
+			}
 			continue
 		}
-		for j := range briefs {
-			published[briefs[j].ID] = struct{}{}
+		for id, state := range states {
+			if state == "live" {
+				published[id] = struct{}{}
+			}
 		}
 	}
 	var drafts []int

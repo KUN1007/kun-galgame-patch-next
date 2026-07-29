@@ -330,11 +330,16 @@ func (a *App) RegisterRoutes() {
 	// FE-dead (no composable, page or server route called them — the taxonomy
 	// admin console drives its tag/official panes off `/tag/search` +
 	// `/official/search`, never the bare lists) and retired with their /v1
-	// reshapers. The `search` reads MUST stay on the wiki id space: the console
-	// feeds the ids they return straight back into PUT /tag {tag_id} /
-	// DELETE /tag/:id on the wiki staff write face, which is a W5 survivor keyed
-	// on wiki taxonomy PKs.
-	api.Get("/tag/search", a.PatchHandler.GalgameEditProxy)
+	// reshapers.
+	//
+	// The STAFF reads below now require `auth` and forward to the surviving /api
+	// staff face. Two reasons they cannot follow the public browse pages onto
+	// catalog ids: the console feeds the ids they return straight back into
+	// PUT /tag {tag_id} / DELETE /tag/:id, which are keyed on WIKI taxonomy PKs;
+	// and the staff face gates on the user's own galgame.taxonomy.edit_any
+	// permission, so a Bearer must exist. Reading a picker no longer works
+	// anonymously — which matches what the writes next to it always required.
+	api.Get("/tag/search", auth, a.PatchHandler.GalgameEditProxy)
 	api.Post("/tag", auth, a.PatchHandler.GalgameEditProxy)
 	api.Put("/tag", auth, a.PatchHandler.GalgameEditProxy)
 	api.Delete("/tag/:id", auth, a.PatchHandler.GalgameEditProxy)
@@ -345,7 +350,7 @@ func (a *App) RegisterRoutes() {
 	// galgame index. Other tag/official endpoints stay generic passthrough.
 	api.Get("/tag/:name", a.PatchHandler.GalgameTaxonomyDetailProxy)
 
-	api.Get("/official/search", a.PatchHandler.GalgameEditProxy)
+	api.Get("/official/search", auth, a.PatchHandler.GalgameEditProxy)
 	api.Post("/official", auth, a.PatchHandler.GalgameEditProxy)
 	api.Put("/official", auth, a.PatchHandler.GalgameEditProxy)
 	api.Delete("/official/:id", auth, a.PatchHandler.GalgameEditProxy)
@@ -354,17 +359,27 @@ func (a *App) RegisterRoutes() {
 	// Wave A1: the engine `:name` detail, series `search` and series `:id` detail
 	// GETs were census-verified FE-dead (no composable or page called them) and
 	// retired with their /v1 reshapers. The LIST reads stay — the taxonomy admin
-	// page (pages/galgame/taxonomy.vue) drives engineList / seriesList off them.
-	api.Get("/engine", a.PatchHandler.GalgameEditProxy)
+	// page (pages/galgame/taxonomy.vue) drives engineList / seriesList off them —
+	// and, like their tag/official siblings, they are now staff reads on /api.
+	api.Get("/engine", auth, a.PatchHandler.GalgameEditProxy)
 	api.Post("/engine", auth, a.PatchHandler.GalgameEditProxy)
 	api.Put("/engine", auth, a.PatchHandler.GalgameEditProxy)
 	api.Delete("/engine/:id", auth, a.PatchHandler.GalgameEditProxy)
 
-	api.Get("/series", a.PatchHandler.GalgameEditProxy)
+	api.Get("/series", auth, a.PatchHandler.GalgameEditProxy)
 	api.Post("/series/modal", auth, a.PatchHandler.GalgameEditProxy)
 	api.Post("/series", auth, a.PatchHandler.GalgameEditProxy)
 	api.Put("/series/:id", auth, a.PatchHandler.GalgameEditProxy)
 	api.Delete("/series/:id", auth, a.PatchHandler.GalgameEditProxy)
+
+	// Staff EDIT-FORM read-back (wave A2-2). Its own `/taxonomy/` prefix because
+	// `/tag/:name` is already the PUBLIC browse page, and the two answer in
+	// different id spaces — the browse page in catalog ids, this in wiki ids.
+	// Without it the console prefills from list rows and silently WIPES every
+	// field the list does not carry (aliases on all four families, tag/official
+	// descriptions, and a series' entire membership) on every save, because the
+	// update payload is a wholesale replacement.
+	api.Get("/taxonomy/:kind/:id", auth, a.PatchHandler.GalgameEditProxy)
 
 	// ===== Taxonomy 修订历史 / 回滚（W3 / galgame U3 PR4，12 条）=====
 	// 4 实体 × 3 端点；都是纯透传到 galgame，鉴权 galgame 自己强制

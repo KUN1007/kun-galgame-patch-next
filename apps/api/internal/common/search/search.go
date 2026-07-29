@@ -32,18 +32,29 @@ func New(db *gorm.DB, galgame *galgameClient.Client) *Handler {
 }
 
 // SearchRequest is the search request body.
-// It supports most of galgame's filter parameters, passed through directly.
+//
+// The bounds below are the CATALOG search face's, not arbitrary: since wave
+// A2-2 this proxies GET /v1/catalog/works/search, which ANDs up to ten canonical
+// tag ids and takes a SINGLE label / engine id. Lists longer than the face can
+// express are rejected here rather than silently truncated — a search that
+// quietly ignores half the filters the caller asked for is the worst kind of
+// plausible-looking answer.
+//
+// `include_intro` is GONE. It used to widen the wiki index's searchable
+// attributes to the intro bodies; the catalog works index carries titles,
+// aliases and latin readings only, so there is nothing to widen to. Leaving the
+// flag accepted would have been a promise the face cannot keep — see the wave
+// report's STOP item.
 type SearchRequest struct {
 	Q            string `json:"q" validate:"max=200"`
-	TagIDs       []int  `json:"tag_ids" validate:"omitempty,max=20,dive,min=1"`
-	OfficialIDs  []int  `json:"official_ids" validate:"omitempty,max=20,dive,min=1"`
-	EngineIDs    []int  `json:"engine_ids" validate:"omitempty,max=20,dive,min=1"`
+	TagIDs       []int  `json:"tag_ids" validate:"omitempty,max=10,dive,min=1"`
+	OfficialIDs  []int  `json:"official_ids" validate:"omitempty,max=1,dive,min=1"`
+	EngineIDs    []int  `json:"engine_ids" validate:"omitempty,max=1,dive,min=1"`
 	OriginalLang string `json:"original_language" validate:"max=100"`
 	AgeLimit     string `json:"age_limit" validate:"omitempty,oneof=all r18"`
 	ReleasedFrom int    `json:"released_from" validate:"omitempty,min=1970,max=2200"`
 	ReleasedTo   int    `json:"released_to" validate:"omitempty,min=1970,max=2200"`
-	IncludeIntro bool   `json:"include_intro"`
-	Sort         string `json:"sort" validate:"omitempty,oneof=relevance released_desc released_asc view updated"`
+	Sort         string `json:"sort" validate:"omitempty,oneof=relevance released_desc released_asc view updated popularity"`
 	Page         int    `json:"page" validate:"required,min=1"`
 	Limit        int    `json:"limit" validate:"required,min=1,max=50"`
 }
@@ -76,11 +87,12 @@ func (h *Handler) Search(c fiber.Ctx) error {
 	// Call galgame search
 	params := galgameClient.SearchGalgameParams{
 		Q: req.Q,
-		// Public search only surfaces published galgames. Unpublished states
-		// (1 banned / 2 VNDB draft / 3 pending / 4 declined) are excluded.
-		// The publish wizard uses a separate SearchGalgameForPublish call
-		// that intentionally includes the caller's own pending drafts.
-		Status:       "0",
+		// Public search surfaces published entries only. That used to be spelled
+		// `status=0` against the wiki's own state machine; the catalog has no
+		// such column, so the client gates on the claim state instead (hidden
+		// and draft claims never reach a result page). The publish wizard is
+		// unaffected — it uses SearchGalgameForPublish on the surviving internal
+		// face, which intentionally includes the caller's own pending drafts.
 		ContentLimit: contentLimit,
 		AgeLimit:     req.AgeLimit,
 		OriginalLang: req.OriginalLang,
@@ -89,7 +101,6 @@ func (h *Handler) Search(c fiber.Ctx) error {
 		EngineIDs:    req.EngineIDs,
 		ReleasedFrom: req.ReleasedFrom,
 		ReleasedTo:   req.ReleasedTo,
-		IncludeIntro: req.IncludeIntro,
 		Sort:         req.Sort,
 		Page:         req.Page,
 		Limit:        req.Limit,
