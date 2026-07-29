@@ -74,13 +74,22 @@ interface GalgameCard {
     age_limit: string
     original_language: string
     release_date: string | null
-    release_date_tba: boolean
-    // How to read release_date: day | month | year | tba | unknown. Only the
-    // calendar endpoints (/galgame/calendar*) populate it; absent elsewhere.
-    // A "2026-06-01" with precision 'month' means "some day in June", not the 1st.
+    // How to read release_date: day | month | year. release_date is NORMALIZED
+    // from the catalog's partial-ISO value, so the two MUST be read together —
+    // a "2026-06-01" with precision 'month' means "some day in June", not the
+    // 1st. Absent when the work has no dated release.
     release_precision?: GalgameReleasePrecision
-    user_id: number
-    resource_update_time: string
+    // The catalog's claim VISIBILITY for this work (wave A2-2):
+    //   'live'  — a published wiki entry
+    //   'draft' — a wiki entry that is not published yet
+    //   ''      — no wiki entry claims this work at all
+    // 'hidden' (withdrawn) never reaches the frontend: the backend drops those.
+    // This replaced the wiki `status` int, which was product state the canonical
+    // catalog face does not carry.
+    claim_state: string
+    // The registry's own id for this work, for deep-linking the canonical
+    // record. moyu keys on the wiki gid (`id`) everywhere else.
+    catalog_work_id?: number
   }
 }
 

@@ -15,8 +15,8 @@
 
 ## 统计
 
-- 本服务 GET 端点：**80 → 72**
-  - 认证 1 · 补丁 8 · Galgame 代理 11→9 · 分类代理（基础 12→6 + 修订 8）20→14 · 用户 11 · 消息 3 · 管理 11 · 公共 8 · 聊天 3 · 外部 2 · 关于 2
+- 本服务 GET 端点：**80 → 74**
+  - 认证 1 · 补丁 8 · Galgame 代理 11→9 · 分类代理（基础 12→8 + 修订 8）20→16 · 用户 11 · 消息 3 · 管理 11 · 公共 8 · 聊天 3 · 外部 2 · 关于 2
 - 本轮：已修复 8 · 代理透传 28 · 其余对齐无误
 - **A1 波（/v1 正典化）删除 5 条 FE-dead 只读代理**：`/galgame/:gid/links`、
   `/galgame/:gid/aliases`（写面 POST/DELETE 保留）、`/engine/:name`、
@@ -70,23 +70,41 @@
 
 ## 4. 分类代理 `/tag /official /engine /series`（→ Wiki）
 
-### 4.1 基础读（12 → 6）
+### 4.1 基础读（12 → 8）
 
-| 路径 | 鉴权 | Handler | 状态 | 备注 |
+**A2-2 后分两条道,id 空间不同,永远不要混**:
+
+| 路径 | 鉴权 | 上游面 | id 空间 | 备注 |
 |---|---|---|---|---|
-| `GET /api/v1/tag/search` | 公开 | `patchH.WikiEditProxy` | 保持 | 代理（literal 先于 `:name`）；**id 必须留 wiki 空间**（管理台回填写面）|
-| `GET /api/v1/tag/:name` | 公开 | `patchH.WikiTaxonomyDetailProxy` | 已修 | 重写 `galgame→galgames`(GalgameCard)；降级卡 `type/language/platform` 原为 `null` → 初始化 `[]`（`created` 零值时间见 README 遗留）|
-| `GET /api/v1/official/search` | 公开 | `patchH.WikiEditProxy` | 保持 | 代理；**id 必须留 wiki 空间**（同上）|
-| `GET /api/v1/official/:name` | 公开 | `patchH.WikiTaxonomyDetailProxy` | 已修 | 同 `/tag/:name` 降级卡修复 |
-| `GET /api/v1/engine` | 公开 | `patchH.WikiEditProxy` | 保持 | 代理（`taxonomy.vue` 的 engineList）；**id 必须留 wiki 空间**（同上）|
-| `GET /api/v1/series` | 公开 | `patchH.WikiEditProxy` | 保持 | 代理（`taxonomy.vue` 的 seriesList）；**id 必须留 wiki 空间**（同上）|
+| `GET /api/v1/tag/search` | **登录** | `/api/tag/search`（wiki staff）| **wiki** | 管理台选择器；返回 `{id,name}` 恒等身份子集 |
+| `GET /api/v1/official/search` | **登录** | `/api/official/search` | **wiki** | 同上 |
+| `GET /api/v1/engine` | **登录** | `/api/engine/search`（路径改写）| **wiki** | 同上；裸列表改成有界 search |
+| `GET /api/v1/series` | **登录** | `/api/series/search`（路径改写）| **wiki** | 同上 |
+| `GET /api/v1/taxonomy/:kind/:id` | **登录** | `/api/{kind}/{id}` | **wiki** | **新增**：编辑表单回填。update 是整体替换,读不回来的字段就是保存时被抹掉的字段 |
+| `GET /api/v1/tag/:name` | 公开 | `/v1/catalog/tags/{id}` + `works?ids=` | **catalog** | 公开浏览页；`?tag_id=` 现在收 catalog tag id |
+| `GET /api/v1/official/:name` | 公开 | `/v1/catalog/labels/{id}` + `works?ids=` | **catalog** | 同上；`?official_id=` 收 catalog label id |
+| `GET /api/v1/taxonomy/resolve/:kind/:id` | 公开 | 静态表 / `lookup?type=label` | wiki→catalog | **新增**：旧 URL 跳转壳的解析器。200 `{catalog_id}` / 410 / 404 |
+
+> **为什么 staff 道不能换 catalog id**：管理台把这些 id 直接回填进
+> `PUT /tag {tag_id}` / `DELETE /tag/:id`（wiki staff 写面,W5 幸存面,键=wiki 分类 PK）。
+> 换 id 空间 = 改错行删错行。R11 裁定就是钉这一条。
+>
+> **为什么 staff 道现在要登录**：上游 `/api` staff 面的门是
+> `jwtAuth + galgame.taxonomy.edit_any`——和它旁边的写操作同一个门。
 
 > A1 波删除：`GET /engine/:name`、`GET /series/search`、`GET /series/:id`
 > —— 三条详情/搜索读均无 FE 调用方（对应的 `/v1` reshaper 一并删除）。列表读保留。
 >
 > A2-2 波删除：`GET /tag`、`GET /official`（裸列表读）、`GET /tag/multi`
-> —— 三条均无任何 FE 调用方（`useGalgameEdit` 无对应出口），`/v1` reshaper
-> （`v1TagMulti` 与两条 `v1TaxList` 分派臂）一并删除。`v1TaxList` 现只服务 `/series`。
+> —— 三条均无任何 FE 调用方（`useGalgameEdit` 无对应出口），弃用面 reshaper
+> 一并删除。
+>
+> A2-2 波新增 2 条：`GET /taxonomy/:kind/:id`（staff 编辑回填）、
+> `GET /taxonomy/resolve/:kind/:id`（旧 id 解析）。
+>
+> **前端路由同步迁移**（R1）：`/tag/:id`→`/tags/:id`、`/official/:id`→`/labels/:id`
+> 承载 catalog id；旧路径退化成纯跳转壳（映射内 301、名单内 410、其余 404）。
+> 两个 id 空间数值重叠,单路径两用不可判定——这就是必须换路径而不是原地改语义的原因。
 
 ### 4.2 修订历史读（8 = 4 实体 × 2）
 

@@ -1,8 +1,12 @@
-// Types for the Galgame release calendar (发售月表). Backed by the wiki calendar
-// API (docs/galgame_wiki/01-galgame.md §发售月历), surfaced via moyu's
-// /galgame/calendar endpoint. Ambient (no import/export) to match the rest of
-// app/shared/types. The sibling /calendar/{pending,tba} buckets were retired in
-// wave A1 — nothing on the frontend ever rendered them.
+// Types for the Galgame release calendar (发售月表). Backed by the CATALOG
+// calendar bucket since wave A2-2, surfaced via moyu's /galgame/calendar
+// endpoint. Ambient (no import/export) to match the rest of app/shared/types.
+// The sibling /calendar/{pending,tba} buckets were retired in wave A1 — nothing
+// on the frontend ever rendered them.
+//
+// POPULATION: the month now covers the WHOLE catalog, not just the games the
+// wiki has an entry for (refs/proj/126 P1). That is why a card can arrive with
+// no gid and no claim — see CalendarItem.claim_state.
 
 // release_precision marks how release_date should be read (release_date is
 // normalized, so the two MUST be read together).
@@ -17,9 +21,13 @@ interface CalendarItem extends GalgameCard {
   // Whether the logged-in viewer has favorited this game (false for anonymous).
   // Drives the inline 收藏 toggle's initial state on the calendar card.
   is_favorite: boolean
-  // Wiki status: 0 = published, 2 = unclaimed VNDB draft. Published cards link to
-  // /patch/:id; draft cards show a 未发布 badge and route to the publish wizard to 认领.
-  status: number
+  // Which of THREE cards to render (replaced the wiki `status` int in A2-2):
+  //   'live'  — a published wiki entry; links to /patch/:id
+  //   'draft' — unpublished; shows a 未发布 badge and routes to the publish
+  //             wizard to 认领 (the old status === 2)
+  //   ''      — NO wiki entry at all; shows 未上论坛 and has no gid to link to
+  // 'hidden' (withdrawn) never arrives — the backend drops those.
+  claim_state: string
 }
 
 // GET /galgame/calendar?month=YYYY-MM

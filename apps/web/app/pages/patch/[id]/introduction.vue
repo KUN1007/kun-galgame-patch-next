@@ -53,38 +53,39 @@ const langOptions: { value: Language; label: string }[] = [
 ]
 
 // ─── Tag display: color-by-category + manual spoiler / category filter ──
-// Mirrors the legacy nextjs project (apps/next-web/components/patch/intro
-// duction/section/Tag.tsx) — content=primary, sexual=danger, technical=
-// success, plus a "显示剧透" checkbox for spoiler_level>0 tags.
-// Removed the VNDB/Bangumi provider tab from the legacy impl: Wiki has no
-// provider concept (the old shape was bgm vs vndb pre-D8/D11; current Wiki
-// taxonomy is a single source).
-type TagCategory = 'content' | 'sexual' | 'technical'
+// content=primary, sexual=danger, plus a "显示剧透" checkbox for
+// spoiler_level>0 tags.
+//
+// The category axis is now TWO-valued. The wiki's own
+// content|sexual|technical vocabulary retired with it in wave A2-2; the
+// canonical catalog publishes a per-tag `sexual` BOOLEAN instead (the safety
+// axis, refs/proj/106 R8), and the backend derives this field from it. So
+// `sexual` still means exactly what it always did — which is what keeps the
+// safe-mode gate below correct — while `technical` is gone rather than faked:
+// nothing but the wiki ever asserted it, and manufacturing a third value out of
+// the catalog's tier/kind (a different coordinate system) would be a guess
+// wearing data's clothes.
+type TagCategory = 'content' | 'sexual'
 const CATEGORY_LABEL: Record<TagCategory, string> = {
   content: '内容',
-  sexual: '性相关',
-  technical: '技术'
+  sexual: '性相关'
 }
-const tagColor = (cat: string): 'primary' | 'danger' | 'success' => {
+const tagColor = (cat: string): 'primary' | 'danger' => {
   if (cat === 'sexual') return 'danger'
-  if (cat === 'technical') return 'success'
   return 'primary' // content + unknown fallback
 }
 // Static class map — Tailwind JIT only sees literal class strings, so we can
 // NEVER write `text-${color}-600` (the spec calls this out as a latent bug).
 const TAG_CATEGORY_TEXT_CLASS: Record<TagCategory, string> = {
   content: 'text-primary-600',
-  sexual: 'text-danger-600',
-  technical: 'text-success-600'
+  sexual: 'text-danger-600'
 }
 
 // SFW (safe) mode never shows sexual tags — not even behind the toggle. The
 // category checkboxes only offer the categories allowed in the current mode.
 const isSafeMode = computed(() => settingStore.data.kunNsfwEnable === 'sfw')
 const availableCategories = computed<TagCategory[]>(() =>
-  isSafeMode.value
-    ? ['content', 'technical']
-    : ['content', 'sexual', 'technical']
+  isSafeMode.value ? ['content'] : ['content', 'sexual']
 )
 
 // Spoiler filtering follows VNDB's 3-level model (tag.spoiler_level 0/1/2 =
@@ -104,9 +105,7 @@ const spoilerOptions = [
   { value: 'all', label: '完全剧透' }
 ]
 
-const visibleCategories = ref<Set<TagCategory>>(
-  new Set(['content', 'sexual', 'technical'])
-)
+const visibleCategories = ref<Set<TagCategory>>(new Set(['content', 'sexual']))
 const toggleCategory = (c: TagCategory) => {
   if (visibleCategories.value.has(c)) visibleCategories.value.delete(c)
   else visibleCategories.value.add(c)
@@ -222,8 +221,10 @@ const kungalOrigin = kunMoyuMoe.domain.kungal
 
     <!-- Tags & officials (developers/publishers) come pre-resolved from Wiki
          by the backend enricher — see apps/api/internal/galgame/enricher/
-         enricher.go. Links navigate to moyu's internal /tag/:id and
-         /official/:id detail pages. -->
+         enricher.go. Links navigate to moyu's /tags/:id and /labels/:id detail
+         pages — CATALOG ids since wave A2-2, which is why the paths are the
+         plural ones (the singular /tag/:id and /official/:id are now redirect
+         shells for the old wiki-keyed URLs). -->
     <section v-if="detail.tags?.length">
       <div
         class="mb-4 flex flex-col items-start gap-3 sm:flex-row sm:items-center sm:justify-between"
@@ -264,7 +265,7 @@ const kungalOrigin = kunMoyuMoe.domain.kungal
         <NuxtLink
           v-for="t in filteredTags"
           :key="t.id"
-          :to="`/tag/${t.id}`"
+          :to="`/tags/${t.id}`"
         >
           <KunChip
             :color="tagColor(t.category)"
@@ -303,7 +304,7 @@ const kungalOrigin = kunMoyuMoe.domain.kungal
         <NuxtLink
           v-for="o in detail.officials"
           :key="o.id"
-          :to="`/official/${o.id}`"
+          :to="`/labels/${o.id}`"
         >
           <KunChip color="success" variant="flat" size="sm">
             {{ o.name }}

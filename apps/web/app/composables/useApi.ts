@@ -73,10 +73,10 @@ export const useApi = () => {
   //      login state.
   //
   // The detail-route regex is intentionally narrow: only patch/resource
-  // detail pages get the bypass. /tag/<id>, /official/<id>, /user/<id> +
+  // detail pages get the bypass. /tags/<id>, /labels/<id>, /user/<id> +
   // their child tabs are list-semantics (show many galgames under a
-  // tag/user) and stay sfw-default — wiki's own /tag/:name endpoint
-  // already filters server-side per §16.2.
+  // tag/label/user) and stay sfw-default — the catalog's own taxonomy
+  // detail faces filter server-side under the same nsfw gate.
   //
   // Captured at setup time so a single request closure sees one snapshot;
   // toggling NSFW mode after the request has started doesn't retroactively

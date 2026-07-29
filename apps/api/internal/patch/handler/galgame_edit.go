@@ -23,6 +23,7 @@ import (
 
 	galgameClient "kun-galgame-patch-api/internal/galgame/client"
 	"kun-galgame-patch-api/internal/galgame/enricher"
+	"kun-galgame-patch-api/internal/galgame/taxonomyid"
 	"kun-galgame-patch-api/internal/middleware"
 	"kun-galgame-patch-api/pkg/errors"
 	"kun-galgame-patch-api/pkg/response"
@@ -197,4 +198,56 @@ func (h *PatchHandler) GalgameTaxonomyDetailProxy(c fiber.Ctx) error {
 		return c.JSON(response.Response{Code: 0, Message: "OK", Data: raw})
 	}
 	return c.JSON(response.Response{Code: 0, Message: "OK", Data: json.RawMessage(out)})
+}
+
+// ResolveTaxonomyID serves GET /taxonomy/resolve/:kind/:id — the redirect
+// shells' resolver for the wave-A2-2 taxonomy id migration (refs/proj/106 R1).
+//
+// moyu published /tag/<wiki id> and /official/<wiki id> URLs for years. The
+// canonical pages now live in the CATALOG id space, and the two spaces OVERLAP
+// numerically — a wiki tag id is very often also a live catalog tag id — so one
+// path cannot serve both without silently showing the wrong entity. R1's answer
+// is a clean split: the new paths carry catalog ids, the old ones become pure
+// redirect shells, and this is what they ask.
+//
+// Three verdicts, three status codes, no guessing:
+//
+//	200 {catalog_id} — resolved; the shell sends a 301 to the new path.
+//	410              — a real old id whose vocabulary entry has no successor
+//	                   and never will (the 1,507 parked tags). "Gone" is the
+//	                   honest word for a URL we published and retired.
+//	404              — never a valid id here.
+func (h *PatchHandler) ResolveTaxonomyID(c fiber.Ctx) error {
+	kind := c.Params("kind")
+	id, err := strconv.Atoi(c.Params("id"))
+	if err != nil || id <= 0 {
+		return response.Error(c, errors.ErrBadRequest("id 必须是正整数"))
+	}
+
+	switch kind {
+	case "tag":
+		catalogID, verdict := taxonomyid.ResolveTag(id)
+		switch verdict {
+		case taxonomyid.Moved:
+			return response.OK(c, fiber.Map{"catalog_id": catalogID})
+		case taxonomyid.Gone:
+			return c.Status(fiber.StatusGone).JSON(response.Response{
+				Code: 410, Message: "该标签已永久退役，没有对应的新词条",
+			})
+		}
+		return response.Error(c, errors.ErrNotFound("标签不存在"))
+
+	case "official":
+		// No vendored table: the rescue wave registered every wiki official as
+		// an exact external ref, so the live lookup covers 100% of them.
+		catalogID, found, lErr := h.galgame.ResolveWikiLabel(c.Context(), id)
+		if lErr != nil {
+			return response.Error(c, errors.ErrInternal("解析会社 ID 失败"))
+		}
+		if !found {
+			return response.Error(c, errors.ErrNotFound("会社不存在"))
+		}
+		return response.OK(c, fiber.Map{"catalog_id": catalogID})
+	}
+	return response.Error(c, errors.ErrBadRequest("未知的分类类型"))
 }

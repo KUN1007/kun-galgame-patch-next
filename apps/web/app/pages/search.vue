@@ -34,10 +34,12 @@ const query = ref(String(route.query.q ?? ''))
 const page = ref(Number(route.query.page ?? 1))
 const limit = 24
 
-// `include_intro` is the only search-scope toggle the wiki-delegated /search
-// endpoint actually supports (D11). Alias/tag are always searchable in
-// Meilisearch's index, so the old per-scope checkboxes are gone.
-const searchInIntroduction = ref(false)
+// There is no search-scope toggle. `include_intro` used to widen the deprecated
+// wiki index's searchable attributes to the intro bodies; the canonical catalog
+// index moyu re-anchored on in wave A2-2 carries titles, aliases and latin
+// readings only, so the checkbox was removed rather than left promising
+// something the face cannot do. Restoring it needs intro text in the catalog
+// works index — reported as the wave's open STOP item.
 
 const results = ref<GalgameCard[]>([])
 const resourceResults = ref<PatchResource[]>([])
@@ -148,8 +150,7 @@ const searchGalgame = async (q: string) => {
   const res = await api.post<{ items: SearchHit[]; total: number }>('/search', {
     q,
     page: page.value,
-    limit,
-    include_intro: searchInIntroduction.value
+    limit
   })
   if (res.code === 0) {
     results.value = (res.data?.items ?? []).map(mapHit)
@@ -186,7 +187,7 @@ const debouncedSearch = useDebounceFn(() => {
   doSearch()
 }, 500)
 
-watch([query, searchInIntroduction], () => {
+watch(query, () => {
   debouncedSearch()
 })
 // Mode switches re-search immediately (a deliberate action, not typing).
@@ -251,10 +252,6 @@ const onChangePage = (v: number) => {
         <KunIcon name="lucide:search" class="text-default-400 size-5" />
       </template>
     </KunInput>
-
-    <div v-if="mode === 'galgame'" class="flex flex-wrap gap-4">
-      <KunCheckBox v-model="searchInIntroduction" label="搜索简介内容" />
-    </div>
 
     <KunLoading v-if="loading" description="正在搜索..." />
 

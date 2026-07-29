@@ -21,7 +21,7 @@ const kunKeepaliveConfig = {
     'search-page',
     'calendar-page',
     'tag-detail',
-    'official-detail',
+    'label-detail',
     'user-galgame',
     'user-resource',
     'user-favorite',

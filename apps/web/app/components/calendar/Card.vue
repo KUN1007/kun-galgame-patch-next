@@ -18,13 +18,22 @@ const bannerSrc = computed(
   () => resolveBannerUrl(props.item, 'mini') || '/kungalgame-trans.webp'
 )
 
-// status=2 = unclaimed VNDB draft. It 404s at /patch/:id, so a draft card routes
-// to the publish wizard pre-searched by name → 认领并发布; it shows a 未发布 badge
-// and no 收藏 (can't favorite until it exists locally). Published cards link to
-// their patch page as usual.
-const isDraft = computed(() => props.item.status === 2)
+// Three cards, one field (wave A2-2 — see CalendarItem.claim_state):
+//
+//   live  → the normal card, linking to its patch page.
+//   draft → an unpublished wiki entry. It 404s at /patch/:id, so the card routes
+//           to the publish wizard pre-searched by name → 认领并发布, shows a
+//           未发布 badge and offers no 收藏 (nothing exists locally to favorite).
+//   ''    → no wiki entry at all. The calendar now covers the WHOLE catalog, so
+//           these are games nobody has brought to the forum yet. Same treatment
+//           as a draft — the wizard is exactly where such a game should start —
+//           but labelled 未上论坛, because "unpublished draft" and "we have
+//           never heard of it here" are different facts.
+const isDraft = computed(() => props.item.claim_state === 'draft')
+const isUnclaimed = computed(() => !props.item.claim_state)
+const needsPublish = computed(() => isDraft.value || isUnclaimed.value)
 const cardHref = computed(() =>
-  isDraft.value
+  needsPublish.value
     ? `/edit/create?q=${encodeURIComponent(name.value)}`
     : `/patch/${props.item.id}/introduction`
 )
@@ -122,15 +131,16 @@ const toggleFavorite = async () => {
         </KunChip>
       </div>
 
-      <!-- Draft (status=2): a 未发布 badge; the card routes to the claim wizard. -->
+      <!-- Needs publishing: a badge, and the card routes to the claim wizard.
+           Two different facts, so two different words (see claim_state above). -->
       <KunChip
-        v-if="isDraft"
-        color="warning"
+        v-if="needsPublish"
+        :color="isDraft ? 'warning' : 'default'"
         variant="solid"
         size="sm"
         class="absolute top-1.5 right-1.5"
       >
-        未发布
+        {{ isDraft ? '未发布' : '未上论坛' }}
       </KunChip>
 
       <!-- Published: inline 收藏 (watch for patch). Own button, not the card link. -->

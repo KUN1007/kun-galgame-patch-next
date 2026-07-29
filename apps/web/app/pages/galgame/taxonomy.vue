@@ -9,10 +9,7 @@
 // forward its code+message; non-privileged users just see galgame's 403.
 
 import type {
-  GalgameTag,
-  GalgameOfficial,
-  GalgameEngine,
-  GalgameSeries,
+  StaffTaxonomyRow,
   TaxonomyRevision
 } from '~/composables/useGalgameEdit'
 import type { KunUIColor } from '@kungal/ui-core'
@@ -36,8 +33,15 @@ const TABS: { key: Kind; title: string }[] = [
   { key: 'series', title: '系列' }
 ]
 
-// ─── tag / official / engine share one shape ──────────
-type Row = { id: number; name: string; category?: string; description?: string }
+// ─── all four families share one row shape ────────────
+//
+// It is IDENTITY ONLY, on purpose. The staff pickers return {id, name} and
+// nothing else; every other field the edit form needs comes from the per-record
+// read (openEdit below). Before wave A2-2 this row was also the form's prefill
+// source, which is how every save silently erased whatever the row did not
+// carry — aliases on all four families, tag/official descriptions, and a
+// series' entire membership.
+type Row = { id: number; name: string }
 const keyword = ref('')
 const rows = ref<Row[]>([])
 const loading = ref(false)
@@ -45,50 +49,25 @@ const loading = ref(false)
 const loadList = async () => {
   loading.value = true
   try {
+    const pick = (items?: StaffTaxonomyRow[]): Row[] =>
+      (items ?? []).map((it) => ({ id: it.id, name: it.name }))
+
     if (tab.value === 'tag') {
       const r = await ge.tagSearch(keyword.value, undefined, 50)
-      rows.value =
-        r.code === 0
-          ? (r.data?.items ?? []).map((t: GalgameTag) => ({
-              id: t.id,
-              name: t.name,
-              category: t.category
-            }))
-          : []
+      rows.value = r.code === 0 ? pick(r.data?.items) : []
     } else if (tab.value === 'official') {
       const r = await ge.officialSearch(keyword.value, undefined, undefined, 50)
-      rows.value =
-        r.code === 0
-          ? (r.data?.items ?? []).map((o: GalgameOfficial) => ({
-              id: o.id,
-              name: o.name,
-              category: o.category
-            }))
-          : []
+      rows.value = r.code === 0 ? pick(r.data?.items) : []
     } else if (tab.value === 'engine') {
       const r = await ge.engineList()
-      const all =
-        r.code === 0
-          ? (r.data ?? []).map((e: GalgameEngine) => ({
-              id: e.id,
-              name: e.name,
-              description: e.description
-            }))
-          : []
+      const all = r.code === 0 ? pick(r.data?.items) : []
       const kw = keyword.value.trim().toLowerCase()
       rows.value = kw
         ? all.filter((e) => e.name.toLowerCase().includes(kw))
         : all
     } else {
       const r = await ge.seriesList({ limit: 50 })
-      rows.value =
-        r.code === 0
-          ? (r.data?.items ?? []).map((s: GalgameSeries) => ({
-              id: s.id,
-              name: s.name,
-              description: s.description
-            }))
-          : []
+      rows.value = r.code === 0 ? pick(r.data?.items) : []
     }
   } finally {
     loading.value = false
@@ -126,13 +105,24 @@ const openCreate = () => {
   f.galgame_ids = ''
   modalOpen.value = true
 }
-const openEdit = (row: Row) => {
+// Read the FULL record before opening the form. The update ops are wholesale
+// replacements, so anything left blank here is destroyed on save — which is
+// exactly what happened to aliases, descriptions and series membership until the
+// staff read-back existed. On a read failure the form does NOT open: an empty
+// form over a real row is a delete button wearing an edit button's label.
+const openEdit = async (row: Row) => {
+  const r = await ge.taxonomyRecord(tab.value, row.id)
+  if (r.code !== 0 || !r.data) {
+    useKunMessage(r.message || '读取词条失败，未打开编辑框', 'error')
+    return
+  }
+  const rec = r.data
   editing.value = row
-  f.name = row.name
-  f.category = row.category ?? 'content'
-  f.description = row.description ?? ''
-  f.alias = ''
-  f.galgame_ids = ''
+  f.name = rec.name ?? row.name
+  f.category = rec.category ?? 'content'
+  f.description = rec.description ?? ''
+  f.alias = (rec.alias ?? []).join(', ')
+  f.galgame_ids = (rec.galgame_ids ?? []).join(', ')
   modalOpen.value = true
 }
 
@@ -427,12 +417,6 @@ const fmtSnapshotValue = (v: unknown): string => {
             <p class="truncate text-sm font-medium">
               {{ r.name }}
               <span class="text-default-400 text-xs">#{{ r.id }}</span>
-            </p>
-            <p
-              v-if="r.category || r.description"
-              class="text-default-500 truncate text-xs"
-            >
-              {{ r.category }}{{ r.description ? ` · ${r.description}` : '' }}
             </p>
           </div>
           <div class="flex shrink-0 gap-2">

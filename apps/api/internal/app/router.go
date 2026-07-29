@@ -381,6 +381,12 @@ func (a *App) RegisterRoutes() {
 	// update payload is a wholesale replacement.
 	api.Get("/taxonomy/:kind/:id", auth, a.PatchHandler.GalgameEditProxy)
 
+	// Old-id resolver for the taxonomy redirect shells (wave A2-2 / R1). Public:
+	// it answers only "where did this old id go", which is exactly what a
+	// crawler following a years-old link needs. Registered BEFORE the
+	// parameterized route above would swallow it — `resolve` is a literal.
+	api.Get("/taxonomy/resolve/:kind/:id", a.PatchHandler.ResolveTaxonomyID)
+
 	// ===== Taxonomy 修订历史 / 回滚（W3 / galgame U3 PR4，12 条）=====
 	// 4 实体 × 3 端点；都是纯透传到 galgame，鉴权 galgame 自己强制
 	// （GET 公开，revert 需 admin/moderator —— 我们只挂 auth 拿 Bearer）。

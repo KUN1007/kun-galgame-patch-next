@@ -314,6 +314,45 @@ func (c *Client) resolveGID(ctx context.Context, gid int) (catalogID int64, foun
 	return data.Work.ID, true, nil
 }
 
+// ResolveWikiLabel maps an old wiki official id (oid) to its catalog label id
+// via GET /v1/catalog/lookup?type=label. found=false means the registry has no
+// label anchored to that oid.
+//
+// Unlike tags, officials need no vendored table: the A2-0 rescue registered all
+// 24,334 of them as exact external refs, so the public lookup answers for every
+// one. `external_id` is matched VERBATIM on the non-work lookup families — the
+// vndb `v`-prefix rule is work-only — and wiki oids are stored bare.
+func (c *Client) ResolveWikiLabel(ctx context.Context, oid int) (int64, bool, error) {
+	if oid <= 0 {
+		return 0, false, nil
+	}
+	q := url.Values{}
+	q.Set("type", "label")
+	q.Set("source", catalogSiteGalgameWiki)
+	q.Set("external_id", strconv.Itoa(oid))
+	q.Set("nsfw", "1")
+
+	raw, status, err := c.getV1RawStatus(ctx, "/catalog/lookup", q)
+	if err != nil {
+		if status == http.StatusNotFound {
+			return 0, false, nil
+		}
+		return 0, false, err
+	}
+	var data struct {
+		Label *struct {
+			ID int64 `json:"id"`
+		} `json:"label"`
+	}
+	if err := json.Unmarshal(raw, &data); err != nil {
+		return 0, false, fmt.Errorf("解析 catalog label lookup data 失败: %w", err)
+	}
+	if data.Label == nil {
+		return 0, false, nil
+	}
+	return data.Label.ID, true, nil
+}
+
 // joinInt64s renders catalog ids for an `ids=` query value.
 func joinInt64s(xs []int64) string {
 	parts := make([]string, 0, len(xs))
