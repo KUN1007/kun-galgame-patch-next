@@ -433,14 +433,21 @@ func (h *AdminHandler) GetOrphanPatches(c fiber.Ctx) error {
 	// against Wiki BY ID — whatever Wiki returns exists and is NOT a real orphan
 	// (it renders via id-based enrichment). content_limit="" makes the batch
 	// permissive (returns every id incl. NSFW): we want EXISTENCE, not visibility.
-	// Chunk so the ids= query string stays bounded.
+	//
+	// The chunk size is NOT free tuning: /v1/galgame/batch SILENTLY TRUNCATES to
+	// the first 100 ids (`if len(ids) > 100 { ids = ids[:100] }`) instead of
+	// erroring, so any chunk larger than that drops its tail — and every dropped
+	// id then reads as "Wiki doesn't have it" = a FALSE ORPHAN on the admin page.
+	// This loop used to step by 500, i.e. it verified 100 of every 500 candidates
+	// and fabricated orphans out of the other 400. Latent only because the
+	// candidate set (malformed/placeholder vndb_id rows) has stayed under 100.
 	candidateIDs, err := h.service.GetOrphanCandidateIDs()
 	if err != nil {
 		return response.Error(c, errors.ErrInternal(""))
 	}
 	existing := make([]int, 0, len(candidateIDs))
-	for start := 0; start < len(candidateIDs); start += 500 {
-		end := min(start+500, len(candidateIDs))
+	for start := 0; start < len(candidateIDs); start += galgameClient.BatchMaxIDs {
+		end := min(start+galgameClient.BatchMaxIDs, len(candidateIDs))
 		briefs, bErr := h.galgame.GalgameBatch(c.Context(), candidateIDs[start:end], "")
 		if bErr != nil {
 			// Never fabricate an orphan list on a Wiki hiccup (audit F075 spirit).

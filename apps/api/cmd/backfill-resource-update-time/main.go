@@ -122,6 +122,16 @@ func main() {
 	}
 	slog.Info("bucket2 (无资源) 候选", "count", len(ids), "dry_run", *dryRun)
 
+	// Clamp to the batch wire limit: /v1/galgame/batch truncates to the first 100
+	// ids SILENTLY, so a -batch-size above that would make every id past the
+	// hundredth look like "wiki has no such galgame" and get counted as missing
+	// instead of backfilled. The flag stays useful below the cap.
+	if *batchSize > galgameClient.BatchMaxIDs {
+		slog.Warn("batch-size 超过 batch 接口上限，已下调",
+			"requested", *batchSize, "clamped_to", galgameClient.BatchMaxIDs)
+		*batchSize = galgameClient.BatchMaxIDs
+	}
+
 	chunks := make([][]int, 0, len(ids)/(*batchSize)+1)
 	for i := 0; i < len(ids); i += *batchSize {
 		chunks = append(chunks, ids[i:min(i+*batchSize, len(ids))])

@@ -682,6 +682,20 @@ func (c *Client) CheckGalgameByVndbID(ctx context.Context, vndbID string) (exist
 	return true, int(out.ClaimedBy.WorkID), nil
 }
 
+// BatchMaxIDs is the largest `ids` set GalgameBatch may be handed in one call.
+//
+// It is a WIRE LIMIT, not a tuning knob: /v1/galgame/batch clamps with
+// `if len(ids) > 100 { ids = ids[:100] }` — it TRUNCATES SILENTLY rather than
+// erroring, so an over-long call returns a short list that is indistinguishable
+// from "the wiki doesn't have those ids". Callers that chunk MUST step by this
+// constant; a caller that hands over more is not slow, it is WRONG.
+//
+// Successor note (wave A2-2): the catalog face this eventually re-anchors on
+// (GET /v1/catalog/works?ids=) answers `400 at most 100 ids` instead, so the
+// same mistake there fails loudly. Keep the chunking anyway — the cap is the
+// same 100 on both faces.
+const BatchMaxIDs = 100
+
 // GalgameBatch calls /galgame/batch?ids=1,2,3 to fetch lightweight galgame info in bulk.
 //
 // contentLimit is the NSFW filter — pass "sfw" / "nsfw" / "all" to apply,
