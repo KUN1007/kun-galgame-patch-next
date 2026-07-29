@@ -78,20 +78,25 @@ const galgames = computed<GalgameCard[]>(() => data.value?.galgames ?? [])
 const total = computed(() => data.value?.total ?? 0)
 const totalPage = computed(() => Math.max(1, Math.ceil(total.value / limit)))
 
-// SEO is OFF on every tag page, deliberately and temporarily.
+// A sexual tag's own NAME is an NSFW signal, so those pages stay out of the
+// index — the same rule patch/[id].vue applies. The works list under the tag is
+// sfw-gated by the face, so an ordinary tag page is safe to index.
 //
-// The gate used to be `category !== 'sexual'`: a sexual tag's own NAME is an
-// NSFW signal, so those pages were kept out of the index (the same rule
-// patch/[id].vue applies). The canonical tag record carries no such flag — the
-// safety axis the catalog does publish (per-tag `sexual`) rides the WORK detail's
-// tags[], not the tag record — so this page can no longer tell the two apart.
+// This gate was a blanket noindex for one wave: the canonical tag record
+// carried no safety flag (it rode the work detail's tags[] only), so the page
+// could not tell the two apart and took the safe direction. A2-1f put `sexual`
+// on the record and the gate is precise again.
 //
-// Given the choice between indexing tag names we would previously have hidden
-// and indexing none, this takes the safe direction. Over-hiding costs traffic
-// and is reversible in one line; under-hiding is not. Reported as the wave's
-// open STOP item — restore the original gate the moment `sexual` appears on
-// GET /v1/catalog/tags/{id}.
-useKunDisableSeo(tag.value ? `标签 · ${tag.value.name}` : '标签详情')
+// Also disabled when the tag is missing / the fetch failed, to avoid indexing a
+// 404 stub.
+if (tag.value && !tag.value.sexual) {
+  useKunSeoMeta({
+    title: `标签 · ${tag.value.name}`,
+    description: `${tag.value.name}（${tag.value.galgame_count ?? '0'} 个 Galgame）汉化补丁、中文补丁资源下载合集`
+  })
+} else {
+  useKunDisableSeo(tag.value ? `标签 · ${tag.value.name}` : '标签详情')
+}
 </script>
 
 <template>

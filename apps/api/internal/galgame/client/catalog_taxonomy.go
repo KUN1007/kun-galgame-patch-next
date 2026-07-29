@@ -145,18 +145,23 @@ func atoiDefault(s string, def int) int {
 
 // catalogTagBrief is the entity block moyu emits for a tag page.
 //
-// `aliases` is always empty and `category` is always "": the canonical tag
-// vocabulary has neither. The wiki's 8,700 tag aliases were deliberately not
-// migrated (P2), and its content|sexual|technical category axis has no
-// successor at all — the catalog's tier/kind are a different coordinate system,
-// and the sexual flag it DOES carry lives on the work-tag edge, not on the tag
-// record. Both keys stay on the wire so the frontend contract is unchanged and
-// the loss is visible rather than inferred from a missing key.
+// `aliases` is always empty: the canonical tag vocabulary has no alias table
+// (the wiki's 8,700 tag aliases were deliberately not migrated, P2). The key
+// stays on the wire so the loss is visible rather than inferred from a missing
+// key.
+//
+// `sexual` is the safety axis (A2-1f). The wiki's content|sexual|technical
+// category had no successor for one wave — tier/kind are a different coordinate
+// system and the flag then lived only on the work-tag edge — which is why this
+// page had to fall back to a blanket noindex. The tag RECORD now carries it, so
+// the SEO gate is precise again. `category` is derived from it for the same
+// reason the work detail derives it: consumers keyed on the literal "sexual".
 type catalogTagBrief struct {
 	ID           int64    `json:"id"`
 	Name         string   `json:"name"`
 	Aliases      []string `json:"aliases"`
 	Category     string   `json:"category"`
+	Sexual       bool     `json:"sexual"`
 	Description  string   `json:"description"`
 	GalgameCount int      `json:"galgame_count"`
 	Tier         string   `json:"tier"`
@@ -183,10 +188,15 @@ type catalogIntroRow struct {
 }
 
 type catalogTagRecord struct {
-	ID         int64             `json:"id"`
-	Name       string            `json:"name"`
-	Tier       string            `json:"tier"`
-	Kind       string            `json:"kind"`
+	ID   int64  `json:"id"`
+	Name string `json:"name"`
+	Tier string `json:"tier"`
+	Kind string `json:"kind"`
+	// Sexual is the tag-level safety flag (A2-1f). Coverage caveat, stated
+	// because a consumer must not read the default as an assertion: it is
+	// derived from the wiki tag bridge's category, so an unmapped folksonomy tag
+	// reads false — meaning "this source has no such axis", NOT "confirmed safe".
+	Sexual     bool              `json:"sexual"`
 	WorkCount  int               `json:"work_count"`
 	Intros     []catalogIntroRow `json:"intros"`
 	Works      []catalogWorkRef  `json:"works"`
@@ -276,10 +286,14 @@ func (c *Client) catalogTagDetail(ctx context.Context, idStr string, q url.Value
 	}
 	return json.Marshal(map[string]any{
 		"tag": catalogTagBrief{
-			ID:           rec.ID,
-			Name:         rec.Name,
-			Aliases:      []string{},
-			Category:     "",
+			ID:      rec.ID,
+			Name:    rec.Name,
+			Aliases: []string{},
+			// Same derivation as the work detail's tags[]: a sexual-flagged tag
+			// reads "sexual", everything else "content". Keeps every consumer
+			// that keys on the literal string working off one boolean.
+			Category:     tagCategoryFor(rec.Sexual),
+			Sexual:       rec.Sexual,
 			Description:  preferredIntro(rec.Intros),
 			GalgameCount: rec.WorkCount,
 			Tier:         rec.Tier,

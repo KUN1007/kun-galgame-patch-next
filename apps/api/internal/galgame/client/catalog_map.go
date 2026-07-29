@@ -407,10 +407,7 @@ func catalogWorkToFull(w *catalogWork) GalgameFull {
 // ever asserted it, and inventing a third value from tier/kind would be a
 // guess dressed as data.
 func catalogTagToFullTag(gid int, t *catalogWorkTag) GalgameFullTag {
-	category := "content"
-	if t.Sexual {
-		category = "sexual"
-	}
+	category := tagCategoryFor(t.Sexual)
 	return GalgameFullTag{
 		GalgameID:    gid,
 		TagID:        int(t.CanonicalID),
@@ -421,6 +418,18 @@ func catalogTagToFullTag(gid int, t *catalogWorkTag) GalgameFullTag {
 			Category: category,
 		},
 	}
+}
+
+// tagCategoryFor projects the catalog's tag-level `sexual` boolean onto the
+// category string every moyu consumer keys on. Shared by the work detail's
+// tags[] and the tag page, so the two can never disagree about what makes a tag
+// sexual — which matters, because that word drives an SFW hard-hide and an SEO
+// gate.
+func tagCategoryFor(sexual bool) string {
+	if sexual {
+		return "sexual"
+	}
+	return "content"
 }
 
 // catalogLabelToFullOfficial builds one GalgameFull.Official entry. The

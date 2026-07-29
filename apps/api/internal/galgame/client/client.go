@@ -492,9 +492,15 @@ type SearchGalgameParams struct {
 	SeriesID     int
 	ReleasedFrom int
 	ReleasedTo   int
-	Sort         string // relevance / released_desc / released_asc / updated / popularity
-	Page         int
-	Limit        int
+	// SearchIntro widens free-text matching from titles to SYNOPSES. It went
+	// missing for one wave — the catalog works index carried titles only, so the
+	// parameter was dropped rather than accepted and quietly ignored — and came
+	// back with A2-1f. Default false keeps the narrow, high-precision behaviour;
+	// a title hit always outranks a synopsis hit either way.
+	SearchIntro bool
+	Sort        string // relevance / released_desc / released_asc / updated / popularity
+	Page        int
+	Limit       int
 }
 
 // searchSortForCatalog maps moyu's sort token to the catalog search face's.
@@ -558,6 +564,9 @@ func (c *Client) SearchGalgame(ctx context.Context, p SearchGalgameParams) (*Pag
 	}
 	if p.ReleasedTo > 0 {
 		q.Set("released_before", yearUpperBound(p.ReleasedTo))
+	}
+	if p.SearchIntro {
+		q.Set("search_intro", "1")
 	}
 	if s := searchSortForCatalog(p.Sort); s != "" {
 		q.Set("sort", s)

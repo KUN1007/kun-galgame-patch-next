@@ -18,6 +18,7 @@ package client
 
 import (
 	"context"
+	"encoding/json"
 	"net/http"
 	"net/http/httptest"
 	"net/url"
@@ -488,7 +489,75 @@ func TestCatalogTwoHopReads(t *testing.T) {
 		if got := srv.last().query.Get("nsfw"); got != "" {
 			t.Errorf("nsfw = %q, want absent for an sfw caller", got)
 		}
+		// Absent by default, so the narrow high-precision search is what an
+		// unmodified caller gets.
+		if got := srv.last().query.Get("search_intro"); got != "" {
+			t.Errorf("search_intro = %q, want absent unless asked for", got)
+		}
 	})
+
+	// The synopsis lane (A2-1f). It is opt-in on the wire because it is opt-in
+	// in the UI — the checkbox went away for one wave when the catalog index had
+	// no synopsis to search, and an accepted-but-ignored flag would have been a
+	// promise the face could not keep.
+	t.Run("search_intro rides the wire when asked for", func(t *testing.T) {
+		srv.reset()
+		_, err := c.SearchGalgame(ctx, SearchGalgameParams{Q: "x", SearchIntro: true})
+		if err != nil {
+			t.Fatalf("SearchGalgame: %v", err)
+		}
+		if got := srv.last().query.Get("search_intro"); got != "1" {
+			t.Errorf("search_intro = %q, want 1", got)
+		}
+	})
+}
+
+// TestTagPageCarriesSafetyFlag pins the tag page's SAFETY axis end to end.
+//
+// The page's SEO gate is `!sexual`: a sexual tag's own name is an NSFW signal,
+// so those pages stay out of the index. For one wave the canonical tag record
+// carried no such flag and the page had to fall back to a blanket noindex;
+// A2-1f put it on the record, so this asserts the value actually reaches the
+// frontend — and that `category` is derived from the SAME boolean the work
+// detail derives it from, since that one word drives both an SFW hard-hide and
+// the SEO gate.
+func TestTagPageCarriesSafetyFlag(t *testing.T) {
+	srv := newCatalogFake(t)
+	c := NewWithKey(srv.URL, "nm_test_key")
+	ctx := context.Background()
+
+	for _, tc := range []struct {
+		name         string
+		tagID        string
+		wantSexual   bool
+		wantCategory string
+	}{
+		{"a sexual tag", "12", true, "sexual"},
+		{"an ordinary tag", "11", false, "content"},
+	} {
+		t.Run(tc.name, func(t *testing.T) {
+			srv.reset()
+			raw, handled, err := c.proxyReadV1(ctx, "/tag/_?tag_id="+tc.tagID)
+			if err != nil || !handled {
+				t.Fatalf("proxyReadV1: handled=%v err=%v", handled, err)
+			}
+			var got struct {
+				Tag struct {
+					Sexual   bool   `json:"sexual"`
+					Category string `json:"category"`
+				} `json:"tag"`
+			}
+			if e := json.Unmarshal(raw, &got); e != nil {
+				t.Fatalf("unmarshal: %v", e)
+			}
+			if got.Tag.Sexual != tc.wantSexual {
+				t.Errorf("sexual = %v, want %v", got.Tag.Sexual, tc.wantSexual)
+			}
+			if got.Tag.Category != tc.wantCategory {
+				t.Errorf("category = %q, want %q (derived from the same flag)", got.Tag.Category, tc.wantCategory)
+			}
+		})
+	}
 }
 
 // TestClaimStateGating is the wave's most load-bearing test.

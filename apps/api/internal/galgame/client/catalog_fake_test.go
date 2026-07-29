@@ -75,6 +75,8 @@ func (f *catalogFake) route(req *http.Request) string {
 		return `{"total":1,"page":1,"limit":20,"items":[` + workItem(900, 7, catalogClaimStateLive) + `]}`
 	case p == "/v1/catalog/calendar":
 		return f.calendar()
+	case strings.HasPrefix(p, "/v1/catalog/tags/"):
+		return f.tagRecord(p)
 	case strings.HasPrefix(p, "/v1/catalog/works/"):
 		return f.workDetail(p)
 	}
@@ -125,6 +127,20 @@ func (f *catalogFake) worksList(req *http.Request) string {
 		items = append(items, workItem(id, gid, state))
 	}
 	return `{"items":[` + strings.Join(items, ",") + `],"next_cursor":null}`
+}
+
+// tagRecord answers the canonical tag record. Tag 12 is the fixture's sexual
+// one — the axis the page's SEO gate turns on.
+func (f *catalogFake) tagRecord(path string) string {
+	id, _ := strconv.ParseInt(strings.TrimPrefix(path, "/v1/catalog/tags/"), 10, 64)
+	sexual := "false"
+	if id == 12 {
+		sexual = "true"
+	}
+	return `{"id":` + strconv.FormatInt(id, 10) + `,"name":"tag","tier":"core","kind":"content",` +
+		`"sexual":` + sexual + `,"work_count":3,` +
+		`"intros":[{"lang":"zh-Hans","intro":"说明","source":"vndb"}],` +
+		`"works":[{"id":900,"claimed_by":` + claimJSON(7, catalogClaimStateLive) + `}],"next_offset":null}`
 }
 
 func (f *catalogFake) workDetail(path string) string {

@@ -40,11 +40,10 @@ func New(db *gorm.DB, galgame *galgameClient.Client) *Handler {
 // quietly ignores half the filters the caller asked for is the worst kind of
 // plausible-looking answer.
 //
-// `include_intro` is GONE. It used to widen the wiki index's searchable
-// attributes to the intro bodies; the catalog works index carries titles,
-// aliases and latin readings only, so there is nothing to widen to. Leaving the
-// flag accepted would have been a promise the face cannot keep — see the wave
-// report's STOP item.
+// `include_intro` is back (A2-1f). It was dropped for one wave because the
+// catalog works index carried titles only and an accepted-but-ignored flag is a
+// promise the face cannot keep; the index now has a synopsis lane, so the
+// checkbox means something again.
 type SearchRequest struct {
 	Q            string `json:"q" validate:"max=200"`
 	TagIDs       []int  `json:"tag_ids" validate:"omitempty,max=10,dive,min=1"`
@@ -54,6 +53,7 @@ type SearchRequest struct {
 	AgeLimit     string `json:"age_limit" validate:"omitempty,oneof=all r18"`
 	ReleasedFrom int    `json:"released_from" validate:"omitempty,min=1970,max=2200"`
 	ReleasedTo   int    `json:"released_to" validate:"omitempty,min=1970,max=2200"`
+	IncludeIntro bool   `json:"include_intro"`
 	Sort         string `json:"sort" validate:"omitempty,oneof=relevance released_desc released_asc view updated popularity"`
 	Page         int    `json:"page" validate:"required,min=1"`
 	Limit        int    `json:"limit" validate:"required,min=1,max=50"`
@@ -101,6 +101,7 @@ func (h *Handler) Search(c fiber.Ctx) error {
 		EngineIDs:    req.EngineIDs,
 		ReleasedFrom: req.ReleasedFrom,
 		ReleasedTo:   req.ReleasedTo,
+		SearchIntro:  req.IncludeIntro,
 		Sort:         req.Sort,
 		Page:         req.Page,
 		Limit:        req.Limit,

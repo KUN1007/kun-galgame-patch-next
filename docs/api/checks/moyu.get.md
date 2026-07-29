@@ -91,6 +91,12 @@
 >
 > **为什么 staff 道现在要登录**：上游 `/api` staff 面的门是
 > `jwtAuth + galgame.taxonomy.edit_any`——和它旁边的写操作同一个门。
+>
+> **A2-1f 尾件补回两件**（A2-2 曾因上游缺供给临时降级,现已恢复）：
+> ①`POST /search` 的 `include_intro` 复选框恢复 → 透传 `search_intro=1`（简介检索）；
+> ②`/tag/:name` 的 `sexual` 恢复下发 → tag 详情页 SEO 门从「全 noindex」
+> 回到 `!sexual` 精确判据。`category` 由该布尔派生,与作品详情页 tags[] 同源,
+> 两处不可能对「什么算 sexual」产生分歧。
 
 > A1 波删除：`GET /engine/:name`、`GET /series/search`、`GET /series/:id`
 > —— 三条详情/搜索读均无 FE 调用方（对应的 `/v1` reshaper 一并删除）。列表读保留。

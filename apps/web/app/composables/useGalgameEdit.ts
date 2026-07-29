@@ -60,12 +60,17 @@ export interface StaffTaxonomyRow {
 export interface BrowseTag {
   id: number
   name: string
-  // Always [] and always '': the canonical tag vocabulary has no alias table
-  // (the wiki's 8,700 aliases were deliberately not migrated) and no
-  // content|sexual|technical axis — `tier`/`kind` below are a different
-  // coordinate system, not a rename. Both keys stay on the wire so the loss is
-  // visible instead of inferred from a missing key.
+  // Always []: the canonical tag vocabulary has no alias table (the wiki's
+  // 8,700 aliases were deliberately not migrated). The key stays on the wire so
+  // the loss is visible instead of inferred from a missing key.
   aliases: string[]
+  // The safety axis. `sexual` is the flag the catalog publishes; `category` is
+  // derived from it ('sexual' | 'content') so every consumer that keys on that
+  // literal keeps working off one boolean. COVERAGE: an unmapped folksonomy tag
+  // reads false, which means "this source has no such axis", NOT "confirmed
+  // safe". `tier`/`kind` below are a different coordinate system entirely — not
+  // a rename of the wiki's old category.
+  sexual: boolean
   category: string
   tier: 'core' | 'longtail' | 'hidden' | string
   kind: 'content' | 'meta' | string
