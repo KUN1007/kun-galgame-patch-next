@@ -30,15 +30,18 @@ are recomputed.
 
 ## Catalog drafts (status=2) — post-run remediation
 
-`CheckGalgameByVndbID` (`GET /v1/galgame/lookup`) returns `exists=true` even for
-**unclaimed VNDB drafts** (`status=2`, auto-created by infra's `sync-vndb`). That
-is load-bearing and slightly surprising: lookup is the **only** `/v1` endpoint
-that answers for drafts — its repository query carries no status filter, while
-`/v1` search, batch and detail all serve `status=0` only. Roughly **52k of the
-catalog's ~63k galgames are drafts**, so if lookup ever gains a status filter
-this tool degrades *silently* to `catalog-missing` for most of the archive
-(a skip, not an error). See infra `GalgameRepository.ExistsByVNDBID`, plus the
-two sibling incidents `8ce01e86` and `f52b84d4`.
+`CheckGalgameByVndbID` (`GET /v1/catalog/lookup?source=vndb&external_id=…&nsfw=1`)
+returns `exists=true` even for **unclaimed VNDB drafts** (`status=2`, auto-created
+by infra's `sync-vndb`). That is load-bearing and slightly surprising: it is the
+**only** `/v1` read that answers for drafts — every wiki entry, drafts included,
+claims its catalog work at sync time, and the catalog's `claimed_by` pointer is
+**status-blind** (it reads `catalog_work.{site,product_work_id}`, never the wiki's
+status), while `/v1` search, batch and detail all serve `status=0` only. Roughly
+**52k of the catalog's ~63k galgames are drafts**, so if the claim projection ever
+gained a status filter this tool would degrade *silently* to `catalog-missing` for
+most of the archive (a skip, not an error). Same trap on the request side: the
+lookup must send `nsfw=1` or every r18 work answers `404`. See the two sibling
+incidents `8ce01e86` and `f52b84d4`.
 
 The flip side: the importer happily creates patches on drafts, but since the
 public read faces only serve `status=0`, those galgames — and their imported

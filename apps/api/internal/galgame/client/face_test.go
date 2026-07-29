@@ -361,8 +361,21 @@ func TestV1ReadRouting(t *testing.T) {
 	t.Run("calendar/tba → v1", func(t *testing.T) {
 		check(t, "/v1/galgame/calendar/tba", func() error { _, e := c.GetGalgameCalendarTBA(ctx, ""); return e })
 	})
-	t.Run("vndb lookup → v1", func(t *testing.T) {
-		check(t, "/v1/galgame/lookup", func() error { _, _, e := c.CheckGalgameByVndbID(ctx, "v1"); return e })
+	// The vndb reverse lookup reads the CATALOG face (wave A1), not the
+	// deprecated /v1/galgame surface. nsfw=1 is load-bearing: without it every
+	// r18 work answers 404 and moyu — largely an r18 patch site — would silently
+	// report "not in catalog" for most of its archive.
+	t.Run("vndb lookup → v1 catalog", func(t *testing.T) {
+		check(t, "/v1/catalog/lookup", func() error { _, _, e := c.CheckGalgameByVndbID(ctx, "v1"); return e })
+		if got := rec.query.Get("source"); got != "vndb" {
+			t.Errorf("source = %q, want vndb", got)
+		}
+		if got := rec.query.Get("external_id"); got != "v1" {
+			t.Errorf("external_id = %q, want v1", got)
+		}
+		if got := rec.query.Get("nsfw"); got != "1" {
+			t.Errorf("nsfw = %q, want 1 (r18 works are hidden without it)", got)
+		}
 	})
 
 	// Taxonomy A-bucket reads through the generic Proxy.

@@ -96,10 +96,11 @@ func (h *PatchHandler) ensureCanPublishGalgame(c fiber.Ctx) *errors.AppError {
 //
 // The legacy vndb_id form was removed in 2026-07: nothing sent it after the
 // publish wizard switched to galgame_id, and it was actively harmful — it
-// resolved through /v1/galgame/lookup, which DOES see unclaimed status=2 VNDB
-// drafts, so it could register a carrier on a draft that the read faces then
-// refuse to serve, producing a patch page with no metadata at all. Claiming a
-// draft goes through POST /galgame/:gid/claim, which publishes it first.
+// resolved through the vndb reverse lookup (now /v1/catalog/lookup), which DOES
+// see unclaimed status=2 VNDB drafts because the catalog's claimed_by pointer is
+// status-blind, so it could register a carrier on a draft that the read faces
+// then refuse to serve, producing a patch page with no metadata at all. Claiming
+// a draft goes through POST /galgame/:gid/claim, which publishes it first.
 //
 // Publish gate: by default any logged-in user may create a patch. The admin
 // "creator_only" toggle narrows publishing to the trusted-publisher set

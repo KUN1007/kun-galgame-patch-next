@@ -42,15 +42,19 @@ func (e *GalgameError) Error() string {
 // surface). It derives three faces from one host base:
 //   - v1Base       = {base}/v1       — the FROZEN /v1 public data contract
 //     (curated shapes). Since open-API phase 2 wave 07 (route-B endgame) the
-//     galgame READ set consumes this face: search / batch / detail / calendar /
-//     vndb lookup, plus the taxonomy reads (tag/official/engine/series
-//     list/search/detail) and the galgame links/aliases edit-prefill reads. A
-//     BFF-side adaptation layer (public_dto.go + the taxonomy reshapers below)
-//     projects the curated /v1 records back onto this client's DTOs so moyu's
-//     own API output stays byte-stable. Gated by the internal-tier X-API-Key
-//     (galgame:read scope). NOTE: /v1 serves PUBLISHED works only — it does not
-//     honour `status`, so anything that must see status=2 VNDB drafts or a
-//     caller's own pending submissions belongs on the internal face below.
+//     galgame READ set consumes this face: search / batch / detail / month
+//     calendar, plus the taxonomy reads (tag/official list/search/detail,
+//     engine list, series list). Wave A1 additionally moved the vndb reverse
+//     lookup off the deprecated galgame surface onto the CATALOG surface
+//     (/v1/catalog/lookup), which shares this base + key. A BFF-side adaptation
+//     layer (public_dto.go + the taxonomy reshapers below) projects the curated
+//     /v1 records back onto this client's DTOs so moyu's own API output stays
+//     byte-stable. Gated by the internal-tier X-API-Key (galgame:read +
+//     galgame:nsfw scopes). NOTE: the /v1 GALGAME surface serves PUBLISHED works
+//     only — it does not honour `status`, so anything that must see status=2
+//     VNDB drafts or a caller's own pending submissions belongs on the internal
+//     face below. The one exception is the catalog lookup above: its claimed_by
+//     projection is status-blind and therefore DOES answer for drafts.
 //   - internalBase = {base}/internal — the internal-tier platform-workflow face,
 //     gated by an X-API-Key. What STAYS here: the JWT personal reads (/galgame/
 //     mine, /galgame/messages/mine), the publish picker's status=0,2 +
@@ -380,6 +384,15 @@ func (c *Client) get(ctx context.Context, path string, query url.Values, out any
 // (galgame:read scope): an empty key yields a 401 the caller surfaces (same
 // fail-fast contract as the internal read face).
 func (c *Client) getV1Raw(ctx context.Context, path string, query url.Values) (json.RawMessage, error) {
+	data, _, err := c.getV1RawStatus(ctx, path, query)
+	return data, err
+}
+
+// getV1RawStatus is getV1Raw plus the HTTP status of the response (0 when the
+// request never got one). Callers that must distinguish a DOCUMENTED 404 — the
+// catalog face folds "no such external id" and "hidden work" into one 404 by
+// design — from a genuine failure use this variant; everyone else uses getV1Raw.
+func (c *Client) getV1RawStatus(ctx context.Context, path string, query url.Values) (json.RawMessage, int, error) {
 	u := c.v1Base + path
 	if len(query) > 0 {
 		u += "?" + query.Encode()
@@ -387,7 +400,7 @@ func (c *Client) getV1Raw(ctx context.Context, path string, query url.Values) (j
 
 	req, err := http.NewRequestWithContext(ctx, "GET", u, nil)
 	if err != nil {
-		return nil, fmt.Errorf("构造请求失败: %w", err)
+		return nil, 0, fmt.Errorf("构造请求失败: %w", err)
 	}
 	if c.apiKey != "" {
 		req.Header.Set("X-API-Key", c.apiKey)
@@ -395,23 +408,23 @@ func (c *Client) getV1Raw(ctx context.Context, path string, query url.Values) (j
 
 	resp, err := c.http.Do(req)
 	if err != nil {
-		return nil, fmt.Errorf("调用 galgame 失败: %w", err)
+		return nil, 0, fmt.Errorf("调用 galgame 失败: %w", err)
 	}
 	defer resp.Body.Close()
 
 	body, err := io.ReadAll(resp.Body)
 	if err != nil {
-		return nil, fmt.Errorf("读取 galgame 响应失败: %w", err)
+		return nil, resp.StatusCode, fmt.Errorf("读取 galgame 响应失败: %w", err)
 	}
 
 	var wrapper galgameResponse[json.RawMessage]
 	if err := json.Unmarshal(body, &wrapper); err != nil {
-		return nil, fmt.Errorf("解析 galgame 响应失败: %w (body=%s)", err, truncate(string(body), 200))
+		return nil, resp.StatusCode, fmt.Errorf("解析 galgame 响应失败: %w (body=%s)", err, truncate(string(body), 200))
 	}
 	if wrapper.Code != 0 {
-		return nil, &GalgameError{Code: wrapper.Code, Message: wrapper.Message}
+		return nil, resp.StatusCode, &GalgameError{Code: wrapper.Code, Message: wrapper.Message}
 	}
-	return wrapper.Data, nil
+	return wrapper.Data, resp.StatusCode, nil
 }
 
 // getV1 fetches the /v1 `data` (via getV1Raw) and unmarshals it into out.
@@ -605,22 +618,68 @@ func (c *Client) GetGalgame(ctx context.Context, gid int, contentLimit string) (
 	return &GalgameDetailEnvelope{Galgame: v1GalgameToFull(&g)}, nil
 }
 
-// CheckGalgameByVndbID calls /v1/galgame/lookup?vndb_id=xxx and returns
-// (exists, galgame_id). Used as a pre-check for POST /api/patch. The /v1 lookup
-// mirrors the internal /galgame/check but keys the id as `id` (public DTO
-// convention), not `galgame_id`.
+// catalogSiteGalgameWiki is the catalog claim pointer's `site` value for the
+// galgame-wiki product face — the ONE site whose claimed_by.work_id is a wiki
+// gid (what this client's callers mean by "galgame id").
+const catalogSiteGalgameWiki = "galgame_wiki"
+
+// CheckGalgameByVndbID resolves a VNDB id to the wiki entry that owns it and
+// returns (exists, galgame_id). Used as a pre-check by the patch service's
+// vndb_id identity assertion and by the archive importer.
+//
+// It reads the CATALOG face — GET /v1/catalog/lookup?source=vndb&external_id=…
+// — not the deprecated /v1/galgame/lookup: the catalog is the cross-media
+// identity registry, and its `claimed_by` pointer is the authoritative
+// "which product entry owns this external id" answer.
+//
+// DRAFT VISIBILITY IS LOAD-BEARING. ~52k of the catalog's ~63k galgames are
+// unclaimed status=2 VNDB drafts, and this lookup MUST still resolve them —
+// /v1 search, batch and detail all serve status=0 only, so it is the single
+// read that answers for drafts. The new mechanism preserves that BY DESIGN:
+// every wiki entry (drafts included) claims its catalog work at sync time, and
+// the catalog's claimed_by projection is STATUS-BLIND — it reads
+// catalog_work.{site,product_work_id} and never consults the wiki's status.
+// If that ever changes, this degrades SILENTLY to "vndb not in catalog" for
+// most of the archive (a skip, not an error). See the sibling incidents
+// 8ce01e86 (publish picker) and f52b84d4.
+//
+// nsfw=1 is REQUIRED, always: without it the catalog hides r18 works behind the
+// very same 404 as a miss, and moyu is largely an r18 patch site. moyu's
+// internal-tier key carries the galgame:nsfw scope for exactly this.
+//
+// Semantics (bit-for-bit identical to the retired /v1/galgame/lookup):
+//   - HTTP 404 → (false, 0, nil): the catalog folds miss + hidden into one 404.
+//   - claimed_by == null → (false, 0, nil): the catalog knows this VNDB work but
+//     NO wiki entry owns it, so there is no galgame id to return.
+//   - claimed_by.site != galgame_wiki → (false, 0, nil): another product face
+//     claimed it; its work_id is not a wiki gid (future-proofing).
 func (c *Client) CheckGalgameByVndbID(ctx context.Context, vndbID string) (exists bool, galgameID int, err error) {
 	q := url.Values{}
-	q.Set("vndb_id", vndbID)
+	q.Set("source", "vndb")
+	q.Set("external_id", vndbID)
+	q.Set("nsfw", "1")
 
-	var out struct {
-		Exists bool `json:"exists"`
-		ID     int  `json:"id"`
-	}
-	if err := c.getV1(ctx, "/galgame/lookup", q, &out); err != nil {
+	data, status, err := c.getV1RawStatus(ctx, "/catalog/lookup", q)
+	if err != nil {
+		if status == http.StatusNotFound {
+			return false, 0, nil
+		}
 		return false, 0, err
 	}
-	return out.Exists, out.ID, nil
+
+	var out struct {
+		ClaimedBy *struct {
+			Site   string `json:"site"`
+			WorkID int64  `json:"work_id"`
+		} `json:"claimed_by"`
+	}
+	if err := json.Unmarshal(data, &out); err != nil {
+		return false, 0, fmt.Errorf("解析 catalog lookup data 失败: %w", err)
+	}
+	if out.ClaimedBy == nil || out.ClaimedBy.Site != catalogSiteGalgameWiki {
+		return false, 0, nil
+	}
+	return true, int(out.ClaimedBy.WorkID), nil
 }
 
 // GalgameBatch calls /galgame/batch?ids=1,2,3 to fetch lightweight galgame info in bulk.

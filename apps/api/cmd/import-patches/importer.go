@@ -51,14 +51,17 @@ type Importer struct {
 	// touched collects every galgame_id we resolved (published or draft) so the
 	// run can flag the ones still at catalog status=2 afterwards.
 	//
-	// LOAD-BEARING: CheckGalgameByVndbID (/v1/galgame/lookup) is the ONE /v1
-	// endpoint that still answers for unclaimed VNDB drafts — its repository
-	// query (infra GalgameRepository.ExistsByVNDBID) carries no status filter,
-	// while /v1 search, batch and detail all serve status=0 only. The whole
-	// archive import depends on that: ~52k of catalog's ~63k galgames are
-	// status=2 drafts, so if lookup ever gains a status filter this tool
-	// SILENTLY degrades to "vndb not in catalog" for most of the archive —
-	// a skip, not an error, invisible unless you read the summary. See the
+	// LOAD-BEARING: CheckGalgameByVndbID (/v1/catalog/lookup) is the ONE /v1
+	// read that still answers for unclaimed VNDB drafts — every wiki entry,
+	// drafts included, claims its catalog work at sync time, and the catalog's
+	// claimed_by projection is STATUS-BLIND (it reads catalog_work.{site,
+	// product_work_id} and never consults the wiki's status), while /v1 search,
+	// batch and detail all serve status=0 only. The whole archive import depends
+	// on that: ~52k of catalog's ~63k galgames are status=2 drafts, so if the
+	// claim projection ever gained a status filter this tool would SILENTLY
+	// degrade to "vndb not in catalog" for most of the archive — a skip, not an
+	// error, invisible unless you read the summary. Same trap on the request
+	// side: the lookup MUST send nsfw=1 or every r18 work answers 404. See the
 	// sibling incidents: 8ce01e86 (publish picker) and f52b84d4, which calls
 	// this lookup asymmetry out by name.
 	//
