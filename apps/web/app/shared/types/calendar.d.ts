@@ -1,7 +1,8 @@
 // Types for the Galgame release calendar (发售月表). Backed by the wiki calendar
 // API (docs/galgame_wiki/01-galgame.md §发售月历), surfaced via moyu's
-// /galgame/calendar[/pending|/tba] endpoints. Ambient (no import/export) to match
-// the rest of app/shared/types.
+// /galgame/calendar endpoint. Ambient (no import/export) to match the rest of
+// app/shared/types. The sibling /calendar/{pending,tba} buckets were retired in
+// wave A1 — nothing on the frontend ever rendered them.
 
 // release_precision marks how release_date should be read (release_date is
 // normalized, so the two MUST be read together).
@@ -35,10 +36,4 @@ interface CalendarMonthResponse {
     max_month: string
     count: number
   }
-}
-
-// GET /galgame/calendar/pending?year=YYYY  and  GET /galgame/calendar/tba
-interface CalendarBucketResponse {
-  year?: string
-  items: CalendarItem[]
 }

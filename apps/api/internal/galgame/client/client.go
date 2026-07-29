@@ -719,7 +719,7 @@ func (c *Client) GalgameBatch(ctx context.Context, ids []int, contentLimit strin
 
 // ─── Galgame release calendar (发售月历) ───────────────
 // docs/galgame_wiki/01-galgame.md §Galgame 发售月历. Precision-aware read-only
-// endpoints for a "本月新作 / 发售月表" view. content_limit is EXACT-match here
+// endpoint for a "本月新作 / 发售月表" view. content_limit is EXACT-match here
 // (sfw / nsfw only — there is no combined "all"); the caller fans out + merges.
 
 // GalgameCalendar is the data field of GET /galgame/calendar (one ISO month,
@@ -743,16 +743,6 @@ type GalgameCalendarMeta struct {
 	Count     int    `json:"count"`
 }
 
-// GalgameCalendarBucket is the data field of /calendar/pending (year-only) and
-// /calendar/tba (global). Pending echoes the resolved year; tba has none.
-type GalgameCalendarBucket struct {
-	Year  string         `json:"year,omitempty"`
-	Items []GalgameBrief `json:"items"`
-	Meta  struct {
-		Count int `json:"count"`
-	} `json:"meta"`
-}
-
 // GetGalgameCalendar fetches one ISO month. month is strict "YYYY-MM" or "" for
 // the current month (JST, galgame-side). contentLimit is "sfw" / "nsfw" (exact) or
 // "" to omit (galgame defaults sfw).
@@ -771,35 +761,11 @@ func (c *Client) GetGalgameCalendar(ctx context.Context, month, contentLimit str
 	return &out, nil
 }
 
-// GetGalgameCalendarPending fetches the "year-only, month TBD" bucket. year is
-// strict "YYYY" or "" for the current year (JST, galgame-side).
-func (c *Client) GetGalgameCalendarPending(ctx context.Context, year, contentLimit string) (*GalgameCalendarBucket, error) {
-	q := url.Values{}
-	if year != "" {
-		q.Set("year", year)
-	}
-	if contentLimit != "" {
-		q.Set("content_limit", contentLimit)
-	}
-	var out GalgameCalendarBucket
-	if err := c.getV1(ctx, "/galgame/calendar/pending", q, &out); err != nil {
-		return nil, err
-	}
-	return &out, nil
-}
-
-// GetGalgameCalendarTBA fetches the global "release date TBA" bucket.
-func (c *Client) GetGalgameCalendarTBA(ctx context.Context, contentLimit string) (*GalgameCalendarBucket, error) {
-	q := url.Values{}
-	if contentLimit != "" {
-		q.Set("content_limit", contentLimit)
-	}
-	var out GalgameCalendarBucket
-	if err := c.getV1(ctx, "/galgame/calendar/tba", q, &out); err != nil {
-		return nil, err
-	}
-	return &out, nil
-}
+// NOTE: the sibling "year-only, month TBD" (/calendar/pending) and "release date
+// TBA" (/calendar/tba) buckets were retired in wave A1 — the FE only ever
+// rendered the month lane, so the two client methods, their moyu handlers and
+// their routes were census-verified dead and deleted. The month lane above is
+// the whole calendar surface.
 
 // ─── Write methods (require user OAuth access_token) ───
 //

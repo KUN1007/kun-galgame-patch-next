@@ -122,7 +122,7 @@ export const useApi = () => {
   // toggle. Most critically the publish-time picker (/galgame/search/publish):
   // when you add the FIRST patch to a game it has resource_count = 0, so a
   // resource-presence filter there would make it unfindable. The /search page
-  // (Meilisearch) and the edit-flow /tag|/official|/series/search proxies are
+  // (Meilisearch) and the edit-flow /tag|/official/search proxies are
   // likewise keyword-discovery, not browse lists. (These are all Wiki/Meili
   // backed and ignore the param anyway — we drop it here so the contract is
   // explicit and future moyu-side search can't accidentally honor it.) The

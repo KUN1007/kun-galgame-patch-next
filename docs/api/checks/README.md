@@ -98,7 +98,7 @@ moyu 侧仅挂 `auth`/`optionalAuth` 以便转发用户的 OAuth access_token：
 
 | 服务 | 二进制 | Base URL | GET | POST | PUT | DELETE | PATCH | 小计 |
 |---|---|---|---|---|---|---|---|---|
-| moyu | `cmd/server` | `/api/v1` | [80](./moyu.get.md) | [37](./moyu.post.md) | [26](./moyu.put.md) | [14](./moyu.delete.md) | [2](./moyu.patch.md) | **159** |
+| moyu | `cmd/server` | `/api/v1` | [80→75](./moyu.get.md) | [37](./moyu.post.md) | [26](./moyu.put.md) | [14](./moyu.delete.md) | [2](./moyu.patch.md) | **159→154** |
 
 ### 功能域分布（便于切片审计）
 
@@ -106,8 +106,8 @@ moyu 侧仅挂 `auth`/`optionalAuth` 以便转发用户的 OAuth access_token：
 |---|---|---|---|---|---|---|
 | 认证 `/auth` | 1 | 2 | — | — | 1 | 4 |
 | 补丁/评论/资源 `/patch` | 8 | 3 | 9 | 3 | — | 23 |
-| Galgame 投稿/编辑代理 `/galgame` | 11 | 6 | 4 | 3 | 1 | 25 |
-| 分类代理 `/tag /official /engine /series`（含修订） | 20 | 9 | 4 | 4 | — | 37 |
+| Galgame 投稿/编辑代理 `/galgame` | 11→9 | 6 | 4 | 3 | 1 | 25→23 |
+| 分类代理 `/tag /official /engine /series`（含修订） | 20→17 | 9 | 4 | 4 | — | 37→34 |
 | 用户 `/user` | 11 | 2 | 1 | 1 | — | 15 |
 | 消息 `/message` | 3 | 1→0 | 1 | — | — | 5→4 |
 | 管理 `/admin` | 11 | 1 | 5 | 2 | — | 19 |
@@ -115,9 +115,14 @@ moyu 侧仅挂 `auth`/`optionalAuth` 以便转发用户的 OAuth access_token：
 | 聊天 `/chat` | 3 | 5 | 2 | 1 | — | 11 |
 | 上传 `/upload` | — | 6 | — | — | — | 6 |
 | 搜索/外部/关于 | 4 | 1 | — | — | — | 5 |
-| **合计（审计时）** | **80** | **37** | **26** | **14** | **2** | **159** |
+| **合计（审计时）** | **80→75** | **37** | **26** | **14** | **2** | **159→154** |
 
-> 注：`POST /message` 因安全问题被删除，现存 POST 为 **36**、总计 **158**。
+> 注：`POST /message` 因安全问题被删除，现存 POST 为 **36**。
+>
+> 注：A1 波（`/v1` 正典化）删除 5 条 FE-dead 只读代理 —— `/galgame/:gid/links`、
+> `/galgame/:gid/aliases`、`/engine/:name`、`/series/search`、`/series/:id`
+> （详见 [moyu.get.md](./moyu.get.md)）。同波删除的
+> `/galgame/calendar/{pending,tba}` 在本次审计之后才上线，不计入上表。
 
 ## 图例 — 审计状态
 
@@ -145,7 +150,7 @@ moyu 侧仅挂 `auth`/`optionalAuth` 以便转发用户的 OAuth access_token：
 
 ## 配套清单
 
-- [moyu.get.md](./moyu.get.md) — GET（80）
+- [moyu.get.md](./moyu.get.md) — GET（80 → 75）
 - [moyu.post.md](./moyu.post.md) — POST（37 → 36）
 - [moyu.put.md](./moyu.put.md) — PUT（26）
 - [moyu.delete.md](./moyu.delete.md) — DELETE（14）

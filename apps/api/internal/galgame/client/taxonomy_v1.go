@@ -1,16 +1,18 @@
 package client
 
 // Taxonomy read reshapers (open-API phase 2 wave 07, W3). The generic Proxy
-// forwards moyu's verbatim taxonomy/relation reads; this file intercepts the
-// A-bucket GET reads and serves them from the /v1 public contract, reshaping the
-// curated records back to the bridge `data` the moyu handler + FE consume.
+// forwards moyu's verbatim taxonomy reads; this file intercepts the A-bucket GET
+// reads and serves them from the /v1 public contract, reshaping the curated
+// records back to the bridge `data` the moyu handler + FE consume.
 //
-// The B-bucket reads (tag/official/engine/series /:id/revisions) and every write
-// are NOT handled here — they fall through to the internal / legacy face
+// The surviving set after the wave-A1 dead-lane sweep is exactly what the FE
+// consumes: tag/official list + search + multi + detail, engine list, series
+// list. The B-bucket reads (tag/official/engine/series /:id/revisions) and every
+// write are NOT handled here — they fall through to the internal / legacy face
 // unchanged (see Proxy). The /v1 curation deliberately drops raw-model-only
-// fields (taxonomy alias-row {id,created,updated}, engine created/updated,
-// link/alias row bookkeeping) that the moyu FE does not consume (W3 census);
-// those diffs are the expected route-B curation, not a regression.
+// fields (taxonomy alias-row {id,created,updated}, engine created/updated) that
+// the moyu FE does not consume (W3 census); those diffs are the expected
+// route-B curation, not a regression.
 
 import (
 	"context"
@@ -59,29 +61,12 @@ func (c *Client) proxyReadV1(ctx context.Context, pathAndQuery string) (data jso
 			return c.wrap(c.v1EntityDetail(ctx, "officials", "official", q.Get("official_id"), q))
 		}
 	case "engine":
-		switch {
-		case len(segs) == 1:
+		if len(segs) == 1 {
 			return c.wrap(c.v1EngineList(ctx, q))
-		case len(segs) == 2:
-			return c.wrap(c.v1EngineDetail(ctx, q.Get("engine_id"), q))
 		}
 	case "series":
-		switch {
-		case len(segs) == 1:
+		if len(segs) == 1 {
 			return c.wrap(c.v1TaxList(ctx, "/galgame/series", q))
-		case segs[1] == "search":
-			return c.wrap(c.v1SeriesSearch(ctx, q))
-		case len(segs) == 2:
-			return c.wrap(c.v1SeriesDetail(ctx, segs[1], q))
-		}
-	case "galgame":
-		if len(segs) == 3 {
-			switch segs[2] {
-			case "links":
-				return c.wrap(c.v1GalgameLinks(ctx, segs[1]))
-			case "aliases":
-				return c.wrap(c.v1GalgameAliases(ctx, segs[1]))
-			}
 		}
 	}
 	return nil, false, nil
@@ -193,101 +178,9 @@ func (c *Client) v1EngineList(ctx context.Context, q url.Values) (json.RawMessag
 	return json.Marshal(items)
 }
 
-// v1EngineDetail composes an engine detail (unconsumed by the moyu FE; kept
-// functional). /v1 has no engine reverse-lookup, so the member galgames come
-// from a search on engine_ids projected to briefs.
-func (c *Client) v1EngineDetail(ctx context.Context, idStr string, q url.Values) (json.RawMessage, error) {
-	if idStr == "" {
-		idStr = "0"
-	}
-	engine, err := c.getV1Raw(ctx, "/galgame/engines/"+idStr, nil)
-	if err != nil {
-		return nil, err
-	}
-	sq := copyParams(q, "page", "limit", "content_limit")
-	sq.Set("engine_ids", idStr)
-	sq.Set("include", "meta")
-	var sd v1SearchData
-	if err := c.getV1(ctx, "/galgame/search", sq, &sd); err != nil {
-		return nil, err
-	}
-	briefs := make([]GalgameBrief, 0, len(sd.Items))
-	for i := range sd.Items {
-		briefs = append(briefs, v1ItemToBrief(&sd.Items[i]))
-	}
-	return json.Marshal(map[string]any{
-		"engine":   engine,
-		"galgames": briefs,
-		"total":    sd.Total,
-	})
-}
-
-// v1SeriesSearch adapts the bridge /series/search (galgame keyword search for
-// series assignment; unconsumed by the moyu FE) to a /v1 galgame search,
-// returning a bare array of briefs.
-func (c *Client) v1SeriesSearch(ctx context.Context, q url.Values) (json.RawMessage, error) {
-	sq := url.Values{}
-	if kw := q.Get("keywords"); kw != "" {
-		sq.Set("q", kw)
-	}
-	sq.Set("include", "meta")
-	var sd v1SearchData
-	if err := c.getV1(ctx, "/galgame/search", sq, &sd); err != nil {
-		return nil, err
-	}
-	briefs := make([]GalgameBrief, 0, len(sd.Items))
-	for i := range sd.Items {
-		briefs = append(briefs, v1ItemToBrief(&sd.Items[i]))
-	}
-	return json.Marshal(briefs)
-}
-
-// v1SeriesDetail forwards the curated /v1 series by-id record (unconsumed by the
-// moyu FE). The {id,name,description,galgame_count,galgames} shape passes through.
-func (c *Client) v1SeriesDetail(ctx context.Context, idStr string, q url.Values) (json.RawMessage, error) {
-	return c.getV1Raw(ctx, "/galgame/series/"+idStr, copyParams(q, "content_limit"))
-}
-
-// v1GalgameLinks serves the edit-prefill link read from the /v1 detail's
-// include=links block (curated [{id,name,link,source}]). content_limit=all so an
-// NSFW entry's links are still returned (the handler already gated visibility).
-func (c *Client) v1GalgameLinks(ctx context.Context, gid string) (json.RawMessage, error) {
-	q := url.Values{}
-	q.Set("include", "links")
-	q.Set("content_limit", "all")
-	data, err := c.getV1Raw(ctx, "/galgame/"+gid, q)
-	if err != nil {
-		return nil, err
-	}
-	var det struct {
-		Links json.RawMessage `json:"links"`
-	}
-	if err := json.Unmarshal(data, &det); err != nil {
-		return nil, err
-	}
-	if len(det.Links) == 0 {
-		return json.RawMessage("[]"), nil
-	}
-	return det.Links, nil
-}
-
-// v1GalgameAliases serves the edit-prefill alias read from the /v1 detail's
-// top-level aliases block ([]string, always present).
-func (c *Client) v1GalgameAliases(ctx context.Context, gid string) (json.RawMessage, error) {
-	q := url.Values{}
-	q.Set("content_limit", "all")
-	data, err := c.getV1Raw(ctx, "/galgame/"+gid, q)
-	if err != nil {
-		return nil, err
-	}
-	var det struct {
-		Aliases json.RawMessage `json:"aliases"`
-	}
-	if err := json.Unmarshal(data, &det); err != nil {
-		return nil, err
-	}
-	if len(det.Aliases) == 0 {
-		return json.RawMessage("[]"), nil
-	}
-	return det.Aliases, nil
-}
+// NOTE (wave A1): the engine `:id` detail, series `search` and series `:id`
+// detail reshapers, plus the galgame links/aliases edit-prefill reshapers, were
+// deleted here together with the moyu routes that fronted them — a consumption
+// census found no frontend caller for any of the five. Their /v1 sources
+// (/galgame/engines/{id}, /galgame/series/{id}, the detail's links/aliases
+// blocks) are untouched and still available should a consumer ever appear.

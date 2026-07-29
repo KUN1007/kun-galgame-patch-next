@@ -91,16 +91,14 @@ const qs = (q?: Q): string => {
 export const useGalgameEdit = () => {
   const api = useApi()
 
-  // ─── Relations ──────────────────────────────────────
-  const listLinks = (gid: number) =>
-    api.get<GalgameLink[]>(`/galgame/${gid}/links`)
+  // ─── Relations (writes only) ────────────────────────
+  // The list/prefill GETs were retired in wave A1 — no page ever called them,
+  // and the backend dropped both routes with their reshapers.
   const createLink = (gid: number, body: { name: string; link: string }) =>
     api.post(`/galgame/${gid}/links`, body)
   const deleteLink = (gid: number, id: number) =>
     api.delete(`/galgame/${gid}/links`, { id })
 
-  const listAliases = (gid: number) =>
-    api.get<GalgameAlias[]>(`/galgame/${gid}/aliases`)
   const createAlias = (gid: number, name: string) =>
     api.post(`/galgame/${gid}/aliases`, { name })
   const deleteAlias = (gid: number, id: number) =>
@@ -193,11 +191,11 @@ export const useGalgameEdit = () => {
     }>(`/engine/${id}${force ? '?force=true' : ''}`)
 
   // ─── Taxonomy: series ───────────────────────────────
+  // seriesSearch (`GET /series/search`) and seriesDetail (`GET /series/:id`)
+  // were retired in wave A1 alongside their backend routes — census-verified
+  // uncalled. The list read below stays: pages/galgame/taxonomy.vue drives it.
   const seriesList = (opts?: { page?: number; limit?: number }) =>
     api.get<GalgamePage<GalgameSeries>>(`/series${qs(opts as Q)}`)
-  const seriesSearch = (keywords: string) =>
-    api.get<unknown[]>(`/series/search${qs({ keywords })}`)
-  const seriesDetail = (id: number) => api.get<GalgameSeries>(`/series/${id}`)
   const createSeries = (body: {
     name: string
     description?: string
@@ -268,10 +266,8 @@ export const useGalgameEdit = () => {
     }>(`/official/_${qs({ official_id: id, ...(opts as Q) })}`)
 
   return {
-    listLinks,
     createLink,
     deleteLink,
-    listAliases,
     createAlias,
     deleteAlias,
     tagSearch,
@@ -287,8 +283,6 @@ export const useGalgameEdit = () => {
     updateEngine,
     deleteEngine,
     seriesList,
-    seriesSearch,
-    seriesDetail,
     createSeries,
     seriesModal,
     updateSeries,

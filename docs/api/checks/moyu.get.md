@@ -15,9 +15,13 @@
 
 ## 统计
 
-- 本服务 GET 端点：**80**
-  - 认证 1 · 补丁 8 · Galgame 代理 11 · 分类代理（基础 12 + 修订 8）20 · 用户 11 · 消息 3 · 管理 11 · 公共 8 · 聊天 3 · 外部 2 · 关于 2
+- 本服务 GET 端点：**80 → 75**
+  - 认证 1 · 补丁 8 · Galgame 代理 11→9 · 分类代理（基础 12→9 + 修订 8）20→17 · 用户 11 · 消息 3 · 管理 11 · 公共 8 · 聊天 3 · 外部 2 · 关于 2
 - 本轮：已修复 8 · 代理透传 28 · 其余对齐无误
+- **A1 波（/v1 正典化）删除 5 条 FE-dead 只读代理**：`/galgame/:gid/links`、
+  `/galgame/:gid/aliases`（写面 POST/DELETE 保留）、`/engine/:name`、
+  `/series/search`、`/series/:id`（列表读 `/engine`、`/series` 保留）。同波
+  `/galgame/calendar/{pending,tba}` 也已删除（本表审计时尚未存在，故无对应行）。
 
 ---
 
@@ -53,12 +57,13 @@
 | `GET /api/v1/galgame/:gid/revisions/:rev/diff` | 可选登录 | `patchH.WikiEditProxy` | 保持 | 代理 |
 | `GET /api/v1/galgame/:gid/prs` | 可选登录 | `patchH.WikiEditProxy` | 保持 | 代理 |
 | `GET /api/v1/galgame/:gid/prs/:prid` | 可选登录 | `patchH.WikiEditProxy` | 保持 | 代理 |
-| `GET /api/v1/galgame/:gid/links` | 可选登录 | `patchH.WikiEditProxy` | 保持 | 代理（响应含未声明 `user_id`，无害）|
-| `GET /api/v1/galgame/:gid/aliases` | 可选登录 | `patchH.WikiEditProxy` | 保持 | 代理 |
+
+> A1 波删除：`GET /galgame/:gid/links`、`GET /galgame/:gid/aliases`（编辑预填读，
+> 无任何 FE 调用方）。同路径的 POST / DELETE 写面保留。
 
 ## 4. 分类代理 `/tag /official /engine /series`（→ Wiki）
 
-### 4.1 基础读（12）
+### 4.1 基础读（12 → 9）
 
 | 路径 | 鉴权 | Handler | 状态 | 备注 |
 |---|---|---|---|---|
@@ -69,11 +74,11 @@
 | `GET /api/v1/official` | 公开 | `patchH.WikiEditProxy` | 保持 | 代理 |
 | `GET /api/v1/official/search` | 公开 | `patchH.WikiEditProxy` | 保持 | 代理 |
 | `GET /api/v1/official/:name` | 公开 | `patchH.WikiTaxonomyDetailProxy` | 已修 | 同 `/tag/:name` 降级卡修复 |
-| `GET /api/v1/engine` | 公开 | `patchH.WikiEditProxy` | 保持 | 代理 |
-| `GET /api/v1/engine/:name` | 公开 | `patchH.WikiEditProxy` | 保持 | 通用透传（无 GalgameCard 重写）|
-| `GET /api/v1/series` | 公开 | `patchH.WikiEditProxy` | 保持 | 代理 |
-| `GET /api/v1/series/search` | 公开 | `patchH.WikiEditProxy` | 保持 | 代理 |
-| `GET /api/v1/series/:id` | 公开 | `patchH.WikiEditProxy` | 保持 | 代理 |
+| `GET /api/v1/engine` | 公开 | `patchH.WikiEditProxy` | 保持 | 代理（`taxonomy.vue` 的 engineList）|
+| `GET /api/v1/series` | 公开 | `patchH.WikiEditProxy` | 保持 | 代理（`taxonomy.vue` 的 seriesList）|
+
+> A1 波删除：`GET /engine/:name`、`GET /series/search`、`GET /series/:id`
+> —— 三条详情/搜索读均无 FE 调用方（对应的 `/v1` reshaper 一并删除）。列表读保留。
 
 ### 4.2 修订历史读（8 = 4 实体 × 2）
 

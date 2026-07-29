@@ -1011,45 +1011,9 @@ func (h *CommonHandler) fetchCalendarMonth(ctx context.Context, month, cl string
 	return merged, nil
 }
 
-// GetGalgameCalendarPending GET /api/galgame/calendar/pending?year=YYYY
-func (h *CommonHandler) GetGalgameCalendarPending(c fiber.Ctx) error {
-	cl := utils.ContentLimitForListBrowse(c)
-	year := strings.TrimSpace(c.Query("year"))
-
-	var briefs []galgameClient.GalgameBrief
-	outYear := year
-	for _, lim := range calendarContentLimits(cl) {
-		b, err := h.galgame.GetGalgameCalendarPending(c.Context(), year, lim)
-		if err != nil {
-			return response.Error(c, errors.ErrInternal("调用 Galgame 资料库失败"))
-		}
-		briefs = append(briefs, b.Items...)
-		if b.Year != "" {
-			outYear = b.Year
-		}
-	}
-	return response.OK(c, fiber.Map{
-		"year":  outYear,
-		"items": h.enrichCalendarItems(c, briefs),
-	})
-}
-
-// GetGalgameCalendarTBA GET /api/galgame/calendar/tba
-func (h *CommonHandler) GetGalgameCalendarTBA(c fiber.Ctx) error {
-	cl := utils.ContentLimitForListBrowse(c)
-
-	var briefs []galgameClient.GalgameBrief
-	for _, lim := range calendarContentLimits(cl) {
-		b, err := h.galgame.GetGalgameCalendarTBA(c.Context(), lim)
-		if err != nil {
-			return response.Error(c, errors.ErrInternal("调用 Galgame 资料库失败"))
-		}
-		briefs = append(briefs, b.Items...)
-	}
-	return response.OK(c, fiber.Map{
-		"items": h.enrichCalendarItems(c, briefs),
-	})
-}
+// NOTE: the /calendar/pending (year-only) and /calendar/tba buckets were
+// retired in wave A1 — pages/calendar.vue and useGalgameReleaseToday only ever
+// read the month lane above, so both handlers and their routes were dead.
 
 // minMonthStr / maxMonthStr compare zero-padded "YYYY-MM" lexicographically (==
 // chronologically), treating "" as absent. Used to union the data bounds when

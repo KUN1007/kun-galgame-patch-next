@@ -2,10 +2,11 @@ package client
 
 // Face-selection tests: prove the galgame client routes each call to the right
 // face by ROUTE membership, not HTTP method. Since open-API phase 2 wave 07
-// (route-B endgame) the A-bucket READ set — search / batch / detail / calendar /
-// vndb lookup + the taxonomy reads (tag/official/engine/series list/search/
-// detail) + the galgame links/aliases edit-prefill reads — hits the {base}/v1
-// public face + X-API-Key. The B-bucket platform-workflow reads (/galgame/mine,
+// (route-B endgame) the A-bucket READ set — search / batch / detail / month
+// calendar + the taxonomy reads (tag/official list/search/multi/detail, engine
+// list, series list) — hits the {base}/v1 public face + X-API-Key, and since
+// wave A1 the vndb reverse lookup hits the same base's CATALOG surface
+// (/v1/catalog/lookup). The B-bucket platform-workflow reads (/galgame/mine,
 // /galgame/messages/mine, the publish picker's status=0,2 search, taxonomy
 // /:id/revisions), the S2S message feed, and
 // the user write set (submit / draft update+delete / claim / image upload /
@@ -323,10 +324,10 @@ func TestFaceSelection_WithKey(t *testing.T) {
 	})
 }
 
-// TestV1ReadRouting proves every A-bucket read routes to the {base}/v1 public
-// face with the internal-tier key (route-B endgame, wave 07). The composed
-// taxonomy detail reads make two /v1 calls; the recorder captures the last
-// (the reverse-lookup), which is sufficient to prove the face.
+// TestV1ReadRouting proves every A-bucket read routes to the {base}/v1 face with
+// the internal-tier key (route-B endgame, wave 07; catalog lookup added in wave
+// A1). The composed taxonomy detail reads make two /v1 calls; the recorder
+// captures the last (the reverse-lookup), which is sufficient to prove the face.
 func TestV1ReadRouting(t *testing.T) {
 	rec := &faceRecorder{}
 	srv := rec.server(t)
@@ -354,12 +355,6 @@ func TestV1ReadRouting(t *testing.T) {
 	})
 	t.Run("calendar → v1", func(t *testing.T) {
 		check(t, "/v1/galgame/calendar", func() error { _, e := c.GetGalgameCalendar(ctx, "", ""); return e })
-	})
-	t.Run("calendar/pending → v1", func(t *testing.T) {
-		check(t, "/v1/galgame/calendar/pending", func() error { _, e := c.GetGalgameCalendarPending(ctx, "", ""); return e })
-	})
-	t.Run("calendar/tba → v1", func(t *testing.T) {
-		check(t, "/v1/galgame/calendar/tba", func() error { _, e := c.GetGalgameCalendarTBA(ctx, ""); return e })
 	})
 	// The vndb reverse lookup reads the CATALOG face (wave A1), not the
 	// deprecated /v1/galgame surface. nsfw=1 is load-bearing: without it every
@@ -393,8 +388,9 @@ func TestV1ReadRouting(t *testing.T) {
 	t.Run("official detail (composed) → v1 reverse-lookup", func(t *testing.T) {
 		check(t, "/v1/galgame/officials/9/galgames", proxyGet("/official/_?official_id=9"))
 	})
-	t.Run("galgame links → v1 detail", func(t *testing.T) { check(t, "/v1/galgame/42", proxyGet("/galgame/42/links")) })
-	t.Run("galgame aliases → v1 detail", func(t *testing.T) { check(t, "/v1/galgame/42", proxyGet("/galgame/42/aliases")) })
+	// NOTE: the calendar pending/tba, galgame links/aliases prefill, engine
+	// detail and series search/detail lanes had their pins removed in wave A1 —
+	// the lanes themselves are gone (census-verified FE-dead).
 }
 
 // TestMessageFeedRequiresKey proves the S2S message feed hard-depends on the

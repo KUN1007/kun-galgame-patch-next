@@ -157,13 +157,13 @@ func (a *App) RegisterRoutes() {
 	// /galgame/search/publish, /galgame/messages/* must be registered BEFORE
 	// the parameterized /galgame/:gid routes below so Fiber doesn't match
 	// "mine"/"submit"/etc. as a :gid value.
-	// Release calendar (发售月表) — public reads, delegated to the galgame and
-	// stamped with has_patch. Literal paths, so they also sit above /galgame/:gid.
+	// Release calendar (发售月表) — public read, delegated to the galgame and
+	// stamped with has_patch. Literal path, so it also sits above /galgame/:gid.
 	// optionalAuth so each card can be stamped is_favorite for the logged-in
-	// viewer (inline 收藏 state) without requiring login to browse.
+	// viewer (inline 收藏 state) without requiring login to browse. The month
+	// lane is the whole surface: the /calendar/{pending,tba} buckets were
+	// census-verified FE-dead and retired in wave A1.
 	api.Get("/galgame/calendar", optionalAuth, a.CommonHandler.GetGalgameCalendar)
-	api.Get("/galgame/calendar/pending", optionalAuth, a.CommonHandler.GetGalgameCalendarPending)
-	api.Get("/galgame/calendar/tba", optionalAuth, a.CommonHandler.GetGalgameCalendarTBA)
 	api.Get("/galgame/mine", auth, a.PatchHandler.ListMyGalgames)
 	api.Get("/galgame/search/publish", auth, a.PatchHandler.SearchGalgameForPublish)
 	api.Get("/galgame/messages/mine", auth, a.PatchHandler.GetMyGalgameMessages)
@@ -180,16 +180,17 @@ func (a *App) RegisterRoutes() {
 	// edit) moved to kungal — moyu retired its revision/PR proxy + UI in the
 	// "编辑面归 kungal" wave. What remains here is the links / aliases relation
 	// proxy: verbatim pass-throughs (a.PatchHandler.GalgameEditProxy) that mirror
-	// the galgame path 1:1. Reads use optionalAuth (token forwarded only if logged
-	// in); writes use auth so a Bearer exists. galgame enforces creator/admin; we
-	// forward its code+message verbatim.
+	// the galgame path 1:1. Writes use auth so a Bearer exists; galgame enforces
+	// creator/admin and we forward its code+message verbatim.
+	//
+	// WRITES ONLY since wave A1: the two GET prefill lanes were census-verified
+	// FE-dead (the edit UI never listed links/aliases through moyu) and retired
+	// together with their /v1 detail-composing reshapers.
 	//
 	// Registered AFTER the literal /galgame/{mine,submit,search,messages,:gid}
 	// routes above so Fiber's order-based matching keeps them intact.
-	api.Get("/galgame/:gid/links", optionalAuth, a.PatchHandler.GalgameEditProxy)
 	api.Post("/galgame/:gid/links", auth, a.PatchHandler.GalgameEditProxy)
 	api.Delete("/galgame/:gid/links", auth, a.PatchHandler.GalgameEditProxy)
-	api.Get("/galgame/:gid/aliases", optionalAuth, a.PatchHandler.GalgameEditProxy)
 	api.Post("/galgame/:gid/aliases", auth, a.PatchHandler.GalgameEditProxy)
 	api.Delete("/galgame/:gid/aliases", auth, a.PatchHandler.GalgameEditProxy)
 	// galgame contributor list / removal is no longer surfaced. moyu only
@@ -344,19 +345,20 @@ func (a *App) RegisterRoutes() {
 	api.Delete("/official/:id", auth, a.PatchHandler.GalgameEditProxy)
 	api.Get("/official/:name", a.PatchHandler.GalgameTaxonomyDetailProxy)
 
+	// Wave A1: the engine `:name` detail, series `search` and series `:id` detail
+	// GETs were census-verified FE-dead (no composable or page called them) and
+	// retired with their /v1 reshapers. The LIST reads stay — the taxonomy admin
+	// page (pages/galgame/taxonomy.vue) drives engineList / seriesList off them.
 	api.Get("/engine", a.PatchHandler.GalgameEditProxy)
 	api.Post("/engine", auth, a.PatchHandler.GalgameEditProxy)
 	api.Put("/engine", auth, a.PatchHandler.GalgameEditProxy)
 	api.Delete("/engine/:id", auth, a.PatchHandler.GalgameEditProxy)
-	api.Get("/engine/:name", a.PatchHandler.GalgameEditProxy)
 
 	api.Get("/series", a.PatchHandler.GalgameEditProxy)
-	api.Get("/series/search", a.PatchHandler.GalgameEditProxy)
 	api.Post("/series/modal", auth, a.PatchHandler.GalgameEditProxy)
 	api.Post("/series", auth, a.PatchHandler.GalgameEditProxy)
 	api.Put("/series/:id", auth, a.PatchHandler.GalgameEditProxy)
 	api.Delete("/series/:id", auth, a.PatchHandler.GalgameEditProxy)
-	api.Get("/series/:id", a.PatchHandler.GalgameEditProxy)
 
 	// ===== Taxonomy 修订历史 / 回滚（W3 / galgame U3 PR4，12 条）=====
 	// 4 实体 × 3 端点；都是纯透传到 galgame，鉴权 galgame 自己强制
