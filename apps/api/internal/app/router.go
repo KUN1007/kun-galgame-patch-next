@@ -325,9 +325,16 @@ func (a *App) RegisterRoutes() {
 	// user; PUT/DELETE admin/moderator) and we forward its code+message.
 	// Literal sub-paths are registered before :name/:id params so Fiber's
 	// order-based matcher resolves /tag/search before /tag/:name, etc.
-	api.Get("/tag", a.PatchHandler.GalgameEditProxy)
+	//
+	// Wave A2-2: the tag/official LIST reads and `/tag/multi` were census-verified
+	// FE-dead (no composable, page or server route called them — the taxonomy
+	// admin console drives its tag/official panes off `/tag/search` +
+	// `/official/search`, never the bare lists) and retired with their /v1
+	// reshapers. The `search` reads MUST stay on the wiki id space: the console
+	// feeds the ids they return straight back into PUT /tag {tag_id} /
+	// DELETE /tag/:id on the wiki staff write face, which is a W5 survivor keyed
+	// on wiki taxonomy PKs.
 	api.Get("/tag/search", a.PatchHandler.GalgameEditProxy)
-	api.Get("/tag/multi", a.PatchHandler.GalgameEditProxy)
 	api.Post("/tag", auth, a.PatchHandler.GalgameEditProxy)
 	api.Put("/tag", auth, a.PatchHandler.GalgameEditProxy)
 	api.Delete("/tag/:id", auth, a.PatchHandler.GalgameEditProxy)
@@ -338,7 +345,6 @@ func (a *App) RegisterRoutes() {
 	// galgame index. Other tag/official endpoints stay generic passthrough.
 	api.Get("/tag/:name", a.PatchHandler.GalgameTaxonomyDetailProxy)
 
-	api.Get("/official", a.PatchHandler.GalgameEditProxy)
 	api.Get("/official/search", a.PatchHandler.GalgameEditProxy)
 	api.Post("/official", auth, a.PatchHandler.GalgameEditProxy)
 	api.Put("/official", auth, a.PatchHandler.GalgameEditProxy)

@@ -377,8 +377,7 @@ func TestV1ReadRouting(t *testing.T) {
 	proxyGet := func(p string) func() error {
 		return func() error { _, e := c.Proxy(ctx, http.MethodGet, p, "", nil, ""); return e }
 	}
-	t.Run("tag list → v1", func(t *testing.T) { check(t, "/v1/galgame/tags", proxyGet("/tag?page=1")) })
-	t.Run("tag multi → v1", func(t *testing.T) { check(t, "/v1/galgame/tags/multi", proxyGet("/tag/multi?tag_ids=1,2")) })
+	t.Run("tag search → v1", func(t *testing.T) { check(t, "/v1/galgame/tags/search", proxyGet("/tag/search?q=x")) })
 	t.Run("official search → v1", func(t *testing.T) { check(t, "/v1/galgame/officials/search", proxyGet("/official/search?q=x")) })
 	t.Run("engine list → v1", func(t *testing.T) { check(t, "/v1/galgame/engines", proxyGet("/engine")) })
 	t.Run("series list → v1", func(t *testing.T) { check(t, "/v1/galgame/series", proxyGet("/series?page=1")) })
@@ -390,7 +389,32 @@ func TestV1ReadRouting(t *testing.T) {
 	})
 	// NOTE: the calendar pending/tba, galgame links/aliases prefill, engine
 	// detail and series search/detail lanes had their pins removed in wave A1 —
-	// the lanes themselves are gone (census-verified FE-dead).
+	// the lanes themselves are gone (census-verified FE-dead). Wave A2-2 removed
+	// the tag list + tag/multi pins for the same reason and pinned `tag/search`
+	// in their place, so the tag family keeps a routing pin.
+}
+
+// TestRetiredTaxonomyListsAreUnhandled proves the wave-A2-2 retirement is real
+// at the dispatcher, not just at the router: the bare tag / official LIST paths
+// must NOT be claimed by proxyReadV1 any more. Were they still claimed, a stray
+// caller would be served silently off the deprecated /v1 face instead of
+// surfacing as a moyu 404 — the exact failure mode a "retired lane" is supposed
+// to make loud.
+func TestRetiredTaxonomyListsAreUnhandled(t *testing.T) {
+	rec := &faceRecorder{}
+	srv := rec.server(t)
+	c := NewWithKey(srv.URL, "nm_test_key")
+	ctx := context.Background()
+
+	for _, p := range []string{"/tag", "/tag?page=1", "/official", "/official?page=1"} {
+		rec.path = ""
+		if _, handled, err := c.proxyReadV1(ctx, p); handled || err != nil {
+			t.Errorf("proxyReadV1(%q) = handled %v, err %v; want handled=false, err=nil", p, handled, err)
+		}
+		if rec.path != "" {
+			t.Errorf("proxyReadV1(%q) dialed %q; a retired lane must not reach the /v1 face", p, rec.path)
+		}
+	}
 }
 
 // TestMessageFeedRequiresKey proves the S2S message feed hard-depends on the

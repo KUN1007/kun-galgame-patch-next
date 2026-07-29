@@ -15,13 +15,20 @@
 
 ## 统计
 
-- 本服务 GET 端点：**80 → 75**
-  - 认证 1 · 补丁 8 · Galgame 代理 11→9 · 分类代理（基础 12→9 + 修订 8）20→17 · 用户 11 · 消息 3 · 管理 11 · 公共 8 · 聊天 3 · 外部 2 · 关于 2
+- 本服务 GET 端点：**80 → 72**
+  - 认证 1 · 补丁 8 · Galgame 代理 11→9 · 分类代理（基础 12→6 + 修订 8）20→14 · 用户 11 · 消息 3 · 管理 11 · 公共 8 · 聊天 3 · 外部 2 · 关于 2
 - 本轮：已修复 8 · 代理透传 28 · 其余对齐无误
 - **A1 波（/v1 正典化）删除 5 条 FE-dead 只读代理**：`/galgame/:gid/links`、
   `/galgame/:gid/aliases`（写面 POST/DELETE 保留）、`/engine/:name`、
   `/series/search`、`/series/:id`（列表读 `/engine`、`/series` 保留）。同波
   `/galgame/calendar/{pending,tba}` 也已删除（本表审计时尚未存在，故无对应行）。
+- **A2-2 波再删 3 条 FE-dead 分类只读代理**：`/tag`、`/official`（裸列表读）、
+  `/tag/multi`。第二轮普查（这次扫全 `apps/web` 而不只是 composable）确认
+  `useGalgameEdit` 根本没有 `tagList` / `officialList` / `tagMulti` 出口，
+  `pages/galgame/taxonomy.vue` 的 tag / official 面板走的是 `/tag/search` +
+  `/official/search`。**`search` 与 `:name` 详情读保留**：前者返回的 id 被后台
+  管理台直接回填进 `PUT /tag {tag_id}` / `DELETE /tag/:id`（wiki staff 写面，
+  W5 幸存面，键 = wiki 分类 PK），换 id 空间会改错行。
 
 ---
 
@@ -63,22 +70,23 @@
 
 ## 4. 分类代理 `/tag /official /engine /series`（→ Wiki）
 
-### 4.1 基础读（12 → 9）
+### 4.1 基础读（12 → 6）
 
 | 路径 | 鉴权 | Handler | 状态 | 备注 |
 |---|---|---|---|---|
-| `GET /api/v1/tag` | 公开 | `patchH.WikiEditProxy` | 保持 | 代理 |
-| `GET /api/v1/tag/search` | 公开 | `patchH.WikiEditProxy` | 保持 | 代理（literal 先于 `:name`）|
-| `GET /api/v1/tag/multi` | 公开 | `patchH.WikiEditProxy` | 保持 | 代理 |
+| `GET /api/v1/tag/search` | 公开 | `patchH.WikiEditProxy` | 保持 | 代理（literal 先于 `:name`）；**id 必须留 wiki 空间**（管理台回填写面）|
 | `GET /api/v1/tag/:name` | 公开 | `patchH.WikiTaxonomyDetailProxy` | 已修 | 重写 `galgame→galgames`(GalgameCard)；降级卡 `type/language/platform` 原为 `null` → 初始化 `[]`（`created` 零值时间见 README 遗留）|
-| `GET /api/v1/official` | 公开 | `patchH.WikiEditProxy` | 保持 | 代理 |
-| `GET /api/v1/official/search` | 公开 | `patchH.WikiEditProxy` | 保持 | 代理 |
+| `GET /api/v1/official/search` | 公开 | `patchH.WikiEditProxy` | 保持 | 代理；**id 必须留 wiki 空间**（同上）|
 | `GET /api/v1/official/:name` | 公开 | `patchH.WikiTaxonomyDetailProxy` | 已修 | 同 `/tag/:name` 降级卡修复 |
-| `GET /api/v1/engine` | 公开 | `patchH.WikiEditProxy` | 保持 | 代理（`taxonomy.vue` 的 engineList）|
-| `GET /api/v1/series` | 公开 | `patchH.WikiEditProxy` | 保持 | 代理（`taxonomy.vue` 的 seriesList）|
+| `GET /api/v1/engine` | 公开 | `patchH.WikiEditProxy` | 保持 | 代理（`taxonomy.vue` 的 engineList）；**id 必须留 wiki 空间**（同上）|
+| `GET /api/v1/series` | 公开 | `patchH.WikiEditProxy` | 保持 | 代理（`taxonomy.vue` 的 seriesList）；**id 必须留 wiki 空间**（同上）|
 
 > A1 波删除：`GET /engine/:name`、`GET /series/search`、`GET /series/:id`
 > —— 三条详情/搜索读均无 FE 调用方（对应的 `/v1` reshaper 一并删除）。列表读保留。
+>
+> A2-2 波删除：`GET /tag`、`GET /official`（裸列表读）、`GET /tag/multi`
+> —— 三条均无任何 FE 调用方（`useGalgameEdit` 无对应出口），`/v1` reshaper
+> （`v1TagMulti` 与两条 `v1TaxList` 分派臂）一并删除。`v1TaxList` 现只服务 `/series`。
 
 ### 4.2 修订历史读（8 = 4 实体 × 2）
 

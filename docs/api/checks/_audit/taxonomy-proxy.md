@@ -1,5 +1,11 @@
 # Domain: taxonomy-proxy
 
+> **陈旧提示（2026-07-29，A1 + A2-2 波）**：本文是 2026-05-29 的审计快照，
+> 端点集自那以后缩过两次。A1 删了 `GET /engine/:name`、`GET /series/search`、
+> `GET /series/:id`；A2-2 删了 `GET /tag`、`GET /official`、`GET /tag/multi`
+> ——全部 FE-dead（本文 §GET /tag/multi 当年就已记下「No FE consumer」）。
+> 现役清单以 [`../moyu.get.md`](../moyu.get.md) §4 为准。
+
 ## Summary
 38 endpoints in scope: tag/official/engine/series CRUD + search + enriched
 detail (`/tag/:name`, `/official/:name`) + 12 taxonomy revision/revert routes (4

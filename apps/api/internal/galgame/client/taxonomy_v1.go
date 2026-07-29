@@ -5,9 +5,9 @@ package client
 // reads and serves them from the /v1 public contract, reshaping the curated
 // records back to the bridge `data` the moyu handler + FE consume.
 //
-// The surviving set after the wave-A1 dead-lane sweep is exactly what the FE
-// consumes: tag/official list + search + multi + detail, engine list, series
-// list. The B-bucket reads (tag/official/engine/series /:id/revisions) and every
+// The surviving set after the wave-A1 and wave-A2-2 dead-lane sweeps is exactly
+// what the FE consumes: tag/official search + detail, engine list, series list.
+// The B-bucket reads (tag/official/engine/series /:id/revisions) and every
 // write are NOT handled here — they fall through to the internal / legacy face
 // unchanged (see Proxy). The /v1 curation deliberately drops raw-model-only
 // fields (taxonomy alias-row {id,created,updated}, engine created/updated) that
@@ -42,19 +42,20 @@ func (c *Client) proxyReadV1(ctx context.Context, pathAndQuery string) (data jso
 	switch segs[0] {
 	case "tag":
 		switch {
+		// The bare tag/official LIST reads were retired in wave A2-2 (no moyu
+		// route fronts them any more). The arm stays as an explicit "not ours"
+		// so segs[1] below is always in range.
 		case len(segs) == 1:
-			return c.wrap(c.v1TaxList(ctx, "/galgame/tags", q))
+			return nil, false, nil
 		case segs[1] == "search":
 			return c.wrap(c.v1TaxSearch(ctx, "/galgame/tags/search", q, "q", "category", "limit"))
-		case segs[1] == "multi":
-			return c.wrap(c.v1TagMulti(ctx, q))
 		case len(segs) == 2:
 			return c.wrap(c.v1EntityDetail(ctx, "tags", "tag", q.Get("tag_id"), q))
 		}
 	case "official":
 		switch {
 		case len(segs) == 1:
-			return c.wrap(c.v1TaxList(ctx, "/galgame/officials", q))
+			return nil, false, nil
 		case segs[1] == "search":
 			return c.wrap(c.v1TaxSearch(ctx, "/galgame/officials/search", q, "q", "category", "lang", "limit"))
 		case len(segs) == 2:
@@ -90,8 +91,9 @@ func copyParams(src url.Values, names ...string) url.Values {
 	return out
 }
 
-// v1TaxList forwards a curated list read (tags / officials / series) — the /v1
-// {items,total} envelope IS the shape moyu emits, so the data passes through.
+// v1TaxList forwards a curated list read (series is the last member since wave
+// A2-2) — the /v1 {items,total} envelope IS the shape moyu emits, so the data
+// passes through.
 func (c *Client) v1TaxList(ctx context.Context, path string, q url.Values) (json.RawMessage, error) {
 	return c.getV1Raw(ctx, path, copyParams(q, "page", "limit", "content_limit"))
 }
@@ -100,16 +102,6 @@ func (c *Client) v1TaxList(ctx context.Context, path string, q url.Values) (json
 // /v1 {items,total,processing_time_ms} envelope passes through.
 func (c *Client) v1TaxSearch(ctx context.Context, path string, q url.Values, params ...string) (json.RawMessage, error) {
 	return c.getV1Raw(ctx, path, copyParams(q, params...))
-}
-
-// v1TagMulti serves the tag-intersection read: the bridge tag_ids param maps to
-// the /v1 ids param; the {items,total} thin-item envelope passes through.
-func (c *Client) v1TagMulti(ctx context.Context, q url.Values) (json.RawMessage, error) {
-	fq := copyParams(q, "page", "limit", "content_limit")
-	if v := q.Get("tag_ids"); v != "" {
-		fq.Set("ids", v)
-	}
-	return c.getV1Raw(ctx, "/galgame/tags/multi", fq)
 }
 
 // v1EntityDetail composes a tag/official detail from the by-id entity record
@@ -184,3 +176,12 @@ func (c *Client) v1EngineList(ctx context.Context, q url.Values) (json.RawMessag
 // census found no frontend caller for any of the five. Their /v1 sources
 // (/galgame/engines/{id}, /galgame/series/{id}, the detail's links/aliases
 // blocks) are untouched and still available should a consumer ever appear.
+//
+// NOTE (wave A2-2): the tag LIST, official LIST and `tag/multi` reshapers went
+// the same way — a second census (this time over the whole of apps/web, not just
+// the composable) found that useGalgameEdit exposes no tagList / officialList /
+// tagMulti at all, so nothing could ever have called them. `/galgame/tags/multi`
+// is worth a footnote: it is the only DAG consumer moyu ever had, and the
+// canonical catalog vocabulary has no DAG (refs/proj/126 P2 accepts the
+// descendant expansion degrading to a flat multi-tag AND) — retiring an
+// uncalled lane spends none of that budget.
