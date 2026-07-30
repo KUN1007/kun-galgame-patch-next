@@ -40,8 +40,12 @@ func (c *Client) Proxy(
 ) (json.RawMessage, error) {
 	// GET routing after the wave-A2-2 re-anchor, in precedence order:
 	//
-	//  1. the two PUBLIC BROWSE pages (/tag/:name, /official/:name) — composed
-	//     from the catalog and reshaped back to the bridge `data` here;
+	//  1. the two PUBLIC BROWSE pages — composed from the catalog and reshaped
+	//     back to the bridge `data` here. They are addressed by the `tag_id` /
+	//     `official_id` QUERY parameter, in the CATALOG id space; the route's own
+	//     path segment is a vestigial placeholder the frontend fills with `_`.
+	//     Keying on the wiki NAME in that segment is the pre-migration shape and
+	//     is gone: the name is not an identity the catalog answers to;
 	//  2. the STAFF taxonomy reads (picker + edit-form read-back) — rewritten
 	//     onto the surviving `/api` staff face, which is where the wiki id key
 	//     space lives and where the write ops these ids feed already are;

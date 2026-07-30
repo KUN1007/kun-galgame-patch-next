@@ -46,8 +46,15 @@ var staffTaxonomyKinds = map[string]struct{}{
 //
 // Three of the four are already path-identical; the engine and series LIST
 // reads are rewritten to the staff face's `search` form, which is what the
-// console's "list everything, filter by keyword" pane actually wants — and
-// which, unlike the old bare list, is bounded.
+// console's "list everything, filter by keyword" pane actually wants.
+//
+// A BLANK query on that form enumerates the whole family for these two — engine
+// and series are small curated sets, and the staff face serves them unfiltered
+// (a four-figure safety fuse, not a page window). That is load-bearing here: the
+// console's engine tab filters by keyword CLIENT-side over whatever this returns,
+// so a response truncated to the first N rows would make most engines
+// unsearchable while looking like a working filter. A query WITH terms is
+// narrowed by the face and stays bounded the ordinary way.
 func staffReadPath(path string) (string, bool) {
 	segs := strings.Split(strings.Trim(path, "/"), "/")
 	if len(segs) == 0 {
