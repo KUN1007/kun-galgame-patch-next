@@ -56,6 +56,28 @@ const composerSeed = computed(() => {
 
 <template>
   <div class="space-y-6">
+    <!-- Standing notice (resource area only). Solid palette colours, no
+         gradient. Shown to everyone including logged-out readers — the point is
+         that someone hitting a broken link knows where to say so BEFORE they
+         decide whether it's worth logging in. -->
+    <div
+      v-if="surface.notice"
+      class="border-primary/30 bg-primary/10 flex gap-3 rounded-2xl border p-4"
+    >
+      <KunIcon
+        name="lucide:megaphone"
+        class="text-primary mt-0.5 size-5 shrink-0"
+      />
+      <div class="min-w-0 space-y-1">
+        <p class="text-primary text-sm font-semibold">
+          {{ surface.notice.title }}
+        </p>
+        <p class="text-default-600 text-sm leading-relaxed">
+          {{ surface.notice.body }}
+        </p>
+      </div>
+    </div>
+
     <!-- Composer. Logged out → the login prompt in its place; the editor itself
          is pointless without an identity to post as. -->
     <div
