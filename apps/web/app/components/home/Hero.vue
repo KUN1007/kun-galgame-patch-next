@@ -41,8 +41,10 @@ const posts = computed<HomeCarouselMetadata[]>(() =>
     banner: d.banner,
     description: d.description,
     date: d.date,
-    authorName: d.author_name,
-    authorAvatar: d.author_avatar,
+    // id 0: the feed has no author id, so the avatar is deliberately not a
+    // profile link. An empty author_avatar is normal (a user who never set one)
+    // and KunAvatar turns it into a per-name sticker.
+    author: { id: 0, name: d.author_name, avatar: d.author_avatar },
     pin: true,
     directory: d.category,
     link: `/doc/${d.slug}`

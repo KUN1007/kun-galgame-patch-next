@@ -43,13 +43,10 @@ const post = computed(() => props.post)
       <div class="flex justify-between">
         <div>
           <div class="mb-2 flex items-center gap-3">
-            <KunImage
-              :src="post.authorAvatar"
-              :alt="post.authorName"
-              class-name="h-6 w-6 rounded-full"
-            />
+            <!-- size="sm" is size-6, i.e. the same box the raw KunImage had. -->
+            <KunAvatar :user="post.author" size="sm" />
             <span class="text-foreground/80 text-sm">
-              {{ post.authorName }}
+              {{ post.author.name }}
             </span>
           </div>
           <KunLink

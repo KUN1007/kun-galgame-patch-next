@@ -33,13 +33,10 @@ const post = computed(() => props.post)
     <div class="h-1/2 py-3">
       <div class="mb-2 flex items-center justify-between">
         <div class="flex items-center gap-2">
-          <KunImage
-            :src="post.authorAvatar"
-            :alt="post.authorName"
-            class-name="h-8 w-8 rounded-full"
-          />
+          <!-- size="md" is size-8, i.e. the same box the raw KunImage had. -->
+          <KunAvatar :user="post.author" size="md" />
           <span class="text-foreground/80 text-sm">
-            {{ post.authorName }}
+            {{ post.author.name }}
           </span>
         </div>
       </div>
