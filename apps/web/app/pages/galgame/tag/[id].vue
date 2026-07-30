@@ -1,14 +1,19 @@
 <script setup lang="ts">
-// Standalone moyu tag detail page. The entity is a CANONICAL CATALOG TAG since
-// wave A2-2 — `:id` is a catalog_tag id, NOT the wiki tag id this page used to
-// take (refs/proj/106 R1 / P2).
+// Standalone moyu tag detail page, at /galgame/tag/:id. The entity is a
+// CANONICAL CATALOG TAG since wave A2-2 — `:id` is a catalog_tag id, NOT the
+// wiki tag id this page used to take (refs/proj/106 R1 / P2).
 //
-// That is why the page moved from /tag/:id to /tags/:id rather than changing
-// meaning in place: the two id spaces overlap numerically — a great many wiki
-// tag ids are also live catalog tag ids — so one path serving both would have
-// silently rendered the WRONG tag for years-old links. /tag/:id survives as a
-// pure redirect shell that resolves the old id and 301s here (or 410s, for the
-// 1,507 wiki tags whose vocabulary entry has no canonical successor).
+// That is why the page left /tag/:id rather than changing meaning in place: the
+// two id spaces overlap numerically — a great many wiki tag ids are also live
+// catalog tag ids — so one path serving both would have silently rendered the
+// WRONG tag for years-old links. /tag/:id survives as a pure redirect shell that
+// resolves the old id and 301s here (or 410s, for the 1,507 wiki tags whose
+// vocabulary entry has no canonical successor).
+//
+// The address settled here in wave 146: entry pages live under the /galgame/
+// namespace on BOTH sites, in the singular, so one URL shape describes a tag
+// whether you meet it on moyu or on kungal. The intermediate /tags/:id (one
+// week old, published 07-29) 301s here from the server middleware.
 //
 // Reads `GET /tag/_?tag_id=N&page&limit`, which returns the tag entity + its
 // paginated galgame list.
@@ -55,14 +60,18 @@ const TIER_COLOR: Record<string, KunUIColor> = {
   hidden: 'warning'
 }
 
+// moyu answers an id the registry has no tag for with its own not-found
+// envelope (GalgameTaxonomyDetailProxy); every other non-zero code is a failure
+// to serve a tag that may well exist.
+const VERDICT_NOT_FOUND = 40400
+
 const { data, pending } = await useAsyncData(
   () => `tag-detail-${tagID.value}-${page.value}`,
   async () => {
     const res = await ge.tagDetail(tagID.value, { page: page.value, limit })
-    if (res.code !== 0) return null
-    return res.data
+    return { code: res.code, detail: res.code === 0 ? res.data : null }
   },
-  // Refetch on page change AND tag change (navigating between /tag/:id without
+  // Refetch on page change AND tag change (navigating between ids without
   // a full remount). Do NOT watch the derived `tag` entity and call refresh():
   // each fetch yields a new `data` object → new `tag` ref → the watch re-fires →
   // refresh() loops forever, pinning `pending` true, which disables every
@@ -70,12 +79,30 @@ const { data, pending } = await useAsyncData(
   { watch: [page, tagID] }
 )
 
+// An unknown id ANSWERS 404 instead of rendering an empty 200 shell. A shell is
+// a soft 404: the crawler is told the URL is fine, keeps it indexed, keeps
+// spending budget on it, and reads the "不存在" copy as thin content on a live
+// page — the status line is the only part of that answer it obeys. Deliberately
+// NOT thrown for a backend failure, which would retire a live tag because the
+// registry blinked; that case keeps the in-page failure state below.
+const notFound = () =>
+  createError({ statusCode: 404, statusMessage: '标签不存在', fatal: true })
+
+if (data.value?.code === VERDICT_NOT_FOUND) throw notFound()
+// Re-checked on every refetch: navigating between two tag ids reuses this
+// component (see the watch above), so setup does not run a second time.
+watch(data, (v) => {
+  if (v?.code === VERDICT_NOT_FOUND) showError(notFound())
+})
+
 // galgame shapes the response with `tag` for the entity + `items`/`galgames` +
 // `total` for the paginated galgame list. Be defensive about which key it
 // uses since the doc shows the request but not the exact response.
-const tag = computed(() => data.value?.tag ?? null)
-const galgames = computed<GalgameCard[]>(() => data.value?.galgames ?? [])
-const total = computed(() => data.value?.total ?? 0)
+const tag = computed(() => data.value?.detail?.tag ?? null)
+const galgames = computed<GalgameCard[]>(
+  () => data.value?.detail?.galgames ?? []
+)
+const total = computed(() => data.value?.detail?.total ?? 0)
 const totalPage = computed(() => Math.max(1, Math.ceil(total.value / limit)))
 
 // A sexual tag's own NAME is an NSFW signal, so those pages stay out of the
@@ -103,7 +130,9 @@ if (tag.value && !tag.value.sexual) {
   <div class="container mx-auto my-6">
     <KunLoading v-if="pending && !tag" description="加载中..." />
 
-    <KunNull v-else-if="!tag" description="标签不存在或加载失败" />
+    <!-- Only ever the FAILURE state now: a missing tag left through the 404
+         above, so this no longer has to say "不存在或". -->
+    <KunNull v-else-if="!tag" description="标签加载失败，请稍后重试" />
 
     <template v-else>
       <!-- Header -->

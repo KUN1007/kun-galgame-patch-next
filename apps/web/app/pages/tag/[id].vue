@@ -2,15 +2,22 @@
 // Redirect shell for the legacy wiki-keyed tag URL (wave A2-2 / refs/proj/106 R1).
 //
 // This path used to render the tag page addressed by a WIKI tag id. The page
-// moved to /tags/:id in the CATALOG id space, and the two spaces overlap
+// moved to /galgame/tag/:id in the CATALOG id space, and the two spaces overlap
 // numerically — a large share of wiki tag ids are also live catalog tag ids —
 // so this path cannot keep rendering: it would silently show a different tag
 // than the link promised. It resolves and forwards instead, which is the only
 // answer that is never wrong.
 //
+// The target is the FINAL address, not the /tags/:id this shell shipped against
+// one week ago (wave 146 moved entry pages under /galgame/). Pointing here at
+// the intermediate would build a 301 CHAIN — two hops for every crawler and
+// every old link, for no gain — so the shell was re-aimed in the same wave that
+// moved the page.
+//
 // Three outcomes, from the resolver (`GET /taxonomy/resolve/tag/:id`), and the
 // shell ANSWERS in all three rather than rendering in two of them:
-//   301 -> /tags/:catalogId   the 1,530 wiki tags with a canonical successor
+//   301 -> /galgame/tag/:catalogId  the 1,530 wiki tags with a canonical
+//                              successor
 //   410                        the 1,507 with none — permanently retired, and
 //                              "gone" is the honest word for a URL we published
 //   404                        never a wiki tag id at all
@@ -58,7 +65,7 @@ if (verdict?.code === 0 && verdict.catalogId > 0) {
   // 301, not 302: the move is permanent, and a crawler that learns it stops
   // spending its budget on the old URL and passes the ranking along.
   await navigateTo(
-    `/tags/${verdict.catalogId}${route.query.page ? `?page=${route.query.page}` : ''}`,
+    `/galgame/tag/${verdict.catalogId}${route.query.page ? `?page=${route.query.page}` : ''}`,
     {
       redirectCode: 301
     }

@@ -1,15 +1,21 @@
 <script setup lang="ts">
 // Standalone moyu label (brand / publisher / circle — what the wiki called an
-// "official") detail page. Mirrors the tags/[id].vue layout.
+// "official") detail page, at /galgame/official/:id. Mirrors the sibling tag
+// page's layout.
 //
 // The entity is a CANONICAL CATALOG LABEL since wave A2-2 — `:id` is a
 // catalog_label id, not the wiki official id this page used to take. Hence the
-// move from /official/:id to /labels/:id: the two id spaces overlap
-// numerically, so serving both from one path would render the wrong company
-// (refs/proj/106 R1 / P2). /official/:id survives as a pure redirect shell,
-// which resolves every old id through the catalog reverse lookup — the rescue
-// wave registered all 24,334 of them, so that lane needs no static table and
-// has no 410 case.
+// move off /official/:id: the two id spaces overlap numerically, so serving
+// both from one path would render the wrong company (refs/proj/106 R1 / P2).
+// /official/:id survives as a pure redirect shell, which resolves every old id
+// through the catalog reverse lookup — the rescue wave registered all 24,334 of
+// them, so that lane needs no static table and has no 410 case.
+//
+// The address settled here in wave 146: entry pages live under the /galgame/
+// namespace on BOTH sites, and the noun is `official` on both — the intermediate
+// /labels/:id (one week old, published 07-29) 301s here from the server
+// middleware. "label" was the catalog's word for the record; the two sites'
+// users only ever say 会社/official.
 
 // keepalive: returning from a galgame restores this official's page + scroll.
 // The page is a computed off `?page=`, so reactivation re-reads the URL and
@@ -44,22 +50,45 @@ const CATEGORY_LABEL: Record<string, string> = {
   other: '其他'
 }
 
-const { data, pending, refresh } = await useAsyncData(
+// moyu answers an id the registry has no label for with its own not-found
+// envelope (GalgameTaxonomyDetailProxy); every other non-zero code is a failure
+// to serve a company that may well exist.
+const VERDICT_NOT_FOUND = 40400
+
+const { data, pending } = await useAsyncData(
   () => `official-detail-${officialID.value}-${page.value}`,
   async () => {
     const res = await ge.officialDetail(officialID.value, {
       page: page.value,
       limit
     })
-    if (res.code !== 0) return null
-    return res.data
+    return { code: res.code, detail: res.code === 0 ? res.data : null }
   },
-  { watch: [page] }
+  // Watches the ID as well as the page — navigating between two officials
+  // reuses this component. This used to be `watch(official, () => refresh())`,
+  // which is the loop the sibling tag page warns about: every fetch yields a
+  // new `data` object → a new `official` ref → the watch re-fires → refresh()
+  // never settles and `pending` stays true, disabling the pagination buttons.
+  { watch: [page, officialID] }
 )
 
-const official = computed(() => data.value?.official ?? null)
-const galgames = computed<GalgameCard[]>(() => data.value?.galgames ?? [])
-const total = computed(() => data.value?.total ?? 0)
+// An unknown id ANSWERS 404 rather than rendering an empty 200 shell — see the
+// sibling tag page for why a soft 404 is the one thing a crawler will not
+// forgive. A backend failure deliberately does NOT 404; it keeps the in-page
+// failure state below.
+const notFound = () =>
+  createError({ statusCode: 404, statusMessage: '会社不存在', fatal: true })
+
+if (data.value?.code === VERDICT_NOT_FOUND) throw notFound()
+watch(data, (v) => {
+  if (v?.code === VERDICT_NOT_FOUND) showError(notFound())
+})
+
+const official = computed(() => data.value?.detail?.official ?? null)
+const galgames = computed<GalgameCard[]>(
+  () => data.value?.detail?.galgames ?? []
+)
+const total = computed(() => data.value?.detail?.total ?? 0)
 const totalPage = computed(() => Math.max(1, Math.ceil(total.value / limit)))
 
 // The label lane keeps its SEO: a company name is not itself an NSFW signal
@@ -74,15 +103,15 @@ if (official.value) {
 } else {
   useKunDisableSeo('会社详情')
 }
-
-watch(official, () => refresh(), { flush: 'post' })
 </script>
 
 <template>
   <div class="container mx-auto my-6">
     <KunLoading v-if="pending && !official" description="加载中..." />
 
-    <KunNull v-else-if="!official" description="会社不存在或加载失败" />
+    <!-- Only ever the FAILURE state now: a missing company left through the
+         404 above, so this no longer has to say "不存在或". -->
+    <KunNull v-else-if="!official" description="会社加载失败，请稍后重试" />
 
     <template v-else>
       <!-- Header -->

@@ -111,6 +111,13 @@
 > **前端路由同步迁移**（R1）：`/tag/:id`→`/tags/:id`、`/official/:id`→`/labels/:id`
 > 承载 catalog id；旧路径退化成纯跳转壳（映射内 301、名单内 410、其余 404）。
 > 两个 id 空间数值重叠,单路径两用不可判定——这就是必须换路径而不是原地改语义的原因。
+>
+> **146 波定型**：上面那对复数路径只活了一周（07-29 上线）。词条页最终落在
+> `/galgame/tag/:id` 与 `/galgame/official/:id`——与 kungal 同形,两站一个 URL 形状；
+> `/tags/:id`、`/labels/:id` 由 `server/middleware/legacy-redirect.ts` 301 过去,
+> 跳转壳则**直接指向最终形态**（壳→复数→单数的两跳链是错误形态,同波一并改指）。
+> 同波：`/tag/_`、`/official/_` 的「查无此条」不再透传 catalog 的 `code:4`(HTTP 400),
+> 改由 moyu 自己答 `40400` / HTTP 404,词条页据此 `createError` 出真 404 而非 200 空壳。
 
 ### 4.2 修订历史读（8 = 4 实体 × 2）
 

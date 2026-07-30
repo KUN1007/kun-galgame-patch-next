@@ -73,9 +73,9 @@ export const useApi = () => {
   //      login state.
   //
   // The detail-route regex is intentionally narrow: only patch/resource
-  // detail pages get the bypass. /tags/<id>, /labels/<id>, /user/<id> +
-  // their child tabs are list-semantics (show many galgames under a
-  // tag/label/user) and stay sfw-default — the catalog's own taxonomy
+  // detail pages get the bypass. /galgame/tag/<id>, /galgame/official/<id>
+  // and /user/<id> + their child tabs are list-semantics (show many galgames
+  // under a tag/label/user) and stay sfw-default — the catalog's own taxonomy
   // detail faces filter server-side under the same nsfw gate.
   //
   // Captured at setup time so a single request closure sees one snapshot;

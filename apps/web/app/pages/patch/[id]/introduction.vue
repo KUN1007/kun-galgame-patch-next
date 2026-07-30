@@ -221,10 +221,10 @@ const kungalOrigin = kunMoyuMoe.domain.kungal
 
     <!-- Tags & officials (developers/publishers) come pre-resolved from Wiki
          by the backend enricher — see apps/api/internal/galgame/enricher/
-         enricher.go. Links navigate to moyu's /tags/:id and /labels/:id detail
-         pages — CATALOG ids since wave A2-2, which is why the paths are the
-         plural ones (the singular /tag/:id and /official/:id are now redirect
-         shells for the old wiki-keyed URLs). -->
+         enricher.go. Links navigate to moyu's /galgame/tag/:id and
+         /galgame/official/:id detail pages — CATALOG ids since wave A2-2, which
+         is why they are NOT the bare /tag/:id and /official/:id (those are
+         redirect shells keyed by the old wiki id space). -->
     <section v-if="detail.tags?.length">
       <div
         class="mb-4 flex flex-col items-start gap-3 sm:flex-row sm:items-center sm:justify-between"
@@ -265,7 +265,7 @@ const kungalOrigin = kunMoyuMoe.domain.kungal
         <NuxtLink
           v-for="t in filteredTags"
           :key="t.id"
-          :to="`/tags/${t.id}`"
+          :to="`/galgame/tag/${t.id}`"
         >
           <KunChip
             :color="tagColor(t.category)"
@@ -304,7 +304,7 @@ const kungalOrigin = kunMoyuMoe.domain.kungal
         <NuxtLink
           v-for="o in detail.officials"
           :key="o.id"
-          :to="`/labels/${o.id}`"
+          :to="`/galgame/official/${o.id}`"
         >
           <KunChip color="success" variant="flat" size="sm">
             {{ o.name }}
