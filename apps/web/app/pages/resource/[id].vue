@@ -9,9 +9,11 @@ import {
   GALGAME_AGE_LIMIT_DETAIL,
   GALGAME_AGE_LIMIT_MAP
 } from '~/constants/galgame'
+import type { CommentTarget } from '~/shared/utils/commentTarget'
 
 const route = useRoute()
 const api = useApi()
+const userStore = useUserStore()
 const { requireLogin } = useAuthModal()
 
 const resourceId = computed(() => Number(route.params.id))
@@ -105,8 +107,8 @@ const storageIcon = computed(() =>
 )
 
 // ─── 资源下载 / 更改历史 tabs ──────────────────────────
-// Awaited up here rather than fetched inside ResourceHistory: the tab SET depends
-// on whether there is any history at all, and settling that a tick late would
+// Lifted up here rather than fetched inside the panel: the tab SET depends on
+// whether there is any history at all, and settling that a tick late would
 // visibly flip the bar from one tab to two.
 const {
   items: revisionItems,
@@ -116,6 +118,27 @@ const {
   pending: revisionsPending,
   page: revisionPage
 } = useResourceRevisions(resourceId)
+
+const commentTarget = computed<CommentTarget>(() => ({
+  kind: 'resource',
+  resourceId: resourceId.value,
+  galgameId: detail.value?.resource.galgame_id ?? 0
+}))
+
+const {
+  items: commentItems,
+  total: commentTotal,
+  totalPages: commentTotalPages,
+  pending: commentsPending,
+  page: commentPage,
+  expandedRoots,
+  toggleExpand,
+  onLiked,
+  onCommentAdded,
+  onReplyAdded,
+  onEdited: onCommentEdited,
+  onRemoved
+} = useCommentList(commentTarget)
 
 // Shared by the bar and the panels so their aria wiring lines up.
 const PANEL_GROUP = 'resource-detail'
@@ -517,6 +540,35 @@ if (
               />
             </KunTabPanel>
           </KunTabPanels>
+
+          <!-- ── 资源评论 ────────────────────────────────────
+               Deliberately NOT a tab panel: the download and the change history
+               are two views of the same thing (pick one), while the comments are
+               a separate conversation that belongs BELOW both — always open, and
+               reachable by a #comment-<id> deep-link without first having to
+               reveal a panel. -->
+          <section class="space-y-5">
+            <KunHeader
+              :name="commentTotal ? `资源评论 ${commentTotal}` : '资源评论'"
+              scale="h2"
+            />
+            <CommentSection
+              v-model:page="commentPage"
+              :target="commentTarget"
+              :items="commentItems"
+              :total-pages="commentTotalPages"
+              :expanded-roots="expandedRoots"
+              :pending="commentsPending"
+              :can-moderate="userStore.isModerator"
+              :mention-user="resource.user"
+              @comment-added="onCommentAdded"
+              @liked="onLiked"
+              @reply-added="onReplyAdded"
+              @edited="onCommentEdited"
+              @removed="onRemoved"
+              @toggle-expand="toggleExpand"
+            />
+          </section>
         </div>
 
         <!-- sidebar: patch resource recommendations (no wrapper / heading) -->

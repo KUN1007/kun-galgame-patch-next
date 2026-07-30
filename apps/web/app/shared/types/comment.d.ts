@@ -19,6 +19,10 @@ interface PatchComment {
   content: string
   content_html: string
   galgame_id: number
+  // Set when the comment belongs to a RESOURCE's comment area (/resource/:rid)
+  // rather than the game's comment tab — migration 028. Absent on every comment
+  // written before resource comments existed.
+  resource_id?: number | null
   like_count: number
   created: Date | string
   // Populated only by /api/v1/comment and /api/v1/home; null on per-patch lists.
@@ -41,6 +45,8 @@ interface PatchPageComment {
   parent_id: number | null
   user_id: number
   galgame_id: number
+  // See PatchComment.resource_id — which comment area this row belongs to.
+  resource_id?: number | null
   created: string
   updated: string
   // Set (RFC3339) when the comment has been edited; empty/absent otherwise.

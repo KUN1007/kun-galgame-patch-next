@@ -61,6 +61,9 @@ interface UserComment {
   like_count: number
   user_id: number
   galgame_id: number
+  // Set when the comment lives in a RESOURCE's comment area rather than the
+  // game's comment tab (migration 028) — decides which page a row links to.
+  resource_id?: number | null
   created: string
   patch?: PatchSummary
 }

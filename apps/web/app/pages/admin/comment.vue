@@ -1,4 +1,6 @@
 <script setup lang="ts">
+import { commentPermalink } from '~/shared/utils/commentTarget'
+
 useKunDisableSeo('评论管理')
 
 const api = useApi()
@@ -105,7 +107,7 @@ const chipClass = (active: boolean) => [
               <span class="text-default-500">
                 在
                 <NuxtLink
-                  :to="`/patch/${c.galgame_id}/comment`"
+                  :to="commentPermalink(c)"
                   class="text-primary hover:underline"
                 >
                   {{
@@ -114,6 +116,7 @@ const chipClass = (active: boolean) => [
                       : `补丁 #${c.galgame_id}`
                   }}
                 </NuxtLink>
+                <template v-if="c.resource_id">的补丁资源</template>
               </span>
               <span class="text-default-400 text-xs">
                 {{

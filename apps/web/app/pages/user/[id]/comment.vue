@@ -1,4 +1,6 @@
 <script setup lang="ts">
+import { commentPermalink } from '~/shared/utils/commentTarget'
+
 // /user/:id/comment returns paginated PatchComments with the owning patch
 // summary attached (see user/service.attachPatchSummaries). The row carries
 // the local `like_count` and `galgame_id`; backend does not currently fill
@@ -52,12 +54,13 @@ const patchName = (c: UserComment) =>
       <NuxtLink
         v-for="c in data.items"
         :key="c.id"
-        :to="`/patch/${c.galgame_id}/comment`"
+        :to="commentPermalink(c)"
         class="border-default/20 bg-content1 shadow-kun-sm hover:bg-default-100 block rounded-lg border p-4 transition-colors"
       >
         <div class="text-default-500 mb-1 text-sm">
-          评论在
+          {{ c.resource_id ? '评论了' : '评论在' }}
           <span class="text-primary">{{ patchName(c) }}</span>
+          <template v-if="c.resource_id">的补丁资源</template>
         </div>
         <p class="whitespace-pre-wrap line-clamp-3">{{ c.content }}</p>
         <div class="text-default-500 mt-2 flex items-center gap-4 text-xs">

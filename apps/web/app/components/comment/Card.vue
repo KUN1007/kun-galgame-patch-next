@@ -1,4 +1,6 @@
 <script setup lang="ts">
+import { commentPermalink } from '~/shared/utils/commentTarget'
+
 interface Props {
   comment: PatchComment
 }
@@ -22,9 +24,10 @@ const patchName = computed(() =>
     : `补丁 #${props.comment.galgame_id}`
 )
 
-const target = computed(
-  () => `/patch/${props.comment.galgame_id}/comment#comment-${props.comment.id}`
-)
+// Both feeds this card serves — the homepage 最新评论 and /comment — mix patch and
+// resource comments, so the surface is decided per row (see commentPermalink).
+const isResourceComment = computed(() => !!props.comment.resource_id)
+const target = computed(() => commentPermalink(props.comment))
 
 // The card MUST NOT render as a NuxtLink (i.e. don't pass `:href`). Rendered
 // comment Markdown carries its own <a> (@mentions, autolinks, KunAvatar's link),
@@ -64,8 +67,9 @@ const handleKeydown = async (event: KeyboardEvent) => {
         <div class="flex flex-wrap items-center gap-2">
           <h2 class="font-semibold">{{ displayName }}</h2>
           <span class="text-small text-default-500">
-            评论在
+            {{ isResourceComment ? '评论了' : '评论在' }}
             <span class="text-primary-500">{{ patchName }}</span>
+            <template v-if="isResourceComment">的补丁资源</template>
           </span>
         </div>
         <!-- KunContent: sanitize + spoiler + inline-image lightbox built in.

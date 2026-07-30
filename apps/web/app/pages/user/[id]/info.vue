@@ -1,4 +1,6 @@
 <script setup lang="ts">
+import { commentPermalink } from '~/shared/utils/commentTarget'
+
 // 动态 — the user-profile overview / landing tab (KunAvatar links here, and
 // /user/:id redirects here). Shows a compact "recent activity" digest by
 // reusing the same per-tab endpoints with a small limit, so there's no new
@@ -146,11 +148,13 @@ const isEmpty = computed(
           <NuxtLink
             v-for="c in data.comments.items"
             :key="c.id"
-            :to="`/patch/${c.galgame_id}/comment`"
+            :to="commentPermalink(c)"
             class="border-default/20 bg-content1 shadow-kun-sm hover:bg-default-100 block rounded-lg border p-3 transition-colors"
           >
             <div class="text-default-500 mb-1 text-xs">
-              评论在 <span class="text-primary">{{ commentPatchName(c) }}</span>
+              {{ c.resource_id ? '评论了' : '评论在' }}
+              <span class="text-primary">{{ commentPatchName(c) }}</span>
+              <template v-if="c.resource_id">的补丁资源</template>
             </div>
             <p class="line-clamp-2 text-sm whitespace-pre-wrap">{{ c.content }}</p>
             <div class="text-default-400 mt-1.5 flex items-center gap-4 text-xs">
