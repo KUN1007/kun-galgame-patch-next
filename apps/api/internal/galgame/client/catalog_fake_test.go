@@ -72,7 +72,7 @@ func (f *catalogFake) route(req *http.Request) string {
 	case p == "/v1/catalog/works":
 		return f.worksList(req)
 	case p == "/v1/catalog/works/search":
-		return `{"total":1,"page":1,"limit":20,"items":[` + workItem(900, 7, catalogClaimStateLive) + `]}`
+		return f.search()
 	case p == "/v1/catalog/calendar":
 		return f.calendar()
 	case strings.HasPrefix(p, "/v1/catalog/tags/"):
@@ -158,6 +158,21 @@ func (f *catalogFake) workDetail(path string) string {
 		`{"name":"エロ","source":"vndb","canonical_id":12,"tier":"core","kind":"content","spoiler":1,"sexual":true}],` +
 		`"labels":[{"id":31,"display_name":"Brand","label_kind":"game_brand","kind":"developer","lang":"ja"}],` +
 		`"engines":[{"id":41,"name":"KiriKiri"}],"links":[{"source":"web","url":"https://example.test"}]}`
+}
+
+// search answers DELIBERATELY WRONG: the client sends claim_state=live, and this
+// hands back a draft, a withdrawn and an unclaimed row alongside the live one,
+// under a total that counts all four. A real face would not, but a client that
+// re-filters the response would visibly drop three rows here and leave total
+// lying about the page — which is the exact shape of doc 106 §37. Gating is the
+// face's job; this lane's job is to ask for the gate and pass the answer on.
+func (f *catalogFake) search() string {
+	return `{"total":4,"page":1,"limit":20,"items":[` +
+		workItem(900, 7, catalogClaimStateLive) + `,` +
+		workItem(920, 20, catalogClaimStateDraft) + `,` +
+		workItem(921, 21, catalogClaimStateHidden) + `,` +
+		workItem(930, 0, "") +
+		`]}`
 }
 
 // calendar returns the three renderable states plus a hidden row that must be

@@ -478,9 +478,15 @@ func (c *Client) getV1(ctx context.Context, path string, query url.Values, out a
 //     handler rejects loudly instead of quietly using the first.
 //   - TagIDs are at most 10 (the catalog's own multi-value ceiling), ANDed.
 //
-// `Status` is gone: the catalog has no wiki status machine, and the
-// published-only population the old `status=0` selected is now expressed by the
-// claim-state gate the search face applies for us.
+// `Status` is gone: the catalog has no wiki status machine. The published-only
+// population the old `status=0` selected is spelled `claim_state=live` on the
+// outgoing query instead — a filter the SEARCH FACE applies, not this client.
+//
+// That sentence was written one wave before the parameter existed. What shipped
+// in its place was a client-side post-filter on `renderable()`, which drops
+// hidden claims only — so every unclaimed row in the registry (the dlsite /
+// erogamespace bulk, tens of thousands of works with no wiki entry at all) and
+// every unpublished draft reached the public result page. doc 106 §37.
 type SearchGalgameParams struct {
 	Q            string
 	ContentLimit string // sfw / nsfw / all
@@ -523,11 +529,18 @@ func searchSortForCatalog(sort string) string {
 
 // SearchGalgame runs the works product search on GET /v1/catalog/works/search.
 //
-// The result's `total` is now trustworthy in a way the deprecated face's was
-// not: the wiki search compiled its content filter into the re-hydration SQL
-// but NOT into the Meili filter, so `total` counted rows the caller could not
-// see and every sfw consumer's pagination was lossy. The catalog compiles one
-// expression for total, items and facets alike.
+// EVERY gate this lane applies rides the querystring, and the response is passed
+// through untouched. That is what makes `total` trustworthy: the catalog
+// compiles one expression for total, items and facets alike, so the count and
+// the page describe the same set. The deprecated face never held that property —
+// the wiki search compiled its content filter into the re-hydration SQL but NOT
+// into the Meili filter, so `total` counted rows the caller could not see.
+//
+// A second gate here would give that back. It did: for one wave this function
+// dropped rows on `renderable()` AFTER the face had paged and counted them, so
+// pages came back short under a total that no longer matched — and, because a
+// missing claim is renderable, the filter let through the very population it
+// was there to exclude. doc 106 §37. Add filters to `q`, never to the result.
 func (c *Client) SearchGalgame(ctx context.Context, p SearchGalgameParams) (*Paginated[GalgameHit], error) {
 	q := url.Values{}
 	if p.Q != "" {
@@ -542,6 +555,11 @@ func (c *Client) SearchGalgame(ctx context.Context, p SearchGalgameParams) (*Pag
 		gate.contentRating = "r18"
 	}
 	gate.apply(q)
+	// The population axis: narrow the whole cross-media registry to works a
+	// PUBLISHED wiki entry claims. `live` is the exact successor of the wiki's
+	// `status=0` — it excludes hidden (withdrawn/banned) claims, unpublished
+	// drafts and, decisively, the unclaimed majority of the registry.
+	q.Set("claim_state", "live")
 
 	if lang := joinCatalogLangs(p.OriginalLang); lang != "" {
 		q.Set("olang", lang)
@@ -588,13 +606,7 @@ func (c *Client) SearchGalgame(ctx context.Context, p SearchGalgameParams) (*Pag
 	}
 	out := Paginated[GalgameHit]{Total: data.Total}
 	for i := range data.Items {
-		it := &data.Items[i]
-		// A withdrawn wiki entry must not surface in search results — the
-		// deprecated face's published-only population made that automatic.
-		if !it.ClaimedBy.renderable() {
-			continue
-		}
-		out.Items = append(out.Items, catalogItemToHit(it))
+		out.Items = append(out.Items, catalogItemToHit(&data.Items[i]))
 	}
 	return &out, nil
 }

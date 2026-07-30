@@ -88,11 +88,12 @@ func (h *Handler) Search(c fiber.Ctx) error {
 	params := galgameClient.SearchGalgameParams{
 		Q: req.Q,
 		// Public search surfaces published entries only. That used to be spelled
-		// `status=0` against the wiki's own state machine; the catalog has no
-		// such column, so the client gates on the claim state instead (hidden
-		// and draft claims never reach a result page). The publish wizard is
-		// unaffected — it uses SearchGalgameForPublish on the surviving internal
-		// face, which intentionally includes the caller's own pending drafts.
+		// `status=0` against the wiki's own state machine; the catalog has no such
+		// column, so the client asks the search face for `claim_state=live`
+		// instead — unclaimed, draft and withdrawn works never reach a result
+		// page. The publish wizard is unaffected — it uses SearchGalgameForPublish
+		// on the surviving internal face, which intentionally includes the
+		// caller's own pending drafts.
 		ContentLimit: contentLimit,
 		AgeLimit:     req.AgeLimit,
 		OriginalLang: req.OriginalLang,

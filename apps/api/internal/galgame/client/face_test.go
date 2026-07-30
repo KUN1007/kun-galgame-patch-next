@@ -617,6 +617,33 @@ func TestClaimStateGating(t *testing.T) {
 		}
 	})
 
+	// Search is the lane that got this wrong in production (doc 106 §37): it
+	// post-filtered on `renderable()`, which passes an ABSENT claim — and most of
+	// the registry is unclaimed — so the public search page served the whole
+	// cross-media catalog. The gate now rides the wire, and the two halves of that
+	// are asserted separately: the request must carry it, and the response must
+	// come back untouched.
+	t.Run("search gates on the wire and re-filters nothing", func(t *testing.T) {
+		srv.reset()
+		res, err := c.SearchGalgame(ctx, SearchGalgameParams{Q: "x"})
+		if err != nil {
+			t.Fatalf("SearchGalgame: %v", err)
+		}
+		if got := srv.last().query.Get("claim_state"); got != "live" {
+			t.Fatalf("claim_state = %q, want live — published-only is a REQUEST parameter now", got)
+		}
+		// The fake answers with draft / hidden / unclaimed rows on purpose. All
+		// four must survive: a client-side gate would drop rows out of a page the
+		// face already counted, so total would stop describing items and paging
+		// would go lossy again.
+		if len(res.Items) != 4 {
+			t.Errorf("items = %d, want all 4 rows the face returned (no client-side filter)", len(res.Items))
+		}
+		if res.Total != 4 {
+			t.Errorf("total = %d, want the face's 4 verbatim", res.Total)
+		}
+	})
+
 	t.Run("claim states resolve in one hop", func(t *testing.T) {
 		srv.reset()
 		states, err := c.ClaimStates(ctx, []int{7, 20, 21})
