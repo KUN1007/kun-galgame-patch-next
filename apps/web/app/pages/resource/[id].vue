@@ -55,10 +55,6 @@ const patchAlias = computed(() => {
   )
 })
 
-const bannerSrc = computed(() =>
-  resolveBannerUrl(detail.value?.patch, 'mini')
-)
-
 // The resource's OWN title — this is what users came to see ("某某汉化补丁").
 // Falls back to "<游戏名> 的补丁资源" when the uploader left it blank.
 const resourceTitle = computed(() => {
@@ -215,49 +211,12 @@ const recName = (r: PatchResource) =>
   r.name || (r.patch ? getPreferredLanguageText(r.patch.name) : '补丁资源')
 
 // SEO contract (same shape as patch/[id].vue):
-//   - loaded + sfw owning patch → full SEO (composed title carries
-//     game+platform+language+model+type for long-tail keywords; banner as
-//     og image; description from note_html stripped to plain text)
-//   - loaded + nsfw owning patch → disable (resource page exposes patch
-//     name + note → must not index)
-//   - null / not-found → disable
-const noteText = computed(() =>
-  noteHtml.value ? noteHtml.value.replace(/<[^>]+>/g, '').slice(0, 140) : ''
-)
-const seoDescription = computed(() => {
-  if (noteText.value) return noteText.value
-  const r = resource.value
-  if (!r) return `${patchName.value} 的补丁资源下载`
-  const attrs = [
-    (r.platform ?? []).map((p) => SUPPORTED_PLATFORM_MAP[p] ?? p).join('、'),
-    (r.language ?? []).map((l) => SUPPORTED_LANGUAGE_MAP[l] ?? l).join('、'),
-    (r.type ?? []).map((t) => SUPPORTED_TYPE_MAP[t] ?? t).join('、')
-  ]
-    .filter(Boolean)
-    .join(' · ')
-  return (
-    `《${patchName.value}》补丁资源免费下载` +
-    (attrs ? `：${attrs}` : '') +
-    (r.size ? `，文件 ${r.size}` : '') +
-    (storageLabel.value ? `，${storageLabel.value}` : '') +
-    '，支持 aria2 多线程加速下载与 BLAKE3 完整性校验。'
-  )
-})
-if (
-  detail.value &&
-  resource.value &&
-  detail.value.patch &&
-  detail.value.patch.content_limit === 'sfw'
-) {
-  useKunSeoMeta({
-    title: composedTitle.value,
-    description: seoDescription.value,
-    ogType: 'article',
-    ogImage: bannerSrc.value || undefined
-  })
-} else {
-  useKunDisableSeo(composedTitle.value || '补丁资源')
-}
+//   - loaded + sfw owning patch → full metadata + structured data
+//   - loaded + nsfw owning patch → disabled (this page exposes the game's name
+//     and the uploader's note → must not index)
+//   - null / not-found → disabled
+// See useResourceSeo for the whole of it.
+useResourceSeo(detail, { title: composedTitle, commentCount: commentTotal })
 </script>
 
 <template>

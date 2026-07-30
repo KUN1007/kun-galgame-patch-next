@@ -47,7 +47,14 @@ export default defineNuxtConfig({
     // no site build-arg), so an unset env at build → an empty site.url would make
     // sitemap <loc>s non-absolute. Prod runs on this canonical host; override at
     // runtime with NUXT_PUBLIC_SITE_URL if it ever moves.
-    url: process.env.NUXT_PUBLIC_SITE_URL || 'https://www.moyu.moe'
+    url: process.env.NUXT_PUBLIC_SITE_URL || 'https://www.moyu.moe',
+    // Without these, nuxt-site-config falls back to package.json's `name`, so
+    // every page's WebSite entity announced itself as "@apps/web". Kept in step
+    // with config/moyu-moe.ts (which nuxt.config cannot import — it runs before
+    // the app's aliases exist).
+    name: '鲲 Galgame 补丁',
+    description:
+      '开源的 Galgame 补丁资源下载站，提供 Galgame 汉化补丁、AI 翻译补丁、全 CG 存档等资源的免费下载。'
   },
 
   sitemap: {
