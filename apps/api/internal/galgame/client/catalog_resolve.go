@@ -45,6 +45,14 @@ import (
 // what makes that 404 mean "absent" rather than "your request never arrived".
 const catalogCodeNotFound = 4
 
+// catalogCodeMoved is the /v1 catalog face's BUSINESS code for "this id was
+// MERGED AWAY" — upstream `pkg/errors.ErrMoved`, paired with HTTP 301 and an
+// envelope whose data carries `current_id`. It is emphatically NOT a miss: the
+// entity exists, under another id, and answering it with moyu's 404 would
+// retire a company page that is very much alive. The pairing discipline is
+// catalogAbsent's: the business code is the proof that the CATALOG answered.
+const catalogCodeMoved = 12
+
 // catalogAbsent reports whether a failed /v1 read is the catalog's DOCUMENTED
 // "the registry has no such row (or you may not see it)" answer, as opposed to
 // any other failure that merely happens to arrive with status 404.

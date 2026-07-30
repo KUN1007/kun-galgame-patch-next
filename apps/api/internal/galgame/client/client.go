@@ -49,6 +49,12 @@ type GalgameError struct {
 	// that separates them, so it is recorded beside the code everywhere a
 	// response actually arrived (see upstreamError).
 	HTTPStatus int
+	// Moved is the survivor id of a MERGED entity: the catalog answered 301 +
+	// catalogCodeMoved because this id's identity now lives on that one. Zero
+	// on every other verdict. It rides the error rather than a success value
+	// because the request did NOT produce the record that was asked for — the
+	// survivor's content must never be served under the dead id.
+	Moved int64
 }
 
 func (e *GalgameError) Error() string {
@@ -79,6 +85,25 @@ func (e *GalgameError) Absent() bool {
 func IsAbsent(err error) bool {
 	var gerr *GalgameError
 	return errors.As(err, &gerr) && gerr.Absent()
+}
+
+// MovedTarget reports the survivor id when err is the catalog's documented
+// "this id was merged away" verdict — the pairing of catalogCodeMoved with the
+// 301, never the status alone, for catalogAbsent's reason.
+//
+// Handlers must check it BEFORE IsAbsent: both arrive as errors, but a merge is
+// the opposite of a miss. Answering it with a 404 would retire a live company's
+// old URL instead of forwarding it, losing every inbound link that ever pointed
+// at the id that lost the merge.
+func MovedTarget(err error) (int64, bool) {
+	var gerr *GalgameError
+	if !errors.As(err, &gerr) {
+		return 0, false
+	}
+	if gerr.HTTPStatus != http.StatusMovedPermanently || gerr.Code != catalogCodeMoved || gerr.Moved <= 0 {
+		return 0, false
+	}
+	return gerr.Moved, true
 }
 
 // AsBadRequest reports whether err is the catalog REJECTING THE REQUEST — a
@@ -170,7 +195,17 @@ func NewWithKey(baseURL, apiKey string) *Client {
 		internalBase: base + "/internal",
 		legacyBase:   base + "/api",
 		apiKey:       apiKey,
-		http:         &http.Client{Timeout: 10 * time.Second},
+		// Never follow a redirect. The catalog answers a merged entity id with
+		// 301 + current_id so the caller can forward the BROWSER in one hop;
+		// auto-following would swallow that and return the survivor's record
+		// under the dead id — one company on two URLs, the outcome the redirect
+		// exists to prevent. No other catalog endpoint answers 3xx.
+		http: &http.Client{
+			Timeout: 10 * time.Second,
+			CheckRedirect: func(*http.Request, []*http.Request) error {
+				return http.ErrUseLastResponse
+			},
+		},
 		gids:         newGIDMap(),
 	}
 }
@@ -510,7 +545,20 @@ func (c *Client) getV1RawStatus(ctx context.Context, path string, query url.Valu
 		return nil, resp.StatusCode, fmt.Errorf("解析 galgame 响应失败: %w (body=%s)", err, truncate(string(body), 200))
 	}
 	if wrapper.Code != 0 {
-		return nil, resp.StatusCode, upstreamError(resp, wrapper.Code, wrapper.Message)
+		gerr := upstreamError(resp, wrapper.Code, wrapper.Message)
+		// A merged id answers 301 + current_id. The target lives in the
+		// envelope's data, which the error path would otherwise drop — and it
+		// is the whole point of the answer, so it is lifted onto the verdict
+		// here rather than re-fetched by whoever needs it.
+		if wrapper.Code == catalogCodeMoved {
+			var moved struct {
+				CurrentID int64 `json:"current_id"`
+			}
+			if json.Unmarshal(wrapper.Data, &moved) == nil {
+				gerr.Moved = moved.CurrentID
+			}
+		}
+		return nil, resp.StatusCode, gerr
 	}
 	return wrapper.Data, resp.StatusCode, nil
 }

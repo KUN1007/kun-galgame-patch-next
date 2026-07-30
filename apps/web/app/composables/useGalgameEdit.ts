@@ -307,11 +307,16 @@ export const useGalgameEdit = () => {
       total?: number
     }>(`/tag/_${qs({ tag_id: id, ...(opts as Q) })}`)
 
+  // `moved_to` arrives ALONE, in place of the record, when this label id was
+  // merged away in the catalog: the company lives on under that id and the page
+  // 301s there. Never alongside the record — one company must not be reachable
+  // at two URLs.
   const officialDetail = (id: number, opts?: TaxonomyListOpts) =>
     api.get<{
       official?: BrowseOfficial
       galgames?: GalgameCard[]
       total?: number
+      moved_to?: number
     }>(`/official/_${qs({ official_id: id, ...(opts as Q) })}`)
 
   return {

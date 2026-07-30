@@ -80,8 +80,27 @@ const notFound = () =>
   createError({ statusCode: 404, statusMessage: '会社不存在', fatal: true })
 
 if (data.value?.code === VERDICT_NOT_FOUND) throw notFound()
+
+// A MERGED company keeps its old id addressable, but only as a 301. The catalog
+// merges duplicate labels and the loser's id has to land on the survivor's page
+// rather than render a copy of it — two URLs for one company is what the
+// redirect prevents, and a 200 here would be the soft 404's twin: a real-looking
+// page that permanently holds no games. `moved_to` arrives INSTEAD of the
+// record, so nothing of the survivor is ever painted under the old id. The
+// target is the FINAL address (never the retired /official/:id or /labels/:id
+// shells), so this stays one hop.
+const movedTarget = (v: typeof data.value) =>
+  v?.code === 0 ? (v.detail?.moved_to ?? 0) : 0
+const hopTo = (to: number) =>
+  navigateTo(`/galgame/official/${to}`, { redirectCode: 301, replace: true })
+
+const moved = movedTarget(data.value)
+if (moved > 0) await hopTo(moved)
+
 watch(data, (v) => {
   if (v?.code === VERDICT_NOT_FOUND) showError(notFound())
+  const to = movedTarget(v)
+  if (to > 0) hopTo(to)
 })
 
 const official = computed(() => data.value?.detail?.official ?? null)

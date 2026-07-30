@@ -120,6 +120,18 @@ func (h *PatchHandler) GalgameTaxonomyDetailProxy(c fiber.Ctx) error {
 		// rendering an empty 200 shell — a soft 404 keeps a dead URL indexed and
 		// reads the "不存在" copy as thin content on a live page. It also has to
 		// be told apart from an outage, which is what Absent() insists on.
+		// Checked BEFORE the miss branch: a merged id is the opposite of an
+		// absent one. The catalog merges duplicate labels and the loser keeps
+		// its id addressable only as a redirect, so answering it with the 404
+		// below would retire a live company's old URL instead of forwarding it.
+		// The verdict travels as `moved_to` ALONE — the survivor's record never
+		// rides under the dead id, or the same company would exist at two URLs
+		// — and the page turns it into a single-hop 301.
+		if to, ok := galgameClient.MovedTarget(err); ok {
+			return c.JSON(response.Response{
+				Code: 0, Message: "OK", Data: fiber.Map{"moved_to": to},
+			})
+		}
 		if galgameClient.IsAbsent(err) {
 			return response.Error(c, errors.ErrNotFound("词条不存在"))
 		}

@@ -35,15 +35,20 @@ func TestGalgameTaxonomyDetailStatusCodes(t *testing.T) {
 		routeGone = `{"code":404,"message":"Cannot GET /v1/catalog/tagz/11"}`
 		// The registry answering, but broken.
 		serverDown = `{"code":3,"message":"服务器内部错误"}`
+		// A MERGED id: the catalog's 301 verdict, whose data names the survivor.
+		// The opposite of a miss — the company exists, under another id.
+		recordMoved = `{"code":12,"message":"this id was merged away; use current_id",` +
+			`"data":{"entity_type":"label","id":13323,"current_id":6935}}`
 	)
 
 	for _, tc := range []struct {
-		name           string
-		path           string
-		upstreamStatus int
-		upstreamBody   string
-		wantStatus     int
-		wantBodyHas    string
+		name             string
+		path             string
+		upstreamStatus   int
+		upstreamLocation string
+		upstreamBody     string
+		wantStatus       int
+		wantBodyHas      string
 	}{
 		{
 			name:           "a tag the registry has no row for is a real 404",
@@ -66,6 +71,24 @@ func TestGalgameTaxonomyDetailStatusCodes(t *testing.T) {
 			wantStatus: http.StatusNotFound, wantBodyHas: `"code":40400`,
 		},
 		{
+			// A merged label must FORWARD, not 404. Answering it with the miss
+			// above would retire a live company's old URL and drop every inbound
+			// link that pointed at the id which lost the merge.
+			//
+			// Location is set on purpose: net/http follows a 301 by default, and
+			// following it here would replay the request and hand back whatever
+			// the survivor's URL serves — the survivor's record under the DEAD
+			// id. The upstream answers every path with this same body, so a
+			// followed redirect would still 301 and the assertion below would
+			// see no moved_to.
+			name:             "a merged official forwards to its survivor",
+			path:             "/api/v1/official/_?official_id=13323",
+			upstreamStatus:   http.StatusMovedPermanently,
+			upstreamLocation: "/v1/catalog/labels/6935",
+			upstreamBody:     recordMoved,
+			wantStatus:       http.StatusOK, wantBodyHas: `"moved_to":6935`,
+		},
+		{
 			// The case a status-only test would get wrong: same 404, different
 			// body, opposite meaning.
 			name:           "an upstream route failure is a failure, not a missing tag",
@@ -83,6 +106,9 @@ func TestGalgameTaxonomyDetailStatusCodes(t *testing.T) {
 		t.Run(tc.name, func(t *testing.T) {
 			upstream := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, _ *http.Request) {
 				w.Header().Set("Content-Type", "application/json")
+				if tc.upstreamLocation != "" {
+					w.Header().Set("Location", tc.upstreamLocation)
+				}
 				if tc.upstreamStatus != 0 {
 					w.WriteHeader(tc.upstreamStatus)
 				}
