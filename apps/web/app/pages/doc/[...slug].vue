@@ -91,10 +91,13 @@ const toc = computed<KunTOCItem[]>(() => detail.value?.toc ?? [])
     v-if="detail"
     class="grid w-full gap-6 py-6 lg:grid-cols-[16rem_minmax(0,1fr)_16rem]"
   >
-    <aside
-      class="hidden lg:sticky lg:top-20 lg:block lg:self-start lg:max-h-[calc(100vh-6rem)] lg:overflow-y-auto"
-    >
-      <AboutSidebar :tree="tree" :active-slug="slugParam" />
+    <!-- The height cap and the scrolling live on KunOverlayScroll, not the
+         <aside>: overlayscrollbars needs to own the scroll container to replace
+         its bar, so the aside keeps only the sticky positioning. -->
+    <aside class="hidden lg:sticky lg:top-20 lg:block lg:self-start">
+      <KunOverlayScroll class="lg:max-h-[calc(100vh-6rem)]">
+        <AboutSidebar :tree="tree" :active-slug="slugParam" />
+      </KunOverlayScroll>
     </aside>
 
     <article class="min-w-0">

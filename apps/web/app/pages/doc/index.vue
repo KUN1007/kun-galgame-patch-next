@@ -52,10 +52,11 @@ const tree = computed(() =>
 
 <template>
   <div class="grid w-full gap-6 py-6 lg:grid-cols-[16rem_minmax(0,1fr)]">
-    <aside
-      class="hidden lg:sticky lg:top-20 lg:block lg:self-start lg:max-h-[calc(100vh-6rem)] lg:overflow-y-auto"
-    >
-      <AboutSidebar :tree="tree" />
+    <!-- Height cap + scrolling belong to KunOverlayScroll (see doc/[...slug]). -->
+    <aside class="hidden lg:sticky lg:top-20 lg:block lg:self-start">
+      <KunOverlayScroll class="lg:max-h-[calc(100vh-6rem)]">
+        <AboutSidebar :tree="tree" />
+      </KunOverlayScroll>
     </aside>
 
     <section class="space-y-6">
