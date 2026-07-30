@@ -486,8 +486,10 @@ func TestCatalogTwoHopReads(t *testing.T) {
 			t.Fatalf("SearchGalgame: %v", err)
 		}
 		srv.wantPaths(t, "/v1/catalog/works/search")
-		if got := srv.last().query.Get("nsfw"); got != "" {
-			t.Errorf("nsfw = %q, want absent for an sfw caller", got)
+		// nsfw=1 even for an sfw caller: the AGE axis never stands in for the
+		// editing one (doc 106 §38). TestContentLimitCaliber owns that contract.
+		if got := srv.last().query.Get("nsfw"); got != "1" {
+			t.Errorf("nsfw = %q, want 1 — moyu always reads the whole population", got)
 		}
 		// Absent by default, so the narrow high-precision search is what an
 		// unmodified caller gets.
@@ -508,6 +510,210 @@ func TestCatalogTwoHopReads(t *testing.T) {
 		}
 		if got := srv.last().query.Get("search_intro"); got != "1" {
 			t.Errorf("search_intro = %q, want 1", got)
+		}
+	})
+}
+
+// TestContentLimitCaliber pins the wave's whole reason for existing: moyu's
+// content_limit is the EDITING axis and must never be spoken as the age axis.
+//
+// The regression it guards is doc 106 §38, which shipped: `sfw` was projected
+// onto nsfw=0, which on this archive hides 94.5% of the site, and `nsfw` onto
+// content_rating=r18, a set that overlaps the intended one by about half. Every
+// assertion below fails loudly if either projection comes back.
+func TestContentLimitCaliber(t *testing.T) {
+	srv := newCatalogFake(t)
+	c := NewWithKey(srv.URL, "nm_test_key")
+	ctx := context.Background()
+
+	t.Run("the three values ride the wire as the editing axis", func(t *testing.T) {
+		for _, tc := range []struct {
+			cl        string
+			wantLimit string
+		}{
+			{"sfw", "sfw"},
+			{"nsfw", "nsfw"},
+			{"all", ""},
+			{"", ""},
+		} {
+			srv.reset()
+			if _, err := c.SearchGalgame(ctx, SearchGalgameParams{Q: "x", ContentLimit: tc.cl}); err != nil {
+				t.Fatalf("SearchGalgame(%q): %v", tc.cl, err)
+			}
+			q := srv.last().query
+			if got := q.Get("nsfw"); got != "1" {
+				t.Errorf("content_limit=%q: nsfw = %q, want 1 unconditionally", tc.cl, got)
+			}
+			if got := q.Get("content_limit"); got != tc.wantLimit {
+				t.Errorf("content_limit=%q: wire content_limit = %q, want %q", tc.cl, got, tc.wantLimit)
+			}
+			// The age axis is NOT how a content_limit is expressed. `nsfw` in
+			// particular must not become content_rating=r18 again.
+			if got := q.Get("content_rating"); got != "" {
+				t.Errorf("content_limit=%q: content_rating = %q, want absent — that is the AGE axis", tc.cl, got)
+			}
+		}
+	})
+
+	// age_limit=r18 is the caller genuinely asking for 18+, and the one place the
+	// age axis is still spoken. It composes with the editing axis rather than
+	// replacing it.
+	t.Run("age_limit is the only content_rating caller", func(t *testing.T) {
+		srv.reset()
+		if _, err := c.SearchGalgame(ctx, SearchGalgameParams{Q: "x", AgeLimit: "r18", ContentLimit: "sfw"}); err != nil {
+			t.Fatalf("SearchGalgame: %v", err)
+		}
+		q := srv.last().query
+		if got := q.Get("content_rating"); got != "r18" {
+			t.Errorf("content_rating = %q, want r18", got)
+		}
+		if got := q.Get("content_limit"); got != "sfw" {
+			t.Errorf("content_limit = %q, want sfw — the two axes compose", got)
+		}
+	})
+
+	t.Run("batch and calendar carry the same gate", func(t *testing.T) {
+		srv.reset()
+		if _, err := c.GalgameBatch(ctx, []int{7}, "sfw"); err != nil {
+			t.Fatalf("GalgameBatch: %v", err)
+		}
+		q := srv.last().query
+		if q.Get("nsfw") != "1" || q.Get("content_limit") != "sfw" {
+			t.Errorf("works list gate = nsfw %q / content_limit %q, want 1 / sfw", q.Get("nsfw"), q.Get("content_limit"))
+		}
+
+		srv.reset()
+		if _, err := c.GetGalgameCalendar(ctx, "2026-07", "nsfw"); err != nil {
+			t.Fatalf("GetGalgameCalendar: %v", err)
+		}
+		q = srv.last().query
+		if q.Get("nsfw") != "1" || q.Get("content_limit") != "nsfw" {
+			t.Errorf("calendar gate = nsfw %q / content_limit %q, want 1 / nsfw", q.Get("nsfw"), q.Get("content_limit"))
+		}
+	})
+
+	// gid 22 is rated r18 and edited sfw. Rendering the rating would label it
+	// NSFW on every card — the SEO collapse the incident report opens with.
+	t.Run("the rendered content_limit is the claim's, not the rating's", func(t *testing.T) {
+		srv.reset()
+		briefs, err := c.GalgameBatch(ctx, []int{22}, "")
+		if err != nil {
+			t.Fatalf("GalgameBatch: %v", err)
+		}
+		if len(briefs) != 1 {
+			t.Fatalf("briefs = %+v, want the one live row", briefs)
+		}
+		if got := briefs[0].ContentLimit; got != "sfw" {
+			t.Errorf("content_limit = %q, want sfw (claimed_by.content_limit)", got)
+		}
+		if got := briefs[0].AgeLimit; got != "r18" {
+			t.Errorf("age_limit = %q, want r18 — the AGE axis is untouched", got)
+		}
+	})
+
+	// The detail face takes no content_limit= parameter, so the gate lands on the
+	// single row it answers with — the wiki detail's own 404-on-mismatch.
+	t.Run("detail gates the row it fetched", func(t *testing.T) {
+		srv.reset()
+		if _, err := c.GetGalgame(ctx, 22, "sfw"); err != nil {
+			t.Fatalf("GetGalgame(sfw) on an sfw-edited entry: %v", err)
+		}
+		q := srv.last().query
+		if got := q.Get("nsfw"); got != "1" {
+			t.Errorf("detail nsfw = %q, want 1 — an r18-rated entry 404s without it", got)
+		}
+		if got := q.Get("content_limit"); got != "" {
+			t.Errorf("detail content_limit = %q, want absent — that face has no such parameter", got)
+		}
+		if _, err := c.GetGalgame(ctx, 22, "nsfw"); err == nil {
+			t.Error("GetGalgame(nsfw) on an sfw-edited entry: want not-found, got nil")
+		}
+		if _, err := c.GetGalgame(ctx, 22, ""); err != nil {
+			t.Errorf("GetGalgame(no filter): %v", err)
+		}
+	})
+}
+
+// TestContentAxisProjection pins the projection itself, including the branch the
+// fake cannot reach end to end: a work NO wiki entry claims has no edited body,
+// so the age rating is the only evidence there is and stands in conservatively.
+func TestContentAxisProjection(t *testing.T) {
+	claim := func(limit string) *catalogClaimedBy {
+		return &catalogClaimedBy{Site: catalogSiteGalgameWiki, WorkID: 1, State: catalogClaimStateLive, ContentLimit: limit}
+	}
+	for _, tc := range []struct {
+		name            string
+		claim           *catalogClaimedBy
+		rating          string
+		wantCL, wantAge string
+	}{
+		{"claimed sfw, rated r18", claim("sfw"), "r18", "sfw", "r18"},
+		{"claimed nsfw, rated all_ages", claim("nsfw"), "all_ages", "nsfw", "all"},
+		{"unclaimed r18 falls back to nsfw", nil, "r18", "nsfw", "r18"},
+		{"unclaimed sensitive falls back to sfw", nil, "sensitive", "sfw", "all"},
+		{"a claim with no verdict falls back too", claim(""), "r18", "nsfw", "r18"},
+		{"another product's claim is not moyu's", &catalogClaimedBy{Site: "letmoe", ContentLimit: "sfw"}, "r18", "nsfw", "r18"},
+	} {
+		t.Run(tc.name, func(t *testing.T) {
+			cl, age := contentAxisOf(tc.claim, tc.rating)
+			if cl != tc.wantCL || age != tc.wantAge {
+				t.Errorf("contentAxisOf = (%q, %q), want (%q, %q)", cl, age, tc.wantCL, tc.wantAge)
+			}
+		})
+	}
+}
+
+// TestEffectiveBannerPrefersLandscape pins the cover flip (doc 106 §38, user
+// order): moyu's effective banner is the WIDE art, as it was before the A2-2
+// re-anchor started reading the catalog's portrait slot and visibly changed
+// every cover on the site.
+func TestEffectiveBannerPrefersLandscape(t *testing.T) {
+	t.Run("list rows take the banner slot", func(t *testing.T) {
+		portrait := &catalogCoverSlot{URL: "https://cdn/aa/bb/p.webp", Width: 600, Height: 800}
+		banner := &catalogCoverSlot{URL: "https://cdn/aa/bb/b.webp", Width: 1280, Height: 720}
+		for _, tc := range []struct {
+			name string
+			it   catalogWorkListItem
+			want string
+		}{
+			{"both slots", catalogWorkListItem{Covers: &catalogCoverSlots{Portrait: portrait, Banner: banner}}, "b"},
+			{"portrait only", catalogWorkListItem{Covers: &catalogCoverSlots{Portrait: portrait}}, "p"},
+			{"no include=covers", catalogWorkListItem{Cover: "https://cdn/aa/bb/c.webp"}, "c"},
+			{"no cover at all", catalogWorkListItem{}, ""},
+		} {
+			t.Run(tc.name, func(t *testing.T) {
+				hash, _, _, _ := coverOf(&tc.it)
+				if hash != tc.want {
+					t.Errorf("coverOf hash = %q, want %q", hash, tc.want)
+				}
+			})
+		}
+	})
+
+	t.Run("the detail hero takes the first landscape row", func(t *testing.T) {
+		pinned := catalogDetailCover{URL: "https://cdn/aa/bb/p.webp", PortraitPinned: true, Width: 600, Height: 800}
+		wide := catalogDetailCover{URL: "https://cdn/aa/bb/b.webp", Width: 1280, Height: 720}
+		// No dimensions = unknown shape, NOT landscape.
+		unknown := catalogDetailCover{URL: "https://cdn/aa/bb/u.webp"}
+		for _, tc := range []struct {
+			name   string
+			covers []catalogDetailCover
+			want   string
+		}{
+			{"landscape beats the portrait pin", []catalogDetailCover{pinned, wide}, "https://cdn/aa/bb/b.webp"},
+			{"portrait-only falls back to the pin", []catalogDetailCover{unknown, pinned}, "https://cdn/aa/bb/p.webp"},
+			{"nothing pinned falls back to the first", []catalogDetailCover{unknown}, "https://cdn/aa/bb/u.webp"},
+			{"no covers", nil, ""},
+		} {
+			t.Run(tc.name, func(t *testing.T) {
+				got := ""
+				if c := heroCover(tc.covers); c != nil {
+					got = c.URL
+				}
+				if got != tc.want {
+					t.Errorf("heroCover = %q, want %q", got, tc.want)
+				}
+			})
 		}
 	})
 }

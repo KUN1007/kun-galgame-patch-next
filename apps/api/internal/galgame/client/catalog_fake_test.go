@@ -10,7 +10,12 @@ package client
 //	gid 7  -> catalog 900, claim live    (a published wiki entry)
 //	gid 20 -> catalog 920, claim draft   (an unpublished one)
 //	gid 21 -> catalog 921, claim hidden  (a withdrawn one — the ban case)
+//	gid 22 -> catalog 922, claim live, rated r18 but EDITED sfw
 //	          catalog 930, NO claim      (a work no wiki entry covers at all)
+//
+// gid 22 is the doc 106 §38 case in miniature: the two content axes disagree, so
+// every assertion about which one moyu renders and filters on has a row that can
+// tell them apart.
 
 import (
 	"encoding/json"
@@ -35,15 +40,27 @@ type catalogFake struct {
 	reqs []fakeReq
 }
 
-// gidFixture maps the fixture's gids to their catalog id and claim state.
+// gidFixture maps the fixture's gids to their catalog id, claim state and the
+// claim's EDITING axis (claimed_by.content_limit — the wiki entry's own column).
 var gidFixture = map[int]struct {
 	catalogID int64
 	state     string
+	limit     string
 }{
-	7:  {900, catalogClaimStateLive},
-	8:  {901, catalogClaimStateLive},
-	20: {920, catalogClaimStateDraft},
-	21: {921, catalogClaimStateHidden},
+	7:  {900, catalogClaimStateLive, "sfw"},
+	8:  {901, catalogClaimStateLive, "sfw"},
+	20: {920, catalogClaimStateDraft, "nsfw"},
+	21: {921, catalogClaimStateHidden, "nsfw"},
+	22: {922, catalogClaimStateLive, "sfw"},
+}
+
+// ratingForCatalogID is the fixture's AGE axis. 922 is rated r18 while its claim
+// says the entry was edited sfw — the two axes disagreeing on purpose.
+func ratingForCatalogID(id int64) string {
+	if id == 922 {
+		return "r18"
+	}
+	return "all_ages"
 }
 
 func newCatalogFake(t *testing.T) *catalogFake {
@@ -99,7 +116,7 @@ func (f *catalogFake) lookupBatch(req *http.Request) string {
 			continue
 		}
 		items = append(items, `{"source":"galgame_wiki","external_id":"`+pair.ExternalID+`",`+
-			`"work":{"id":`+strconv.FormatInt(fx.catalogID, 10)+`,"medium":"galgame","display_name":"W","content_rating":"all_ages"},`+
+			`"work":{"id":`+strconv.FormatInt(fx.catalogID, 10)+`,"medium":"galgame","display_name":"W","content_rating":"`+ratingForCatalogID(fx.catalogID)+`"},`+
 			`"claimed_by":`+claimJSON(gid, fx.state)+`}`)
 	}
 	return `{"items":[` + strings.Join(items, ",") + `]}`
@@ -111,7 +128,7 @@ func (f *catalogFake) lookupOne(req *http.Request) string {
 	if !ok {
 		return `{"work":null,"claimed_by":null}`
 	}
-	return `{"work":{"id":` + strconv.FormatInt(fx.catalogID, 10) + `,"medium":"galgame","display_name":"W","content_rating":"all_ages"},` +
+	return `{"work":{"id":` + strconv.FormatInt(fx.catalogID, 10) + `,"medium":"galgame","display_name":"W","content_rating":"` + ratingForCatalogID(fx.catalogID) + `"},` +
 		`"claimed_by":` + claimJSON(gid, fx.state) + `}`
 }
 
@@ -163,12 +180,15 @@ func (f *catalogFake) workDetail(path string) string {
 	id, _ := strconv.ParseInt(strings.TrimPrefix(path, "/v1/catalog/works/"), 10, 64)
 	gid, state := gidForCatalogID(id)
 	return `{"id":` + strconv.FormatInt(id, 10) + `,"medium":"galgame","display_name":"W","olang":"ja",` +
-		`"content_rating":"all_ages","release_date":"2026-07-14","created":"2026-01-01T00:00:00Z","updated":"2026-07-01T00:00:00Z",` +
+		`"content_rating":"` + ratingForCatalogID(id) + `","release_date":"2026-07-14","created":"2026-01-01T00:00:00Z","updated":"2026-07-01T00:00:00Z",` +
 		`"titles":[{"lang":"ja","title":"タイトル","kind":"official"}],` +
 		`"refs":[{"source":"vndb","external_id":"v42"}],` +
 		`"claimed_by":` + claimJSON(gid, state) + `,` +
 		`"intro":[{"lang":"zh-Hans","intro":"介绍","source":"vndb","machine":false}],` +
-		`"covers":[{"url":"https://cdn/aa/bb/hash1.webp","kind":"main","portrait_pinned":true,"sexual":0,"violence":0,"source":"vndb","width":600,"height":800,"thumbhash":"th"}],` +
+		// The portrait pin comes FIRST on purpose: the detail hero must still pick
+		// the landscape row below it.
+		`"covers":[{"url":"https://cdn/aa/bb/hash1.webp","kind":"main","portrait_pinned":true,"sexual":0,"violence":0,"source":"vndb","width":600,"height":800,"thumbhash":"th"},` +
+		`{"url":"https://cdn/aa/bb/hash2.webp","kind":"main","portrait_pinned":false,"sexual":0,"violence":0,"source":"vndb","width":1280,"height":720,"thumbhash":"th2"}],` +
 		`"screenshots":[],` +
 		`"tags":[{"name":"純愛","source":"vndb","canonical_id":11,"tier":"core","kind":"content","spoiler":0,"sexual":false},` +
 		`{"name":"エロ","source":"vndb","canonical_id":12,"tier":"core","kind":"content","spoiler":1,"sexual":true}],` +
@@ -208,18 +228,23 @@ func (f *catalogFake) calendar() string {
 // — the full-catalog population's "not on the forum yet" row.
 func workItem(catalogID int64, gid int, state string) string {
 	return `{"id":` + strconv.FormatInt(catalogID, 10) + `,"medium":"galgame","display_name":"W",` +
-		`"content_rating":"all_ages","olang":"ja","release_date":"2026-07-14",` +
+		`"content_rating":"` + ratingForCatalogID(catalogID) + `","olang":"ja","release_date":"2026-07-14",` +
 		`"claimed_by":` + claimJSON(gid, state) + `,"cover":"https://cdn/aa/bb/hash1.webp","updated":"2026-07-01T00:00:00Z",` +
 		`"names":{"ja-jp":"タイトル","zh-cn":"标题"},` +
-		`"covers":{"portrait":{"url":"https://cdn/aa/bb/hash1.webp","width":600,"height":800,"thumbhash":"th","sexual":0,"violence":0,"source":"vndb"},"banner":null},` +
+		// Both slots filled: the card must take the BANNER one (doc 106 §38).
+		`"covers":{"portrait":{"url":"https://cdn/aa/bb/hash1.webp","width":600,"height":800,"thumbhash":"th","sexual":0,"violence":0,"source":"vndb"},` +
+		`"banner":{"url":"https://cdn/aa/bb/hash2.webp","width":1280,"height":720,"thumbhash":"th2","sexual":0,"violence":0,"source":"vndb"}},` +
 		`"refs":[{"source":"vndb","external_id":"v42"}]}`
 }
 
+// claimJSON renders the claim pointer, carrying the fixture's editing axis so a
+// consumer can be caught deriving content_limit from the age rating instead.
 func claimJSON(gid int, state string) string {
 	if gid == 0 || state == "" {
 		return "null"
 	}
-	return `{"site":"galgame_wiki","work_id":` + strconv.Itoa(gid) + `,"state":"` + state + `"}`
+	return `{"site":"galgame_wiki","work_id":` + strconv.Itoa(gid) + `,"state":"` + state + `",` +
+		`"content_limit":"` + gidFixture[gid].limit + `"}`
 }
 
 func gidForCatalogID(id int64) (int, string) {

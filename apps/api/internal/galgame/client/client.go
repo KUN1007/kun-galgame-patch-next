@@ -546,12 +546,12 @@ func (c *Client) SearchGalgame(ctx context.Context, p SearchGalgameParams) (*Pag
 	if p.Q != "" {
 		q.Set("q", p.Q)
 	}
-	// The content axis: moyu's content_limit picks the nsfw switch and, for the
-	// nsfw-only case, the rating filter. age_limit=r18 narrows to r18 the same
-	// way — the wiki's two axes collapse onto the catalog's one.
+	// The content axes, kept apart (doc 106 §38): content_limit is the EDITING
+	// axis and rides `content_limit=`, while age_limit is the caller explicitly
+	// asking for 18+ and is the one place the AGE axis (`content_rating=`) is
+	// still spoken. They are independent filters and compose.
 	gate := gateFor(p.ContentLimit)
 	if p.AgeLimit == "r18" {
-		gate.nsfw = true
 		gate.contentRating = "r18"
 	}
 	gate.apply(q)
@@ -683,13 +683,12 @@ type GalgameDetailEnvelope struct {
 	Galgame GalgameFull `json:"galgame"`
 }
 
-// GetGalgame calls /galgame/:gid; used to enrich detail pages.
+// GetGalgame reads one work's detail; used to enrich detail pages.
 //
-// contentLimit is the NSFW filter — pass "sfw" / "nsfw" / "all" to apply,
-// or "" to omit the param (galgame endpoint default for single is "no filter",
-// see docs/galgame_wiki/01-galgame.md GET /galgame/:gid + 00-handbook §16).
-// When the row exists but doesn't match the filter, galgame returns 404 (same
-// shape as a missing ID) — caller treats both as not-found.
+// contentLimit is the EDITING-axis filter — "sfw" / "nsfw" match the entry's own
+// content_limit exactly, "" / "all" apply no filter. A row that exists but fails
+// the filter comes back as a not-found error, the same shape as a missing id, so
+// every caller's 404 branch keeps its meaning.
 func (c *Client) GetGalgame(ctx context.Context, gid int, contentLimit string) (*GalgameDetailEnvelope, error) {
 	catalogID, found, err := c.resolveGID(ctx, gid)
 	if err != nil {
@@ -699,8 +698,11 @@ func (c *Client) GetGalgame(ctx context.Context, gid int, contentLimit string) (
 		return nil, &GalgameError{Code: galgameCodeNotFound, Message: "galgame not found"}
 	}
 
+	gate := gateFor(contentLimit)
 	q := url.Values{}
-	gateFor(contentLimit).apply(q)
+	// The work detail takes no filter parameters — only the visibility switch —
+	// so the editing-axis gate is applied to the row it answers with, below.
+	applyNSFW(q)
 	// spoilers=2 asks for the COMPLETE tag set, spoiler-flagged rows included.
 	// That is deliberate: moyu does its own spoiler filtering client-side (three
 	// modes plus a "N hidden" counter), so it needs every edge and its level —
@@ -717,7 +719,16 @@ func (c *Client) GetGalgame(ctx context.Context, gid int, contentLimit string) (
 	if !w.ClaimedBy.live() {
 		return nil, &GalgameError{Code: galgameCodeNotFound, Message: "galgame not found"}
 	}
-	return &GalgameDetailEnvelope{Galgame: catalogWorkToFull(&w)}, nil
+	full := catalogWorkToFull(&w)
+	// The editing-axis gate, applied to the single row because the detail face
+	// carries no content_limit= parameter — and 404 is the same answer the wiki
+	// detail gave on a content_limit miss, which is what every caller's
+	// not-found branch already means. See catalogGate.allows for why this is not
+	// the forbidden list-side re-filter.
+	if !gate.allows(full.ContentLimit) {
+		return nil, &GalgameError{Code: galgameCodeNotFound, Message: "galgame not found"}
+	}
+	return &GalgameDetailEnvelope{Galgame: full}, nil
 }
 
 // CheckGalgameByVndbID resolves a VNDB id to the wiki entry that owns it and
@@ -794,12 +805,12 @@ func (c *Client) CheckGalgameByVndbID(ctx context.Context, vndbID string) (exist
 // on the far side to complain.
 const BatchMaxIDs = 100
 
-// GalgameBatch calls /galgame/batch?ids=1,2,3 to fetch lightweight galgame info in bulk.
+// GalgameBatch fetches lightweight galgame info in bulk, keyed by gid.
 //
-// contentLimit is the NSFW filter — pass "sfw" / "nsfw" / "all" to apply,
-// or "" to omit the param (galgame endpoint default for batch is "no filter",
-// see docs/galgame_wiki/01-galgame.md GET /galgame/batch + 00-handbook §16).
-// IMPORTANT: batch is intentionally permissive by default per galgame spec — the
+// contentLimit is the EDITING-axis filter — "sfw" / "nsfw" match the entry's own
+// content_limit exactly, "" / "all" apply no filter and return every requested
+// id the caller may see.
+// IMPORTANT: batch is intentionally permissive by default — the
 // caller (typically holding patch.galgame_id, favorites, etc.) gets back every
 // requested ID. When the moyu side wants list-style SFW filtering it MUST
 // explicitly pass "sfw"; the returned slice will then be shorter than ids and
@@ -851,9 +862,11 @@ func (c *Client) GalgameBatch(ctx context.Context, ids []int, contentLimit strin
 }
 
 // ─── Galgame release calendar (发售月历) ───────────────
-// docs/galgame_wiki/01-galgame.md §Galgame 发售月历. Precision-aware read-only
-// endpoint for a "本月新作 / 发售月表" view. content_limit is EXACT-match here
-// (sfw / nsfw only — there is no combined "all"); the caller fans out + merges.
+// Precision-aware read-only endpoint for a "本月新作 / 发售月表" view.
+// content_limit is EXACT-match on the editing axis here, as it is everywhere
+// else; "" / "all" ask for no filter, which the catalog calendar expresses
+// natively (the deprecated face could not, which is why the moyu handler still
+// fans "all" out into two calls and merges them).
 
 // GalgameCalendar is one ISO month of the release calendar (day + month
 // precision, released + upcoming mixed, ascending by date).

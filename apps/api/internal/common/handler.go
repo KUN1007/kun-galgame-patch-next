@@ -891,11 +891,18 @@ func (h *CommonHandler) GetMoyuHasPatch(c fiber.Ctx) error {
 // (docs/galgame_wiki/01-galgame.md §发售月历). The galgame owns the data; moyu only
 // stamps each entry with has_patch (does moyu hold a local patch row → the card
 // links to /patch/:id, otherwise to the galgame entry) so the FE renders a
-// "智能跳转" calendar. content_limit is EXACT-match on the galgame side (sfw / nsfw),
-// so an "all" (R18) viewer fans out to both and we merge.
+// "智能跳转" calendar. content_limit is EXACT-match upstream (sfw / nsfw), so an
+// "all" viewer fans out to both and we merge.
 
-// calendarContentLimits maps moyu's content_limit (sfw/nsfw/all/"") to the galgame
-// calendar's exact-match values. "all" needs both (the galgame has no combined mode).
+// calendarContentLimits maps moyu's content_limit (sfw/nsfw/all/"") to the
+// calendar's exact-match EDITING-axis values — the entry's own content_limit,
+// never the registry's age rating (doc 106 §38).
+//
+// "all" fans out to both values and the caller merges. The catalog calendar can
+// express "no editing-axis gate" in one request (an absent content_limit=), but
+// naming both values keeps this lane independent of what an absent parameter
+// defaults to — and the two sets partition the population, so the merged count
+// below is the ungated count exactly.
 func calendarContentLimits(cl string) []string {
 	switch cl {
 	case "nsfw":

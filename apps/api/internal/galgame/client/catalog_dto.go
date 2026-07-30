@@ -49,10 +49,16 @@ const catalogSiteGalgameWiki = "galgame_wiki"
 // catalogClaimedBy is the cross-face content pointer. Null when the catalog row
 // is unclaimed — i.e. the work exists in the registry but no product face holds
 // an entry for it ("not on the forum yet").
+// ContentLimit is the claiming entry's EDITING axis (sfw | nsfw) — the wiki
+// column itself, not a projection of the registry's age rating. It is the
+// authority for both the display value and the content_limit= filter, and it
+// exists only where a claim does; an unclaimed work has no edited body and
+// therefore no such verdict (see contentAxisOf's fallback).
 type catalogClaimedBy struct {
-	Site   string `json:"site"`
-	WorkID int64  `json:"work_id"`
-	State  string `json:"state"`
+	Site         string `json:"site"`
+	WorkID       int64  `json:"work_id"`
+	State        string `json:"state"`
+	ContentLimit string `json:"content_limit"`
 }
 
 // gid returns the wiki galgame id this claim points at, or 0 when the claim is

@@ -262,8 +262,12 @@ func (c *Client) catalogTagDetail(ctx context.Context, idStr string, q url.Value
 	}
 	gate := gateFor(q.Get("content_limit"))
 
+	// The record read is for the page HEADER only — the tag's name, safety flag
+	// and description. It takes no filter parameters (and moyu asks for no works
+	// block, so its nsfw-aware work_count is never read); the gate belongs to the
+	// member search below, which is where every number on the page comes from.
 	fq := url.Values{}
-	gate.apply(fq)
+	applyNSFW(fq)
 
 	var rec catalogTagRecord
 	if err := c.getV1(ctx, fmt.Sprintf("/catalog/tags/%d", id), fq, &rec); err != nil {
@@ -304,8 +308,9 @@ func (c *Client) catalogLabelDetail(ctx context.Context, idStr string, q url.Val
 	}
 	gate := gateFor(q.Get("content_limit"))
 
+	// Header-only, exactly as catalogTagDetail's record read.
 	fq := url.Values{}
-	gate.apply(fq)
+	applyNSFW(fq)
 
 	var rec catalogLabelRecord
 	if err := c.getV1(ctx, fmt.Sprintf("/catalog/labels/%d", id), fq, &rec); err != nil {

@@ -18,11 +18,12 @@ package client
 //	              placeholder day/month it writes back are exactly the ones the
 //	              deprecated face wrote, and release_precision stays the
 //	              authority on how to read them.
-//	content axis  the wiki had two axes (content_limit sfw|nsfw, age_limit
-//	              all|r18); the catalog has one (content_rating). r18 maps to
-//	              (nsfw, r18) and everything else to (sfw, all) — including
-//	              `sensitive`, which is where the wiki's own sfw grading put
-//	              that material.
+//	content axis  moyu carries two (content_limit sfw|nsfw = the EDITING axis,
+//	              age_limit all|r18 = the AGE axis). age_limit comes off the
+//	              catalog's content_rating; content_limit comes off
+//	              claimed_by.content_limit, the wiki column itself, and only
+//	              falls back to the rating when nothing claims the work. See
+//	              contentAxisOf.
 //	olang         the catalog stores upstream BCP-47 (ja / zh-Hans / en); moyu
 //	              renders product locales (ja-jp / zh-cn / en-us). Unknown tags
 //	              pass through verbatim rather than being dropped.
@@ -94,13 +95,37 @@ func catalogLangFromProduct(lang string) string {
 
 // ─── content rating ───────────────────────────────────────────────────────
 
-// contentLimitFromRating projects the catalog's single content_rating axis onto
-// moyu's (content_limit, age_limit) pair.
-func contentLimitFromRating(rating string) (contentLimit, ageLimit string) {
+// contentAxisOf resolves the (content_limit, age_limit) pair moyu's DTOs carry
+// from the catalog's two independent sources.
+//
+// age_limit is the AGE axis and comes straight off content_rating, unchanged:
+// r18 → r18, everything else → all.
+//
+// content_limit is the EDITING axis and its authority is the CLAIM — the wiki
+// entry's own column, served as claimed_by.content_limit. Deriving it from the
+// age rating instead is the doc 106 §38 incident: on prod 94.5% of the claimed
+// live population is rated r18 while barely 44% is edited nsfw, so the derived
+// value mislabelled thousands of entries.
+//
+// The rating is still the FALLBACK, and only where there is nothing better: a
+// work no wiki entry claims has no edited body to have a verdict about, so the
+// conservative registry reading stands in (r18 → nsfw, all_ages / sensitive →
+// sfw — `sensitive` is where the wiki's own sfw grading put that material).
+func contentAxisOf(claim *catalogClaimedBy, rating string) (contentLimit, ageLimit string) {
+	ageLimit = "all"
 	if rating == "r18" {
-		return "nsfw", "r18"
+		ageLimit = "r18"
 	}
-	return "sfw", "all"
+	if claim != nil && claim.Site == catalogSiteGalgameWiki {
+		switch claim.ContentLimit {
+		case "sfw", "nsfw":
+			return claim.ContentLimit, ageLimit
+		}
+	}
+	if rating == "r18" {
+		return "nsfw", ageLimit
+	}
+	return "sfw", ageLimit
 }
 
 // ─── dates ────────────────────────────────────────────────────────────────
@@ -154,15 +179,27 @@ func vndbIDOf(refs []catalogRef) string {
 	return ""
 }
 
-// coverOf picks the slot moyu calls the "effective banner": the pinned key art.
-// That is the PORTRAIT slot — the catalog's `banner` is the wide hero art it
-// added alongside, a different picture for a different position. Falls back to
-// the list row's single `cover` URL (which follows the same portrait-first rule)
-// when include=covers was not requested.
+// coverOf picks the slot that fills moyu's "effective banner" — the field every
+// card and the detail hero render.
+//
+// It is the LANDSCAPE one. The name is not decoration: the wiki's own
+// EffectiveBanner was the lowest-sort_order cover, which on this archive is the
+// wide key art, and moyu's card layout has been built around that picture for
+// its whole life. The A2-2 re-anchor read the catalog's `portrait` slot instead
+// and visibly changed every cover on the site (doc 106 §38, user-reported); the
+// order was to keep the horizontal banner, so this reads `banner` first and
+// falls back to `portrait` for the works that have no landscape cover at all.
+//
+// Last resort is the list row's single `cover` URL, for a caller that did not
+// ask for include=covers.
 func coverOf(it *catalogWorkListItem) (hash string, width, height int, thumbhash string) {
-	if it.Covers != nil && it.Covers.Portrait != nil {
-		p := it.Covers.Portrait
-		return hashFromURL(p.URL), p.Width, p.Height, p.Thumbhash
+	if it.Covers != nil {
+		if c := it.Covers.Banner; c != nil {
+			return hashFromURL(c.URL), c.Width, c.Height, c.Thumbhash
+		}
+		if c := it.Covers.Portrait; c != nil {
+			return hashFromURL(c.URL), c.Width, c.Height, c.Thumbhash
+		}
 	}
 	return hashFromURL(it.Cover), 0, 0, ""
 }
@@ -184,7 +221,7 @@ func claimStateOf(c *catalogClaimedBy) string {
 // that renders it claim-less).
 func catalogItemToBrief(it *catalogWorkListItem) GalgameBrief {
 	ja, zhCN, zhTW, en := namesOf(it.Names)
-	cl, age := contentLimitFromRating(it.ContentRating)
+	cl, age := contentAxisOf(it.ClaimedBy, it.ContentRating)
 	date, precision := normalizeCatalogDate(it.ReleaseDate)
 	hash, w, h, th := coverOf(it)
 
@@ -325,11 +362,24 @@ func catalogScreenshotsToInputs(shots []catalogScreenshot) []ScreenshotInput {
 	return out
 }
 
-// pinnedCover returns the cover row moyu treats as the effective banner: the
-// portrait-pinned one, else the first.
-func pinnedCover(covers []catalogDetailCover) *catalogDetailCover {
+// heroCover returns the cover row moyu treats as the effective banner, the
+// detail-page twin of coverOf: the first LANDSCAPE row, else the portrait-pinned
+// one, else the first.
+//
+// The detail face serves the full cover list rather than the two curated slots,
+// so the orientation is decided here from the rows' own dimensions — using the
+// registry's own cutoff (see isLandscape) so a work cannot get a landscape card
+// and a portrait hero. Rows with no known dimensions are not landscape
+// candidates: image_service has no entry for them, so their shape is unknown
+// rather than wide.
+func heroCover(covers []catalogDetailCover) *catalogDetailCover {
 	if len(covers) == 0 {
 		return nil
+	}
+	for i := range covers {
+		if isLandscape(covers[i].Width, covers[i].Height) {
+			return &covers[i]
+		}
 	}
 	for i := range covers {
 		if covers[i].PortraitPinned {
@@ -339,10 +389,18 @@ func pinnedCover(covers []catalogDetailCover) *catalogDetailCover {
 	return &covers[0]
 }
 
+// isLandscape is the catalog's own portrait cutoff, inverted: a cover counts as
+// portrait when height exceeds width * 1.05, so everything else with real
+// dimensions is landscape. Kept as the exact rational 21/20 (no floats), the
+// same way the registry's cover-slot picker spells it.
+func isLandscape(w, h int) bool {
+	return w > 0 && h > 0 && int64(h)*20 <= int64(w)*21
+}
+
 // catalogWorkToFull projects the catalog work detail record onto the internal
 // GalgameFull the detail enricher consumes.
 func catalogWorkToFull(w *catalogWork) GalgameFull {
-	cl, age := contentLimitFromRating(w.ContentRating)
+	cl, age := contentAxisOf(w.ClaimedBy, w.ContentRating)
 	date, _ := normalizeCatalogDate(w.ReleaseDate)
 	titles := titleByProductKey(w.Titles)
 	intros := introByProductKey(w.Intro)
@@ -372,7 +430,7 @@ func catalogWorkToFull(w *catalogWork) GalgameFull {
 	if f.NameJaJp == "" && f.NameZhCn == "" && f.NameZhTw == "" && f.NameEnUs == "" {
 		f.NameJaJp = w.DisplayName
 	}
-	if c := pinnedCover(w.Covers); c != nil {
+	if c := heroCover(w.Covers); c != nil {
 		f.EffectiveBannerHash = hashFromURL(c.URL)
 		f.EffectiveBannerWidth = c.Width
 		f.EffectiveBannerHeight = c.Height

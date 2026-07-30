@@ -98,45 +98,81 @@ func (g *gidMap) put(gid int, catalogID int64) {
 
 // catalogGate is the catalog-side rendering of one moyu content_limit value.
 //
-// moyu inherited a two-axis convention from the wiki (content_limit sfw|nsfw
-// plus a separate age_limit); the catalog has ONE axis, content_rating
-// (all_ages | sensitive | r18), plus the caller-controlled `nsfw` switch that
-// decides whether r18 rows are visible at all. The projection:
+// TWO AXES, and doc 106 §38 is entirely about not confusing them:
 //
-//	""     -> nsfw=1, no rating filter  (moyu's permissive default: return the
-//	                                     row whatever its grading)
-//	"all"  -> nsfw=1, no rating filter
-//	"sfw"  -> nsfw=0                    (r18 hidden by the face itself)
-//	"nsfw" -> nsfw=1 + content_rating=r18 (r18 ONLY — the deprecated face's
-//	                                     exact-match semantics)
+//   - content_rating (all_ages | sensitive | r18) is the AGE axis — the
+//     registry's judgement about the GAME. Its companion is the `nsfw` switch,
+//     which decides whether r18 rows are visible to this caller at all.
+//   - content_limit (sfw | nsfw) is the EDITING axis — whether the wiki entry's
+//     own displayed material was sanitized. That is the column moyu's
+//     content_limit has always meant, and the catalog now carries it:
+//     `claimed_by.content_limit` on every face that emits a claim, plus a
+//     `content_limit=` filter on works/search, the works LIST and the calendar.
 //
-// `sensitive` has no wiki counterpart and falls on the sfw side, which is where
-// the wiki's own sfw grading put that material.
+// For one wave this gate projected moyu's content_limit onto the AGE axis, and
+// the two do not line up even slightly. On prod, of the 10,929 claimed live
+// entries 10,330 (94.5%) are content_rating=r18, while only 4,812 are EDITED
+// nsfw: `sfw` therefore hid 94.5% of the site, and `nsfw` returned a set that
+// overlapped the intended one by roughly half. The projection is now the wiki
+// face's own, verbatim — exact match on the editing axis:
+//
+//	""     -> nsfw=1                      (no editing-axis filter at all)
+//	"all"  -> nsfw=1
+//	"sfw"  -> nsfw=1 + content_limit=sfw
+//	"nsfw" -> nsfw=1 + content_limit=nsfw (NOT "r18 only")
+//
+// nsfw=1 is UNCONDITIONAL and therefore not a field: the age axis must never
+// again stand in for the editing axis, so the caller's own filter is the only
+// thing that narrows the population. moyu's internal-tier key carries the
+// galgame:nsfw scope for exactly this.
 type catalogGate struct {
-	nsfw          bool
-	contentRating string // "" = no filter
+	// contentLimit is the EDITING-axis filter; "" = no filter.
+	contentLimit string
+	// contentRating is the AGE-axis filter; "" = no filter. gateFor NEVER sets
+	// it — it is reserved for the caller that genuinely means "18+ only", which
+	// today is SearchGalgame's own age_limit=r18 parameter.
+	contentRating string
 }
 
 func gateFor(contentLimit string) catalogGate {
 	switch strings.ToLower(strings.TrimSpace(contentLimit)) {
 	case "sfw":
-		return catalogGate{nsfw: false}
+		return catalogGate{contentLimit: "sfw"}
 	case "nsfw":
-		return catalogGate{nsfw: true, contentRating: "r18"}
+		return catalogGate{contentLimit: "nsfw"}
 	default: // "" and "all"
-		return catalogGate{nsfw: true}
+		return catalogGate{}
 	}
 }
 
-// apply writes the gate onto a query.
+// apply writes the whole gate onto a query. Valid for the three faces that take
+// the filter parameters: works/search, the works LIST and the calendar.
 func (g catalogGate) apply(q url.Values) {
-	if g.nsfw {
-		q.Set("nsfw", "1")
+	applyNSFW(q)
+	if g.contentLimit != "" {
+		q.Set("content_limit", g.contentLimit)
 	}
 	if g.contentRating != "" {
 		q.Set("content_rating", g.contentRating)
 	}
 }
+
+// allows reports whether a row whose DISPLAY content limit is displayLimit
+// passes this gate.
+//
+// Only for a face that has no content_limit= parameter AND answers with a
+// single record — the work detail. It is not the client-side list filter doc
+// 106 §37 forbids: there is no page and no total here to desync, just this one
+// row's own verdict, which is exactly the 404 the wiki detail used to give.
+func (g catalogGate) allows(displayLimit string) bool {
+	return g.contentLimit == "" || g.contentLimit == displayLimit
+}
+
+// applyNSFW writes the visibility switch alone, for the faces that take no
+// filter parameters at all (the work detail, the tag / label records). A plain
+// function rather than a gate method because it is not a choice: every moyu read
+// is nsfw=1 now (doc 106 §38).
+func applyNSFW(q url.Values) { q.Set("nsfw", "1") }
 
 // ─── the /v1 POST channel ─────────────────────────────────────────────────
 
