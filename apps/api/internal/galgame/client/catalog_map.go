@@ -166,17 +166,42 @@ func namesOf(n *catalogNames) (ja, zhCN, zhTW, en string) {
 	return n.JaJP, n.ZhCN, n.ZhTW, n.EnUS
 }
 
-// vndbIDOf finds the work's vndb anchor in an include=refs block. The registry
-// stores vndb work ids WITH the leading `v`, which is byte-identical to moyu's
-// own patch.vndb_id form — so this needs no reformatting and the local patch
-// join by vndb_id keeps working unchanged.
+// vndbIDOf finds the work's vndb WORK anchor in an include=refs block. The
+// registry stores vndb work ids WITH the leading `v`, which is byte-identical to
+// moyu's own patch.vndb_id form — so this needs no reformatting and the local
+// patch join by vndb_id keeps working unchanged.
+//
+// The `v` shape is the FILTER, not decoration. A refs block carries EVERY exact
+// anchor the registry holds for the work, and vndb has two id spaces in there:
+// the work anchor (`v\d+`) and the RELEASE anchors (`r\d+`, one per release, so
+// usually several). The wire shape is {source, external_id} with no `kind`
+// field, so `source == "vndb"` alone cannot tell them apart — taking the first
+// vndb ref hands back an `r`-id whenever a release anchor happens to come first,
+// and moyu's whole patch join is keyed on vndb_id: every such row then reports
+// has_patch = false for a game that has patches.
 func vndbIDOf(refs []catalogRef) string {
 	for _, r := range refs {
-		if r.Source == "vndb" {
+		if r.Source == "vndb" && isVndbWorkID(r.ExternalID) {
 			return r.ExternalID
 		}
 	}
 	return ""
+}
+
+// isVndbWorkID reports whether an external id is a vndb WORK anchor: `v`
+// followed by at least one digit and nothing else. Stricter than a prefix test
+// on purpose — `v`, `v12a` and `vn3` are not work ids, and joining moyu's patch
+// rows on one of them would silently match nothing.
+func isVndbWorkID(s string) bool {
+	if len(s) < 2 || s[0] != 'v' {
+		return false
+	}
+	for i := 1; i < len(s); i++ {
+		if s[i] < '0' || s[i] > '9' {
+			return false
+		}
+	}
+	return true
 }
 
 // coverOf picks the slot that fills moyu's "effective banner" — the field every
