@@ -18,7 +18,11 @@ package client
 //	BROWSE lane — the two public pages, /tag/:id and /official/:id. These move to
 //	              the CATALOG id space (P2 / R1): catalog_tag ids and
 //	              catalog_label ids, with the old wiki-keyed URLs reduced to
-//	              redirect shells.
+//	              redirect shells. Each page is two reads with two jobs: the
+//	              entity RECORD supplies the header, and the works SEARCH face
+//	              supplies the member list AND its count under one claim gate
+//	              (taxonomyMembers). The record's own work_count is registry-wide
+//	              and is not the page's number.
 //
 // Nothing in this file touches the deprecated /v1/galgame face — that is the
 // point of the wave.
@@ -120,20 +124,20 @@ func splitPathQuery(pathAndQuery string) (path, rawQuery string) {
 
 // ─── the catalog-backed browse lane ───────────────────────────────────────
 
-// taxonomyPageWindow turns moyu's page/limit into the catalog's limit/offset.
-// The catalog's entity detail paginates its member list by offset (unlike the
-// works browse lane, which is keyset) — which is exactly what these pages need,
-// because their pagination is crawlable `?page=N` links.
-func taxonomyPageWindow(q url.Values) (limit, offset int) {
+// taxonomyPageWindow reads moyu's page/limit for a browse page. Both pass
+// straight to the works SEARCH face, which is 1-based page-paginated — the
+// shape these pages need, because their pagination is crawlable `?page=N`
+// links rather than a cursor the crawler cannot construct.
+func taxonomyPageWindow(q url.Values) (page, limit int) {
 	limit = atoiDefault(q.Get("limit"), 24)
 	if limit <= 0 || limit > 50 {
 		limit = 24
 	}
-	page := atoiDefault(q.Get("page"), 1)
+	page = atoiDefault(q.Get("page"), 1)
 	if page < 1 {
 		page = 1
 	}
-	return limit, (page - 1) * limit
+	return page, limit
 }
 
 func atoiDefault(s string, def int) int {
@@ -196,16 +200,15 @@ type catalogTagRecord struct {
 	// because a consumer must not read the default as an assertion: it is
 	// derived from the wiki tag bridge's category, so an unmapped folksonomy tag
 	// reads false — meaning "this source has no such axis", NOT "confirmed safe".
-	Sexual     bool              `json:"sexual"`
-	WorkCount  int               `json:"work_count"`
-	Intros     []catalogIntroRow `json:"intros"`
-	Works      []catalogWorkRef  `json:"works"`
-	NextOffset *int              `json:"next_offset"`
-}
-
-type catalogWorkRef struct {
-	ID        int64             `json:"id"`
-	ClaimedBy *catalogClaimedBy `json:"claimed_by"`
+	Sexual bool `json:"sexual"`
+	// WorkCount is the REGISTRY-caliber member count: every galgame carrying this
+	// tag, claimed or not. It is deliberately not read here — a browse page's
+	// number must count the gated list it labels (see taxonomyMembers) — and is
+	// kept on the struct so the next reader can see the record carries it and
+	// what it means. The entity INDEX cards, whose subject IS the registry, are
+	// the lane that legitimately shows it.
+	WorkCount int               `json:"work_count"`
+	Intros    []catalogIntroRow `json:"intros"`
 }
 
 type catalogLabelLink struct {
@@ -213,22 +216,15 @@ type catalogLabelLink struct {
 	URL    string `json:"url"`
 }
 
-type catalogLabelWorkRow struct {
-	Work catalogWorkRef `json:"work"`
-	Kind string         `json:"kind"`
-}
-
 type catalogLabelRecord struct {
-	ID          int64                 `json:"id"`
-	DisplayName string                `json:"display_name"`
-	Kind        string                `json:"kind"`
-	Lang        string                `json:"lang"`
-	Aliases     []string              `json:"aliases"`
-	WorkCount   int                   `json:"work_count"`
-	Intros      []catalogIntroRow     `json:"intros"`
-	Links       []catalogLabelLink    `json:"links"`
-	Works       []catalogLabelWorkRow `json:"works"`
-	NextOffset  *int                  `json:"next_offset"`
+	ID          int64              `json:"id"`
+	DisplayName string             `json:"display_name"`
+	Kind        string             `json:"kind"`
+	Lang        string             `json:"lang"`
+	Aliases     []string           `json:"aliases"`
+	WorkCount   int                `json:"work_count"` // registry-caliber; see catalogTagRecord.WorkCount
+	Intros      []catalogIntroRow  `json:"intros"`
+	Links       []catalogLabelLink `json:"links"`
 }
 
 // preferredIntro picks the description to render: Chinese first, then Japanese,
@@ -257,30 +253,23 @@ func preferredIntro(rows []catalogIntroRow) string {
 	return ""
 }
 
-// catalogTagDetail composes the tag page: the canonical tag record plus one
-// offset-paginated page of its works, hydrated to the brief the moyu handler
-// enriches into cards.
+// catalogTagDetail composes the tag page: the canonical tag record for the
+// header, and one page of its member works from the gated search face.
 func (c *Client) catalogTagDetail(ctx context.Context, idStr string, q url.Values) (json.RawMessage, error) {
 	id, err := strconv.ParseInt(strings.TrimSpace(idStr), 10, 64)
 	if err != nil || id <= 0 {
 		return nil, &GalgameError{Code: galgameCodeNotFound, Message: "tag not found"}
 	}
-	limit, offset := taxonomyPageWindow(q)
+	gate := gateFor(q.Get("content_limit"))
 
 	fq := url.Values{}
-	fq.Set("include", "works")
-	fq.Set("limit", strconv.Itoa(limit))
-	fq.Set("offset", strconv.Itoa(offset))
-	gate := gateFor(q.Get("content_limit"))
 	gate.apply(fq)
 
 	var rec catalogTagRecord
 	if err := c.getV1(ctx, fmt.Sprintf("/catalog/tags/%d", id), fq, &rec); err != nil {
 		return nil, err
 	}
-	refs := make([]catalogWorkRef, len(rec.Works))
-	copy(refs, rec.Works)
-	briefs, err := c.hydrateWorkRefs(ctx, refs, gate)
+	members, total, err := c.taxonomyMembers(ctx, "tag_id", id, q, gate)
 	if err != nil {
 		return nil, err
 	}
@@ -292,15 +281,18 @@ func (c *Client) catalogTagDetail(ctx context.Context, idStr string, q url.Value
 			// Same derivation as the work detail's tags[]: a sexual-flagged tag
 			// reads "sexual", everything else "content". Keeps every consumer
 			// that keys on the literal string working off one boolean.
-			Category:     tagCategoryFor(rec.Sexual),
-			Sexual:       rec.Sexual,
-			Description:  preferredIntro(rec.Intros),
-			GalgameCount: rec.WorkCount,
+			Category:    tagCategoryFor(rec.Sexual),
+			Sexual:      rec.Sexual,
+			Description: preferredIntro(rec.Intros),
+			// The page renders this as "N 个 Galgame" directly above the list and
+			// puts it in the SEO description, so it must count the list it sits
+			// on — the gated total, not the record's registry-caliber work_count.
+			GalgameCount: int(total),
 			Tier:         rec.Tier,
 			Kind:         rec.Kind,
 		},
-		"galgames": briefs,
-		"total":    rec.WorkCount,
+		"galgames": members,
+		"total":    total,
 	})
 }
 
@@ -310,24 +302,16 @@ func (c *Client) catalogLabelDetail(ctx context.Context, idStr string, q url.Val
 	if err != nil || id <= 0 {
 		return nil, &GalgameError{Code: galgameCodeNotFound, Message: "official not found"}
 	}
-	limit, offset := taxonomyPageWindow(q)
+	gate := gateFor(q.Get("content_limit"))
 
 	fq := url.Values{}
-	fq.Set("include", "works")
-	fq.Set("limit", strconv.Itoa(limit))
-	fq.Set("offset", strconv.Itoa(offset))
-	gate := gateFor(q.Get("content_limit"))
 	gate.apply(fq)
 
 	var rec catalogLabelRecord
 	if err := c.getV1(ctx, fmt.Sprintf("/catalog/labels/%d", id), fq, &rec); err != nil {
 		return nil, err
 	}
-	refs := make([]catalogWorkRef, 0, len(rec.Works))
-	for i := range rec.Works {
-		refs = append(refs, rec.Works[i].Work)
-	}
-	briefs, err := c.hydrateWorkRefs(ctx, refs, gate)
+	members, total, err := c.taxonomyMembers(ctx, "label_id", id, q, gate)
 	if err != nil {
 		return nil, err
 	}
@@ -341,57 +325,66 @@ func (c *Client) catalogLabelDetail(ctx context.Context, idStr string, q url.Val
 	}
 	return json.Marshal(map[string]any{
 		"official": catalogOfficialBrief{
-			ID:           rec.ID,
-			Name:         rec.DisplayName,
-			Aliases:      aliases,
-			Category:     rec.Kind,
-			Lang:         productLangFromCatalog(rec.Lang),
-			Link:         link,
-			Description:  preferredIntro(rec.Intros),
-			GalgameCount: rec.WorkCount,
+			ID:          rec.ID,
+			Name:        rec.DisplayName,
+			Aliases:     aliases,
+			Category:    rec.Kind,
+			Lang:        productLangFromCatalog(rec.Lang),
+			Link:        link,
+			Description: preferredIntro(rec.Intros),
+			// The gated total, for the reason catalogTagDetail states.
+			GalgameCount: int(total),
 		},
-		"galgames": briefs,
-		"total":    rec.WorkCount,
+		"galgames": members,
+		"total":    total,
 	})
 }
 
-// hydrateWorkRefs turns a page of thin work references into the full briefs the
-// cards need, with ONE works?ids= call. Withdrawn claims are dropped (the same
-// gate every other read applies); order is preserved, because the entity page's
-// ordering is the catalog's answer and re-sorting it here would be inventing a
-// ranking.
-func (c *Client) hydrateWorkRefs(ctx context.Context, refs []catalogWorkRef, gate catalogGate) ([]GalgameBrief, error) {
-	out := make([]GalgameBrief, 0, len(refs))
-	if len(refs) == 0 {
-		return out, nil
-	}
-	ids := make([]int64, 0, len(refs))
-	for _, r := range refs {
-		if r.ClaimedBy.renderable() {
-			ids = append(ids, r.ID)
-		}
-	}
-	if len(ids) == 0 {
-		return out, nil
-	}
-	q := url.Values{}
-	q.Set("ids", joinInt64s(ids))
-	q.Set("include", "names,covers,refs")
-	q.Set("limit", strconv.Itoa(CatalogWorksIDsMax))
-	gate.apply(q)
+// taxonomyMemberSort orders a browse page's member list. The face's default
+// (relevance) is meaningless without a query, and the list this replaced came
+// back in catalog-work-id order — an insertion artefact no reader can interpret.
+// Newest-first is the ordering such a page wants, and it is DETERMINISTIC, which
+// crawlable ?page=N links require: a page 2 that reshuffles behind the crawler
+// both duplicates and drops rows.
+const taxonomyMemberSort = "released_desc"
 
-	var data catalogWorksListData
-	if err := c.getV1(ctx, "/catalog/works", q, &data); err != nil {
-		return nil, err
+// taxonomyMembers reads ONE page of an entity's member works from the works
+// product search, filtered by `filterKey` (tag_id / label_id) and gated to the
+// published population.
+//
+// This lane used to be ref-set hydration: ask the entity record for a page of
+// work references (include=works), drop the ones failing renderable(), then
+// hydrate the survivors with works?ids=. Three faults, all of them the search
+// incident's (doc 106 §37) in a different lane:
+//
+//   - `renderable()` passes an ABSENT claim, so the registry's unclaimed bulk
+//     and every unpublished draft rendered as cards on a public, crawlable page.
+//   - the page's `total` came from the entity record's work_count — the whole
+//     registry population under no claim gate at all — so the pager advertised
+//     pages that were empty or full of rows the page should never have had.
+//   - two numbers from two calls, which is how those two could disagree.
+//
+// Now the members and the count come from ONE gated response, so they cannot.
+func (c *Client) taxonomyMembers(ctx context.Context, filterKey string, id int64, q url.Values, gate catalogGate) ([]GalgameBrief, int64, error) {
+	page, limit := taxonomyPageWindow(q)
+
+	fq := url.Values{}
+	fq.Set(filterKey, strconv.FormatInt(id, 10))
+	// The population gate, identical to SearchGalgame's and for the same reason.
+	fq.Set("claim_state", "live")
+	fq.Set("include", "names,covers,refs")
+	fq.Set("sort", taxonomyMemberSort)
+	fq.Set("page", strconv.Itoa(page))
+	fq.Set("limit", strconv.Itoa(limit))
+	gate.apply(fq)
+
+	var data catalogWorksSearchData
+	if err := c.getV1(ctx, "/catalog/works/search", fq, &data); err != nil {
+		return nil, 0, err
 	}
-	byID := make(map[int64]*catalogWorkListItem, len(data.Items))
+	out := make([]GalgameBrief, 0, len(data.Items))
 	for i := range data.Items {
-		byID[data.Items[i].ID] = &data.Items[i]
+		out = append(out, catalogItemToBrief(&data.Items[i]))
 	}
-	for _, r := range refs {
-		if it, ok := byID[r.ID]; ok {
-			out = append(out, catalogItemToBrief(it))
-		}
-	}
-	return out, nil
+	return out, data.Total, nil
 }

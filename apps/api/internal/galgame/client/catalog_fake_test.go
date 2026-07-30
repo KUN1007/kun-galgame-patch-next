@@ -77,6 +77,8 @@ func (f *catalogFake) route(req *http.Request) string {
 		return f.calendar()
 	case strings.HasPrefix(p, "/v1/catalog/tags/"):
 		return f.tagRecord(p)
+	case strings.HasPrefix(p, "/v1/catalog/labels/"):
+		return f.labelRecord(p)
 	case strings.HasPrefix(p, "/v1/catalog/works/"):
 		return f.workDetail(p)
 	}
@@ -131,6 +133,12 @@ func (f *catalogFake) worksList(req *http.Request) string {
 
 // tagRecord answers the canonical tag record. Tag 12 is the fixture's sexual
 // one — the axis the page's SEO gate turns on.
+//
+// work_count is 3 and the search fixture's total is 4, deliberately: the browse
+// page's number must be the gated search's, and two equal numbers could not tell
+// the two apart. No `works` block — the composer stopped asking for one when the
+// member lane moved to the search face, and a fake that still volunteered it
+// would hide a regression that started reading it again.
 func (f *catalogFake) tagRecord(path string) string {
 	id, _ := strconv.ParseInt(strings.TrimPrefix(path, "/v1/catalog/tags/"), 10, 64)
 	sexual := "false"
@@ -139,8 +147,16 @@ func (f *catalogFake) tagRecord(path string) string {
 	}
 	return `{"id":` + strconv.FormatInt(id, 10) + `,"name":"tag","tier":"core","kind":"content",` +
 		`"sexual":` + sexual + `,"work_count":3,` +
+		`"intros":[{"lang":"zh-Hans","intro":"说明","source":"vndb"}]}`
+}
+
+// labelRecord answers the label ("official") record, same posture as tagRecord.
+func (f *catalogFake) labelRecord(path string) string {
+	id, _ := strconv.ParseInt(strings.TrimPrefix(path, "/v1/catalog/labels/"), 10, 64)
+	return `{"id":` + strconv.FormatInt(id, 10) + `,"display_name":"Brand","kind":"developer","lang":"ja",` +
+		`"aliases":["ブランド"],"work_count":3,` +
 		`"intros":[{"lang":"zh-Hans","intro":"说明","source":"vndb"}],` +
-		`"works":[{"id":900,"claimed_by":` + claimJSON(7, catalogClaimStateLive) + `}],"next_offset":null}`
+		`"links":[{"source":"web","url":"https://example.test"}]}`
 }
 
 func (f *catalogFake) workDetail(path string) string {

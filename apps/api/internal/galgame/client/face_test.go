@@ -660,6 +660,103 @@ func TestClaimStateGating(t *testing.T) {
 	})
 }
 
+// TestTaxonomyBrowseMembersAreGated pins the tag / official browse pages'
+// member lane, the sibling of the search incident (doc 106 §37).
+//
+// These pages are public and crawlable, and they used to compose their list from
+// the entity record's work refs under a `renderable()` filter — which passes an
+// absent claim — while taking `total` from the record's registry-wide
+// work_count. So they rendered unclaimed and draft works, and paged over a count
+// no gate had ever touched. Members and count now come from ONE gated search
+// response, which is what these assertions hold in place.
+func TestTaxonomyBrowseMembersAreGated(t *testing.T) {
+	srv := newCatalogFake(t)
+	c := NewWithKey(srv.URL, "nm_test_key")
+	ctx := context.Background()
+
+	for _, tc := range []struct {
+		name      string
+		path      string
+		recPath   string
+		filterKey string
+		filterVal string
+		entity    string
+	}{
+		{"tag page", "/tag/_?tag_id=11&page=2&limit=10", "/v1/catalog/tags/11", "tag_id", "11", "tag"},
+		{"official page", "/official/_?official_id=31&page=2&limit=10", "/v1/catalog/labels/31", "label_id", "31", "official"},
+	} {
+		t.Run(tc.name, func(t *testing.T) {
+			srv.reset()
+			raw, handled, err := c.proxyReadV1(ctx, tc.path)
+			if err != nil || !handled {
+				t.Fatalf("proxyReadV1: handled=%v err=%v", handled, err)
+			}
+			// The record call is for the header only. It must NOT ask for works:
+			// that include is what made the member set the record's to decide.
+			srv.wantPaths(t, tc.recPath, "/v1/catalog/works/search")
+			if got := srv.all()[0].query.Get("include"); got != "" {
+				t.Errorf("record include = %q, want empty — the member list is the search face's job now", got)
+			}
+
+			q := srv.last().query
+			if got := q.Get(tc.filterKey); got != tc.filterVal {
+				t.Errorf("%s = %q, want %q", tc.filterKey, got, tc.filterVal)
+			}
+			if got := q.Get("claim_state"); got != "live" {
+				t.Errorf("claim_state = %q, want live — a public browse page serves the published population", got)
+			}
+			// page/limit ride through as-is: these pages paginate with crawlable
+			// ?page=N links, so the face must be the page-paginated one.
+			if got, want := q.Get("page"), "2"; got != want {
+				t.Errorf("page = %q, want %q", got, want)
+			}
+			if got, want := q.Get("limit"), "10"; got != want {
+				t.Errorf("limit = %q, want %q", got, want)
+			}
+			if got := q.Get("sort"); got != "released_desc" {
+				t.Errorf("sort = %q, want released_desc — ?page=N needs a deterministic order", got)
+			}
+			if got := q.Get("include"); got != "names,covers,refs" {
+				t.Errorf("member include = %q, want names,covers,refs", got)
+			}
+
+			var got struct {
+				Total    int64 `json:"total"`
+				Galgames []struct {
+					ID int `json:"id"`
+				} `json:"galgames"`
+				Tag struct {
+					GalgameCount int `json:"galgame_count"`
+				} `json:"tag"`
+				Official struct {
+					GalgameCount int `json:"galgame_count"`
+				} `json:"official"`
+			}
+			if e := json.Unmarshal(raw, &got); e != nil {
+				t.Fatalf("unmarshal: %v", e)
+			}
+			// The fake's search answers four rows — live, draft, hidden and
+			// unclaimed — under total 4. All four arrive: the gate is the face's,
+			// and a client-side re-filter would desync items from total again.
+			if len(got.Galgames) != 4 {
+				t.Errorf("galgames = %d, want the face's 4 rows verbatim", len(got.Galgames))
+			}
+			// 4 is the search's total; 3 is the record's registry-wide work_count.
+			// Both numbers on the page must be the former.
+			if got.Total != 4 {
+				t.Errorf("total = %d, want 4 (the gated search's), not the record's 3", got.Total)
+			}
+			count := got.Tag.GalgameCount
+			if tc.entity == "official" {
+				count = got.Official.GalgameCount
+			}
+			if count != 4 {
+				t.Errorf("%s.galgame_count = %d, want 4 — the header counts the list below it", tc.entity, count)
+			}
+		})
+	}
+}
+
 // TestDeprecatedGalgameFaceIsUnreachable is the wave's residue gate: after the
 // A2-2 re-anchor, NO read may touch /v1/galgame — that surface carries
 // Deprecation + Sunset headers and is being taken down. A future edit that
