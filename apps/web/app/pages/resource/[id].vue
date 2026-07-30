@@ -16,7 +16,11 @@ const { requireLogin } = useAuthModal()
 
 const resourceId = computed(() => Number(route.params.id))
 
-const { data: detail, pending } = await useAsyncData<PatchResourceDetail | null>(
+const {
+  data: detail,
+  pending,
+  refresh
+} = await useAsyncData<PatchResourceDetail | null>(
   () => `resource-${resourceId.value}`,
   async () => {
     const res = await api.get<PatchResourceDetail>(
@@ -158,6 +162,15 @@ const onResourceFavoriteChange = async (active: boolean) => {
     isResourceFavorite.value = !active
     useKunMessage(res.message || '操作失败', 'error')
   }
+}
+
+// ─── Edited via the ⋮ menu ────────────────────────────
+// ResourcePublish's edit mode returns the server-rendered row (note_html and
+// update_time both re-resolved server-side), so swapping it straight in
+// refreshes the note and the 最后更新于 line with no refetch. The nested
+// assignment re-renders because this useAsyncData is deep.
+const onResourceEdited = (updated: PatchResourceHtml) => {
+  if (detail.value) detail.value.resource = updated
 }
 
 // ─── Recommendations preview helper ───────────────────
@@ -330,14 +343,25 @@ if (
         <div class="space-y-6 lg:col-span-2">
           <KunCard :bordered="true" class-name="rounded-2xl">
             <div class="space-y-4 p-2">
-              <!-- Resource title — the patch resource's own name, now visible. -->
-              <div class="space-y-1">
-                <h2 class="text-xl font-bold break-words sm:text-2xl">
-                  {{ resourceTitle }}
-                </h2>
-                <p class="text-default-500 text-sm">
-                  该补丁资源最后更新于 {{ updateTimeLabel }}
-                </p>
+              <!-- Resource title — the patch resource's own name, now visible —
+                   plus the ⋮ management menu (编辑 / 分享 / 删除). The kebab is
+                   pinned to the top-right and shrink-0 inside the component, so
+                   it holds its place instead of reflowing with a wrapping title. -->
+              <div class="flex items-start justify-between gap-3">
+                <div class="space-y-1">
+                  <h2 class="text-xl font-bold break-words sm:text-2xl">
+                    {{ resourceTitle }}
+                  </h2>
+                  <p class="text-default-500 text-sm">
+                    该补丁资源最后更新于 {{ updateTimeLabel }}
+                  </p>
+                </div>
+                <ResourceDetailActions
+                  :resource="resource"
+                  :galgame-name="patchName"
+                  @edited="onResourceEdited"
+                  @refresh="refresh"
+                />
               </div>
 
               <div class="flex flex-wrap items-center gap-2">
