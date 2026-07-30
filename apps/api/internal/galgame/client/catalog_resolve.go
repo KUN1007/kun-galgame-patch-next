@@ -27,6 +27,7 @@ import (
 	"bytes"
 	"context"
 	"encoding/json"
+	"errors"
 	"fmt"
 	"io"
 	"net/http"
@@ -36,6 +37,34 @@ import (
 	"sync"
 	"time"
 )
+
+// catalogCodeNotFound is the /v1 catalog face's BUSINESS code for "no such row"
+// — upstream `pkg/errors.ErrNotFound`, which every public catalog handler passes
+// to `response.NotFound` and which is the ONLY 404 those handlers emit. It
+// travels in the standard {code,message} envelope beside the HTTP 404, and it is
+// what makes that 404 mean "absent" rather than "your request never arrived".
+const catalogCodeNotFound = 4
+
+// catalogAbsent reports whether a failed /v1 read is the catalog's DOCUMENTED
+// "the registry has no such row (or you may not see it)" answer, as opposed to
+// any other failure that merely happens to arrive with status 404.
+//
+// The distinction is the difference between a miss and an outage. The catalog
+// answers a real miss with the envelope above; a ROUTE-level 404 — a renamed or
+// mistyped path, a face that moved — answers with the router's own body instead
+// (the framework echoes the HTTP status into `code`, or a proxy returns HTML
+// that is not an envelope at all). Folding those into "absent" is how a whole
+// read face fails SILENTLY: every gid resolves to "not in the registry", moyu
+// renders an archive that looks empty rather than broken, and nothing logs. So
+// the envelope's business code is the proof that the CATALOG answered rather
+// than the router, and anything else surfaces as the error it is.
+func catalogAbsent(status int, err error) bool {
+	if status != http.StatusNotFound {
+		return false
+	}
+	var gerr *GalgameError
+	return errors.As(err, &gerr) && gerr.Code == catalogCodeNotFound
+}
 
 // catalogLookupBatchMax is the reverse lookup's documented pair ceiling. Over
 // it the catalog answers 400 (it does NOT silently truncate, unlike the
@@ -334,7 +363,7 @@ func (c *Client) resolveGID(ctx context.Context, gid int) (catalogID int64, foun
 
 	raw, status, err := c.getV1RawStatus(ctx, "/catalog/lookup", q)
 	if err != nil {
-		if status == http.StatusNotFound {
+		if catalogAbsent(status, err) {
 			return 0, false, nil
 		}
 		return 0, false, err
@@ -370,7 +399,7 @@ func (c *Client) ResolveWikiLabel(ctx context.Context, oid int) (int64, bool, er
 
 	raw, status, err := c.getV1RawStatus(ctx, "/catalog/lookup", q)
 	if err != nil {
-		if status == http.StatusNotFound {
+		if catalogAbsent(status, err) {
 			return 0, false, nil
 		}
 		return 0, false, err

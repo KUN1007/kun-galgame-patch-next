@@ -414,6 +414,11 @@ func (c *Client) getV1Raw(ctx context.Context, path string, query url.Values) (j
 // request never got one). Callers that must distinguish a DOCUMENTED 404 — the
 // catalog face folds "no such external id" and "hidden work" into one 404 by
 // design — from a genuine failure use this variant; everyone else uses getV1Raw.
+//
+// The status alone is NOT that distinction: judge the pair with catalogAbsent,
+// which also demands the catalog's own error envelope. A 404 the router emitted
+// carries a different body, and reading it as "absent" turns a broken path into
+// an empty archive.
 func (c *Client) getV1RawStatus(ctx context.Context, path string, query url.Values) (json.RawMessage, int, error) {
 	u := c.v1Base + path
 	if len(query) > 0 {
@@ -756,7 +761,10 @@ func (c *Client) GetGalgame(ctx context.Context, gid int, contentLimit string) (
 // internal-tier key carries the galgame:nsfw scope for exactly this.
 //
 // Semantics (bit-for-bit identical to the retired /v1/galgame/lookup):
-//   - HTTP 404 → (false, 0, nil): the catalog folds miss + hidden into one 404.
+//   - the DOCUMENTED 404 → (false, 0, nil): the catalog folds miss + hidden into
+//     one 404. Only that one — see catalogAbsent, which insists on the catalog's
+//     own error envelope so a route-level 404 surfaces as the failure it is
+//     instead of reporting the whole archive absent.
 //   - claimed_by == null → (false, 0, nil): the catalog knows this VNDB work but
 //     NO wiki entry owns it, so there is no galgame id to return.
 //   - claimed_by.site != galgame_wiki → (false, 0, nil): another product face
@@ -769,7 +777,7 @@ func (c *Client) CheckGalgameByVndbID(ctx context.Context, vndbID string) (exist
 
 	data, status, err := c.getV1RawStatus(ctx, "/catalog/lookup", q)
 	if err != nil {
-		if status == http.StatusNotFound {
+		if catalogAbsent(status, err) {
 			return false, 0, nil
 		}
 		return false, 0, err
