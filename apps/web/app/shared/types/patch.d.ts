@@ -12,6 +12,14 @@ interface GalgameCard {
   vndb_id: string
   bid: number | null
   banner: string
+  // Pinned-cover metadata at the TOP level, which is the shape the flat faces
+  // hand over (the /search hit, mapped client-side) as opposed to the enriched
+  // rows that nest it under `galgame`. resolveBannerUrl / resolveBannerThumbhash
+  // read either — nested first, then here — so a card built from a flat hit
+  // still gets its cover. Absent on the enriched rows; `banner` alone is not a
+  // fallback for it, since the catalog leaves that legacy URL empty.
+  effective_banner_hash?: string
+  effective_banner_thumbhash?: string
   view: number
   download: number
   type: string[]

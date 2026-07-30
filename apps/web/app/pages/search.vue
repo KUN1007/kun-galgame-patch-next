@@ -60,6 +60,17 @@ interface SearchHit {
   name_zh_cn: string
   name_zh_tw: string
   banner: string
+  // The pinned cover arrives as a content-addressed HASH, and the legacy
+  // absolute `banner` URL is now always empty on this face — resolveBannerUrl
+  // prefers the hash and only falls back to that URL. So these have to ride
+  // along into the card shape; without them every result card resolves to ''
+  // and renders the placeholder logo instead of its cover.
+  //
+  // The intrinsic dims are deliberately NOT carried: GalgameCard pins a 16:9
+  // box for the uniform grid (and `mini` is a 460×259 thumbnail), so the real
+  // aspect ratio has nothing to change here.
+  effective_banner_hash?: string
+  effective_banner_thumbhash?: string
   content_limit: string
   release_date?: string | null
   has_patch: boolean
@@ -95,6 +106,8 @@ const mapHit = (h: SearchHit): GalgameCard =>
       'zh-tw': h.name_zh_tw ?? ''
     },
     banner: h.banner ?? '',
+    effective_banner_hash: h.effective_banner_hash ?? '',
+    effective_banner_thumbhash: h.effective_banner_thumbhash ?? '',
     view: h.patch?.view ?? 0,
     download: h.patch?.download ?? 0,
     type: h.patch?.type ?? [],
