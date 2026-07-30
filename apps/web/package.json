@@ -44,6 +44,7 @@
     "codemirror": "^6.0.2",
     "cropperjs": "^2.0.1",
     "date-fns": "^4.1.0",
+    "diff": "^9.0.0",
     "gray-matter": "^4.0.3",
     "katex": "^0.16.27",
     "localforage": "^1.10.0",
