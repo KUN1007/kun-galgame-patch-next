@@ -322,7 +322,70 @@ func (h *PatchHandler) CreateComment(c fiber.Ctx) error {
 	// owner about a comment that may be rejected.
 	if comment.Status == 0 {
 		go func() {
-			h.service.CreateMentionMessages(user.ID, patchID, comment.ID, req.Content)
+			h.service.CreateMentionMessages(user.ID, comment, req.Content)
+			h.service.CreateCommentNotification(user.ID, comment)
+		}()
+	}
+
+	return response.OK(c, comment)
+}
+
+// GetResourceComments GET /api/patch/resource/:resourceId/comment
+//
+// One resource's comment area (migration 028). NSFW-gated through the owning
+// patch exactly like GetComments: comment bodies discuss the game, and the
+// resource detail page itself 404s for sfw callers on a NSFW game, so this list
+// must not be readable there either.
+func (h *PatchHandler) GetResourceComments(c fiber.Ctx) error {
+	resourceID, err := getIDParam(c, "resourceId")
+	if err != nil {
+		return response.Error(c, err.(*errors.AppError))
+	}
+	patchID, pErr := h.service.GetResourcePatchID(resourceID)
+	if pErr != nil {
+		return response.Error(c, errors.ErrNotFound("resource not found"))
+	}
+	if !h.gatePatchByContentLimit(c, patchID) {
+		return response.Error(c, errors.ErrNotFound("resource not found"))
+	}
+
+	var req dto.GetPatchCommentRequest
+	if err := utils.ParseQueryAndValidate(c, &req); err != nil {
+		return response.Error(c, errors.ErrBadRequest(err.Error()))
+	}
+
+	currentUID := middleware.GetUserID(c)
+	comments, total, gErr := h.service.GetResourceComments(c.Context(), resourceID, currentUID, req.Page, req.Limit)
+	if gErr != nil {
+		return response.Error(c, errors.ErrInternal(""))
+	}
+
+	return response.Paginated(c, comments, total)
+}
+
+// CreateResourceComment POST /api/patch/resource/:resourceId/comment
+func (h *PatchHandler) CreateResourceComment(c fiber.Ctx) error {
+	resourceID, err := getIDParam(c, "resourceId")
+	if err != nil {
+		return response.Error(c, err.(*errors.AppError))
+	}
+
+	var req dto.PatchCommentCreateRequest
+	if err := utils.ParseAndValidate(c, &req); err != nil {
+		return response.Error(c, errors.ErrBadRequest(err.Error()))
+	}
+
+	user := middleware.MustGetUser(c)
+	comment, cErr := h.service.CreateResourceComment(resourceID, user.ID, req.Content, req.ParentID)
+	if cErr != nil {
+		return response.Error(c, errors.ErrBadRequest(cErr.Error()))
+	}
+
+	// Same deferral as CreateComment: a pending (comment-verify) comment's
+	// notifications wait for ApproveComment.
+	if comment.Status == 0 {
+		go func() {
+			h.service.CreateMentionMessages(user.ID, comment, req.Content)
 			h.service.CreateCommentNotification(user.ID, comment)
 		}()
 	}
@@ -346,7 +409,7 @@ func (h *PatchHandler) ApproveComment(c fiber.Ctx) error {
 		return response.Error(c, errors.ErrBadRequest(aerr.Error()))
 	}
 	go func() {
-		h.service.CreateMentionMessages(comment.UserID, comment.GalgameID, comment.ID, comment.Content)
+		h.service.CreateMentionMessages(comment.UserID, comment, comment.Content)
 		h.service.CreateCommentNotification(comment.UserID, comment)
 	}()
 	return response.OK(c, comment)

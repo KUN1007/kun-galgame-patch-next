@@ -85,6 +85,9 @@ func (a *App) RegisterRoutes() {
 	patchRoutes.Put("/:id/view", a.PatchHandler.IncrementView)
 	patchRoutes.Get("/comment/:commentId/markdown", a.PatchHandler.GetCommentMarkdown)
 	patchRoutes.Get("/comment/:commentId/locate", optionalAuth, a.PatchHandler.LocateComment)
+	// One resource's comment area (migration 028). The edit / delete / like
+	// routes above are comment-addressed, so both areas share them.
+	patchRoutes.Get("/resource/:resourceId/comment", optionalAuth, a.PatchHandler.GetResourceComments)
 
 	// Authenticated
 	patchRoutes.Put("/:id", auth, a.PatchHandler.UpdatePatch)
@@ -93,6 +96,7 @@ func (a *App) RegisterRoutes() {
 	patchRoutes.Put("/comment/:commentId", auth, a.PatchHandler.UpdateComment)
 	patchRoutes.Delete("/comment/:commentId", auth, a.PatchHandler.DeleteComment)
 	patchRoutes.Put("/comment/:commentId/like", auth, a.PatchHandler.ToggleCommentLike)
+	patchRoutes.Post("/resource/:resourceId/comment", auth, a.PatchHandler.CreateResourceComment)
 	patchRoutes.Post("/:id/resource", auth, a.PatchHandler.CreateResource)
 	patchRoutes.Put("/resource/:resourceId", auth, a.PatchHandler.UpdateResource)
 	patchRoutes.Delete("/resource/:resourceId", auth, a.PatchHandler.DeleteResource)

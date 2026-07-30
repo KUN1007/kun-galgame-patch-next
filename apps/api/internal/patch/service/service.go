@@ -531,7 +531,38 @@ func (s *PatchService) GetComments(ctx context.Context, patchID, currentUID, pag
 	if err != nil {
 		return comments, total, err
 	}
+	s.enrichComments(ctx, comments, currentUID)
+	return comments, total, nil
+}
 
+// GetResourceComments is GetComments for a single resource's comment area
+// (migration 028) — same page shape, same enrichment, keyed on the resource.
+func (s *PatchService) GetResourceComments(ctx context.Context, resourceID, currentUID, page, limit int) ([]model.PatchComment, int64, error) {
+	offset := (page - 1) * limit
+	comments, total, err := s.repo.GetResourceComments(resourceID, offset, limit)
+	if err != nil {
+		return comments, total, err
+	}
+	s.enrichComments(ctx, comments, currentUID)
+	return comments, total, nil
+}
+
+// CountResourceComments is the resource's approved comment count (roots +
+// replies) — what the detail page labels its 评论 tab with.
+func (s *PatchService) CountResourceComments(resourceID int) (int64, error) {
+	return s.repo.CountResourceComments(resourceID)
+}
+
+// GetResourcePatchID returns the resource's owning patch.id so a handler can
+// NSFW-gate the resource's comment area.
+func (s *PatchService) GetResourcePatchID(resourceID int) (int, error) {
+	return s.repo.GetResourcePatchID(resourceID)
+}
+
+// enrichComments fills in everything the wire shape needs but the DB doesn't
+// hold: rendered markdown, author briefs from OAuth /users/batch, and the
+// current user's like marks. Shared by both comment areas so they cannot drift.
+func (s *PatchService) enrichComments(ctx context.Context, comments []model.PatchComment, currentUID int) {
 	// Render content_html for every top-level comment and each reply. Done
 	// here so all consumers of GetComments share the same rendered output.
 	for i := range comments {
@@ -558,7 +589,7 @@ func (s *PatchService) GetComments(ctx context.Context, patchID, currentUID, pag
 	}
 
 	if currentUID == 0 || len(comments) == 0 {
-		return comments, total, nil
+		return
 	}
 
 	// Collect all comment IDs (top-level + replies) for the like-marking query.
@@ -571,7 +602,9 @@ func (s *PatchService) GetComments(ctx context.Context, patchID, currentUID, pag
 	}
 	liked, err := s.repo.GetLikedCommentIDs(currentUID, ids)
 	if err != nil {
-		return comments, total, nil
+		// Like marks are cosmetic — a failure here leaves every pill un-pressed
+		// rather than failing the whole list read.
+		return
 	}
 	likedSet := make(map[int]bool, len(liked))
 	for _, id := range liked {
@@ -583,7 +616,6 @@ func (s *PatchService) GetComments(ctx context.Context, patchID, currentUID, pag
 			comments[i].Replies[j].IsLiked = likedSet[comments[i].Replies[j].ID]
 		}
 	}
-	return comments, total, nil
 }
 
 // briefToPatchUser is the small adapter from OAuth /users/batch shape to the
@@ -602,6 +634,62 @@ func (s *PatchService) CreateComment(patchID, userID int, content string, parent
 	if _, err := s.ensureLocalPatch(context.Background(), patchID); err != nil {
 		return nil, fmt.Errorf("patch not found")
 	}
+	if err := s.checkCommentParent(parentID, patchID, nil); err != nil {
+		return nil, err
+	}
+	return s.createComment(patchID, nil, userID, content, parentID)
+}
+
+// CreateResourceComment posts to ONE resource's comment area (migration 028).
+// The owning patch is taken from the resource rather than the caller, so a
+// resource comment can never be filed against a galgame it doesn't belong to —
+// galgame_id is what NSFW-gates it on every later read.
+func (s *PatchService) CreateResourceComment(resourceID, userID int, content string, parentID *int) (*model.PatchComment, error) {
+	resource, err := s.repo.GetResourceByID(resourceID)
+	if err != nil {
+		return nil, fmt.Errorf("resource not found")
+	}
+	// status 2 = hidden by trust enforcement: the detail page 404s, so its
+	// comment area is unreachable through the UI — reject the direct POST too
+	// rather than letting content accumulate on a hidden resource. status 1
+	// (download disabled) still renders, so commenting there stays open.
+	if resource.Status == 2 {
+		return nil, fmt.Errorf("resource not found")
+	}
+	if err := s.checkCommentParent(parentID, resource.GalgameID, &resourceID); err != nil {
+		return nil, err
+	}
+	return s.createComment(resource.GalgameID, &resourceID, userID, content, parentID)
+}
+
+// checkCommentParent validates a reply's parent before the insert. Replies are
+// ONE tier (the frontend always attaches to a root), and a parent must live in
+// the very same comment area — otherwise a reply lands in a list its parent
+// isn't in and is unreachable. Nothing enforced this until resource comments
+// made cross-surface attachment reachable at all.
+func (s *PatchService) checkCommentParent(parentID *int, galgameID int, resourceID *int) error {
+	if parentID == nil {
+		return nil
+	}
+	parent, err := s.repo.GetCommentByID(*parentID)
+	if err != nil {
+		return fmt.Errorf("parent comment not found")
+	}
+	if parent.ParentID != nil {
+		return fmt.Errorf("cannot reply to a reply")
+	}
+	sameArea := parent.GalgameID == galgameID &&
+		((parent.ResourceID == nil) == (resourceID == nil)) &&
+		(resourceID == nil || *parent.ResourceID == *resourceID)
+	if !sameArea {
+		return fmt.Errorf("parent comment belongs to another discussion")
+	}
+	return nil
+}
+
+// createComment is the shared insert for both comment areas. resourceID nil =
+// a patch comment.
+func (s *PatchService) createComment(patchID int, resourceID *int, userID int, content string, parentID *int) (*model.PatchComment, error) {
 	// When the admin "评论需要审核" toggle is on, the comment is created in the
 	// pending state (status=1), hidden from public reads until approved. All
 	// the visible-comment side effects (comment_count++, owner moemoepoint,
@@ -613,11 +701,12 @@ func (s *PatchService) CreateComment(patchID, userID int, content string, parent
 		status = 1
 	}
 	comment := &model.PatchComment{
-		GalgameID: patchID,
-		UserID:    userID,
-		Content:   content,
-		ParentID:  parentID,
-		Status:    status,
+		GalgameID:  patchID,
+		ResourceID: resourceID,
+		UserID:     userID,
+		Content:    content,
+		ParentID:   parentID,
+		Status:     status,
 	}
 	if err := s.repo.CreateComment(comment); err != nil {
 		return nil, err
@@ -716,11 +805,18 @@ func (s *PatchService) DeleteComment(commentID, userID int, isPrivileged bool, r
 		} else {
 			content += "如有疑问可联系管理员。"
 		}
+		// Link to the AREA the comment lived in, not the deleted comment itself
+		// (its anchor no longer resolves): the resource page for a resource
+		// comment, the game's comment tab otherwise.
+		area := fmt.Sprintf("/patch/%d/comment", comment.GalgameID)
+		if comment.ResourceID != nil {
+			area = fmt.Sprintf("/resource/%d", *comment.ResourceID)
+		}
 		if err := s.db.Table("user_message").Create(map[string]any{
 			"type":         "system",
 			"content":      content,
 			"status":       0,
-			"link":         fmt.Sprintf("/patch/%d/comment", comment.GalgameID),
+			"link":         area,
 			"sender_id":    nil,
 			"recipient_id": comment.UserID,
 			"created":      time.Now(),
@@ -1511,16 +1607,27 @@ func (s *PatchService) createDedupMessage(senderID, recipientID int, msgType, co
 	}
 }
 
-// CreateMentionMessages notifies every @mentioned user. commentID is the
-// comment carrying the mention, so the notification deep-links straight to it
-// (/patch/:gid/comment#comment-:cid) instead of just the patch page.
-func (s *PatchService) CreateMentionMessages(senderID, patchID, commentID int, content string) {
+// commentAnchorLink is the deep-link that lands a reader on this exact comment.
+// The surface depends on which area the comment belongs to, so every
+// notification path builds it here — a resource comment is NOT reachable at
+// /patch/:gid/comment (that list filters resource_id IS NULL), so hard-coding
+// the patch shape would send the recipient to a page their comment isn't on.
+func commentAnchorLink(c *model.PatchComment) string {
+	if c.ResourceID != nil {
+		return fmt.Sprintf("/resource/%d#comment-%d", *c.ResourceID, c.ID)
+	}
+	return fmt.Sprintf("/patch/%d/comment#comment-%d", c.GalgameID, c.ID)
+}
+
+// CreateMentionMessages notifies every @mentioned user, deep-linking straight
+// to the comment carrying the mention instead of just the patch page.
+func (s *PatchService) CreateMentionMessages(senderID int, comment *model.PatchComment, content string) {
 	ids := s.ExtractMentionUserIDs(content)
 	excerpt := content
 	if len(excerpt) > 233 {
 		excerpt = excerpt[:233]
 	}
-	link := fmt.Sprintf("/patch/%d/comment#comment-%d", patchID, commentID)
+	link := commentAnchorLink(comment)
 	for _, userID := range ids {
 		if userID != senderID {
 			s.createDedupMessage(senderID, userID, "mention", excerpt, link, false)
@@ -1534,9 +1641,7 @@ func (s *PatchService) CreateCommentNotification(senderID int, comment *model.Pa
 		if err == nil && parent.UserID != senderID {
 			// Deep-link to the reply so the recipient lands on it directly.
 			s.createDedupMessage(senderID, parent.UserID, "comment",
-				"回复了您的评论",
-				fmt.Sprintf("/patch/%d/comment#comment-%d", comment.GalgameID, comment.ID),
-				false)
+				"回复了您的评论", commentAnchorLink(comment), false)
 		}
 	}
 }
@@ -1551,6 +1656,10 @@ type LocateCommentResult struct {
 	RootID    int  `json:"root_id"`
 	IsReply   bool `json:"is_reply"`
 	GalgameID int  `json:"galgame_id"`
+	// ResourceID is set when the comment lives in a RESOURCE's comment area,
+	// i.e. the page to jump to is /resource/:rid, not /patch/:gid/comment. The
+	// page number above is computed within that area's own listing.
+	ResourceID *int `json:"resource_id,omitempty"`
 }
 
 // LocateComment resolves a comment id to its page in the root-comment listing.
@@ -1577,23 +1686,25 @@ func (s *PatchService) LocateComment(commentID, limit int) (*LocateCommentResult
 	if root.Status != 0 || root.ParentID != nil {
 		return nil, fmt.Errorf("comment not locatable")
 	}
-	before, err := s.repo.CountRootCommentsBefore(root.GalgameID, root.Created, root.ID)
+	before, err := s.repo.CountRootCommentsBefore(root)
 	if err != nil {
 		return nil, err
 	}
 	return &LocateCommentResult{
-		Page:      int(before)/limit + 1,
-		RootID:    root.ID,
-		IsReply:   isReply,
-		GalgameID: root.GalgameID,
+		Page:       int(before)/limit + 1,
+		RootID:     root.ID,
+		IsReply:    isReply,
+		GalgameID:  root.GalgameID,
+		ResourceID: root.ResourceID,
 	}, nil
 }
 
 func (s *PatchService) CreateLikeCommentNotification(senderID int, comment *model.PatchComment) {
 	if comment.UserID != senderID {
+		// Anchored at the comment itself — the old link pointed at the bare patch
+		// page, which for a resource comment isn't even the right surface.
 		s.createDedupMessage(senderID, comment.UserID, "likeComment",
-			"赞了您的评论",
-			fmt.Sprintf("/patch/%d", comment.GalgameID), false)
+			"赞了您的评论", commentAnchorLink(comment), false)
 	}
 }
 

@@ -289,12 +289,20 @@ type PatchComment struct {
 	// 0 = approved/visible (default), 1 = pending review (created while verify
 	// is on; hidden from public reads until an admin approves). See migration
 	// 011 + PatchService.CreateComment / ApproveComment.
-	Status    int       `gorm:"default:0" json:"status"`
-	ParentID  *int      `json:"parent_id"`
-	UserID    int       `gorm:"not null" json:"user_id"`
-	GalgameID int       `gorm:"not null" json:"galgame_id"`
-	Created   time.Time `gorm:"autoCreateTime" json:"created"`
-	Updated   time.Time `gorm:"autoUpdateTime" json:"updated"`
+	Status   int  `gorm:"default:0" json:"status"`
+	ParentID *int `json:"parent_id"`
+	// ResourceID scopes the comment to ONE resource (nil = a patch comment, i.e.
+	// every row that pre-dates migration 028). It selects which surface the
+	// comment belongs to: nil → the /patch/:id/comment tab, set → /resource/:id.
+	// GalgameID is populated either way — it is what NSFW-gates the comment and
+	// what patch.comment_count aggregates on — so every read that means "the
+	// patch's own comments" must filter `resource_id IS NULL` explicitly, not
+	// just `galgame_id = ?`.
+	ResourceID *int      `json:"resource_id,omitempty"`
+	UserID     int       `gorm:"not null" json:"user_id"`
+	GalgameID  int       `gorm:"not null" json:"galgame_id"`
+	Created    time.Time `gorm:"autoCreateTime" json:"created"`
+	Updated    time.Time `gorm:"autoUpdateTime" json:"updated"`
 
 	// Filled by the handler/service layer from OAuth /users/batch.
 	User    *PatchUser     `gorm:"-" json:"user,omitempty"`

@@ -2,7 +2,6 @@ package repository
 
 import (
 	"fmt"
-	"time"
 
 	"kun-galgame-patch-api/internal/patch/model"
 
@@ -159,8 +158,13 @@ func (r *PatchRepository) GetComments(patchID, offset, limit int) ([]model.Patch
 	// status = 0 → only APPROVED comments are public; pending (status=1) ones
 	// stay hidden until an admin approves (comment-verify). Applied to both the
 	// top-level query and the Replies preload so a pending reply is hidden too.
+	//
+	// resource_id IS NULL keeps the patch's comment tab to the patch's OWN
+	// comments: a resource comment also carries this galgame_id (it needs it for
+	// the NSFW gate), so filtering on galgame_id alone would pull every
+	// resource's comments into the game's comment list.
 	base := r.db.Model(&model.PatchComment{}).
-		Where("galgame_id = ? AND parent_id IS NULL AND status = 0", patchID)
+		Where("galgame_id = ? AND resource_id IS NULL AND parent_id IS NULL AND status = 0", patchID)
 	if err := base.Session(&gorm.Session{}).Count(&total).Error; err != nil {
 		return nil, 0, err
 	}
@@ -171,6 +175,38 @@ func (r *PatchRepository) GetComments(patchID, offset, limit int) ([]model.Patch
 		Find(&comments).Error
 
 	return comments, total, err
+}
+
+// GetResourceComments is GetComments for a single resource's comment area
+// (migration 028). Same shape and ordering as the patch list — one page of
+// approved roots, each with its approved replies preloaded — keyed on
+// resource_id instead of galgame_id.
+func (r *PatchRepository) GetResourceComments(resourceID, offset, limit int) ([]model.PatchComment, int64, error) {
+	var comments []model.PatchComment
+	var total int64
+
+	base := r.db.Model(&model.PatchComment{}).
+		Where("resource_id = ? AND parent_id IS NULL AND status = 0", resourceID)
+	if err := base.Session(&gorm.Session{}).Count(&total).Error; err != nil {
+		return nil, 0, err
+	}
+	err := base.Session(&gorm.Session{}).Order("created DESC, id DESC").Offset(offset).Limit(limit).
+		Preload("Replies", func(db *gorm.DB) *gorm.DB {
+			return db.Where("status = 0").Order("created ASC, id ASC")
+		}).
+		Find(&comments).Error
+
+	return comments, total, err
+}
+
+// CountResourceComments counts a resource's approved comments (roots + replies)
+// — the number the resource detail page's 评论 tab shows.
+func (r *PatchRepository) CountResourceComments(resourceID int) (int64, error) {
+	var n int64
+	err := r.db.Model(&model.PatchComment{}).
+		Where("resource_id = ? AND status = 0", resourceID).
+		Count(&n).Error
+	return n, err
 }
 
 func (r *PatchRepository) CreateComment(comment *model.PatchComment) error {
@@ -190,16 +226,27 @@ func (r *PatchRepository) GetCommentByID(id int) (*model.PatchComment, error) {
 	return &comment, err
 }
 
-// CountRootCommentsBefore returns how many APPROVED root comments of the patch
-// sort BEFORE the given root under the list order (created DESC, id DESC).
-// (created, id) > (created, id) row-comparison reproduces "earlier in a DESC
-// sort". Used by LocateComment to compute which page a comment lands on.
-func (r *PatchRepository) CountRootCommentsBefore(galgameID int, created time.Time, id int) (int64, error) {
+// CountRootCommentsBefore returns how many APPROVED root comments of the same
+// comment AREA sort BEFORE the given root under the list order
+// (created DESC, id DESC). (created, id) > (created, id) row-comparison
+// reproduces "earlier in a DESC sort". Used by LocateComment to compute which
+// page a comment lands on.
+//
+// The area is the one the root itself belongs to: a resource comment is
+// paginated within its resource's list, a patch comment within the patch's. The
+// two must not be counted together or a deep-link would resolve to a page the
+// comment isn't on.
+func (r *PatchRepository) CountRootCommentsBefore(root *model.PatchComment) (int64, error) {
 	var n int64
-	err := r.db.Model(&model.PatchComment{}).
-		Where("galgame_id = ? AND parent_id IS NULL AND status = 0", galgameID).
-		Where("(created, id) > (?, ?)", created, id).
-		Count(&n).Error
+	q := r.db.Model(&model.PatchComment{}).
+		Where("parent_id IS NULL AND status = 0").
+		Where("(created, id) > (?, ?)", root.Created, root.ID)
+	if root.ResourceID != nil {
+		q = q.Where("resource_id = ?", *root.ResourceID)
+	} else {
+		q = q.Where("galgame_id = ? AND resource_id IS NULL", root.GalgameID)
+	}
+	err := q.Count(&n).Error
 	return n, err
 }
 
@@ -250,6 +297,22 @@ func (r *PatchRepository) GetCommentMarkdown(commentID int) (string, error) {
 	var content string
 	err := r.db.Model(&model.PatchComment{}).Where("id = ?", commentID).Pluck("content", &content).Error
 	return content, err
+}
+
+// GetResourcePatchID returns the resource's owning patch.id, for handlers that
+// need to NSFW-gate a resource sub-resource (its comment list) before serving
+// it. Returns 0 + ErrRecordNotFound when the resource doesn't exist.
+func (r *PatchRepository) GetResourcePatchID(resourceID int) (int, error) {
+	var patchID int
+	err := r.db.Model(&model.PatchResource{}).Where("id = ?", resourceID).
+		Pluck("galgame_id", &patchID).Error
+	if err != nil {
+		return 0, err
+	}
+	if patchID == 0 {
+		return 0, gorm.ErrRecordNotFound
+	}
+	return patchID, nil
 }
 
 // GetCommentPatchID returns the comment's owning patch.id — used by handlers
@@ -317,10 +380,17 @@ func (r *PatchRepository) DeleteResource(id int) error {
 	// Drop any notification linking to this resource's detail page in the same
 	// tx — user_message has no FK to cascade, so a deleted resource would
 	// otherwise leave a dangling /resource/:id link. (See migration 019.)
+	//
+	// Since migration 028 the resource also owns comments, and patch_comment
+	// .resource_id CASCADEs: the delete below silently takes every comment on
+	// this resource, whose own notifications deep-link to
+	// /resource/:id#comment-:cid. Match the bare link AND that anchored form
+	// (prefix-anchored on "#" so /resource/12 never eats /resource/123's rows).
 	return r.db.Transaction(func(tx *gorm.DB) error {
 		if err := tx.Exec(
-			"DELETE FROM user_message WHERE link = ?",
+			"DELETE FROM user_message WHERE link = ? OR link LIKE ?",
 			fmt.Sprintf("/resource/%d", id),
+			fmt.Sprintf("/resource/%d#%%", id),
 		).Error; err != nil {
 			return err
 		}
