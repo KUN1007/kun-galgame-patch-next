@@ -603,6 +603,12 @@ if (
               </div>
             </div>
           </div>
+
+          <!-- Change history, expanded, directly under the download card: it is
+               part of what a reader judges before downloading (has this been
+               re-uploaded, and what changed). Renders nothing when the resource
+               has never been edited. -->
+          <ResourceHistory :resource-id="resource.id" />
         </div>
 
         <!-- sidebar: patch resource recommendations (no wrapper / heading) -->
