@@ -104,24 +104,38 @@ const storageIcon = computed(() =>
   resource.value?.storage === 's3' ? 'lucide:cloud' : 'lucide:link'
 )
 
-const downloadLinks = computed(() =>
-  resolveDownloadLinks(
-    resource.value?.storage,
-    resource.value?.content,
-    resource.value?.download_url
-  )
-)
+// ─── 资源下载 / 更改历史 tabs ──────────────────────────
+// Awaited up here rather than fetched inside ResourceHistory: the tab SET depends
+// on whether there is any history at all, and settling that a tick late would
+// visibly flip the bar from one tab to two.
+const {
+  items: revisionItems,
+  total: revisionTotal,
+  totalPages: revisionTotalPages,
+  hasHistory,
+  pending: revisionsPending,
+  page: revisionPage
+} = useResourceRevisions(resourceId)
 
-// aria2 command for a download URL — 16 parallel connections + resume (-c). The
-// link is single-quoted so its &/= query params survive the shell. Any download
-// manager (or the Aria2 Explorer extension) works on the same URL since it
-// natively supports HTTP Range.
-const aria2CommandOf = (url: string) => `aria2c -x16 -s16 -c '${url}'`
+// Shared by the bar and the panels so their aria wiring lines up.
+const PANEL_GROUP = 'resource-detail'
+const activePanel = ref('download')
 
-// status != 0 → download disabled (e.g. pulled for virus). The backend withholds
-// content/code/password for disabled resources, so downloadLinks is empty here;
-// show an explicit notice instead of a bare "暂无下载链接".
-const isResourceDisabled = computed(() => (resource.value?.status ?? 0) !== 0)
+const panelTabs = computed(() => {
+  const tabs = [
+    { value: 'download', textValue: '资源下载', icon: 'lucide:download-cloud' }
+  ]
+  // No history → no tab, rather than a tab onto an empty state. Most resources
+  // have never been edited.
+  if (hasHistory.value) {
+    tabs.push({
+      value: 'history',
+      textValue: `更改历史 ${revisionTotal.value}`,
+      icon: 'lucide:history'
+    })
+  }
+  return tabs
+})
 
 // ─── Download (fire-and-forget counter bump) ──────────
 const onDownload = () => {
@@ -466,149 +480,43 @@ if (
           <!-- AIEro ad banner — mobile only (desktop copy is above the grid) -->
           <KunAdAIEroBanner class-name="block sm:hidden" />
 
-          <!-- Download card -->
-          <div
-            class="border-success/40 bg-success/10 space-y-4 rounded-2xl border p-5"
-          >
-            <div class="flex items-center gap-2">
-              <KunIcon
-                name="lucide:download-cloud"
-                class="text-success size-5"
+          <!-- ── 资源下载 / 更改历史 ──────────────────────────
+               KunTabPanels keeps its default mount="eager", so BOTH panels are
+               server-rendered and the inactive one is hidden rather than removed.
+               That matters twice here: the download payload stays in the indexed
+               HTML (this page's whole SEO purpose), and hidden="until-found" lets
+               find-in-page, scroll-to-text fragments and deep links reveal the
+               history — the browser fires `beforematch` and KunTabPanels flips
+               the active tab to match what the reader is about to see.
+
+               `name` must be the SAME on the bar and the panels: it is what the
+               tabs' aria-controls and the panels' aria-labelledby are derived
+               from, and a mismatch breaks the wiring silently. -->
+          <KunTab
+            v-model="activePanel"
+            :items="panelTabs"
+            :name="PANEL_GROUP"
+            variant="underlined"
+            color="primary"
+            size="md"
+          />
+
+          <KunTabPanels v-model="activePanel" :name="PANEL_GROUP">
+            <KunTabPanel value="download">
+              <ResourceDownload :resource="resource" @downloaded="onDownload" />
+            </KunTabPanel>
+
+            <!-- Only mounted when there is history at all, which is also what
+                 decides whether the tab exists. -->
+            <KunTabPanel v-if="hasHistory" value="history">
+              <ResourceHistory
+                v-model:page="revisionPage"
+                :items="revisionItems"
+                :total-pages="revisionTotalPages"
+                :pending="revisionsPending"
               />
-              <h2 class="text-lg font-semibold">资源下载</h2>
-            </div>
-
-            <div
-              v-if="isResourceDisabled"
-              class="border-danger/30 bg-danger/10 text-danger-700 flex items-center gap-2 rounded-xl border p-3 text-sm"
-            >
-              <KunIcon name="lucide:shield-alert" class="size-4 shrink-0" />
-              <span>
-                该资源已被禁用下载（可能存在安全风险，或应发布者 / 版主要求下架），暂时无法获取下载链接。
-              </span>
-            </div>
-
-            <p v-if="!isResourceDisabled" class="text-default-500 text-sm">
-              点击下方链接下载（共 {{ downloadLinks.length }} 个）
-            </p>
-
-            <div v-if="!isResourceDisabled" class="space-y-2">
-              <div
-                v-for="(lnk, i) in downloadLinks"
-                :key="i"
-                class="border-success/40 bg-content1 shadow-kun-sm hover:border-success focus-within:border-success space-y-3 rounded-xl border p-3 transition-colors"
-              >
-                <a
-                  :href="lnk"
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  class="hover:text-success group flex min-w-0 items-center gap-3 transition-colors"
-                  @click="onDownload"
-                >
-                  <span
-                    class="bg-success/15 text-success flex size-9 shrink-0 items-center justify-center rounded-lg"
-                  >
-                    <KunIcon name="lucide:download" class="size-5" />
-                  </span>
-                  <span class="min-w-0 flex-1 truncate text-sm">{{ lnk }}</span>
-                  <KunIcon
-                    name="lucide:external-link"
-                    class="text-default-400 group-hover:text-success size-4 shrink-0"
-                  />
-                </a>
-                <!-- Prominent copy actions on their own row: the plain URL (works
-                     with any downloader / the Aria2 Explorer extension) and a
-                     ready-to-paste aria2 command (16-way + resume). -->
-                <div class="flex flex-wrap gap-2">
-                  <KunCopy
-                    :text="lnk"
-                    name="复制下载链接"
-                    copied-text="已复制链接"
-                    color="success"
-                    variant="flat"
-                    size="md"
-                  />
-                  <KunCopy
-                    :text="aria2CommandOf(lnk)"
-                    name="复制 aria2 命令"
-                    copied-text="已复制命令"
-                    color="success"
-                    variant="flat"
-                    size="md"
-                  />
-                </div>
-              </div>
-              <p
-                v-if="!downloadLinks.length"
-                class="text-default-500 text-sm"
-              >
-                暂无可用下载链接
-              </p>
-            </div>
-
-            <div
-              v-if="resource.code || resource.password"
-              class="flex flex-wrap gap-2"
-            >
-              <KunCopy
-                v-if="resource.code"
-                :text="resource.code"
-                :name="`提取码: ${resource.code}`"
-                color="secondary"
-                variant="flat"
-                size="sm"
-              />
-              <KunCopy
-                v-if="resource.password"
-                :text="resource.password"
-                :name="`解压密码: ${resource.password}`"
-                color="secondary"
-                variant="flat"
-                size="sm"
-              />
-            </div>
-
-            <div
-              v-if="resource.blake3 && resource.storage !== 'user'"
-              class="border-success/30 space-y-2 border-t pt-3"
-            >
-              <p class="text-default-500 text-xs">
-                BLAKE3 校验码，可校验下载文件完整性
-              </p>
-              <div class="flex flex-wrap items-center gap-2">
-                <code
-                  class="bg-background/60 max-w-full truncate rounded-lg px-2 py-1 text-xs"
-                >
-                  {{ resource.blake3 }}
-                </code>
-                <KunCopy
-                  :text="resource.blake3"
-                  name="复制"
-                  size="sm"
-                  variant="flat"
-                />
-                <NuxtLink
-                  :to="`/check-hash?hash=${resource.blake3}&content=${encodeURIComponent(resource.content || '')}`"
-                >
-                  <KunButton
-                    size="sm"
-                    variant="flat"
-                    color="primary"
-                    rounded="full"
-                  >
-                    <KunIcon name="lucide:shield-check" class="size-3.5" />
-                    前往校验页面
-                  </KunButton>
-                </NuxtLink>
-              </div>
-            </div>
-          </div>
-
-          <!-- Change history, expanded, directly under the download card: it is
-               part of what a reader judges before downloading (has this been
-               re-uploaded, and what changed). Renders nothing when the resource
-               has never been edited. -->
-          <ResourceHistory :resource-id="resource.id" />
+            </KunTabPanel>
+          </KunTabPanels>
         </div>
 
         <!-- sidebar: patch resource recommendations (no wrapper / heading) -->

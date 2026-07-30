@@ -1,19 +1,14 @@
 <script setup lang="ts">
-// The resource's change history, expanded inline under the download card.
+// The resource's change history — the body of the 更改历史 tab.
 //
-// Same public endpoint the list rows open in a modal
+// Renders the same public endpoint the list rows open in a modal
 // (GET /patch/resource/:id/revisions): one entry per edit, each carrying the
 // per-field "before → after" diff computed server-side. It is safe to render to
 // anyone — service.diffResourceFields records the download link / 提取码 / 解压密码
 // only as "已更新", never their values.
 //
-// Inline rather than behind a click, because on the detail page the history is
-// part of what a reader is judging: whether a patch has been re-uploaded, and
-// what changed when. Nothing renders when a resource has never been edited —
-// most have not, and an empty "暂无更改历史" card would be noise on every page.
-//
-// Costs one extra request per detail view. Unavoidable for an always-visible
-// section: knowing whether there is anything to show IS the request.
+// Presentational: the fetch lives in useResourceRevisions, which the PAGE calls,
+// because whether this tab exists at all depends on the count. See that file.
 
 // Imported explicitly rather than leaning on the shared/utils auto-import, which
 // is the same form Gallery.vue / Covers.vue use for resolveBannerUrl. The types
@@ -25,30 +20,19 @@ import {
   type TextDiffOp,
   type TextDiffSegment
 } from '~/shared/utils/textDiff'
+import type { ResourceRevisionItem } from '~/composables/useResourceRevisions'
 
 interface Props {
-  resourceId: number
+  items: ResourceRevisionItem[]
+  totalPages: number
+  pending?: boolean
 }
 
-const props = defineProps<Props>()
+defineProps<Props>()
 
-const api = useApi()
-
-// Mirrors the wire shape of the revisions endpoint.
-interface ResourceFieldChange {
-  field: string
-  label: string
-  before: string
-  after: string
-}
-interface ResourceRevisionItem {
-  id: number
-  action: string
-  reason: string
-  actor_role: number
-  created_at: string
-  changes: ResourceFieldChange[]
-}
+// Which page of revisions is shown — owned by the composable, so the fetch and
+// the pager cannot disagree.
+const page = defineModel<number>('page', { required: true })
 
 const ACTOR_ROLE_LABEL: Record<number, string> = {
   0: '未知',
@@ -152,49 +136,13 @@ const renderChanges = (rev: ResourceRevisionItem): RenderedChange[] =>
     }
   })
 
-const page = ref(1)
-const limit = 20
-
-const { data, pending } = await useAsyncData(
-  () => `resource-revisions-${props.resourceId}-${page.value}`,
-  async () => {
-    const res = await api.get<{
-      items: ResourceRevisionItem[]
-      total: number
-    }>(
-      `/patch/resource/${props.resourceId}/revisions?page=${page.value}&limit=${limit}`
-    )
-    // A failure here must not take the page down with it — the history is
-    // supplementary to the download, which is why this resolves to empty
-    // instead of throwing.
-    if (res.code !== 0) return { items: [], total: 0 }
-    return { items: res.data?.items ?? [], total: res.data?.total ?? 0 }
-  },
-  { watch: [page] }
-)
-
-const items = computed(() => data.value?.items ?? [])
-const total = computed(() => data.value?.total ?? 0)
-const totalPages = computed(() => Math.max(1, Math.ceil(total.value / limit)))
-
-// Only the FIRST load decides whether the section exists at all; later pages
-// keep it mounted while they fetch (`pending` flips on every page change).
-const hasHistory = computed(() => total.value > 0)
 </script>
 
 <template>
-  <div
-    v-if="hasHistory"
-    class="border-default/20 bg-content1 shadow-kun-sm space-y-4 rounded-2xl border p-5"
-  >
-    <div class="flex items-center gap-2">
-      <KunIcon name="lucide:history" class="text-primary size-5" />
-      <h2 class="text-lg font-semibold">更改历史</h2>
-      <KunChip color="default" variant="flat" size="sm">
-        {{ total }} 次编辑
-      </KunChip>
-    </div>
-
+  <!-- No card chrome / heading: the tab bar above already names this panel, and
+       the download panel is its sibling. Wrapping it in another titled box would
+       repeat the label the tab is already showing. -->
+  <div class="space-y-4">
     <div class="text-default-500 space-y-1 text-sm">
       <p>
         该补丁资源每次编辑的字段变化，只标出改动的部分：
