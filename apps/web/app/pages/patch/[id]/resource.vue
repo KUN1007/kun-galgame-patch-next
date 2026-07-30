@@ -1,5 +1,4 @@
 <script setup lang="ts">
-import { SUPPORTED_RESOURCE_LINK_MAP } from '~/constants/resource'
 import { kunMoyuMoe } from '~/config/moyu-moe'
 
 const route = useRoute()
@@ -56,7 +55,7 @@ const canManage = (r: PatchResource) =>
   userStore.isModerator || r.user_id === userStore.user.id
 
 // status != 0 → resource download is disabled (e.g. pulled for virus). The row
-// stays visible but its link can't be fetched.
+// stays visible; the detail page it links to withholds the links.
 const isDisabled = (r: PatchResource) => (r.status ?? 0) !== 0
 
 const togglingDisable = ref<number | null>(null)
@@ -68,11 +67,6 @@ const toggleDisable = async (r: PatchResource) => {
     )
     if (res.code === 0) {
       r.status = res.data.status
-      // Collapse any already-revealed link when disabling. `delete` on the
-      // reactive `fetched` record is the intended Vue idiom here (drop the key
-      // so the reveal block hides); not a dynamic-collection footgun.
-      // eslint-disable-next-line @typescript-eslint/no-dynamic-delete
-      if (isDisabled(r) && fetched[r.id]) delete fetched[r.id]
       useKunMessage(
         isDisabled(r) ? '已禁用该资源下载' : '已恢复该资源下载',
         'success'
@@ -193,62 +187,13 @@ const sortedResources = computed(() => {
   return list
 })
 
-// ─── "获取资源链接" — fetch minimal link info, reveal inline ──
-// Calls the lightweight GET /patch/resource/:id/link (only storage + links +
-// secrets — no Wiki enrich / recommendations / blake3). A second click
-// collapses. blake3 is folded INTO this reveal (rendered from the row's own
-// r.blake3, since the /link endpoint doesn't return it) so the hash + 校验文件
-// only show once the user reveals the download links.
-interface ResourceLinkInfo {
-  storage: string
-  content: string
-  // Resolved absolute URL for artifact-backed rows (empty for legacy rows).
-  download_url?: string
-  code: string
-  password: string
-}
-const fetched = reactive<Record<number, ResourceLinkInfo>>({})
-const loadingId = ref<number | null>(null)
-
-const getResourceLink = async (r: PatchResource) => {
-  if (fetched[r.id]) {
-    // eslint-disable-next-line @typescript-eslint/no-dynamic-delete
-    delete fetched[r.id] // collapse (drop the reactive key)
-    return
-  }
-  loadingId.value = r.id
-  try {
-    const res = await api.get<ResourceLinkInfo>(
-      `/patch/resource/${r.id}/link`
-    )
-    if (res.code === 0 && res.data) {
-      fetched[r.id] = res.data
-    } else {
-      useKunMessage(res.message || '获取资源链接失败', 'error')
-    }
-  } finally {
-    loadingId.value = null
-  }
-}
-
-const linksOf = (d: ResourceLinkInfo) =>
-  resolveDownloadLinks(d.storage, d.content, d.download_url)
-
-const storageLabelOf = (d: ResourceLinkInfo) =>
-  SUPPORTED_RESOURCE_LINK_MAP[d.storage] ?? d.storage
-
-// aria2 command for a download URL — 16 parallel connections + resume (-c). The
-// link is single-quoted so its &/= query params survive the shell. Users paste
-// it into a terminal; any download manager (or the Aria2 Explorer extension)
-// works on the same URL since it natively supports HTTP Range.
-const aria2CommandOf = (url: string) => `aria2c -x16 -s16 -c '${url}'`
-
-// Bump the download counter when a revealed link is actually clicked,
-// mirroring the resource detail page.
-const onLinkDownload = (r: PatchResource) => {
-  api.put(`/patch/resource/${r.id}/download`).catch(() => {})
-  r.download += 1
-}
+// NOTE: this list no longer reveals download links inline. The former
+// "获取资源链接" button (and its GET /patch/resource/:id/link call, the per-row
+// reveal block, the BLAKE3 / 提取码 / 解压密码 copy actions and the download
+// counter bump) were removed deliberately: the resource DETAIL page is now the
+// only place a link, code or password is shown, so every download goes through
+// the page that also carries the resource's own notes, change history and
+// comment area. The /link endpoint still exists — the detail page uses it.
 
 // 收藏资源 (per-resource subscription) toggle. Optimistic: backend returns
 // { favorited }, folded onto the local row. Notifies on this resource's
@@ -649,18 +594,6 @@ watch(histPage, loadHistory)
             </p>
           </div>
           <div class="flex shrink-0 flex-wrap items-center gap-2">
-            <!-- Secondary: open this resource's own page (/resource/:id). href so
-                 middle-click / ctrl-click opens a new tab. -->
-            <KunButton
-              size="sm"
-              rounded="full"
-              variant="light"
-              color="default"
-              :href="`/resource/${r.id}`"
-            >
-              <KunIcon name="lucide:arrow-up-right" class="size-4" />
-              查看资源详情
-            </KunButton>
             <KunChip
               v-if="isDisabled(r)"
               color="danger"
@@ -670,135 +603,21 @@ watch(histPage, loadHistory)
               <KunIcon name="lucide:ban" class="size-3.5" />
               已禁用下载
             </KunChip>
+            <!-- The ONLY way to a download link from this list: the resource's own
+                 page. It is the primary action now that the inline reveal is gone.
+                 href (not @click) so middle-click / ctrl-click opens a new tab. -->
             <KunButton
-              v-else
               color="primary"
               size="sm"
               rounded="full"
-              :loading="loadingId === r.id"
-              :disabled="loadingId === r.id"
-              @click="getResourceLink(r)"
+              :href="`/resource/${r.id}`"
             >
-              <KunIcon
-                :name="fetched[r.id] ? 'lucide:chevron-up' : 'lucide:link'"
-                class="size-4"
-              />
-              {{ fetched[r.id] ? '收起' : '获取资源链接' }}
+              <KunIcon name="lucide:arrow-up-right" class="size-4" />
+              查看资源详情
             </KunButton>
           </div>
         </div>
 
-        <!-- inline reveal: download links + hash + secrets -->
-        <div
-          v-if="fetched[r.id]"
-          class="border-success/40 bg-success/10 mt-1 space-y-3 rounded-xl border p-4"
-        >
-          <div class="flex items-center gap-2">
-            <KunIcon
-              name="lucide:download-cloud"
-              class="text-success size-4"
-            />
-            <span class="text-sm font-semibold">资源下载链接</span>
-            <KunChip color="secondary" variant="flat" size="sm">
-              {{ storageLabelOf(fetched[r.id]!) }}
-            </KunChip>
-          </div>
-
-          <div class="space-y-2">
-            <div
-              v-for="(lnk, i) in linksOf(fetched[r.id]!)"
-              :key="i"
-              class="border-success/40 bg-content1 shadow-kun-sm hover:border-success space-y-2.5 rounded-lg border p-3"
-            >
-              <a
-                :href="lnk"
-                target="_blank"
-                rel="noopener noreferrer"
-                class="hover:text-success group flex min-w-0 items-center gap-2 transition-colors"
-                @click="onLinkDownload(r)"
-              >
-                <KunIcon
-                  name="lucide:download"
-                  class="text-success size-4 shrink-0"
-                />
-                <span class="min-w-0 flex-1 truncate text-sm">{{ lnk }}</span>
-                <KunIcon
-                  name="lucide:external-link"
-                  class="text-default-400 group-hover:text-success size-3.5 shrink-0"
-                />
-              </a>
-              <!-- Prominent copy actions on their own row: the plain URL (works
-                   with any downloader / the Aria2 Explorer extension) and a
-                   ready-to-paste aria2 command (16-way + resume). -->
-              <div class="flex flex-wrap gap-2">
-                <KunCopy
-                  :text="lnk"
-                  name="复制下载链接"
-                  copied-text="已复制链接"
-                  color="success"
-                  variant="flat"
-                  size="md"
-                />
-                <KunCopy
-                  :text="aria2CommandOf(lnk)"
-                  name="复制 aria2 命令"
-                  copied-text="已复制命令"
-                  color="success"
-                  variant="flat"
-                  size="md"
-                />
-              </div>
-            </div>
-            <p
-              v-if="!linksOf(fetched[r.id]!).length"
-              class="text-default-500 text-sm"
-            >
-              暂无可用下载链接
-            </p>
-          </div>
-
-          <div
-            v-if="fetched[r.id]!.code || fetched[r.id]!.password"
-            class="flex flex-wrap gap-2"
-          >
-            <KunCopy
-              v-if="fetched[r.id]!.code"
-              :text="fetched[r.id]!.code!"
-              :name="`提取码: ${fetched[r.id]!.code}`"
-              color="secondary"
-              variant="flat"
-              size="sm"
-            />
-            <KunCopy
-              v-if="fetched[r.id]!.password"
-              :text="fetched[r.id]!.password!"
-              :name="`解压密码: ${fetched[r.id]!.password}`"
-              color="secondary"
-              variant="flat"
-              size="sm"
-            />
-          </div>
-
-          <!-- BLAKE3 + 校验文件 — folded into the reveal (was previously always
-               shown on the card). Uses the row's own r.blake3 / r.content. -->
-          <div
-            v-if="r.blake3"
-            class="text-default-400 flex flex-wrap items-center gap-2 text-xs"
-          >
-            <span class="shrink-0">BLAKE3</span>
-            <code class="bg-default-100 max-w-full truncate rounded-lg px-2 py-1">
-              {{ r.blake3 }}
-            </code>
-            <NuxtLink
-              :to="`/check-hash?hash=${r.blake3}&content=${encodeURIComponent(r.content || '')}`"
-            >
-              <KunButton size="sm" variant="flat" color="primary" rounded="full">
-                <KunIcon name="lucide:shield-check" class="size-3.5" />
-                校验文件
-              </KunButton>
-            </NuxtLink>
-          </div>
-        </div>
       </div>
     </div>
     <KunNull v-else description="该 Galgame 暂无补丁资源" />
