@@ -109,6 +109,14 @@ func (h *Handler) Search(c fiber.Ctx) error {
 	}
 	galgameResult, err := h.galgame.SearchGalgame(c.Context(), params)
 	if err != nil {
+		// Same split as the calendar: several of these filters (tag_id's
+		// multi-value ceiling, the single-valued label/engine ids, the date
+		// bounds) are rejected by the catalog with a 400, and calling that
+		// "搜索服务暂不可用" blames a healthy service for a malformed query.
+		if gerr, ok := galgameClient.AsBadRequest(err); ok {
+			slog.Warn("galgame 搜索参数被上游拒绝", "error", err)
+			return response.Error(c, errors.ErrBadRequest(gerr.Message))
+		}
 		slog.Error("galgame 搜索失败", "error", err)
 		return response.Error(c, errors.ErrInternal("搜索服务暂不可用"))
 	}

@@ -114,6 +114,15 @@ func (h *PatchHandler) GalgameTaxonomyDetailProxy(c fiber.Ctx) error {
 		"",
 	)
 	if err != nil {
+		// An id the registry has no row for is a MISS, and moyu answers it with
+		// its OWN 404 rather than forwarding the catalog's code inside a 400.
+		// The page above turns that into a real 404 status line instead of
+		// rendering an empty 200 shell — a soft 404 keeps a dead URL indexed and
+		// reads the "不存在" copy as thin content on a live page. It also has to
+		// be told apart from an outage, which is what Absent() insists on.
+		if galgameClient.IsAbsent(err) {
+			return response.Error(c, errors.ErrNotFound("词条不存在"))
+		}
 		if werr, ok := err.(*galgameClient.GalgameError); ok {
 			return response.Error(c, errors.New(werr.Code, werr.Message, fiber.StatusBadRequest))
 		}

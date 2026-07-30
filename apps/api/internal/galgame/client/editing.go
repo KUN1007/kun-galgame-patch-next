@@ -178,7 +178,7 @@ func (c *Client) doEnvelope(req *http.Request, method, pathAndQuery string) (jso
 		return nil, fmt.Errorf("decode galgame envelope: %w (body=%s)", err, truncate(string(raw), 200))
 	}
 	if env.Code != 0 {
-		return nil, &GalgameError{Code: env.Code, Message: env.Message}
+		return nil, upstreamError(resp, env.Code, env.Message)
 	}
 	return env.Data, nil
 }

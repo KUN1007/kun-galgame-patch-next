@@ -196,7 +196,7 @@ func (c *Client) DeleteGalgameDraft(ctx context.Context, accessToken string, gid
 		return fmt.Errorf("decode galgame envelope: %w (body=%s)", err, truncate(string(raw), 200))
 	}
 	if env.Code != 0 {
-		return &GalgameError{Code: env.Code, Message: env.Message}
+		return upstreamError(resp, env.Code, env.Message)
 	}
 	return nil
 }
@@ -244,7 +244,7 @@ func (c *Client) ListMyGalgames(ctx context.Context, accessToken string, status 
 		return nil, fmt.Errorf("decode galgame envelope: %w (body=%s)", err, truncate(string(raw), 200))
 	}
 	if env.Code != 0 {
-		return nil, &GalgameError{Code: env.Code, Message: env.Message}
+		return nil, upstreamError(resp, env.Code, env.Message)
 	}
 	if env.Data.Items == nil {
 		env.Data.Items = []MineItem{}
@@ -310,7 +310,7 @@ func (c *Client) SearchGalgameForPublish(ctx context.Context, accessToken, q str
 		return nil, fmt.Errorf("decode galgame envelope: %w (body=%s)", err, truncate(string(raw), 200))
 	}
 	if env.Code != 0 {
-		return nil, &GalgameError{Code: env.Code, Message: env.Message}
+		return nil, upstreamError(resp, env.Code, env.Message)
 	}
 	// Normalize: a nil slice marshals back to JSON `null`, which crashes
 	// frontend code doing `results.pending.length`. Guarantee `[]`.
@@ -363,7 +363,7 @@ func (c *Client) GetMyGalgameMessages(ctx context.Context, accessToken string, s
 		return nil, fmt.Errorf("decode galgame envelope: %w (body=%s)", err, truncate(string(raw), 200))
 	}
 	if env.Code != 0 {
-		return nil, &GalgameError{Code: env.Code, Message: env.Message}
+		return nil, upstreamError(resp, env.Code, env.Message)
 	}
 	return &env.Data, nil
 }
@@ -415,7 +415,7 @@ func (c *Client) GetGalgameMessageFeed(ctx context.Context, sinceID int64, limit
 		return nil, fmt.Errorf("decode galgame envelope: %w (body=%s)", err, truncate(string(raw), 200))
 	}
 	if env.Code != 0 {
-		return nil, &GalgameError{Code: env.Code, Message: env.Message}
+		return nil, upstreamError(resp, env.Code, env.Message)
 	}
 	return &env.Data, nil
 }
@@ -453,7 +453,7 @@ func (c *Client) writeUserJSON(ctx context.Context, method, path, accessToken st
 		return nil, fmt.Errorf("decode galgame envelope: %w (body=%s)", err, truncate(string(raw), 200))
 	}
 	if env.Code != 0 {
-		return nil, &GalgameError{Code: env.Code, Message: env.Message}
+		return nil, upstreamError(resp, env.Code, env.Message)
 	}
 	return env.Data, nil
 }
@@ -520,7 +520,7 @@ func (c *Client) writeUserMultipart(
 		return nil, fmt.Errorf("decode galgame envelope: %w (body=%s)", err, truncate(string(raw), 200))
 	}
 	if env.Code != 0 {
-		return nil, &GalgameError{Code: env.Code, Message: env.Message}
+		return nil, upstreamError(resp, env.Code, env.Message)
 	}
 	return env.Data, nil
 }

@@ -13,6 +13,7 @@ import (
 	"bytes"
 	"context"
 	"encoding/json"
+	"errors"
 	"fmt"
 	"io"
 	"mime/multipart"
@@ -39,10 +40,70 @@ const galgameCodeNotFound = 404
 type GalgameError struct {
 	Code    int
 	Message string
+	// HTTPStatus is the status the catalog answered with, or 0 when the client
+	// minted the verdict itself without ever dialling.
+	//
+	// The envelope `code` alone cannot say WHOSE fault a failure was: the
+	// catalog spells "your parameter is malformed" and "my database fell over"
+	// in the same 1-999 general block. The status is the half of the answer
+	// that separates them, so it is recorded beside the code everywhere a
+	// response actually arrived (see upstreamError).
+	HTTPStatus int
 }
 
 func (e *GalgameError) Error() string {
 	return fmt.Sprintf("galgame business error code=%d: %s", e.Code, e.Message)
+}
+
+// Absent reports whether this verdict is the documented "no such row" rather
+// than a failure that merely happens to arrive carrying a 404.
+//
+// Same discipline as catalogAbsent (which judges the pair for the reads that
+// still hold the status in hand): the proof is the PAIRING of the catalog's own
+// not-found business code with the 404, never the status alone. A ROUTE-level
+// 404 — a renamed path, a proxy's HTML — echoes 404 into `code` instead, and
+// folding that in is how a whole read face fails silently.
+//
+// The second shape is the client's own miss: it minted the verdict for an id it
+// could not even parse or for a work whose claim is not live, so there is no
+// status to pair with.
+func (e *GalgameError) Absent() bool {
+	if e.HTTPStatus == 0 {
+		return e.Code == galgameCodeNotFound
+	}
+	return e.HTTPStatus == http.StatusNotFound && e.Code == catalogCodeNotFound
+}
+
+// IsAbsent is Absent over an opaque error — the form handlers use to answer a
+// miss with their own 404 instead of forwarding the upstream code verbatim.
+func IsAbsent(err error) bool {
+	var gerr *GalgameError
+	return errors.As(err, &gerr) && gerr.Absent()
+}
+
+// AsBadRequest reports whether err is the catalog REJECTING THE REQUEST — a
+// parameter sent in a shape the face does not accept — as opposed to failing to
+// serve a well-formed one.
+//
+// Handlers must keep the two apart. A 400 is a caller error (ours, or the
+// browser's when a query parameter rides through untouched); answering it with
+// "调用 Galgame 资料库失败" — a 500 — tells the user the registry is down, tells
+// the operator to go look at a healthy service, and hides the one fact that
+// would fix it: which parameter was wrong. A 5xx or a transport failure IS the
+// registry being down, and keeps that spelling.
+func AsBadRequest(err error) (*GalgameError, bool) {
+	var gerr *GalgameError
+	if !errors.As(err, &gerr) || gerr.HTTPStatus != http.StatusBadRequest {
+		return nil, false
+	}
+	return gerr, true
+}
+
+// upstreamError builds the envelope error for a response that carried one, so
+// every decode site records the status beside the business code instead of half
+// of them dropping it.
+func upstreamError(resp *http.Response, code int, message string) *GalgameError {
+	return &GalgameError{Code: code, Message: message, HTTPStatus: resp.StatusCode}
 }
 
 // Client is a thin wrapper around calls to the NextMoe catalog service (galgame
@@ -449,7 +510,7 @@ func (c *Client) getV1RawStatus(ctx context.Context, path string, query url.Valu
 		return nil, resp.StatusCode, fmt.Errorf("解析 galgame 响应失败: %w (body=%s)", err, truncate(string(body), 200))
 	}
 	if wrapper.Code != 0 {
-		return nil, resp.StatusCode, &GalgameError{Code: wrapper.Code, Message: wrapper.Message}
+		return nil, resp.StatusCode, upstreamError(resp, wrapper.Code, wrapper.Message)
 	}
 	return wrapper.Data, resp.StatusCode, nil
 }
@@ -1113,7 +1174,7 @@ func (c *Client) UpdateGalgame(ctx context.Context, accessToken string, gid int,
 		return nil, fmt.Errorf("decode galgame envelope: %w (body=%s)", err, truncate(string(raw), 200))
 	}
 	if env.Code != 0 {
-		return nil, &GalgameError{Code: env.Code, Message: env.Message}
+		return nil, upstreamError(resp, env.Code, env.Message)
 	}
 	return env.Data, nil
 }
@@ -1197,7 +1258,7 @@ func (c *Client) UpdateGalgameMultipart(
 		return nil, fmt.Errorf("decode galgame envelope: %w (body=%s)", err, truncate(string(raw), 200))
 	}
 	if env.Code != 0 {
-		return nil, &GalgameError{Code: env.Code, Message: env.Message}
+		return nil, upstreamError(resp, env.Code, env.Message)
 	}
 	return env.Data, nil
 }
@@ -1268,7 +1329,7 @@ func (c *Client) UploadGalgameImage(
 		return nil, fmt.Errorf("decode galgame envelope: %w (body=%s)", err, truncate(string(raw), 200))
 	}
 	if env.Code != 0 {
-		return nil, &GalgameError{Code: env.Code, Message: env.Message}
+		return nil, upstreamError(resp, env.Code, env.Message)
 	}
 	return env.Data, nil
 }

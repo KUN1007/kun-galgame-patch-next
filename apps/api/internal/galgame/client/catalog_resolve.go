@@ -238,7 +238,7 @@ func (c *Client) postV1(ctx context.Context, path string, body any) (json.RawMes
 		return nil, fmt.Errorf("解析 catalog 响应失败: %w (body=%s)", err, truncate(string(raw), 200))
 	}
 	if env.Code != 0 {
-		return nil, &GalgameError{Code: env.Code, Message: env.Message}
+		return nil, upstreamError(resp, env.Code, env.Message)
 	}
 	return env.Data, nil
 }

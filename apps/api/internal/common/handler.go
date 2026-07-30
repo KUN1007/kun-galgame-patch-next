@@ -981,7 +981,19 @@ func (h *CommonHandler) GetGalgameCalendar(c fiber.Ctx) error {
 	month := strings.TrimSpace(c.Query("month"))
 
 	merged, err := h.fetchCalendarMonth(c.Context(), month, cl)
-	if err != nil || merged == nil {
+	if err != nil {
+		// `month` rides through to the catalog verbatim, so a caller who spells
+		// it wrongly gets the catalog's 400 back — and that is a BAD REQUEST,
+		// not an outage. Reporting it as 50000「调用 Galgame 资料库失败」sent
+		// every such caller (and every on-call reading the logs) after a service
+		// that was answering correctly the whole time. Forward the upstream's
+		// own message: it names the parameter.
+		if gerr, ok := galgameClient.AsBadRequest(err); ok {
+			return response.Error(c, errors.ErrBadRequest(gerr.Message))
+		}
+		return response.Error(c, errors.ErrInternal("调用 Galgame 资料库失败"))
+	}
+	if merged == nil {
 		return response.Error(c, errors.ErrInternal("调用 Galgame 资料库失败"))
 	}
 
