@@ -2,14 +2,16 @@
 // Publish-galgame wizard.
 //
 // Implements the 4 scenarios laid out in docs/galgame_wiki/00-handbook-for-downstream.md §4:
-//   A. Hit a published galgame (status=0) → go straight to patch creation.
-//   B. Hit a VNDB draft (status=2)        → claim → patch creation.
-//   C. Hit own pending/declined (3/4)     → jump to /me/submissions.
-//   D. No match                            → submit form → status=3 awaits review.
+//   A. Hit a published work (claim_state=live) → go straight to patch creation.
+//   B. Hit an unpublished draft (claim_state=draft) → claim → patch creation.
+//   C. Hit own pending/declined (status 3/4)   → jump to /me/submissions.
+//   D. No match                                → submit form → status=3 awaits review.
 //
-// All search calls hit our backend's /galgame/search/publish proxy which adds
-// the Bearer token + include_pending=true so the wiki surfaces both public
-// items and the caller's own pending entries.
+// All search calls hit our backend's /galgame/search/publish proxy. Its two
+// halves come off two different faces: `items` is the catalog registry search
+// (claim_state=live,draft) and `pending` is still the wiki's own view of the
+// caller's submissions — which is why the two arrays speak different lifecycle
+// vocabularies below.
 
 // Write-side page (publish wizard). Not a content surface — disable SEO
 // so search engines don't index our edit forms.
@@ -31,26 +33,40 @@ const mode = ref<WizardMode>('search')
 const searchQuery = ref('')
 const searching = ref(false)
 const searched = ref(false) // true after first search; gates the "no results" CTA
-interface GalgameHit {
+interface GalgameName {
   id: number
-  status: number
-  vndb_id: string
   name_en_us: string
   name_ja_jp: string
   name_zh_cn: string
   name_zh_tw: string
+}
+// A search hit is a REGISTRY row: its lifecycle word is claim_state, not the
+// wiki status int. `draft` covers both an unclaimed VNDB row and someone else's
+// submission under review — the registry cannot tell those apart — so the claim
+// button is offered on both and the wiki is what refuses the impossible one.
+interface GalgameHit extends GalgameName {
+  claim_state: string
+  vndb_id: string
   banner: string
   effective_banner_hash?: string
 }
+// A pending row is the caller's OWN submission, still answered by the wiki, so
+// it still speaks the wiki's state machine: 3 审核中 / 4 已拒绝.
+interface PendingHit extends GalgameName {
+  status: number
+  vndb_id: string
+}
 interface SearchResult {
   items: GalgameHit[]
-  pending: GalgameHit[]
+  pending: PendingHit[]
   total: number
 }
 const results = ref<SearchResult>({ items: [], pending: [], total: 0 })
 
-const displayName = (h: GalgameHit): string =>
+const displayName = (h: GalgameName): string =>
   h.name_zh_cn || h.name_zh_tw || h.name_ja_jp || h.name_en_us || `#${h.id}`
+
+const isClaimableDraft = (h: GalgameHit): boolean => h.claim_state === 'draft'
 
 const doSearch = async () => {
   const q = searchQuery.value.trim()
@@ -121,7 +137,7 @@ const selectPublished = async (hit: GalgameHit) => {
   }
 }
 
-// ─── Scenario B: claim a VNDB draft (status=2) ────────
+// ─── Scenario B: claim an unpublished draft (claim_state=draft) ──
 const claimingFor = ref<number | null>(null)
 const claimAndPublish = async (hit: GalgameHit) => {
   claimingFor.value = hit.id
@@ -138,12 +154,14 @@ const claimAndPublish = async (hit: GalgameHit) => {
       await navigateTo(`/patch/${claimRes.data.id}/introduction`)
       return
     }
-    // Wiki business codes (docs/galgame_wiki/99-appendix.md §20xxx). The
-    // common cause is a stale Meilisearch row: search says status=2 but the
-    // draft was already claimed/published — recover by re-searching.
+    // Wiki business codes (docs/galgame_wiki/99-appendix.md §20xxx). Two
+    // causes now: a stale index row (the draft was already claimed), or the
+    // row is someone ELSE's submission awaiting review — which the registry
+    // cannot distinguish from a claimable draft, so the wiki's refusal is the
+    // only place that difference exists. Recover by re-searching either way.
     if (claimRes.code === 20006 || claimRes.code === 20001) {
       useKunMessage(
-        '该 VNDB 草稿已被他人认领或已不可用，正在为您刷新搜索结果',
+        '该草稿已被他人认领、正在审核中或已不可用，正在为您刷新搜索结果',
         'warn'
       )
       await doSearch()
@@ -379,7 +397,7 @@ const handleSubmit = async () => {
         </div>
       </KunCard>
 
-      <!-- Public hits (status=0 or status=2) -->
+      <!-- Registry hits (claim_state live or draft) -->
       <KunCard v-if="results.items.length > 0" :bordered="true">
         <div class="space-y-3 p-4">
           <h3 class="text-lg font-semibold">搜索结果</h3>
@@ -393,13 +411,13 @@ const handleSubmit = async () => {
                 <p class="font-semibold">{{ displayName(hit) }}</p>
                 <p class="text-default-500 text-xs">
                   {{ hit.vndb_id || '无 VNDB ID' }}
-                  <span v-if="hit.status === 2" class="text-warning ml-2">
-                    · VNDB 草稿（认领后即发布）
+                  <span v-if="isClaimableDraft(hit)" class="text-warning ml-2">
+                    · 未发布草稿（认领后即发布，若为他人审核中的投稿则无法认领）
                   </span>
                 </p>
               </div>
               <KunButton
-                v-if="hit.status === 2"
+                v-if="isClaimableDraft(hit)"
                 color="warning"
                 size="sm"
                 :loading="claimingFor === hit.id"

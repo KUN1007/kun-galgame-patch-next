@@ -13,6 +13,7 @@ Audited 26 endpoints: 4 submission GETs (mine/search-publish/messages-mine/messa
 ### GET /galgame/search/publish — SearchGalgameForPublish
 - verdict: ok
 - tested: live `?q=fate&limit=2` → `{items:[...12 GalgameHit fields...]}`; `?q=zzzznomatch123` → `{"items":[],"pending":[],"total":0}` (nil slices normalized to `[]`, submission.go:298-304). Shape `{items,pending,total}` matches FE `SearchResult` (create.vue:48-52). Forwards `include_pending=true&facets=false&highlight=false` (submission.go:269-271). limit clamped 1..24→10 (handler.go:1008-1010); FE sends limit=12.
+- wave 160: the endpoint is now TWO upstream reads. `items` comes off the catalog works search (`claim_state=live,draft`) and each row carries `claim_state` instead of the wiki `status` int; `pending` still comes off the wiki face and now keeps its `status` (3 审核中 / 4 已拒绝), which the old `[]GalgameHit` decode had been dropping.
 
 ### GET /galgame/messages/mine — GetMyWikiMessages
 - verdict: ok (no FE consumer)

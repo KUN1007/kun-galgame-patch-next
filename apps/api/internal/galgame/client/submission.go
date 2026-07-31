@@ -108,13 +108,36 @@ type GalgameMessage struct {
 	CreatedAt    string          `json:"created_at"`
 }
 
-// SearchPending is the additional `pending` array surfaced by
-// /galgame/search?include_pending=true (only when the caller is the owner of
-// the matching status ∈ {3,4} entries).
+// SearchPending is the publish wizard's payload. The two arrays are answered by
+// two different faces and mean two different things; see
+// SearchGalgameForPublish for why they cannot be merged.
 type SearchPending struct {
-	Items   []GalgameHit `json:"items"`
-	Pending []GalgameHit `json:"pending"`
-	Total   int64        `json:"total"`
+	Items   []GalgameHit        `json:"items"`
+	Pending []GalgamePendingHit `json:"pending"`
+	Total   int64               `json:"total"`
+}
+
+// GalgamePendingHit is one of the caller's OWN unpublished submissions, as
+// surfaced by /galgame/search?include_pending=true.
+//
+// It is deliberately NOT a GalgameHit. A hit is a registry row and carries
+// `claim_state`; this is a wiki-side workflow row whose whole reason to be on
+// screen is its position in the wiki's review machine — 3 审核中 vs 4 已拒绝,
+// which the wizard prints verbatim and the catalog has no successor for
+// (`claim_state` collapses both onto `draft`). Decoding this half into
+// GalgameHit dropped `status` on the floor and the block has been labelling
+// every row 已拒绝 ever since.
+type GalgamePendingHit struct {
+	ID     int    `json:"id"`
+	VndbID string `json:"vndb_id"`
+	// Status is the wiki state machine: 3 = pending review, 4 = declined.
+	Status              int    `json:"status"`
+	NameEnUs            string `json:"name_en_us"`
+	NameZhCn            string `json:"name_zh_cn"`
+	NameJaJp            string `json:"name_ja_jp"`
+	NameZhTw            string `json:"name_zh_tw"`
+	Banner              string `json:"banner"`
+	EffectiveBannerHash string `json:"effective_banner_hash"`
 }
 
 // ─── User-facing methods (transparent JWT forwarding) ──
@@ -252,22 +275,94 @@ func (c *Client) ListMyGalgames(ctx context.Context, accessToken string, status 
 	return &env.Data, nil
 }
 
-// SearchGalgameForPublish wraps /galgame/search?include_pending=true. With a
-// non-empty access token, galgame decodes the JWT and additionally surfaces the
-// caller's own status ∈ {3,4} matches in `pending`. Anonymous calls behave
-// like the regular search.
+// publishWizardClaimStates is the population the publish wizard has to see:
+// every work a wiki entry claims, published or not. Public browse lanes want
+// `live` alone (doc 106 §37) — this is the deliberate exception, because the
+// wizard exists to prevent a second submission of something that already
+// exists, and an entry it cannot see is an entry that gets submitted twice.
+const publishWizardClaimStates = catalogClaimStateLive + "," + catalogClaimStateDraft
+
+// SearchGalgameForPublish answers the publish wizard. It is TWO upstream reads
+// and they are not interchangeable:
 //
-// DO NOT move this to the /v1 public face. It is a PLATFORM-WORKFLOW read
-// (B bucket), not a public read: the publish wizard's whole job is to surface
-// claimable VNDB drafts (status=2) and the caller's own pending submissions,
-// and /v1 exposes published works ONLY — it silently ignores `status=0,2`.
-// Open-API phase 2 wave 07 (e8927569) mis-bucketed it into the A-bucket /v1
-// migration, which hid 52k of the catalog's 63k entries from the picker: every
-// unclaimed VNDB game fell through to "没有找到匹配的条目", so users hit
-// 提交新作 and created blank duplicates of drafts that already existed
-// (prod 2026-07-24: galgame 63091/63092/63097/63098 duplicated 13555/10143/
-// 27451/9867). Scenario B of the wizard (认领并发布) only works on this face.
+//   - `items` is the catalog works search with claim_state=live,draft — the
+//     registry is the supply of record for "does this game already exist". This
+//     replaced the wiki face's status=0,2 search once the works index recalled
+//     CJK titles as well as the wiki one did (wave 158).
+//   - `pending` is the caller's OWN status ∈ {3,4} submissions, which only the
+//     wiki face can answer: the catalog has no per-user read face for that
+//     backlog (the rows all predate the claim-event log), so this half keeps
+//     its original query byte for byte.
+//
+// The one accepted difference in `items`: the catalog projects wiki status 2
+// (unclaimed VNDB draft) and status 3 (SOMEONE ELSE's submission under review)
+// onto the same `draft` state and cannot tell them apart, so the wizard now
+// shows both as claimable. Attempting the claim is what discovers the
+// difference — the wiki refuses it — and the wizard says so on screen.
+//
+// The history this replaces is worth keeping: open-API phase 2 wave 07
+// (e8927569) moved this lane onto a published-only /v1 read, which hid 52k of
+// the catalog's 63k entries from the picker. Every unclaimed VNDB game fell
+// through to "没有找到匹配的条目", users hit 提交新作, and blank duplicates of
+// existing drafts were created (prod 2026-07-24: galgame 63091/63092/63097/
+// 63098 duplicated 13555/10143/27451/9867). `claim_state` is the parameter that
+// makes this face serviceable; without it the lane must stay on the wiki.
 func (c *Client) SearchGalgameForPublish(ctx context.Context, accessToken, q string, limit int) (*SearchPending, error) {
+	items, total, err := c.searchPublishItems(ctx, q, limit)
+	if err != nil {
+		return nil, err
+	}
+	pending, err := c.searchPublishPending(ctx, accessToken, q, limit)
+	if err != nil {
+		return nil, err
+	}
+	return &SearchPending{Items: items, Pending: pending, Total: total}, nil
+}
+
+// searchPublishItems runs the registry half.
+//
+// Only the AGE gate is opened — exactly as the wiki lane had it. The wizard is
+// a dedup tool for an authenticated submitter, not a browse surface, so
+// narrowing its supply by an editorial preference would hide the very entries
+// it exists to surface.
+func (c *Client) searchPublishItems(ctx context.Context, q string, limit int) ([]GalgameHit, int64, error) {
+	params := url.Values{}
+	if q != "" {
+		params.Set("q", q)
+	}
+	if limit > 0 {
+		params.Set("limit", strconv.Itoa(limit))
+	}
+	// claimed=true is the gid requirement: an unclaimed registry row has no
+	// wiki id, and every wizard action (关联 / 认领) is keyed by one.
+	params.Set("claimed", "true")
+	params.Set("claim_state", publishWizardClaimStates)
+	params.Set("include", "names,covers,refs")
+	gateFor("").apply(params)
+
+	var data catalogWorksSearchData
+	if err := c.getV1(ctx, "/catalog/works/search", params, &data); err != nil {
+		return nil, 0, err
+	}
+	items := make([]GalgameHit, 0, len(data.Items))
+	for i := range data.Items {
+		row := &data.Items[i]
+		// A withdrawn claim must never be offered for 认领, and a row with no
+		// gid has no action at all. claimed=true should already exclude the
+		// latter; this is the same belt the other claim-bearing lanes wear.
+		if !row.ClaimedBy.renderable() || row.ClaimedBy.gid() == 0 {
+			continue
+		}
+		items = append(items, catalogItemToHit(row))
+	}
+	return items, data.Total, nil
+}
+
+// searchPublishPending runs the wiki half — the caller's own submissions. The
+// query is the pre-switchover one unchanged: the face merges the caller's hits
+// only while serving a real search, so the search parameters have to be there
+// even though we keep just the `pending` array.
+func (c *Client) searchPublishPending(ctx context.Context, accessToken, q string, limit int) ([]GalgamePendingHit, error) {
 	params := url.Values{}
 	if q != "" {
 		params.Set("q", q)
@@ -276,8 +371,6 @@ func (c *Client) SearchGalgameForPublish(ctx context.Context, accessToken, q str
 		params.Set("limit", strconv.Itoa(limit))
 	}
 	params.Set("include_pending", "true")
-	// Publish wizard surfaces published games (0) AND claimable VNDB drafts (2);
-	// without status=2 it can't find the bulk of the catalog (unclaimed drafts).
 	params.Set("status", "0,2")
 	params.Set("facets", "false")
 	params.Set("highlight", "false")
@@ -312,15 +405,12 @@ func (c *Client) SearchGalgameForPublish(ctx context.Context, accessToken, q str
 	if env.Code != 0 {
 		return nil, upstreamError(resp, env.Code, env.Message)
 	}
-	// Normalize: a nil slice marshals back to JSON `null`, which crashes
-	// frontend code doing `results.pending.length`. Guarantee `[]`.
-	if env.Data.Items == nil {
-		env.Data.Items = []GalgameHit{}
-	}
+	// A nil slice marshals back to JSON `null`, which crashes frontend code
+	// doing `results.pending.length`. Guarantee `[]`.
 	if env.Data.Pending == nil {
-		env.Data.Pending = []GalgameHit{}
+		return []GalgamePendingHit{}, nil
 	}
-	return &env.Data, nil
+	return env.Data.Pending, nil
 }
 
 // ─── Service-to-service (internal-tier X-API-Key) ──────

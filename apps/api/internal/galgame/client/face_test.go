@@ -100,10 +100,13 @@ func TestFaceSelection_WithKey(t *testing.T) {
 		}
 	})
 
-	// Platform-workflow read: the publish picker needs status=0,2 (claimable VNDB
-	// drafts) + the caller's own pending submissions, neither of which the /v1
-	// public face serves. Pinning the face here so it is never re-migrated.
-	t.Run("publish search (include_pending) → internal + key + user JWT", func(t *testing.T) {
+	// Platform-workflow read: the publish picker's PENDING half needs the
+	// caller's own status ∈ {3,4} submissions, which no /v1 face serves (the
+	// registry has no per-user view of that backlog). Pinning the face here so
+	// it is never re-migrated. The ITEMS half moved to the catalog search in
+	// wave 160 and is pinned in TestPublishWizard_ItemsComeFromTheCatalog; this
+	// recorder keeps only the LAST request, which is the wiki one.
+	t.Run("publish search pending half → internal + key + user JWT", func(t *testing.T) {
 		if _, err := c.SearchGalgameForPublish(ctx, "user-jwt", "q", 0); err != nil {
 			t.Fatalf("SearchGalgameForPublish: %v", err)
 		}
