@@ -280,12 +280,20 @@ func (c *Client) ListMyGalgames(ctx context.Context, accessToken string, status 
 // `live` alone (doc 106 §37) — this is the deliberate exception, because the
 // wizard exists to prevent a second submission of something that already
 // exists, and an entry it cannot see is an entry that gets submitted twice.
-const publishWizardClaimStates = catalogClaimStateLive + "," + catalogClaimStateDraft
+//
+// `pending` is asked for even though nothing produces it yet (see
+// catalogClaimStatePending). That ordering is the point: the registry's
+// projector splits "someone else's submission under review" out of `draft` in
+// the W1 window, and if this query only learned the word afterwards, those rows
+// would drop out of the wizard's dedup supply for the length of a deploy gap —
+// which is exactly the shape that mints duplicate submissions.
+const publishWizardClaimStates = catalogClaimStateLive + "," +
+	catalogClaimStateDraft + "," + catalogClaimStatePending
 
 // SearchGalgameForPublish answers the publish wizard. It is TWO upstream reads
 // and they are not interchangeable:
 //
-//   - `items` is the catalog works search with claim_state=live,draft — the
+//   - `items` is the catalog works search with claim_state=live,draft,pending — the
 //     registry is the supply of record for "does this game already exist". This
 //     replaced the wiki face's status=0,2 search once the works index recalled
 //     CJK titles as well as the wiki one did (wave 158).
@@ -296,9 +304,12 @@ const publishWizardClaimStates = catalogClaimStateLive + "," + catalogClaimState
 //
 // The one accepted difference in `items`: the catalog projects wiki status 2
 // (unclaimed VNDB draft) and status 3 (SOMEONE ELSE's submission under review)
-// onto the same `draft` state and cannot tell them apart, so the wizard now
-// shows both as claimable. Attempting the claim is what discovers the
-// difference — the wiki refuses it — and the wizard says so on screen.
+// onto the same `draft` state and cannot tell them apart, so the wizard shows
+// both as claimable. Attempting the claim is what discovers the difference —
+// the wiki refuses it — and the wizard says so on screen. The registry's
+// projector splits status 3 out as `pending` in the W1 window, which is why
+// that state is already in the query above and already has a badge on the page:
+// the fix arrives as rows appearing under a word both sides already speak.
 //
 // The history this replaces is worth keeping: open-API phase 2 wave 07
 // (e8927569) moved this lane onto a published-only /v1 read, which hid 52k of

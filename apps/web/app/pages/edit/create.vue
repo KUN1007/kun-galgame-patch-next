@@ -4,14 +4,15 @@
 // Implements the 4 scenarios laid out in docs/galgame_wiki/00-handbook-for-downstream.md §4:
 //   A. Hit a published work (claim_state=live) → go straight to patch creation.
 //   B. Hit an unpublished draft (claim_state=draft) → claim → patch creation.
+//      (claim_state=pending is someone else's submission: shown, not claimable.)
 //   C. Hit own pending/declined (status 3/4)   → jump to /me/submissions.
 //   D. No match                                → submit form → status=3 awaits review.
 //
 // All search calls hit our backend's /galgame/search/publish proxy. Its two
 // halves come off two different faces: `items` is the catalog registry search
-// (claim_state=live,draft) and `pending` is still the wiki's own view of the
-// caller's submissions — which is why the two arrays speak different lifecycle
-// vocabularies below.
+// (claim_state=live,draft,pending) and `pending` is still the wiki's own view of
+// the caller's submissions — which is why the two arrays speak different
+// lifecycle vocabularies below.
 
 // Write-side page (publish wizard). Not a content surface — disable SEO
 // so search engines don't index our edit forms.
@@ -67,6 +68,15 @@ const displayName = (h: GalgameName): string =>
   h.name_zh_cn || h.name_zh_tw || h.name_ja_jp || h.name_en_us || `#${h.id}`
 
 const isClaimableDraft = (h: GalgameHit): boolean => h.claim_state === 'draft'
+// `pending` is someone else's submission awaiting review. It is in the dedup
+// supply on purpose — an entry the wizard cannot see is an entry that gets
+// submitted a second time — but it is nobody's to claim, so it gets a state
+// label and no action instead of a button that the registry would refuse.
+//
+// Until the registry's projector splits it out, `draft` still covers this case
+// too and no row will ever carry `pending`; that is why the draft copy below
+// keeps its "may be someone else's" caveat rather than handing it over here.
+const isPendingReview = (h: GalgameHit): boolean => h.claim_state === 'pending'
 
 const doSearch = async () => {
   const q = searchQuery.value.trim()
@@ -411,13 +421,24 @@ const handleSubmit = async () => {
                 <p class="font-semibold">{{ displayName(hit) }}</p>
                 <p class="text-default-500 text-xs">
                   {{ hit.vndb_id || '无 VNDB ID' }}
-                  <span v-if="isClaimableDraft(hit)" class="text-warning ml-2">
+                  <span v-if="isPendingReview(hit)" class="text-warning ml-2">
+                    · 审核中（他人已提交，正在等待审核，暂时无法认领）
+                  </span>
+                  <span v-else-if="isClaimableDraft(hit)" class="text-warning ml-2">
                     · 未发布草稿（认领后即发布，若为他人审核中的投稿则无法认领）
                   </span>
                 </p>
               </div>
               <KunButton
-                v-if="isClaimableDraft(hit)"
+                v-if="isPendingReview(hit)"
+                variant="bordered"
+                size="sm"
+                :disabled="true"
+              >
+                审核中
+              </KunButton>
+              <KunButton
+                v-else-if="isClaimableDraft(hit)"
                 color="warning"
                 size="sm"
                 :loading="claimingFor === hit.id"

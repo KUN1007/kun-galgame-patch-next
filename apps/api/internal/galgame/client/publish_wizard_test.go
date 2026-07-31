@@ -3,10 +3,12 @@ package client
 // The publish wizard is moyu's only defence against a user minting a duplicate
 // entry in the shared registry, so both of its halves are pinned here.
 //
-// The ITEMS half must reach the catalog search with claim_state=live,draft.
-// Narrowing it to `live` hides every unpublished draft, which is exactly the
-// 2026-07-24 failure: 52k of 63k entries invisible, users hitting 提交新作 and
-// creating blank duplicates of drafts that already existed.
+// The ITEMS half must reach the catalog search with claim_state=live,draft,
+// pending. Narrowing it to `live` hides every unpublished draft, which is
+// exactly the 2026-07-24 failure: 52k of 63k entries invisible, users hitting
+// 提交新作 and creating blank duplicates of drafts that already existed.
+// `pending` is in the list before anything produces it, so that the projector
+// step which starts minting it cannot open the same hole for a deploy's width.
 //
 // The PENDING half must stay on the wiki face and must keep the wiki `status`
 // int, which is the only thing that tells 审核中 from 已拒绝.
@@ -74,8 +76,10 @@ func TestPublishWizard_ItemsComeFromTheCatalog(t *testing.T) {
 	rec := &wizardRecorder{}
 	out := rec.search(t)
 
-	if got := rec.catalogQ.Get("claim_state"); got != "live,draft" {
-		t.Errorf("claim_state = %q, want live,draft — `live` alone hides every claimable draft", got)
+	if got := rec.catalogQ.Get("claim_state"); got != "live,draft,pending" {
+		t.Errorf("claim_state = %q, want live,draft,pending — `live` alone hides every "+
+			"claimable draft, and dropping `pending` would hide every entry already "+
+			"under review the moment the registry starts telling them apart", got)
 	}
 	if got := rec.catalogQ.Get("claimed"); got != "true" {
 		t.Errorf("claimed = %q, want true — an unclaimed row has no gid to act on", got)

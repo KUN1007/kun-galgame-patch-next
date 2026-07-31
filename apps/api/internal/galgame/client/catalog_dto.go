@@ -39,6 +39,15 @@ const (
 	catalogClaimStateLive   = "live"
 	catalogClaimStateDraft  = "draft"
 	catalogClaimStateHidden = "hidden"
+	// catalogClaimStatePending — submitted, awaiting a curator's decision. It
+	// has been in the registry's public vocabulary since the claim lifecycle
+	// nativized, but NOTHING produces it yet for wiki-claimed rows: the wiki
+	// projector still folds both "unclaimed VNDB draft" and "someone else's
+	// submission under review" onto `draft`. Fixing that projector is an infra
+	// step in the W1 window, and asking for this state before then is a
+	// deliberate no-op — the downstream query has to be able to receive the
+	// rows before the step that mints them lands, not after.
+	catalogClaimStatePending = "pending"
 )
 
 // catalogClaimSiteKungal is the claim pointer's `site` value for the product
