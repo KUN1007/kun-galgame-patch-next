@@ -184,17 +184,6 @@ func TestFaceSelection_WithKey(t *testing.T) {
 		}
 	})
 
-	t.Run("messages feed → internal + key (S2S cron)", func(t *testing.T) {
-		if _, err := c.GetGalgameMessageFeed(ctx, 0, 10); err != nil {
-			t.Fatalf("GetGalgameMessageFeed: %v", err)
-		}
-		if rec.path != "/internal/galgame/messages/feed" {
-			t.Errorf("path = %q, want /internal/galgame/messages/feed", rec.path)
-		}
-		if rec.apiKey != "nm_test_key" {
-			t.Errorf("X-API-Key = %q, want nm_test_key on internal feed face", rec.apiKey)
-		}
-	})
 }
 
 // TestV1ReadRouting proves every A-bucket read routes to the {base}/v1 face with
@@ -842,22 +831,5 @@ func TestRetiredTaxonomyListsAreUnhandled(t *testing.T) {
 		if rec.path != "" {
 			t.Errorf("TaxonomyBrowse(%q) dialed %q; a retired lane must not reach any face", p, rec.path)
 		}
-	}
-}
-
-// TestMessageFeedRequiresKey proves the S2S message feed hard-depends on the
-// internal-tier key: with no key configured it errors before dialing rather
-// than silently falling back (the rollback valve was retired in wave 05).
-func TestMessageFeedRequiresKey(t *testing.T) {
-	rec := &faceRecorder{}
-	srv := rec.server(t)
-	c := NewWithKey(srv.URL, "") // no API key
-	ctx := context.Background()
-
-	if _, err := c.GetGalgameMessageFeed(ctx, 0, 10); err == nil {
-		t.Fatal("GetGalgameMessageFeed with empty key: want error, got nil")
-	}
-	if rec.path != "" {
-		t.Errorf("recorder path = %q, want empty (must not dial without a key)", rec.path)
 	}
 }

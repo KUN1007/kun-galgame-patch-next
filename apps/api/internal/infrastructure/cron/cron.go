@@ -7,6 +7,7 @@ import (
 	"time"
 
 	galgameClient "kun-galgame-patch-api/internal/galgame/client"
+	"kun-galgame-patch-api/pkg/catalogclient"
 	"kun-galgame-patch-api/pkg/imageclient"
 	"kun-galgame-patch-api/pkg/moemoepoint"
 
@@ -18,11 +19,18 @@ import (
 //
 // Job list:
 //  1. Daily 00:00: reset daily_image_count / daily_check_in / daily_upload_size on the user table
-//  2. Every 10 minutes: pull the galgame message feed, apply approved/declined/banned/unbanned events
-//     (idempotent via wiki_message_processed; awards +3 moemoepoint on approved)
+//  2. Every 10 minutes: pull the catalog claim-event feed, apply the four review
+//     verdicts (idempotent via claim_event_processed; awards +3 moemoepoint on
+//     an approval)
 //  3. Daily 04:00: ref-ping image_service for every hash moyu still references
 //     (doc banners + content /image/<hash> tokens) so its GC doesn't reclaim them
-func Start(db *gorm.DB, galgame *galgameClient.Client, mp *moemoepoint.Client, img *imageclient.Client) func() {
+func Start(
+	db *gorm.DB,
+	galgame *galgameClient.Client,
+	catalog *catalogclient.Client,
+	mp *moemoepoint.Client,
+	img *imageclient.Client,
+) func() {
 	// Pin the schedule to Asia/Shanghai so the daily 00:00 reset fires at the
 	// intended civil midnight regardless of host TZ (audit F085). The check-in
 	// idempotency key's date (user/service) is pinned to the same zone so the
@@ -52,23 +60,25 @@ func Start(db *gorm.DB, galgame *galgameClient.Client, mp *moemoepoint.Client, i
 		slog.Error("注册每日重置任务失败", "error", err)
 	}
 
-	// ── Every 10 minutes: sync the galgame message feed ─────────
-	// Only registered when the galgame client is configured; tests / cmd helpers
-	// that build the app without one (e.g. cmd/remap-patch-ids) won't run this.
-	if galgame != nil {
-		if _, err := c.AddFunc(galgameSyncSchedule, func() {
+	// ── Every 10 minutes: sync the catalog claim-event feed ─────
+	// Only registered when the catalog S2S client is configured; tests / cmd
+	// helpers that build the app without one won't run this. On the FIRST run
+	// after deploy the expected log line is "已初始化游标 (不回填历史)" — the
+	// cursor seeds at the feed head rather than replaying the re-site backfill.
+	if catalog != nil && catalog.Configured() {
+		if _, err := c.AddFunc(claimSyncSchedule, func() {
 			ctx, cancel := context.WithTimeout(context.Background(), 2*time.Minute)
 			defer cancel()
-			applied, cursor, err := RunGalgameMessageSync(ctx, db, galgame, mp)
+			applied, cursor, err := RunClaimEventSync(ctx, db, catalog, galgame, mp)
 			if err != nil {
-				slog.Error("galgame 消息同步失败", "error", err, "applied", applied, "cursor", cursor)
+				slog.Error("catalog claim 同步失败", "error", err, "applied", applied, "cursor", cursor)
 				return
 			}
 			if applied > 0 {
-				slog.Info("galgame 消息同步完成", "applied", applied, "cursor", cursor)
+				slog.Info("catalog claim 同步完成", "applied", applied, "cursor", cursor)
 			}
 		}); err != nil {
-			slog.Error("注册 galgame 消息同步任务失败", "error", err)
+			slog.Error("注册 catalog claim 同步任务失败", "error", err)
 		}
 	}
 

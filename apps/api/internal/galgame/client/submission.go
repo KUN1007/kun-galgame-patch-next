@@ -5,15 +5,18 @@ package client
 // client.go is purely organizational — all methods belong to *Client.
 //
 // Two auth modes are at play:
-//   - User-facing methods (Submit / Claim / PatchDraft / DeleteDraft / ListMine /
-//     SearchWithPending / MyMessages) transparently forward the user's OAuth
-//     access_token. galgame decodes the JWT itself; this site never re-decides
-//     identity. Since open-API phase 2 wave 06a the write members (Submit /
-//     Claim / PatchDraft / DeleteDraft) also ride the internal face and so carry
-//     the internal-tier X-API-Key alongside the Bearer (dual credential) — see
-//     writeTarget in client.go.
-//   - Server-to-server (MessageFeed) uses the internal-tier X-API-Key on the
-//     internal face — the same key every other read carries.
+// Every method here forwards the user's OAuth access_token transparently:
+// galgame decodes the JWT itself and this site never re-decides identity. Since
+// open-API phase 2 wave 06a the write members (Submit / Claim / PatchDraft /
+// DeleteDraft) also ride the internal face and so carry the internal-tier
+// X-API-Key alongside the Bearer (dual credential) — see writeTarget in
+// client.go.
+//
+// The S2S half is gone: the cron's message feed retired with the wiki's
+// `galgame_message` table in wave 161 (N5), replaced by the registry's
+// claim-event feed on a different client entirely (pkg/catalogclient — Basic
+// auth, not an X-API-Key, because the catalog resolves the caller's site
+// binding from its OAuth client).
 
 import (
 	"bytes"
@@ -80,32 +83,6 @@ type MineItem struct {
 	Created             string `json:"created"`
 	Updated             string `json:"updated"`
 	DeclineReason       string `json:"decline_reason,omitempty"`
-}
-
-// MessageGalgame is the embedded galgame brief on a galgame message. It may
-// be nil if the galgame was hard-deleted between event emission and read.
-type MessageGalgame struct {
-	ID                  int    `json:"id"`
-	NameEnUs            string `json:"name_en_us"`
-	NameJaJp            string `json:"name_ja_jp"`
-	NameZhCn            string `json:"name_zh_cn"`
-	NameZhTw            string `json:"name_zh_tw"`
-	Banner              string `json:"banner"`
-	EffectiveBannerHash string `json:"effective_banner_hash"`
-	Status              int    `json:"status"`
-	UserID              int    `json:"user_id"`
-}
-
-// GalgameMessage is one entry from /galgame/messages/mine or /galgame/messages/feed.
-type GalgameMessage struct {
-	ID           int64           `json:"id"`
-	Type         string          `json:"type"`
-	GalgameID    int             `json:"galgame_id"`
-	Galgame      *MessageGalgame `json:"galgame,omitempty"`
-	ActorUserID  *int            `json:"actor_user_id,omitempty"`
-	TargetUserID *int            `json:"target_user_id,omitempty"`
-	Payload      json.RawMessage `json:"payload,omitempty"`
-	CreatedAt    string          `json:"created_at"`
 }
 
 // SearchPending is the publish wizard's payload. The two arrays are answered by
@@ -422,58 +399,6 @@ func (c *Client) searchPublishPending(ctx context.Context, accessToken, q string
 		return []GalgamePendingHit{}, nil
 	}
 	return env.Data.Pending, nil
-}
-
-// ─── Service-to-service (internal-tier X-API-Key) ──────
-
-// GalgameMessageFeedResult is the decoded `data` payload of /galgame/messages/feed.
-type GalgameMessageFeedResult struct {
-	Items   []GalgameMessage `json:"items"`
-	HasMore bool             `json:"has_more"`
-}
-
-// GetGalgameMessageFeed proxies GET /galgame/messages/feed for the cron job.
-// Authenticated via the internal-tier X-API-Key on the internal read face — the
-// same key every other read carries (the legacy /api Basic-Auth feed retired in
-// open-API phase 2 wave 05).
-func (c *Client) GetGalgameMessageFeed(ctx context.Context, sinceID int64, limit int) (*GalgameMessageFeedResult, error) {
-	if c.apiKey == "" {
-		return nil, fmt.Errorf("galgame message feed: internal-tier API key not configured (KUN_NEXTMOE_API_KEY)")
-	}
-	q := url.Values{}
-	if sinceID > 0 {
-		q.Set("since_id", strconv.FormatInt(sinceID, 10))
-	}
-	if limit > 0 {
-		q.Set("limit", strconv.Itoa(limit))
-	}
-	u := c.internalBase + "/galgame/messages/feed"
-	if len(q) > 0 {
-		u += "?" + q.Encode()
-	}
-	req, err := http.NewRequestWithContext(ctx, http.MethodGet, u, nil)
-	if err != nil {
-		return nil, fmt.Errorf("build galgame /messages/feed: %w", err)
-	}
-	req.Header.Set("X-API-Key", c.apiKey)
-
-	resp, err := c.http.Do(req)
-	if err != nil {
-		return nil, fmt.Errorf("galgame /messages/feed: %w", err)
-	}
-	defer resp.Body.Close()
-	raw, err := io.ReadAll(resp.Body)
-	if err != nil {
-		return nil, fmt.Errorf("read galgame response: %w", err)
-	}
-	var env galgameResponse[GalgameMessageFeedResult]
-	if err := json.Unmarshal(raw, &env); err != nil {
-		return nil, fmt.Errorf("decode galgame envelope: %w (body=%s)", err, truncate(string(raw), 200))
-	}
-	if env.Code != 0 {
-		return nil, upstreamError(resp, env.Code, env.Message)
-	}
-	return &env.Data, nil
 }
 
 // ─── shared write helpers ──────────────────────────────
