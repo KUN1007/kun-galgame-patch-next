@@ -265,7 +265,7 @@ func New(cfg *config.Config) *App {
 	// after imgCli so the Hikari partner API can resolve avatar hashes to
 	// absolute CDN URLs for third-party consumers.
 	commonHdl := common.NewHandler(db, galgame, usrCli, artCli, imgCli)
-	uploadHdl := uploadPkg.NewHandler(uploadSvc, imgCli, galgame)
+	uploadHdl := uploadPkg.NewHandler(uploadSvc, imgCli)
 
 	// Resolve domain-agnostic content image tokens (/image/<hash>) embedded in
 	// user markdown to image_service CDN URLs at render time — the "fast path"

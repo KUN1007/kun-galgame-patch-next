@@ -184,21 +184,6 @@ func TestFaceSelection_WithKey(t *testing.T) {
 		}
 	})
 
-	t.Run("image upload proxy → internal + key + JWT", func(t *testing.T) {
-		if _, err := c.UploadGalgameImage(ctx, "user-jwt", "galgame_cover", "f.png", []byte("x"), "image/png"); err != nil {
-			t.Fatalf("UploadGalgameImage: %v", err)
-		}
-		if rec.path != "/internal/galgame/image" {
-			t.Errorf("path = %q, want /internal/galgame/image", rec.path)
-		}
-		if rec.apiKey != "nm_test_key" {
-			t.Errorf("X-API-Key = %q, want nm_test_key", rec.apiKey)
-		}
-		if rec.auth != "Bearer user-jwt" {
-			t.Errorf("Authorization = %q, want Bearer user-jwt", rec.auth)
-		}
-	})
-
 	t.Run("messages feed → internal + key (S2S cron)", func(t *testing.T) {
 		if _, err := c.GetGalgameMessageFeed(ctx, 0, 10); err != nil {
 			t.Fatalf("GetGalgameMessageFeed: %v", err)

@@ -1,12 +1,10 @@
 package upload
 
 import (
-	"encoding/json"
 	stderrors "errors"
 	"io"
 
 	"kun-galgame-patch-api/internal/constants"
-	galgameclient "kun-galgame-patch-api/internal/galgame/client"
 	"kun-galgame-patch-api/internal/middleware"
 	"kun-galgame-patch-api/pkg/errors"
 	"kun-galgame-patch-api/pkg/imageclient"
@@ -21,14 +19,11 @@ type Handler struct {
 	svc *Service
 	// img uploads moyu's OWN content images (preset=topic) under site=moyu.
 	img *imageclient.Client // image_service SDK (W2 / PR3b)
-	// galgame proxies galgame cover/screenshot uploads to the galgame's
-	// POST /galgame/image so they're owned by site=galgame_wiki, not site=moyu.
-	galgame *galgameclient.Client
 }
 
-// NewHandler constructs a Handler. img/galgame may be nil in tests.
-func NewHandler(svc *Service, img *imageclient.Client, galgame *galgameclient.Client) *Handler {
-	return &Handler{svc: svc, img: img, galgame: galgame}
+// NewHandler constructs a Handler. img may be nil in tests.
+func NewHandler(svc *Service, img *imageclient.Client) *Handler {
+	return &Handler{svc: svc, img: img}
 }
 
 // uploadTier resolves the caller's per-role upload allowance from the OAuth
@@ -99,20 +94,24 @@ func (h *Handler) Resume(c fiber.Ctx) error {
 // UploadImageService POST /api/upload/image-service
 //
 // Proxies a multipart image upload to the centralized image_service
-// (kun-galgame-infra :9278) and returns the content hash + variant URLs. Used
-// by the galgame screenshot editor (galgame PR5: screenshots must reference
-// image_service by hash, and galgame itself accepts no multipart for them).
-// Covers can also flow through this if the client wants to add a non-pinned
-// cover; pinned-banner uploads still go through PUT /galgame/:gid multipart
-// where galgame auto-promotes the hash to covers[sort_order=0].
+// (kun-galgame-infra :9278) and returns the content hash + variant URLs. Every
+// byte it stores is moyu's own (site=moyu): the editor-inline and admin-doc
+// images.
 //
 // Body: multipart/form-data with required `file` (image binary) and `preset`
 // form field. moyu forwards the preset VERBATIM — image_service owns the
 // allowlist (`image_allowed_presets` per OAuth client) and rejects anything not
-// enabled, so there is intentionally no preset allowlist here. moyu's callers
-// send `galgame_screenshot` (galgame screenshots) and `topic` (editor-inline /
-// admin doc images). (Banners use the multipart PUT /galgame/:gid galgame flow;
-// avatars use OAuth's /auth/me/avatar — neither hits this endpoint.)
+// enabled, so there is intentionally no preset allowlist here. moyu's only
+// caller sends `topic` (editor-inline / admin doc images); avatars use OAuth's
+// /auth/me/avatar and never reach this endpoint.
+//
+// Wave 161 (N5) removed the second lane. `galgame_banner` / `galgame_screenshot`
+// used to be proxied to the wiki's POST /galgame/image so the bytes were owned
+// by site=galgame_wiki rather than site=moyu, but a census found ZERO senders on
+// the moyu frontend — the wiki editing surface it existed for became an external
+// navigate to kungal several waves ago. The lane went with the wiki write face
+// it called; the site=galgame_wiki image key it used is untouched here and stays
+// the wiki's own.
 //
 // 10MB body cap is inherited from the Fiber app config; image_service itself
 // enforces per-preset size + per-client daily quota.
@@ -138,57 +137,12 @@ func (h *Handler) UploadImageService(c fiber.Ctx) error {
 	defer f.Close()
 	mime := fh.Header.Get("Content-Type")
 
-	// Galgame images (covers/screenshots) are WIKI-owned: proxy them to the
-	// galgame's canonical POST /galgame/image (uploaded under site=galgame_wiki),
-	// forwarding the user's Bearer — moyu no longer uploads galgame images
-	// under its own site=moyu. Other presets (topic = moyu's own content
-	// images) keep using moyu's local image_service client.
-	if preset == "galgame_banner" || preset == "galgame_screenshot" {
-		if h.galgame == nil {
-			return response.Error(c, errors.ErrInternal("资料库客户端未配置"))
-		}
-		fileBytes, rerr := io.ReadAll(f)
-		if rerr != nil {
-			return response.Error(c, errors.ErrBadRequest("读取上传文件失败"))
-		}
-		data, werr := h.galgame.UploadGalgameImage(
-			c.Context(), middleware.GetAccessToken(c), preset, fh.Filename, fileBytes, mime,
-		)
-		if werr != nil {
-			// Forward the galgame/image_service business code + message; map the
-			// common ones to sensible HTTP statuses (matches the local path).
-			var we *galgameclient.GalgameError
-			if stderrors.As(werr, &we) {
-				switch we.Code {
-				case 80008:
-					return response.Error(c, errors.New(80008, we.Message, fiber.StatusTooManyRequests))
-				case 60002:
-					return response.Error(c, errors.New(60002, we.Message, fiber.StatusUnprocessableEntity))
-				default:
-					return response.Error(c, errors.New(we.Code, we.Message, fiber.StatusBadRequest))
-				}
-			}
-			return response.Error(c, errors.ErrInternal("资料库图片上传失败: "+werr.Error()))
-		}
-		// galgame returns image_service's UploadResult, identical shape to moyu's
-		// imageclient.UploadResult — re-marshal into it so the FE sees the same
-		// response as the local path.
-		var result imageclient.UploadResult
-		if jerr := json.Unmarshal(data, &result); jerr != nil {
-			return response.Error(c, errors.ErrInternal("解析资料库上传响应失败"))
-		}
-		return response.OK(c, result)
-	}
-
-	// Non-galgame presets (topic, ...) → moyu's own image_service client.
 	if h.img == nil {
 		return response.Error(c, errors.ErrInternal("image_service 客户端未配置"))
 	}
 
 	// Per-USER daily cap: image_service enforces only a per-SITE quota, so moyu
-	// applies its own per-user fair-use limit here (aligned with kungal). Only
-	// moyu-owned content images (this branch) count — the galgame-proxied galgame
-	// images above do not.
+	// applies its own per-user fair-use limit here (aligned with kungal).
 	if qErr := h.svc.CheckDailyImageQuota(user.ID); qErr != nil {
 		if stderrors.Is(qErr, errDailyImageLimit) {
 			return response.Error(c, errors.New(80008, qErr.Error(), fiber.StatusTooManyRequests))

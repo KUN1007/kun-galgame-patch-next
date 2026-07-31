@@ -107,10 +107,10 @@ type UploadResult struct {
 //
 //   - body / filename / mime describe the file (mime may be "" — the server
 //     sniffs by magic number anyway).
-//   - preset must be one of the presets enabled for our client (e.g. "topic"
-//     for free-form gallery / editor-inline images, "galgame_screenshot" for
-//     galgame screenshots; "galgame_banner"/"avatar" exist but moyu uploads
-//     those via other paths — see UploadImageService handler doc).
+//   - preset must be one of the presets enabled for our client. moyu sends
+//     "topic" (free-form gallery / editor-inline images) and nothing else;
+//     "avatar" exists but goes through OAuth's own path, and the two galgame
+//     presets left with the wiki upload lane in wave 161.
 //
 // On non-2xx the response body's error code is mapped to one of the sentinels
 // where it makes sense, or wrapped with the raw status for unrecognized codes.

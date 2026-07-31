@@ -10,15 +10,12 @@
 package client
 
 import (
-	"bytes"
 	"context"
 	"encoding/json"
 	"errors"
 	"fmt"
 	"io"
-	"mime/multipart"
 	"net/http"
-	"net/textproto"
 	"net/url"
 	"strconv"
 	"strings"
@@ -156,8 +153,8 @@ func upstreamError(resp *http.Response, code int, message string) *GalgameError 
 //     mine, /galgame/messages/mine), the publish picker's status=0,2 +
 //     include_pending search, the user-stats read, the S2S cron message feed,
 //     the taxonomy revision-history reads, AND (since wave 06a) the user
-//     write set — galgame submit / draft update+delete / claim / image upload /
-//     links+aliases relation edits. Personalized reads and user writes carry
+//     write set — galgame submit / draft update+delete / claim. Personalized
+//     reads and user writes carry
 //     dual credentials (X-API-Key = client identity; Authorization: Bearer =
 //     user identity, which the catalog's jwtAuth validates itself).
 //
@@ -251,17 +248,16 @@ func (c *Client) writeTarget(path string) (base, apiKey string) {
 // isUserWritePath reports whether a galgame path (no face prefix; a trailing
 // query string is allowed) is a member of the user write set that moved to the
 // internal face in open-API phase 2 wave 06a: galgame submit, draft
-// update/patch/delete, claim, and cover/screenshot image upload. The
-// links/aliases relation edits used to be members too; they were retired in
-// wave 159 (N4) as UI-less. /admin/* writes are NOT members — they stay on the
+// update/patch/delete, claim. Two former members are gone: the links/aliases
+// relation edits (wave 159, UI-less) and the cover/screenshot image upload
+// (wave 161, zero senders). /admin/* writes are NOT members — they stay on the
 // legacy /api face.
 func isUserWritePath(path string) bool {
 	// Membership is by path only; drop any query string.
 	if i := strings.IndexByte(path, '?'); i >= 0 {
 		path = path[:i]
 	}
-	switch path {
-	case "/galgame/submit", "/galgame/image":
+	if path == "/galgame/submit" {
 		return true
 	}
 	rest, ok := strings.CutPrefix(path, "/galgame/")
@@ -1148,77 +1144,6 @@ func (c *Client) GetGalgameMeta(ctx context.Context, gids []int) ([]GalgameMeta,
 // (the same one we already keep in the Redis session). The galgame service
 // validates the JWT, extracts the userID, and enforces creator/admin rules
 // itself — the patch backend does not need to re-implement authorization.
-
-// UploadGalgameImage proxies a galgame cover/screenshot upload to the galgame's
-// canonical POST /galgame/image (multipart {preset, file}), forwarding the
-// user's OAuth access_token as Bearer. The galgame uploads under its OWN image
-// client (site=galgame_wiki), so all galgame image bytes are owned by the galgame
-// — moyu no longer uploads galgame images under its own site=moyu (which the
-// site-scoped galgame reference-ping can't keep alive). Returns galgame's raw
-// `data` (image_service UploadResult) on success, *GalgameError on a non-zero
-// envelope code.
-func (c *Client) UploadGalgameImage(
-	ctx context.Context,
-	accessToken string,
-	preset, fileName string,
-	fileContent []byte,
-	fileMime string,
-) (json.RawMessage, error) {
-	var buf bytes.Buffer
-	w := multipart.NewWriter(&buf)
-	if err := w.WriteField("preset", preset); err != nil {
-		return nil, fmt.Errorf("write preset field: %w", err)
-	}
-	h := make(textproto.MIMEHeader)
-	h.Set("Content-Disposition",
-		fmt.Sprintf(`form-data; name="file"; filename=%q`, fileName))
-	if fileMime != "" {
-		h.Set("Content-Type", fileMime)
-	}
-	fw, err := w.CreatePart(h)
-	if err != nil {
-		return nil, fmt.Errorf("create file part: %w", err)
-	}
-	if _, err := fw.Write(fileContent); err != nil {
-		return nil, fmt.Errorf("write file part: %w", err)
-	}
-	if err := w.Close(); err != nil {
-		return nil, fmt.Errorf("close multipart writer: %w", err)
-	}
-
-	base, apiKey := c.writeTarget("/galgame/image")
-	req, err := http.NewRequestWithContext(ctx, http.MethodPost, base+"/galgame/image", &buf)
-	if err != nil {
-		return nil, fmt.Errorf("build galgame upload request: %w", err)
-	}
-	if accessToken != "" {
-		req.Header.Set("Authorization", "Bearer "+accessToken)
-	}
-	if apiKey != "" {
-		req.Header.Set("X-API-Key", apiKey)
-	}
-	req.Header.Set("Content-Type", w.FormDataContentType())
-	req.Header.Set("Accept", "application/json")
-
-	resp, err := c.http.Do(req)
-	if err != nil {
-		return nil, fmt.Errorf("galgame POST galgame image: %w", err)
-	}
-	defer resp.Body.Close()
-
-	raw, err := io.ReadAll(resp.Body)
-	if err != nil {
-		return nil, fmt.Errorf("read galgame response: %w", err)
-	}
-	var env galgameResponse[json.RawMessage]
-	if err := json.Unmarshal(raw, &env); err != nil {
-		return nil, fmt.Errorf("decode galgame envelope: %w (body=%s)", err, truncate(string(raw), 200))
-	}
-	if env.Code != 0 {
-		return nil, upstreamError(resp, env.Code, env.Message)
-	}
-	return env.Data, nil
-}
 
 // ─── helpers ─────────────────────────────────────────
 
