@@ -79,6 +79,34 @@ func catalogAbsent(status int, err error) bool {
 // deprecated batch face) — so this is a chunking size, not a hope.
 const catalogLookupBatchMax = 100
 
+// anchorSourceKeys are the catalog_source KEYS of the provenance every gid-
+// bridged external_ref anchor is filed under, and therefore the only handle the
+// gid -> work id bridge has. That source is being RENAMED from `galgame_wiki`
+// to `curated` in the W1 window; its id does not move, only its key.
+//
+// A list rather than a constant so the rename needs no coordinated moyu deploy.
+// A one-value constant would have to flip in the same deploy as the infra
+// rename, and between the two deploys every gid would resolve to nothing —
+// which presents as "every galgame page 404s", not as anything a reader would
+// trace back to a renamed label. Asking for both keys costs one extra lookup
+// item per gid and is correct on either side of the rename, in either order.
+//
+// Post-rename order: once the rename has soaked the first key answers and the
+// singular lookups are one call again. The legacy key is the only temporary
+// entry; the tests in catalog_rename_test.go fail first when it is removed.
+//
+// NOT the claim SITE (catalogClaimSiteKungal): the two happened to spell
+// `galgame_wiki` alike and stop doing so in two different window steps.
+var anchorSourceKeys = []string{"curated", "galgame_wiki"}
+
+// gidLookupStride is how many gids fit in one batch-lookup page. Each gid costs
+// one item PER source key, so the wire's item ceiling has to be divided by the
+// number of keys in flight — otherwise the extra spelling silently pushes the
+// page over catalogLookupBatchMax and the catalog answers 400.
+func gidLookupStride() int {
+	return max(catalogLookupBatchMax/len(anchorSourceKeys), 1)
+}
+
 // CatalogWorksIDsMax is the `ids=` ceiling on GET /v1/catalog/works. Same
 // value, same posture: 400 on excess, never a short answer that reads as
 // "those works do not exist".
@@ -276,15 +304,23 @@ func (c *Client) resolveGIDs(ctx context.Context, gids []int) (map[int]int64, er
 		}
 		missing = append(missing, gid)
 	}
-	for start := 0; start < len(missing); start += catalogLookupBatchMax {
-		end := min(start+catalogLookupBatchMax, len(missing))
+	stride := gidLookupStride()
+	for start := 0; start < len(missing); start += stride {
+		end := min(start+stride, len(missing))
 		chunk := missing[start:end]
 
-		body := catalogLookupBatchRequest{Items: make([]catalogLookupPair, 0, len(chunk))}
+		body := catalogLookupBatchRequest{
+			Items: make([]catalogLookupPair, 0, len(chunk)*len(anchorSourceKeys)),
+		}
 		for _, gid := range chunk {
-			body.Items = append(body.Items, catalogLookupPair{
-				Source: catalogSiteGalgameWiki, ExternalID: strconv.Itoa(gid),
-			})
+			// A gid comes back once per source key. Both name the SAME registry
+			// source, so both name the same identity; outside the rename only
+			// one of them resolves at all.
+			for _, source := range anchorSourceKeys {
+				body.Items = append(body.Items, catalogLookupPair{
+					Source: source, ExternalID: strconv.Itoa(gid),
+				})
+			}
 		}
 		raw, err := c.postV1(ctx, "/catalog/lookup/batch?nsfw=1", body)
 		if err != nil {
@@ -320,16 +356,21 @@ func (c *Client) resolveGIDs(ctx context.Context, gids []int) (map[int]int64, er
 // but costs a second round-trip per chunk to compute.
 func (c *Client) ClaimStates(ctx context.Context, gids []int) (map[int]string, error) {
 	out := make(map[int]string, len(gids))
-	for start := 0; start < len(gids); start += catalogLookupBatchMax {
-		end := min(start+catalogLookupBatchMax, len(gids))
-		body := catalogLookupBatchRequest{Items: make([]catalogLookupPair, 0, end-start)}
+	stride := gidLookupStride()
+	for start := 0; start < len(gids); start += stride {
+		end := min(start+stride, len(gids))
+		body := catalogLookupBatchRequest{
+			Items: make([]catalogLookupPair, 0, (end-start)*len(anchorSourceKeys)),
+		}
 		for _, gid := range gids[start:end] {
 			if gid <= 0 {
 				continue
 			}
-			body.Items = append(body.Items, catalogLookupPair{
-				Source: catalogSiteGalgameWiki, ExternalID: strconv.Itoa(gid),
-			})
+			for _, source := range anchorSourceKeys {
+				body.Items = append(body.Items, catalogLookupPair{
+					Source: source, ExternalID: strconv.Itoa(gid),
+				})
+			}
 		}
 		if len(body.Items) == 0 {
 			continue
@@ -364,8 +405,20 @@ func (c *Client) resolveGID(ctx context.Context, gid int) (catalogID int64, foun
 	if id, ok := c.gids.get(gid); ok {
 		return id, true, nil
 	}
+	// The singular lookup takes ONE source, so the rename is walked key by key
+	// rather than asked for in one shot (post-rename order first).
+	for _, source := range anchorSourceKeys {
+		id, found, err := c.resolveGIDBySource(ctx, source, gid)
+		if err != nil || found {
+			return id, found, err
+		}
+	}
+	return 0, false, nil
+}
+
+func (c *Client) resolveGIDBySource(ctx context.Context, source string, gid int) (int64, bool, error) {
 	q := url.Values{}
-	q.Set("source", catalogSiteGalgameWiki)
+	q.Set("source", source)
 	q.Set("external_id", strconv.Itoa(gid))
 	q.Set("nsfw", "1")
 
@@ -399,9 +452,20 @@ func (c *Client) ResolveWikiLabel(ctx context.Context, oid int) (int64, bool, er
 	if oid <= 0 {
 		return 0, false, nil
 	}
+	// Same key-by-key walk as resolveGID: one source per call, post-rename first.
+	for _, source := range anchorSourceKeys {
+		id, found, err := c.resolveWikiLabelBySource(ctx, source, oid)
+		if err != nil || found {
+			return id, found, err
+		}
+	}
+	return 0, false, nil
+}
+
+func (c *Client) resolveWikiLabelBySource(ctx context.Context, source string, oid int) (int64, bool, error) {
 	q := url.Values{}
 	q.Set("type", "label")
-	q.Set("source", catalogSiteGalgameWiki)
+	q.Set("source", source)
 	q.Set("external_id", strconv.Itoa(oid))
 	q.Set("nsfw", "1")
 

@@ -116,7 +116,7 @@ func contentAxisOf(claim *catalogClaimedBy, rating string) (contentLimit, ageLim
 	if rating == "r18" {
 		ageLimit = "r18"
 	}
-	if claim != nil && claim.Site == catalogSiteGalgameWiki {
+	if claim != nil && isGIDClaimSite(claim.Site) {
 		switch claim.ContentLimit {
 		case "sfw", "nsfw":
 			return claim.ContentLimit, ageLimit
@@ -233,7 +233,7 @@ func coverOf(it *catalogWorkListItem) (hash string, width, height int, thumbhash
 // claim at all (the "not on the forum" case, which the full-catalog population
 // lanes render as their own card).
 func claimStateOf(c *catalogClaimedBy) string {
-	if c == nil || c.Site != catalogSiteGalgameWiki {
+	if c == nil || !isGIDClaimSite(c.Site) {
 		return ""
 	}
 	return c.State

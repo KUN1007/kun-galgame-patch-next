@@ -41,10 +41,38 @@ const (
 	catalogClaimStateHidden = "hidden"
 )
 
-// catalogSiteGalgameWiki is the claim pointer's `site` value for the
-// galgame-wiki product face — the ONE site whose claimed_by.work_id is a wiki
-// gid (what this client's callers mean by "galgame id").
-const catalogSiteGalgameWiki = "galgame_wiki"
+// catalogClaimSiteKungal is the claim pointer's `site` value for the product
+// face that owns the gid key space — the ONE site whose claimed_by.work_id is
+// a wiki gid (what this client's callers mean by "galgame id"). moyu is NOT
+// that site: it borrows the same key space (patch.id IS the gid), it does not
+// mint it.
+//
+// The value is `kungal` because the W1 window's re-site step rewrites
+// catalog_work.site from `galgame_wiki` to `kungal`. It is NOT the external_ref
+// source key (see anchorSourceKeys in catalog_resolve.go), even though the two
+// spelled `galgame_wiki` alike for as long as the wiki was both the claiming
+// product and the provenance of the bridged rows. They stop agreeing in the
+// window, in two DIFFERENT deploy steps, which is why one constant cannot
+// describe both.
+const catalogClaimSiteKungal = "kungal"
+
+// catalogClaimSiteLegacy is what `claimed_by.site` reads until the re-site step
+// rewrites it. Accepting both spellings is what keeps this reader correct on
+// either side of that step, in either deploy order, so the flip needs no
+// coordinated moyu deploy: a constant matching only the new value would return
+// gid 0 for every row until the data caught up, and gid 0 raises nothing — it
+// silently strips every card's link and mis-attaches every entry's local stats.
+//
+// Only READ. moyu writes no claim site at all, so nothing here can mint a row
+// in the old vocabulary. Removable once the re-site has soaked; the tests in
+// catalog_rename_test.go are what should fail first when it goes.
+const catalogClaimSiteLegacy = "galgame_wiki"
+
+// isGIDClaimSite reports whether a claim's site is the one whose work_id is a
+// gid, under either spelling.
+func isGIDClaimSite(site string) bool {
+	return site == catalogClaimSiteKungal || site == catalogClaimSiteLegacy
+}
 
 // catalogClaimedBy is the cross-face content pointer. Null when the catalog row
 // is unclaimed — i.e. the work exists in the registry but no product face holds
@@ -64,7 +92,7 @@ type catalogClaimedBy struct {
 // gid returns the wiki galgame id this claim points at, or 0 when the claim is
 // absent or belongs to some other product face.
 func (c *catalogClaimedBy) gid() int {
-	if c == nil || c.Site != catalogSiteGalgameWiki {
+	if c == nil || !isGIDClaimSite(c.Site) {
 		return 0
 	}
 	return int(c.WorkID)
@@ -80,7 +108,7 @@ func (c *catalogClaimedBy) renderable() bool {
 // live reports whether the claim is a published wiki entry — the exact
 // population the deprecated face's batch / detail / search reads served.
 func (c *catalogClaimedBy) live() bool {
-	return c != nil && c.Site == catalogSiteGalgameWiki && c.State == catalogClaimStateLive
+	return c != nil && isGIDClaimSite(c.Site) && c.State == catalogClaimStateLive
 }
 
 // ─── shared blocks ────────────────────────────────────────────────────────

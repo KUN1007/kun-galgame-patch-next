@@ -483,7 +483,7 @@ func TestContentLimitCaliber(t *testing.T) {
 // so the age rating is the only evidence there is and stands in conservatively.
 func TestContentAxisProjection(t *testing.T) {
 	claim := func(limit string) *catalogClaimedBy {
-		return &catalogClaimedBy{Site: catalogSiteGalgameWiki, WorkID: 1, State: catalogClaimStateLive, ContentLimit: limit}
+		return &catalogClaimedBy{Site: catalogClaimSiteKungal, WorkID: 1, State: catalogClaimStateLive, ContentLimit: limit}
 	}
 	for _, tc := range []struct {
 		name            string

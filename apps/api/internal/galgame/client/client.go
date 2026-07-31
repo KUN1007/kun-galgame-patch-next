@@ -901,7 +901,7 @@ func (c *Client) CheckGalgameByVndbID(ctx context.Context, vndbID string) (exist
 	if err := json.Unmarshal(data, &out); err != nil {
 		return false, 0, fmt.Errorf("解析 catalog lookup data 失败: %w", err)
 	}
-	if out.ClaimedBy == nil || out.ClaimedBy.Site != catalogSiteGalgameWiki {
+	if out.ClaimedBy == nil || !isGIDClaimSite(out.ClaimedBy.Site) {
 		return false, 0, nil
 	}
 	return true, int(out.ClaimedBy.WorkID), nil
