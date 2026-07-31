@@ -6,7 +6,7 @@ defineOptions({ name: 'tag-detail' })
 
 const route = useRoute()
 const router = useRouter()
-const ge = useGalgameEdit()
+const browse = useTaxonomyBrowse()
 
 const tagID = computed(() => Number(route.params.id))
 const page = computed({
@@ -38,7 +38,7 @@ const VERDICT_NOT_FOUND = 40400
 const { data, pending } = await useAsyncData(
   () => `tag-detail-${tagID.value}-${page.value}`,
   async () => {
-    const res = await ge.tagDetail(tagID.value, { page: page.value, limit })
+    const res = await browse.tagDetail(tagID.value, { page: page.value, limit })
     return { code: res.code, detail: res.code === 0 ? res.data : null }
   },
   { watch: [page, tagID] }

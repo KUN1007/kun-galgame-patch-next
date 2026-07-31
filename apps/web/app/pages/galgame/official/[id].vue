@@ -5,7 +5,7 @@ defineOptions({ name: 'label-detail' })
 
 const route = useRoute()
 const router = useRouter()
-const ge = useGalgameEdit()
+const browse = useTaxonomyBrowse()
 
 const officialID = computed(() => Number(route.params.id))
 const page = computed({
@@ -32,7 +32,7 @@ const VERDICT_NOT_FOUND = 40400
 const { data, pending } = await useAsyncData(
   () => `official-detail-${officialID.value}-${page.value}`,
   async () => {
-    const res = await ge.officialDetail(officialID.value, {
+    const res = await browse.officialDetail(officialID.value, {
       page: page.value,
       limit
     })
