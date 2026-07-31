@@ -118,7 +118,7 @@ func TestGalgameTaxonomyDetailStatusCodes(t *testing.T) {
 
 			// service / users nil: every branch under test answers before the
 			// handler touches either.
-			h := New(nil, galgameClient.NewWithKey(upstream.URL, "nm_test_key"), nil)
+			h := New(nil, galgameClient.NewWithKey(upstream.URL, "nm_test_key"), nil, nil)
 			app := fiber.New()
 			// Registered under the real prefix: the handler derives the upstream
 			// path from c.OriginalURL() minus /api/v1.

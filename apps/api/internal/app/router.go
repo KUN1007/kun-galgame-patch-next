@@ -156,6 +156,11 @@ func (a *App) RegisterRoutes() {
 	// /galgame/:gid routes below so Fiber doesn't match "mine"/"submit"/etc.
 	// as a :gid value.
 	//
+	// Wave 161 (N5) moved this whole family onto the registry's claim lifecycle
+	// and retired PATCH /galgame/:gid with it: "re-edit my declined draft" has
+	// been an external navigate to kungal since the editing face moved there, so
+	// a census found no caller, and the wiki write face it proxied to is gone.
+	//
 	// Wave 159 (N4) retired three more of these: the wiki notification inbox
 	// read /galgame/messages/mine and its GET/PUT read-state pair. moyu never
 	// called any of them — its wiki notifications are the ordinary user_message
@@ -173,8 +178,10 @@ func (a *App) RegisterRoutes() {
 	api.Get("/galgame/search/publish", auth, a.PatchHandler.SearchGalgameForPublish)
 	api.Post("/galgame/submit", auth, a.PatchHandler.SubmitGalgame)
 	api.Post("/galgame/:gid/claim", auth, a.PatchHandler.ClaimGalgame)
-	api.Patch("/galgame/:gid", auth, a.PatchHandler.PatchGalgameDraft)
-	api.Delete("/galgame/:gid", auth, a.PatchHandler.DeleteGalgameDraft)
+	// DELETE is kept as the verb a client already speaks, but the action behind
+	// it is WITHDRAW: the registry row survives, unclaimed and unpublished (03
+	// §9-3). A submission taken back is not an identity that stops existing.
+	api.Delete("/galgame/:gid", auth, a.PatchHandler.WithdrawGalgameSubmission)
 
 	// Galgame metadata editing (revision history, edit-request PRs, direct
 	// edit) moved to kungal — moyu retired its revision/PR proxy + UI in the

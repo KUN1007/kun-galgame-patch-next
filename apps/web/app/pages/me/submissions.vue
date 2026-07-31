@@ -1,14 +1,18 @@
 <script setup lang="ts">
 import type { KunUIColor } from '@kungal/ui-core'
 import { kunMoyuMoe } from '~/config/moyu-moe'
-// "My submissions" page — proxies GET /galgame/mine.
+// "My submissions" page — proxies GET /galgame/mine, which since wave 161 reads
+// the registry's per-user claim face rather than the wiki's own list.
 //
-// Shows the caller's status ∈ {3, 4} drafts so they can:
-//   - See current state (pending / declined with reason)
-//   - Re-edit a declined draft (auto-flips back to status=3 on save)
-//   - Withdraw a draft via DELETE /galgame/:gid
+// Shows the caller's open submissions so they can:
+//   - See current state (审核中 / 已拒绝 with the reviewer's note)
+//   - Re-edit a declined submission (on kungal, which owns the edit face)
+//   - Withdraw it via DELETE /galgame/:gid
 //
-// See docs/galgame_wiki/07-submission.md §GET /galgame/mine.
+// "Withdraw" no longer deletes anything. A registry row is an identity, and an
+// identity does not vanish because a product withdrew a submission: the entry
+// goes back to unclaimed and can be picked up again, by this user or another.
+// The copy says 撤回 and means it.
 
 // Private listing of the caller's own wiki submissions (includes pending /
 // declined drafts). Nothing here that anyone but the owner should see, so
@@ -21,20 +25,16 @@ const api = useApi()
 // Unauthed users see the login modal in place (via <AuthRequired> in the
 // template), not a redirect to home — see edit/create.vue for the reasoning.
 
+// One row of the per-user claim face. `product_work_id` is the id moyu keys its
+// own pages by; it is null only for a claim with no product anchor, which a
+// submission always has.
 interface MineItem {
-  id: number
-  status: number
-  vndb_id: string
-  name_en_us: string
-  name_ja_jp: string
-  name_zh_cn: string
-  name_zh_tw: string
-  banner: string
-  effective_banner_hash: string
-  content_limit: string
-  created: string
-  updated: string
-  decline_reason?: string
+  work_id: number
+  display_name: string
+  claim_state: string
+  product_work_id: number | null
+  last_reason: string | null
+  first_acted_at: string
 }
 interface MineResp {
   items: MineItem[]
@@ -44,7 +44,7 @@ interface MineResp {
 const { data, pending, refresh } = await useAsyncData<MineResp>(
   'me-submissions',
   async () => {
-    const res = await api.get<MineResp>('/galgame/mine?status=3,4&limit=50')
+    const res = await api.get<MineResp>('/galgame/mine?limit=50')
     if (res.code !== 0) return { items: [], total: 0 }
     return {
       items: res.data?.items ?? [],
@@ -54,13 +54,17 @@ const { data, pending, refresh } = await useAsyncData<MineResp>(
   { default: () => ({ items: [], total: 0 }) }
 )
 
-const displayName = (m: MineItem): string =>
-  m.name_zh_cn || m.name_zh_tw || m.name_ja_jp || m.name_en_us || `#${m.id}`
+// The id every moyu URL is keyed by. For an entry created after the switchover
+// the registry work id and the product id are the same number; for a wiki-era
+// one the product id is its old gid, so read the anchor and never the work id.
+const patchID = (m: MineItem): number => m.product_work_id ?? m.work_id
 
-const statusLabel = (s: number): { text: string; color: KunUIColor } => {
-  if (s === 3) return { text: '审核中', color: 'warning' }
-  if (s === 4) return { text: '已拒绝', color: 'danger' }
-  return { text: `状态 ${s}`, color: 'default' }
+const displayName = (m: MineItem): string => m.display_name || `#${patchID(m)}`
+
+const stateLabel = (s: string): { text: string; color: KunUIColor } => {
+  if (s === 'pending') return { text: '审核中', color: 'warning' }
+  if (s === 'declined') return { text: '已拒绝', color: 'danger' }
+  return { text: s, color: 'default' }
 }
 
 // ─── Withdraw (DELETE /galgame/:gid) ──────────────────
@@ -68,12 +72,12 @@ const withdrawing = ref<number | null>(null)
 const handleWithdraw = async (m: MineItem) => {
   const ok = await useKunAlert({
     title: '撤回提交',
-    message: `确定要撤回《${displayName(m)}》的提交吗？撤回后无法恢复，需要重新提交。`
+    message: `确定要撤回《${displayName(m)}》的提交吗？撤回后条目会回到「无人认领」，您或其他人可以重新认领它。`
   })
   if (!ok) return
-  withdrawing.value = m.id
+  withdrawing.value = patchID(m)
   try {
-    const res = await api.delete(`/galgame/${m.id}`)
+    const res = await api.delete(`/galgame/${patchID(m)}`)
     if (res.code === 0) {
       useKunMessage('已撤回', 'success')
       await refresh()
@@ -89,7 +93,7 @@ const handleWithdraw = async (m: MineItem) => {
 const handleEdit = async (m: MineItem) => {
   // Galgame metadata editing moved to kungal — open the game's kungal page,
   // which carries the edit entry. External (cross-origin) navigation.
-  await navigateTo(`${kunMoyuMoe.domain.kungal}/galgame/${m.id}`, {
+  await navigateTo(`${kunMoyuMoe.domain.kungal}/galgame/${patchID(m)}`, {
     external: true
   })
 }
@@ -112,30 +116,30 @@ const handleEdit = async (m: MineItem) => {
     />
 
     <div v-else class="mt-6 space-y-3">
-      <KunCard v-for="m in data.items" :key="m.id" :bordered="true">
+      <KunCard v-for="m in data.items" :key="m.work_id" :bordered="true">
         <div class="space-y-3 p-4">
           <div class="flex items-start justify-between gap-3">
             <div class="flex-1">
               <div class="flex flex-wrap items-center gap-2">
                 <h3 class="text-lg font-semibold">{{ displayName(m) }}</h3>
-                <KunChip :color="statusLabel(m.status).color" size="sm">
-                  {{ statusLabel(m.status).text }}
+                <KunChip :color="stateLabel(m.claim_state).color" size="sm">
+                  {{ stateLabel(m.claim_state).text }}
                 </KunChip>
               </div>
               <p class="text-default-500 mt-1 text-xs">
-                {{ m.vndb_id || '无 VNDB ID' }} · 提交于
-                {{ formatDate(m.created, { isPrecise: true, isShowYear: true }) }}
+                提交于
+                {{ formatDate(m.first_acted_at, { isPrecise: true, isShowYear: true }) }}
               </p>
             </div>
           </div>
 
           <!-- Declined: surface the admin reason inline -->
           <div
-            v-if="m.status === 4 && m.decline_reason"
+            v-if="m.claim_state === 'declined' && m.last_reason"
             class="border-danger/30 bg-danger/10 rounded-lg border p-3 text-sm"
           >
             <p class="text-danger font-semibold">被拒原因</p>
-            <p class="text-default-700 mt-1">{{ m.decline_reason }}</p>
+            <p class="text-default-700 mt-1">{{ m.last_reason }}</p>
           </div>
 
           <div class="flex flex-wrap justify-end gap-2">
@@ -143,14 +147,14 @@ const handleEdit = async (m: MineItem) => {
               variant="bordered"
               color="danger"
               size="sm"
-              :loading="withdrawing === m.id"
+              :loading="withdrawing === patchID(m)"
               :disabled="withdrawing !== null"
               @click="handleWithdraw(m)"
             >
               撤回
             </KunButton>
             <KunButton
-              v-if="m.status === 4"
+              v-if="m.claim_state === 'declined'"
               color="primary"
               size="sm"
               @click="handleEdit(m)"

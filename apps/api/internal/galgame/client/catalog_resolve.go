@@ -343,6 +343,79 @@ func (c *Client) resolveGIDs(ctx context.Context, gids []int) (map[int]int64, er
 			c.gids.put(gid, it.Work.ID)
 		}
 	}
+	// Anything still unresolved may be an ADOPTED id rather than a bridged one
+	// (see resolveByIdentity).
+	var unbridged []int
+	for _, gid := range missing {
+		if _, ok := out[gid]; !ok {
+			unbridged = append(unbridged, gid)
+		}
+	}
+	if len(unbridged) > 0 {
+		adopted, err := c.resolveByIdentity(ctx, unbridged)
+		if err != nil {
+			return nil, err
+		}
+		for gid, id := range adopted {
+			out[gid] = id
+		}
+	}
+	return out, nil
+}
+
+// resolveByIdentity resolves ids that are their own answer.
+//
+// Entries minted through the registry's submission face carry no external_ref
+// bridge: the wiki anchored its gids there because the wiki issued them, and
+// after the wiki retires nobody does — a submission's product id IS the work id
+// the registry minted for it, which both product sites adopt as their local row
+// id (161 §6.P4-verdict 1). So the bridge falls through to identity.
+//
+// The round-trip check is what makes that safe rather than a guess. A legacy
+// gid is also a syntactically valid work id, and reading work 42 for gid 42
+// would otherwise hand back a completely different game. A row only counts when
+// its own claim points back at the id we asked with — which is true by
+// construction for an adopted id and false for a coincidence.
+func (c *Client) resolveByIdentity(ctx context.Context, gids []int) (map[int]int64, error) {
+	out := make(map[int]int64, len(gids))
+	for start := 0; start < len(gids); start += CatalogWorksIDsMax {
+		end := min(start+CatalogWorksIDsMax, len(gids))
+		ids := make([]int64, 0, end-start)
+		for _, gid := range gids[start:end] {
+			ids = append(ids, int64(gid))
+		}
+		q := url.Values{}
+		q.Set("ids", joinInt64s(ids))
+		q.Set("limit", strconv.Itoa(CatalogWorksIDsMax))
+		// Identity resolution is not content: an age gate here would make an
+		// r18 entry indistinguishable from one that does not exist.
+		applyNSFW(q)
+
+		// Decoded through the same absent-vs-broken discipline as every other
+		// lookup here: a documented not-found is a MISS (these ids simply are
+		// not adopted works), while a router or gateway 404 is a fault and must
+		// not read as "the registry has none of them".
+		raw, status, err := c.getV1RawStatus(ctx, "/catalog/works", q)
+		if err != nil {
+			if catalogAbsent(status, err) {
+				continue
+			}
+			return nil, err
+		}
+		var data catalogWorksListData
+		if err := json.Unmarshal(raw, &data); err != nil {
+			return nil, fmt.Errorf("解析 catalog works data 失败: %w", err)
+		}
+		for i := range data.Items {
+			it := &data.Items[i]
+			gid := it.ClaimedBy.gid()
+			if gid == 0 || int64(gid) != it.ID {
+				continue
+			}
+			out[gid] = it.ID
+			c.gids.put(gid, it.ID)
+		}
+	}
 	return out, nil
 }
 
@@ -413,7 +486,22 @@ func (c *Client) resolveGID(ctx context.Context, gid int) (catalogID int64, foun
 			return id, found, err
 		}
 	}
+	// No bridge row: it may be an adopted id, which is its own answer.
+	adopted, err := c.resolveByIdentity(ctx, []int{gid})
+	if err != nil {
+		return 0, false, err
+	}
+	if id, ok := adopted[gid]; ok {
+		return id, true, nil
+	}
 	return 0, false, nil
+}
+
+// ResolveWorkID maps one gid to the registry work id the lifecycle actions
+// address. found=false means the registry has no work for that id, which the
+// caller answers as a 404 rather than acting on a guess.
+func (c *Client) ResolveWorkID(ctx context.Context, gid int) (int64, bool, error) {
+	return c.resolveGID(ctx, gid)
 }
 
 func (c *Client) resolveGIDBySource(ctx context.Context, source string, gid int) (int64, bool, error) {

@@ -3,7 +3,6 @@ package handler
 import (
 	"encoding/json"
 	stderrors "errors"
-	"io"
 	"log/slog"
 	"regexp"
 	"strconv"
@@ -15,6 +14,7 @@ import (
 	"kun-galgame-patch-api/internal/patch/dto"
 	"kun-galgame-patch-api/internal/patch/model"
 	"kun-galgame-patch-api/internal/patch/service"
+	"kun-galgame-patch-api/pkg/catalogclient"
 	"kun-galgame-patch-api/pkg/errors"
 	"kun-galgame-patch-api/pkg/response"
 	"kun-galgame-patch-api/pkg/userclient"
@@ -32,11 +32,66 @@ var vndbIDRegex = regexp.MustCompile(`^v\d+$`)
 type PatchHandler struct {
 	service *service.PatchService
 	galgame *galgameClient.Client
+	// catalog is the registry's S2S face: the claim lifecycle (submit / publish
+	// / withdraw) and the per-user claim list the "my submissions" page reads.
+	catalog *catalogclient.Client
 	users   *userclient.Client
 }
 
-func New(svc *service.PatchService, galgame *galgameClient.Client, users *userclient.Client) *PatchHandler {
-	return &PatchHandler{service: svc, galgame: galgame, users: users}
+func New(
+	svc *service.PatchService,
+	galgame *galgameClient.Client,
+	catalog *catalogclient.Client,
+	users *userclient.Client,
+) *PatchHandler {
+	return &PatchHandler{service: svc, galgame: galgame, catalog: catalog, users: users}
+}
+
+// claimSite is the tenant moyu acts as on the registry.
+//
+// moyu and kungal are two entrances to ONE galgame product, which is what the
+// shared gid key space has meant for a decade: a moyu submission has always
+// minted an entry in the same catalogue kungal reads, and moyu's local patch id
+// IS that entry's id. So moyu's client binds this site rather than a `moyu`
+// tenant of its own — a separate tenant would mean a second registry identity
+// for the same game, and moyu's own reads (which require this site to derive a
+// gid) would not even find it.
+const claimSite = catalogclient.ClaimSiteKungal
+
+// claimActor asserts the logged-in user to the registry. The catalog never sees
+// moyu's session; the product asserts identity and the registry records it.
+func claimActor(c fiber.Ctx) catalogclient.EditActor {
+	return catalogclient.EditActor{
+		UserID: int64(middleware.MustGetUser(c).ID),
+		Roles:  middleware.GetRoles(c),
+	}
+}
+
+// catalogErr renders a registry failure. A 409 is not an accident — it is the
+// lifecycle face answering "that move is illegal from where this claim
+// currently is", or "you already submitted this" — so its message is shown to
+// the user verbatim rather than flattened into a 500.
+func catalogErr(c fiber.Ctx, err error, fallback string) error {
+	var apiErr *catalogclient.APIError
+	if stderrors.As(err, &apiErr) && apiErr.Status >= 400 && apiErr.Status < 500 {
+		return response.Error(c, errors.New(apiErr.Code, apiErr.Message, apiErr.Status))
+	}
+	return response.Error(c, errors.ErrInternal(fallback))
+}
+
+// resolveWorkID maps the gid in the path onto the registry work id the
+// lifecycle actions address, or answers 404. The frontend keeps speaking gids:
+// for entries born after the switchover the two ids are the same number, and
+// for everything older the anchor bridge translates.
+func (h *PatchHandler) resolveWorkID(c fiber.Ctx, gid int) (int64, error) {
+	workID, found, err := h.galgame.ResolveWorkID(c.Context(), gid)
+	if err != nil {
+		return 0, response.Error(c, errors.ErrInternal("解析资料库条目失败"))
+	}
+	if !found {
+		return 0, response.Error(c, errors.ErrNotFound("资料库中没有这个条目"))
+	}
+	return workID, nil
 }
 
 func getIDParam(c fiber.Ctx, name string) (int, error) {
@@ -888,56 +943,57 @@ func writeGalgameResult(c fiber.Ctx, data json.RawMessage, err error) error {
 
 // SubmitGalgame POST /api/v1/galgame/submit
 //
-// Two content types accepted:
-//   - application/json
-//   - multipart/form-data with `data` + optional `file` for banner upload
+// Mints a new entry in the registry, in the `pending` claim state, and answers
+// with the id it was given. One request, one transaction on the registry side:
+// the row, its content and the birth event land together or not at all.
+//
+// No product id is sent. moyu's local patch id IS the shared gid, a key space
+// it does not mint, so the registry allocates and moyu adopts the answer —
+// which is also why the wizard can navigate straight to a page keyed by it.
+//
+// No local patch row is created here, deliberately: a pending submission is not
+// published on moyu, has no resources, and its +3 arrives with the approval
+// through the claim-event cron. The row materializes the first time somebody
+// interacts with the entry, exactly as it does for any other catalogue game.
 func (h *PatchHandler) SubmitGalgame(c fiber.Ctx) error {
 	if appErr := h.ensureCanPublishGalgame(c); appErr != nil {
 		return response.Error(c, appErr)
 	}
-	accessToken := middleware.GetAccessToken(c)
-	if accessToken == "" {
-		return response.Error(c, errors.ErrUnauthorized())
+	if h.catalog == nil || !h.catalog.Configured() {
+		return response.Error(c, errors.ErrInternal("资料库客户端未配置"))
 	}
-	ctype := string(c.Request().Header.ContentType())
-	if strings.HasPrefix(ctype, "multipart/form-data") {
-		return h.submitGalgameMultipart(c, accessToken)
-	}
-	return h.submitGalgameJSON(c, accessToken)
-}
-
-func (h *PatchHandler) submitGalgameJSON(c fiber.Ctx, accessToken string) error {
-	var req galgameClient.SubmitGalgameRequest
-	if err := c.Bind().Body(&req); err != nil {
+	var form SubmissionForm
+	if err := c.Bind().Body(&form); err != nil {
 		return response.Error(c, errors.ErrBadRequest("无法解析请求体"))
 	}
-	data, err := h.galgame.SubmitGalgame(c.Context(), accessToken, &req)
-	return writeGalgameResult(c, data, err)
-}
-
-func (h *PatchHandler) submitGalgameMultipart(c fiber.Ctx, accessToken string) error {
-	req, fileName, fileBytes, fileMime, err := parseGalgameMultipart(c)
+	fields, fErr := form.SubmissionFields()
+	if fErr != nil {
+		return response.Error(c, errors.ErrBadRequest(fErr.Error()))
+	}
+	out, err := h.catalog.SubmitWork(c.Context(), catalogclient.WorkSubmitRequest{
+		Site: claimSite, Actor: claimActor(c), Fields: fields,
+	})
 	if err != nil {
-		return response.Error(c, err.(*errors.AppError))
+		return catalogErr(c, err, "提交到资料库失败")
 	}
-	if len(fileBytes) == 0 {
-		data, callErr := h.galgame.SubmitGalgame(c.Context(), accessToken, &req)
-		return writeGalgameResult(c, data, callErr)
-	}
-	data, callErr := h.galgame.SubmitGalgameMultipart(
-		c.Context(), accessToken, &req, fileName, fileBytes, fileMime,
-	)
-	return writeGalgameResult(c, data, callErr)
+	return c.JSON(response.Response{
+		Code: 0, Message: "OK",
+		Data: fiber.Map{"id": out.WorkID, "claim_state": out.ClaimState},
+	})
 }
 
 // ClaimGalgame POST /api/v1/galgame/:gid/claim
 //
-// Flip a VNDB draft (status=2) to published (status=0) on galgame, then register
-// the local patch row + award +3 moemoepoint atomically (handbook §9). The
-// frontend must NOT additionally POST /patch — that produced a double +3.
+// Publish an unclaimed draft (claim_state draft → live), then register the
+// local patch row + award +3 moemoepoint atomically. The frontend must NOT
+// additionally POST /patch — that produced a double +3.
 //
-// Response payload: { "id": <local patch id == galgame id> } so the frontend
-// can navigate straight to /patch/:id without a second round-trip.
+// The registry addresses works by its own id while the wizard speaks gids, so
+// the path id is translated first. For an entry born after the switchover the
+// two are the same number; for a wiki-era one the anchor bridge translates.
+//
+// Response payload: { "id": <local patch id == gid> } so the frontend can
+// navigate straight to /patch/:id without a second round-trip.
 func (h *PatchHandler) ClaimGalgame(c fiber.Ctx) error {
 	if appErr := h.ensureCanPublishGalgame(c); appErr != nil {
 		return response.Error(c, appErr)
@@ -946,39 +1002,43 @@ func (h *PatchHandler) ClaimGalgame(c fiber.Ctx) error {
 	if idErr != nil {
 		return response.Error(c, idErr.(*errors.AppError))
 	}
-	accessToken := middleware.GetAccessToken(c)
-	if accessToken == "" {
-		return response.Error(c, errors.ErrUnauthorized())
+	if h.catalog == nil || !h.catalog.Configured() {
+		return response.Error(c, errors.ErrInternal("资料库客户端未配置"))
+	}
+	workID, hErr := h.resolveWorkID(c, gid)
+	if hErr != nil {
+		return hErr
+	}
+	if _, err := h.catalog.ActOnClaim(c.Context(), workID,
+		catalogclient.ClaimActionPublish,
+		catalogclient.ClaimActionRequest{Site: claimSite, Actor: claimActor(c)}); err != nil {
+		// A 409 here is the registry saying the claim is not in `draft` any
+		// more — someone else took it, or it is a submission under review. That
+		// refusal is the answer, not a fault, and the wizard re-searches on it.
+		return catalogErr(c, err, "调用资料库失败")
 	}
 
-	data, err := h.galgame.ClaimGalgame(c.Context(), accessToken, gid)
-	if err != nil {
-		if werr, ok := err.(*galgameClient.GalgameError); ok {
-			// Forward galgame business code/message verbatim (e.g. 20006 草稿不可
-			// 认领 when the Meilisearch row was stale). HTTP 400.
-			return response.Error(c, errors.New(werr.Code, werr.Message, fiber.StatusBadRequest))
+	// vndb_id is looked up rather than taken from the action's answer: the
+	// lifecycle face reports the transition, not the entry's identity anchors.
+	// A miss leaves the deterministic wiki-<id> placeholder the local unique
+	// index needs, which is what the interaction path already writes.
+	vndbID := ""
+	if briefs, bErr := h.galgame.GalgameBatch(c.Context(), []int{gid}, ""); bErr == nil {
+		for i := range briefs {
+			if briefs[i].ID == gid {
+				vndbID = briefs[i].VndbID
+				break
+			}
 		}
-		return response.Error(c, errors.ErrInternal("调用 Galgame 资料库失败"))
-	}
-
-	// galgame returned the published galgame (status=0). Pull the id/vndb_id so
-	// we can create the local patch row keyed by galgame_id (== patch.id, D13).
-	var claimed struct {
-		ID     int    `json:"id"`
-		VndbID string `json:"vndb_id"`
-	}
-	if jerr := json.Unmarshal(data, &claimed); jerr != nil || claimed.ID == 0 {
-		// galgame succeeded but we couldn't parse — fall back to the path param.
-		claimed.ID = gid
 	}
 
 	userID := middleware.MustGetUser(c).ID
-	patchID, regErr := h.service.RegisterClaimedGalgame(userID, claimed.ID, claimed.VndbID)
+	patchID, regErr := h.service.RegisterClaimedGalgame(userID, gid, vndbID)
 	if regErr != nil {
-		// The galgame-side claim already succeeded and cannot be rolled back; the
-		// galgame is published and owned by the user. Surface a soft error so
-		// the user can retry the (idempotent) local registration via the
-		// detail page's first interaction, but don't pretend it failed wholesale.
+		// The registry-side publish already succeeded and cannot be rolled
+		// back; the entry is live and owned by the user. Surface a soft error
+		// so the local registration can be retried through the detail page's
+		// first interaction, but do not pretend the whole thing failed.
 		return response.Error(c, errors.ErrInternal("认领成功，但本站登记失败，请稍后重试"))
 	}
 
@@ -989,154 +1049,167 @@ func (h *PatchHandler) ClaimGalgame(c fiber.Ctx) error {
 	})
 }
 
-// PatchGalgameDraft PATCH /api/v1/galgame/:gid
+// WithdrawGalgameSubmission DELETE /api/v1/galgame/:gid
 //
-// Edit one's own pending/declined draft. galgame auto-flips status=4 back to 3.
-// Same dual-content-type as Submit/Update.
-func (h *PatchHandler) PatchGalgameDraft(c fiber.Ctx) error {
+// Take one's own submission back out of the review queue (claim_state → draft).
+//
+// It used to HARD-DELETE the wiki draft, and that verb does not survive the
+// move to the registry — deliberately, not for want of an endpoint. A registry
+// row is an identity, and identities do not disappear because a product
+// withdrew a submission: the entry stays, unclaimed and unpublished, and the
+// same person (or anyone else) can pick it up again later. The route keeps its
+// DELETE method so no client has to change, but the copy around it says
+// 撤回, not 删除.
+//
+// The local patch carrier row, if one exists, is moyu's own business and stays:
+// it holds the likes, comments and ratings collected while the entry was up.
+func (h *PatchHandler) WithdrawGalgameSubmission(c fiber.Ctx) error {
 	gid, idErr := getIDParam(c, "gid")
 	if idErr != nil {
 		return response.Error(c, idErr.(*errors.AppError))
 	}
-	accessToken := middleware.GetAccessToken(c)
-	if accessToken == "" {
-		return response.Error(c, errors.ErrUnauthorized())
+	if h.catalog == nil || !h.catalog.Configured() {
+		return response.Error(c, errors.ErrInternal("资料库客户端未配置"))
 	}
-	ctype := string(c.Request().Header.ContentType())
-	if strings.HasPrefix(ctype, "multipart/form-data") {
-		req, fileName, fileBytes, fileMime, err := parseGalgameMultipart(c)
-		if err != nil {
-			return response.Error(c, err.(*errors.AppError))
-		}
-		if len(fileBytes) == 0 {
-			data, callErr := h.galgame.PatchGalgameDraft(c.Context(), accessToken, gid, &req)
-			return writeGalgameResult(c, data, callErr)
-		}
-		data, callErr := h.galgame.PatchGalgameDraftMultipart(
-			c.Context(), accessToken, gid, &req, fileName, fileBytes, fileMime,
-		)
-		return writeGalgameResult(c, data, callErr)
+	workID, hErr := h.resolveWorkID(c, gid)
+	if hErr != nil {
+		return hErr
 	}
-	var req galgameClient.SubmitGalgameRequest
-	if err := c.Bind().Body(&req); err != nil {
-		return response.Error(c, errors.ErrBadRequest("无法解析请求体"))
-	}
-	data, err := h.galgame.PatchGalgameDraft(c.Context(), accessToken, gid, &req)
-	return writeGalgameResult(c, data, err)
-}
-
-// DeleteGalgameDraft DELETE /api/v1/galgame/:gid (draft)
-//
-// Hard-delete one's own pending/declined draft (galgame enforces status ∈ {3,4}
-// + submitter check). NOTE: this conflicts at the path level with the local
-// patch DELETE /api/v1/patch/:id; we expose it under /galgame/:gid which is
-// what galgame uses, so the verb is unambiguous.
-func (h *PatchHandler) DeleteGalgameDraft(c fiber.Ctx) error {
-	gid, idErr := getIDParam(c, "gid")
-	if idErr != nil {
-		return response.Error(c, idErr.(*errors.AppError))
-	}
-	accessToken := middleware.GetAccessToken(c)
-	if accessToken == "" {
-		return response.Error(c, errors.ErrUnauthorized())
-	}
-	if err := h.galgame.DeleteGalgameDraft(c.Context(), accessToken, gid); err != nil {
-		if werr, ok := err.(*galgameClient.GalgameError); ok {
-			return response.Error(c, errors.New(werr.Code, werr.Message, fiber.StatusBadRequest))
-		}
-		return response.Error(c, errors.ErrInternal("调用 Galgame 资料库失败"))
+	if _, err := h.catalog.ActOnClaim(c.Context(), workID,
+		catalogclient.ClaimActionWithdraw,
+		catalogclient.ClaimActionRequest{Site: claimSite, Actor: claimActor(c)}); err != nil {
+		return catalogErr(c, err, "调用资料库失败")
 	}
 	return response.OKMessage(c, "OK")
 }
 
 // ListMyGalgames GET /api/v1/galgame/mine
+//
+// The caller's own submissions, from the registry's per-user claim face.
+//
+// `status` is gone from the wire: the page asked the wiki for status 3,4
+// (pending / declined) and now asks for the claim states that mean the same
+// two things. The cursor is keyset, not a page number — the face orders by the
+// latest transition, which a page offset cannot address stably while reviews
+// are landing.
 func (h *PatchHandler) ListMyGalgames(c fiber.Ctx) error {
-	accessToken := middleware.GetAccessToken(c)
-	if accessToken == "" {
-		return response.Error(c, errors.ErrUnauthorized())
+	if h.catalog == nil || !h.catalog.Configured() {
+		return response.Error(c, errors.ErrInternal("资料库客户端未配置"))
 	}
-	status := c.Query("status", "")
-	page, _ := strconv.Atoi(c.Query("page", "1"))
 	limit, _ := strconv.Atoi(c.Query("limit", "20"))
 	if limit < 1 || limit > 50 {
 		limit = 20
 	}
-	if page < 1 {
-		page = 1
-	}
-	out, err := h.galgame.ListMyGalgames(c.Context(), accessToken, status, page, limit)
-	if err != nil {
-		if werr, ok := err.(*galgameClient.GalgameError); ok {
-			return response.Error(c, errors.New(werr.Code, werr.Message, fiber.StatusBadRequest))
+	before, _ := strconv.ParseInt(c.Query("before", "0"), 10, 64)
+
+	states := mySubmissionStates
+	if raw := strings.TrimSpace(c.Query("claim_state", "")); raw != "" {
+		states = nil
+		for _, s := range strings.Split(raw, ",") {
+			if s = strings.TrimSpace(s); s != "" {
+				states = append(states, s)
+			}
 		}
-		return response.Error(c, errors.ErrInternal("调用 Galgame 资料库失败"))
+	}
+	out, err := h.catalog.UserClaims(c.Context(), middleware.MustGetUser(c).ID,
+		catalogclient.UserClaimFilter{
+			Site: claimSite, ClaimStates: states, Before: before, Limit: limit,
+		})
+	if err != nil {
+		return catalogErr(c, err, "调用资料库失败")
 	}
 	return response.OK(c, out)
 }
 
+// mySubmissionStates is what "我的提交" means: the two states a submitter still
+// has something to do about. `live` is excluded because a published entry is
+// reached through its own page, and `hidden` because a ban is not a submission
+// the user can act on.
+var mySubmissionStates = []string{
+	catalogclient.ClaimStatePending,
+	catalogclient.ClaimStateDeclined,
+}
+
 // SearchGalgameForPublish GET /api/v1/galgame/search/publish
 //
-// Used by the publish wizard. Forwards the user's Bearer + include_pending=true
-// so the response surfaces both public results and the caller's own
-// pending/declined drafts.
+// The publish wizard's supply, composed from TWO faces because it asks two
+// different questions:
+//
+//   - `items` — does this game already exist in the catalogue? A public dedup
+//     search over every claimed work, published or not.
+//   - `pending` — has the CALLER already submitted it? A private worklist, read
+//     off the registry's per-user claim face.
+//
+// They were one upstream call while the wiki answered both from one index. The
+// registry has no per-user dimension on a public search and should not grow
+// one: merging a private worklist into a public search result is how a search
+// face ends up leaking whose submission is whose.
+//
+// The caller's own block is filtered here rather than upstream: the per-user
+// face has no text query, and a person's open submissions are a handful of
+// rows, so asking for all of them and matching the name locally costs one small
+// request and keeps the two supplies independent.
+type wizardPendingHit struct {
+	ID          int    `json:"id"`
+	DisplayName string `json:"display_name"`
+	ClaimState  string `json:"claim_state"`
+	Reason      string `json:"reason,omitempty"`
+}
+
 func (h *PatchHandler) SearchGalgameForPublish(c fiber.Ctx) error {
-	accessToken := middleware.GetAccessToken(c)
-	if accessToken == "" {
-		return response.Error(c, errors.ErrUnauthorized())
-	}
 	q := c.Query("q", "")
 	limit, _ := strconv.Atoi(c.Query("limit", "10"))
 	if limit < 1 || limit > 24 {
 		limit = 10
 	}
-	out, err := h.galgame.SearchGalgameForPublish(c.Context(), accessToken, q, limit)
+	items, total, err := h.galgame.SearchPublishItems(c.Context(), q, limit)
 	if err != nil {
 		if werr, ok := err.(*galgameClient.GalgameError); ok {
 			return response.Error(c, errors.New(werr.Code, werr.Message, fiber.StatusBadRequest))
 		}
 		return response.Error(c, errors.ErrInternal("调用 Galgame 资料库失败"))
 	}
-	return response.OK(c, out)
+	// Pre-sized non-nil: a nil slice marshals to JSON `null`, which crashes the
+	// frontend's `results.pending.length`.
+	pending := make([]wizardPendingHit, 0)
+	if h.catalog != nil && h.catalog.Configured() {
+		pending = append(pending, h.ownPendingSubmissions(c, q)...)
+	}
+	return response.OK(c, fiber.Map{"items": items, "pending": pending, "total": total})
 }
 
-// parseGalgameMultipart is shared between SubmitGalgame and PatchGalgameDraft.
-// Returns the JSON body, the file name / bytes / mime if present, or an
-// AppError describing what failed.
-func parseGalgameMultipart(c fiber.Ctx) (galgameClient.SubmitGalgameRequest, string, []byte, string, error) {
-	var req galgameClient.SubmitGalgameRequest
-	form, err := c.MultipartForm()
+// ownPendingSubmissions lists the caller's open submissions whose name matches
+// the query. A failure degrades to an empty block with a warning rather than
+// failing the search: the dedup half is what prevents a duplicate submission,
+// and losing it to an unrelated upstream blip is the expensive outcome.
+func (h *PatchHandler) ownPendingSubmissions(c fiber.Ctx, q string) []wizardPendingHit {
+	page, err := h.catalog.UserClaims(c.Context(), middleware.MustGetUser(c).ID,
+		catalogclient.UserClaimFilter{
+			Site: claimSite, ClaimStates: mySubmissionStates, Limit: 50,
+		})
 	if err != nil {
-		return req, "", nil, "", errors.ErrBadRequest("multipart 表单解析失败")
+		slog.Warn("读取本人投稿列表失败，向导仅显示公开结果", "error", err)
+		return nil
 	}
-	dataStrs := form.Value["data"]
-	if len(dataStrs) == 0 {
-		return req, "", nil, "", errors.ErrBadRequest("缺少 data 字段")
+	needle := strings.ToLower(strings.TrimSpace(q))
+	out := make([]wizardPendingHit, 0, len(page.Items))
+	for i := range page.Items {
+		it := &page.Items[i]
+		if needle != "" && !strings.Contains(strings.ToLower(it.DisplayName), needle) {
+			continue
+		}
+		hit := wizardPendingHit{
+			ID: int(it.WorkID), DisplayName: it.DisplayName, ClaimState: it.ClaimState,
+		}
+		if it.ProductWorkID != nil && *it.ProductWorkID > 0 {
+			hit.ID = int(*it.ProductWorkID)
+		}
+		if it.LastReason != nil {
+			hit.Reason = *it.LastReason
+		}
+		out = append(out, hit)
 	}
-	if err := json.Unmarshal([]byte(dataStrs[0]), &req); err != nil {
-		return req, "", nil, "", errors.ErrBadRequest("data 字段不是合法 JSON")
-	}
-	fileHeaders := form.File["file"]
-	if len(fileHeaders) == 0 {
-		return req, "", nil, "", nil
-	}
-	fh := fileHeaders[0]
-	if fh.Size > 10*1024*1024 {
-		return req, "", nil, "", errors.ErrBadRequest("banner 超过 10MB 上限")
-	}
-	f, err := fh.Open()
-	if err != nil {
-		return req, "", nil, "", errors.ErrBadRequest("无法读取上传文件")
-	}
-	defer f.Close()
-	raw, err := io.ReadAll(f)
-	if err != nil {
-		return req, "", nil, "", errors.ErrBadRequest("读取上传文件失败")
-	}
-	mime := fh.Header.Get("Content-Type")
-	if mime == "" {
-		mime = "application/octet-stream"
-	}
-	return req, fh.Filename, raw, mime, nil
+	return out
 }
 
 // GetResourceFileHistory GET /api/patch/resource/:resourceId/history

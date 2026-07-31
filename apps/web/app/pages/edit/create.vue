@@ -5,14 +5,14 @@
 //   A. Hit a published work (claim_state=live) → go straight to patch creation.
 //   B. Hit an unpublished draft (claim_state=draft) → claim → patch creation.
 //      (claim_state=pending is someone else's submission: shown, not claimable.)
-//   C. Hit own pending/declined (status 3/4)   → jump to /me/submissions.
-//   D. No match                                → submit form → status=3 awaits review.
+//   C. Hit own pending/declined              → jump to /me/submissions.
+//   D. No match                              → submit form → awaits review.
 //
 // All search calls hit our backend's /galgame/search/publish proxy. Its two
-// halves come off two different faces: `items` is the catalog registry search
-// (claim_state=live,draft,pending) and `pending` is still the wiki's own view of
-// the caller's submissions — which is why the two arrays speak different
-// lifecycle vocabularies below.
+// halves answer two different questions off two different faces: `items` is the
+// public dedup search over the registry (claim_state=live,draft,pending), and
+// `pending` is the CALLER'S OWN open submissions, read off the registry's
+// per-user claim face. Both speak one lifecycle vocabulary now — claim_state.
 
 // Write-side page (publish wizard). Not a content surface — disable SEO
 // so search engines don't index our edit forms.
@@ -51,11 +51,14 @@ interface GalgameHit extends GalgameName {
   banner: string
   effective_banner_hash?: string
 }
-// A pending row is the caller's OWN submission, still answered by the wiki, so
-// it still speaks the wiki's state machine: 3 审核中 / 4 已拒绝.
-interface PendingHit extends GalgameName {
-  status: number
-  vndb_id: string
+// A pending row is the caller's OWN submission. It speaks the same claim_state
+// vocabulary as a search hit — `pending` 审核中 / `declined` 已拒绝 — instead of
+// the wiki status ints it used to carry.
+interface PendingHit {
+  id: number
+  display_name: string
+  claim_state: string
+  reason?: string
 }
 interface SearchResult {
   items: GalgameHit[]
@@ -66,6 +69,9 @@ const results = ref<SearchResult>({ items: [], pending: [], total: 0 })
 
 const displayName = (h: GalgameName): string =>
   h.name_zh_cn || h.name_zh_tw || h.name_ja_jp || h.name_en_us || `#${h.id}`
+
+const claimStateLabel = (state: string): string =>
+  state === 'declined' ? '已拒绝（可重新提交）' : '审核中'
 
 const isClaimableDraft = (h: GalgameHit): boolean => h.claim_state === 'draft'
 // `pending` is someone else's submission awaiting review. It is in the dedup
@@ -231,13 +237,11 @@ const submitForm = reactive<SubmitForm>({
   original_language: 'ja-jp'
 })
 
-// Banner held separately from the reactive form. The cover cropper
-// (ImageCropper) renders its own preview and hands back a cropped + optionally
-// mosaicked webp blob, which we wrap as the File the submit path uploads.
-const bannerFile = ref<File | null>(null)
-const onBannerComplete = (blob: Blob) => {
-  bannerFile.value = new File([blob], 'cover.webp', { type: 'image/webp' })
-}
+// No banner on this form any more. The registry's submission face takes the
+// identity and text facets only: cover bytes must already exist in the image
+// store before anything may reference them, so a cover is attached by editing
+// the entry after it exists — which on moyu means the kungal edit face the
+// 编辑 affordances already point at.
 
 const startSubmit = () => {
   // Pre-fill name from the search query so users don't retype — but ONLY when
@@ -274,7 +278,8 @@ const handleSubmit = async () => {
   }
 
   // No vndb_id sent — see the SubmitForm comment above. Only include non-empty
-  // fields so omitempty on the wiki side keeps defaults for what we didn't set.
+  // fields; the BFF maps this form onto the registry's own field keys and omits
+  // what is not filled in.
   const payload: Record<string, unknown> = {
     content_limit: submitForm.content_limit,
     age_limit: submitForm.age_limit
@@ -289,26 +294,10 @@ const handleSubmit = async () => {
 
   submitting.value = true
   try {
-    // multipart when a banner file is attached; JSON otherwise. The backend
-    // proxy handles both content types.
-    let res: { code: number; message: string; data: { id?: number } | null }
-    if (bannerFile.value) {
-      const fd = new FormData()
-      fd.append('data', JSON.stringify(payload))
-      fd.append('file', bannerFile.value, bannerFile.value.name)
-      const config = useRuntimeConfig()
-      const base = config.public.apiBase || ''
-      const raw = await $fetch
-        .raw<typeof res>(`${base}/galgame/submit`, {
-          method: 'POST',
-          body: fd,
-          credentials: 'include'
-        })
-        .catch((e) => e?.response)
-      res = (raw?._data ?? { code: -1, message: '上传失败', data: null }) as typeof res
-    } else {
-      res = await api.post(`/galgame/submit`, payload)
-    }
+    const res = await api.post<{ id: number; claim_state: string }>(
+      '/galgame/submit',
+      payload
+    )
 
     if (res.code === 0) {
       useKunMessage(
@@ -318,14 +307,10 @@ const handleSubmit = async () => {
       await navigateTo('/me/submissions')
       return
     }
-    // Wiki business errors per docs/galgame_wiki/99-appendix.md §20xxx.
-    // We never send a vndb_id so 20003/20004 shouldn't occur; keep only the
-    // quota case + a generic fallback.
-    if (res.code === 20009) {
-      submitError.value = '今日投稿配额已用尽（默认 5 条），明日再来。'
-    } else {
-      submitError.value = res.message || '提交失败'
-    }
+    // The registry aims its refusals at the submitter — a rejected field, or a
+    // repeat submission naming the work it already created — so show the
+    // message rather than flattening it into a generic line.
+    submitError.value = res.message || '提交失败'
   } finally {
     submitting.value = false
   }
@@ -393,10 +378,10 @@ const handleSubmit = async () => {
               class="border-default/20 flex items-center gap-3 rounded-lg border p-3"
             >
               <div class="flex-1">
-                <p class="font-semibold">{{ displayName(hit) }}</p>
+                <p class="font-semibold">{{ hit.display_name || `#${hit.id}` }}</p>
                 <p class="text-default-500 text-xs">
-                  {{ hit.vndb_id || '无 VNDB ID' }} ·
-                  {{ hit.status === 3 ? '审核中' : '已拒绝（可重新提交）' }}
+                  {{ claimStateLabel(hit.claim_state) }}
+                  <span v-if="hit.reason"> · {{ hit.reason }}</span>
                 </p>
               </div>
               <KunButton variant="bordered" size="sm" @click="goToMine">
@@ -495,10 +480,10 @@ const handleSubmit = async () => {
 
         <div class="border-default/20 bg-default-50 rounded-lg border p-3 text-sm">
           <p class="text-default-700">
-            提交后状态为「待审核」，进入 admin 审核队列。审核通过后您将获得
+            提交后状态为「审核中」，进入审核队列。审核通过后您将获得
             <strong>+3 萌萌点</strong>，并可在本站发布该游戏的补丁。
             <br />
-            每天最多提交 <strong>5 条</strong>。
+            封面请在条目通过审核后，到条目页的「编辑」中补充。
           </p>
         </div>
 
@@ -539,17 +524,6 @@ const handleSubmit = async () => {
             :model-value="submitForm.intro_zh_cn"
             :image="false"
             @update:model-value="(val) => (submitForm.intro_zh_cn = val)"
-          />
-        </section>
-
-        <section class="space-y-2">
-          <h3 class="font-semibold">Banner（可选）</h3>
-          <KunCropperImageCropper
-            :aspect-ratio="16 / 9"
-            hint="点击或拖放图片选择 Banner"
-            description="将按 16:9 裁剪，可选对敏感区域打码后提交（上传后由后端转交 image_service）"
-            @complete="onBannerComplete"
-            @remove="bannerFile = null"
           />
         </section>
 

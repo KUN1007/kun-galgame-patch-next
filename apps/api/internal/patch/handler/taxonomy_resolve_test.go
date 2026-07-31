@@ -107,7 +107,7 @@ func TestResolveTaxonomyIDStatusCodes(t *testing.T) {
 			// service / users are nil on purpose: this route reads the vendored tag
 			// table and the catalog client, and nothing else. A nil that never
 			// panics is itself the proof.
-			h := New(nil, galgameClient.NewWithKey(upstream.URL, "nm_test_key"), nil)
+			h := New(nil, galgameClient.NewWithKey(upstream.URL, "nm_test_key"), nil, nil)
 			app := fiber.New()
 			app.Get("/taxonomy/resolve/:kind/:id", h.ResolveTaxonomyID)
 

@@ -153,13 +153,6 @@ func New(cfg *config.Config) *App {
 		ClientSecret: artCfg.ClientSecret,
 	})
 
-	// Patch module
-	patchRepository := patchRepo.New(db)
-	patchSvc := patchService.New(patchRepository, settingSvc, db, artCli, galgame, usrCli, mpAwarder, adminRepository)
-	patchHdl := patchHandler.New(patchSvc, galgame, usrCli)
-
-	// User module
-	userRepository := userRepo.New(db)
 	// Catalog S2S client — the registry's own face (Basic auth with the OAuth
 	// client_id/secret, which is how the catalog resolves this caller's
 	// per-client site binding). Distinct from `galgame` above, which speaks the
@@ -177,6 +170,13 @@ func New(cfg *config.Config) *App {
 		slog.Warn("catalog s2s client NOT configured; the claim lifecycle and its cron will not run — set KUN_NEXTMOE_API_BASE + OAuth creds")
 	}
 
+	// Patch module
+	patchRepository := patchRepo.New(db)
+	patchSvc := patchService.New(patchRepository, settingSvc, db, artCli, galgame, usrCli, mpAwarder, adminRepository)
+	patchHdl := patchHandler.New(patchSvc, galgame, catalogCli, usrCli)
+
+	// User module
+	userRepository := userRepo.New(db)
 	userSvc := userService.New(userRepository, usrCli, galgame, catalogCli, db, mpAwarder)
 	userHdl := userHandler.New(userSvc, galgame, usrCli)
 

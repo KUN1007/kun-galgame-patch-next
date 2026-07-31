@@ -1,7 +1,7 @@
 package client
 
 // The publish wizard is moyu's only defence against a user minting a duplicate
-// entry in the shared registry, so both of its halves are pinned here.
+// entry in the shared registry, so its dedup supply is pinned here.
 //
 // The ITEMS half must reach the catalog search with claim_state=live,draft,
 // pending. Narrowing it to `live` hides every unpublished draft, which is
@@ -10,8 +10,9 @@ package client
 // `pending` is in the list before anything produces it, so that the projector
 // step which starts minting it cannot open the same hole for a deploy's width.
 //
-// The PENDING half must stay on the wiki face and must keep the wiki `status`
-// int, which is the only thing that tells 审核中 from 已拒绝.
+// The caller's OWN open submissions are no longer part of this call at all —
+// they are the registry's per-user claim face, composed in by the BFF (wave
+// 161). What this file pins is the half that answers "does it already exist".
 
 import (
 	"context"
@@ -26,7 +27,6 @@ import (
 type wizardRecorder struct {
 	mu       sync.Mutex
 	catalogQ url.Values
-	wikiQ    url.Values
 	wikiHits int
 }
 
@@ -49,11 +49,8 @@ func (r *wizardRecorder) client(t *testing.T) *Client {
 			  {"id":14,"display_name":"unclaimed","content_rating":"r18","claimed_by":null}
 			]}}`
 		case strings.HasSuffix(req.URL.Path, "/galgame/search"):
-			r.wikiQ = req.URL.Query()
+			// Nothing should reach the retiring wiki search any more.
 			r.wikiHits++
-			body = `{"code":0,"message":"ok","data":{"items":[{"id":1}],"total":1,
-			  "pending":[{"id":64689,"status":3,"vndb_id":"","name_ja_jp":"曇った瞳に恋してる"},
-			             {"id":61301,"status":4,"vndb_id":"","name_ja_jp":"ピエタ"}]}}`
 		}
 		r.mu.Unlock()
 		w.Header().Set("Content-Type", "application/json")
@@ -63,13 +60,18 @@ func (r *wizardRecorder) client(t *testing.T) *Client {
 	return NewWithKey(srv.URL, "nm_test_key")
 }
 
-func (r *wizardRecorder) search(t *testing.T) *SearchPending {
+type wizardItems struct {
+	Items []GalgameHit
+	Total int64
+}
+
+func (r *wizardRecorder) search(t *testing.T) wizardItems {
 	t.Helper()
-	out, err := r.client(t).SearchGalgameForPublish(context.Background(), "user-jwt", "sakura", 12)
+	items, total, err := r.client(t).SearchPublishItems(context.Background(), "sakura", 12)
 	if err != nil {
-		t.Fatalf("SearchGalgameForPublish: %v", err)
+		t.Fatalf("SearchPublishItems: %v", err)
 	}
-	return out
+	return wizardItems{Items: items, Total: total}
 }
 
 func TestPublishWizard_ItemsComeFromTheCatalog(t *testing.T) {
@@ -128,47 +130,33 @@ func TestPublishWizard_ItemsAreGidKeyedAndDropWithdrawnRows(t *testing.T) {
 	}
 }
 
-func TestPublishWizard_PendingStaysOnTheWikiFaceAndKeepsStatus(t *testing.T) {
+// The wizard's dedup supply must not touch the retiring wiki search at all.
+// While it did, this lane had a second upstream that would go down with the
+// wiki tables and take the whole wizard with it.
+func TestPublishWizard_NeverTouchesTheWikiFace(t *testing.T) {
 	rec := &wizardRecorder{}
-	out := rec.search(t)
+	rec.search(t)
 
-	if rec.wikiHits != 1 {
-		t.Fatalf("wiki face hits = %d, want exactly 1", rec.wikiHits)
-	}
-	if got := rec.wikiQ.Get("include_pending"); got != "true" {
-		t.Errorf("include_pending = %q, want true", got)
-	}
-	if got := rec.wikiQ.Get("status"); got != "0,2" {
-		t.Errorf("status = %q, want the pre-switchover 0,2 verbatim", got)
-	}
-	if len(out.Pending) != 2 {
-		t.Fatalf("pending = %d, want 2", len(out.Pending))
-	}
-	// Decoding this half into GalgameHit dropped `status`, which is the ONLY
-	// signal separating 审核中 from 已拒绝 on screen.
-	if out.Pending[0].Status != 3 || out.Pending[1].Status != 4 {
-		t.Errorf("pending statuses = %d,%d, want 3,4",
-			out.Pending[0].Status, out.Pending[1].Status)
-	}
-	if out.Pending[0].ID != 64689 || out.Pending[0].NameJaJp != "曇った瞳に恋してる" {
-		t.Errorf("pending[0] = %+v, want the caller's own row forwarded", out.Pending[0])
+	if rec.wikiHits != 0 {
+		t.Errorf("wiki face hits = %d, want 0 — the caller's own submissions come "+
+			"from the registry's per-user claim face now, composed in by the BFF", rec.wikiHits)
 	}
 }
 
-func TestPublishWizard_EmptyHalvesAreArraysNotNull(t *testing.T) {
-	srv := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, req *http.Request) {
+func TestPublishWizard_EmptyResultIsAnArrayNotNull(t *testing.T) {
+	srv := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, _ *http.Request) {
 		w.Header().Set("Content-Type", "application/json")
 		_, _ = w.Write([]byte(`{"code":0,"message":"ok","data":{}}`))
 	}))
 	t.Cleanup(srv.Close)
 
-	out, err := NewWithKey(srv.URL, "nm_test_key").
-		SearchGalgameForPublish(context.Background(), "user-jwt", "nothing", 12)
+	items, _, err := NewWithKey(srv.URL, "nm_test_key").
+		SearchPublishItems(context.Background(), "nothing", 12)
 	if err != nil {
-		t.Fatalf("SearchGalgameForPublish: %v", err)
+		t.Fatalf("SearchPublishItems: %v", err)
 	}
 	// `null` breaks the page's `results.items.length` reads.
-	if out.Items == nil || out.Pending == nil {
-		t.Errorf("items=%v pending=%v, want empty slices", out.Items, out.Pending)
+	if items == nil {
+		t.Error("items = nil, want an empty slice")
 	}
 }
