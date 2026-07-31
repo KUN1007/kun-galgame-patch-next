@@ -1,19 +1,14 @@
 package handler
 
-// Galgame taxonomy + relation proxy surface. Galgame metadata editing
-// (revision history, edit-request PRs, direct edit) moved to kungal in the
-// "编辑面归 kungal" wave; what remains here is a verbatim proxy to the galgame
-// Service for the links / aliases relations and the tag/official/engine/series
-// taxonomy CRUD. Every endpoint is a verbatim proxy to the galgame service:
+// Public taxonomy surface. This file used to host a generic verbatim proxy for
+// the galgame taxonomy CRUD and the links / aliases relations; both are gone —
+// metadata editing moved to kungal in the "编辑面归 kungal" wave, and wave 159
+// (N4) retired the staff console and the UI-less relation writes with it.
 //
-//   - Route paths mirror galgame 1:1 (sans the /api/v1 prefix), so the galgame path
-//     is derived by stripping /api/v1 from the original URL — there are no
-//     per-route path templates to keep in sync.
-//   - Reads are public (optionalAuth: a token is forwarded only if the caller
-//     happens to be logged in). Writes require login (auth) so a Bearer token
-//     exists to forward; galgame enforces creator/admin/role rules and we forward
-//     its business code+message verbatim. We deliberately do NOT re-implement
-//     authorization locally — §15: "鉴权语义以 galgame 端为准，下游不得放宽或收紧".
+// What is left are the two PUBLIC browse pages and the old-id resolver they
+// depend on. Route paths still mirror the upstream 1:1 (sans the /api/v1
+// prefix), so the upstream path is derived by stripping /api/v1 from the
+// original URL rather than from per-route templates.
 
 import (
 	"encoding/json"
@@ -24,7 +19,6 @@ import (
 	galgameClient "kun-galgame-patch-api/internal/galgame/client"
 	"kun-galgame-patch-api/internal/galgame/enricher"
 	"kun-galgame-patch-api/internal/galgame/taxonomyid"
-	"kun-galgame-patch-api/internal/middleware"
 	"kun-galgame-patch-api/pkg/errors"
 	"kun-galgame-patch-api/pkg/response"
 
@@ -40,48 +34,6 @@ const apiV1Prefix = "/api/v1"
 // syntactically valid).
 func galgamePathFromRequest(c fiber.Ctx) string {
 	return strings.TrimPrefix(c.OriginalURL(), apiV1Prefix)
-}
-
-// GalgameEditProxy is the generic JSON-write pass-through used by the remaining
-// relation (links/aliases) endpoints. The taxonomy proxies it also used to
-// serve were retired with the console in wave 159 (N4).
-func (h *PatchHandler) GalgameEditProxy(c fiber.Ctx) error {
-	method := c.Method()
-	accessToken := middleware.GetAccessToken(c)
-	if method != fiber.MethodGet && accessToken == "" {
-		return response.Error(c, errors.ErrUnauthorized())
-	}
-
-	// NSFW gate for GET on :gid-scoped sub-resources (links / aliases). galgame's
-	// content_limit protocol (docs/galgame_wiki/00-handbook §16.2) only lists
-	// main list / search / taxonomy / batch / detail — these sub-resources fall
-	// outside the matrix, so galgame won't filter them. An anonymous caller hitting
-	// /galgame/<nsfw-gid>/aliases would otherwise receive the aliases of an
-	// NSFW-gated entry. Mutating GETs don't exist on these routes; mutating
-	// methods require auth above and are galgame-side authz'd, so they bypass the gate.
-	if method == fiber.MethodGet {
-		if gidStr := c.Params("gid"); gidStr != "" {
-			if gid, err := strconv.Atoi(gidStr); err == nil && gid > 0 {
-				if !h.gatePatchByContentLimit(c, gid) {
-					return response.Error(c, errors.ErrNotFound("patch not found"))
-				}
-			}
-		}
-	}
-
-	var body []byte
-	if method != fiber.MethodGet {
-		body = c.Body()
-	}
-	data, err := h.galgame.Proxy(
-		c.Context(),
-		method,
-		galgamePathFromRequest(c),
-		accessToken,
-		body,
-		string(c.Request().Header.ContentType()),
-	)
-	return writeGalgameResult(c, data, err)
 }
 
 // GalgameTaxonomyDetailProxy serves the two PUBLIC browse pages /tag/:name and

@@ -44,8 +44,10 @@
 | `POST /api/v1/galgame/:gid/claim` | 登录 | `patchH.ClaimGalgame` | 对齐 | +3 萌萌点；RegisterClaimedGalgame 已存在则 early-return，无重复奖励（实测）|
 | `POST /api/v1/galgame/:gid/revert` | 登录 | `patchH.WikiEditProxy` | 保持 | 代理（Wiki 强制 admin/mod）|
 | `POST /api/v1/galgame/:gid/prs` | 登录 | `patchH.WikiPRSubmit` | 对齐 | JSON / multipart(`data`+`file` banner) 均支持，10MB 上限 |
-| `POST /api/v1/galgame/:gid/links` | 登录 | `patchH.WikiEditProxy` | 保持 | 代理（Wiki 强制 owner/admin）|
-| `POST /api/v1/galgame/:gid/aliases` | 登录 | `patchH.WikiEditProxy` | 保持 | 代理 |
+
+> **W159 波(N4)**:`/galgame/:gid/links`、`/galgame/:gid/aliases` 两组写路由已删除 ——
+> `useGalgameEdit` 的四个函数自始至终零调用点,没有任何 UI 驱动它们,
+> 只有手写 API 调用才能到达。
 
 ## 4. 分类代理 `/tag /official /engine /series`（→ Wiki）
 

@@ -1,20 +1,13 @@
-// useGalgameEdit — typed client for what is left of the galgame taxonomy +
-// relation surface. Galgame metadata editing (revision history, edit-request
-// PRs, direct edit) moved to kungal in the "编辑面归 kungal" wave, and the
-// taxonomy STAFF console (tag/official/engine/series CRUD + revision history +
-// revert) was retired in wave 159 (N4) — the catalog owns the vocabulary now
-// and kungal hosts the one staff surface.
+// useGalgameEdit — typed client for the two PUBLIC taxonomy browse pages, which
+// is all that is left of what this composable once covered. Galgame metadata
+// editing (revision history, edit-request PRs, direct edit) moved to kungal in
+// the "编辑面归 kungal" wave; the taxonomy STAFF console and the UI-less
+// links/aliases relation writes were retired in wave 159 (N4) — the catalog
+// owns the vocabulary now and kungal hosts the one staff surface.
 //
-// What remains: the links/aliases relation writes, and the two PUBLIC taxonomy
-// browse pages. Every call goes through OUR backend proxy (/api/v1/...), which
-// relays the upstream {code,message,data} verbatim (see
+// Both calls go through OUR backend proxy (/api/v1/...), which composes the
+// page from the catalog and relays {code,message,data} (see
 // internal/patch/handler/galgame_edit.go).
-
-// galgame-proxied relation shapes are aliased to the vendored wire types
-// (shared/types/galgame-wiki.ts) so a backend wire change fails tsc here
-// instead of breaking at runtime. Re-exported so the relation surface keeps
-// importing them from this one composable.
-export type { GalgameLink, GalgameAlias } from '~/shared/types/galgame-wiki'
 
 // BrowseTag / BrowseOfficial are the PUBLIC taxonomy pages' entities. Their ids
 // are CATALOG ids since wave A2-2 (P2 / R1).
@@ -69,19 +62,6 @@ const qs = (q?: Q): string => {
 export const useGalgameEdit = () => {
   const api = useApi()
 
-  // ─── Relations (writes only) ────────────────────────
-  // The list/prefill GETs were retired in wave A1 — no page ever called them,
-  // and the backend dropped both routes with their reshapers.
-  const createLink = (gid: number, body: { name: string; link: string }) =>
-    api.post(`/galgame/${gid}/links`, body)
-  const deleteLink = (gid: number, id: number) =>
-    api.delete(`/galgame/${gid}/links`, { id })
-
-  const createAlias = (gid: number, name: string) =>
-    api.post(`/galgame/${gid}/aliases`, { name })
-  const deleteAlias = (gid: number, id: number) =>
-    api.delete(`/galgame/${gid}/aliases`, { id })
-
   // ─── Taxonomy detail pages (tag / official "view-by-id" pages) ─────────
   // galgame's `GET /<entity>/:name?<entity>_id=X` returns the entity itself +
   // the associated galgame list (paginated, with optional sort + NSFW filter).
@@ -122,10 +102,6 @@ export const useGalgameEdit = () => {
     }>(`/official/_${qs({ official_id: id, ...(opts as Q) })}`)
 
   return {
-    createLink,
-    deleteLink,
-    createAlias,
-    deleteAlias,
     tagDetail,
     officialDetail
   }

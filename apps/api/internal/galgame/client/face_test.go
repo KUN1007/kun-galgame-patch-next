@@ -136,36 +136,6 @@ func TestFaceSelection_WithKey(t *testing.T) {
 		}
 	})
 
-	t.Run("proxy POST /galgame/:gid/links (relation write) → internal + key + JWT", func(t *testing.T) {
-		if _, err := c.Proxy(ctx, http.MethodPost, "/galgame/42/links", "user-jwt", []byte(`{}`), "application/json"); err != nil {
-			t.Fatalf("Proxy POST links: %v", err)
-		}
-		if rec.path != "/internal/galgame/42/links" {
-			t.Errorf("path = %q, want /internal/galgame/42/links", rec.path)
-		}
-		if rec.apiKey != "nm_test_key" {
-			t.Errorf("X-API-Key = %q, want nm_test_key", rec.apiKey)
-		}
-		if rec.auth != "Bearer user-jwt" {
-			t.Errorf("Authorization = %q, want Bearer user-jwt", rec.auth)
-		}
-	})
-
-	t.Run("proxy DELETE /galgame/:gid/aliases (relation write) → internal + key + JWT", func(t *testing.T) {
-		if _, err := c.Proxy(ctx, http.MethodDelete, "/galgame/42/aliases", "user-jwt", []byte(`{}`), "application/json"); err != nil {
-			t.Fatalf("Proxy DELETE aliases: %v", err)
-		}
-		if rec.path != "/internal/galgame/42/aliases" {
-			t.Errorf("path = %q, want /internal/galgame/42/aliases", rec.path)
-		}
-		if rec.apiKey != "nm_test_key" {
-			t.Errorf("X-API-Key = %q, want nm_test_key", rec.apiKey)
-		}
-		if rec.auth != "Bearer user-jwt" {
-			t.Errorf("Authorization = %q, want Bearer user-jwt", rec.auth)
-		}
-	})
-
 	t.Run("submit write → internal + key + JWT", func(t *testing.T) {
 		if _, err := c.SubmitGalgame(ctx, "user-jwt", map[string]any{"x": 1}); err != nil {
 			t.Fatalf("SubmitGalgame: %v", err)
@@ -879,9 +849,8 @@ func TestDeprecatedGalgameFaceIsUnreachable(t *testing.T) {
 	_, _ = c.GetGalgameCalendar(ctx, "2026-07", "")
 	_, _ = c.SearchGalgame(ctx, SearchGalgameParams{Q: "x"})
 	_, _, _ = c.CheckGalgameByVndbID(ctx, "v1")
-	_, _ = c.Proxy(ctx, http.MethodGet, "/tag/_?tag_id=5", "", nil, "")
-	_, _ = c.Proxy(ctx, http.MethodGet, "/official/_?official_id=9", "", nil, "")
-	_, _ = c.Proxy(ctx, http.MethodGet, "/tag/search?q=x", "jwt", nil, "")
+	_, _, _ = c.TaxonomyBrowse(ctx, "/tag/_?tag_id=5")
+	_, _, _ = c.TaxonomyBrowse(ctx, "/official/_?official_id=9")
 
 	for _, r := range srv.all() {
 		if strings.HasPrefix(r.path, "/v1/galgame") {

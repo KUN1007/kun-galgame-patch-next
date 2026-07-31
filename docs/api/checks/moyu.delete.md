@@ -34,8 +34,10 @@
 | 路径 | 鉴权 | Handler | 状态 | 备注 |
 |---|---|---|---|---|
 | `DELETE /api/v1/galgame/:gid` | 登录 | `patchH.DeleteGalgameDraft` | 对齐 | 删草稿投稿（代理 Wiki）|
-| `DELETE /api/v1/galgame/:gid/links` | 登录 | `patchH.WikiEditProxy` | 保持 | 代理（Wiki 强制 owner/admin）|
-| `DELETE /api/v1/galgame/:gid/aliases` | 登录 | `patchH.WikiEditProxy` | 保持 | 代理 |
+
+> **W159 波(N4)**:`/galgame/:gid/links`、`/galgame/:gid/aliases` 两组写路由已删除 ——
+> `useGalgameEdit` 的四个函数自始至终零调用点,没有任何 UI 驱动它们,
+> 只有手写 API 调用才能到达。
 
 ## 3. 分类代理 `/tag /official /engine /series`（→ Wiki，Wiki 强制 admin/mod）
 

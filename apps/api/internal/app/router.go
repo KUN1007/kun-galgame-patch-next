@@ -178,31 +178,17 @@ func (a *App) RegisterRoutes() {
 	api.Patch("/galgame/:gid", auth, a.PatchHandler.PatchGalgameDraft)
 	api.Delete("/galgame/:gid", auth, a.PatchHandler.DeleteGalgameDraft)
 
-	// ===== Galgame relation editing surface (links / aliases proxy) =====
-	//
 	// Galgame metadata editing (revision history, edit-request PRs, direct
 	// edit) moved to kungal — moyu retired its revision/PR proxy + UI in the
-	// "编辑面归 kungal" wave. What remains here is the links / aliases relation
-	// proxy: verbatim pass-throughs (a.PatchHandler.GalgameEditProxy) that mirror
-	// the galgame path 1:1. Writes use auth so a Bearer exists; galgame enforces
-	// creator/admin and we forward its code+message verbatim.
+	// "编辑面归 kungal" wave. The links / aliases relation writes outlived it by
+	// a few waves and were retired in wave 159 (N4): their composable functions
+	// never had a single call site, so no UI ever drove them and they were
+	// reachable only by a hand-made API call.
 	//
-	// WRITES ONLY since wave A1: the two GET prefill lanes were census-verified
-	// FE-dead (the edit UI never listed links/aliases through moyu) and retired
-	// together with their /v1 detail-composing reshapers.
-	//
-	// Registered AFTER the literal /galgame/{mine,submit,search,messages,:gid}
-	// routes above so Fiber's order-based matching keeps them intact.
-	api.Post("/galgame/:gid/links", auth, a.PatchHandler.GalgameEditProxy)
-	api.Delete("/galgame/:gid/links", auth, a.PatchHandler.GalgameEditProxy)
-	api.Post("/galgame/:gid/aliases", auth, a.PatchHandler.GalgameEditProxy)
-	api.Delete("/galgame/:gid/aliases", auth, a.PatchHandler.GalgameEditProxy)
-	// galgame contributor list / removal is no longer surfaced. moyu only
-	// edits the galgame's metadata (creator can update / admins can
-	// moderate); contributors are an attribution attribute owned by galgame
-	// and not editable from the moyu side. The local /patch/:id/contributor
-	// route above is a different concept (people who uploaded patch
-	// resources on moyu) — that one stays.
+	// galgame contributor list / removal is likewise not surfaced: contributors
+	// are an attribution attribute owned by galgame and not editable from the
+	// moyu side. The local /patch/:id/contributor route above is a different
+	// concept (people who uploaded patch resources on moyu) — that one stays.
 
 	// ===== User Routes =====
 	//

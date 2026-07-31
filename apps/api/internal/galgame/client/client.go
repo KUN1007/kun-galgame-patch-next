@@ -251,10 +251,10 @@ func (c *Client) writeTarget(path string) (base, apiKey string) {
 // isUserWritePath reports whether a galgame path (no face prefix; a trailing
 // query string is allowed) is a member of the user write set that moved to the
 // internal face in open-API phase 2 wave 06a: galgame submit, draft
-// update/patch/delete, claim, cover/screenshot image upload, and the
-// links/aliases relation edits. The staff taxonomy family
-// (tag/official/engine/series CRUD + revert) and /admin/* writes are NOT members
-// — they stay on the legacy /api face.
+// update/patch/delete, claim, and cover/screenshot image upload. The
+// links/aliases relation edits used to be members too; they were retired in
+// wave 159 (N4) as UI-less. /admin/* writes are NOT members — they stay on the
+// legacy /api face.
 func isUserWritePath(path string) bool {
 	// Membership is by path only; drop any query string.
 	if i := strings.IndexByte(path, '?'); i >= 0 {
@@ -278,8 +278,8 @@ func isUserWritePath(path string) bool {
 	switch len(seg) {
 	case 1: // PUT / PATCH / DELETE /galgame/:gid
 		return true
-	case 2: // POST /galgame/:gid/{claim,links,aliases}; DELETE links/aliases
-		return seg[1] == "claim" || seg[1] == "links" || seg[1] == "aliases"
+	case 2: // POST /galgame/:gid/claim
+		return seg[1] == "claim"
 	}
 	return false
 }
