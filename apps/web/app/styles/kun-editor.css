@@ -1,9 +1,14 @@
 /*
  * @kungal/editor-vue is HEADLESS (ships zero CSS) — it renders only stable class
  * hooks (`.kun-editor__*`, `.kun-mention-dropdown*`) and `data-*` state. This is
- * the canonical reference styling of those hooks (copied from kun-editor's docs
- * site, apps/docs/app/assets/css/kun-editor.css), themed with KunUI tokens
- * (`--color-*` from @kungal/ui-tokens). Keep in sync when the editor adds hooks.
+ * the reference styling of those hooks, themed with KunUI tokens. Keep in sync
+ * when the editor adds hooks.
+ *
+ * Since editor-nuxt 0.31.1 that reference ships with the layer, so a host can
+ * `@import '@kungal/editor-nuxt/editor.css'` and get style fixes with a version
+ * bump. moyu deliberately does NOT: the shipped file animates the loading
+ * skeleton with a `linear-gradient` sweep, and background gradients are banned
+ * here (see the skeleton rules at the bottom). Port upstream fixes by hand.
  *
  * It also carries the two structural rules the editor genuinely needs to
  * function: ProseMirror's `white-space` and the popover positioning / show-hide.
@@ -55,15 +60,31 @@
 /* Placeholder: the editor sets a `data-placeholder` attr + `.kun-editor__placeholder`
    class on the empty block (a ProseMirror decoration, not real content). Render the
    text via ::before so it never enters the doc / markdown or moves the caret. Synced
-   from the docs reference kun-editor.css. */
+   from the docs reference kun-editor.css.
+
+   The ::before is absolutely positioned, so it needs a positioned ancestor: with
+   none, its containing block is the viewport and a long placeholder is laid out
+   against THAT width, running past the editor and over the toolbar (which is
+   what moyu's multi-line comment placeholders do). Anchor it to the empty block
+   and let it wrap — editor 0.31.1's fix. */
+.kun-editor__placeholder {
+  position: relative;
+}
+
 .kun-editor__placeholder::before {
   content: attr(data-placeholder);
   position: absolute;
-  color: var(--color-default-200);
+  top: 0;
+  left: 0;
+  width: 100%;
+  overflow-wrap: break-word;
+  /* Raw token triplet: `--color-default-*` does NOT exist at runtime (see the
+     loading-skeleton note below), so the reference file's var() here resolves to
+     nothing and the placeholder paints as full-contrast body text. */
+  color: oklch(var(--default-400));
   font-size: 0.875rem;
   font-style: italic;
   pointer-events: none;
-  height: 0;
 }
 
 /* In-document "uploading…" placeholder shown at the caret while an image upload
