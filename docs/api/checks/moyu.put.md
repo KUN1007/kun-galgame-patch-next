@@ -39,10 +39,11 @@
 
 | 路径 | 鉴权 | Handler | 状态 | 备注 |
 |---|---|---|---|---|
-| `PUT /api/v1/galgame/:gid` | 登录 | `patchH.UpdateGalgame` | 对齐 | 代理 Wiki（Wiki 强制 creator/admin）|
-| `PUT /api/v1/galgame/messages/read-state` | 登录 | `patchH.UpdateWikiMessagesReadState` | 对齐 | forward-only GREATEST（实测往返，DB 回 0）|
 | `PUT /api/v1/galgame/:gid/prs/:prid/merge` | 登录 | `patchH.WikiEditProxy` | 保持 | 代理 |
 | `PUT /api/v1/galgame/:gid/prs/:prid/decline` | 登录 | `patchH.WikiEditProxy` | 保持 | 代理 |
+
+> **W159 波(N4)**:`PUT /galgame/:gid`(编辑面已外链 kungal,无 UI)与
+> `PUT /galgame/messages/read-state`(无 FE 调用方,表恒 0 行)已删除。
 
 ## 3. 分类代理 `/tag /official /engine /series`（→ Wiki，Wiki 强制 admin/mod）
 

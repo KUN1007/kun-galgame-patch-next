@@ -100,21 +100,6 @@ func TestFaceSelection_WithKey(t *testing.T) {
 		}
 	})
 
-	t.Run("token read /galgame/messages/mine → internal + key + user JWT", func(t *testing.T) {
-		if _, err := c.GetMyGalgameMessages(ctx, "user-jwt", 0, 0); err != nil {
-			t.Fatalf("GetMyGalgameMessages: %v", err)
-		}
-		if rec.path != "/internal/galgame/messages/mine" {
-			t.Errorf("path = %q, want /internal/galgame/messages/mine", rec.path)
-		}
-		if rec.apiKey != "nm_test_key" {
-			t.Errorf("X-API-Key = %q, want nm_test_key", rec.apiKey)
-		}
-		if rec.auth != "Bearer user-jwt" {
-			t.Errorf("Authorization = %q, want Bearer user-jwt", rec.auth)
-		}
-	})
-
 	// Platform-workflow read: the publish picker needs status=0,2 (claimable VNDB
 	// drafts) + the caller's own pending submissions, neither of which the /v1
 	// public face serves. Pinning the face here so it is never re-migrated.
@@ -187,21 +172,6 @@ func TestFaceSelection_WithKey(t *testing.T) {
 		}
 		if rec.path != "/internal/galgame/9" {
 			t.Errorf("path = %q, want /internal/galgame/9", rec.path)
-		}
-		if rec.apiKey != "nm_test_key" {
-			t.Errorf("X-API-Key = %q, want nm_test_key", rec.apiKey)
-		}
-		if rec.auth != "Bearer user-jwt" {
-			t.Errorf("Authorization = %q, want Bearer user-jwt", rec.auth)
-		}
-	})
-
-	t.Run("update write → internal + key + JWT", func(t *testing.T) {
-		if _, err := c.UpdateGalgame(ctx, "user-jwt", 5, map[string]any{"x": 1}); err != nil {
-			t.Fatalf("UpdateGalgame: %v", err)
-		}
-		if rec.path != "/internal/galgame/5" {
-			t.Errorf("path = %q, want /internal/galgame/5", rec.path)
 		}
 		if rec.apiKey != "nm_test_key" {
 			t.Errorf("X-API-Key = %q, want nm_test_key", rec.apiKey)

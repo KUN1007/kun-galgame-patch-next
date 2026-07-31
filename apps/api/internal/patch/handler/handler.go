@@ -865,110 +865,6 @@ func (h *PatchHandler) GetRandomPatch(c fiber.Ctx) error {
 	return response.OK(c, map[string]int{"id": id})
 }
 
-// UpdateGalgame PUT /api/v1/galgame/:gid
-//
-// Thin proxy over the galgame service's PUT /galgame/:gid. Two modes:
-//
-//   - application/json  -> forwards the JSON body unchanged.
-//   - multipart/form-data with `data` (JSON) and optional `file` (banner)
-//     -> forwards as multipart so galgame/image_service can attach the banner
-//     in the same revision (no orphan files; see docs/galgame_wiki/01-galgame.md
-//     §Banner 上传).
-//
-// We do not enforce authorization locally: galgame itself permits only the
-// creator or an admin. The user's OAuth access_token is forwarded verbatim
-// (carries the JWT roles claim galgame validates).
-func (h *PatchHandler) UpdateGalgame(c fiber.Ctx) error {
-	gid, err := getIDParam(c, "gid")
-	if err != nil {
-		return response.Error(c, err.(*errors.AppError))
-	}
-	accessToken := middleware.GetAccessToken(c)
-	if accessToken == "" {
-		return response.Error(c, errors.ErrUnauthorized())
-	}
-
-	ctype := string(c.Request().Header.ContentType())
-	if strings.HasPrefix(ctype, "multipart/form-data") {
-		return h.updateGalgameMultipart(c, gid, accessToken)
-	}
-	return h.updateGalgameJSON(c, gid, accessToken)
-}
-
-// updateGalgameJSON is the plain JSON path. Decoding into the client's
-// pointer-fielded shape filters out unsupported keys (e.g. vndb_id, which
-// galgame rejects on update anyway).
-func (h *PatchHandler) updateGalgameJSON(c fiber.Ctx, gid int, accessToken string) error {
-	var req galgameClient.UpdateGalgameRequest
-	if err := c.Bind().Body(&req); err != nil {
-		return response.Error(c, errors.ErrBadRequest("无法解析请求体"))
-	}
-	data, err := h.galgame.UpdateGalgame(c.Context(), accessToken, gid, &req)
-	if err == nil {
-		// Editing galgame info is a content update → bump moyu's 最近更新 sort key.
-		h.service.TouchResourceUpdateTime(gid)
-	}
-	return writeGalgameResult(c, data, err)
-}
-
-// updateGalgameMultipart reads `data` + optional `file` from the incoming
-// multipart body and forwards them through the galgame client. Size cap is
-// 10 MB (consistent with other image-upload paths in this project).
-func (h *PatchHandler) updateGalgameMultipart(c fiber.Ctx, gid int, accessToken string) error {
-	form, err := c.MultipartForm()
-	if err != nil {
-		return response.Error(c, errors.ErrBadRequest("multipart 表单解析失败"))
-	}
-
-	// data field: JSON string mirroring UpdateGalgameRequest. Re-decode into
-	// the typed shape to strip unsupported keys before forwarding.
-	dataStrs, _ := form.Value["data"]
-	if len(dataStrs) == 0 {
-		return response.Error(c, errors.ErrBadRequest("缺少 data 字段"))
-	}
-	var req galgameClient.UpdateGalgameRequest
-	if err := json.Unmarshal([]byte(dataStrs[0]), &req); err != nil {
-		return response.Error(c, errors.ErrBadRequest("data 字段不是合法 JSON"))
-	}
-
-	// file field is optional -- if absent, fall back to JSON mode so we don't
-	// invent an empty multipart that galgame could misinterpret.
-	fileHeaders, _ := form.File["file"]
-	if len(fileHeaders) == 0 {
-		data, err := h.galgame.UpdateGalgame(c.Context(), accessToken, gid, &req)
-		if err == nil {
-			h.service.TouchResourceUpdateTime(gid)
-		}
-		return writeGalgameResult(c, data, err)
-	}
-
-	fh := fileHeaders[0]
-	if fh.Size > 10*1024*1024 {
-		return response.Error(c, errors.ErrBadRequest("banner 超过 10MB 上限"))
-	}
-	f, err := fh.Open()
-	if err != nil {
-		return response.Error(c, errors.ErrBadRequest("无法读取上传文件"))
-	}
-	defer f.Close()
-	raw, err := io.ReadAll(f)
-	if err != nil {
-		return response.Error(c, errors.ErrBadRequest("读取上传文件失败"))
-	}
-	mime := fh.Header.Get("Content-Type")
-	if mime == "" {
-		mime = "application/octet-stream"
-	}
-
-	data, err := h.galgame.UpdateGalgameMultipart(
-		c.Context(), accessToken, gid, &req, fh.Filename, raw, mime,
-	)
-	if err == nil {
-		h.service.TouchResourceUpdateTime(gid)
-	}
-	return writeGalgameResult(c, data, err)
-}
-
 // writeGalgameResult is the shared result -> response mapping for both modes.
 // galgame business errors (e.g. 80008 image quota, 60002 review rejected,
 // 40300 forbidden) flow through as-is via GalgameError so the frontend can
@@ -992,7 +888,7 @@ func writeGalgameResult(c fiber.Ctx, data json.RawMessage, err error) error {
 
 // SubmitGalgame POST /api/v1/galgame/submit
 //
-// Two content types accepted (same shape as UpdateGalgame):
+// Two content types accepted:
 //   - application/json
 //   - multipart/form-data with `data` + optional `file` for banner upload
 func (h *PatchHandler) SubmitGalgame(c fiber.Ctx) error {
@@ -1194,71 +1090,6 @@ func (h *PatchHandler) SearchGalgameForPublish(c fiber.Ctx) error {
 		limit = 10
 	}
 	out, err := h.galgame.SearchGalgameForPublish(c.Context(), accessToken, q, limit)
-	if err != nil {
-		if werr, ok := err.(*galgameClient.GalgameError); ok {
-			return response.Error(c, errors.New(werr.Code, werr.Message, fiber.StatusBadRequest))
-		}
-		return response.Error(c, errors.ErrInternal("调用 Galgame 资料库失败"))
-	}
-	return response.OK(c, out)
-}
-
-// GetGalgameMessagesReadState GET /api/v1/galgame/messages/read-state
-//
-// Returns the caller's last-read marker for galgame notifications. Used by the
-// notification-center to compute the unread badge (count of galgame messages
-// with id > last_read_message_id). State lives locally — galgame doesn't
-// maintain per-user read flags (see docs/galgame_wiki/08-messages.md §已读状态).
-func (h *PatchHandler) GetGalgameMessagesReadState(c fiber.Ctx) error {
-	user := middleware.MustGetUser(c)
-	var lastRead int64
-	row := h.service.DB().Raw(
-		`SELECT last_read_message_id FROM wiki_message_read_state WHERE user_id = ?`,
-		user.ID,
-	).Row()
-	_ = row.Scan(&lastRead)
-	return response.OK(c, map[string]any{"last_read_message_id": lastRead})
-}
-
-// UpdateGalgameMessagesReadState PUT /api/v1/galgame/messages/read-state
-//
-// Body: { "last_read_message_id": int64 }. We only move forward — submitting
-// a smaller id is a no-op.
-func (h *PatchHandler) UpdateGalgameMessagesReadState(c fiber.Ctx) error {
-	user := middleware.MustGetUser(c)
-	var body struct {
-		LastReadMessageID int64 `json:"last_read_message_id"`
-	}
-	if err := c.Bind().Body(&body); err != nil {
-		return response.Error(c, errors.ErrBadRequest("无法解析请求体"))
-	}
-	if body.LastReadMessageID < 0 {
-		return response.Error(c, errors.ErrBadRequest("last_read_message_id 不能为负"))
-	}
-	if err := h.service.DB().Exec(`
-		INSERT INTO wiki_message_read_state(user_id, last_read_message_id, updated_at)
-		VALUES (?, ?, NOW())
-		ON CONFLICT(user_id) DO UPDATE
-		SET last_read_message_id = GREATEST(wiki_message_read_state.last_read_message_id, EXCLUDED.last_read_message_id),
-		    updated_at = NOW()
-	`, user.ID, body.LastReadMessageID).Error; err != nil {
-		return response.Error(c, errors.ErrInternal("保存已读状态失败"))
-	}
-	return response.OKMessage(c, "OK")
-}
-
-// GetMyGalgameMessages GET /api/v1/galgame/messages/mine
-func (h *PatchHandler) GetMyGalgameMessages(c fiber.Ctx) error {
-	accessToken := middleware.GetAccessToken(c)
-	if accessToken == "" {
-		return response.Error(c, errors.ErrUnauthorized())
-	}
-	sinceID, _ := strconv.ParseInt(c.Query("since_id", "0"), 10, 64)
-	limit, _ := strconv.Atoi(c.Query("limit", "20"))
-	if limit < 1 || limit > 100 {
-		limit = 20
-	}
-	out, err := h.galgame.GetMyGalgameMessages(c.Context(), accessToken, sinceID, limit)
 	if err != nil {
 		if werr, ok := err.(*galgameClient.GalgameError); ok {
 			return response.Error(c, errors.New(werr.Code, werr.Message, fiber.StatusBadRequest))

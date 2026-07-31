@@ -145,22 +145,23 @@ func (a *App) RegisterRoutes() {
 	)
 	patchRoutes.Put("/:id/favorite", auth, a.PatchHandler.ToggleFavorite)
 
-	// Galgame metadata edit (proxy to NextMoe catalog PUT /galgame/:gid).
-	// Lives on /galgame/:gid to match the galgame path verbatim, even though the
-	// patch.id and galgame.id are aligned. The galgame service enforces creator/
-	// admin authorization itself — we just forward the user's access_token.
-	api.Put("/galgame/:gid", auth, a.PatchHandler.UpdateGalgame)
-
 	// ===== galgame submission proxies (docs/galgame_wiki/07-submission.md) =====
 	//
 	// User-facing endpoints for the new publish-galgame flow. Each one
 	// forwards the user's OAuth access_token to galgame and surfaces galgame's
 	// business errors (20003 / 20004 / 20006 / 20007 / 20008 / 20009) verbatim.
 	//
-	// IMPORTANT: order matters here. /galgame/mine, /galgame/submit,
-	// /galgame/search/publish, /galgame/messages/* must be registered BEFORE
-	// the parameterized /galgame/:gid routes below so Fiber doesn't match
-	// "mine"/"submit"/etc. as a :gid value.
+	// IMPORTANT: order matters here. /galgame/mine, /galgame/submit and
+	// /galgame/search/publish must be registered BEFORE the parameterized
+	// /galgame/:gid routes below so Fiber doesn't match "mine"/"submit"/etc.
+	// as a :gid value.
+	//
+	// Wave 159 (N4) retired three more of these: the wiki notification inbox
+	// read /galgame/messages/mine and its GET/PUT read-state pair. moyu never
+	// called any of them — its wiki notifications are the ordinary user_message
+	// rows the message-sync cron writes, and wiki_message_read_state stayed
+	// empty. Editing PUT /galgame/:gid went the same way: every "编辑游戏信息"
+	// affordance on moyu is an external navigate to kungal, so no UI drove it.
 	// Release calendar (发售月表) — public read, delegated to the galgame and
 	// stamped with has_patch. Literal path, so it also sits above /galgame/:gid.
 	// optionalAuth so each card can be stamped is_favorite for the logged-in
@@ -170,9 +171,6 @@ func (a *App) RegisterRoutes() {
 	api.Get("/galgame/calendar", optionalAuth, a.CommonHandler.GetGalgameCalendar)
 	api.Get("/galgame/mine", auth, a.PatchHandler.ListMyGalgames)
 	api.Get("/galgame/search/publish", auth, a.PatchHandler.SearchGalgameForPublish)
-	api.Get("/galgame/messages/mine", auth, a.PatchHandler.GetMyGalgameMessages)
-	api.Get("/galgame/messages/read-state", auth, a.PatchHandler.GetGalgameMessagesReadState)
-	api.Put("/galgame/messages/read-state", auth, a.PatchHandler.UpdateGalgameMessagesReadState)
 	api.Post("/galgame/submit", auth, a.PatchHandler.SubmitGalgame)
 	api.Post("/galgame/:gid/claim", auth, a.PatchHandler.ClaimGalgame)
 	api.Patch("/galgame/:gid", auth, a.PatchHandler.PatchGalgameDraft)

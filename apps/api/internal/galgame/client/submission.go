@@ -36,8 +36,8 @@ import (
 // U1: ReleaseDate / ReleaseDateTBA replace the old `released string`.
 // W2 / galgame PR5: BannerImageHash dropped — banner via multipart `file` (auto
 // promoted to covers[sort_order=0]) or explicit covers array.
-// Covers / Screenshots presence-replace semantics (see UpdateGalgameRequest
-// comment).
+// Covers / Screenshots are presence-replace: send the key to replace the whole
+// set, omit it to keep what is there.
 type SubmitGalgameRequest struct {
 	VndbID           *string            `json:"vndb_id,omitempty"`
 	NameEnUs         *string            `json:"name_en_us,omitempty"`
@@ -319,51 +319,6 @@ func (c *Client) SearchGalgameForPublish(ctx context.Context, accessToken, q str
 	}
 	if env.Data.Pending == nil {
 		env.Data.Pending = []GalgameHit{}
-	}
-	return &env.Data, nil
-}
-
-// GetMyGalgameMessages proxies GET /galgame/messages/mine (Bearer). Used by the
-// notification center to merge galgame notifications with local ones.
-func (c *Client) GetMyGalgameMessages(ctx context.Context, accessToken string, sinceID int64, limit int) (*Paginated[GalgameMessage], error) {
-	q := url.Values{}
-	if sinceID > 0 {
-		q.Set("since_id", strconv.FormatInt(sinceID, 10))
-	}
-	if limit > 0 {
-		q.Set("limit", strconv.Itoa(limit))
-	}
-	base, apiKey := c.readTarget("/galgame/messages/mine")
-	u := base + "/galgame/messages/mine"
-	if len(q) > 0 {
-		u += "?" + q.Encode()
-	}
-	req, err := http.NewRequestWithContext(ctx, http.MethodGet, u, nil)
-	if err != nil {
-		return nil, fmt.Errorf("build galgame /messages/mine: %w", err)
-	}
-	// Dual credential: the user JWT rides Authorization; the service key (when
-	// configured) rides X-API-Key on the internal read face.
-	req.Header.Set("Authorization", "Bearer "+accessToken)
-	if apiKey != "" {
-		req.Header.Set("X-API-Key", apiKey)
-	}
-
-	resp, err := c.http.Do(req)
-	if err != nil {
-		return nil, fmt.Errorf("galgame /messages/mine: %w", err)
-	}
-	defer resp.Body.Close()
-	raw, err := io.ReadAll(resp.Body)
-	if err != nil {
-		return nil, fmt.Errorf("read galgame response: %w", err)
-	}
-	var env galgameResponse[Paginated[GalgameMessage]]
-	if err := json.Unmarshal(raw, &env); err != nil {
-		return nil, fmt.Errorf("decode galgame envelope: %w (body=%s)", err, truncate(string(raw), 200))
-	}
-	if env.Code != 0 {
-		return nil, upstreamError(resp, env.Code, env.Message)
 	}
 	return &env.Data, nil
 }

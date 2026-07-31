@@ -29,6 +29,10 @@
   `/official/search`。**`search` 与 `:name` 详情读保留**：前者返回的 id 被后台
   管理台直接回填进 `PUT /tag {tag_id}` / `DELETE /tag/:id`（wiki staff 写面，
   W5 幸存面，键 = wiki 分类 PK），换 id 空间会改错行。
+- **W159 波(N4)**:`GET /galgame/messages/mine` 与 `GET/PUT /galgame/messages/read-state`
+  三条已删除 —— 本表自己就记着「暂无 FE 调用方」,而 moyu 的资料库通知走的是消息同步 cron
+  写进 `user_message` 的普通系统消息,`wiki_message_read_state` 始终 0 行(表留给 N5 随族清理)。
+  同波删 `PUT /api/v1/galgame/:gid`:moyu 的「编辑游戏信息」全部外链 kungal,无 UI 驱动它。
 - **W159 波(N4)退役 taxonomy staff 控制台**:tag / official / engine / series 的 CRUD 代理、
   `/taxonomy/:kind/:id` 编辑表单回填、以及 4 实体 × 3 的修订/回滚代理全部随
   `pages/galgame/taxonomy.vue` 一并删除(该页无任何导航入口,仅直链可达)。**保留公开三件**:
@@ -61,8 +65,6 @@
 |---|---|---|---|---|
 | `GET /api/v1/galgame/mine` | 登录 | `patchH.ListMyGalgames` | 对齐 | 我的投稿（分页 `{items,total}`）|
 | `GET /api/v1/galgame/search/publish` | 登录 | `patchH.SearchGalgameForPublish` | 对齐 | 发布流程内搜索 |
-| `GET /api/v1/galgame/messages/mine` | 登录 | `patchH.GetMyWikiMessages` | 对齐 | 暂无 FE 调用方（dead-but-correct）|
-| `GET /api/v1/galgame/messages/read-state` | 登录 | `patchH.GetWikiMessagesReadState` | 对齐 | 同上 |
 | `GET /api/v1/galgame/:gid/revisions` | 可选登录 | `patchH.WikiEditProxy` | 保持 | 代理透传；NSFW gate 对 `:gid` fail-closed（实测）|
 | `GET /api/v1/galgame/:gid/revisions/:rev` | 可选登录 | `patchH.WikiEditProxy` | 保持 | 代理 |
 | `GET /api/v1/galgame/:gid/revisions/:rev/diff` | 可选登录 | `patchH.WikiEditProxy` | 保持 | 代理 |
