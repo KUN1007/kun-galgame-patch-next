@@ -1094,49 +1094,6 @@ func shiftMonth(month string, n int) string {
 // their routes were census-verified dead and deleted. The month lane above is
 // the whole calendar surface.
 
-// GalgameMeta is one row of the ownership-meta batch: who owns a wiki entry and
-// what state it is in. Deliberately NOT a brief — no cover, no intro, no
-// release data. Ownership is not content.
-type GalgameMeta struct {
-	GID    int `json:"gid"`
-	UserID int `json:"user_id"`
-	// Status is the wiki's own state machine (0 published / 1 banned / 2 vndb
-	// draft / 3 pending / 4 declined). It legitimately lives on this face — the
-	// SURVIVING wiki face — and must never be read from the catalog, which
-	// refuses to mirror another service's states (R2).
-	Status int `json:"status"`
-}
-
-// GetGalgameMeta reads GET /internal/galgame/meta?ids= — the ownership-meta
-// batch on the surviving platform-workflow face (A2-1e area B, R2 lane ①).
-//
-// moyu uses it for the WRITE lifecycle only: stamping a lazily-materialized
-// stub row's placeholder owner, and the one-time backfill of the frozen
-// entry-creator snapshot. Display lanes must NOT call it per read — the creator
-// badge reads moyu's own snapshot column (R12), because wiki-era authorship is
-// frozen at the archive and does not want a live dependency.
-//
-// It is STATUS-BLIND, which is exactly why it exists: the published-only reads
-// answer nothing for an unpublished entry, so an owner assertion built on them
-// degrades to "not the owner" and locks the true owner out.
-func (c *Client) GetGalgameMeta(ctx context.Context, gids []int) ([]GalgameMeta, error) {
-	if len(gids) == 0 {
-		return nil, nil
-	}
-	if len(gids) > CatalogWorksIDsMax {
-		return nil, fmt.Errorf("GetGalgameMeta: %d ids exceeds the %d-id ceiling", len(gids), CatalogWorksIDsMax)
-	}
-	var out struct {
-		Items []GalgameMeta `json:"items"`
-	}
-	q := url.Values{}
-	q.Set("ids", joinInts(gids))
-	if err := c.get(ctx, "/galgame/meta", q, &out); err != nil {
-		return nil, err
-	}
-	return out.Items, nil
-}
-
 // ─── Write methods (require user OAuth access_token) ───
 //
 // Per integration-guide.md §2, write operations are proxied through the site

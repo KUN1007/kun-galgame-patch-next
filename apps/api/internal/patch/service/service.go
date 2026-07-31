@@ -242,9 +242,24 @@ func (s *PatchService) GetPatchDetail(ctx context.Context, id int) (*model.Patch
 //
 // Returns gorm.ErrRecordNotFound when the galgame is not a publicly-published
 // galgame entry, so the caller can reject the interaction. The stub is a PURE STATS
-// row: user_id = the galgame entry creator (placeholder owner), no +3 moemoepoint,
-// no contributor — the publish reward is granted only on a real resource publish.
-func (s *PatchService) ensureLocalPatch(ctx context.Context, id int) (*model.Patch, error) {
+// row: no +3 moemoepoint, no contributor — the publish reward is granted only on
+// a real resource publish.
+//
+// actorID is the user whose interaction is materializing the row, and becomes
+// the stub's PLACEHOLDER owner. It used to be the wiki entry's creator, read
+// live off the wiki's ownership-meta face; that face retires with the wiki
+// tables, and the registry deliberately does not mirror another service's user
+// model (refs/proj/106 R2 lane ①), so there is no successor read to point at.
+//
+// The interacting user is the right stand-in rather than a second-best one:
+// patch.user_id has a hard FK to the local user table, so it cannot be left
+// unset, and this is the one person who provably exists locally at this moment.
+// It is a placeholder either way — the first REAL publish adopts the stub and
+// transfers ownership (adoptStub) — and the honest "who wrote this wiki entry"
+// answer lives in the separate creator_id column, which migration 027 already
+// declared null-means-unknown for exactly the rows created after the wiki face
+// retires.
+func (s *PatchService) ensureLocalPatch(ctx context.Context, id, actorID int) (*model.Patch, error) {
 	patch, err := s.repo.GetPatchDetail(id)
 	if err == nil {
 		return patch, nil
@@ -278,27 +293,6 @@ func (s *PatchService) ensureLocalPatch(ctx context.Context, id int) (*model.Pat
 		vndb = fmt.Sprintf("wiki-%d", id)
 	}
 
-	// The entry creator: still the stub row's placeholder owner (adopted by the
-	// first real publish in createPatchRow), and now also the frozen creator
-	// snapshot the badge renders (migration 027).
-	//
-	// It comes from the SURVIVING wiki face's ownership-meta read, not from the
-	// catalog: "who owns this wiki entry" is wiki product state, which the
-	// registry refuses to mirror (refs/proj/106 R2 lane ①). This is a write
-	// path, so one extra credentialed call on first interaction is cheap — and
-	// the read is status-blind, so it answers for unpublished entries too.
-	creatorID := 0
-	if metas, mErr := s.galgame.GetGalgameMeta(ctx, []int{id}); mErr == nil {
-		for i := range metas {
-			if metas[i].GID == id {
-				creatorID = metas[i].UserID
-				break
-			}
-		}
-	} else {
-		slog.Warn("读取 galgame 归属元信息失败，stub 行将无创建者", "galgame_id", id, "error", mErr)
-	}
-
 	// Pure stats STUB row (is_stub=true). ON CONFLICT DO NOTHING makes concurrent
 	// first-interactions idempotent; we always re-read the canonical row after.
 	//
@@ -307,14 +301,14 @@ func (s *PatchService) ensureLocalPatch(ctx context.Context, id int) (*model.Pat
 	// data about moyu's resources, ruled moyu-owned in R12). "Now" is the honest
 	// answer for a row moyu is materializing at this instant, and the row has no
 	// resources yet, so the "最近更新" sort it feeds is not misled either way.
-	row := &model.Patch{ID: id, VndbID: vndb, UserID: creatorID, IsStub: true}
-	if creatorID > 0 {
-		row.CreatorID = &creatorID
-	}
-	// The galgame's owner (galgame user id) may never have logged into moyu, so there
-	// may be no local user anchor row — without one this insert fails
-	// patch_user_id_fkey (23503). Provision a stub anchor first (id only; profile
-	// fields live on OAuth), the same shape AuthService.FindOrCreateUserByID writes.
+	// creator_id is left NULL: "unknown", which is what migration 027 wrote down
+	// as the terminal value for rows materialized after the wiki face retires.
+	row := &model.Patch{ID: id, VndbID: vndb, UserID: actorID, IsStub: true}
+	// The interacting user is authenticated, so a local anchor row normally
+	// exists — but the session only proves OAuth identity, and a first-ever
+	// interaction can precede the local row. Provision it (id only; profile
+	// fields live on OAuth), the same shape AuthService.FindOrCreateUserByID
+	// writes, or patch_user_id_fkey (23503) rejects the insert.
 	if row.UserID > 0 {
 		if uErr := s.db.WithContext(ctx).
 			Clauses(clause.OnConflict{DoNothing: true}).
@@ -631,7 +625,7 @@ func (s *PatchService) CreateComment(patchID, userID int, content string, parent
 	// Commenting on a not-yet-收录 galgame lazily records it (the patch_comment FK
 	// to patch(id) would 23503 otherwise). No-op when the row exists; errors when
 	// the galgame isn't a public galgame entry.
-	if _, err := s.ensureLocalPatch(context.Background(), patchID); err != nil {
+	if _, err := s.ensureLocalPatch(context.Background(), patchID, userID); err != nil {
 		return nil, fmt.Errorf("patch not found")
 	}
 	if err := s.checkCommentParent(parentID, patchID, nil); err != nil {
@@ -968,7 +962,7 @@ func (s *PatchService) CreateResource(ctx context.Context, resource *model.Patch
 	// Publishing a resource on a not-yet-收录 galgame lazily records it (the
 	// patch_resource FK to patch(id) would 23503 otherwise). No-op in the normal
 	// publish flow (the wizard's CreatePatch already made the row).
-	if _, err := s.ensureLocalPatch(ctx, resource.GalgameID); err != nil {
+	if _, err := s.ensureLocalPatch(ctx, resource.GalgameID, userID); err != nil {
 		return fmt.Errorf("patch not found")
 	}
 
@@ -1481,7 +1475,7 @@ func (s *PatchService) ToggleFavorite(patchID, userID int) (bool, error) {
 	// Favoriting a not-yet-收录 galgame lazily records it (creates the local row),
 	// matching kungal's interaction-driven ingest. No-op when the row already
 	// exists; ErrRecordNotFound when the galgame isn't a public galgame entry.
-	patch, err := s.ensureLocalPatch(context.Background(), patchID)
+	patch, err := s.ensureLocalPatch(context.Background(), patchID, userID)
 	if err != nil {
 		return false, fmt.Errorf("patch not found")
 	}
