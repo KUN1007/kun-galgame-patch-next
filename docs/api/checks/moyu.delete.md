@@ -39,12 +39,12 @@
 
 ## 3. 分类代理 `/tag /official /engine /series`（→ Wiki，Wiki 强制 admin/mod）
 
+> **W159 波(N4)已整节退役**:该组代理随 moyu taxonomy staff 控制台
+> (`pages/galgame/taxonomy.vue`,无导航入口)一并删除。词表归 catalog,
+> staff 面归 kungal。公开浏览三件仍在,见 `moyu.get.md`。
+
 | 路径 | 鉴权 | Handler | 状态 | 备注 |
 |---|---|---|---|---|
-| `DELETE /api/v1/tag/:id` | 登录 | `patchH.WikiEditProxy` | 保持 | 代理 |
-| `DELETE /api/v1/official/:id` | 登录 | `patchH.WikiEditProxy` | 保持 | 代理 |
-| `DELETE /api/v1/engine/:id` | 登录 | `patchH.WikiEditProxy` | 保持 | 代理 |
-| `DELETE /api/v1/series/:id` | 登录 | `patchH.WikiEditProxy` | 保持 | 代理 |
 
 ## 4. 用户 `/user`
 

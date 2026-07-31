@@ -136,66 +136,6 @@ func TestFaceSelection_WithKey(t *testing.T) {
 		}
 	})
 
-	t.Run("proxy GET (staff taxonomy read) → legacy /api, user Bearer, no key", func(t *testing.T) {
-		if _, err := c.Proxy(ctx, http.MethodGet, "/tag/search?q=x", "user-jwt", nil, ""); err != nil {
-			t.Fatalf("Proxy GET: %v", err)
-		}
-		if rec.path != "/api/tag/search" {
-			t.Errorf("path = %q, want /api/tag/search", rec.path)
-		}
-		if rec.apiKey != "" {
-			t.Errorf("X-API-Key = %q, want empty — the staff face authenticates the USER", rec.apiKey)
-		}
-	})
-
-	t.Run("proxy GET (taxonomy B-bucket revisions) → internal + key", func(t *testing.T) {
-		if _, err := c.Proxy(ctx, http.MethodGet, "/tag/5/revisions?page=1", "", nil, ""); err != nil {
-			t.Fatalf("Proxy GET revisions: %v", err)
-		}
-		if rec.path != "/internal/tag/5/revisions" {
-			t.Errorf("path = %q, want /internal/tag/5/revisions (B-bucket stays internal)", rec.path)
-		}
-		if rec.apiKey != "nm_test_key" {
-			t.Errorf("X-API-Key = %q, want nm_test_key", rec.apiKey)
-		}
-	})
-
-	t.Run("proxy POST (taxonomy tag write) → legacy, no key", func(t *testing.T) {
-		if _, err := c.Proxy(ctx, http.MethodPost, "/tag", "user-jwt", []byte(`{}`), "application/json"); err != nil {
-			t.Fatalf("Proxy POST: %v", err)
-		}
-		if rec.path != "/api/tag" {
-			t.Errorf("path = %q, want /api/tag", rec.path)
-		}
-		if rec.apiKey != "" {
-			t.Errorf("X-API-Key = %q, want empty on legacy write face", rec.apiKey)
-		}
-	})
-
-	t.Run("proxy POST (series write, staff) → legacy, no key", func(t *testing.T) {
-		if _, err := c.Proxy(ctx, http.MethodPost, "/series", "user-jwt", []byte(`{}`), "application/json"); err != nil {
-			t.Fatalf("Proxy POST /series: %v", err)
-		}
-		if rec.path != "/api/series" {
-			t.Errorf("path = %q, want /api/series (staff taxonomy stays legacy)", rec.path)
-		}
-		if rec.apiKey != "" {
-			t.Errorf("X-API-Key = %q, want empty on legacy write face", rec.apiKey)
-		}
-	})
-
-	t.Run("proxy PUT (series update, staff) → legacy, no key", func(t *testing.T) {
-		if _, err := c.Proxy(ctx, http.MethodPut, "/series/9", "user-jwt", []byte(`{}`), "application/json"); err != nil {
-			t.Fatalf("Proxy PUT /series/9: %v", err)
-		}
-		if rec.path != "/api/series/9" {
-			t.Errorf("path = %q, want /api/series/9 (staff taxonomy stays legacy)", rec.path)
-		}
-		if rec.apiKey != "" {
-			t.Errorf("X-API-Key = %q, want empty on legacy write face", rec.apiKey)
-		}
-	})
-
 	t.Run("proxy POST /galgame/:gid/links (relation write) → internal + key + JWT", func(t *testing.T) {
 		if _, err := c.Proxy(ctx, http.MethodPost, "/galgame/42/links", "user-jwt", []byte(`{}`), "application/json"); err != nil {
 			t.Fatalf("Proxy POST links: %v", err)
@@ -375,45 +315,6 @@ func TestV1ReadRouting(t *testing.T) {
 		}
 	})
 
-	// The STAFF taxonomy reads route to the surviving /api face with the user's
-	// Bearer and NO service key: that face authenticates the USER (jwtAuth +
-	// galgame.taxonomy.edit_any), and its ids are wiki taxonomy PKs — the same
-	// key space the writes they feed take (refs/proj/106 R11).
-	staffGet := func(p string) func() error {
-		return func() error { _, e := c.Proxy(ctx, http.MethodGet, p, "user-jwt", nil, ""); return e }
-	}
-	staffCheck := func(t *testing.T, wantPath string, call func() error) {
-		t.Helper()
-		if err := call(); err != nil {
-			t.Fatalf("call: %v", err)
-		}
-		if rec.path != wantPath {
-			t.Errorf("path = %q, want %q", rec.path, wantPath)
-		}
-		if rec.apiKey != "" {
-			t.Errorf("X-API-Key = %q, want empty on the staff face", rec.apiKey)
-		}
-		if rec.auth != "Bearer user-jwt" {
-			t.Errorf("Authorization = %q, want the user Bearer", rec.auth)
-		}
-	}
-	t.Run("tag search → api staff", func(t *testing.T) {
-		staffCheck(t, "/api/tag/search", staffGet("/tag/search?q=x"))
-	})
-	t.Run("official search → api staff", func(t *testing.T) {
-		staffCheck(t, "/api/official/search", staffGet("/official/search?q=x"))
-	})
-	// The engine / series bare lists are rewritten onto the staff `search` form:
-	// same pane, but bounded.
-	t.Run("engine list → api staff search", func(t *testing.T) {
-		staffCheck(t, "/api/engine/search", staffGet("/engine"))
-	})
-	t.Run("series list → api staff search", func(t *testing.T) {
-		staffCheck(t, "/api/series/search", staffGet("/series?page=1"))
-	})
-	t.Run("staff edit-form read-back → api staff record", func(t *testing.T) {
-		staffCheck(t, "/api/tag/42", staffGet("/taxonomy/tag/42"))
-	})
 }
 
 // TestCatalogTwoHopReads pins the SEQUENCE of the gid-keyed reads, which is the
@@ -743,9 +644,9 @@ func TestTagPageCarriesSafetyFlag(t *testing.T) {
 	} {
 		t.Run(tc.name, func(t *testing.T) {
 			srv.reset()
-			raw, handled, err := c.proxyReadV1(ctx, "/tag/_?tag_id="+tc.tagID)
+			raw, handled, err := c.TaxonomyBrowse(ctx, "/tag/_?tag_id="+tc.tagID)
 			if err != nil || !handled {
-				t.Fatalf("proxyReadV1: handled=%v err=%v", handled, err)
+				t.Fatalf("TaxonomyBrowse: handled=%v err=%v", handled, err)
 			}
 			var got struct {
 				Tag struct {
@@ -893,9 +794,9 @@ func TestTaxonomyBrowseMembersAreGated(t *testing.T) {
 	} {
 		t.Run(tc.name, func(t *testing.T) {
 			srv.reset()
-			raw, handled, err := c.proxyReadV1(ctx, tc.path)
+			raw, handled, err := c.TaxonomyBrowse(ctx, tc.path)
 			if err != nil || !handled {
-				t.Fatalf("proxyReadV1: handled=%v err=%v", handled, err)
+				t.Fatalf("TaxonomyBrowse: handled=%v err=%v", handled, err)
 			}
 			// The record call is for the header only. It must NOT ask for works:
 			// that include is what made the member set the record's to decide.
@@ -999,16 +900,20 @@ func TestRetiredTaxonomyListsAreUnhandled(t *testing.T) {
 	c := NewWithKey(srv.URL, "nm_test_key")
 	ctx := context.Background()
 
-	for _, p := range []string{"/tag", "/tag?page=1", "/official", "/official?page=1"} {
+	// The bare lists went in wave A2-2; the staff picker / edit-form read-back
+	// lanes went with the console in wave 159. None of them may be resurrected
+	// through the browse reader, and none may dial any face.
+	for _, p := range []string{
+		"/tag", "/tag?page=1", "/official", "/official?page=1",
+		"/tag/search?q=x", "/official/search?q=x", "/engine", "/series?page=1",
+		"/taxonomy/tag/42",
+	} {
 		rec.path = ""
-		if _, handled, err := c.proxyReadV1(ctx, p); handled || err != nil {
-			t.Errorf("proxyReadV1(%q) = handled %v, err %v; want handled=false, err=nil", p, handled, err)
-		}
-		if _, ok := staffReadPath(p); ok {
-			t.Errorf("staffReadPath(%q) claimed a retired lane", p)
+		if _, handled, err := c.TaxonomyBrowse(ctx, p); handled || err != nil {
+			t.Errorf("TaxonomyBrowse(%q) = handled %v, err %v; want handled=false, err=nil", p, handled, err)
 		}
 		if rec.path != "" {
-			t.Errorf("proxyReadV1(%q) dialed %q; a retired lane must not reach any face", p, rec.path)
+			t.Errorf("TaxonomyBrowse(%q) dialed %q; a retired lane must not reach any face", p, rec.path)
 		}
 	}
 }

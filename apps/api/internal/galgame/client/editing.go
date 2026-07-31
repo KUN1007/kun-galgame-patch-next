@@ -38,48 +38,26 @@ func (c *Client) Proxy(
 	body []byte,
 	contentType string,
 ) (json.RawMessage, error) {
-	// GET routing after the wave-A2-2 re-anchor, in precedence order:
+	// GET routing: the two PUBLIC BROWSE pages are composed from the catalog and
+	// reshaped back to the bridge `data` here. They are addressed by the
+	// `tag_id` / `official_id` QUERY parameter, in the CATALOG id space; the
+	// route's own path segment is a vestigial placeholder the frontend fills
+	// with `_`. Keying on the wiki NAME in that segment is the pre-migration
+	// shape and is gone: the name is not an identity the catalog answers to.
 	//
-	//  1. the two PUBLIC BROWSE pages — composed from the catalog and reshaped
-	//     back to the bridge `data` here. They are addressed by the `tag_id` /
-	//     `official_id` QUERY parameter, in the CATALOG id space; the route's own
-	//     path segment is a vestigial placeholder the frontend fills with `_`.
-	//     Keying on the wiki NAME in that segment is the pre-migration shape and
-	//     is gone: the name is not an identity the catalog answers to;
-	//  2. the STAFF taxonomy reads (picker + edit-form read-back) — rewritten
-	//     onto the surviving `/api` staff face, which is where the wiki id key
-	//     space lives and where the write ops these ids feed already are;
-	//  3. everything else — the B-bucket revision-history reads — falls through
-	//     to the internal platform-workflow face unchanged.
+	// The staff taxonomy read lane that used to sit behind them was retired with
+	// the console in wave 159 (N4); there is no other proxied GET left.
 	var base, apiKey string
 	switch {
 	case method == http.MethodGet:
-		if data, handled, err := c.proxyReadV1(ctx, pathAndQuery); handled {
+		if data, handled, err := c.TaxonomyBrowse(ctx, pathAndQuery); handled {
 			return data, err
 		}
-		path, rawQuery := splitPathQuery(pathAndQuery)
-		staffPath, isStaff := staffReadPath(path)
-		if !isStaff {
-			staffPath, isStaff = staffDetailPath(path)
-		}
-		if isStaff {
-			// The staff face authenticates the USER (jwtAuth +
-			// galgame.taxonomy.edit_any), not the service, so it takes the
-			// Bearer and no API key — the same credential shape as the taxonomy
-			// writes it sits next to.
-			if rawQuery != "" {
-				staffPath += "?" + rawQuery
-			}
-			pathAndQuery = staffPath
-			base, apiKey = c.legacyBase, ""
-		} else {
-			base, apiKey = c.readTarget(pathAndQuery)
-		}
+		base, apiKey = c.readTarget(pathAndQuery)
 	default:
 		// Non-GETs split by route membership (see writeTarget): the galgame
 		// links/aliases relation writes are user-write-set members on the
-		// internal face + X-API-Key (wave 06a); the staff taxonomy CRUD +
-		// reverts stay on the legacy /api face.
+		// internal face + X-API-Key (wave 06a).
 		base, apiKey = c.writeTarget(pathAndQuery)
 	}
 

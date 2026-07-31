@@ -29,6 +29,10 @@
   `/official/search`。**`search` 与 `:name` 详情读保留**：前者返回的 id 被后台
   管理台直接回填进 `PUT /tag {tag_id}` / `DELETE /tag/:id`（wiki staff 写面，
   W5 幸存面，键 = wiki 分类 PK），换 id 空间会改错行。
+- **W159 波(N4)退役 taxonomy staff 控制台**:tag / official / engine / series 的 CRUD 代理、
+  `/taxonomy/:kind/:id` 编辑表单回填、以及 4 实体 × 3 的修订/回滚代理全部随
+  `pages/galgame/taxonomy.vue` 一并删除(该页无任何导航入口,仅直链可达)。**保留公开三件**:
+  `/tag/:name`、`/official/:name`、`/taxonomy/resolve/:kind/:id`。词表归 catalog,staff 面归 kungal。
 
 ---
 
@@ -76,11 +80,6 @@
 
 | 路径 | 鉴权 | 上游面 | id 空间 | 备注 |
 |---|---|---|---|---|
-| `GET /api/v1/tag/search` | **登录** | `/api/tag/search`（wiki staff）| **wiki** | 管理台选择器；返回 `{id,name}` 恒等身份子集 |
-| `GET /api/v1/official/search` | **登录** | `/api/official/search` | **wiki** | 同上 |
-| `GET /api/v1/engine` | **登录** | `/api/engine/search`（路径改写）| **wiki** | 同上；裸列表改成有界 search |
-| `GET /api/v1/series` | **登录** | `/api/series/search`（路径改写）| **wiki** | 同上 |
-| `GET /api/v1/taxonomy/:kind/:id` | **登录** | `/api/{kind}/{id}` | **wiki** | **新增**：编辑表单回填。update 是整体替换,读不回来的字段就是保存时被抹掉的字段 |
 | `GET /api/v1/tag/:name` | 公开 | `/v1/catalog/tags/{id}` + `works?ids=` | **catalog** | 公开浏览页；`?tag_id=` 现在收 catalog tag id |
 | `GET /api/v1/official/:name` | 公开 | `/v1/catalog/labels/{id}` + `works?ids=` | **catalog** | 同上；`?official_id=` 收 catalog label id |
 | `GET /api/v1/taxonomy/resolve/:kind/:id` | 公开 | 静态表 / `lookup?type=label` | wiki→catalog | **新增**：旧 URL 跳转壳的解析器。200 `{catalog_id}` / 410 / 404 |
@@ -118,19 +117,6 @@
 > 跳转壳则**直接指向最终形态**（壳→复数→单数的两跳链是错误形态,同波一并改指）。
 > 同波：`/tag/_`、`/official/_` 的「查无此条」不再透传 catalog 的 `code:4`(HTTP 400),
 > 改由 moyu 自己答 `40400` / HTTP 404,词条页据此 `createError` 出真 404 而非 200 空壳。
-
-### 4.2 修订历史读（8 = 4 实体 × 2）
-
-| 路径 | 鉴权 | Handler | 状态 | 备注 |
-|---|---|---|---|---|
-| `GET /api/v1/tag/:id/revisions` | 公开 | `patchH.WikiEditProxy` | 保持 | 代理 |
-| `GET /api/v1/tag/:id/revisions/:rev` | 公开 | `patchH.WikiEditProxy` | 保持 | 代理 |
-| `GET /api/v1/official/:id/revisions` | 公开 | `patchH.WikiEditProxy` | 保持 | 代理 |
-| `GET /api/v1/official/:id/revisions/:rev` | 公开 | `patchH.WikiEditProxy` | 保持 | 代理 |
-| `GET /api/v1/engine/:id/revisions` | 公开 | `patchH.WikiEditProxy` | 保持 | 代理 |
-| `GET /api/v1/engine/:id/revisions/:rev` | 公开 | `patchH.WikiEditProxy` | 保持 | 代理 |
-| `GET /api/v1/series/:id/revisions` | 公开 | `patchH.WikiEditProxy` | 保持 | 代理 |
-| `GET /api/v1/series/:id/revisions/:rev` | 公开 | `patchH.WikiEditProxy` | 保持 | 代理 |
 
 ## 5. 用户 `/user`
 

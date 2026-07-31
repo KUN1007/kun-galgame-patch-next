@@ -1,62 +1,23 @@
-// useGalgameEdit — typed client for the galgame taxonomy + relation surface
-// moyu still proxies to the galgame service: links/aliases relations and
-// tag/official/engine/series CRUD (incl. taxonomy revision history + revert).
-// Galgame metadata editing (revision history, edit-request PRs, direct edit)
-// moved to kungal in the "编辑面归 kungal" wave. Every call goes through OUR
-// backend proxy (/api/v1/...), which forwards the user's session/access_token
-// to the galgame service and relays galgame's {code,message,data} verbatim (see
-// internal/patch/handler/galgame_edit.go).
+// useGalgameEdit — typed client for what is left of the galgame taxonomy +
+// relation surface. Galgame metadata editing (revision history, edit-request
+// PRs, direct edit) moved to kungal in the "编辑面归 kungal" wave, and the
+// taxonomy STAFF console (tag/official/engine/series CRUD + revision history +
+// revert) was retired in wave 159 (N4) — the catalog owns the vocabulary now
+// and kungal hosts the one staff surface.
 //
-// galgame owns authorization (admin/moderator for PUT·DELETE taxonomy + revert;
-// any logged-in user for POST taxonomy). We do NOT re-check it client-side — on
-// a permission failure the backend forwards galgame's code+message and the caller
-// shows it.
+// What remains: the links/aliases relation writes, and the two PUBLIC taxonomy
+// browse pages. Every call goes through OUR backend proxy (/api/v1/...), which
+// relays the upstream {code,message,data} verbatim (see
+// internal/patch/handler/galgame_edit.go).
 
-export interface GalgamePage<T> {
-  items: T[]
-  total: number
-}
-
-// galgame-proxied relation shapes are aliased to the generated OpenAPI schemas
-// (shared/types/galgame-wiki.ts) so a backend wire change fails the drift gate
-// + tsc here instead of breaking at runtime. Re-exported so the relation
-// surface keeps importing them from this one composable.
+// galgame-proxied relation shapes are aliased to the vendored wire types
+// (shared/types/galgame-wiki.ts) so a backend wire change fails tsc here
+// instead of breaking at runtime. Re-exported so the relation surface keeps
+// importing them from this one composable.
 export type { GalgameLink, GalgameAlias } from '~/shared/types/galgame-wiki'
 
-// W3 / galgame U3 — taxonomy revision (multi-polymorphic single-table on the
-// galgame side; entity column distinguishes tag/official/engine/series). snapshot
-// shape varies per entity; we render it generically as Record<string, unknown>.
-// See docs/galgame_wiki/04-taxonomy.md §修订与回滚.
-export interface TaxonomyRevision {
-  id: number
-  entity: 'tag' | 'official' | 'engine' | 'series'
-  target_id: number
-  revision: number
-  action: 'created' | 'updated' | 'deleted' | 'reverted' | string
-  user_id: number
-  user_role: number
-  snapshot: Record<string, unknown>
-  changed_fields: string[]
-  // `deleted` rows only:
-  ref_count?: number
-  affected_galgame_ids?: number[]
-  note: string
-  created: string
-}
-
-// StaffTaxonomyRow is one row of a staff picker list. It is the IDENTITY subset
-// ONLY — the console picks a row and then reads the full record by id
-// (taxonomyRecord below). One shape promises "everything the form needs", and it
-// is not this one; that separation is what stopped the console silently wiping
-// fields it could not see.
-export interface StaffTaxonomyRow {
-  id: number
-  name: string
-}
-
 // BrowseTag / BrowseOfficial are the PUBLIC taxonomy pages' entities. Their ids
-// are CATALOG ids since wave A2-2 (P2 / R1) — a different key space from the
-// staff rows above, which is why they are a different type.
+// are CATALOG ids since wave A2-2 (P2 / R1).
 export interface BrowseTag {
   id: number
   name: string
@@ -121,165 +82,6 @@ export const useGalgameEdit = () => {
   const deleteAlias = (gid: number, id: number) =>
     api.delete(`/galgame/${gid}/aliases`, { id })
 
-  // ─── Taxonomy: the staff EDIT-FORM read-back ────────
-  //
-  // The update ops below are WHOLESALE replacements — a field the form cannot
-  // prefill is a field it erases on save. The list rows the console picks from
-  // carry only an identity subset, so every edit used to wipe `alias` (all four
-  // families), tag/official `description`, and a series' entire membership.
-  // This read (wave A2-2, backed by the staff face's per-family record) is the
-  // fix: read the record, prefill the form, then replace.
-  //
-  // Wiki ids end to end — the same key space the update ops and the revision
-  // history take. The PUBLIC browse pages moved to catalog ids; this lane
-  // deliberately did not follow them.
-  interface StaffTaxonomyRecord {
-    id: number
-    name: string
-    category?: string
-    original?: string
-    link?: string
-    lang?: string
-    description?: string
-    alias?: string[]
-    galgame_ids?: number[]
-  }
-  const taxonomyRecord = (
-    kind: 'tag' | 'official' | 'engine' | 'series',
-    id: number
-  ) => api.get<StaffTaxonomyRecord>(`/taxonomy/${kind}/${id}`)
-
-  // ─── Taxonomy: tag ──────────────────────────────────
-  const tagSearch = (q: string, category?: string, limit = 30) =>
-    api.get<{ items: StaffTaxonomyRow[]; total: number }>(
-      `/tag/search${qs({ q, category, limit })}`
-    )
-  const createTag = (body: {
-    name: string
-    category: string
-    description?: string
-    alias?: string[]
-  }) => api.post<StaffTaxonomyRow>('/tag', body)
-  const updateTag = (body: {
-    tag_id: number
-    name: string
-    category: string
-    description?: string
-    alias?: string[]
-  }) => api.put<StaffTaxonomyRow>('/tag', body)
-  // Two-stage safe delete (docs/galgame_wiki/04-taxonomy.md, 00 §15.1):
-  // without force, galgame rejects with code:7 + reference count if the tag is
-  // still used; force=true cascades. Same for official/engine.
-  const deleteTag = (id: number, force = false) =>
-    api.delete<{
-      deleted: boolean
-      forced: boolean
-      purged_relations: number
-      purged_aliases: number
-    }>(`/tag/${id}${force ? '?force=true' : ''}`)
-
-  // ─── Taxonomy: official ─────────────────────────────
-  const officialSearch = (
-    q: string,
-    category?: string,
-    lang?: string,
-    limit = 30
-  ) =>
-    api.get<{ items: StaffTaxonomyRow[]; total: number }>(
-      `/official/search${qs({ q, category, lang, limit })}`
-    )
-  const createOfficial = (body: {
-    name: string
-    category: string
-    original?: string
-    link?: string
-    lang?: string
-    description?: string
-    alias?: string[]
-  }) => api.post<StaffTaxonomyRow>('/official', body)
-  const updateOfficial = (body: {
-    official_id: number
-    name: string
-    category: string
-    link?: string
-    lang?: string
-    description?: string
-    alias?: string[]
-  }) => api.put<StaffTaxonomyRow>('/official', body)
-  const deleteOfficial = (id: number, force = false) =>
-    api.delete<{
-      deleted: boolean
-      forced: boolean
-      purged_relations: number
-      purged_aliases: number
-    }>(`/official/${id}${force ? '?force=true' : ''}`)
-
-  // ─── Taxonomy: engine ───────────────────────────────
-  // The engine and series panes are staff SEARCH lanes now (same face, bounded
-  // instead of "every row"), so both answer the {items,total} envelope its
-  // tag/official siblings always did.
-  const engineList = () =>
-    api.get<{ items: StaffTaxonomyRow[]; total: number }>('/engine')
-  const createEngine = (body: {
-    name: string
-    description?: string
-    alias?: string[]
-  }) => api.post<StaffTaxonomyRow>('/engine', body)
-  const updateEngine = (body: {
-    engine_id: number
-    name: string
-    description?: string
-    alias?: string[]
-  }) => api.put<StaffTaxonomyRow>('/engine', body)
-  // engine has no alias table → response has no purged_aliases.
-  const deleteEngine = (id: number, force = false) =>
-    api.delete<{
-      deleted: boolean
-      forced: boolean
-      purged_relations: number
-    }>(`/engine/${id}${force ? '?force=true' : ''}`)
-
-  // ─── Taxonomy: series ───────────────────────────────
-  // seriesSearch (`GET /series/search`) and seriesDetail (`GET /series/:id`)
-  // were retired in wave A1 alongside their backend routes — census-verified
-  // uncalled. The list read below stays: pages/galgame/taxonomy.vue drives it.
-  const seriesList = (opts?: { page?: number; limit?: number }) =>
-    api.get<GalgamePage<StaffTaxonomyRow>>(`/series${qs(opts as Q)}`)
-  const createSeries = (body: {
-    name: string
-    description?: string
-    galgame_ids: number[]
-  }) => api.post<StaffTaxonomyRow>('/series', body)
-  const seriesModal = (ids: number[]) =>
-    api.post<unknown[]>('/series/modal', { ids })
-  const updateSeries = (
-    id: number,
-    body: { name?: string; description?: string; galgame_ids?: number[] }
-  ) => api.put(`/series/${id}`, body)
-  const deleteSeries = (id: number) => api.delete(`/series/${id}`)
-
-  // ─── W3 / PR4 — Taxonomy 修订历史 + 回滚（4 实体 × 3 端点 = 12 个方法）─
-  // 全部由通用 GalgameEditProxy 代理；galgame 端鉴权（GET 公开、revert 需 admin/
-  // moderator）；snapshot 形态因 entity 而异（TagSnapshot / OfficialSnapshot /
-  // EngineSnapshot / SeriesSnapshot），UI 层用泛型 Record 展示，无需逐型建模。
-  // docs/galgame_wiki/04-taxonomy.md §修订与回滚 + 00-handbook §15.
-  type TaxKind = 'tag' | 'official' | 'engine' | 'series'
-
-  const taxListRevisions = (
-    kind: TaxKind,
-    id: number,
-    opts?: { page?: number; limit?: number }
-  ) =>
-    api.get<GalgamePage<TaxonomyRevision>>(
-      `/${kind}/${id}/revisions${qs(opts as Q)}`
-    )
-
-  const taxGetRevision = (kind: TaxKind, id: number, rev: number) =>
-    api.get<TaxonomyRevision>(`/${kind}/${id}/revisions/${rev}`)
-
-  const taxRevert = (kind: TaxKind, id: number, revision: number) =>
-    api.post<{ reverted_to: number }>(`/${kind}/${id}/revert`, { revision })
-
   // ─── Taxonomy detail pages (tag / official "view-by-id" pages) ─────────
   // galgame's `GET /<entity>/:name?<entity>_id=X` returns the entity itself +
   // the associated galgame list (paginated, with optional sort + NSFW filter).
@@ -320,31 +122,10 @@ export const useGalgameEdit = () => {
     }>(`/official/_${qs({ official_id: id, ...(opts as Q) })}`)
 
   return {
-    taxonomyRecord,
     createLink,
     deleteLink,
     createAlias,
     deleteAlias,
-    tagSearch,
-    createTag,
-    updateTag,
-    deleteTag,
-    officialSearch,
-    createOfficial,
-    updateOfficial,
-    deleteOfficial,
-    engineList,
-    createEngine,
-    updateEngine,
-    deleteEngine,
-    seriesList,
-    createSeries,
-    seriesModal,
-    updateSeries,
-    deleteSeries,
-    taxListRevisions,
-    taxGetRevision,
-    taxRevert,
     tagDetail,
     officialDetail
   }

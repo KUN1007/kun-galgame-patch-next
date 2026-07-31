@@ -318,89 +318,32 @@ func (a *App) RegisterRoutes() {
 	adminRoutes.Put("/doc/:id", a.DocHandler.UpdatePost)
 	adminRoutes.Delete("/doc/:id", a.DocHandler.DeletePost)
 
-	// ===== Galgame taxonomy proxy (handbook §15, MANDATORY full proxy) =====
+	// ===== Public taxonomy browse pages =====
 	//
-	// SUPERSEDES the old D11 note ("frontend calls galgame /tag /official directly,
-	// downstream skips tag/company"): handbook §15 now REQUIRES moyu to fully
-	// proxy + build UI for tag / official / engine / series CRUD — including the
-	// new POST creators (any logged-in user may add a tag/official/engine for an
-	// original/doujin work VNDB lacks; same permission model as POST /series).
-	// Pure pass-through; galgame enforces role (GET public; POST any logged-in
-	// user; PUT/DELETE admin/moderator) and we forward its code+message.
-	// Literal sub-paths are registered before :name/:id params so Fiber's
-	// order-based matcher resolves /tag/search before /tag/:name, etc.
+	// Wave 159 (N4) retired moyu's taxonomy STAFF console entirely — the CRUD
+	// proxies for tag / official / engine / series, the `/taxonomy/:kind/:id`
+	// edit-form read-back, and the 4x3 revision/revert proxies all went with the
+	// page that drove them (`pages/galgame/taxonomy.vue`, which had no nav entry
+	// on either the site or the admin shell and was reachable by direct URL
+	// only). The catalog is the vocabulary owner now; taxonomy field editing
+	// becomes an edit-engine family there, and until then kungal's console is
+	// the one staff surface. See infra
+	// refs/plans/10-data-layer-retirement/03-editing-face-nativization.md §4.
 	//
-	// Wave A2-2: the tag/official LIST reads and `/tag/multi` were census-verified
-	// FE-dead (no composable, page or server route called them — the taxonomy
-	// admin console drives its tag/official panes off `/tag/search` +
-	// `/official/search`, never the bare lists) and retired with their /v1
-	// reshapers.
-	//
-	// The STAFF reads below now require `auth` and forward to the surviving /api
-	// staff face. Two reasons they cannot follow the public browse pages onto
-	// catalog ids: the console feeds the ids they return straight back into
-	// PUT /tag {tag_id} / DELETE /tag/:id, which are keyed on WIKI taxonomy PKs;
-	// and the staff face gates on the user's own galgame.taxonomy.edit_any
-	// permission, so a Bearer must exist. Reading a picker no longer works
-	// anonymously — which matches what the writes next to it always required.
-	api.Get("/tag/search", auth, a.PatchHandler.GalgameEditProxy)
-	api.Post("/tag", auth, a.PatchHandler.GalgameEditProxy)
-	api.Put("/tag", auth, a.PatchHandler.GalgameEditProxy)
-	api.Delete("/tag/:id", auth, a.PatchHandler.GalgameEditProxy)
-	// /tag/:name and /official/:name carry an associated `galgame` list —
-	// we rewrite the response in GalgameTaxonomyDetailProxy so each entry
-	// has moyu's enriched GalgameCard shape (per-patch counts, KunLanguage
-	// name etc.), letting the FE render the same <GalgameCard> as home /
-	// galgame index. Other tag/official endpoints stay generic passthrough.
+	// What survives is the PUBLIC browse lane, and only it. `/tag/:name` and
+	// `/official/:name` carry an associated `galgame` list — we rewrite the
+	// response in GalgameTaxonomyDetailProxy so each entry has moyu's enriched
+	// GalgameCard shape (per-patch counts, KunLanguage name etc.), letting the
+	// FE render the same <GalgameCard> as home / galgame index. The `:name`
+	// segment is cosmetic; the real key is the `tag_id` / `official_id` query
+	// param, in the CATALOG id space.
 	api.Get("/tag/:name", a.PatchHandler.GalgameTaxonomyDetailProxy)
-
-	api.Get("/official/search", auth, a.PatchHandler.GalgameEditProxy)
-	api.Post("/official", auth, a.PatchHandler.GalgameEditProxy)
-	api.Put("/official", auth, a.PatchHandler.GalgameEditProxy)
-	api.Delete("/official/:id", auth, a.PatchHandler.GalgameEditProxy)
 	api.Get("/official/:name", a.PatchHandler.GalgameTaxonomyDetailProxy)
-
-	// Wave A1: the engine `:name` detail, series `search` and series `:id` detail
-	// GETs were census-verified FE-dead (no composable or page called them) and
-	// retired with their /v1 reshapers. The LIST reads stay — the taxonomy admin
-	// page (pages/galgame/taxonomy.vue) drives engineList / seriesList off them —
-	// and, like their tag/official siblings, they are now staff reads on /api.
-	api.Get("/engine", auth, a.PatchHandler.GalgameEditProxy)
-	api.Post("/engine", auth, a.PatchHandler.GalgameEditProxy)
-	api.Put("/engine", auth, a.PatchHandler.GalgameEditProxy)
-	api.Delete("/engine/:id", auth, a.PatchHandler.GalgameEditProxy)
-
-	api.Get("/series", auth, a.PatchHandler.GalgameEditProxy)
-	api.Post("/series/modal", auth, a.PatchHandler.GalgameEditProxy)
-	api.Post("/series", auth, a.PatchHandler.GalgameEditProxy)
-	api.Put("/series/:id", auth, a.PatchHandler.GalgameEditProxy)
-	api.Delete("/series/:id", auth, a.PatchHandler.GalgameEditProxy)
-
-	// Staff EDIT-FORM read-back (wave A2-2). Its own `/taxonomy/` prefix because
-	// `/tag/:name` is already the PUBLIC browse page, and the two answer in
-	// different id spaces — the browse page in catalog ids, this in wiki ids.
-	// Without it the console prefills from list rows and silently WIPES every
-	// field the list does not carry (aliases on all four families, tag/official
-	// descriptions, and a series' entire membership) on every save, because the
-	// update payload is a wholesale replacement.
-	api.Get("/taxonomy/:kind/:id", auth, a.PatchHandler.GalgameEditProxy)
 
 	// Old-id resolver for the taxonomy redirect shells (wave A2-2 / R1). Public:
 	// it answers only "where did this old id go", which is exactly what a
-	// crawler following a years-old link needs. Registered BEFORE the
-	// parameterized route above would swallow it — `resolve` is a literal.
+	// crawler following a years-old link needs.
 	api.Get("/taxonomy/resolve/:kind/:id", a.PatchHandler.ResolveTaxonomyID)
-
-	// ===== Taxonomy 修订历史 / 回滚（W3 / galgame U3 PR4，12 条）=====
-	// 4 实体 × 3 端点；都是纯透传到 galgame，鉴权 galgame 自己强制
-	// （GET 公开，revert 需 admin/moderator —— 我们只挂 auth 拿 Bearer）。
-	// Fiber 按段数匹配，/<entity>/:name (2段) 与 /<entity>/:id/revisions (3段)
-	// 不冲突，顺序无关；放在 taxonomy 块尾保持归类清晰。
-	for _, e := range []string{"tag", "official", "engine", "series"} {
-		api.Get("/"+e+"/:id/revisions", a.PatchHandler.GalgameEditProxy)
-		api.Get("/"+e+"/:id/revisions/:rev", a.PatchHandler.GalgameEditProxy)
-		api.Post("/"+e+"/:id/revert", auth, a.PatchHandler.GalgameEditProxy)
-	}
 
 	// ===== Common Routes =====
 	api.Get("/home", a.CommonHandler.GetHome)

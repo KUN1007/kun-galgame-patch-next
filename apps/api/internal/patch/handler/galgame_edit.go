@@ -42,8 +42,9 @@ func galgamePathFromRequest(c fiber.Ctx) string {
 	return strings.TrimPrefix(c.OriginalURL(), apiV1Prefix)
 }
 
-// GalgameEditProxy is the generic GET / JSON-write pass-through used by every
-// remaining relation (links/aliases) and taxonomy proxy endpoint.
+// GalgameEditProxy is the generic JSON-write pass-through used by the remaining
+// relation (links/aliases) endpoints. The taxonomy proxies it also used to
+// serve were retired with the console in wave 159 (N4).
 func (h *PatchHandler) GalgameEditProxy(c fiber.Ctx) error {
 	method := c.Method()
 	accessToken := middleware.GetAccessToken(c)
@@ -83,9 +84,9 @@ func (h *PatchHandler) GalgameEditProxy(c fiber.Ctx) error {
 	return writeGalgameResult(c, data, err)
 }
 
-// GalgameTaxonomyDetailProxy specializes GalgameEditProxy for /tag/:name and
-// /official/:name: it forwards to galgame same as the generic proxy, then
-// rewrites the response so the `galgame` array (galgame's flat brief shape) is
+// GalgameTaxonomyDetailProxy serves the two PUBLIC browse pages /tag/:name and
+// /official/:name: it composes the page from the catalog (TaxonomyBrowse), then
+// rewrites the response so the `galgame` array (the flat brief shape) is
 // replaced with moyu's enriched `GalgameCard` shape (KunLanguage `name`,
 // per-patch counts, banner-hash resolution etc.) — the same shape the home /
 // galgame index pages already consume.
@@ -98,21 +99,14 @@ func (h *PatchHandler) GalgameEditProxy(c fiber.Ctx) error {
 // of moyu's paginated list shape (and the existing FE TaxonomyListOpts
 // reader fallbacks).
 func (h *PatchHandler) GalgameTaxonomyDetailProxy(c fiber.Ctx) error {
-	if c.Method() != fiber.MethodGet {
-		// Non-GETs (PUT/POST/DELETE) on tag/official go through the generic
-		// proxy in GalgameEditProxy; this method is read-only enrichment.
-		return h.GalgameEditProxy(c)
+	raw, handled, err := h.galgame.TaxonomyBrowse(c.Context(), galgamePathFromRequest(c))
+	if !handled && err == nil {
+		// Not a browse read. Since wave 159 retired the taxonomy staff console
+		// there is no other taxonomy face downstream, so a `/tag/<anything
+		// else>` is simply not a page moyu serves — answer it here rather than
+		// letting it fall through onto a face it has no business reaching.
+		return response.Error(c, errors.ErrNotFound("词条不存在"))
 	}
-
-	accessToken := middleware.GetAccessToken(c)
-	raw, err := h.galgame.Proxy(
-		c.Context(),
-		fiber.MethodGet,
-		galgamePathFromRequest(c),
-		accessToken,
-		nil,
-		"",
-	)
 	if err != nil {
 		// An id the registry has no row for is a MISS, and moyu answers it with
 		// its OWN 404 rather than forwarding the catalog's code inside a 400.

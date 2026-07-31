@@ -1,28 +1,22 @@
 package client
 
-// Taxonomy reads after the wave-A2-2 re-anchor.
+// Taxonomy reads after the wave-A2-2 re-anchor and the wave-159 console
+// retirement.
 //
-// The taxonomy reads split into TWO lanes with two different id spaces, and
-// keeping them apart is the whole design (refs/proj/106 R11):
+// There used to be TWO lanes here with two different id spaces. The STAFF lane
+// (the admin console's picker + edit-form read-back, keyed on WIKI taxonomy PKs
+// because its ids fed straight back into `PUT /tag {tag_id}`) went away in wave
+// 159 (N4) together with the console itself — moyu no longer proxies taxonomy
+// CRUD at all, and with the writes gone there is nothing left for wiki-keyed
+// reads to serve.
 //
-//	STAFF lane  — the admin console's picker + edit form. Its ids feed straight
-//	              back into PUT /tag {tag_id} / DELETE /tag/:id on the wiki staff
-//	              write face, so they MUST be wiki taxonomy PKs. These reads
-//	              therefore go to the surviving `/api` staff face, which grew a
-//	              read-back pair per family in A2-1e precisely so a console can
-//	              read what it is about to overwrite. (Before that pair existed
-//	              the console prefilled from list rows and silently WIPED every
-//	              field the list did not carry — aliases on all four families,
-//	              plus tag/official descriptions.)
-//
-//	BROWSE lane — the two public pages, /tag/:id and /official/:id. These move to
-//	              the CATALOG id space (P2 / R1): catalog_tag ids and
-//	              catalog_label ids, with the old wiki-keyed URLs reduced to
-//	              redirect shells. Each page is two reads with two jobs: the
-//	              entity RECORD supplies the header, and the works SEARCH face
-//	              supplies the member list AND its count under one claim gate
-//	              (taxonomyMembers). The record's own work_count is registry-wide
-//	              and is not the page's number.
+// What remains is the BROWSE lane: the two public pages, /tag/:id and
+// /official/:id, in the CATALOG id space (P2 / R1) — catalog_tag ids and
+// catalog_label ids, with the old wiki-keyed URLs reduced to redirect shells.
+// Each page is two reads with two jobs: the entity RECORD supplies the header,
+// and the works SEARCH face supplies the member list AND its count under one
+// claim gate (taxonomyMembers). The record's own work_count is registry-wide
+// and is not the page's number.
 //
 // Nothing in this file touches the deprecated /v1/galgame face — that is the
 // point of the wave.
@@ -36,70 +30,11 @@ import (
 	"strings"
 )
 
-// staffTaxonomyKinds are the four families the `/api` staff read-back covers.
-var staffTaxonomyKinds = map[string]struct{}{
-	"tag": {}, "official": {}, "engine": {}, "series": {},
-}
-
-// staffReadPath maps a moyu taxonomy read path onto its `/api` staff
-// counterpart, or returns ok=false when the path is not a staff read.
-//
-// Three of the four are already path-identical; the engine and series LIST
-// reads are rewritten to the staff face's `search` form, which is what the
-// console's "list everything, filter by keyword" pane actually wants.
-//
-// A BLANK query on that form enumerates the whole family for these two — engine
-// and series are small curated sets, and the staff face serves them unfiltered
-// (a four-figure safety fuse, not a page window). That is load-bearing here: the
-// console's engine tab filters by keyword CLIENT-side over whatever this returns,
-// so a response truncated to the first N rows would make most engines
-// unsearchable while looking like a working filter. A query WITH terms is
-// narrowed by the face and stays bounded the ordinary way.
-func staffReadPath(path string) (string, bool) {
-	segs := strings.Split(strings.Trim(path, "/"), "/")
-	if len(segs) == 0 {
-		return "", false
-	}
-	if _, ok := staffTaxonomyKinds[segs[0]]; !ok {
-		return "", false
-	}
-	switch {
-	case len(segs) == 1:
-		// Only engine and series keep a bare-list moyu route; the tag and
-		// official bare lists were retired earlier in this wave as FE-dead, and
-		// resurrecting them here through the back door would undo that.
-		if segs[0] != "engine" && segs[0] != "series" {
-			return "", false
-		}
-		return "/" + segs[0] + "/search", true
-	case len(segs) == 2 && segs[1] == "search":
-		return path, true
-	}
-	return "", false
-}
-
-// staffDetailPath maps moyu's `/taxonomy/{kind}/{id}` read-back route onto the
-// `/api/{kind}/{id}` staff record. This route exists on its own prefix because
-// `/tag/{id}` is already taken by the public browse page — and the two must not
-// share a path, since they answer in two different id spaces.
-func staffDetailPath(path string) (string, bool) {
-	segs := strings.Split(strings.Trim(path, "/"), "/")
-	if len(segs) != 3 || segs[0] != "taxonomy" {
-		return "", false
-	}
-	if _, ok := staffTaxonomyKinds[segs[1]]; !ok {
-		return "", false
-	}
-	if _, err := strconv.Atoi(segs[2]); err != nil {
-		return "", false
-	}
-	return "/" + segs[1] + "/" + segs[2], true
-}
-
-// proxyReadV1 classifies a proxied GET and serves it from the face that now
-// owns it. handled=false lets Proxy fall through to its own face selection
-// (the taxonomy revision reads, and every write).
-func (c *Client) proxyReadV1(ctx context.Context, pathAndQuery string) (data json.RawMessage, handled bool, err error) {
+// TaxonomyBrowse serves one of the two PUBLIC taxonomy browse pages from the
+// catalog. handled=false means the path is not a browse read — the caller
+// answers that with a 404 rather than forwarding it anywhere, because since
+// wave 159 there is no other taxonomy face left downstream to forward it to.
+func (c *Client) TaxonomyBrowse(ctx context.Context, pathAndQuery string) (data json.RawMessage, handled bool, err error) {
 	path, rawQuery := splitPathQuery(pathAndQuery)
 	q, _ := url.ParseQuery(rawQuery)
 	segs := strings.Split(strings.Trim(path, "/"), "/")
