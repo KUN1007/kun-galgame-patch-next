@@ -160,7 +160,24 @@ func New(cfg *config.Config) *App {
 
 	// User module
 	userRepository := userRepo.New(db)
-	userSvc := userService.New(userRepository, usrCli, galgame, db, mpAwarder)
+	// Catalog S2S client — the registry's own face (Basic auth with the OAuth
+	// client_id/secret, which is how the catalog resolves this caller's
+	// per-client site binding). Distinct from `galgame` above, which speaks the
+	// public /v1 face with an internal-tier X-API-Key. Its consumers are the claim
+	// lifecycle (submission wizard, my-submissions), the claim-event cron and the
+	// per-user contribution counters.
+	catalogCli := catalogclient.New(catalogclient.Config{
+		BaseURL:      cfg.NextMoeAPI.BaseURL,
+		ClientID:     cfg.OAuth.ClientID,
+		ClientSecret: cfg.OAuth.ClientSecret,
+	})
+	if catalogCli.Configured() {
+		slog.Info("catalog s2s client configured", "base_url", cfg.NextMoeAPI.BaseURL)
+	} else {
+		slog.Warn("catalog s2s client NOT configured; the claim lifecycle and its cron will not run — set KUN_NEXTMOE_API_BASE + OAuth creds")
+	}
+
+	userSvc := userService.New(userRepository, usrCli, galgame, catalogCli, db, mpAwarder)
 	userHdl := userHandler.New(userSvc, galgame, usrCli)
 
 	// Message module
@@ -171,22 +188,6 @@ func New(cfg *config.Config) *App {
 	// Admin module (adminRepository built above — also patch-service's AuditLogger)
 	adminSvc := adminService.New(adminRepository, rdb, settingSvc, patchSvc)
 	adminHdl := adminHandler.New(adminSvc, galgame, usrCli)
-
-	// Catalog S2S client — the registry's own face (Basic auth with the OAuth
-	// client_id/secret, which is how the catalog resolves this caller's
-	// per-client site binding). Distinct from `galgame` above, which speaks the
-	// public /v1 face with an internal-tier X-API-Key. Today its only consumer
-	// is the claim-event cron.
-	catalogCli := catalogclient.New(catalogclient.Config{
-		BaseURL:      cfg.NextMoeAPI.BaseURL,
-		ClientID:     cfg.OAuth.ClientID,
-		ClientSecret: cfg.OAuth.ClientSecret,
-	})
-	if catalogCli.Configured() {
-		slog.Info("catalog s2s client configured", "base_url", cfg.NextMoeAPI.BaseURL)
-	} else {
-		slog.Warn("catalog s2s client NOT configured; the claim-event cron will not run — set KUN_NEXTMOE_API_BASE + OAuth creds")
-	}
 
 	// Trust & Safety integration — report intake (Phase 1) + enforcement callback
 	// (Phase 2) + moderator inbox proxy (Phase 3). S2S Basic auth reuses the OAuth

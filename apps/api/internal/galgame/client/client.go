@@ -1119,18 +1119,3 @@ func truncate(s string, n int) string {
 	return s[:n] + "..."
 }
 
-// GalgameUserStats is the subset of /galgame/user/:id/stats used for creator
-// eligibility (merged PRs + published galgames).
-type GalgameUserStats struct {
-	GalgameCreated int64 `json:"galgame_created"`
-	PRMerged       int64 `json:"pr_merged"`
-}
-
-// GetUserStats fetches a user's galgame contribution stats from the galgame.
-func (c *Client) GetUserStats(ctx context.Context, userID int) (*GalgameUserStats, error) {
-	var stats GalgameUserStats
-	if err := c.get(ctx, fmt.Sprintf("/galgame/user/%d/stats", userID), nil, &stats); err != nil {
-		return nil, err
-	}
-	return &stats, nil
-}

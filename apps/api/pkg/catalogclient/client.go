@@ -38,6 +38,23 @@ const (
 	ClaimStateHidden   = "hidden"
 )
 
+// Claim sites moyu recognises as the gid key space — the galgame product it
+// shares with kungal, whose product_work_id IS moyu's own patch id.
+//
+// Two spellings because the W1 window renames it in a step moyu does not deploy
+// alongside. A reader that knows only one of them is silently wrong on the
+// other side of that step, and neither failure raises anything.
+const (
+	ClaimSiteKungal = "kungal"
+	claimSiteLegacy = "galgame_wiki"
+)
+
+// IsGIDClaimSite reports whether a claim site is that key space, under either
+// spelling. Removable down to a comparison once the rename has soaked.
+func IsGIDClaimSite(site string) bool {
+	return site == ClaimSiteKungal || site == claimSiteLegacy
+}
+
 // Config bundles connection settings (created in app.go from config). The Basic
 // credentials are moyu's OAuth client_id/secret.
 type Config struct {

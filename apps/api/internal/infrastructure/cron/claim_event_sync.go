@@ -211,18 +211,11 @@ func effectOf(ev *catalogclient.ClaimEventFeedItem) claimEffect {
 	}
 }
 
-// isGIDClaim reports whether a claim's site is the one whose product_work_id is
-// a gid — moyu's own key space — under either spelling of the key.
-//
-// The window renames it from `galgame_wiki` to `kungal` in a step moyu does not
-// deploy alongside, so the filter is applied HERE rather than as a `site=` on
-// the request: a server-side filter naming one spelling would silently consume
-// and discard every event on the other side of the rename, advancing the cursor
-// past transitions it never applied. Client-side the cost is one comparison per
-// event, and other tenants' events fall out with no effect.
-func isGIDClaim(site string) bool {
-	return site == "kungal" || site == "galgame_wiki"
-}
+// The tenant filter is applied HERE rather than as a `site=` on the request: a
+// server-side filter naming one spelling of the mid-window rename would
+// silently consume and discard every event on the other side of it, advancing
+// the cursor past transitions it never applied. Client-side the cost is one
+// comparison per event, and other tenants' events fall out with no effect.
 
 // applyClaimEvent handles a single transition inside an open tx. It is the
 // idempotency boundary: a non-zero RowsAffected on the INSERT means this is the
@@ -235,7 +228,7 @@ func applyClaimEvent(
 	ev *catalogclient.ClaimEventFeedItem,
 ) error {
 	effect := effectOf(ev)
-	if !isGIDClaim(ev.Site) {
+	if !catalogclient.IsGIDClaimSite(ev.Site) {
 		// Another product's tenant. Consume nothing, remember nothing — the
 		// cursor still advances, which is the point of reading unfiltered.
 		return nil

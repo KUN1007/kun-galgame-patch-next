@@ -3,16 +3,17 @@ package service
 import (
 	"context"
 	"encoding/json"
+	"log/slog"
 
 	"kun-galgame-patch-api/pkg/errors"
 	"kun-galgame-patch-api/pkg/userclient"
 )
 
 // Moyu creator-eligibility thresholds — moyu's OWN policy (change freely here;
-// OAuth + wiki are untouched). A user may apply if ANY criterion is met:
-// ≥3 published patch resources (moyu's own data) OR ≥2000 moemoepoint (OAuth's
-// authoritative balance, C3) OR ≥5 merged PRs (wiki data).
-// See docs/auth/01-creator-role-design.md.
+// OAuth + the registry are untouched). A user may apply if ANY criterion is
+// met: ≥3 published patch resources (moyu's own data) OR ≥2000 moemoepoint
+// (OAuth's authoritative balance, C3) OR ≥5 merged edit proposals (registry
+// data). See docs/auth/01-creator-role-design.md.
 const (
 	creatorMinMergedPRs   = 5
 	creatorMinResources   = 3
@@ -21,6 +22,12 @@ const (
 )
 
 // CreatorEligibility is the moyu-side eligibility snapshot (counts vs thresholds).
+//
+// MergedPRs counts MERGED EDIT PROPOSALS. The wire name is the wiki-era "merged
+// PRs" and stays: it is a public field the frontend renders and a column in the
+// evidence blob recorded on every application, and the thing it counts did not
+// change — the editing engine's proposals ARE what the wiki called PRs, re-homed
+// onto the registry.
 type CreatorEligibility struct {
 	Eligible        bool  `json:"eligible"`
 	MergedPRs       int64 `json:"merged_prs"`
@@ -32,9 +39,22 @@ type CreatorEligibility struct {
 }
 
 func (s *UserService) creatorEligibility(ctx context.Context, userID int) (*CreatorEligibility, *errors.AppError) {
-	stats, err := s.galgame.GetUserStats(ctx, userID)
-	if err != nil {
-		return nil, errors.ErrInternal("获取贡献统计失败")
+	// Merged edit proposals, from the registry's own list face under a filter —
+	// the wiki's /galgame/user/:id/stats retires with the wiki tables and the
+	// count it served has no other successor.
+	//
+	// A failure degrades to 0 instead of failing the snapshot, which is how the
+	// moemoepoint leg below has always behaved and what this one should have
+	// done all along: it is ONE of three OR criteria, so an upstream blip used
+	// to deny eligibility to a user who already qualified on resources alone.
+	var mergedProposals int64
+	if s.catalog != nil && s.catalog.Configured() {
+		n, err := s.catalog.MergedProposalTotal(ctx, userID)
+		if err != nil {
+			slog.Warn("读取合并提案数失败，按 0 计", "user_id", userID, "error", err)
+		} else {
+			mergedProposals = n
+		}
 	}
 	resources := s.repo.CountPublishedPatchResources(userID)
 	// Authoritative OAuth balance (C3 single source, not the local cache). A
@@ -42,7 +62,7 @@ func (s *UserService) creatorEligibility(ctx context.Context, userID int) (*Crea
 	// fail the whole snapshot; the user can still qualify via resources / PRs.
 	moe, _ := s.mp.Balance(ctx, userID)
 	e := &CreatorEligibility{
-		MergedPRs:       stats.PRMerged,
+		MergedPRs:       mergedProposals,
 		Resources:       resources,
 		Moemoepoint:     int64(moe),
 		NeedMergedPRs:   creatorMinMergedPRs,

@@ -129,13 +129,13 @@ func TestEffectOfMapsEveryTransition(t *testing.T) {
 // because a foreign tenant's product_work_id is not a gid.
 func TestGIDClaimSiteAcceptsBothSpellings(t *testing.T) {
 	for _, site := range []string{"kungal", "galgame_wiki"} {
-		if !isGIDClaim(site) {
+		if !catalogclient.IsGIDClaimSite(site) {
 			t.Errorf("site %q must be recognised; on the wrong side of the rename "+
 				"the cron would consume every transition and apply none", site)
 		}
 	}
 	for _, site := range []string{"moyu", "letmoe-staging", ""} {
-		if isGIDClaim(site) {
+		if catalogclient.IsGIDClaimSite(site) {
 			t.Errorf("site %q is not the gid key space and must not be acted on", site)
 		}
 	}
