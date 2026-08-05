@@ -193,7 +193,8 @@
     "id": "4ed9bc99ec0a789a4796b83e22bd84c5",
     "name": "鲲 Galgame 论坛",
     "auto_consent": true,
-    "site_domain": "www.kungal.com"
+    "site_domain": "www.kungal.com",
+    "logo_url": "https://image.moyu.moe/image/abc123"
   }
 }
 ```
@@ -204,6 +205,7 @@
 | name | 展示名 |
 | auto_consent | 第一方 client 标志；为 true 时前端**跳过同意页**，直接 POST `/oauth/authorize/consent` |
 | site_domain | 关联 site 的 domain（可空），用于展示"将跳转回 X" |
+| logo_url | 应用图标（可空，与 `/oauth/ecosystem` 同一张图），同意页用它替代首字母占位 |
 
 > **不返回**：`secret`、`redirect_uris`、`scopes` 等敏感 / 实现细节。这个端点只为前端判定 UI 行为服务。
 
