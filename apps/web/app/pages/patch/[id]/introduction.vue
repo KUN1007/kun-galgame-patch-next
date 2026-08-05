@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import { useContentBlurUp } from '@kungal/ui-vue'
 import { kunMoyuMoe } from '~/config/moyu-moe'
+import { imageServiceUrl } from '~/shared/utils/resolveBannerUrl'
 
 const route = useRoute()
 const api = useApi()
@@ -129,6 +130,13 @@ const hiddenByFilterCount = computed(() => {
   if (!detail.value?.tags) return 0
   return detail.value.tags.length - filteredTags.value.length
 })
+
+// The 会社 chips' brand logo (wave 170 P3). `_mini` is the 360px inside-fit
+// variant — a chip is ~20px tall, so the original would be a hundredfold
+// overdraw on a page that already carries covers and screenshots. '' for a
+// label with no logo, and the chip then renders text-only exactly as before.
+const officialLogoSrc = (o: PatchDetailOfficial) =>
+  imageServiceUrl((o.logo_hash ?? '').trim(), 'mini')
 
 // Galgame metadata home (E3b: the wiki frontend is retiring — the metadata
 // pages live on kungal now; deep links go to /galgame/:gid there).
@@ -307,6 +315,13 @@ const kungalOrigin = kunMoyuMoe.domain.kungal
           :to="`/galgame/official/${o.id}`"
         >
           <KunChip color="success" variant="flat" size="sm">
+            <KunImage
+              v-if="officialLogoSrc(o)"
+              :src="officialLogoSrc(o)"
+              :alt="o.name"
+              object-fit="contain"
+              class-name="mr-1 size-4 shrink-0 rounded-sm"
+            />
             {{ o.name }}
             <span v-if="o.category" class="text-default-500 text-xs">
               · {{ o.category }}

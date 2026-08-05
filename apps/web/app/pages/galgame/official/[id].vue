@@ -1,4 +1,6 @@
 <script setup lang="ts">
+import { imageServiceUrl } from '~/shared/utils/resolveBannerUrl'
+
 // Standalone moyu label (brand / publisher / circle — what the wiki called an
 // "official") detail page, at /galgame/official/:id. Mirrors the sibling tag
 // page's layout.
@@ -108,6 +110,15 @@ const galgames = computed<GalgameCard[]>(
   () => data.value?.detail?.galgames ?? []
 )
 const total = computed(() => data.value?.detail?.total ?? 0)
+
+// The brand logo, wave 170 P3. The catalog stores a hash and moyu relays the
+// hash (never a URL), so the CDN address is built here exactly as banners and
+// avatars are. Most labels carry none — '' resolves to '' and the header falls
+// back to its name-only form rather than to a broken image box. Logos are SFW
+// by definition (a brand mark is not the work's content), so no age gate.
+const logoSrc = computed(() =>
+  imageServiceUrl((official.value?.logo_hash ?? '').trim())
+)
 const totalPage = computed(() => Math.max(1, Math.ceil(total.value / limit)))
 
 // The label lane keeps its SEO: a company name is not itself an NSFW signal
@@ -136,6 +147,19 @@ if (official.value) {
       <!-- Header -->
       <section class="border-default/20 rounded-xl border p-5">
         <div class="flex flex-wrap items-center gap-3">
+          <!-- Brand logo (wave 170 P3). Absent for most labels — the whole
+               header then reads exactly as it did before the field existed,
+               which is why there is no placeholder tile. `contain` because a
+               logo is artwork with its own aspect ratio: cropping it to a
+               square is defacing a trademark. -->
+          <KunImage
+            v-if="logoSrc"
+            :src="logoSrc"
+            :alt="official.name"
+            object-fit="contain"
+            loading="eager"
+            class-name="border-default/20 bg-content1 size-14 shrink-0 rounded-lg border p-1"
+          />
           <h1 class="text-2xl font-bold sm:text-3xl">{{ official.name }}</h1>
           <KunChip color="success" variant="flat" size="sm">
             {{ CATEGORY_LABEL[official.category] ?? official.category }}

@@ -682,6 +682,53 @@ func TestTaxonomyBrowseMembersAreGated(t *testing.T) {
 	}
 }
 
+// TestLabelLogoHashReachesBothFaces pins the 会社 logo (wave 170 P3) on the two
+// lanes that render one: the official browse page's header, and the work
+// detail's 会社 chips.
+//
+// It is a HASH on moyu's own wire, never a URL — the frontend builds the CDN
+// address from it exactly as it does for banners and avatars, so the CDN domain
+// stays in one place. An absent key must read "" rather than raise: the catalog
+// grew the field additively and moyu has to serve both sides of that deploy.
+func TestLabelLogoHashReachesBothFaces(t *testing.T) {
+	srv := newCatalogFake(t)
+	c := NewWithKey(srv.URL, "nm_test_key")
+	ctx := context.Background()
+
+	t.Run("official browse header", func(t *testing.T) {
+		srv.reset()
+		raw, handled, err := c.TaxonomyBrowse(ctx, "/official/_?official_id=31")
+		if err != nil || !handled {
+			t.Fatalf("TaxonomyBrowse: handled=%v err=%v", handled, err)
+		}
+		var got struct {
+			Official struct {
+				LogoHash string `json:"logo_hash"`
+			} `json:"official"`
+		}
+		if e := json.Unmarshal(raw, &got); e != nil {
+			t.Fatalf("unmarshal: %v", e)
+		}
+		if got.Official.LogoHash != "abcd1234" {
+			t.Errorf("official.logo_hash = %q, want the record's hash verbatim", got.Official.LogoHash)
+		}
+	})
+
+	t.Run("work detail label", func(t *testing.T) {
+		srv.reset()
+		full, err := c.GetGalgame(ctx, 7, "")
+		if err != nil {
+			t.Fatalf("GetGalgame: %v", err)
+		}
+		if len(full.Galgame.Official) == 0 {
+			t.Fatal("detail carries no official — the fixture has one")
+		}
+		if got := full.Galgame.Official[0].Official.LogoHash; got != "abcd1234" {
+			t.Errorf("official[0].logo_hash = %q, want the label edge's hash verbatim", got)
+		}
+	})
+}
+
 // TestDeprecatedGalgameFaceIsUnreachable is the wave's residue gate: after the
 // A2-2 re-anchor, NO read may touch /v1/galgame — that surface carries
 // Deprecation + Sunset headers and is being taken down. A future edit that

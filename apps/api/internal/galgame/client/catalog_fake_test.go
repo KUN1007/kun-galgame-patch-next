@@ -171,7 +171,7 @@ func (f *catalogFake) tagRecord(path string) string {
 func (f *catalogFake) labelRecord(path string) string {
 	id, _ := strconv.ParseInt(strings.TrimPrefix(path, "/v1/catalog/labels/"), 10, 64)
 	return `{"id":` + strconv.FormatInt(id, 10) + `,"display_name":"Brand","kind":"developer","lang":"ja",` +
-		`"aliases":["ブランド"],"work_count":3,` +
+		`"aliases":["ブランド"],"work_count":3,"logo_hash":"abcd1234",` +
 		`"intros":[{"lang":"zh-Hans","intro":"说明","source":"vndb"}],` +
 		`"links":[{"source":"web","url":"https://example.test"}]}`
 }
@@ -192,7 +192,7 @@ func (f *catalogFake) workDetail(path string) string {
 		`"screenshots":[],` +
 		`"tags":[{"name":"純愛","source":"vndb","canonical_id":11,"tier":"core","kind":"content","spoiler":0,"sexual":false},` +
 		`{"name":"エロ","source":"vndb","canonical_id":12,"tier":"core","kind":"content","spoiler":1,"sexual":true}],` +
-		`"labels":[{"id":31,"display_name":"Brand","label_kind":"game_brand","kind":"developer","lang":"ja"}],` +
+		`"labels":[{"id":31,"display_name":"Brand","label_kind":"game_brand","kind":"developer","lang":"ja","logo_hash":"abcd1234"}],` +
 		`"engines":[{"id":41,"name":"KiriKiri"}],"links":[{"source":"web","url":"https://example.test"}]}`
 }
 

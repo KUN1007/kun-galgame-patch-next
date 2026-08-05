@@ -45,6 +45,12 @@ export interface BrowseOfficial {
   link: string
   description: string
   galgame_count: number
+  // The 会社 brand logo as an image_service content HASH (wave 170 P3) — moyu's
+  // convention for every catalog-derived image, so the URL is built here with
+  // imageServiceUrl and the CDN domain stays in one place. '' / absent = no
+  // logo: the header renders its name-only form, which is what every label
+  // looked like before this field existed.
+  logo_hash?: string
 }
 
 type Q = Record<string, string | number | boolean | undefined>

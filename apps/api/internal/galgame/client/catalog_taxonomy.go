@@ -124,6 +124,11 @@ type catalogOfficialBrief struct {
 	Link         string   `json:"link"`
 	Description  string   `json:"description"`
 	GalgameCount int      `json:"galgame_count"`
+	// LogoHash is an image_service content HASH, not a URL — moyu's own
+	// convention for every catalog-derived image (see Official.LogoHash). ""
+	// when the label has no logo, which is the majority of the registry; the
+	// page renders its existing name-only header for those.
+	LogoHash string `json:"logo_hash"`
 }
 
 // catalog wire shapes for the two entity records.
@@ -167,6 +172,11 @@ type catalogLabelRecord struct {
 	WorkCount   int                `json:"work_count"` // registry-caliber; see catalogTagRecord.WorkCount
 	Intros      []catalogIntroRow  `json:"intros"`
 	Links       []catalogLabelLink `json:"links"`
+	// LogoHash is the catalog-owned brand logo (catalog_label.logo_hash, wave
+	// 170). Additive on this record: a catalog that has not deployed the field
+	// yet omits the key and this reads "", which is the same value 会社 without
+	// a logo carry — one branch downstream, no version sniffing.
+	LogoHash string `json:"logo_hash"`
 }
 
 // preferredIntro picks the description to render: Chinese first, then Japanese,
@@ -279,6 +289,7 @@ func (c *Client) catalogLabelDetail(ctx context.Context, idStr string, q url.Val
 			Lang:        productLangFromCatalog(rec.Lang),
 			Link:        link,
 			Description: preferredIntro(rec.Intros),
+			LogoHash:    rec.LogoHash,
 			// The gated total, for the reason catalogTagDetail states.
 			GalgameCount: int(total),
 		},

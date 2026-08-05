@@ -157,6 +157,9 @@ interface PatchDetailOfficial {
   aliases?: string[]
   category: string
   lang: string
+  // image_service content hash of the brand logo (wave 170 P3), not a URL.
+  // '' / absent = no logo, and the chip stays text-only.
+  logo_hash?: string
 }
 
 interface PatchDetail extends GalgameCard {

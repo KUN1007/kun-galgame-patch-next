@@ -395,6 +395,12 @@ type Official struct {
 	Link         string   `json:"link"`
 	Description  string   `json:"description"`
 	GalgameCount int      `json:"galgame_count"`
+	// LogoHash is the company's brand logo as an image_service content hash,
+	// NOT a URL — the same shape moyu already emits for every other
+	// catalog-derived image (effective_banner_hash, avatar_image_hash), so the
+	// frontend builds the CDN URL with one helper and the emitting side stays
+	// free of a domain it does not own. "" = no logo, render the fallback.
+	LogoHash string `json:"logo_hash"`
 }
 
 // CoverInput / ScreenshotInput mirror the galgame cover/screenshot row shape

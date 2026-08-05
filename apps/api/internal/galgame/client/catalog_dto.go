@@ -313,6 +313,12 @@ type catalogWorkLabel struct {
 	LabelKind   string `json:"label_kind"`
 	Kind        string `json:"kind"`
 	Lang        string `json:"lang"`
+	// LogoHash is the label's brand logo in the image service (wave 170 P3).
+	// ADDITIVE and optional on this block: the catalog guarantees the field on
+	// the label RECORD and on the taxonomy list rows, and a face that has not
+	// grown it yet simply leaves this "" — which is exactly what a label with
+	// no logo carries, and the same fallback renders for both.
+	LogoHash string `json:"logo_hash"`
 }
 
 // catalogWorkEngine is one engine attribution on a work.

@@ -529,6 +529,7 @@ func catalogLabelToFullOfficial(gid int, l *catalogWorkLabel) GalgameFullOfficia
 			Name:     l.DisplayName,
 			Category: l.LabelKind,
 			Lang:     productLangFromCatalog(l.Lang),
+			LogoHash: l.LogoHash,
 		},
 	}
 }

@@ -358,6 +358,11 @@ type PatchDetailOfficial struct {
 	Aliases  []string `json:"aliases,omitempty"`
 	Category string   `json:"category"`
 	Lang     string   `json:"lang"`
+	// LogoHash is the brand logo as an image_service content hash (""=none).
+	// Not omitempty: a consumer must be able to tell "this company has no logo"
+	// from "this response predates the field", and only an always-present key
+	// says the first.
+	LogoHash string `json:"logo_hash"`
 }
 
 // PatchDetailCard is for the detail page: the base GalgameCard plus intro and the
@@ -480,6 +485,7 @@ func EnrichPatchDetail(ctx context.Context, galgame *galgameClient.Client, users
 			Aliases:  o.Official.Aliases,
 			Category: o.Official.Category,
 			Lang:     o.Official.Lang,
+			LogoHash: o.Official.LogoHash,
 		})
 	}
 	return base
@@ -720,6 +726,7 @@ func GalgameOnlyDetail(ctx context.Context, galgame *galgameClient.Client, users
 			Aliases:  o.Official.Aliases,
 			Category: o.Official.Category,
 			Lang:     o.Official.Lang,
+			LogoHash: o.Official.LogoHash,
 		})
 	}
 	return base
