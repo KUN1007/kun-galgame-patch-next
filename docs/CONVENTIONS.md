@@ -11,4 +11,4 @@
 - **提示 / 警告用文字标签**:「注意:」「重要:」「已实现:」等,不用 emoji 前缀。
 - **可保留**(等宽渲染一致、属结构而非装饰):ASCII 制表符 `┌─┘├`、几何箭头 `▲ ► ▼`、圈号步骤 `① ② ③`、纯文本箭头 `→ ← ↓`、键盘快捷键写文字(如 `Cmd+K`)。
 
-> 注意:`docs/oauth`、`docs/image_service`、`docs/galgame_wiki` 是 infra 契约的**生成镜像**,勿手改;由 `kungal-docs` 的 `docs:sync` 下发。
+> 注意:`docs/oauth`、`docs/image_service`、`docs/artifact` 是 infra 契约的**生成镜像**,勿手改;由 `kungal-docs` 的 `docs:sync` 下发。
