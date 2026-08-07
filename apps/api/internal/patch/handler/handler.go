@@ -32,8 +32,12 @@ var vndbIDRegex = regexp.MustCompile(`^v\d+$`)
 type PatchHandler struct {
 	service *service.PatchService
 	galgame *galgameClient.Client
-	// catalog is the registry's S2S face: the claim lifecycle (submit / publish
-	// / withdraw) and the per-user claim list the "my submissions" page reads.
+	// catalog is the registry client. The claim lifecycle (submit / publish /
+	// withdraw) and the "my submissions" list now go over the USER plane —
+	// the caller's own OAuth access token as a Bearer — so what a person does
+	// to the catalogue is attributed to them by the registry, not asserted by
+	// moyu. Only the machine reads (the claim-event cron, the creator counters)
+	// still speak S2S.
 	catalog *catalogclient.Client
 	users   *userclient.Client
 }
@@ -47,31 +51,43 @@ func New(
 	return &PatchHandler{service: svc, galgame: galgame, catalog: catalog, users: users}
 }
 
-// claimSite is the tenant moyu acts as on the registry.
-//
-// moyu and kungal are two entrances to ONE galgame product, which is what the
-// shared gid key space has meant for a decade: a moyu submission has always
-// minted an entry in the same catalogue kungal reads, and moyu's local patch id
-// IS that entry's id. So moyu's client binds this site rather than a `moyu`
-// tenant of its own — a separate tenant would mean a second registry identity
-// for the same game, and moyu's own reads (which require this site to derive a
-// gid) would not even find it.
-const claimSite = catalogclient.ClaimSiteKungal
+// The tenant moyu acts as on the registry is no longer named here at all: the
+// user plane reads it off the OAuth client the access token was minted for
+// (that client's catalog_site binding). It is still `kungal`, and for the same
+// decade-old reason — moyu and kungal are two entrances to ONE galgame product,
+// so a moyu submission mints an entry in the catalogue kungal reads and moyu's
+// local patch id IS that entry's id — but the binding now lives in one place
+// instead of being restated on every request.
 
-// claimActor asserts the logged-in user to the registry. The catalog never sees
-// moyu's session; the product asserts identity and the registry records it.
-func claimActor(c fiber.Ctx) catalogclient.EditActor {
-	return catalogclient.EditActor{
-		UserID: int64(middleware.MustGetUser(c).ID),
-		Roles:  middleware.GetRoles(c),
+// catalogUserToken is the OAuth access token every claim write now travels on.
+//
+// The registry's user plane derives BOTH the acting user and the acting site
+// from the token, so moyu asserts neither: a session with no token has nothing
+// to say there and is refused here rather than one round-trip later.
+func catalogUserToken(c fiber.Ctx) (string, *errors.AppError) {
+	token := middleware.GetAccessToken(c)
+	if token == "" {
+		return "", errors.ErrUnauthorized()
 	}
+	return token, nil
 }
 
 // catalogErr renders a registry failure. A 409 is not an accident — it is the
 // lifecycle face answering "that move is illegal from where this claim
 // currently is", or "you already submitted this" — so its message is shown to
 // the user verbatim rather than flattened into a 500.
+//
+// The one denial that gets re-worded is a missing `catalog:edit` scope: the
+// registry's own 403 reads as "not allowed", when the truth is that the session
+// was authorized before the scope existed and a re-login fixes it. That becomes
+// moyu's own 40399 so the frontend can say so.
 func catalogErr(c fiber.Ctx, err error, fallback string) error {
+	if stderrors.Is(err, catalogclient.ErrInsufficientScope) {
+		return response.Error(c, errors.ErrCatalogReauthRequired(""))
+	}
+	if stderrors.Is(err, catalogclient.ErrNoAccessToken) {
+		return response.Error(c, errors.ErrUnauthorized())
+	}
 	var apiErr *catalogclient.APIError
 	if stderrors.As(err, &apiErr) && apiErr.Status >= 400 && apiErr.Status < 500 {
 		return response.Error(c, errors.New(apiErr.Code, apiErr.Message, apiErr.Status))
@@ -970,8 +986,12 @@ func (h *PatchHandler) SubmitGalgame(c fiber.Ctx) error {
 	if fErr != nil {
 		return response.Error(c, errors.ErrBadRequest(fErr.Error()))
 	}
-	out, err := h.catalog.SubmitWork(c.Context(), catalogclient.WorkSubmitRequest{
-		Site: claimSite, Actor: claimActor(c), Fields: fields,
+	token, tErr := catalogUserToken(c)
+	if tErr != nil {
+		return response.Error(c, tErr)
+	}
+	out, err := h.catalog.SubmitWorkUser(c.Context(), token, catalogclient.UserWorkSubmitRequest{
+		Fields: fields,
 	})
 	if err != nil {
 		return catalogErr(c, err, "提交到资料库失败")
@@ -1009,12 +1029,19 @@ func (h *PatchHandler) ClaimGalgame(c fiber.Ctx) error {
 	if hErr != nil {
 		return hErr
 	}
-	if _, err := h.catalog.ActOnClaim(c.Context(), workID,
+	token, tErr := catalogUserToken(c)
+	if tErr != nil {
+		return response.Error(c, tErr)
+	}
+	if _, err := h.catalog.ActOnClaimUser(c.Context(), token, workID,
 		catalogclient.ClaimActionPublish,
-		catalogclient.ClaimActionRequest{Site: claimSite, Actor: claimActor(c)}); err != nil {
+		catalogclient.UserClaimActionRequest{}); err != nil {
 		// A 409 here is the registry saying the claim is not in `draft` any
 		// more — someone else took it, or it is a submission under review. That
 		// refusal is the answer, not a fault, and the wizard re-searches on it.
+		// A 403 is the other half of the same sentence: the entry already has
+		// an owner and it is not this person. Only an UNOWNED draft is free to
+		// take, and taking it is what stamps the ownership.
 		return catalogErr(c, err, "调用资料库失败")
 	}
 
@@ -1075,9 +1102,16 @@ func (h *PatchHandler) WithdrawGalgameSubmission(c fiber.Ctx) error {
 	if hErr != nil {
 		return hErr
 	}
-	if _, err := h.catalog.ActOnClaim(c.Context(), workID,
+	token, tErr := catalogUserToken(c)
+	if tErr != nil {
+		return response.Error(c, tErr)
+	}
+	// The registry checks ownership itself now: only the submission's own owner
+	// may pull it back out of the queue, and that is answered against the token
+	// subject rather than against a uid moyu asserts.
+	if _, err := h.catalog.ActOnClaimUser(c.Context(), token, workID,
 		catalogclient.ClaimActionWithdraw,
-		catalogclient.ClaimActionRequest{Site: claimSite, Actor: claimActor(c)}); err != nil {
+		catalogclient.UserClaimActionRequest{}); err != nil {
 		return catalogErr(c, err, "调用资料库失败")
 	}
 	return response.OKMessage(c, "OK")
@@ -1111,10 +1145,15 @@ func (h *PatchHandler) ListMyGalgames(c fiber.Ctx) error {
 			}
 		}
 	}
-	out, err := h.catalog.UserClaims(c.Context(), middleware.MustGetUser(c).ID,
-		catalogclient.UserClaimFilter{
-			Site: claimSite, ClaimStates: states, Before: before, Limit: limit,
-		})
+	token, tErr := catalogUserToken(c)
+	if tErr != nil {
+		return response.Error(c, tErr)
+	}
+	// /claims/mine needs no uid and no site: it is whoever holds the token, on
+	// the tenant that token's client is bound to. There is no argument left to
+	// get wrong and ask about somebody else.
+	out, err := h.catalog.MyClaims(c.Context(), token,
+		catalogclient.UserClaimFilter{ClaimStates: states, Before: before, Limit: limit})
 	if err != nil {
 		return catalogErr(c, err, "调用资料库失败")
 	}
@@ -1183,10 +1222,14 @@ func (h *PatchHandler) SearchGalgameForPublish(c fiber.Ctx) error {
 // failing the search: the dedup half is what prevents a duplicate submission,
 // and losing it to an unrelated upstream blip is the expensive outcome.
 func (h *PatchHandler) ownPendingSubmissions(c fiber.Ctx, q string) []wizardPendingHit {
-	page, err := h.catalog.UserClaims(c.Context(), middleware.MustGetUser(c).ID,
-		catalogclient.UserClaimFilter{
-			Site: claimSite, ClaimStates: mySubmissionStates, Limit: 50,
-		})
+	token := middleware.GetAccessToken(c)
+	if token == "" {
+		// An anonymous (or token-less) wizard still gets the public dedup half;
+		// there is simply no "mine" block to add to it.
+		return nil
+	}
+	page, err := h.catalog.MyClaims(c.Context(), token,
+		catalogclient.UserClaimFilter{ClaimStates: mySubmissionStates, Limit: 50})
 	if err != nil {
 		slog.Warn("读取本人投稿列表失败，向导仅显示公开结果", "error", err)
 		return nil

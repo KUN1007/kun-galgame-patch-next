@@ -164,6 +164,22 @@ export const useApi = () => {
     useKunMessage('登录状态已失效，请重新登录', 'warn')
   }
 
+  // 40399 = the catalog refused a submission/claim because this session's OAuth
+  // token predates the `catalog:edit` scope (see apps/api/pkg/errors). The
+  // session is otherwise perfectly good, so this must NOT log the user out and
+  // must NOT redirect — it only tells them the one thing that fixes it, on a
+  // long-lived toast because "log out and back in" is an instruction to follow,
+  // not a flash to notice.
+  const handleCatalogReauth = (code: number, message?: string) => {
+    if (!import.meta.client) return
+    if (code !== 40399) return
+    useKunMessage(
+      message || '登录凭证尚未包含资料库投稿权限，请退出登录后重新登录一次',
+      'warn',
+      15000
+    )
+  }
+
   const request = async <T>(
     endpoint: string,
     options: ApiOptions = {}
@@ -199,6 +215,7 @@ export const useApi = () => {
         })
       }
       handleAuthExpiry(res.code)
+      handleCatalogReauth(res.code, res.message)
       return res
     } catch (error: unknown) {
       const fetchError = error as { statusCode?: number; data?: ApiError }
@@ -212,6 +229,7 @@ export const useApi = () => {
         })
       }
       handleAuthExpiry(code)
+      handleCatalogReauth(code, fetchError.data?.message)
       return {
         code,
         message: fetchError.data?.message ?? 'Request failed',

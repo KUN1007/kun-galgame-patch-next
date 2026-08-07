@@ -81,6 +81,24 @@ func ErrAccountBanned(msg string) *AppError {
 	return New(10014, msg, fiber.StatusForbidden)
 }
 
+// ErrCatalogReauthRequired is the catalog user plane refusing a write because
+// the session's OAuth access token predates the `catalog:edit` scope. A refresh
+// cannot widen a grant, so the only fix is a re-login — the frontend must say
+// exactly that and must NOT log the user out or bounce them anywhere, because
+// everything else about the session still works.
+//
+// Code 40399 is local to moyu on purpose: this house numbers its own errors in
+// the HTTP-derived 4xxNN space (40300 forbidden, 40400 not found, 44001 galgame
+// missing), so 40399 reads as "a 403 subcase, ours" and cannot collide with
+// OAuth's published 1xxxx authentication codes (10010-10016, docs/oauth/04),
+// which moyu only ever mirrors verbatim (see ErrAccountBanned / 10014).
+func ErrCatalogReauthRequired(msg string) *AppError {
+	if msg == "" {
+		msg = "登录凭证尚未包含资料库投稿权限，请退出登录后重新登录一次即可继续"
+	}
+	return New(40399, msg, fiber.StatusForbidden)
+}
+
 func ErrConflict(msg string) *AppError {
 	return New(40900, msg, fiber.StatusConflict)
 }

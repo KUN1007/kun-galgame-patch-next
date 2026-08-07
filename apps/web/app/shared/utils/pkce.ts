@@ -106,7 +106,12 @@ const prepareAuthorizeUrl = async (
     client_id: clientId,
     redirect_uri: redirectUri,
     response_type: 'code',
-    scope: 'openid profile',
+    // `catalog:edit` is what lets the session speak to the catalog as the user
+    // rather than as moyu: submitting a game, claiming a draft, withdrawing a
+    // submission. A token minted without it can never gain it by refreshing —
+    // the grant is fixed at authorization — so a session from before this line
+    // must log in again, which is what house code 40399 tells the user.
+    scope: 'openid profile catalog:edit',
     state,
     code_challenge: codeChallenge,
     code_challenge_method: 'S256'
