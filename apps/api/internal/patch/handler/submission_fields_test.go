@@ -1,10 +1,5 @@
 package handler
 
-// The wizard form and the registry speak different vocabularies for the same
-// four languages, and a mismatch is a 422 the submitter cannot act on. Every
-// value below is checked against the shape the field's own validator on the
-// registry accepts.
-
 import (
 	"testing"
 )
@@ -24,10 +19,6 @@ func TestSubmissionMapsLocalesOntoTheRegistryVocabulary(t *testing.T) {
 		OriginalLanguage: "ja-jp", ContentLimit: "nsfw", AgeLimit: "r18",
 	})
 
-	// zh-cn / ja-jp are moyu's inherited wiki column suffixes. The registry
-	// distinguishes Chinese by SCRIPT and has no region tags at all, so sending
-	// the form's spelling straight through is a validation failure on olang and
-	// on every title element.
 	if got := fields[fieldWorkOLang]; got != "ja" {
 		t.Errorf("olang = %v, want ja (not the form's ja-jp)", got)
 	}
@@ -35,8 +26,6 @@ func TestSubmissionMapsLocalesOntoTheRegistryVocabulary(t *testing.T) {
 	if len(titles) != 2 {
 		t.Fatalf("titles = %d, want 2", len(titles))
 	}
-	// Order follows the wizard's own display fallback, so the first official
-	// title is the one the display name was taken from.
 	first, _ := titles[0].(map[string]any)
 	if first["lang"] != "zh-Hans" || first["title"] != "你和她和她的恋爱" {
 		t.Errorf("titles[0] = %v, want the trimmed zh-Hans name first", first)
@@ -53,8 +42,6 @@ func TestSubmissionMapsLocalesOntoTheRegistryVocabulary(t *testing.T) {
 	}
 }
 
-// The two rating axes are independent, and the wizard has always asked for them
-// separately. Deriving one from the other is the doc 106 §38 incident.
 func TestSubmissionKeepsTheTwoRatingAxesApart(t *testing.T) {
 	cases := []struct {
 		limit, age  string
@@ -82,9 +69,6 @@ func TestSubmissionKeepsTheTwoRatingAxesApart(t *testing.T) {
 	}
 }
 
-// An alias is a string people search by, not a localisation, so it carries no
-// language — which is exactly the lane the registry's titles field opened for
-// empty-lang alias rows.
 func TestSubmissionAliasesAreLanguagelessAndDeduped(t *testing.T) {
 	fields := fieldsOf(t, SubmissionForm{
 		NameEnUs: "Muv-Luv", OriginalLanguage: "en",
@@ -119,10 +103,6 @@ func TestSubmissionIntroIsSimplifiedChineseOnly(t *testing.T) {
 		t.Errorf("intro = %v, want the trimmed text under zh-Hans", obj)
 	}
 
-	// An empty box must not emit the key at all: an empty intro LIST is a
-	// meaningful value on a full-replacement field, and sending one on a mint
-	// would be asserting "this work has no introductions" rather than "the
-	// submitter did not write one".
 	bare := fieldsOf(t, SubmissionForm{
 		NameEnUs: "A", OriginalLanguage: "en", ContentLimit: "sfw", AgeLimit: "all",
 	})
@@ -132,20 +112,14 @@ func TestSubmissionIntroIsSimplifiedChineseOnly(t *testing.T) {
 }
 
 func TestSubmissionRefusesWhatItCannotTranslate(t *testing.T) {
-	// No name at all: display_name is required and this face does not invent one.
 	if _, err := (&SubmissionForm{OriginalLanguage: "en"}).SubmissionFields(); err == nil {
 		t.Error("a nameless submission was accepted")
 	}
-	// A language outside the form's own vocabulary is refused here rather than
-	// forwarded to fail validation upstream with a message about BCP-47.
 	if _, err := (&SubmissionForm{NameEnUs: "A", OriginalLanguage: "kr"}).SubmissionFields(); err == nil {
 		t.Error("an unknown original language was accepted")
 	}
 }
 
-// Only keys the registry's submission subset accepts may be emitted. Covers and
-// screenshots are the notable absentees: their bytes must exist in the image
-// store before anything references them.
 func TestSubmissionEmitsOnlyAcceptedKeys(t *testing.T) {
 	accepted := map[string]struct{}{
 		fieldWorkDisplayName: {}, fieldWorkOLang: {}, fieldWorkContentRating: {},

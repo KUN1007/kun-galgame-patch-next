@@ -1,21 +1,5 @@
 package client
 
-// Face-selection tests: prove the galgame client routes each call to the right
-// face by ROUTE membership, not HTTP method. Since open-API phase 2 wave 07
-// (route-B endgame) the A-bucket READ set — search / batch / detail / month
-// calendar + the taxonomy reads (tag/official list/search/multi/detail, engine
-// list, series list) — hits the {base}/v1 public face + X-API-Key, and since
-// wave A1 the vndb reverse lookup hits the same base's CATALOG surface
-// (/v1/catalog/lookup). The B-bucket platform-workflow reads (/galgame/mine,
-// /galgame/messages/mine, the publish picker's status=0,2 search, taxonomy
-// /:id/revisions), the S2S message feed, and
-// the user write set (submit / draft update+delete / claim / image upload /
-// links+aliases relation edits, wave 06a) stay on {base}/internal + key; only
-// the staff taxonomy CRUD/revert + /admin/* stay on legacy {base}/api. The
-// internal + v1 faces hard-depend on the internal-tier key — the empty-key
-// rollback to legacy was retired in wave 05. Deterministic — a fake service
-// records the last request.
-
 import (
 	"context"
 	"encoding/json"
@@ -27,7 +11,6 @@ import (
 	"testing"
 )
 
-// faceRecorder captures the last request the fake service received.
 type faceRecorder struct {
 	mu     sync.Mutex
 	path   string
@@ -46,30 +29,18 @@ func (r *faceRecorder) server(t *testing.T) *httptest.Server {
 		r.auth = req.Header.Get("Authorization")
 		r.mu.Unlock()
 		w.Header().Set("Content-Type", "application/json")
-		// A valid empty envelope: unmarshals into every response type used below
-		// (detail struct, paginated {items,total}, search-pending) as zero values.
 		_, _ = w.Write([]byte(`{"code":0,"message":"ok","data":{}}`))
 	}))
 	t.Cleanup(srv.Close)
 	return srv
 }
 
-// TestFaceSelection_WithKey proves that, with an internal-tier key configured,
-// reads (and the S2S message feed) hit {base}/internal + X-API-Key (personalized
-// reads additionally carry the user JWT on Authorization — dual credential),
-// the user write set (submit / update / draft patch+delete / claim / image
-// upload / links+aliases relation edits) also hits {base}/internal with dual
-// credentials (X-API-Key + Bearer), and only the staff taxonomy CRUD/revert +
-// /admin/* proxies stay on {base}/api with no key.
 func TestFaceSelection_WithKey(t *testing.T) {
 	rec := &faceRecorder{}
 	srv := rec.server(t)
 	c := NewWithKey(srv.URL, "nm_test_key")
 	ctx := context.Background()
 
-	// The gid-keyed reads are two-hop and get their own fixture-backed tests
-	// (TestCatalogTwoHopReads); the calendar is month-keyed, so it reaches the
-	// catalog face in one call and can pin the credential shape here.
 	t.Run("anonymous calendar read → v1 catalog + key", func(t *testing.T) {
 		if _, err := c.GetGalgameCalendar(ctx, "2026-07", ""); err != nil {
 			t.Fatalf("GetGalgameCalendar: %v", err)
@@ -87,10 +58,6 @@ func TestFaceSelection_WithKey(t *testing.T) {
 
 }
 
-// TestV1ReadRouting proves every A-bucket read routes to the {base}/v1 face with
-// the internal-tier key (route-B endgame, wave 07; catalog lookup added in wave
-// A1). The composed taxonomy detail reads make two /v1 calls; the recorder
-// captures the last (the reverse-lookup), which is sufficient to prove the face.
 func TestV1ReadRouting(t *testing.T) {
 	rec := &faceRecorder{}
 	srv := rec.server(t)
@@ -116,10 +83,6 @@ func TestV1ReadRouting(t *testing.T) {
 	t.Run("calendar → v1 catalog", func(t *testing.T) {
 		check(t, "/v1/catalog/calendar", func() error { _, e := c.GetGalgameCalendar(ctx, "", ""); return e })
 	})
-	// The vndb reverse lookup reads the CATALOG face (wave A1). nsfw=1 is
-	// load-bearing: without it every r18 work answers 404 and moyu — largely an
-	// r18 patch site — would silently report "not in catalog" for most of its
-	// archive.
 	t.Run("vndb lookup → v1 catalog", func(t *testing.T) {
 		check(t, "/v1/catalog/lookup", func() error { _, _, e := c.CheckGalgameByVndbID(ctx, "v1"); return e })
 		if got := rec.query.Get("source"); got != "vndb" {
@@ -135,14 +98,6 @@ func TestV1ReadRouting(t *testing.T) {
 
 }
 
-// TestCatalogTwoHopReads pins the SEQUENCE of the gid-keyed reads, which is the
-// part a single-request recorder cannot see: moyu is gid-native and the catalog
-// addresses works by its own id, so every one of these resolves through the
-// reverse lookup first and hydrates second (refs/proj/106 R3).
-//
-// It also pins the include tokens. They are not cosmetic — drop `refs` and
-// every brief loses its vndb_id, which is what the search page joins its local
-// patch rows on; drop `names` and every card renders untitled.
 func TestCatalogTwoHopReads(t *testing.T) {
 	srv := newCatalogFake(t)
 	c := NewWithKey(srv.URL, "nm_test_key")
@@ -178,9 +133,6 @@ func TestCatalogTwoHopReads(t *testing.T) {
 		if _, err := c.GalgameBatch(ctx, []int{7}, ""); err != nil {
 			t.Fatalf("GalgameBatch: %v", err)
 		}
-		// Second call for the same gid must NOT repeat the lookup: the mapping
-		// is an identity, and the claim state it would refresh is read from the
-		// hydration response anyway.
 		srv.wantPaths(t, "/v1/catalog/works")
 	})
 
@@ -205,22 +157,14 @@ func TestCatalogTwoHopReads(t *testing.T) {
 			t.Fatalf("SearchGalgame: %v", err)
 		}
 		srv.wantPaths(t, "/v1/catalog/works/search")
-		// nsfw=1 even for an sfw caller: the AGE axis never stands in for the
-		// editing one (doc 106 §38). TestContentLimitCaliber owns that contract.
 		if got := srv.last().query.Get("nsfw"); got != "1" {
 			t.Errorf("nsfw = %q, want 1 — moyu always reads the whole population", got)
 		}
-		// Absent by default, so the narrow high-precision search is what an
-		// unmodified caller gets.
 		if got := srv.last().query.Get("search_intro"); got != "" {
 			t.Errorf("search_intro = %q, want absent unless asked for", got)
 		}
 	})
 
-	// The synopsis lane (A2-1f). It is opt-in on the wire because it is opt-in
-	// in the UI — the checkbox went away for one wave when the catalog index had
-	// no synopsis to search, and an accepted-but-ignored flag would have been a
-	// promise the face could not keep.
 	t.Run("search_intro rides the wire when asked for", func(t *testing.T) {
 		srv.reset()
 		_, err := c.SearchGalgame(ctx, SearchGalgameParams{Q: "x", SearchIntro: true})
@@ -233,13 +177,6 @@ func TestCatalogTwoHopReads(t *testing.T) {
 	})
 }
 
-// TestContentLimitCaliber pins the wave's whole reason for existing: moyu's
-// content_limit is the EDITING axis and must never be spoken as the age axis.
-//
-// The regression it guards is doc 106 §38, which shipped: `sfw` was projected
-// onto nsfw=0, which on this archive hides 94.5% of the site, and `nsfw` onto
-// content_rating=r18, a set that overlaps the intended one by about half. Every
-// assertion below fails loudly if either projection comes back.
 func TestContentLimitCaliber(t *testing.T) {
 	srv := newCatalogFake(t)
 	c := NewWithKey(srv.URL, "nm_test_key")
@@ -266,17 +203,12 @@ func TestContentLimitCaliber(t *testing.T) {
 			if got := q.Get("content_limit"); got != tc.wantLimit {
 				t.Errorf("content_limit=%q: wire content_limit = %q, want %q", tc.cl, got, tc.wantLimit)
 			}
-			// The age axis is NOT how a content_limit is expressed. `nsfw` in
-			// particular must not become content_rating=r18 again.
 			if got := q.Get("content_rating"); got != "" {
 				t.Errorf("content_limit=%q: content_rating = %q, want absent — that is the AGE axis", tc.cl, got)
 			}
 		}
 	})
 
-	// age_limit=r18 is the caller genuinely asking for 18+, and the one place the
-	// age axis is still spoken. It composes with the editing axis rather than
-	// replacing it.
 	t.Run("age_limit is the only content_rating caller", func(t *testing.T) {
 		srv.reset()
 		if _, err := c.SearchGalgame(ctx, SearchGalgameParams{Q: "x", AgeLimit: "r18", ContentLimit: "sfw"}); err != nil {
@@ -311,8 +243,6 @@ func TestContentLimitCaliber(t *testing.T) {
 		}
 	})
 
-	// gid 22 is rated r18 and edited sfw. Rendering the rating would label it
-	// NSFW on every card — the SEO collapse the incident report opens with.
 	t.Run("the rendered content_limit is the claim's, not the rating's", func(t *testing.T) {
 		srv.reset()
 		briefs, err := c.GalgameBatch(ctx, []int{22}, "")
@@ -330,8 +260,6 @@ func TestContentLimitCaliber(t *testing.T) {
 		}
 	})
 
-	// The detail face takes no content_limit= parameter, so the gate lands on the
-	// single row it answers with — the wiki detail's own 404-on-mismatch.
 	t.Run("detail gates the row it fetched", func(t *testing.T) {
 		srv.reset()
 		if _, err := c.GetGalgame(ctx, 22, "sfw"); err != nil {
@@ -353,9 +281,6 @@ func TestContentLimitCaliber(t *testing.T) {
 	})
 }
 
-// TestContentAxisProjection pins the projection itself, including the branch the
-// fake cannot reach end to end: a work NO wiki entry claims has no edited body,
-// so the age rating is the only evidence there is and stands in conservatively.
 func TestContentAxisProjection(t *testing.T) {
 	claim := func(limit string) *catalogClaimedBy {
 		return &catalogClaimedBy{Site: catalogClaimSiteKungal, WorkID: 1, State: catalogClaimStateLive, ContentLimit: limit}
@@ -382,10 +307,6 @@ func TestContentAxisProjection(t *testing.T) {
 	}
 }
 
-// TestEffectiveBannerPrefersLandscape pins the cover flip (doc 106 §38, user
-// order): moyu's effective banner is the WIDE art, as it was before the A2-2
-// re-anchor started reading the catalog's portrait slot and visibly changed
-// every cover on the site.
 func TestEffectiveBannerPrefersLandscape(t *testing.T) {
 	t.Run("list rows take the banner slot", func(t *testing.T) {
 		portrait := &catalogCoverSlot{URL: "https://cdn/aa/bb/p.webp", Width: 600, Height: 800}
@@ -412,7 +333,6 @@ func TestEffectiveBannerPrefersLandscape(t *testing.T) {
 	t.Run("the detail hero takes the first landscape row", func(t *testing.T) {
 		pinned := catalogDetailCover{URL: "https://cdn/aa/bb/p.webp", PortraitPinned: true, Width: 600, Height: 800}
 		wide := catalogDetailCover{URL: "https://cdn/aa/bb/b.webp", Width: 1280, Height: 720}
-		// No dimensions = unknown shape, NOT landscape.
 		unknown := catalogDetailCover{URL: "https://cdn/aa/bb/u.webp"}
 		for _, tc := range []struct {
 			name   string
@@ -437,15 +357,6 @@ func TestEffectiveBannerPrefersLandscape(t *testing.T) {
 	})
 }
 
-// TestTagPageCarriesSafetyFlag pins the tag page's SAFETY axis end to end.
-//
-// The page's SEO gate is `!sexual`: a sexual tag's own name is an NSFW signal,
-// so those pages stay out of the index. For one wave the canonical tag record
-// carried no such flag and the page had to fall back to a blanket noindex;
-// A2-1f put it on the record, so this asserts the value actually reaches the
-// frontend — and that `category` is derived from the SAME boolean the work
-// detail derives it from, since that one word drives both an SFW hard-hide and
-// the SEO gate.
 func TestTagPageCarriesSafetyFlag(t *testing.T) {
 	srv := newCatalogFake(t)
 	c := NewWithKey(srv.URL, "nm_test_key")
@@ -485,12 +396,6 @@ func TestTagPageCarriesSafetyFlag(t *testing.T) {
 	}
 }
 
-// TestClaimStateGating is the wave's most load-bearing test.
-//
-// The deprecated face served PUBLISHED entries only, and that filter silently
-// doubled as moyu's ban gate. The catalog's claim projection is status-blind, so
-// re-anchoring without honouring `state` would republish every banned and
-// unpublished wiki entry. These assertions are what stands between the two.
 func TestClaimStateGating(t *testing.T) {
 	srv := newCatalogFake(t)
 	c := NewWithKey(srv.URL, "nm_test_key")
@@ -524,7 +429,6 @@ func TestClaimStateGating(t *testing.T) {
 		for _, it := range cal.Items {
 			states = append(states, it.ClaimState)
 		}
-		// live + draft + the claim-less "not on the forum" row survive; hidden does not.
 		if len(states) != 3 {
 			t.Fatalf("claim states = %v, want three rows (live, draft, unclaimed)", states)
 		}
@@ -536,18 +440,11 @@ func TestClaimStateGating(t *testing.T) {
 		if cal.Meta.MaxMonth != "2026-08" {
 			t.Errorf("meta.max_month = %q, want 2026-08", cal.Meta.MaxMonth)
 		}
-		// prev/next are arithmetic on the served month, not data.
 		if cal.Meta.PrevMonth != "2026-06" || cal.Meta.NextMonth != "2026-08" {
 			t.Errorf("prev/next = %q/%q, want 2026-06/2026-08", cal.Meta.PrevMonth, cal.Meta.NextMonth)
 		}
 	})
 
-	// Search is the lane that got this wrong in production (doc 106 §37): it
-	// post-filtered on `renderable()`, which passes an ABSENT claim — and most of
-	// the registry is unclaimed — so the public search page served the whole
-	// cross-media catalog. The gate now rides the wire, and the two halves of that
-	// are asserted separately: the request must carry it, and the response must
-	// come back untouched.
 	t.Run("search gates on the wire and re-filters nothing", func(t *testing.T) {
 		srv.reset()
 		res, err := c.SearchGalgame(ctx, SearchGalgameParams{Q: "x"})
@@ -557,10 +454,6 @@ func TestClaimStateGating(t *testing.T) {
 		if got := srv.last().query.Get("claim_state"); got != "live" {
 			t.Fatalf("claim_state = %q, want live — published-only is a REQUEST parameter now", got)
 		}
-		// The fake answers with draft / hidden / unclaimed rows on purpose. All
-		// four must survive: a client-side gate would drop rows out of a page the
-		// face already counted, so total would stop describing items and paging
-		// would go lossy again.
 		if len(res.Items) != 4 {
 			t.Errorf("items = %d, want all 4 rows the face returned (no client-side filter)", len(res.Items))
 		}
@@ -585,15 +478,6 @@ func TestClaimStateGating(t *testing.T) {
 	})
 }
 
-// TestTaxonomyBrowseMembersAreGated pins the tag / official browse pages'
-// member lane, the sibling of the search incident (doc 106 §37).
-//
-// These pages are public and crawlable, and they used to compose their list from
-// the entity record's work refs under a `renderable()` filter — which passes an
-// absent claim — while taking `total` from the record's registry-wide
-// work_count. So they rendered unclaimed and draft works, and paged over a count
-// no gate had ever touched. Members and count now come from ONE gated search
-// response, which is what these assertions hold in place.
 func TestTaxonomyBrowseMembersAreGated(t *testing.T) {
 	srv := newCatalogFake(t)
 	c := NewWithKey(srv.URL, "nm_test_key")
@@ -616,8 +500,6 @@ func TestTaxonomyBrowseMembersAreGated(t *testing.T) {
 			if err != nil || !handled {
 				t.Fatalf("TaxonomyBrowse: handled=%v err=%v", handled, err)
 			}
-			// The record call is for the header only. It must NOT ask for works:
-			// that include is what made the member set the record's to decide.
 			srv.wantPaths(t, tc.recPath, "/v1/catalog/works/search")
 			if got := srv.all()[0].query.Get("include"); got != "" {
 				t.Errorf("record include = %q, want empty — the member list is the search face's job now", got)
@@ -630,8 +512,6 @@ func TestTaxonomyBrowseMembersAreGated(t *testing.T) {
 			if got := q.Get("claim_state"); got != "live" {
 				t.Errorf("claim_state = %q, want live — a public browse page serves the published population", got)
 			}
-			// page/limit ride through as-is: these pages paginate with crawlable
-			// ?page=N links, so the face must be the page-paginated one.
 			if got, want := q.Get("page"), "2"; got != want {
 				t.Errorf("page = %q, want %q", got, want)
 			}
@@ -660,14 +540,9 @@ func TestTaxonomyBrowseMembersAreGated(t *testing.T) {
 			if e := json.Unmarshal(raw, &got); e != nil {
 				t.Fatalf("unmarshal: %v", e)
 			}
-			// The fake's search answers four rows — live, draft, hidden and
-			// unclaimed — under total 4. All four arrive: the gate is the face's,
-			// and a client-side re-filter would desync items from total again.
 			if len(got.Galgames) != 4 {
 				t.Errorf("galgames = %d, want the face's 4 rows verbatim", len(got.Galgames))
 			}
-			// 4 is the search's total; 3 is the record's registry-wide work_count.
-			// Both numbers on the page must be the former.
 			if got.Total != 4 {
 				t.Errorf("total = %d, want 4 (the gated search's), not the record's 3", got.Total)
 			}
@@ -682,14 +557,6 @@ func TestTaxonomyBrowseMembersAreGated(t *testing.T) {
 	}
 }
 
-// TestLabelLogoHashReachesBothFaces pins the 会社 logo (wave 170 P3) on the two
-// lanes that render one: the official browse page's header, and the work
-// detail's 会社 chips.
-//
-// It is a HASH on moyu's own wire, never a URL — the frontend builds the CDN
-// address from it exactly as it does for banners and avatars, so the CDN domain
-// stays in one place. An absent key must read "" rather than raise: the catalog
-// grew the field additively and moyu has to serve both sides of that deploy.
 func TestLabelLogoHashReachesBothFaces(t *testing.T) {
 	srv := newCatalogFake(t)
 	c := NewWithKey(srv.URL, "nm_test_key")
@@ -729,10 +596,6 @@ func TestLabelLogoHashReachesBothFaces(t *testing.T) {
 	})
 }
 
-// TestDeprecatedGalgameFaceIsUnreachable is the wave's residue gate: after the
-// A2-2 re-anchor, NO read may touch /v1/galgame — that surface carries
-// Deprecation + Sunset headers and is being taken down. A future edit that
-// reintroduces a call there fails here rather than at the sunset.
 func TestDeprecatedGalgameFaceIsUnreachable(t *testing.T) {
 	srv := newCatalogFake(t)
 	c := NewWithKey(srv.URL, "nm_test_key")
@@ -754,19 +617,12 @@ func TestDeprecatedGalgameFaceIsUnreachable(t *testing.T) {
 	}
 }
 
-// TestRetiredTaxonomyListsAreUnhandled proves the earlier A2-2 retirement is
-// real at the dispatcher, not just at the router: the bare tag / official LIST
-// paths must be claimed by nothing — neither the catalog browse composer nor
-// (through the back door) the staff rewriter.
 func TestRetiredTaxonomyListsAreUnhandled(t *testing.T) {
 	rec := &faceRecorder{}
 	srv := rec.server(t)
 	c := NewWithKey(srv.URL, "nm_test_key")
 	ctx := context.Background()
 
-	// The bare lists went in wave A2-2; the staff picker / edit-form read-back
-	// lanes went with the console in wave 159. None of them may be resurrected
-	// through the browse reader, and none may dial any face.
 	for _, p := range []string{
 		"/tag", "/tag?page=1", "/official", "/official?page=1",
 		"/tag/search?q=x", "/official/search?q=x", "/engine", "/series?page=1",

@@ -8,8 +8,6 @@ const page = ref(1)
 const searchQuery = ref('')
 const limit = 30
 
-// /api/v1/admin/galgame returns the standard paginated envelope of GalgameCard
-// rows — see apps/api/internal/admin/handler.GetGalgame.
 interface ListResponse {
   items: GalgameCard[]
   total: number

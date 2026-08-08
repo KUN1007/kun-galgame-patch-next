@@ -1,13 +1,4 @@
 <script setup lang="ts">
-// 创作者申请 modal. Rendered as a SIBLING of the avatar popover in UserDropdown
-// (the popover closes imperatively, so a sibling modal isn't torn down with it —
-// same pattern as 萌萌点记录). Replaces the old buried settings card: it surfaces
-// the creator benefits + live eligibility the moment it opens and lets an
-// eligible user apply in one click. Eligibility is computed by the moyu backend
-// (满足任一即可): 已发布补丁资源 ≥ 3 · 萌萌点 ≥ 2000 ·
-// 已被合并的 Galgame 信息更新请求 ≥ 5.
-// The application, admin review and role grant all live in OAuth; the granted
-// `creator` role lets the user publish Galgame directly (incl. VNDB-less works).
 const open = defineModel<boolean>({ required: true })
 
 const api = useApi()
@@ -50,7 +41,6 @@ const load = async () => {
   loading.value = false
 }
 
-// Re-fetch on every open so eligibility is fresh; clear any stale draft.
 watch(open, (v) => {
   if (v) {
     message.value = ''
@@ -60,9 +50,6 @@ watch(open, (v) => {
 
 const eligibility = computed(() => status.value?.eligibility ?? null)
 const application = computed(() => status.value?.application ?? null)
-// userStore.roles is moyu's client-side source of truth for the role (refreshed
-// via /auth/me); the approved application covers the short window right after
-// approval before that refresh lands.
 const isCreator = computed(
   () =>
     (userStore.user.roles?.includes('creator') ?? false) ||
@@ -75,8 +62,6 @@ const canApply = computed(
   () => isEligible.value && !isPending.value && !isCreator.value
 )
 
-// Application flow as a KunSteps stepper. current is 0-based; earlier steps
-// render done (check). 0 达成条件 · 1 提交申请 · 2 审核 · 3 成为创作者.
 const FLOW = [
   { title: '达成条件', icon: 'lucide:target' },
   { title: '提交申请', icon: 'lucide:send' },
@@ -133,7 +118,6 @@ const handleApply = async () => {
 <template>
   <KunModal v-model="open" inner-class-name="max-w-xl w-full border-default-200">
     <div class="space-y-5 p-1">
-      <!-- header -->
       <div class="flex items-start gap-3">
         <KunIcon
           class="text-primary mt-0.5 size-8 shrink-0"
@@ -162,7 +146,6 @@ const handleApply = async () => {
           size="sm"
         />
 
-        <!-- already a creator (edge: just approved before the role cache caught up) -->
         <div
           v-if="isCreator"
           class="bg-success-50 text-success-700 flex items-center gap-2 rounded-xl p-4 text-sm"
@@ -172,7 +155,6 @@ const handleApply = async () => {
         </div>
 
         <template v-else>
-          <!-- benefits -->
           <section class="space-y-2">
             <h3 class="text-default-700 text-sm font-medium">创作者特权</h3>
             <ul class="text-default-700 list-disc space-y-1 pl-5 text-sm">
@@ -182,7 +164,6 @@ const handleApply = async () => {
 
           <KunDivider />
 
-          <!-- conditions: any-of -->
           <section class="space-y-3">
             <div class="flex items-center justify-between">
               <h3 class="text-default-700 text-sm font-medium">申请条件</h3>
@@ -221,7 +202,6 @@ const handleApply = async () => {
             </div>
           </section>
 
-          <!-- current application state -->
           <div
             v-if="isPending"
             class="bg-primary-50 text-primary-700 flex items-center gap-2 rounded-xl p-3 text-sm"
@@ -242,7 +222,6 @@ const handleApply = async () => {
             </p>
           </div>
 
-          <!-- optional message, only when actually applying -->
           <KunTextarea
             v-if="canApply"
             v-model="message"
@@ -251,7 +230,6 @@ const handleApply = async () => {
             :maxlength="500"
           />
 
-          <!-- CTA -->
           <div class="flex items-center justify-end gap-2 pt-1">
             <KunButton variant="light" @click="open = false">稍后再说</KunButton>
             <KunButton

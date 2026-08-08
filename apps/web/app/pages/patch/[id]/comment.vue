@@ -1,8 +1,4 @@
 <script setup lang="ts">
-// Patch comment tab. A thin container over the shared comment area: everything
-// visual lives in CommentSection / CommentRow, everything stateful in
-// useCommentList. What stays here is what only this surface has — its own route,
-// hence pagination in the URL (?page=), which the deep-link jump also rides on.
 import type { CommentTarget } from '~/shared/utils/commentTarget'
 
 const route = useRoute()

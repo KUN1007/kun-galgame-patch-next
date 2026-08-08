@@ -1,16 +1,4 @@
 <script setup lang="ts">
-// Ported from refs/legacy/next-web/components/about/BlogHeader.tsx, layout
-// preserved 1:1: banner on top → big tracking-tight title → author row with
-// bordered round avatar + name + calendar/date → primary-colored info banner
-// for the description.
-//
-// Differences vs the legacy React version:
-//   - KunAvatar takes a KunUser-shaped object; frontmatter only carries
-//     author_name/author_avatar/author_uid (snake_case API fields), so we
-//     render the avatar as a plain KunImage rounded-full + border instead
-//     of constructing a synthetic KunUser. Visually identical.
-//   - HeroUI <Alert> → KunInfo color="primary". Same primary tint + flat
-//     banner shape.
 interface Props {
   frontmatter: KunPostFrontmatter
 }
@@ -20,12 +8,6 @@ const props = defineProps<Props>()
 
 <template>
   <header class="w-full space-y-4">
-    <!-- Banner — pre-optimized AVIF authored at build time; KunImage
-         provider="none" skips the IPX → sharp roundtrip. eager + high
-         fetchpriority because this is the LCP element on a post detail
-         page. aspect-ratio reserves layout before bytes arrive — 16/9 to
-         match the source banners (1920×1080) and the list cards, so the full
-         image shows instead of being cropped to a strip. -->
     <div
       v-if="props.frontmatter.banner"
       class="relative w-full overflow-hidden rounded-xl"

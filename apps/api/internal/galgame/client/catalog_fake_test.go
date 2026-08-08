@@ -1,22 +1,5 @@
 package client
 
-// A hermetic fake of the /v1/catalog face, good enough to pin the shapes and
-// the call sequence the wave-A2-2 re-anchor depends on. No external service,
-// no database — httptest only, so these run anywhere.
-//
-// The fixture is deliberately tiny and deliberately three-state, because the
-// claim state is what the whole wave turns on:
-//
-//	gid 7  -> catalog 900, claim live    (a published wiki entry)
-//	gid 20 -> catalog 920, claim draft   (an unpublished one)
-//	gid 21 -> catalog 921, claim hidden  (a withdrawn one — the ban case)
-//	gid 22 -> catalog 922, claim live, rated r18 but EDITED sfw
-//	          catalog 930, NO claim      (a work no wiki entry covers at all)
-//
-// gid 22 is the doc 106 §38 case in miniature: the two content axes disagree, so
-// every assertion about which one moyu renders and filters on has a row that can
-// tell them apart.
-
 import (
 	"encoding/json"
 	"net/http"
@@ -40,8 +23,6 @@ type catalogFake struct {
 	reqs []fakeReq
 }
 
-// gidFixture maps the fixture's gids to their catalog id, claim state and the
-// claim's EDITING axis (claimed_by.content_limit — the wiki entry's own column).
 var gidFixture = map[int]struct {
 	catalogID int64
 	state     string
@@ -54,8 +35,6 @@ var gidFixture = map[int]struct {
 	22: {922, catalogClaimStateLive, "sfw"},
 }
 
-// ratingForCatalogID is the fixture's AGE axis. 922 is rated r18 while its claim
-// says the entry was edited sfw — the two axes disagreeing on purpose.
 func ratingForCatalogID(id int64) string {
 	if id == 922 {
 		return "r18"
@@ -102,8 +81,6 @@ func (f *catalogFake) route(req *http.Request) string {
 	return `{}`
 }
 
-// lookupBatch answers the reverse lookup for the fixture gids; an unknown
-// external id comes back as a miss (null work), exactly as the real face does.
 func (f *catalogFake) lookupBatch(req *http.Request) string {
 	var body catalogLookupBatchRequest
 	_ = json.NewDecoder(req.Body).Decode(&body)
@@ -132,8 +109,6 @@ func (f *catalogFake) lookupOne(req *http.Request) string {
 		`"claimed_by":` + claimJSON(gid, fx.state) + `}`
 }
 
-// worksList echoes back one row per requested catalog id, carrying the claim
-// state its gid was fixtured with.
 func (f *catalogFake) worksList(req *http.Request) string {
 	raw := req.URL.Query().Get("ids")
 	items := make([]string, 0, 4)
@@ -148,14 +123,6 @@ func (f *catalogFake) worksList(req *http.Request) string {
 	return `{"items":[` + strings.Join(items, ",") + `],"next_cursor":null}`
 }
 
-// tagRecord answers the canonical tag record. Tag 12 is the fixture's sexual
-// one — the axis the page's SEO gate turns on.
-//
-// work_count is 3 and the search fixture's total is 4, deliberately: the browse
-// page's number must be the gated search's, and two equal numbers could not tell
-// the two apart. No `works` block — the composer stopped asking for one when the
-// member lane moved to the search face, and a fake that still volunteered it
-// would hide a regression that started reading it again.
 func (f *catalogFake) tagRecord(path string) string {
 	id, _ := strconv.ParseInt(strings.TrimPrefix(path, "/v1/catalog/tags/"), 10, 64)
 	sexual := "false"
@@ -167,7 +134,6 @@ func (f *catalogFake) tagRecord(path string) string {
 		`"intros":[{"lang":"zh-Hans","intro":"说明","source":"vndb"}]}`
 }
 
-// labelRecord answers the label ("official") record, same posture as tagRecord.
 func (f *catalogFake) labelRecord(path string) string {
 	id, _ := strconv.ParseInt(strings.TrimPrefix(path, "/v1/catalog/labels/"), 10, 64)
 	return `{"id":` + strconv.FormatInt(id, 10) + `,"display_name":"Brand","kind":"developer","lang":"ja",` +
@@ -185,8 +151,6 @@ func (f *catalogFake) workDetail(path string) string {
 		`"refs":[{"source":"vndb","external_id":"v42"}],` +
 		`"claimed_by":` + claimJSON(gid, state) + `,` +
 		`"intro":[{"lang":"zh-Hans","intro":"介绍","source":"vndb","machine":false}],` +
-		// The portrait pin comes FIRST on purpose: the detail hero must still pick
-		// the landscape row below it.
 		`"covers":[{"url":"https://cdn/aa/bb/hash1.webp","kind":"main","portrait_pinned":true,"sexual":0,"violence":0,"source":"vndb","width":600,"height":800,"thumbhash":"th"},` +
 		`{"url":"https://cdn/aa/bb/hash2.webp","kind":"main","portrait_pinned":false,"sexual":0,"violence":0,"source":"vndb","width":1280,"height":720,"thumbhash":"th2"}],` +
 		`"screenshots":[],` +
@@ -196,12 +160,6 @@ func (f *catalogFake) workDetail(path string) string {
 		`"engines":[{"id":41,"name":"KiriKiri"}],"links":[{"source":"web","url":"https://example.test"}]}`
 }
 
-// search answers DELIBERATELY WRONG: the client sends claim_state=live, and this
-// hands back a draft, a withdrawn and an unclaimed row alongside the live one,
-// under a total that counts all four. A real face would not, but a client that
-// re-filters the response would visibly drop three rows here and leave total
-// lying about the page — which is the exact shape of doc 106 §37. Gating is the
-// face's job; this lane's job is to ask for the gate and pass the answer on.
 func (f *catalogFake) search() string {
 	return `{"total":4,"page":1,"limit":20,"items":[` +
 		workItem(900, 7, catalogClaimStateLive) + `,` +
@@ -211,8 +169,6 @@ func (f *catalogFake) search() string {
 		`]}`
 }
 
-// calendar returns the three renderable states plus a hidden row that must be
-// dropped, and a meta frame whose max_month drives the page's empty-month jump.
 func (f *catalogFake) calendar() string {
 	return `{"month":"2026-07","count":4,"next_cursor":null,` +
 		`"meta":{"today":"2026-07-29","min_month":"2020-01","max_month":"2026-08","has_prev":true,"has_next":true},` +
@@ -224,21 +180,16 @@ func (f *catalogFake) calendar() string {
 		`]}`
 }
 
-// workItem renders one works-list row. gid 0 / state "" means an UNCLAIMED work
-// — the full-catalog population's "not on the forum yet" row.
 func workItem(catalogID int64, gid int, state string) string {
 	return `{"id":` + strconv.FormatInt(catalogID, 10) + `,"medium":"galgame","display_name":"W",` +
 		`"content_rating":"` + ratingForCatalogID(catalogID) + `","olang":"ja","release_date":"2026-07-14",` +
 		`"claimed_by":` + claimJSON(gid, state) + `,"cover":"https://cdn/aa/bb/hash1.webp","updated":"2026-07-01T00:00:00Z",` +
 		`"names":{"ja-jp":"タイトル","zh-cn":"标题"},` +
-		// Both slots filled: the card must take the BANNER one (doc 106 §38).
 		`"covers":{"portrait":{"url":"https://cdn/aa/bb/hash1.webp","width":600,"height":800,"thumbhash":"th","sexual":0,"violence":0,"source":"vndb"},` +
 		`"banner":{"url":"https://cdn/aa/bb/hash2.webp","width":1280,"height":720,"thumbhash":"th2","sexual":0,"violence":0,"source":"vndb"}},` +
 		`"refs":[{"source":"vndb","external_id":"v42"}]}`
 }
 
-// claimJSON renders the claim pointer, carrying the fixture's editing axis so a
-// consumer can be caught deriving content_limit from the age rating instead.
 func claimJSON(gid int, state string) string {
 	if gid == 0 || state == "" {
 		return "null"
@@ -255,8 +206,6 @@ func gidForCatalogID(id int64) (int, string) {
 	}
 	return 0, ""
 }
-
-// ─── assertions ───────────────────────────────────────────────────────────
 
 func (f *catalogFake) reset() {
 	f.mu.Lock()
@@ -280,9 +229,6 @@ func (f *catalogFake) last() fakeReq {
 	return reqs[len(reqs)-1]
 }
 
-// wantPaths asserts the EXACT sequence of paths the client dialled. The order is
-// the assertion: a read that hydrates before it resolves is a read that guessed
-// an id.
 func (f *catalogFake) wantPaths(t *testing.T, want ...string) {
 	t.Helper()
 	got := make([]string, 0, len(f.all()))

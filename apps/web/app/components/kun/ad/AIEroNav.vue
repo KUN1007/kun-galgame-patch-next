@@ -1,13 +1,6 @@
 <script setup lang="ts">
 import { kunMoyuMoe } from '~/config/moyu-moe'
 
-// Desktop top-bar ad button (ported 1:1 from the legacy next-web
-// components/kun/ad/AIEroNav.tsx). The ad is shown to everyone EXCEPT ad-free
-// roles (any non-"user" role: creator / moderator / admin). Legacy gated on
-// `!uid || role < 2`; isAdFree is the OAuth-era equivalent that also covers
-// creator (which isModerator did not). isAdFree reads the cookie-persisted
-// roles during SSR, so the gate is correct on the first server render — no
-// anonymous→hidden flicker.
 const userStore = useUserStore()
 </script>
 

@@ -35,7 +35,6 @@ func getUID(c fiber.Ctx) (int, error) {
 	return userID, nil
 }
 
-// GetUserInfo GET /api/user/:id
 func (h *UserHandler) GetUserInfo(c fiber.Ctx) error {
 	userID, err := getUID(c)
 	if err != nil {
@@ -51,7 +50,6 @@ func (h *UserHandler) GetUserInfo(c fiber.Ctx) error {
 	return response.OK(c, info)
 }
 
-// GetUserFloating GET /api/user/:id/floating
 func (h *UserHandler) GetUserFloating(c fiber.Ctx) error {
 	userID, err := getUID(c)
 	if err != nil {
@@ -66,7 +64,6 @@ func (h *UserHandler) GetUserFloating(c fiber.Ctx) error {
 	return response.OK(c, info)
 }
 
-// GetUserPatches GET /api/user/:id/patch
 func (h *UserHandler) GetUserPatches(c fiber.Ctx) error {
 	userID, err := getUID(c)
 	if err != nil {
@@ -91,7 +88,6 @@ func (h *UserHandler) GetUserPatches(c fiber.Ctx) error {
 	return response.Paginated(c, enricher.EnrichPatches(c.Context(), h.galgame, h.users, patches, utils.ContentLimitForListBrowse(c)), total)
 }
 
-// GetUserResources GET /api/user/:id/resource
 func (h *UserHandler) GetUserResources(c fiber.Ctx) error {
 	userID, err := getUID(c)
 	if err != nil {
@@ -113,18 +109,11 @@ func (h *UserHandler) GetUserResources(c fiber.Ctx) error {
 	if err != nil {
 		return response.Error(c, errors.ErrInternal(""))
 	}
-	// NSFW filter: each resource carries the owning patch summary via the
-	// service's attachPatchSummaries — drop rows whose owning patch wiki
-	// excludes under content_limit before they reach the response.
 	data = enricher.FilterByGalgameContentLimit(c.Context(), h.galgame, data, func(r patchModel.PatchResource) int { return r.GalgameID }, utils.ContentLimitForListBrowse(c))
-	// The user-profile resource tab renders summary cards only (no download
-	// links/secrets), so strip the download payload — same anti-scraping
-	// rationale as the home / global resource feeds.
 	patchModel.StripResourceSecrets(data)
 	return response.Paginated(c, data, total)
 }
 
-// GetUserFavorites GET /api/user/:id/favorite
 func (h *UserHandler) GetUserFavorites(c fiber.Ctx) error {
 	userID, err := getUID(c)
 	if err != nil {
@@ -142,12 +131,6 @@ func (h *UserHandler) GetUserFavorites(c fiber.Ctx) error {
 		req.Limit = 10
 	}
 
-	// Favorites are the user's EXPLICIT collection — always show every favorited
-	// game, including ones with no downloadable patch yet (e.g. a 未收录 game
-	// favorited to watch for patches; favoriting lazily records it as a 0-resource
-	// row). The resource_count>0 filter (the include_empty toggle) is for discovery
-	// lists, not for "我的收藏" — without this a just-favorited game would vanish
-	// from the user's own favorites.
 	patches, total, err := h.service.GetUserFavorites(userID, req.Page, req.Limit, true)
 	if err != nil {
 		return response.Error(c, errors.ErrInternal(""))
@@ -155,7 +138,6 @@ func (h *UserHandler) GetUserFavorites(c fiber.Ctx) error {
 	return response.Paginated(c, enricher.EnrichPatches(c.Context(), h.galgame, h.users, patches, utils.ContentLimitForListBrowse(c)), total)
 }
 
-// GetUserComments GET /api/user/:id/comment
 func (h *UserHandler) GetUserComments(c fiber.Ctx) error {
 	userID, err := getUID(c)
 	if err != nil {
@@ -181,7 +163,6 @@ func (h *UserHandler) GetUserComments(c fiber.Ctx) error {
 	return response.Paginated(c, data, total)
 }
 
-// GetUserContributions GET /api/user/:id/contribute
 func (h *UserHandler) GetUserContributions(c fiber.Ctx) error {
 	userID, err := getUID(c)
 	if err != nil {
@@ -206,11 +187,6 @@ func (h *UserHandler) GetUserContributions(c fiber.Ctx) error {
 	return response.Paginated(c, enricher.EnrichPatches(c.Context(), h.galgame, h.users, patches, utils.ContentLimitForListBrowse(c)), total)
 }
 
-// Profile mutations (username / bio / password / email / avatar) live on
-// OAuth: the frontend should call OAuth's PATCH /auth/me directly or be
-// redirected to oauth.kungal.com/profile.
-
-// Follow PUT /api/user/:id/follow
 func (h *UserHandler) Follow(c fiber.Ctx) error {
 	userID, err := getUID(c)
 	if err != nil {
@@ -225,7 +201,6 @@ func (h *UserHandler) Follow(c fiber.Ctx) error {
 	return response.OKMessage(c, "Followed")
 }
 
-// Unfollow DELETE /api/user/:id/follow
 func (h *UserHandler) Unfollow(c fiber.Ctx) error {
 	userID, err := getUID(c)
 	if err != nil {
@@ -240,7 +215,6 @@ func (h *UserHandler) Unfollow(c fiber.Ctx) error {
 	return response.OKMessage(c, "Unfollowed")
 }
 
-// GetFollowers GET /api/user/:id/follower
 func (h *UserHandler) GetFollowers(c fiber.Ctx) error {
 	userID, err := getUID(c)
 	if err != nil {
@@ -258,8 +232,6 @@ func (h *UserHandler) GetFollowers(c fiber.Ctx) error {
 		req.Limit = 20
 	}
 
-	// viewerID (0 = anonymous) lets the service stamp per-row is_followed
-	// so the FE follow-list modal can render the correct button state.
 	users, total, err := h.service.GetFollowers(c.Context(), userID, middleware.GetUserID(c), req.Page, req.Limit)
 	if err != nil {
 		return response.Error(c, errors.ErrInternal(""))
@@ -267,7 +239,6 @@ func (h *UserHandler) GetFollowers(c fiber.Ctx) error {
 	return response.Paginated(c, users, total)
 }
 
-// GetFollowing GET /api/user/:id/following
 func (h *UserHandler) GetFollowing(c fiber.Ctx) error {
 	userID, err := getUID(c)
 	if err != nil {
@@ -292,7 +263,6 @@ func (h *UserHandler) GetFollowing(c fiber.Ctx) error {
 	return response.Paginated(c, users, total)
 }
 
-// CheckIn POST /api/user/check-in
 func (h *UserHandler) CheckIn(c fiber.Ctx) error {
 	user := middleware.MustGetUser(c)
 	points, err := h.service.CheckIn(user.ID)
@@ -303,11 +273,6 @@ func (h *UserHandler) CheckIn(c fiber.Ctx) error {
 	return response.OK(c, map[string]int{"moemoepoint": points})
 }
 
-// GetMoemoepointLog GET /api/user/moemoepoint/log
-// The authenticated user's OWN moemoepoint ledger. The user id comes from the
-// session (never a path param), so one user can't read another's records. moyu
-// proxies OAuth's REDUCED s2s view (no admin note / actor). Cursor paginated via
-// before_id (0 / absent = newest page); optional reason filter.
 func (h *UserHandler) GetMoemoepointLog(c fiber.Ctx) error {
 	user := middleware.MustGetUser(c)
 
@@ -324,7 +289,6 @@ func (h *UserHandler) GetMoemoepointLog(c fiber.Ctx) error {
 	return response.OK(c, fiber.Map{"items": items, "has_more": hasMore})
 }
 
-// SearchUsers GET /api/user/search
 func (h *UserHandler) SearchUsers(c fiber.Ctx) error {
 	var req dto.SearchUserRequest
 	if err := utils.ParseQueryAndValidate(c, &req); err != nil {

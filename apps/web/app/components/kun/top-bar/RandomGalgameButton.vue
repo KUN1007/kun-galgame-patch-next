@@ -2,9 +2,6 @@
 interface Props {
   isIconOnly?: boolean
   size?: 'xs' | 'sm' | 'md' | 'lg' | 'xl'
-  // Mirrors @kungal/ui-core KunUIVariant. ('faded' was dropped pre-1.0 and
-  // 'ghost' in 2.0 — both were indistinguishable from existing variants and
-  // never passed here; callers use 'light'.)
   variant?: 'solid' | 'bordered' | 'light' | 'flat' | 'shadow'
   className?: string
 }

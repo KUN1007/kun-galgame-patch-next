@@ -6,22 +6,15 @@ const route = useRoute()
 const isMenuOpen = ref(false)
 const galgamePopover = ref<{ close: () => void } | null>(null)
 
-// Solid bg + blur are OFF at the top and snap ON once scrolled. backdrop-filter
-// is kept OUT of the transition list — animating it stutters (GPU repaint), so
-// the blur snaps at the threshold while bg / border / shadow fade smoothly.
 const { y } = useWindowScroll()
 const scrolled = computed(() => y.value > 8)
 
-// Nudge the 发售月表 entry when a Galgame releases today.
 const { hasReleaseToday } = useGalgameReleaseToday()
 
 watch(
   () => route.path,
   () => {
     isMenuOpen.value = false
-    // Close the hover menu after a category click. NuxtLink navigates
-    // client-side (no reload), so without this the menu would linger open
-    // on the destination page until the pointer left it.
     galgamePopover.value?.close()
   }
 )
@@ -57,11 +50,6 @@ watch(
       <KunTopBarBrand />
 
       <div class="hidden items-center gap-6 md:flex">
-        <!-- "下载补丁" hover menu — KunPopover trigger="hover" (kun-ui 2.1):
-             coordinate safe-triangle (no pt-2 bridge hack), no focus steal on
-             hover, touch→click. Both the trigger and the entries stay real
-             <NuxtLink>s (middle-click / new-tab / SEO). Closed on route change
-             via the watch above so a category click doesn't leave it lingering. -->
         <KunPopover
           ref="galgamePopover"
           trigger="hover"
@@ -118,17 +106,8 @@ watch(
 
       </div>
 
-      <!-- AIEro ad button. Pulled OUT of the `hidden md:flex` nav group above
-           so it stays visible on mobile too (phones previously had no ad icon).
-           The brand is itself `hidden md:flex`, so on mobile this sits next to
-           the hamburger with the left side otherwise empty; on desktop it still
-           trails the nav links. Non-moderators only (gated inside the
-           component). -->
       <KunAdAIEroNav />
 
-      <!-- KunTopBarUser already groups NSFW switcher + search + random +
-           theme + bell + avatar (see User.vue). Don't add NSFWSwitcher here
-           in parallel — that would render two copies on desktop. -->
       <KunTopBarUser />
     </div>
 

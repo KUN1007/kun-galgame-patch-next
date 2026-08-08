@@ -11,13 +11,6 @@ import (
 	"testing"
 )
 
-// What these cover is the WIRE, because the user plane's whole point is what is
-// and is not on it: the user's own token forwarded verbatim, no Basic credential
-// beside it, and no `site` / `actor` field the request could lie in.
-
-// newTestClient points a fully-credentialled client at a stub. The Basic
-// credential is configured on purpose — the assertions below prove the user
-// plane does not send it even when it exists.
 func newTestClient(t *testing.T, h http.HandlerFunc) *Client {
 	t.Helper()
 	srv := httptest.NewServer(h)
@@ -59,7 +52,6 @@ func TestSubmitWorkUserSpeaksAsTheToken(t *testing.T) {
 	if gotMethod != http.MethodPost || gotPath != "/api/v1/user/catalog/works/submit" {
 		t.Fatalf("wrong route: %s %s", gotMethod, gotPath)
 	}
-	// Verbatim: no re-encoding, no second scheme, no Basic fallback.
 	if gotAuth != "Bearer tok-abc" {
 		t.Fatalf("Authorization = %q, want the user's Bearer token", gotAuth)
 	}
@@ -121,8 +113,6 @@ func TestMyClaimsSendsNoUIDAndNoSite(t *testing.T) {
 		})
 	})
 
-	// The filter has no Site field to set any more — the tenant comes off the
-	// token — and the query below must show none arriving by any other route.
 	page, err := c.MyClaims(context.Background(), "tok", UserClaimFilter{
 		ClaimStates: []string{"pending", "declined"}, Before: 100, Limit: 20,
 	})
@@ -143,9 +133,6 @@ func TestMyClaimsSendsNoUIDAndNoSite(t *testing.T) {
 	}
 }
 
-// A session minted before the scope existed cannot be widened by a refresh, so
-// this 403 has to be distinguishable from every other one: it is the only
-// denial whose fix is a re-login.
 func TestScopeDenialIsItsOwnSentinel(t *testing.T) {
 	c := newTestClient(t, func(w http.ResponseWriter, r *http.Request) {
 		writeEnvelope(t, w, http.StatusForbidden, 40300,
@@ -172,8 +159,6 @@ func TestOtherForbiddenKeepsUpstreamWording(t *testing.T) {
 	}
 }
 
-// A 409 is the lifecycle answering "that move is illegal from here". It must
-// survive as a 4xx the handler can render, not collapse into a transport error.
 func TestConflictSurvivesAsAPIError(t *testing.T) {
 	c := newTestClient(t, func(w http.ResponseWriter, r *http.Request) {
 		writeEnvelope(t, w, http.StatusConflict, 40900, "claim is already live", nil)

@@ -1,39 +1,17 @@
 <script setup lang="ts">
-// Publish-galgame wizard.
-//
-// Implements the 4 scenarios laid out in docs/galgame_wiki/00-handbook-for-downstream.md §4:
-//   A. Hit a published work (claim_state=live) → go straight to patch creation.
-//   B. Hit an unpublished draft (claim_state=draft) → claim → patch creation.
-//      (claim_state=pending is someone else's submission: shown, not claimable.)
-//   C. Hit own pending/declined              → jump to /me/submissions.
-//   D. No match                              → submit form → awaits review.
-//
-// All search calls hit our backend's /galgame/search/publish proxy. Its two
-// halves answer two different questions off two different faces: `items` is the
-// public dedup search over the registry (claim_state=live,draft,pending), and
-// `pending` is the CALLER'S OWN open submissions, read off the registry's
-// per-user claim face. Both speak one lifecycle vocabulary now — claim_state.
 
-// Write-side page (publish wizard). Not a content surface — disable SEO
-// so search engines don't index our edit forms.
 useKunDisableSeo('发布 Galgame')
 
 const api = useApi()
 const route = useRoute()
 const userStore = useUserStore()
 
-// Unauthed users see the login modal in place (via <AuthRequired> in the
-// template) instead of a silent redirect to home — same modal the 登录 button
-// opens. We don't auto-startOAuthLogin (that traps the user at OAuth with a
-// back-button bounce loop).
-
 type WizardMode = 'search' | 'submit'
 const mode = ref<WizardMode>('search')
 
-// ─── Search state ─────────────────────────────────────
 const searchQuery = ref('')
 const searching = ref(false)
-const searched = ref(false) // true after first search; gates the "no results" CTA
+const searched = ref(false)
 interface GalgameName {
   id: number
   name_en_us: string
@@ -41,19 +19,12 @@ interface GalgameName {
   name_zh_cn: string
   name_zh_tw: string
 }
-// A search hit is a REGISTRY row: its lifecycle word is claim_state, not the
-// wiki status int. `draft` covers both an unclaimed VNDB row and someone else's
-// submission under review — the registry cannot tell those apart — so the claim
-// button is offered on both and the wiki is what refuses the impossible one.
 interface GalgameHit extends GalgameName {
   claim_state: string
   vndb_id: string
   banner: string
   effective_banner_hash?: string
 }
-// A pending row is the caller's OWN submission. It speaks the same claim_state
-// vocabulary as a search hit — `pending` 审核中 / `declined` 已拒绝 — instead of
-// the wiki status ints it used to carry.
 interface PendingHit {
   id: number
   display_name: string
@@ -74,14 +45,6 @@ const claimStateLabel = (state: string): string =>
   state === 'declined' ? '已拒绝（可重新提交）' : '审核中'
 
 const isClaimableDraft = (h: GalgameHit): boolean => h.claim_state === 'draft'
-// `pending` is someone else's submission awaiting review. It is in the dedup
-// supply on purpose — an entry the wizard cannot see is an entry that gets
-// submitted a second time — but it is nobody's to claim, so it gets a state
-// label and no action instead of a button that the registry would refuse.
-//
-// Until the registry's projector splits it out, `draft` still covers this case
-// too and no row will ever carry `pending`; that is why the draft copy below
-// keeps its "may be someone else's" caveat rather than handing it over here.
 const isPendingReview = (h: GalgameHit): boolean => h.claim_state === 'pending'
 
 const doSearch = async () => {
@@ -97,8 +60,6 @@ const doSearch = async () => {
       `/galgame/search/publish?q=${encodeURIComponent(q)}&limit=12`
     )
     if (res.code === 0) {
-      // Go serializes a nil slice as JSON `null`; normalize so the template's
-      // `.length` checks never hit null even if the backend regresses.
       results.value = {
         items: res.data?.items ?? [],
         pending: res.data?.pending ?? [],
@@ -113,10 +74,6 @@ const doSearch = async () => {
   }
 }
 
-// Deep-link from a "发布补丁" CTA on a no-patch galgame page (/edit/create?q=名称):
-// prefill the box and auto-run the search so the user lands one click from
-// selecting that galgame. Only fire when logged in — the search endpoint needs a
-// Bearer; unauthed users see <AuthRequired>'s login modal and the prefilled box.
 onMounted(() => {
   const q = String(route.query.q ?? '').trim()
   if (!q) return
@@ -124,13 +81,10 @@ onMounted(() => {
   if (userStore.isLoggedIn) doSearch()
 })
 
-// ─── Scenario A: pick a published galgame (status=0) ──
 const selectingFor = ref<number | null>(null)
 const selectPublished = async (hit: GalgameHit) => {
   selectingFor.value = hit.id
   try {
-    // Register by galgame_id (always present), not vndb_id — 原创/同人 works have
-    // no vndb_id and the vndb path 400s ("VndbID is required") on them.
     const res = await api.post<{ id: number }>('/patch', {
       galgame_id: hit.id
     })
@@ -140,7 +94,6 @@ const selectPublished = async (hit: GalgameHit) => {
       return
     }
     if (res.code === 44001) {
-      // Shouldn't happen because we searched and got the hit, but guard anyway.
       useKunMessage(
         '资料库中未找到此游戏，请刷新后重试',
         'warn'
@@ -153,14 +106,10 @@ const selectPublished = async (hit: GalgameHit) => {
   }
 }
 
-// ─── Scenario B: claim an unpublished draft (claim_state=draft) ──
 const claimingFor = ref<number | null>(null)
 const claimAndPublish = async (hit: GalgameHit) => {
   claimingFor.value = hit.id
   try {
-    // The backend does the whole thing atomically: wiki claim (status 2→0)
-    // + local patch registration + single +3 moemoepoint, and returns the
-    // local patch id. No separate POST /patch (that double-rewarded).
     const claimRes = await api.post<{ id: number }>(
       `/galgame/${hit.id}/claim`,
       {}
@@ -170,11 +119,6 @@ const claimAndPublish = async (hit: GalgameHit) => {
       await navigateTo(`/patch/${claimRes.data.id}/introduction`)
       return
     }
-    // Wiki business codes (docs/galgame_wiki/99-appendix.md §20xxx). Two
-    // causes now: a stale index row (the draft was already claimed), or the
-    // row is someone ELSE's submission awaiting review — which the registry
-    // cannot distinguish from a claimable draft, so the wiki's refusal is the
-    // only place that difference exists. Recover by re-searching either way.
     if (claimRes.code === 20006 || claimRes.code === 20001) {
       useKunMessage(
         '该草稿已被他人认领、正在审核中或已不可用，正在为您刷新搜索结果',
@@ -192,27 +136,9 @@ const claimAndPublish = async (hit: GalgameHit) => {
   }
 }
 
-// ─── Scenario C: jump to /me/submissions ──────────────
 const goToMine = async () => {
   await navigateTo('/me/submissions')
 }
-
-// ─── Scenario D: submit a new galgame ─────────────────
-//
-// No vndb_id field by design: Galgame Wiki's daily `sync-vndb` cron maintains
-// (nearly) every VNDB entry as a claimable status=2 draft, so anything that
-// fell through the search to this form is either genuinely not in VNDB, or in
-// the one excluded residue: cancelled entries with NO release date (~1k
-// date-less vaporware — users realistically never submit these). Asking for a
-// VNDB ID here would only ever collide → 20004. VNDB games are reached via
-// the "认领并发布" (claim) path.
-//
-// History: before 2026-07 the sync skipped ALL cancelled entries (~2.4k,
-// including ~1.5k actually-shipped games like v1912 EDEN), which broke this
-// premise and let users mint no-vndb_id entries for games that ARE in VNDB
-// (the 2026-07-24 duplicate-draft failure mode). Fixed in infra
-// (cancelledVaporware gate) + backfilled via `sync-vndb --full`; entries
-// created through this form during that window may still lack a vndb_id.
 
 interface SubmitForm {
   name_zh_cn: string
@@ -237,17 +163,7 @@ const submitForm = reactive<SubmitForm>({
   original_language: 'ja-jp'
 })
 
-// No banner on this form any more. The registry's submission face takes the
-// identity and text facets only: cover bytes must already exist in the image
-// store before anything may reference them, so a cover is attached by editing
-// the entry after it exists — which on moyu means the kungal edit face the
-// 编辑 affordances already point at.
-
 const startSubmit = () => {
-  // Pre-fill name from the search query so users don't retype — but ONLY when
-  // it looks like a real title. A VNDB / release id (e.g. "v21497" / "r1984")
-  // is an identifier the user searched, not a name; seeding it into name_en_us
-  // produced entries whose English name was literally "v21497".
   const q = searchQuery.value.trim()
   const looksLikeVndbOrReleaseId = /^[vr]\d+$/i.test(q)
   if (q && !looksLikeVndbOrReleaseId && !submitForm.name_zh_cn && !submitForm.name_ja_jp) {
@@ -277,9 +193,6 @@ const handleSubmit = async () => {
     return
   }
 
-  // No vndb_id sent — see the SubmitForm comment above. Only include non-empty
-  // fields; the BFF maps this form onto the registry's own field keys and omits
-  // what is not filled in.
   const payload: Record<string, unknown> = {
     content_limit: submitForm.content_limit,
     age_limit: submitForm.age_limit
@@ -307,9 +220,6 @@ const handleSubmit = async () => {
       await navigateTo('/me/submissions')
       return
     }
-    // The registry aims its refusals at the submitter — a rejected field, or a
-    // repeat submission naming the work it already created — so show the
-    // message rather than flattening it into a generic line.
     submitError.value = res.message || '提交失败'
   } finally {
     submitting.value = false
@@ -319,10 +229,6 @@ const handleSubmit = async () => {
 
 <template>
   <AuthRequired>
-    <!-- Outer wrapper matches header (max-w-7xl via the default layout) so
-       page edges align with the top bar; the form body itself stays in a
-       centered narrow column for readability — same pattern settings/user
-       already uses. -->
     <div class="container mx-auto my-4">
     <KunHeader
       name="发布 Galgame"
@@ -330,7 +236,6 @@ const handleSubmit = async () => {
     />
     <div class="mx-auto max-w-3xl">
 
-    <!-- ============ Mode: search ============ -->
     <div v-if="mode === 'search'" class="mt-6 space-y-4">
       <KunCard :bordered="true">
         <div class="space-y-3 p-4">
@@ -357,7 +262,6 @@ const handleSubmit = async () => {
         </div>
       </KunCard>
 
-      <!-- Pending (caller's own status=3/4) — always at top with high salience -->
       <KunCard
         v-if="results.pending.length > 0"
         :bordered="true"
@@ -392,7 +296,6 @@ const handleSubmit = async () => {
         </div>
       </KunCard>
 
-      <!-- Registry hits (claim_state live or draft) -->
       <KunCard v-if="results.items.length > 0" :bordered="true">
         <div class="space-y-3 p-4">
           <h3 class="text-lg font-semibold">搜索结果</h3>
@@ -447,7 +350,6 @@ const handleSubmit = async () => {
         </div>
       </KunCard>
 
-      <!-- Empty-result CTA — "submit new" -->
       <KunCard
         v-if="searched && results.items.length === 0 && results.pending.length === 0"
         :bordered="true"
@@ -460,7 +362,6 @@ const handleSubmit = async () => {
         </div>
       </KunCard>
 
-      <!-- Always-on CTA so users can submit even when hits exist (e.g. wrong match) -->
       <div v-if="searched" class="text-center">
         <KunButton variant="light" color="primary" @click="startSubmit">
           以上都不是？提交新作
@@ -468,7 +369,6 @@ const handleSubmit = async () => {
       </div>
     </div>
 
-    <!-- ============ Mode: submit ============ -->
     <KunCard v-else :bordered="true" class-name="mt-6">
       <div class="space-y-4 p-4">
         <div class="flex items-center justify-between">

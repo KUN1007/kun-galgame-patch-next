@@ -7,19 +7,6 @@ import (
 	galgameClient "kun-galgame-patch-api/internal/galgame/client"
 )
 
-// FilterByGalgameContentLimit drops items whose owning galgame_id galgame excludes
-// under the given content_limit. Used by list endpoints whose primary rows are
-// PatchResource / PatchComment (i.e. don't go through EnrichPatches, but still
-// need NSFW gating because they expose the owning patch via attach helpers).
-//
-// Returns the input unchanged when cl == "" (no filter requested) or galgame is
-// nil. On galgame error we fail closed — returning nil — for the same reason
-// EnrichPatches does: an unfiltered fallback would defeat the safe-by-default
-// guarantee, and an empty list is the right answer for the SEO case.
-//
-// gidOf extracts the galgame_id from a row. Generic over T so the same helper
-// works for both []PatchResource and []PatchComment without sacrificing the
-// concrete element type at call sites.
 func FilterByGalgameContentLimit[T any](
 	ctx context.Context,
 	galgame *galgameClient.Client,

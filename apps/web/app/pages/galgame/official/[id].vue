@@ -1,28 +1,6 @@
 <script setup lang="ts">
 import { imageServiceUrl } from '~/shared/utils/resolveBannerUrl'
 
-// Standalone moyu label (brand / publisher / circle — what the wiki called an
-// "official") detail page, at /galgame/official/:id. Mirrors the sibling tag
-// page's layout.
-//
-// The entity is a CANONICAL CATALOG LABEL since wave A2-2 — `:id` is a
-// catalog_label id, not the wiki official id this page used to take. Hence the
-// move off /official/:id: the two id spaces overlap numerically, so serving
-// both from one path would render the wrong company (refs/proj/106 R1 / P2).
-// /official/:id survives as a pure redirect shell, which resolves every old id
-// through the catalog reverse lookup — the rescue wave registered all 24,334 of
-// them, so that lane needs no static table and has no 410 case.
-//
-// The address settled here in wave 146: entry pages live under the /galgame/
-// namespace on BOTH sites, and the noun is `official` on both — the intermediate
-// /labels/:id (one week old, published 07-29) 301s here from the server
-// middleware. "label" was the catalog's word for the record; the two sites'
-// users only ever say 会社/official.
-
-// keepalive: returning from a galgame restores this official's page + scroll.
-// The page is a computed off `?page=`, so reactivation re-reads the URL and
-// refetches the right page (brief silent re-fetch). Mirrors kungal's feed.
-// Kept alive via the central include list in app.vue, keyed by this name.
 defineOptions({ name: 'label-detail' })
 
 const route = useRoute()
@@ -36,12 +14,9 @@ const page = computed({
     router.push({ query: { ...route.query, page: v } })
   }
 })
-const pageHref = usePageHref() // crawlable pagination (<a href>)
+const pageHref = usePageHref()
 const limit = 24
 
-// The catalog's label vocabulary, which REPLACED the wiki's
-// company|individual|amateur. A visible wording change on this page, and the
-// canonical set from here on; an unmapped token renders verbatim.
 const CATEGORY_LABEL: Record<string, string> = {
   game_brand: '游戏品牌',
   bunko: '文库',
@@ -52,9 +27,6 @@ const CATEGORY_LABEL: Record<string, string> = {
   other: '其他'
 }
 
-// moyu answers an id the registry has no label for with its own not-found
-// envelope (GalgameTaxonomyDetailProxy); every other non-zero code is a failure
-// to serve a company that may well exist.
 const VERDICT_NOT_FOUND = 40400
 
 const { data, pending } = await useAsyncData(
@@ -66,31 +38,14 @@ const { data, pending } = await useAsyncData(
     })
     return { code: res.code, detail: res.code === 0 ? res.data : null }
   },
-  // Watches the ID as well as the page — navigating between two officials
-  // reuses this component. This used to be `watch(official, () => refresh())`,
-  // which is the loop the sibling tag page warns about: every fetch yields a
-  // new `data` object → a new `official` ref → the watch re-fires → refresh()
-  // never settles and `pending` stays true, disabling the pagination buttons.
   { watch: [page, officialID] }
 )
 
-// An unknown id ANSWERS 404 rather than rendering an empty 200 shell — see the
-// sibling tag page for why a soft 404 is the one thing a crawler will not
-// forgive. A backend failure deliberately does NOT 404; it keeps the in-page
-// failure state below.
 const notFound = () =>
   createError({ statusCode: 404, statusMessage: '会社不存在', fatal: true })
 
 if (data.value?.code === VERDICT_NOT_FOUND) throw notFound()
 
-// A MERGED company keeps its old id addressable, but only as a 301. The catalog
-// merges duplicate labels and the loser's id has to land on the survivor's page
-// rather than render a copy of it — two URLs for one company is what the
-// redirect prevents, and a 200 here would be the soft 404's twin: a real-looking
-// page that permanently holds no games. `moved_to` arrives INSTEAD of the
-// record, so nothing of the survivor is ever painted under the old id. The
-// target is the FINAL address (never the retired /official/:id or /labels/:id
-// shells), so this stays one hop.
 const movedTarget = (v: typeof data.value) =>
   v?.code === 0 ? (v.detail?.moved_to ?? 0) : 0
 const hopTo = (to: number) =>
@@ -111,20 +66,11 @@ const galgames = computed<GalgameCard[]>(
 )
 const total = computed(() => data.value?.detail?.total ?? 0)
 
-// The brand logo, wave 170 P3. The catalog stores a hash and moyu relays the
-// hash (never a URL), so the CDN address is built here exactly as banners and
-// avatars are. Most labels carry none — '' resolves to '' and the header falls
-// back to its name-only form rather than to a broken image box. Logos are SFW
-// by definition (a brand mark is not the work's content), so no age gate.
 const logoSrc = computed(() =>
   imageServiceUrl((official.value?.logo_hash ?? '').trim())
 )
 const totalPage = computed(() => Math.max(1, Math.ceil(total.value / limit)))
 
-// The label lane keeps its SEO: a company name is not itself an NSFW signal
-// (which is why the old gate only ever special-cased sexual TAGS), and the
-// works list under it is sfw-gated by the face. Only the missing-entity stub is
-// kept out of the index.
 if (official.value) {
   useKunSeoMeta({
     title: `会社 · ${official.value.name}`,
@@ -139,19 +85,11 @@ if (official.value) {
   <div class="container mx-auto my-6">
     <KunLoading v-if="pending && !official" description="加载中..." />
 
-    <!-- Only ever the FAILURE state now: a missing company left through the
-         404 above, so this no longer has to say "不存在或". -->
     <KunNull v-else-if="!official" description="会社加载失败，请稍后重试" />
 
     <template v-else>
-      <!-- Header -->
       <section class="border-default/20 rounded-xl border p-5">
         <div class="flex flex-wrap items-center gap-3">
-          <!-- Brand logo (wave 170 P3). Absent for most labels — the whole
-               header then reads exactly as it did before the field existed,
-               which is why there is no placeholder tile. `contain` because a
-               logo is artwork with its own aspect ratio: cropping it to a
-               square is defacing a trademark. -->
           <KunImage
             v-if="logoSrc"
             :src="logoSrc"
@@ -199,7 +137,6 @@ if (official.value) {
         </p>
       </section>
 
-      <!-- Associated Galgames -->
       <section class="mt-6">
         <div class="mb-4 flex items-center gap-3">
           <div class="bg-primary h-6 w-1 rounded" />
@@ -212,9 +149,6 @@ if (official.value) {
           v-else
           class="grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-4"
         >
-          <!-- Backend now serves moyu-enriched GalgameCard shape for
-               official detail (GalgameTaxonomyDetailProxy) — same shape as
-               home / galgame index, render the same component. -->
           <GalgameCard v-for="g in galgames" :key="g.id" :patch="g" />
         </div>
 

@@ -1,15 +1,5 @@
 package handler
 
-// Public taxonomy surface. This file used to host a generic verbatim proxy for
-// the galgame taxonomy CRUD and the links / aliases relations; both are gone —
-// metadata editing moved to kungal in the "编辑面归 kungal" wave, and wave 159
-// (N4) retired the staff console and the UI-less relation writes with it.
-//
-// What is left are the two PUBLIC browse pages and the old-id resolver they
-// depend on. Route paths still mirror the upstream 1:1 (sans the /api/v1
-// prefix), so the upstream path is derived by stripping /api/v1 from the
-// original URL rather than from per-route templates.
-
 import (
 	"encoding/json"
 	"log/slog"
@@ -27,52 +17,16 @@ import (
 
 const apiV1Prefix = "/api/v1"
 
-// galgamePathFromRequest turns the incoming original URL into the galgame path,
-// preserving exact path/query encoding. c.OriginalURL() keeps the raw,
-// undecoded path+query — important for the cosmetic non-ASCII /tag/:name
-// segment (galgame ignores :name and queries by tag_id, but the URL must stay
-// syntactically valid).
 func galgamePathFromRequest(c fiber.Ctx) string {
 	return strings.TrimPrefix(c.OriginalURL(), apiV1Prefix)
 }
 
-// GalgameTaxonomyDetailProxy serves the two PUBLIC browse pages /tag/:name and
-// /official/:name: it composes the page from the catalog (TaxonomyBrowse), then
-// rewrites the response so the `galgame` array (the flat brief shape) is
-// replaced with moyu's enriched `GalgameCard` shape (KunLanguage `name`,
-// per-patch counts, banner-hash resolution etc.) — the same shape the home /
-// galgame index pages already consume.
-//
-// For galgame-listed galgames moyu has no local patch row for, a degraded card
-// is emitted (galgame name/banner/content_limit, zero counts) so the listing
-// stays visually consistent and the user can still see the full galgame set.
-//
-// The rewritten field is renamed `galgame` → `galgames` to match the rest
-// of moyu's paginated list shape (and the existing FE TaxonomyListOpts
-// reader fallbacks).
 func (h *PatchHandler) GalgameTaxonomyDetailProxy(c fiber.Ctx) error {
 	raw, handled, err := h.galgame.TaxonomyBrowse(c.Context(), galgamePathFromRequest(c))
 	if !handled && err == nil {
-		// Not a browse read. Since wave 159 retired the taxonomy staff console
-		// there is no other taxonomy face downstream, so a `/tag/<anything
-		// else>` is simply not a page moyu serves — answer it here rather than
-		// letting it fall through onto a face it has no business reaching.
 		return response.Error(c, errors.ErrNotFound("词条不存在"))
 	}
 	if err != nil {
-		// An id the registry has no row for is a MISS, and moyu answers it with
-		// its OWN 404 rather than forwarding the catalog's code inside a 400.
-		// The page above turns that into a real 404 status line instead of
-		// rendering an empty 200 shell — a soft 404 keeps a dead URL indexed and
-		// reads the "不存在" copy as thin content on a live page. It also has to
-		// be told apart from an outage, which is what Absent() insists on.
-		// Checked BEFORE the miss branch: a merged id is the opposite of an
-		// absent one. The catalog merges duplicate labels and the loser keeps
-		// its id addressable only as a redirect, so answering it with the 404
-		// below would retire a live company's old URL instead of forwarding it.
-		// The verdict travels as `moved_to` ALONE — the survivor's record never
-		// rides under the dead id, or the same company would exist at two URLs
-		// — and the page turns it into a single-hop 301.
 		if to, ok := galgameClient.MovedTarget(err); ok {
 			return c.JSON(response.Response{
 				Code: 0, Message: "OK", Data: fiber.Map{"moved_to": to},
@@ -87,16 +41,11 @@ func (h *PatchHandler) GalgameTaxonomyDetailProxy(c fiber.Ctx) error {
 		return response.Error(c, errors.ErrInternal("调用 Galgame 资料库失败"))
 	}
 
-	// Parse the galgame `data` field into a generic map so we can swap out the
-	// galgame array without touching the tag/official metadata around it.
 	var envelope map[string]json.RawMessage
 	if jerr := json.Unmarshal(raw, &envelope); jerr != nil {
-		// Shape is unexpected (not a JSON object) — degrade to passthrough.
 		return c.JSON(response.Response{Code: 0, Message: "OK", Data: raw})
 	}
 
-	// galgame's TagDetail / OfficialDetail use `"galgame"` (singular). Be
-	// defensive about `galgames` / `items` in case the upstream changes.
 	var galgameKey string
 	var briefs []galgameClient.GalgameBrief
 	for _, key := range []string{"galgame", "galgames", "items"} {
@@ -113,9 +62,6 @@ func (h *PatchHandler) GalgameTaxonomyDetailProxy(c fiber.Ctx) error {
 		return c.JSON(response.Response{Code: 0, Message: "OK", Data: raw})
 	}
 
-	// 1) Collect ids in galgame order. 2) Find which moyu has locally.
-	// 3) Enrich those (one /galgame/batch + one users batch internally).
-	// 4) Walk the original galgame order and emit either enriched or degraded.
 	ids := make([]int, 0, len(briefs))
 	for i := range briefs {
 		if briefs[i].ID > 0 {
@@ -127,12 +73,6 @@ func (h *PatchHandler) GalgameTaxonomyDetailProxy(c fiber.Ctx) error {
 		slog.Warn("拉本地 patch 失败，将走 galgame 仅元信息的降级路径",
 			"error", lerr, "count", len(ids))
 	}
-	// content_limit="" — the briefs slice was already content_limit-filtered
-	// by galgame itself at the /tag/:name level (galgame's taxonomy endpoints
-	// default to sfw per docs/galgame_wiki/00-handbook §16.2, and the query
-	// param if any was forwarded verbatim by the proxy above). Re-filtering
-	// here would double-call galgame for no semantic gain; the walk below
-	// preserves galgame's order and drops anything galgame excluded.
 	enriched := enricher.EnrichPatches(c.Context(), h.galgame, h.users, localPatches, "")
 	enrichedByID := make(map[int]enricher.GalgameCard, len(enriched))
 	for i := range enriched {
@@ -152,9 +92,6 @@ func (h *PatchHandler) GalgameTaxonomyDetailProxy(c fiber.Ctx) error {
 	if merr != nil {
 		return c.JSON(response.Response{Code: 0, Message: "OK", Data: raw})
 	}
-	// Standardize on `galgames` regardless of the upstream key — the FE
-	// type already permits this and dropping the old key avoids shipping
-	// the same data twice.
 	if galgameKey != "galgames" {
 		delete(envelope, galgameKey)
 	}
@@ -167,23 +104,6 @@ func (h *PatchHandler) GalgameTaxonomyDetailProxy(c fiber.Ctx) error {
 	return c.JSON(response.Response{Code: 0, Message: "OK", Data: json.RawMessage(out)})
 }
 
-// ResolveTaxonomyID serves GET /taxonomy/resolve/:kind/:id — the redirect
-// shells' resolver for the wave-A2-2 taxonomy id migration (refs/proj/106 R1).
-//
-// moyu published /tag/<wiki id> and /official/<wiki id> URLs for years. The
-// canonical pages now live in the CATALOG id space, and the two spaces OVERLAP
-// numerically — a wiki tag id is very often also a live catalog tag id — so one
-// path cannot serve both without silently showing the wrong entity. R1's answer
-// is a clean split: the new paths carry catalog ids, the old ones become pure
-// redirect shells, and this is what they ask.
-//
-// Three verdicts, three status codes, no guessing:
-//
-//	200 {catalog_id} — resolved; the shell sends a 301 to the new path.
-//	410              — a real old id whose vocabulary entry has no successor
-//	                   and never will (the 1,507 parked tags). "Gone" is the
-//	                   honest word for a URL we published and retired.
-//	404              — never a valid id here.
 func (h *PatchHandler) ResolveTaxonomyID(c fiber.Ctx) error {
 	kind := c.Params("kind")
 	id, err := strconv.Atoi(c.Params("id"))
@@ -205,8 +125,6 @@ func (h *PatchHandler) ResolveTaxonomyID(c fiber.Ctx) error {
 		return response.Error(c, errors.ErrNotFound("标签不存在"))
 
 	case "official":
-		// No vendored table: the rescue wave registered every wiki official as
-		// an exact external ref, so the live lookup covers 100% of them.
 		catalogID, found, lErr := h.galgame.ResolveWikiLabel(c.Context(), id)
 		if lErr != nil {
 			return response.Error(c, errors.ErrInternal("解析会社 ID 失败"))

@@ -19,7 +19,7 @@ func NewPostgres(cfg config.DatabaseConfig, mode string) *gorm.DB {
 
 	db, err := gorm.Open(postgres.Open(cfg.URL), &gorm.Config{
 		SkipDefaultTransaction: true,
-		Logger: gormlogger.Default.LogMode(logLevel),
+		Logger:                 gormlogger.Default.LogMode(logLevel),
 	})
 	if err != nil {
 		panic("failed to connect to database: " + err.Error())

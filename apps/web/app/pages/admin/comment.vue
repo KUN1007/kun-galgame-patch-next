@@ -6,7 +6,6 @@ useKunDisableSeo('评论管理')
 const api = useApi()
 const page = ref(1)
 const limit = 30
-// Review-queue filter: '' = all, 'pending' = awaiting approval (comment-verify).
 const statusFilter = ref<'' | 'pending'>('')
 
 interface ListResponse {
@@ -30,7 +29,6 @@ const { data, pending, refresh } = await useAsyncData<ListResponse>(
 
 watch([page, statusFilter], () => refresh())
 
-// Reset to page 1 when switching filters so we don't land on an out-of-range page.
 const setFilter = (v: '' | 'pending') => {
   if (statusFilter.value === v) return
   statusFilter.value = v
@@ -77,8 +75,6 @@ const chipClass = (active: boolean) => [
   <div class="space-y-6">
     <div class="flex flex-wrap items-center justify-between gap-3">
       <h1 class="text-2xl font-bold">评论管理</h1>
-      <!-- Review-queue filter. '待审核' surfaces comments held by the
-           评论需要审核 toggle so moderators can approve/reject them. -->
       <div class="flex gap-1">
         <button type="button" :class="chipClass(statusFilter === '')" @click="setFilter('')">
           全部

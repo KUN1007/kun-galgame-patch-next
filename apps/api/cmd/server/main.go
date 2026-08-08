@@ -22,10 +22,6 @@ func main() {
 	logger.Init(os.Getenv("KUN_SERVER_MODE"))
 	cfg := config.Load()
 
-	// `server healthcheck` (container HEALTHCHECK on distroless, which has no
-	// shell): probe the already-running server's /healthz and exit 0/1.
-	// No-op for the normal `server` invocation. Runs before app.New so the
-	// probe never touches the DB/Redis.
 	health.MaybeProbe(cfg.Server.Port, "/healthz")
 
 	application := app.New(cfg)

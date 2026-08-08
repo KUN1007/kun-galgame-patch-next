@@ -1,11 +1,3 @@
-// Package userclient is a thin OAuth user-brief client with TTL caching,
-// negative caching, request coalescing, and automatic >100-id sharding.
-//
-// The OAuth server is the single source of truth for user display fields
-// (name, avatar, bio, status, roles). Business code holds only user_id and
-// resolves it to a Brief via this client when rendering.
-//
-// See docs/user-migration/08-downstream-integration.md for the contract.
 package userclient
 
 import (
@@ -25,8 +17,6 @@ import (
 	"golang.org/x/sync/singleflight"
 )
 
-// Brief is the public user brief returned by /users/batch and /users/search.
-// Fields match docs/oauth/api-reference.md.
 type Brief struct {
 	ID              uint     `json:"id"`
 	UUID            string   `json:"uuid"`
@@ -36,9 +26,7 @@ type Brief struct {
 	Bio             string   `json:"bio"`
 	Status          int      `json:"status"`
 	Roles           []string `json:"roles"`
-	// SiteRoles are the user's roles scoped to the REQUESTING client's site
-	// (moyu) — never admin/ren. See docs/oauth/12-site-roles.md.
-	SiteRoles []string `json:"site_roles"`
+	SiteRoles       []string `json:"site_roles"`
 }
 
 const (
@@ -48,7 +36,6 @@ const (
 	defaultTimeout     = 5 * time.Second
 )
 
-// Config configures a Client.
 type Config struct {
 	BaseURL      string
 	ClientID     string
@@ -58,7 +45,6 @@ type Config struct {
 	HTTPClient   *http.Client
 }
 
-// Client is the OAuth user-brief client.
 type Client struct {
 	baseURL     string
 	authHeader  string
@@ -66,8 +52,8 @@ type Client struct {
 	cacheTTL    time.Duration
 	notFoundTTL time.Duration
 
-	cache    sync.Map // uint → cacheEntry
-	notFound sync.Map // uint → time.Time
+	cache    sync.Map
+	notFound sync.Map
 	sf       singleflight.Group
 }
 
@@ -96,10 +82,6 @@ func New(cfg Config) *Client {
 	}
 }
 
-// Users fetches user briefs by id. Cache hits skip the network. Misses are
-// deduped, sharded into chunks of 100, coalesced via singleflight, and the
-// result map is returned keyed by id. Unknown ids are silently absent (and
-// negative-cached).
 func (c *Client) Users(ctx context.Context, ids []uint) (map[uint]*Brief, error) {
 	out := make(map[uint]*Brief, len(ids))
 	if len(ids) == 0 {
@@ -160,8 +142,6 @@ func (c *Client) Users(ctx context.Context, ids []uint) (map[uint]*Brief, error)
 	return out, nil
 }
 
-// User is a single-id convenience wrapper. Returns (nil, nil) when the id
-// is not present.
 func (c *Client) User(ctx context.Context, id uint) (*Brief, error) {
 	m, err := c.Users(ctx, []uint{id})
 	if err != nil {
@@ -170,7 +150,6 @@ func (c *Client) User(ctx context.Context, id uint) (*Brief, error) {
 	return m[id], nil
 }
 
-// Search proxies /users/search. Results are not cached (query space is unbounded).
 func (c *Client) Search(ctx context.Context, q string, limit int) ([]*Brief, error) {
 	u := fmt.Sprintf("%s/users/search?q=%s", c.baseURL, url.QueryEscape(q))
 	if limit > 0 {
@@ -211,7 +190,6 @@ func (c *Client) Search(ctx context.Context, q string, limit int) ([]*Brief, err
 	return out, nil
 }
 
-// Invalidate drops both positive and negative cache entries for a single id.
 func (c *Client) Invalidate(id uint) {
 	c.cache.Delete(id)
 	c.notFound.Delete(id)
@@ -290,9 +268,6 @@ func singleflightKey(ids []uint) string {
 	return strings.Join(parts, ",")
 }
 
-// CreatorApplication mirrors OAuth's creator_applications row (the fields moyu
-// surfaces to the user). Acted on behalf of the END USER, not via client
-// credentials. See docs/auth/01-creator-role-design.md.
 type CreatorApplication struct {
 	ID            int             `json:"id"`
 	UserID        int             `json:"user_id"`
@@ -305,8 +280,6 @@ type CreatorApplication struct {
 	CreatedAt     string          `json:"created_at"`
 }
 
-// CreatorAPIError carries OAuth's business code/message from a creator call
-// (e.g. pending exists, cooldown) so callers can surface the message.
 type CreatorAPIError struct {
 	Code    int
 	Message string
@@ -314,8 +287,6 @@ type CreatorAPIError struct {
 
 func (e *CreatorAPIError) Error() string { return e.Message }
 
-// CreateCreatorApplication files a creator-role application AS THE END USER
-// (Authorization: Bearer <token>), not via client credentials.
 func (c *Client) CreateCreatorApplication(ctx context.Context, token, source string, evidence json.RawMessage, message string) (*CreatorApplication, error) {
 	payload, _ := json.Marshal(map[string]any{"source": source, "evidence": evidence, "message": message})
 	req, err := http.NewRequestWithContext(ctx, "POST", c.baseURL+"/creator/applications", bytes.NewReader(payload))
@@ -327,7 +298,6 @@ func (c *Client) CreateCreatorApplication(ctx context.Context, token, source str
 	return c.creatorApplicationReq(req)
 }
 
-// GetMyCreatorApplication returns the user's latest creator application (nil if none).
 func (c *Client) GetMyCreatorApplication(ctx context.Context, token string) (*CreatorApplication, error) {
 	req, err := http.NewRequestWithContext(ctx, "GET", c.baseURL+"/creator/applications/me", nil)
 	if err != nil {

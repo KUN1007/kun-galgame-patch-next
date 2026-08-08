@@ -1,10 +1,4 @@
 <script setup lang="ts">
-// System (display) preferences. Local-only, cookie-backed via settingStore so
-// SSR renders the chosen values on first paint.
-//   - 主题: relocated here from the top bar (the top-bar theme button is gone).
-//   - 内容显示 (NSFW): a COPY of the top-bar / mobile switcher (those stay).
-//   - Galgame 卡片显示设置: moved from the /galgame "显示设置" modal; the
-//     /galgame entry now links to this card (#galgame-display).
 import { KUN_CONTENT_LIMIT_MAP } from '~/constants/top-bar'
 import type { KunNsfwPreference } from '~/stores/settingStore'
 
@@ -13,7 +7,6 @@ useKunDisableSeo('系统设置')
 const route = useRoute()
 const settingStore = useSettingStore()
 
-// ── 主题 ──────────────────────────────────────────────
 const colorMode = useColorMode()
 const themes = [
   { key: 'light', label: '浅色主题', icon: 'lucide:sun' },
@@ -24,10 +17,6 @@ const setTheme = (key: 'light' | 'dark' | 'system') => {
   colorMode.preference = key
 }
 
-// ── 内容显示 (NSFW) ───────────────────────────────────
-// location.reload() on change for the same reason as the top-bar switcher:
-// useApi captures content_limit at setup, so the change only applies on the
-// next navigation — a reload makes it take effect on the current page.
 const nsfwOptions = [
   { key: 'sfw', icon: 'lucide:shield-check' },
   { key: 'all', icon: 'lucide:circle-slash' },
@@ -38,7 +27,6 @@ const setNsfw = (key: KunNsfwPreference) => {
   if (import.meta.client) location.reload()
 }
 
-// ── Galgame 卡片显示设置 (moved from the /galgame modal) ──
 const titleLanguage = computed({
   get: () => settingStore.data.titleLanguage ?? 'ja-jp',
   set: (v: 'zh-cn' | 'ja-jp') => settingStore.setData({ titleLanguage: v })
@@ -64,7 +52,6 @@ const showGalgamesWithoutResource = computed({
   set: (v: boolean) => settingStore.setData({ showGalgamesWithoutResource: v })
 })
 
-// Smooth-scroll to the section the /galgame "显示设置" link deep-links to.
 onMounted(() => {
   if (route.hash) {
     nextTick(() => {
@@ -79,7 +66,6 @@ onMounted(() => {
 <template>
   <div class="w-full">
     <div class="max-w-3xl space-y-6">
-      <!-- 主题 -->
       <KunCard :bordered="true">
         <template #header>
           <h2 class="px-1 pt-1 text-xl font-medium">主题</h2>
@@ -108,7 +94,6 @@ onMounted(() => {
         </div>
       </KunCard>
 
-      <!-- 内容显示 (NSFW) -->
       <KunCard :bordered="true">
         <template #header>
           <h2 class="px-1 pt-1 text-xl font-medium">内容显示</h2>
@@ -145,7 +130,6 @@ onMounted(() => {
         </div>
       </KunCard>
 
-      <!-- Galgame 卡片显示设置 — deep-link target from /galgame 显示设置. -->
       <div id="galgame-display" class="scroll-mt-24">
         <KunCard :bordered="true">
           <template #header>

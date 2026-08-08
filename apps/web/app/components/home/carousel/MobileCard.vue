@@ -3,8 +3,6 @@ import { aboutDirectoryLabelMap } from '~/constants/about'
 
 interface Props {
   post: HomeCarouselMetadata
-  // First slide only: keep its banner eager / high-priority for the LCP; the
-  // rest of the (now all-rendered) carousel slides lazy-load.
   eager?: boolean
 }
 
@@ -19,8 +17,6 @@ const post = computed(() => props.post)
     class="h-full border-none bg-transparent shadow-none sm:hidden"
   >
     <div class="relative h-1/2">
-      <!-- See DesktopCard.vue: `block` overrides inline-block so h-full works;
-           provider="none" passes the already-optimized banner URL through. -->
       <KunImage
         :src="post.banner"
         :alt="post.title"
@@ -33,7 +29,6 @@ const post = computed(() => props.post)
     <div class="h-1/2 py-3">
       <div class="mb-2 flex items-center justify-between">
         <div class="flex items-center gap-2">
-          <!-- size="md" is size-8, i.e. the same box the raw KunImage had. -->
           <KunAvatar :user="post.author" size="md" />
           <span class="text-foreground/80 text-sm">
             {{ post.author.name }}

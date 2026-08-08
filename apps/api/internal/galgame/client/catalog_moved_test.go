@@ -1,11 +1,5 @@
 package client
 
-// The MERGED-id verdict (doc 148), classified by the same pairing discipline
-// Absent() uses: the catalog's own business code TOGETHER with the status.
-// Neither half alone is the proof — a router 404 echoes 404 into `code`, and a
-// proxy could 301 anything — and a merge misread as a miss retires a live
-// company's URL instead of forwarding it.
-
 import (
 	"context"
 	"net/http"
@@ -25,8 +19,6 @@ func TestMovedTargetClassification(t *testing.T) {
 			want: 6935,
 		},
 		{
-			// A proxy or a router could answer 301 for reasons that say nothing
-			// about this entity; without the business code it is not a verdict.
 			name: "a 301 with no merge code is not a merge",
 			err:  &GalgameError{Code: 233, HTTPStatus: http.StatusMovedPermanently, Moved: 6935},
 		},
@@ -35,8 +27,6 @@ func TestMovedTargetClassification(t *testing.T) {
 			err:  &GalgameError{Code: catalogCodeMoved, HTTPStatus: http.StatusOK, Moved: 6935},
 		},
 		{
-			// A merge with no survivor is not actionable: forwarding to id 0
-			// would be a redirect to a 404.
 			name: "a merge verdict with no target is not actionable",
 			err:  &GalgameError{Code: catalogCodeMoved, HTTPStatus: http.StatusMovedPermanently},
 		},
@@ -55,9 +45,6 @@ func TestMovedTargetClassification(t *testing.T) {
 	}
 }
 
-// The client must not follow the catalog's 301: following it replays the
-// request against the survivor's URL and returns the survivor's record under
-// the dead id — the duplicate page the redirect exists to prevent.
 func TestGetV1DoesNotFollowTheMergeRedirect(t *testing.T) {
 	var seen []string
 	upstream := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {

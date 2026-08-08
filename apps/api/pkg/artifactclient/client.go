@@ -1,15 +1,3 @@
-// Package artifactclient is a thin SDK for the centralized artifact service
-// (kun-galgame-infra, port 9279): a private-bucket large-file upload/download
-// platform. The browser PUTs bytes straight to B2 via presigned URLs; this
-// client only drives the small init/complete/download/delete JSON calls (backend
-// S2S, HTTP Basic with an OAuth client_id/secret — the artifact service shares
-// the OAuth `oauth_client` table as its "site" registry, gated by
-// artifact_enabled + artifact_site_key on the infra side).
-//
-// The low-level typed client (sub-package gen) is generated from the committed
-// OpenAPI contract; this file wraps it with auth, no-op-when-disabled behaviour,
-// re-exported contract types, and sentinel errors. See
-// kun-galgame-infra/docs/artifact/06,10.
 package artifactclient
 
 import (
@@ -27,8 +15,6 @@ import (
 	"kun-galgame-patch-api/pkg/artifactclient/gen"
 )
 
-// Re-exported contract types (generated in the gen sub-package) so callers
-// depend only on this package.
 type (
 	InitUploadRequest     = gen.InitUploadRequest
 	InitUploadResponse    = gen.InitUploadResponse
@@ -40,20 +26,12 @@ type (
 	ManifestInput         = gen.ManifestInput
 )
 
-// UploadedPart is a part already stored in B2 for an in-progress upload. Resume
-// returns these so the client can skip re-uploading them (reuse the etag).
 type UploadedPart struct {
 	PartNumber int32  `json:"part_number"`
 	Etag       string `json:"etag"`
 	Size       int64  `json:"size"`
 }
 
-// ResumeUploadResponse mirrors the artifact service's resume response: the parts
-// already stored (UploadedParts — skip them) plus fresh presigned URLs for the
-// parts still missing (PartUrls). A single-part upload comes back with UploadUrl
-// to re-PUT the whole file. Field shapes match gen.InitUploadResponse where they
-// overlap. Hand-written (not generated) until the contract is re-synced; see the
-// note in Resume below.
 type ResumeUploadResponse struct {
 	Uuid          string          `json:"uuid"`
 	Multipart     bool            `json:"multipart"`
@@ -64,7 +42,6 @@ type ResumeUploadResponse struct {
 	UploadedParts *[]UploadedPart `json:"uploaded_parts,omitempty"`
 }
 
-// House error codes returned by the artifact service (see infra pkg/errors).
 const (
 	codeArtifactNotFound       = 50001
 	codeArtifactTooBig         = 50004
@@ -75,7 +52,6 @@ const (
 	codeArtifactMIMEDenied     = 50017
 )
 
-// Sentinel errors callers can errors.Is against.
 var (
 	ErrNotConfigured  = errors.New("artifactclient: not configured (empty base URL or credentials)")
 	ErrUnauthorized   = errors.New("artifactclient: unauthorized (check client_id/secret + artifact_enabled)")
@@ -87,45 +63,28 @@ var (
 	ErrSizeMismatch   = errors.New("artifactclient: uploaded size does not match declared size")
 )
 
-// Config bundles connection settings (created in app.go from config).
 type Config struct {
-	BaseURL      string // e.g. http://127.0.0.1:9279 (no trailing slash)
+	BaseURL      string
 	ClientID     string
 	ClientSecret string
-	HTTPClient   *http.Client // optional; default carries no global timeout — see *CallTimeout
+	HTTPClient   *http.Client
 }
 
-// Per-call timeouts. The artifact HTTP client carries no global Timeout; each
-// call sets its own deadline via context. Quick metadata calls (init / download
-// / delete / resume) fail fast at callTimeout. Complete now returns in seconds —
-// infra bakes the download filename at CreateMultipartUpload, so finalize is
-// O(1), not a size-proportional CopyObject — so completeCallTimeout is just a
-// generous safety net against a stuck B2 / artifact, NOT a per-file-size budget.
-// (It was 10min while infra still did the O(size) copy that aborted ~1GB+
-// completes with "Client.Timeout exceeded while awaiting headers".)
 const (
 	callTimeout         = 30 * time.Second
 	completeCallTimeout = 90 * time.Second
 )
 
-// Client is a thin singleton-friendly wrapper around the generated client.
 type Client struct {
-	inner     *gen.ClientWithResponses
-	basicAuth string
-	// baseURL + httpClient back the hand-written Resume call (the generated
-	// client predates the /resume endpoint); identical to what `inner` uses.
+	inner      *gen.ClientWithResponses
+	basicAuth  string
 	baseURL    string
 	httpClient *http.Client
 }
 
-// New constructs a Client. Empty BaseURL/credentials = no-op client whose calls
-// return ErrNotConfigured, so the caller can degrade gracefully in dev.
 func New(cfg Config) *Client {
 	hc := cfg.HTTPClient
 	if hc == nil {
-		// No global Timeout: each call applies its own deadline (callTimeout /
-		// completeCallTimeout) via context, so the rare slow complete gets room
-		// while the quick metadata calls still fail fast.
 		hc = &http.Client{}
 	}
 	base := strings.TrimRight(cfg.BaseURL, "/")
@@ -151,11 +110,8 @@ func New(cfg Config) *Client {
 	return c
 }
 
-// Configured reports whether the client can talk to the artifact service.
 func (c *Client) Configured() bool { return c.inner != nil && c.basicAuth != "" }
 
-// InitUpload reserves quota + creates the artifact row, returning the presigned
-// upload URL(s) for the browser to PUT directly to B2.
 func (c *Client) InitUpload(ctx context.Context, req InitUploadRequest) (*InitUploadResponse, error) {
 	if !c.Configured() {
 		return nil, ErrNotConfigured
@@ -172,14 +128,10 @@ func (c *Client) InitUpload(ctx context.Context, req InitUploadRequest) (*InitUp
 	return nil, mapErr(resp.StatusCode(), resp.JSONDefault)
 }
 
-// CompleteUpload finalizes an upload (HeadObject size verify + optional manifest)
-// and returns the ready artifact's metadata.
 func (c *Client) CompleteUpload(ctx context.Context, uuid string, req CompleteUploadRequest) (*ArtifactResponse, error) {
 	if !c.Configured() {
 		return nil, ErrNotConfigured
 	}
-	// Complete is O(1) server-side now; keep a generous safety-net deadline
-	// (completeCallTimeout) for B2 / artifact hiccups.
 	ctx, cancel := context.WithTimeout(ctx, completeCallTimeout)
 	defer cancel()
 	resp, err := c.inner.CompleteUploadWithResponse(ctx, uuid, req)
@@ -192,17 +144,6 @@ func (c *Client) CompleteUpload(ctx context.Context, uuid string, req CompleteUp
 	return nil, mapErr(resp.StatusCode(), resp.JSONDefault)
 }
 
-// Resume restarts an interrupted upload. It asks the artifact service which
-// parts are already stored in B2 (UploadedParts — skip them, reuse their etags)
-// and returns fresh presigned URLs for the parts still missing (PartUrls); a
-// single-part upload comes back with a fresh UploadUrl to re-PUT the whole file.
-// Calling it also refreshes the upload's activity timestamp so artifact-gc won't
-// reap an upload that's still being resumed. See infra docs/artifact/06 §2.3.
-//
-// Hand-written rather than generated: the committed gen client predates the
-// /resume endpoint. It reuses the same base URL, HTTP client, Basic auth, and
-// {code,message,data} envelope / error mapping as the generated calls — a future
-// full re-gen from the synced contract can fold it back in.
 func (c *Client) Resume(ctx context.Context, uuid string) (*ResumeUploadResponse, error) {
 	if !c.Configured() {
 		return nil, ErrNotConfigured
@@ -237,8 +178,6 @@ func (c *Client) Resume(ctx context.Context, uuid string) (*ResumeUploadResponse
 	return nil, mapErr(resp.StatusCode, &he)
 }
 
-// Download returns a download URL (presigned GET, or a Worker URL for public
-// artifacts on a site with a CDN base configured).
 func (c *Client) Download(ctx context.Context, uuid string) (*DownloadResponse, error) {
 	if !c.Configured() {
 		return nil, ErrNotConfigured
@@ -255,7 +194,6 @@ func (c *Client) Download(ctx context.Context, uuid string) (*DownloadResponse, 
 	return nil, mapErr(resp.StatusCode(), resp.JSONDefault)
 }
 
-// Delete soft-deletes an artifact (GC physically reclaims it after the TTL).
 func (c *Client) Delete(ctx context.Context, uuid string) error {
 	if !c.Configured() {
 		return ErrNotConfigured
@@ -272,8 +210,6 @@ func (c *Client) Delete(ctx context.Context, uuid string) error {
 	return mapErr(resp.StatusCode(), resp.JSONDefault)
 }
 
-// mapErr turns a non-success artifact response into a sentinel (where callers
-// branch) or a descriptive error.
 func mapErr(status int, he *gen.HouseError) error {
 	code := 0
 	msg := ""

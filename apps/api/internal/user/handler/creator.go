@@ -10,13 +10,9 @@ import (
 	"github.com/gofiber/fiber/v3"
 )
 
-// CreatorStatus — GET /api/user/creator/status: moyu eligibility snapshot +
-// the user's current creator application (from the central OAuth queue).
 func (h *UserHandler) CreatorStatus(c fiber.Ctx) error {
 	userID := middleware.GetUserID(c)
 	token := middleware.GetAccessToken(c)
-	// token is forwarded to OAuth as the user's Bearer; a live session with no
-	// stored access token (evicted / expired) must surface as auth, not a 500.
 	if userID == 0 || token == "" {
 		return response.Error(c, errors.ErrUnauthorized())
 	}
@@ -27,8 +23,6 @@ func (h *UserHandler) CreatorStatus(c fiber.Ctx) error {
 	return response.OK(c, fiber.Map{"eligibility": elig, "application": app})
 }
 
-// CreatorApply — POST /api/user/creator/apply {message?}: checks moyu's
-// eligibility gate then files the application on the OAuth queue.
 func (h *UserHandler) CreatorApply(c fiber.Ctx) error {
 	userID := middleware.GetUserID(c)
 	token := middleware.GetAccessToken(c)

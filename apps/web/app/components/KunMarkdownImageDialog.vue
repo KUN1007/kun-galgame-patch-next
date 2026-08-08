@@ -1,26 +1,12 @@
 <script setup lang="ts">
-// moyu's host-built image dialog for <KunEditor>, dropped into the #toolbar slot
-// next to <KunEditorToolbar :items> (with the built-in 'image' button removed).
-// It drives the editor purely through the slot API — `api.insertImage({ src })`
-// for a ready URL — and runs moyu's own uploader (returns the domain-agnostic
-// /image/<hash> token) for files/drag, so it can keep a persistent "recently
-// used" history the editor knows nothing about (the headless split: the editor
-// ships the insert primitive; the dialog / dropzone / history are the host's).
-//
-// KunPopover / KunInput / KunButton / KunIcon / KunTooltip are auto-imported by
-// @kungal/ui-nuxt.
 import { onMounted, ref } from 'vue'
 import type { KunEditorToolbarApi } from '@kungal/editor-vue'
 
 const props = defineProps<{
   api: KunEditorToolbarApi
-  /** moyu's uploader (returns the stored URL) — `api.adapters.uploadImage`.
-      Called directly so we can record the URL into history + insert it. */
   upload: (file: File) => Promise<string>
 }>()
 
-// Persisted across sessions so a user can re-insert images they used before.
-// Just public /image/<hash> tokens — a convenience cache, not sensitive.
 const HISTORY_KEY = 'moyu-editor-image-history'
 const HISTORY_MAX = 12
 
@@ -41,7 +27,7 @@ onMounted(() => {
     const raw = localStorage.getItem(HISTORY_KEY)
     if (raw) history.value = JSON.parse(raw)
   } catch {
-    /* corrupt / unavailable storage — start empty */
+    history.value = []
   }
 })
 const remember = (src: string) => {
@@ -52,7 +38,7 @@ const remember = (src: string) => {
   try {
     localStorage.setItem(HISTORY_KEY, JSON.stringify(history.value))
   } catch {
-    /* ignore quota / unavailable */
+    return
   }
 }
 
@@ -66,8 +52,6 @@ const insertUrl = () => {
 }
 
 const uploadFiles = async (files: File[]) => {
-  // Accept image/* (and unknown-type — the <input accept> already restricts the
-  // picker; some environments report an empty type).
   const imgs = files.filter((f) => !f.type || f.type.startsWith('image/'))
   if (!imgs.length) return
   busy.value = true
@@ -86,8 +70,6 @@ const uploadFiles = async (files: File[]) => {
 const pick = () => fileEl?.click()
 const onFile = (e: Event) => {
   const input = e.target as HTMLInputElement
-  // Copy to a static array BEFORE resetting value — `input.files` is live, so
-  // clearing the input would empty it (breaks multi-select).
   const files = input.files ? Array.from(input.files) : []
   input.value = ''
   if (files.length) void uploadFiles(files)
@@ -99,7 +81,7 @@ const onDrop = (e: DragEvent) => {
 }
 const insertFromHistory = (src: string) => {
   props.api.insertImage({ src })
-  remember(src) // bump to front
+  remember(src)
   popover?.close()
 }
 </script>
@@ -124,7 +106,6 @@ const insertFromHistory = (src: string) => {
       </KunTooltip>
     </template>
 
-    <!-- 1. Insert by URL -->
     <form class="flex items-center gap-1" @submit.prevent="insertUrl">
       <KunInput
         v-model="url"
@@ -138,7 +119,6 @@ const insertFromHistory = (src: string) => {
       </KunButton>
     </form>
 
-    <!-- 2. Pick file(s) + drag-drop one or many -->
     <div
       class="border-default-300 text-default-500 hover:border-primary rounded-kun-md border border-dashed p-4 text-center text-sm transition-colors"
       @dragover.prevent
@@ -165,7 +145,6 @@ const insertFromHistory = (src: string) => {
       />
     </div>
 
-    <!-- 3. Re-insert from the (host-kept, persisted) history -->
     <div v-if="history.length">
       <div class="text-default-500 mb-1 text-xs">最近使用</div>
       <div class="grid grid-cols-4 gap-1">

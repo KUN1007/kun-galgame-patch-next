@@ -1,8 +1,4 @@
 <script setup lang="ts">
-// The bell links to /message/notice (the notifications inbox). The actual
-// "mark everything read + clear this dot" happens when that page loads (see
-// pages/message/notice.vue) — clicking the bell just navigates there. Unread
-// state is read from the shared messageStore (fed by the top-bar User.vue).
 const userStore = useUserStore()
 const messageStore = useMessageStore()
 

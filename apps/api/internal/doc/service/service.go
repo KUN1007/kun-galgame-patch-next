@@ -1,6 +1,3 @@
-// Package service holds the unified doc logic: about-style list/tree/detail
-// (markdown render, prev/next, category tree) plus blog-style admin CRUD,
-// publish-status gating and image_service banner derivation.
 package service
 
 import (
@@ -23,8 +20,6 @@ import (
 
 var hash64 = regexp.MustCompile(`^[0-9a-fA-F]{64}$`)
 
-// directoryLabels mirrors the legacy about category labels; unknown categories
-// fall back to the raw name.
 var directoryLabels = map[string]string{
 	"about":   "关于我们",
 	"dev":     "开发文档",
@@ -43,8 +38,6 @@ func New(repo *repository.DocRepository, img *imageclient.Client, users *usercli
 	return &DocService{repo: repo, img: img, users: users}
 }
 
-// effectiveBanner prefers the image_service-derived URL (from the hash) and
-// falls back to the legacy static banner URL.
 func (s *DocService) effectiveBanner(d model.Doc) string {
 	if d.BannerImageHash != "" {
 		if u := s.img.MainURL(d.BannerImageHash); u != "" {
@@ -54,11 +47,6 @@ func (s *DocService) effectiveBanner(d model.Doc) string {
 	return d.Banner
 }
 
-// effectiveAuthorAvatar resolves a user brief to a renderable avatar URL,
-// preferring the image_service hash (the post-OAuth-migration form; "100"
-// variant for the small byline) over the legacy URL. Mirrors effectiveBanner +
-// the frontend resolveAvatarUrl. Returns "" when the brief is unavailable so the
-// caller can fall back to the stored create-time snapshot.
 func (s *DocService) effectiveAuthorAvatar(b *userclient.Brief) string {
 	if b == nil {
 		return ""
@@ -71,9 +59,6 @@ func (s *DocService) effectiveAuthorAvatar(b *userclient.Brief) string {
 	return b.Avatar
 }
 
-// ===== Public =====
-
-// List returns the published flat list + the category tree.
 func (s *DocService) List() (*model.PostsResponse, error) {
 	docs, err := s.repo.GetAll(true)
 	if err != nil {
@@ -85,10 +70,6 @@ func (s *DocService) List() (*model.PostsResponse, error) {
 	}, nil
 }
 
-// ListPinned returns the pinned, published docs for the home carousel, newest
-// first by the displayed `date`. We parse the date string for ordering rather
-// than trusting created_at: the /about→/doc migration stamped every row with a
-// near-identical created_at, so created_at order would be meaningless.
 func (s *DocService) ListPinned() ([]model.CarouselItem, error) {
 	docs, err := s.repo.GetAll(true)
 	if err != nil {
@@ -103,10 +84,6 @@ func (s *DocService) ListPinned() ([]model.CarouselItem, error) {
 	sort.SliceStable(pinned, func(i, j int) bool {
 		return parseDocDate(pinned[i].Date).After(parseDocDate(pinned[j].Date))
 	})
-	// Live-resolve each pinned doc's author avatar from OAuth so it tracks the
-	// current avatar rather than the create-time snapshot (which goes stale after
-	// the OAuth avatar migration). One batched lookup; falls back to the stored
-	// snapshot when a brief is unavailable.
 	uids := make([]int, 0, len(pinned))
 	for _, d := range pinned {
 		if d.AuthorUID > 0 {
@@ -135,8 +112,6 @@ func (s *DocService) ListPinned() ([]model.CarouselItem, error) {
 	return items, nil
 }
 
-// parseDocDate tolerantly parses a doc's display date (e.g. "2025-6-18").
-// Unparseable values return the zero time so they sort last.
 func parseDocDate(s string) time.Time {
 	s = strings.TrimSpace(s)
 	for _, layout := range []string{
@@ -209,8 +184,6 @@ func directoryLabel(cat string) string {
 	return cat
 }
 
-// GetPost renders one published doc by slug. Missing OR draft → ErrRecordNotFound
-// so the handler maps both to a 404.
 func (s *DocService) GetPost(slug string) (*model.PostDetail, error) {
 	if slug == "" || strings.Contains(slug, "..") {
 		return nil, gorm.ErrRecordNotFound
@@ -247,7 +220,6 @@ func (s *DocService) GetPost(slug string) (*model.PostDetail, error) {
 	}
 
 	d := docs[idx]
-	// Live-resolve the author avatar (see ListPinned); fall back to the snapshot.
 	authorAvatar := d.AuthorAvatar
 	if d.AuthorUID > 0 {
 		if b := userclient.BriefMapByInt(context.Background(), s.users, []int{d.AuthorUID})[d.AuthorUID]; b != nil {
@@ -276,15 +248,12 @@ func (s *DocService) GetPost(slug string) (*model.PostDetail, error) {
 	}, nil
 }
 
-// IncrementViewBySlug bumps the view counter for a published doc (best-effort).
 func (s *DocService) IncrementViewBySlug(slug string) {
 	d, err := s.repo.GetBySlug(slug)
 	if err == nil && d.Status == model.StatusPublished {
 		_ = s.repo.IncrementView(int(d.ID))
 	}
 }
-
-// ===== Admin =====
 
 func (s *DocService) ListAdmin() ([]model.AdminItem, error) {
 	docs, err := s.repo.GetAll(false)
@@ -358,10 +327,6 @@ func (s *DocService) Create(ctx context.Context, userID int, req dto.DocCreateRe
 	if req.Pin != nil {
 		doc.Pin = *req.Pin
 	}
-	// Snapshot the author name + a resolved avatar URL from OAuth as a fallback
-	// (the read paths now live-resolve the avatar; this only kicks in when a
-	// brief is unavailable). Store the resolved URL — not the raw b.Avatar —
-	// so the fallback stays valid post-migration when avatars are hash-only.
 	if b := userclient.BriefMapByInt(ctx, s.users, []int{userID})[userID]; b != nil {
 		doc.AuthorName = b.Name
 		doc.AuthorAvatar = s.effectiveAuthorAvatar(b)
@@ -435,12 +400,10 @@ func (s *DocService) Update(id int, req dto.DocUpdateRequest) (*model.Doc, error
 
 func (s *DocService) Delete(id int) error { return s.repo.Delete(id) }
 
-// composeSlug builds the stored "<category>/<name>" slug from its parts.
 func composeSlug(category, name string) string {
 	return strings.Trim(category, "/") + "/" + strings.Trim(name, "/")
 }
 
-// nameOf strips the "<category>/" prefix to recover the within-category name.
 func nameOf(slug, category string) string {
 	return strings.TrimPrefix(slug, category+"/")
 }

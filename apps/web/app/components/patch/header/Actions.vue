@@ -1,39 +1,4 @@
 <script setup lang="ts">
-// Patch header actions: favorite / share / edit / delete.
-//
-// Design: a single icon-only action bar wrapped in tooltips. Previously
-// some actions carried a text label (收藏 / 编辑) and others didn't (分享 /
-// 删除), and delete used a default-color border despite being destructive.
-// This version standardises:
-//   - all four buttons are icon-only, same `light` variant, same size
-//   - tooltip carries the accessible label, so no per-button text noise
-//   - favorite turns danger-red + filled heart only when active (color
-//     signal for state)
-//   - delete is always danger-red so the destructive intent is obvious
-//   - a thin divider separates the read-only actions (favorite / share)
-//     from the owner-side actions (edit / delete) without spending a
-//     whole new row on grouping
-//
-// Endpoint contracts:
-//   - favorite: PUT /patch/:id/favorite — local-only state, optimistic UI
-//   - share:    copy direct URL to clipboard
-//   - edit:     opens the game's kungal page (galgame metadata editing moved
-//               to kungal in the "编辑面归 kungal" wave) — external navigation.
-//   - delete:   DELETE /patch/:id — wipes the moyu patch row plus all child
-//               tables (resources / comments / contributor / favorite / pr /
-//               link / resource_file_history via FK CASCADE). File blobs are
-//               not reclaimed here: artifact blobs are GC'd by the artifact
-//               service, and legacy s3_key objects stay in the frozen backup
-//               bucket.
-//               Does NOT touch the wiki galgame entity — wiki considers
-//               status=0 published rows un-deletable (only admin can flip
-//               status to 1 via /admin/galgame/:gid/status). This button is
-//               about removing moyu's local patch carrier, not the upstream
-//               galgame metadata.
-//
-// Gating: backend enforces patch.user_id == caller OR role==admin
-// (PatchService.DeletePatch). UI hides the button otherwise so it doesn't
-// look interactive to viewers who'd just get a 400.
 
 import { kunMoyuMoe } from '~/config/moyu-moe'
 
@@ -43,14 +8,8 @@ interface Props {
 
 const props = defineProps<Props>()
 
-// A galgame moyu hasn't 收录 yet (no real local patch row → is_on_forum=false).
-// Hide the patch-only "资源更新于" line and 删除 (nothing to delete until it's on
-// the site). 收藏 STAYS (favoriting lazily records the game — kungal's
-// interaction-driven ingest), as do 编辑游戏信息 (wiki) and 分享.
 const isNoPatch = computed(() => props.patch.is_on_forum === false)
 
-// E3b: galgame metadata is maintained on kungal now (the wiki frontend is
-// retiring) — the attribution link points there.
 const kungalOrigin = kunMoyuMoe.domain.kungal
 
 const userStore = useUserStore()
@@ -59,7 +18,6 @@ const { requireLogin } = useAuthModal()
 
 const favorite = ref(props.patch.is_favorite)
 
-// Keep local state in sync if the parent re-fetches (e.g. after a PR merge).
 watch(
   () => props.patch.is_favorite,
   (v) => {
@@ -67,11 +25,7 @@ watch(
   }
 )
 
-// KunReaction flips `favorite` optimistically on click, then fires this; confirm
-// with the server and revert on failure / logged-out.
 const onFavoriteChange = async (active: boolean) => {
-  // Logged-out → pop the global login modal (same as the 登录 button) rather
-  // than a toast the user can't act on.
   if (!requireLogin()) {
     favorite.value = !active
     return
@@ -94,8 +48,6 @@ const handleShare = () => {
   useKunCopy(link)
 }
 
-// 编辑游戏信息 → the game's kungal page, which carries the metadata edit entry
-// (galgame editing moved to kungal). Cross-origin, so navigateTo needs external.
 const editHref = computed(() => `${kungalOrigin}/galgame/${props.patch.id}`)
 
 const canDelete = computed(() => {
@@ -127,9 +79,6 @@ const confirmDelete = async () => {
   }
 }
 
-// 编辑 / 分享 / 删除 collapse into a kebab (⋮) — 收藏 is the only always-visible
-// action; management lives behind the menu. Mirrors the resource card's
-// three-dots menu (KunDropdown). 删除 only for the owner / admin.
 type ActionMenuItem = {
   key: 'edit' | 'share' | 'delete'
   label: string
@@ -163,9 +112,6 @@ const onMenuSelect = (item: { key: string }) => {
   <div
     class="flex flex-col items-start gap-3 sm:flex-row sm:items-center sm:justify-between"
   >
-    <!-- Left: 资源更新时间 + the Wiki-maintained metadata note. Both moved here
-         (资源更新于 was under the creator chip) and put to the LEFT of the action
-         bar per the header layout request. -->
     <div class="text-default-500 flex flex-col gap-1 text-xs">
       <p v-if="!isNoPatch">
         资源更新于 {{ formatDistanceToNow(props.patch.resource_update_time) }}
@@ -184,16 +130,8 @@ const onMenuSelect = (item: { key: string }) => {
       </p>
     </div>
 
-    <!-- Right: 收藏 stands alone (prominent), with a kebab (⋮) for the
-         management actions (编辑 / 分享 / 删除); below, a one-line hint that 收藏
-         subscribes to new-patch notifications. No surrounding container — the
-         favorite no longer shares a bar with the icon-only buttons it clashed
-         with. -->
     <div class="flex flex-col items-start gap-2 sm:items-end">
       <div class="flex items-center gap-2">
-        <!-- 收藏 stays available even for a not-yet-收录 game: favoriting lazily
-             records it on the backend (kungal's interaction-driven ingest) and
-             subscribes you to its new-patch notifications. -->
         <KunReaction
           v-model="favorite"
           icon="lucide:star"
@@ -224,9 +162,6 @@ const onMenuSelect = (item: { key: string }) => {
         </KunDropdown>
       </div>
 
-      <!-- New-patch notification hint — the icon-only heart can't say this on
-           its own. Active (favorited) → primary + bell-ring to confirm you're
-           subscribed; inactive → muted nudge. -->
       <p
         :class="
           cn(
@@ -248,8 +183,6 @@ const onMenuSelect = (item: { key: string }) => {
     </div>
   </div>
 
-  <!-- isDismissable=false: destructive irreversible action — backdrop click
-       must not silently close the confirm. Force explicit 取消 / 删除. -->
   <KunModal
     v-model="deleteOpen"
     inner-class-name="max-w-md"

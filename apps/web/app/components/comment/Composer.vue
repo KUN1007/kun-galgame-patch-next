@@ -1,16 +1,10 @@
 <script setup lang="ts">
-// The compose box behind every comment area — root mode (rendered by
-// CommentSection above the list) and reply mode (rendered by CommentRow inline
-// beneath the post being replied to). Which endpoint it posts to comes from the
-// target's descriptor, so adding a comment area needs no change here.
 import { commentSurface, type CommentTarget } from '~/shared/utils/commentTarget'
 
 const props = withDefaults(
   defineProps<{
     target: CommentTarget
-    // Reply mode: the ROOT comment this attaches to (replies are one tier).
     parentId?: number | null
-    // Pre-filled body, e.g. the @mention seeded when replying to a reply.
     seed?: string
     isReply?: boolean
   }>(),
@@ -19,9 +13,6 @@ const props = withDefaults(
 
 const emit = defineEmits<{
   close: []
-  // The server-returned comment, so the container can splice it in without
-  // re-fetching. Not emitted for a comment held for review — there is nothing
-  // to show yet and the message below says so.
   submitted: [comment: PatchPageComment]
 }>()
 
@@ -33,21 +24,13 @@ const surface = commentSurface(props.target)
 
 const content = ref(props.seed)
 const publishing = ref(false)
-// <KunMarkdownEditor> is uncontrolled; bump the key to remount it after a
-// successful post.
 const editorKey = ref(0)
 
-// Reset to the SEED, not to empty. On the resource area the seed is the
-// publisher's @mention placeholder, which has to come back for the next comment
-// too — clearing to empty would silently make only the FIRST comment notify
-// them. A seedless composer resets to empty, as before.
 const resetToSeed = () => {
   content.value = props.seed
   editorKey.value++
 }
 
-// The seed can arrive after mount: the resource page resolves its publisher from
-// an awaited fetch, so an editor mounted before that would sit empty forever.
 watch(
   () => props.seed,
   (next) => {
@@ -88,9 +71,6 @@ const publish = async () => {
       emit('close')
       return
     }
-    // The create response carries user_id but NOT the resolved `user` (only the
-    // list endpoint enriches it via the OAuth batch). The author is the current
-    // user, so stamp it — else CommentRow throws on comment.user.name.
     emit('submitted', {
       ...res.data,
       user: userStore.user,

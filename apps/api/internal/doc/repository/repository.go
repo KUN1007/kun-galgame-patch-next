@@ -1,4 +1,3 @@
-// Package repository is the DB layer for the unified doc feature (migration 016).
 package repository
 
 import (
@@ -15,9 +14,6 @@ func New(db *gorm.DB) *DocRepository {
 	return &DocRepository{db: db}
 }
 
-// GetAll returns docs newest-first by the frontmatter date string (lexical ==
-// chronological for ISO), slug ASC to break ties. onlyPublished restricts to
-// status=1 (public surface); false includes drafts (admin).
 func (r *DocRepository) GetAll(onlyPublished bool) ([]model.Doc, error) {
 	q := r.db.Model(&model.Doc{})
 	if onlyPublished {
@@ -52,7 +48,6 @@ func (r *DocRepository) Delete(id int) error {
 	return r.db.Delete(&model.Doc{}, id).Error
 }
 
-// IncrementView bumps the counter without touching updated_at (UpdateColumn).
 func (r *DocRepository) IncrementView(id int) error {
 	return r.db.Model(&model.Doc{}).Where("id = ?", id).
 		UpdateColumn("view", gorm.Expr("view + 1")).Error

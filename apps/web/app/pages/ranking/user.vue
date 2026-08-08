@@ -26,17 +26,11 @@ const { data, pending, refresh } = await useAsyncData<RankingUser[]>(
 
 const sortOptions = [
   { value: 'moemoepoint', label: '萌萌点' },
-  // patch_count counts `patch` rows = Galgame entries published; resource_count
-  // counts `patch_resource` rows = 补丁资源. Keep these labels aligned with the
-  // profile page (user/[id].vue) so "补丁" never names the Galgame count.
   { value: 'patch_count', label: '发布 Galgame' },
   { value: 'resource_count', label: '补丁资源数' },
   { value: 'comment_count', label: '评论数' }
 ]
 
-// KunSelect's v-model widened to `string | string[] | null` in KunUI 0.14.0
-// (multiple/clearable support). This is a single select → only a string ever
-// arrives; guard the other shapes to satisfy the type.
 const onChangeSort = async (v: string | string[] | null) => {
   if (typeof v !== 'string') return
   sortBy.value = v

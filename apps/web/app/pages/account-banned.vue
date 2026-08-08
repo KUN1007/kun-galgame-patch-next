@@ -1,11 +1,5 @@
 <script setup lang="ts">
-// Landing page for OAuth code 10014 (HTTP 403). Per docs/oauth/api-reference.md
-// the frontend MUST NOT redirect banned users back to /login — re-logging in
-// hits the same 10014. They should see a static "联系管理员" message instead.
 
-// Error landing page — there's nothing here a search engine should index,
-// and surfacing "账号被封禁" snippets in search results would be a poor
-// look for the site.
 useKunDisableSeo('账号已被封禁')
 
 definePageMeta({

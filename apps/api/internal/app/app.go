@@ -62,7 +62,6 @@ type App struct {
 	UserClient *userclient.Client
 	Config     *config.Config
 
-	// Handlers
 	AuthHandler    *authHandler.AuthHandler
 	PatchHandler   *patchHandler.PatchHandler
 	UserHandler    *userHandler.UserHandler
@@ -75,16 +74,9 @@ type App struct {
 	DocHandler     *docHandler.DocHandler
 	TrustHandler   *trustHandler.TrustHandler
 
-	// CronStop is called during graceful shutdown to stop the cron jobs.
 	CronStop func()
 }
 
-// validateConfig fails fast on misconfigurations that must never boot silently.
-// The galgame read face (and the S2S message feed) hard-depend on the
-// internal-tier API key: a configured base with an empty key is a
-// misconfiguration, not a silent fallback to the retired legacy /api face (the
-// rollback valve was removed in open-API phase 2 wave 05). Panics naming both
-// env vars so the operator sees exactly what to set.
 func validateConfig(cfg *config.Config) {
 	if cfg.NextMoeAPI.BaseURL != "" && cfg.NextMoeAPI.APIKey == "" {
 		panic("KUN_NEXTMOE_API_BASE is set but KUN_NEXTMOE_API_KEY is empty: " +
@@ -94,26 +86,18 @@ func validateConfig(cfg *config.Config) {
 }
 
 func New(cfg *config.Config) *App {
-	// Validate misconfigurations that must never boot silently BEFORE opening any
-	// infrastructure connection.
 	validateConfig(cfg)
 
-	// Infrastructure
 	db := database.NewPostgres(cfg.Database, cfg.Server.Mode)
 	rdb := cache.NewRedis(cfg.Redis)
 	galgame := galgameClient.NewWithKey(cfg.NextMoeAPI.BaseURL, cfg.NextMoeAPI.APIKey)
 
-	// OAuth user-brief client (Phase 5-6 will inject this into renderers).
 	usrCli := userclient.New(userclient.Config{
 		BaseURL:      cfg.OAuth.ServerURL,
 		ClientID:     cfg.OAuth.ClientID,
 		ClientSecret: cfg.OAuth.ClientSecret,
 	})
 
-	// moemoepoint: OAuth is the unified source of truth. The Awarder routes every
-	// balance change through OAuth's idempotent s2s endpoint and mirrors the
-	// returned balance into the local user.moemoepoint read-cache. Same OAuth
-	// base + Basic-Auth creds as the user-brief client.
 	mpClient := moemoepoint.New(moemoepoint.Config{
 		BaseURL:      cfg.OAuth.ServerURL,
 		ClientID:     cfg.OAuth.ClientID,
@@ -121,25 +105,14 @@ func New(cfg *config.Config) *App {
 	})
 	mpAwarder := moemoepoint.NewAwarder(mpClient, db)
 
-	// Auth module
 	authRepository := authRepo.New(db)
 	authSvc := authService.New(authRepository, rdb, cfg.OAuth)
 	authHdl := authHandler.New(authSvc, rdb, db, usrCli)
 
-	// Site settings (source of truth for admin toggles; shared by patch + admin)
 	settingSvc := settingService.New(db)
 
-	// Admin repo is built early: its CreateLog is the single audit sink, used
-	// BOTH by the admin module and (as patch-service's AuditLogger) by every
-	// privileged resource/comment delete — so a moderation delete from any entry
-	// point lands one audit_log row.
 	adminRepository := adminRepo.New(db)
 
-	// artifact-service client (large-file upload/download). Defaults credentials
-	// to the project's OAuth client when KUN_ARTIFACT_OAUTH_* are unset — the
-	// artifact service reuses the OAuth oauth_client table as its "site" registry
-	// (gated by artifact_enabled + artifact_site_key on the infra side). Shared by
-	// the patch service (resource delete/download) and the upload module.
 	artCfg := cfg.Artifact
 	if artCfg.ClientID == "" {
 		artCfg.ClientID = cfg.OAuth.ClientID
@@ -153,12 +126,6 @@ func New(cfg *config.Config) *App {
 		ClientSecret: artCfg.ClientSecret,
 	})
 
-	// Catalog S2S client — the registry's own face (Basic auth with the OAuth
-	// client_id/secret, which is how the catalog resolves this caller's
-	// per-client site binding). Distinct from `galgame` above, which speaks the
-	// public /v1 face with an internal-tier X-API-Key. Its consumers are the claim
-	// lifecycle (submission wizard, my-submissions), the claim-event cron and the
-	// per-user contribution counters.
 	catalogCli := catalogclient.New(catalogclient.Config{
 		BaseURL:      cfg.NextMoeAPI.BaseURL,
 		ClientID:     cfg.OAuth.ClientID,
@@ -170,29 +137,21 @@ func New(cfg *config.Config) *App {
 		slog.Warn("catalog s2s client NOT configured; the claim lifecycle and its cron will not run — set KUN_NEXTMOE_API_BASE + OAuth creds")
 	}
 
-	// Patch module
 	patchRepository := patchRepo.New(db)
 	patchSvc := patchService.New(patchRepository, settingSvc, db, artCli, galgame, usrCli, mpAwarder, adminRepository)
 	patchHdl := patchHandler.New(patchSvc, galgame, catalogCli, usrCli)
 
-	// User module
 	userRepository := userRepo.New(db)
 	userSvc := userService.New(userRepository, usrCli, galgame, catalogCli, db, mpAwarder)
 	userHdl := userHandler.New(userSvc, galgame, usrCli)
 
-	// Message module
 	messageRepository := messageRepo.New(db)
 	messageSvc := messageService.New(messageRepository)
 	messageHdl := messageHandler.New(messageSvc, usrCli, galgame)
 
-	// Admin module (adminRepository built above — also patch-service's AuditLogger)
 	adminSvc := adminService.New(adminRepository, rdb, settingSvc, patchSvc)
 	adminHdl := adminHandler.New(adminSvc, galgame, usrCli)
 
-	// Trust & Safety integration — report intake (Phase 1) + enforcement callback
-	// (Phase 2) + moderator inbox proxy (Phase 3). S2S Basic auth reuses the OAuth
-	// client_id/secret; the trust service reads oauth_clients.catalog_site to
-	// derive moyu's site.
 	trustCli := trustclient.New(trustclient.Config{
 		BaseURL:      cfg.Trust.BaseURL,
 		ClientID:     cfg.OAuth.ClientID,
@@ -203,16 +162,8 @@ func New(cfg *config.Config) *App {
 	} else {
 		slog.Warn("trust service client NOT configured; reporting returns 未启用 — set KUN_TRUST_BASE_URL + OAuth creds")
 	}
-	// Enforcement adapters — the "thin adapter" half: each subject_kind wires
-	// hide/remove/restore/author-lookup to existing patch services/repo. Remove
-	// DELEGATES to the canonical PatchService.Delete* so moemoepoint reversal,
-	// owner notification, artifact cleanup and counts are preserved (actor 0 =
-	// system). `user` is absent (bans are IdP-side) → its callbacks no-op.
 	trustRegistry := enforce.Registry{
 		"patch_comment": {
-			// Comment status=1 already hides from public reads (shared with
-			// verify-pending) → no Restore (a dismiss can't distinguish mod-hide
-			// from verify-pending, so it must not auto-un-hide).
 			Hide: func(_ context.Context, id int) error {
 				return patchRepository.UpdateCommentStatus(id, 1)
 			},
@@ -228,8 +179,6 @@ func New(cfg *config.Config) *App {
 			},
 		},
 		"patch_resource": {
-			// Dedicated status=2 = moderation-hidden (distinct from status=1
-			// disabled), so Restore (2→0) is unambiguous.
 			Hide: func(_ context.Context, id int) error {
 				return patchRepository.SetResourceStatus(id, 2)
 			},
@@ -248,8 +197,6 @@ func New(cfg *config.Config) *App {
 			},
 		},
 	}
-	// warn_user is record-only for now (no system-sender user for a targeted
-	// notice) — pass nil; the dispatcher no-ops warn gracefully.
 	trustEnforce := enforce.NewService(db, trustRegistry, nil)
 	trustHdl := trustHandler.NewTrustHandler(
 		trustService.NewTrustService(trustCli, cfg.Trust.Site),
@@ -257,14 +204,7 @@ func New(cfg *config.Config) *App {
 		cfg.Trust.CallbackSecret,
 	)
 
-	// Upload module: bytes live in the artifact service (artCli built above);
-	// rdb SETNX-dedupes Complete to prevent double-charging daily_upload_size.
 	uploadSvc := uploadPkg.New(artCli, db, rdb)
-	// image_service client (W2 / PR3b). Defaults credentials to the project's
-	// OAuth client when the dedicated KUN_IMAGE_OAUTH_* env vars are unset —
-	// image_service reuses the OAuth oauth_client table as its "site" registry,
-	// so the same credentials work end-to-end provided the admin flipped
-	// image_enabled=true for this client.
 	imgCfg := cfg.ImageService
 	if imgCfg.ClientID == "" {
 		imgCfg.ClientID = cfg.OAuth.ClientID
@@ -279,24 +219,11 @@ func New(cfg *config.Config) *App {
 		ClientSecret: imgCfg.ClientSecret,
 	})
 
-	// Common handler (direct DB access for simple aggregation endpoints). Built
-	// after imgCli so the Hikari partner API can resolve avatar hashes to
-	// absolute CDN URLs for third-party consumers.
 	commonHdl := common.NewHandler(db, galgame, usrCli, artCli, imgCli)
 	uploadHdl := uploadPkg.NewHandler(uploadSvc, imgCli)
 
-	// Resolve domain-agnostic content image tokens (/image/<hash>) embedded in
-	// user markdown to image_service CDN URLs at render time — the "fast path"
-	// for server-rendered comments/notes; the web /image/:hash 302 route is the
-	// fallback (image_service 契约 04). No-op when CDN base is unset (MainURL
-	// returns "" → token left for the 302 route to resolve at request time).
 	markdown.SetContentImageResolver(imgCli.MainURL)
 
-	// Also attach intrinsic image metadata (width/height/thumbhash) to those
-	// content <img> tags so the frontend (KunContent / useContentBlurUp) can
-	// reserve the real aspect ratio (no layout shift) and paint a ThumbHash
-	// blur-up. The cached resolver keeps warm renders network-free (metadata is
-	// immutable per content hash) and a 3s timeout bounds the cold path.
 	contentImageMeta := imgCli.NewMetaResolver(3 * time.Second)
 	markdown.SetContentImageMetaResolver(func(hashes []string) map[string]markdown.ImageMeta {
 		got := contentImageMeta.Resolve(hashes)
@@ -307,43 +234,27 @@ func New(cfg *config.Config) *App {
 		return out
 	})
 
-	// Chat module (D9: REST only, no WebSocket)
 	chatRepository := chatRepo.New(db)
 	chatSvc := chatService.New(chatRepository)
 	chatHdl := chatHandler.New(chatSvc, usrCli)
 
-	// Search module (D11: delegate to NextMoe catalog service)
 	searchHdl := searchPkg.New(db, galgame)
 
-	// Doc module (migration 016; unifies the former /about + /blog into one
-	// "doc" feature): category-tree + slug docs with admin CRUD; banners and
-	// inline images go through image_service (imgCli derives URLs from hashes).
 	docRepo := docRepository.New(db)
 	docSvc := docService.New(docRepo, imgCli, usrCli)
 	docHdl := docHandler.New(docSvc)
 
-	// Cookie mode: use Secure cookies in prod; must be off for HTTP in dev
 	middleware.SecureCookies = cfg.Server.Mode == "prod"
 
-	// Fiber app
-	//
-	// ReadBufferSize raised from the 4 KB default to 32 KB to survive the dev
-	// environment's shared 127.0.0.1 cookie jar — browsers don't isolate cookies
-	// by port, so OAuth (9277 + 9420) + moyu (5214 + 6969) all accumulate into
-	// one jar and the combined Cookie header trips Fiber's request header limit
-	// (logs: `Request Header Fields Too Large`). 32 KB is well under fasthttp's
-	// hard limit and inert in prod where the services live on separate domains.
 	app := fiber.New(fiber.Config{
-		BodyLimit:      10 * 1024 * 1024, // 10MB
-		ReadBufferSize: 32 * 1024,        // 32KB headers, see comment above
+		BodyLimit:      10 * 1024 * 1024,
+		ReadBufferSize: 32 * 1024,
 		ErrorHandler:   globalErrorHandler,
 	})
 
 	app.Use(recover.New())
 	app.Use(middleware.CORS(cfg.CORS))
 
-	// Start cron jobs (galgame-sync registered only when galgame client is available;
-	// image ref-ping only when image_service is configured)
 	cronStop := cronJobs.Start(db, galgame, catalogCli, mpClient, imgCli)
 
 	slog.Info("Application initialized")

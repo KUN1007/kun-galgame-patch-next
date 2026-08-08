@@ -1,26 +1,3 @@
-// Package imageclient is a thin SDK for the centralized image_service.
-//
-// Background: image_service is a hash-addressed blob store hosted by
-// kun-galgame-infra (port 9278). Callers POST an image multipart body and get
-// back a content hash + a set of variant URLs. The hash is the only thing
-// downstream stores; URLs are derived deterministically from
-// `{CDN_BASE}/<hash[:2]>/<hash[2:4]>/<hash>[_variant].webp` (the image_service
-// object-key layout — no `/img/` segment; matches infra/kungal imageclient).
-//
-// Authentication is HTTP Basic with an OAuth client_id/secret — the
-// image_service shares the OAuth `oauth_client` table as its "site" registry,
-// so the project's existing OAuth credentials work as-is (provided the admin
-// flipped `image_enabled=true` and listed the desired presets in
-// `image_allowed_presets` on the kun-galgame-infra side).
-//
-// See docs at:
-//   - kun-galgame-infra/docs/image_service/03-api-design.md (endpoints)
-//   - kun-galgame-infra/docs/image_service/06-integration-guide.md (SDK contract)
-//
-// This file intentionally stays small (single Upload call + URL helpers) and
-// stdlib-only — the screenshot editor is currently the only consumer; if more
-// surfaces show up (e.g. moyu also wants to manage avatars through this SDK)
-// we can grow it then.
 package imageclient
 
 import (
@@ -39,25 +16,20 @@ import (
 	"time"
 )
 
-// Sentinel errors callers can `errors.Is` against.
 var (
 	ErrQuotaExceeded      = errors.New("image_service: daily upload quota exceeded")
 	ErrModerationRejected = errors.New("image_service: image rejected by moderation")
 	ErrUnauthorized       = errors.New("image_service: unauthorized (check client_id/secret + image_enabled)")
 )
 
-// Config bundles connection settings. Created in app.go from
-// config.ImageServiceConfig; defaults for ClientID/Secret fall back to the
-// project's OAuth credentials there.
 type Config struct {
-	BaseURL      string // e.g. http://127.0.0.1:9278 (no trailing slash)
-	CDNBase      string // e.g. http://127.0.0.1:9000/kun-images-dev
+	BaseURL      string
+	CDNBase      string
 	ClientID     string
 	ClientSecret string
-	HTTPClient   *http.Client // optional; defaults to 30s timeout client
+	HTTPClient   *http.Client
 }
 
-// Client is a thin singleton-friendly wrapper. Reuse one across the process.
 type Client struct {
 	baseURL    string
 	cdnBase    string
@@ -65,9 +37,6 @@ type Client struct {
 	httpClient *http.Client
 }
 
-// New constructs a Client. Empty BaseURL = no-op client (Upload returns error
-// quickly so the caller can degrade gracefully when image_service is
-// intentionally disabled in dev).
 func New(cfg Config) *Client {
 	hc := cfg.HTTPClient
 	if hc == nil {
@@ -87,33 +56,17 @@ func New(cfg Config) *Client {
 	}
 }
 
-// UploadResult mirrors POST /image/upload's success response.
 type UploadResult struct {
-	Hash          string            `json:"hash"`
-	URL           string            `json:"url"` // main image URL
-	VariantURLs   map[string]string `json:"variant_urls"`
-	Width         int               `json:"width"`
-	Height        int               `json:"height"`
-	// Thumbhash is the base64 ThumbHash placeholder the image service now returns
-	// on upload (omitempty for rows predating the column). Parsed so callers that
-	// persist upload results can ship a blur-up placeholder + reserve the aspect
-	// ratio without a second roundtrip; matches the infra SDK's UploadResult.
-	Thumbhash     string            `json:"thumbhash,omitempty"`
-	SizeBytes     int64             `json:"size_bytes"`
-	Deduplicated  bool              `json:"deduplicated"`
+	Hash         string            `json:"hash"`
+	URL          string            `json:"url"`
+	VariantURLs  map[string]string `json:"variant_urls"`
+	Width        int               `json:"width"`
+	Height       int               `json:"height"`
+	Thumbhash    string            `json:"thumbhash,omitempty"`
+	SizeBytes    int64             `json:"size_bytes"`
+	Deduplicated bool              `json:"deduplicated"`
 }
 
-// Upload sends one image to image_service.
-//
-//   - body / filename / mime describe the file (mime may be "" — the server
-//     sniffs by magic number anyway).
-//   - preset must be one of the presets enabled for our client. moyu sends
-//     "topic" (free-form gallery / editor-inline images) and nothing else;
-//     "avatar" exists but goes through OAuth's own path, and the two galgame
-//     presets left with the wiki upload lane in wave 161.
-//
-// On non-2xx the response body's error code is mapped to one of the sentinels
-// where it makes sense, or wrapped with the raw status for unrecognized codes.
 func (c *Client) Upload(
 	ctx context.Context,
 	body io.Reader, filename, mime, preset string,
@@ -166,11 +119,6 @@ func (c *Client) Upload(
 
 	raw, _ := io.ReadAll(resp.Body)
 
-	// image_service wraps EVERY response in {code,message,data} (api/pkg/response).
-	// A 2xx success body is {code:0,message:"成功",data:{hash,url,variant_urls,...}}.
-	// (The previous code unmarshalled the bare body into UploadResult, so hash/url
-	// came back empty on every successful upload — silently breaking the screenshot
-	// editor. The image_service's own handler_http_test.go reads `env.Data`.)
 	if resp.StatusCode == http.StatusOK || resp.StatusCode == http.StatusCreated {
 		var env struct {
 			Code int          `json:"code"`
@@ -186,10 +134,6 @@ func (c *Client) Upload(
 		return &out, nil
 	}
 
-	// Error body is the same flat envelope {code:<int>,message:<string>} (NOT a
-	// nested {error:{...}} — that was a stale-doc assumption). Map the known
-	// integer business codes (kun-galgame-infra/pkg/errors/codes.go) to sentinels;
-	// otherwise wrap with code+message.
 	var env struct {
 		Code    int    `json:"code"`
 		Message string `json:"message"`
@@ -197,37 +141,24 @@ func (c *Client) Upload(
 	_ = json.Unmarshal(raw, &env)
 
 	switch env.Code {
-	case 80008: // ErrImageQuotaExceeded
+	case 80008:
 		return nil, fmt.Errorf("%w: %s", ErrQuotaExceeded, env.Message)
-	case 60002: // ErrModerationRejected
+	case 60002:
 		return nil, fmt.Errorf("%w: %s", ErrModerationRejected, env.Message)
 	case 80001, 80002, 80003, 80004, 80005, 80006, 80015:
-		// unauthorized / bad client / bad secret / site disabled / site
-		// unconfigured / preset denied / upload disabled — all "you can't" class.
 		return nil, fmt.Errorf("%w: %s", ErrUnauthorized, env.Message)
 	}
 	return nil, fmt.Errorf("image_service upload failed: status=%d code=%d msg=%q",
 		resp.StatusCode, env.Code, env.Message)
 }
 
-// Configured reports whether the client has both a base URL and credentials —
-// i.e. Upload / ReferencePing can actually reach image_service. Lets callers
-// skip work (e.g. the ref-ping cron) when image_service is intentionally
-// disabled in dev.
 func (c *Client) Configured() bool { return c.baseURL != "" && c.basicAuth != "" }
 
-// ReferencePingResult mirrors POST /image/reference-ping's success response.
 type ReferencePingResult struct {
 	Updated  int64    `json:"updated"`
 	NotFound []string `json:"not_found"`
 }
 
-// ReferencePing refreshes last_referenced_at for a batch of hashes so the
-// image_service GC doesn't reclaim images this site still references (cold-
-// storage TTL ~60 days). Call it from a daily cron with EVERY hash the site
-// still points at — entity columns AND content-embedded `/image/<hash>` tokens
-// (see internal/infrastructure/cron). The server caps a batch at 1000; the
-// caller is responsible for chunking larger sets.
 func (c *Client) ReferencePing(ctx context.Context, hashes []string) (*ReferencePingResult, error) {
 	if len(hashes) == 0 {
 		return &ReferencePingResult{}, nil
@@ -284,21 +215,12 @@ func (c *Client) ReferencePing(ctx context.Context, hashes []string) (*Reference
 	return &env.Data, nil
 }
 
-// ImageMeta is an image's intrinsic display metadata: pixel dimensions + the
-// base64 ThumbHash placeholder. Immutable per content-addressed hash, so it is
-// safe to cache forever. Mirrors one element of /image/meta-batch's response.
 type ImageMeta struct {
 	Width     int    `json:"width"`
 	Height    int    `json:"height"`
 	Thumbhash string `json:"thumbhash,omitempty"`
 }
 
-// MetaBatch fetches width/height/thumbhash for a batch of hashes in one
-// roundtrip, keyed by hash. Hashes image_service doesn't know are simply absent
-// from the result. The server caps a batch at 1000. Lets a consumer reserve the
-// correct aspect ratio + render a ThumbHash blur-up for a page of images without
-// a per-image lookup. Metadata is immutable per hash (see MetaResolver for the
-// cached render-path wrapper).
 func (c *Client) MetaBatch(ctx context.Context, hashes []string) (map[string]ImageMeta, error) {
 	if len(hashes) == 0 {
 		return map[string]ImageMeta{}, nil
@@ -360,15 +282,10 @@ func (c *Client) MetaBatch(ctx context.Context, hashes []string) (map[string]Ima
 	return env.Data.Metas, nil
 }
 
-// MainURL builds the canonical CDN URL for the full image (`.webp`).
-// Returns "" for empty / malformed hashes — caller can fall back to a
-// placeholder.
 func (c *Client) MainURL(hash string) string {
 	return c.variantPath(hash, "")
 }
 
-// VariantURL builds the CDN URL for a pre-generated variant (e.g. "mini",
-// "100", "256"). Returns "" if the hash is invalid.
 func (c *Client) VariantURL(hash, variant string) string {
 	return c.variantPath(hash, variant)
 }

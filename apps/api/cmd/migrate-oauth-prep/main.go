@@ -1,37 +1,3 @@
-// cmd/migrate-oauth-prep applies the one-shot data-shape conversion that the
-// kungalgame_patch database needs *before* the numbered migrations under
-// migrations/ can run.
-//
-// What this is:
-//
-//   - Fill NULL → '{}' for 16 text[] columns (patch / patch_resource / etc.)
-//     so the subsequent jsonb cast does not produce NULL on required fields.
-//   - Convert those 16 columns to jsonb (DROP DEFAULT → ALTER TYPE → SET DEFAULT).
-//   - Add denormalized `*_count` fields on user / patch / patch_comment /
-//     patch_resource and backfill them from the relation tables.
-//   - Create the oauth_account table (later dropped by migration 005 once
-//     the OAuth-side id alignment is done; harmless in the interim).
-//
-// Why a separate cmd (not just another file under migrations/):
-//
-//   - This runs *before* numbered migrations 001-005 in the upgrade pipeline,
-//     not as part of normal feature evolution. Slotting it under migrations/
-//     would put it inline with 001-... and confuse the up/down semantics.
-//   - It runs exactly once per database. Idempotency is handled by checking
-//     the existing _migrations tracker for the marker `oauth_prep_20260409`.
-//
-// History: this began as a hand-rolled psql script that ran before the legacy
-// Nitro/Prisma backend's `prisma db push`. The Go rewrite replaced both the
-// runner and the upstream backend; the embedded migration.sql is the same
-// SQL, now driven through database/sql with a marker row in _migrations so
-// CI can run it non-interactively.
-//
-// Usage:
-//
-//	go run ./cmd/migrate-oauth-prep             # apply with confirmation prompt
-//	go run ./cmd/migrate-oauth-prep -yes        # skip confirmation (CI)
-//	go run ./cmd/migrate-oauth-prep -dry-run    # print SQL only
-//	go run ./cmd/migrate-oauth-prep -force      # re-run even if marker is present
 package main
 
 import (
@@ -54,8 +20,6 @@ import (
 //go:embed migration.sql
 var migrationSQL string
 
-// markerName is the row written into _migrations after a successful apply.
-// Re-running with the marker present requires -force.
 const markerName = "oauth_prep_20260409"
 
 func main() {
@@ -101,8 +65,6 @@ func main() {
 		return
 	}
 
-	// The embedded SQL already wraps in BEGIN/COMMIT, so a single Exec is
-	// enough; PostgreSQL will roll back on any failure inside.
 	if _, err := sqlDB.Exec(migrationSQL); err != nil {
 		slog.Error("oauth-prep SQL failed", "error", err)
 		os.Exit(1)
@@ -116,27 +78,6 @@ func main() {
 		os.Exit(1)
 	}
 
-	// Mark 000_baseline as applied on the Prisma-restore path too.
-	//
-	// Reasoning: 000_baseline is a `pg_dump -s` snapshot of the *post-009*
-	// schema. It's idempotent vs the post-009 state (CREATE ... IF NOT
-	// EXISTS, DO/EXCEPTION wrappers), but on a Prisma-era restore it would
-	// reference columns that 002/004 haven't created yet (s3_key,
-	// galgame_id) — CREATE INDEX IF NOT EXISTS doesn't pre-check column
-	// presence, so the migration aborts mid-baseline.
-	//
-	// migrate-oauth-prep is by definition the Prisma-path bootstrap step:
-	// it only ever runs against a Prisma-era schema (asserts pre-002
-	// columns like `hash`, pre-005 columns like `user.email`). So if
-	// oauth-prep just succeeded, we KNOW we're on the Prisma path and
-	// baseline is a no-op — the schema baseline would build already
-	// exists (post-Prisma-create) in a different shape that 001-009 will
-	// reshape into the post-009 form. Marking baseline applied skips it
-	// in the upcoming `cmd/migrate` run.
-	//
-	// The fresh-DB path (no Prisma backup, no oauth-prep) is unaffected:
-	// it goes straight to `cmd/migrate`, baseline runs first as designed,
-	// then 001-009 are all idempotent no-ops on top.
 	if _, err := sqlDB.Exec(
 		`INSERT INTO _migrations (name) VALUES ('000_baseline') ON CONFLICT (name) DO NOTHING`,
 	); err != nil {
@@ -189,7 +130,6 @@ func confirm() bool {
 	return answer == "y" || answer == "yes"
 }
 
-// redactURL replaces the password in postgres://user:pass@host/db with ***.
 func redactURL(u string) string {
 	at := strings.Index(u, "@")
 	if at < 0 {

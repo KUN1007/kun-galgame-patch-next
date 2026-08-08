@@ -68,17 +68,13 @@ watch(showCropper, async (open) => {
       const image = cropperInstance.getCropperImage()
       const selection = cropperInstance.getCropperSelection()
       if (image) {
-        // Fit the (any-aspect) source inside the fixed-height cropper canvas so
-        // the crop area is a consistent size regardless of the source's pixels.
         await image.$ready().catch(() => {})
-        // Modal may have been closed (cropper destroyed) during the decode.
         if (cropperInstance !== instance) return
         image.$center('contain')
       }
       if (selection) {
         selection.aspectRatio = props.aspectRatio
         selection.initialCoverage = 0.9
-        // Re-apply aspect + coverage centered now that the image is laid out.
         selection.$reset()
       }
     }
@@ -118,9 +114,6 @@ const cropToBlob = async (): Promise<Blob | null> => {
   const selection = cropperInstance.getCropperSelection()
   if (!selection) return null
   const canvas = await selection.$toCanvas()
-  // Bound the upload: cap the width to 1920 (16:9 covers → ≤1920×1080),
-  // downscaling only (never upscaling a smaller crop) so we don't blur. Mirrors
-  // the legacy's fixed cover size; image_service still derives display variants.
   let out = canvas
   if (canvas.width > 1920) {
     out = document.createElement('canvas')
@@ -149,7 +142,6 @@ const closeCropper = () => {
   }
 }
 
-// 完成裁剪 — use the crop as-is (skip 打码).
 const handleConfirm = async () => {
   const blob = await cropToBlob()
   if (!blob) {
@@ -160,11 +152,9 @@ const handleConfirm = async () => {
   closeCropper()
 }
 
-// ─── 打码 (mosaic) — optional step after cropping ─────────────────────
 const showMosaic = ref(false)
 const mosaicSrc = ref('')
 
-// 裁剪并打码 — crop, then open the mosaic editor on the cropped result.
 const handleCropThenMosaic = async () => {
   const blob = await cropToBlob()
   if (!blob) {
@@ -181,7 +171,6 @@ const onMosaicComplete = (blob: Blob) => {
   applyResult(blob)
 }
 
-// Revoke the mosaic source when the mosaic modal closes (complete OR cancel).
 watch(showMosaic, (v) => {
   if (!v && mosaicSrc.value) {
     URL.revokeObjectURL(mosaicSrc.value)
@@ -231,12 +220,6 @@ onUnmounted(() => {
         <KunIcon name="lucide:image-plus" class="size-10" />
         <span v-if="hint" class="mt-2 text-sm">{{ hint }}</span>
       </div>
-      <!-- Internal hidden <input>: this component encapsulates a drop zone +
-           cropper + replace button, and all three need to trigger the same
-           single picker via fileInput.click(). KunFileInput's `pick` is only
-           exposed through its default slot, so it can't be shared with the
-           re-select KunButton living outside the slot. Same pattern KunFile-
-           Input itself uses internally (via useFilePicker). -->
       <input
         ref="fileInput"
         type="file"
@@ -272,10 +255,6 @@ onUnmounted(() => {
         <p class="text-default-500 text-sm">
           拖动选框选择封面区域，可缩放/拖动图片调整，完成后可继续打码。
         </p>
-        <!-- The cropper canvas has a fixed responsive height (index.css
-             cropper-canvas) so the crop area is consistent for any source; the
-             raw <img> below is only shown for the brief moment before CropperJS
-             replaces it. -->
         <div class="overflow-hidden rounded-lg">
           <img
             v-if="cropperSrc"

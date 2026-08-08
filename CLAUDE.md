@@ -28,6 +28,23 @@ This repo is one of the **downstreams of kun-galgame-infra (OAuth / identity / c
 13. **One task = one Codex session; one assigned target repo = one branch = one worktree.** Never let two sessions write this checkout; prefer `codex-session new kun-galgame-patch <session>`. The launcher exposes source-repo reference material through `$CODEX_SESSION_REFS` when present; read it in place and never copy it into any worktree. A single-repo session may write only its own worktree; an explicitly coordinated cross-repo operation may write only separately assigned target worktrees. Launcher source checkouts and refs are always read-only.
 14. DB-backed tests must use only the launcher-provided, explicit, unique `TEST_DATABASE_DSN`; never discover or fall back to a DSN from `.env`, and never print the DSN. Run shared-database Go integration suites with `-count=1 -p 1`, never against a live or rehearsal database.
 
+## Comments
+
+**Default: none.** Code that can be understood by reading it gets no comment. Most code is that code. `[review]`
+
+**A comment is earned by a mistake that already happened, not by one you predict.** Do not comment while writing — you cannot tell yet which parts are traps. Comment when something went wrong there: an agent or a person got it wrong, a review caught it, a test went red, production broke. The comment records the wrong conclusion that was actually reached, so the next reader does not reach it again. If you cannot name the incident, there is no comment to write. `[review]`
+
+Two standing exceptions, where the comment is a record rather than a warning:
+
+- `apps/api/migrations/**` — a migration is history and cannot be re-read from the current schema. Say what it changes and why, including what was done about existing rows.
+- A constraint that is true but invisible from this file: a version floor, an upstream bug, a required ordering. `huma/v2 >= v2.39.0` is one; a reader who does not know it will "simplify" the dependency back and break SSE.
+
+Write the conclusion, not the mechanism. `// splitCommand takes the subcommand off before flag.Parse` is a restatement; `flag.Parse stops at the first non-flag argument, so 'migrate down -steps 1' parsed no flags and rolled back nothing` is the trap. Quote real system output verbatim when reproducing a symptom.
+
+Never write: restatements of the code, section banners, `TODO` without an owner, or doc comments that only echo the identifier (`// New creates a new X`). Exported Go identifiers get a doc comment only when the name alone is ambiguous. If a comment explains what a name means, rename the thing and delete the comment.
+
+English, and short. When in doubt, delete it — a wrong comment costs more than a missing one, and the missing one gets written the day it is needed.
+
 ## Current catalog cutover state
 
 - The `w161-p4` line moves publish/claim/withdraw and the cron inbox to catalog. Read the read-only source-workspace file at `${CODEX_SESSION_REPO%/*}/kun-galgame-infra/refs/proj/161-n5-grand-window.md`—not a `../` path from this worktree—and verify the branch, migration `029_claim_event_processed`, client binding, and deployment state before assuming the window ran.

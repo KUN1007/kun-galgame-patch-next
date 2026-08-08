@@ -16,14 +16,14 @@ type Config struct {
 
 type ServerConfig struct {
 	Port string
-	Mode string // "dev" or "prod"
+	Mode string
 }
 
 type DatabaseConfig struct {
 	URL             string
 	MaxIdleConns    int
 	MaxOpenConns    int
-	ConnMaxLifetime int // minutes
+	ConnMaxLifetime int
 }
 
 type RedisConfig struct {
@@ -33,9 +33,6 @@ type RedisConfig struct {
 	DB       int
 }
 
-// OAuthConfig holds the OAuth integration settings. ClientID/ClientSecret
-// are used both for the user-facing PKCE flow (token exchange / refresh)
-// and for service-to-service Basic Auth against /users/batch and /users/search.
 type OAuthConfig struct {
 	ServerURL    string
 	ClientID     string
@@ -43,57 +40,28 @@ type OAuthConfig struct {
 	RedirectURI  string
 }
 
-// NextMoeAPIConfig points at the NextMoe catalog service, which co-hosts the
-// galgame surface (infra W2/W5). BaseURL is the HOST base (no /api or /internal
-// suffix) — the galgame client derives {base}/internal (the internal-tier rich
-// READ face + the S2S cron message feed, gated by X-API-Key) and {base}/api (the
-// legacy face: writes / submissions).
-//
-// APIKey is the internal-tier X-API-Key attached to every read-set call (and the
-// message feed). It is REQUIRED: the empty-key rollback to legacy /api was
-// retired in open-API phase 2 wave 05, so a configured base with an empty key is
-// a misconfiguration that fails fast at service startup (see app.New).
 type NextMoeAPIConfig struct {
-	BaseURL string // host base, e.g. http://catalog:9281 (dev: http://127.0.0.1:19281)
-	APIKey  string // internal-tier X-API-Key; required (empty → app.New fails fast)
+	BaseURL string
+	APIKey  string
 }
 
-// ImageServiceConfig points at the centralized image_service (W2 / PR3b).
-// Auth is HTTP Basic with an OAuth client_id/secret (per
-// docs/image_service/06-integration-guide.md). ClientID/Secret default to the
-// project's OAuth credentials when unset — image_service reuses the OAuth
-// `oauth_client` table as its "site" registry, so the same credentials work.
 type ImageServiceConfig struct {
-	BaseURL      string // e.g. http://127.0.0.1:9278 (no trailing slash)
-	CDNBase      string // e.g. http://127.0.0.1:9000/kun-images-dev; serves the ab/cd/<hash>.webp tree
-	ClientID     string // defaults to OAuth.ClientID
-	ClientSecret string // defaults to OAuth.ClientSecret
+	BaseURL      string
+	CDNBase      string
+	ClientID     string
+	ClientSecret string
 }
 
-// ArtifactConfig points at the centralized artifact service (large-file
-// upload/download, port 9279). Auth is HTTP Basic with an OAuth
-// client_id/secret — the artifact service reuses the OAuth `oauth_client` table
-// as its "site" registry (gated by artifact_enabled + artifact_site_key on the
-// infra side), so the project's OAuth credentials work. ClientID/Secret default
-// to the OAuth credentials when unset (filled in app.go).
 type ArtifactConfig struct {
-	BaseURL      string // e.g. http://127.0.0.1:9279 (no trailing slash)
-	ClientID     string // defaults to OAuth.ClientID
-	ClientSecret string // defaults to OAuth.ClientSecret
+	BaseURL      string
+	ClientID     string
+	ClientSecret string
 }
 
-// TrustConfig holds what moyu needs to integrate the infra Trust & Safety
-// service (kun-galgame-infra :9283): the base URL for submitting reports S2S,
-// the site key (scopes the moderator inbox), and the HMAC secret for verifying
-// inbound enforcement callbacks. The S2S Basic-auth credentials reuse the OAuth
-// client_id/secret (wired in app.go) — the trust service reads
-// oauth_clients.catalog_site to derive moyu's site. Empty BaseURL /
-// CallbackSecret = the integration is inert (reports degrade, callbacks are
-// rejected) so a dev box without a trust service is harmless.
 type TrustConfig struct {
-	BaseURL        string // trust service base, e.g. http://127.0.0.1:9283
-	Site           string // moyu's catalog_site, to scope the moderator inbox
-	CallbackSecret string // HMAC secret shared with the trust subject-kind registry
+	BaseURL        string
+	Site           string
+	CallbackSecret string
 }
 
 type CORSConfig struct {
@@ -126,51 +94,26 @@ func Load() *Config {
 			RedirectURI:  getEnv("OAUTH_REDIRECT_URI", ""),
 		},
 		NextMoeAPI: NextMoeAPIConfig{
-			// Host base (no /api|/internal); the client derives both faces.
-			// dev default = the local phase2 catalog instance (:19281).
 			BaseURL: getEnv("KUN_NEXTMOE_API_BASE", "http://127.0.0.1:19281"),
-			// Internal-tier read-face key. REQUIRED: the legacy /api rollback
-			// valve was retired (open-API phase 2 wave 05), so app.New fails
-			// fast when the base is configured but this key is empty.
-			APIKey: getEnv("KUN_NEXTMOE_API_KEY", ""),
+			APIKey:  getEnv("KUN_NEXTMOE_API_KEY", ""),
 		},
 		ImageService: ImageServiceConfig{
-			// Fail-fast in prod (audit GPT-L02): these default to localhost dev
-			// values, so an unset var in prod would SILENTLY point uploads/CDN
-			// at 127.0.0.1 and only fail at runtime. Require them explicitly in
-			// prod; keep the dev defaults otherwise.
-			BaseURL: getEnvProd("KUN_IMAGE_SERVICE_BASE_URL", "http://127.0.0.1:9278", mode),
-			CDNBase: getEnvProd("KUN_IMAGE_CDN_BASE", "http://127.0.0.1:9000/kun-images-dev", mode),
-			// Empty fallback → app.go fills from OAuth credentials.
+			BaseURL:      getEnvProd("KUN_IMAGE_SERVICE_BASE_URL", "http://127.0.0.1:9278", mode),
+			CDNBase:      getEnvProd("KUN_IMAGE_CDN_BASE", "http://127.0.0.1:9000/kun-images-dev", mode),
 			ClientID:     getEnv("KUN_IMAGE_OAUTH_CLIENT_ID", ""),
 			ClientSecret: getEnv("KUN_IMAGE_OAUTH_CLIENT_SECRET", ""),
 		},
 		Artifact: ArtifactConfig{
-			// Fail-fast in prod (same rationale as ImageService): a localhost
-			// default in prod would silently misroute artifact calls.
-			BaseURL: getEnvProd("KUN_ARTIFACT_SERVICE_BASE_URL", "http://127.0.0.1:9279", mode),
-			// Empty fallback → app.go fills from OAuth credentials.
+			BaseURL:      getEnvProd("KUN_ARTIFACT_SERVICE_BASE_URL", "http://127.0.0.1:9279", mode),
 			ClientID:     getEnv("KUN_ARTIFACT_OAUTH_CLIENT_ID", ""),
 			ClientSecret: getEnv("KUN_ARTIFACT_OAUTH_CLIENT_SECRET", ""),
 		},
 		Trust: TrustConfig{
-			// OPTIONAL in prod (unlike image/artifact, which getEnvProd-panic):
-			// the trust integration must stay deployable BEFORE infra onboarding
-			// — unset in prod means inert (reports degrade, callbacks rejected),
-			// never a boot panic on an auto-deploy. Dev still defaults to the
-			// local infra stack. S2S Basic auth reuses the OAuth client_id/secret
-			// (filled in app.go).
 			BaseURL:        getEnvOptionalProd("KUN_TRUST_BASE_URL", "http://127.0.0.1:9283", mode),
 			Site:           getEnv("KUN_TRUST_SITE", "moyu"),
 			CallbackSecret: getEnv("KUN_TRUST_CALLBACK_SECRET", ""),
 		},
 		CORS: CORSConfig{
-			// Default covers both dev frontends: 5213 = legacy next-web
-			// (deprecated but kept during transition), 6969 = current
-			// Nuxt apps/web. .env / .env.example also list both — keep
-			// in sync if a port changes. Without 6969 the browser fails
-			// `/auth/me` with "No 'Access-Control-Allow-Origin' header"
-			// any time the server boots without .env loaded.
 			AllowOrigins: getEnv(
 				"CORS_ALLOW_ORIGINS",
 				"http://127.0.0.1:5213,http://127.0.0.1:6969",
@@ -194,9 +137,6 @@ func mustGetEnv(key string) string {
 	return v
 }
 
-// getEnvProd returns the env var if set; otherwise it panics in prod mode
-// (fail-fast — no silent dev-default fallback for things that must be
-// configured in production) and returns devFallback in dev.
 func getEnvProd(key, devFallback, mode string) string {
 	if v := os.Getenv(key); v != "" {
 		return v
@@ -207,10 +147,6 @@ func getEnvProd(key, devFallback, mode string) string {
 	return devFallback
 }
 
-// getEnvOptionalProd is for integrations that are ALLOWED to be unconfigured
-// in production (the feature then disables itself): env var if set, devFallback
-// in dev, empty string in prod — never a panic, but also never a localhost
-// default silently misrouting prod traffic.
 func getEnvOptionalProd(key, devFallback, mode string) string {
 	if v := os.Getenv(key); v != "" {
 		return v

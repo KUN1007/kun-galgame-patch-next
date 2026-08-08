@@ -7,14 +7,6 @@ interface Props {
 
 const props = defineProps<Props>()
 
-// The home / global-comments endpoints serialize `User *PatchUser` with
-// `omitempty`, so a comment whose author isn't returned by OAuth /users/batch
-// (deleted, banned, not_found) arrives with `user === undefined`. Without
-// guarding, `props.comment.user.name` throws during render — SSR can still
-// emit the avatar DOM that ran before the throw, while CSR hydration aborts
-// the whole subtree to a comment vnode, which is exactly the
-// "rendered on server: <div>… / expected on client: Symbol(v-cmt)" symptom
-// reported on the homepage comments.
 const safeUser = computed(() => props.comment.user ?? null)
 const displayName = computed(() => safeUser.value?.name ?? '已注销用户')
 
@@ -24,15 +16,9 @@ const patchName = computed(() =>
     : `补丁 #${props.comment.galgame_id}`
 )
 
-// Both feeds this card serves — the homepage 最新评论 and /comment — mix patch and
-// resource comments, so the surface is decided per row (see commentPermalink).
 const isResourceComment = computed(() => !!props.comment.resource_id)
 const target = computed(() => commentPermalink(props.comment))
 
-// The card MUST NOT render as a NuxtLink (i.e. don't pass `:href`). Rendered
-// comment Markdown carries its own <a> (@mentions, autolinks, KunAvatar's link),
-// and nesting <a> inside <a> triggers a Vue hydration mismatch. Keep as a plain
-// div + imperative navigation; defer to any inner <a>/<button> the user clicked.
 const handleCardClick = async (event: MouseEvent) => {
   const el = event.target as HTMLElement | null
   if (el?.closest('a, button')) return
@@ -61,8 +47,6 @@ const handleKeydown = async (event: KeyboardEvent) => {
   >
     <div class="flex gap-4">
       <KunAvatar :user="safeUser" />
-      <!-- min-w-0 lets this column shrink below its content's intrinsic width so a
-           code block in the rendered comment scrolls instead of overflowing the card. -->
       <div class="min-w-0 flex-1 space-y-2">
         <div class="flex flex-wrap items-center gap-2">
           <h2 class="font-semibold">{{ displayName }}</h2>
@@ -72,9 +56,6 @@ const handleKeydown = async (event: KeyboardEvent) => {
             <template v-if="isResourceComment">的补丁资源</template>
           </span>
         </div>
-        <!-- KunContent: sanitize + spoiler + inline-image lightbox built in.
-             Its lightbox click stops propagation, so tapping an image opens
-             the viewer without triggering this card's handleCardClick. -->
         <KunContent
           compact
           :content="props.comment.content_html || ''"

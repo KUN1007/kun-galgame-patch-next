@@ -5,9 +5,6 @@ import (
 	"testing"
 )
 
-// Cases use REAL filenames from the archive's Filelist.txt (增量6) to lock in the
-// parser against the naming actually shipped: combined CHS&CHT, non-Windows
-// platforms, and titles with hyphens / punctuation / fullwidth chars.
 func TestParsePatchFileName(t *testing.T) {
 	cases := []struct {
 		name      string
@@ -101,8 +98,6 @@ func TestParsePatchFileName(t *testing.T) {
 }
 
 func TestSanitizeFileName(t *testing.T) {
-	// Extension preserved; separators/brackets/punctuation stripped from the base;
-	// CJK kept (\p{L}). This is the (galgame_id, name) dedup key.
 	in := "[Key][20000908]AIR[v36][Windows][Key Fans Club][20050104][CHS].rar"
 	got := sanitizeFileName(in)
 	if got == "" || got[len(got)-4:] != ".rar" {

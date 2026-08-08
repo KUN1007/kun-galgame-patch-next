@@ -17,11 +17,6 @@ const iconName = computed(
   () => MESSAGE_TYPE_ICON[props.msg.type] ?? 'lucide:bell'
 )
 
-// Render the referenced game name in the viewer's 标题优先语言 (getPreferredLanguageText
-// with no locale honors the setting), falling back to the baked `content` when the
-// name isn't attached. For the resource interactions the verb sentence is rebuilt
-// around the preferred name; for `favorite` the name IS the line (the 收藏补丁 chip
-// supplies the verb).
 const gameName = computed(() => getPreferredLanguageText(props.msg.galgame_name))
 const displayContent = computed(() => {
   const name = gameName.value

@@ -1,36 +1,3 @@
-// cmd/migrate-content-images rehosts legacy `image.moyu.moe` images embedded in
-// user content onto image_service, and rewrites the stored markdown to the
-// domain-agnostic content token `/image/<hash>` (image_service 契约 04 §"内容内嵌
-// 图的域名无关引用"). This is the "换域名只改一处配置" enabler and a precondition
-// for retiring the old image.moyu.moe bucket.
-//
-// Scope (the only moyu content columns that embed image.moyu.moe URLs — verified
-// by a prod scan: 628 + 82 rows, 100% .avif):
-//
-//	patch_comment.content · patch_resource.note
-//
-// Per distinct old URL: HTTP-fetch the original from -base → (AVIF → PNG via
-// ffmpeg, because image_service has no AVIF decoder and the topic preset only
-// accepts jpeg/png/webp/gif) → upload under the `topic` preset → cache the new
-// hash → replace every occurrence in each row with `/image/<hash>`. The same
-// image referenced by many rows is uploaded once. A URL that 404s / fails to
-// convert / fails to upload is logged and SKIPPED (its rows keep the old URL —
-// safe, and a re-run retries). Only the content column is written.
-//
-// SAFE BY DEFAULT: -dry-run defaults to TRUE — it scans + reports the
-// distinct-file workload per table with NO network and NO DB writes. Pass
-// -dry-run=false to run. Before rewriting a row its original content is appended
-// to a JSONL backup file (full recoverability — the rewrite is not otherwise
-// reversible, hashes don't map back to old URLs). Idempotent: once rewritten,
-// content no longer matches `%image.moyu.moe%`, so a re-run skips it.
-//
-// Requires `ffmpeg` on PATH (AVIF decode). The moyu-tools image bakes it in;
-// for a local run install ffmpeg first.
-//
-//	go run ./cmd/migrate-content-images                       # dry-run: report workload
-//	go run ./cmd/migrate-content-images -dry-run=false        # rehost + rewrite
-//	go run ./cmd/migrate-content-images -dry-run=false -limit=20   # smoke-test 20 rows/table
-//	go run ./cmd/migrate-content-images -dry-run=false -base=http://legacy-mirror   # fetch elsewhere
 package main
 
 import (
@@ -58,15 +25,10 @@ import (
 	"github.com/joho/godotenv"
 )
 
-// legacyImageRe matches a legacy image URL up to the first markdown/whitespace/
-// quote delimiter. Filenames may contain non-ASCII, which these bytes allow.
 var legacyImageRe = regexp.MustCompile(`https?://image\.moyu\.moe/[^\s)"'>\]\\]+`)
 
-// trailingPunct: prose punctuation that can cling to a bare URL. Stripped so the
-// captured URL is exactly the file (a ".avif" tail is never affected).
 const trailingPunct = `.,;!?，。、）】>`
 
-// target is a table + its content column to scan/rewrite.
 type target struct{ table, col string }
 
 func main() {
@@ -77,10 +39,6 @@ func main() {
 	limit := flag.Int("limit", 0, "Max rows per table (0 = all); for smoke-testing -dry-run=false on a small batch")
 	preset := flag.String("preset", "topic", "image_service preset to rehost under")
 	backupPath := flag.String("backup", "migrate-content-images-backup.jsonl", "JSONL file to append original rows to before rewriting (recoverability)")
-	// Default = the two user-content surfaces. The notification + audit columns
-	// (user_message:content, admin_log:content) are scrubbed by passing them
-	// explicitly; their image.moyu.moe refs are the SAME images, so re-upload
-	// dedups to identical hashes → identical /image/<hash> tokens.
 	tablesFlag := flag.String("tables", "patch_comment:content,patch_resource:note", "comma-separated table:column list to scan/rewrite")
 	flag.Parse()
 
@@ -105,8 +63,6 @@ func main() {
 	cfg := config.Load()
 	logger.Init(cfg.Server.Mode)
 
-	// Same credential-defaulting as the server (app.go): fall back to the OAuth
-	// client when the dedicated KUN_IMAGE_OAUTH_* vars are unset.
 	imgCfg := cfg.ImageService
 	if imgCfg.ClientID == "" {
 		imgCfg.ClientID = cfg.OAuth.ClientID
@@ -136,9 +92,9 @@ func main() {
 	httpClient := &http.Client{Timeout: 60 * time.Second}
 	ctx := context.Background()
 
-	migrated := map[string]string{} // oldURL -> "/image/<hash>" (uploaded this run)
-	dead := map[string]bool{}       // oldURL that failed (skipped)
-	seen := map[string]bool{}       // distinct oldURL across all tables
+	migrated := map[string]string{}
+	dead := map[string]bool{}
+	seen := map[string]bool{}
 	deadList := []string{}
 	perTableRows := map[string]int{}
 
@@ -188,7 +144,7 @@ func main() {
 					continue
 				}
 				if *dryRun {
-					continue // pure accounting; no fetch/convert/upload/rewrite
+					continue
 				}
 				token, done := migrated[old]
 				if !done {
@@ -230,12 +186,11 @@ func main() {
 
 			if *dryRun || rowReplaced == 0 {
 				if !*dryRun {
-					rowsSkipped++ // had only dead URLs → nothing rewritten this pass
+					rowsSkipped++
 				}
 				continue
 			}
 
-			// Back up the original BEFORE writing (the rewrite isn't reversible).
 			if err := writeBackup(backup, t.table, r.ID, r.Content); err != nil {
 				slog.Error("写备份失败, 跳过该行(不改写)", "table", t.table, "id", r.ID, "error", err)
 				rowsSkipped++
@@ -275,8 +230,6 @@ func main() {
 		len(migrated), rowsUpdated, replacements, rowsSkipped, len(dead), *backupPath)
 }
 
-// extractLegacyURLs pulls every legacy image URL out of one content string,
-// strips clinging prose punctuation, and de-dups (a row may repeat the same image).
 func extractLegacyURLs(content string) []string {
 	raw := legacyImageRe.FindAllString(content, -1)
 	out := make([]string, 0, len(raw))
@@ -286,8 +239,6 @@ func extractLegacyURLs(content string) []string {
 	return dedupe(out)
 }
 
-// rewriteHost swaps the legacy host for -base so originals can be fetched from
-// an internal mirror when image.moyu.moe isn't reachable from the job.
 func rewriteHost(url, base string) string {
 	if base == "" || base == "https://image.moyu.moe" {
 		return url
@@ -321,13 +272,9 @@ func fetch(ctx context.Context, c *http.Client, url string) ([]byte, error) {
 	if resp.StatusCode != http.StatusOK {
 		return nil, fmt.Errorf("HTTP %d", resp.StatusCode)
 	}
-	return io.ReadAll(io.LimitReader(resp.Body, 32<<20)) // 32MB guard
+	return io.ReadAll(io.LimitReader(resp.Body, 32<<20))
 }
 
-// toUploadable returns bytes image_service can ingest. image_service has no AVIF
-// decoder and the topic preset accepts only jpeg/png/webp/gif, so AVIF originals
-// are transcoded to PNG (lossless intermediate — image_service then does the
-// single webp encode). Already-supported formats pass through untouched.
 func toUploadable(ctx context.Context, data []byte, srcURL string) ([]byte, string, error) {
 	if !isAVIF(data) {
 		return data, path.Base(srcURL), nil
@@ -339,8 +286,6 @@ func toUploadable(ctx context.Context, data []byte, srcURL string) ([]byte, stri
 	return png, "content.png", nil
 }
 
-// isAVIF detects the ISOBMFF `ftyp` box with an `avif`/`avis` brand (major or
-// compatible). moyu's legacy content images are 100% AVIF.
 func isAVIF(b []byte) bool {
 	if len(b) < 12 || string(b[4:8]) != "ftyp" {
 		return false
@@ -348,7 +293,7 @@ func isAVIF(b []byte) bool {
 	if brand := string(b[8:12]); brand == "avif" || brand == "avis" {
 		return true
 	}
-	for i := 16; i+4 <= len(b) && i < 64; i += 4 { // compatible brands
+	for i := 16; i+4 <= len(b) && i < 64; i += 4 {
 		if string(b[i:i+4]) == "avif" {
 			return true
 		}
@@ -356,9 +301,6 @@ func isAVIF(b []byte) bool {
 	return false
 }
 
-// avifToPNG decodes AVIF bytes to PNG via ffmpeg. The input goes through a temp
-// FILE (not a pipe): AVIF is ISOBMFF, whose demuxer needs seekable input. PNG is
-// read back from stdout.
 func avifToPNG(ctx context.Context, avif []byte) ([]byte, error) {
 	cctx, cancel := context.WithTimeout(ctx, 60*time.Second)
 	defer cancel()
@@ -389,7 +331,6 @@ func avifToPNG(ctx context.Context, avif []byte) ([]byte, error) {
 	return out.Bytes(), nil
 }
 
-// writeBackup appends one original row as a JSONL record before it is rewritten.
 func writeBackup(f *os.File, table string, id int64, content string) error {
 	rec, err := json.Marshal(struct {
 		Table   string `json:"table"`

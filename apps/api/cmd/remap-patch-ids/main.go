@@ -1,49 +1,3 @@
-// cmd/remap-patch-ids realigns moyu's local patch.id with the Wiki galgame.id
-// for every patch whose vndb_id resolves on Wiki.
-//
-// Why
-// ----
-// 1 patch corresponds to exactly 1 galgame, identified by vndb_id. The local
-// patch.id has historically been an auto-increment unrelated to galgame_id —
-// this duplicates state. After this migration:
-//
-//   - patch.id = galgame.id (looked up via Wiki /galgame/check?vndb_id=...)
-//   - patch.galgame_id column is dropped (redundant with id)
-//   - child FK columns are renamed: patch_resource.patch_id → galgame_id, etc.
-//
-// What
-// ----
-//  1. Read every patch row.
-//  2. For each, call Wiki /galgame/check?vndb_id=... to get the target id.
-//     Rows with vndb_id="pending-N" or whose vndb_id Wiki doesn't recognize
-//     are orphans — they're left untouched and the script aborts if any of
-//     their current ids collide with a target id (use --allow-orphan-collision
-//     only if you understand what that does).
-//  3. In a single transaction, two-pass remap (offset → final) for patch.id
-//     and the 5 child FK columns. Triggers are temporarily disabled so FK
-//     constraints don't reject mid-pass states.
-//  4. Drop patch.galgame_id, rename child patch_id columns to galgame_id,
-//     reset patch_id_seq.
-//
-// Usage
-// -----
-//
-//	go run ./cmd/remap-patch-ids                    # actually run
-//	go run ./cmd/remap-patch-ids -dry-run           # plan only, no write
-//	go run ./cmd/remap-patch-ids -concurrency=8     # parallel Wiki lookups
-//	go run ./cmd/remap-patch-ids -orphans-out=...   # write orphan list to file
-//
-// The DB DSN is read from KUN_DATABASE_URL (same as the API server).
-//
-// Orphans
-// -------
-// Patches whose vndb_id is empty / `pending-N` / not found on Wiki are not
-// touched (their patch.id stays at the legacy auto-increment value). The full
-// list is written to a TSV file (default `orphans-<timestamp>.txt`) so the
-// admin can manually rebind via /admin/orphans afterwards. Game names are not
-// available locally (per D12 they live on Wiki); the file therefore lists the
-// patch id, current vndb_id, publisher, counts and creation time as the most
-// actionable identifying signals.
 package main
 
 import (
@@ -67,9 +21,6 @@ import (
 	"gorm.io/gorm"
 )
 
-// Tables that hold a `patch_id` FK and need both:
-//  1. Two-pass remap of values (so FKs follow patch.id)
-//  2. Post-remap rename of the column to `galgame_id`
 var childTables = []string{
 	"patch_resource",
 	"patch_comment",
@@ -78,16 +29,8 @@ var childTables = []string{
 	"user_patch_contribute_relation",
 }
 
-// offset moves IDs into a non-overlapping range during pass 1. Galgame IDs
-// from Wiki are <= ~6 digits; 10^9 is safely beyond that.
 const offset int64 = 1_000_000_000
 
-// patchRow carries everything we read from the patch table — the lookup keys
-// plus enough context for the orphan report (publisher, counts, created).
-//
-// publisher_name used to come from a JOIN to "user".name, but after migration
-// 005 (user-table slim) name lives on OAuth, not locally. The orphan report
-// now batch-resolves names via pkg/userclient at write time.
 type patchRow struct {
 	ID              int
 	VndbID          string
@@ -137,10 +80,6 @@ func main() {
 
 	ctx := context.Background()
 
-	// ── Step 0: idempotency check ─────────────────────────
-	// If a previous successful run already renamed child.patch_id → galgame_id
-	// (and dropped patch.galgame_id), this script has nothing to do. Bail out
-	// cleanly instead of letting pass 1 crash with "column patch_id does not exist".
 	state, err := schemaState(db)
 	if err != nil {
 		slog.Error("schema state check failed", "error", err)
@@ -158,11 +97,7 @@ func main() {
 		slog.Error("could not determine schema state (expected child tables not found)")
 		os.Exit(1)
 	}
-	// state == schemaPending → proceed.
 
-	// ── Step 1: read every patch row ──
-	// publisher_name is no longer JOINed in — after migration 005 it lives on
-	// OAuth. The orphan report enriches it via userclient at write time.
 	var rows []patchRow
 	if err := db.Table("patch AS p").
 		Select(`p.id, p.vndb_id, p.user_id,
@@ -178,13 +113,8 @@ func main() {
 	}
 	slog.Info("读取 patch 完成", "total", len(rows))
 
-	// ── Step 2: parallel Wiki lookup, partition into mappings vs skipped ────
 	mappings, skipped := resolveMappings(ctx, galgame, rows, *concurrency)
 
-	// ── Step 3: validate ──────────────────────────────────────
-	// 3a. Two patches mapping to the same galgame_id (would only happen if the
-	//     local patch table somehow has duplicate vndb_ids — defended against
-	//     via a unique index but worth a tripwire).
 	byNew := map[int]int{}
 	for _, m := range mappings {
 		if prev, ok := byNew[m.NewID]; ok {
@@ -195,9 +125,6 @@ func main() {
 		byNew[m.NewID] = m.OldID
 	}
 
-	// 3b. Skipped rows (orphans) keep their original patch.id. If any of those
-	//     original ids equals a new_id we're about to assign, the migration
-	//     would collide. Detect and abort by default.
 	skippedIDs := map[int]struct{}{}
 	for _, s := range skipped {
 		skippedIDs[s.Row.ID] = struct{}{}
@@ -233,7 +160,6 @@ func main() {
 		}
 		fmt.Println()
 
-		// Persist the full list to a TSV file for offline triage.
 		if *orphansOut != "" {
 			if err := writeOrphansFile(ctx, *orphansOut, skipped, users); err != nil {
 				slog.Error("写 orphan 报告失败", "path", *orphansOut, "error", err)
@@ -248,7 +174,6 @@ func main() {
 		return
 	}
 
-	// ── Step 4: actual remap in a single transaction ─────────
 	if err := runRemap(db, mappings); err != nil {
 		slog.Error("迁移失败", "error", err)
 		os.Exit(1)
@@ -257,7 +182,6 @@ func main() {
 	fmt.Println("\n✅ 完成。请记得重启 apps/api 让新 schema 生效。")
 }
 
-// resolveMappings hits Wiki concurrently and returns the partition.
 func resolveMappings(
 	ctx context.Context,
 	galgame *galgameClient.Client,
@@ -332,11 +256,8 @@ func resolveMappings(
 	return mappings, skipped
 }
 
-// runRemap performs the actual two-pass remap + schema fixups in one tx.
 func runRemap(db *gorm.DB, mappings []mapping) error {
 	return db.Transaction(func(tx *gorm.DB) error {
-		// Disable triggers so FK constraints don't reject mid-pass values.
-		// Includes patch itself and every child table.
 		allTables := append([]string{"patch"}, childTables...)
 		for _, t := range allTables {
 			if err := tx.Exec(fmt.Sprintf(`ALTER TABLE %q DISABLE TRIGGER ALL`, t)).Error; err != nil {
@@ -344,12 +265,9 @@ func runRemap(db *gorm.DB, mappings []mapping) error {
 			}
 		}
 
-		// Build a temp mapping table _id_map(old_id, new_id) for batch UPDATEs.
-		// Temp tables auto-drop at tx end.
 		if err := tx.Exec(`CREATE TEMP TABLE _id_map (old_id INT PRIMARY KEY, new_id INT NOT NULL UNIQUE) ON COMMIT DROP`).Error; err != nil {
 			return fmt.Errorf("create temp map: %w", err)
 		}
-		// Bulk-insert in chunks to keep query size bounded.
 		const chunk = 500
 		for i := 0; i < len(mappings); i += chunk {
 			end := i + chunk
@@ -368,8 +286,6 @@ func runRemap(db *gorm.DB, mappings []mapping) error {
 			}
 		}
 
-		// ── Pass 1: shift to offset range ─────────────────────
-		// Update child FK columns first (they currently reference old patch.id)
 		for _, t := range childTables {
 			sql := fmt.Sprintf(`UPDATE %q SET patch_id = patch_id + ?
 				FROM _id_map WHERE %q.patch_id = _id_map.old_id`, t, t)
@@ -377,13 +293,11 @@ func runRemap(db *gorm.DB, mappings []mapping) error {
 				return fmt.Errorf("pass1 %s: %w", t, err)
 			}
 		}
-		// Then move patch.id itself
 		if err := tx.Exec(`UPDATE patch SET id = id + ?
 			FROM _id_map WHERE patch.id = _id_map.old_id`, offset).Error; err != nil {
 			return fmt.Errorf("pass1 patch.id: %w", err)
 		}
 
-		// ── Pass 2: from offset → final new_id ────────────────
 		for _, t := range childTables {
 			sql := fmt.Sprintf(`UPDATE %q SET patch_id = _id_map.new_id
 				FROM _id_map WHERE %q.patch_id = _id_map.old_id + ?`, t, t)
@@ -396,13 +310,9 @@ func runRemap(db *gorm.DB, mappings []mapping) error {
 			return fmt.Errorf("pass2 patch.id: %w", err)
 		}
 
-		// ── Schema cleanup ────────────────────────────────────
-		// 1. patch.galgame_id is now redundant (== patch.id), drop it.
 		if err := tx.Exec(`ALTER TABLE patch DROP COLUMN galgame_id`).Error; err != nil {
 			return fmt.Errorf("drop patch.galgame_id: %w", err)
 		}
-		// 2. Rename FK columns: child.patch_id → galgame_id (the "patch" id is
-		//    now the galgame id by definition, so the column name should reflect that).
 		for _, t := range childTables {
 			if err := tx.Exec(fmt.Sprintf(
 				`ALTER TABLE %q RENAME COLUMN patch_id TO galgame_id`, t,
@@ -411,13 +321,11 @@ func runRemap(db *gorm.DB, mappings []mapping) error {
 			}
 		}
 
-		// ── Reset sequence ────────────────────────────────────
 		if err := tx.Exec(`SELECT setval(pg_get_serial_sequence('patch', 'id'),
 			(SELECT COALESCE(MAX(id), 1) FROM patch))`).Error; err != nil {
 			return fmt.Errorf("reset patch_id_seq: %w", err)
 		}
 
-		// Re-enable triggers
 		for _, t := range allTables {
 			if err := tx.Exec(fmt.Sprintf(`ALTER TABLE %q ENABLE TRIGGER ALL`, t)).Error; err != nil {
 				return fmt.Errorf("enable triggers on %s: %w", t, err)
@@ -428,23 +336,15 @@ func runRemap(db *gorm.DB, mappings []mapping) error {
 	})
 }
 
-// schemaPhase classifies the current state of the patch / child-table schema
-// so the script can decide whether to run, exit clean, or refuse.
 type schemaPhase int
 
 const (
-	// schemaPending: child tables still have patch_id; safe to run.
 	schemaPending schemaPhase = iota
-	// schemaDone: every child table already has galgame_id and no patch_id;
-	// a previous run completed. Nothing to do.
 	schemaDone
-	// schemaMixed: some child tables migrated, others not. Bail.
 	schemaMixed
-	// schemaUnknown: at least one expected child table has neither column.
 	schemaUnknown
 )
 
-// schemaState inspects every child table and returns the aggregate phase.
 func schemaState(db *gorm.DB) (schemaPhase, error) {
 	pendingCount, doneCount := 0, 0
 	for _, t := range childTables {
@@ -481,15 +381,6 @@ func schemaState(db *gorm.DB) (schemaPhase, error) {
 	return schemaMixed, fmt.Errorf("split state: %d pending, %d done", pendingCount, doneCount)
 }
 
-// writeOrphansFile dumps every skipped patch to a TSV file. Game names live
-// on Wiki and these rows by definition have no Wiki match, so the most useful
-// identifying signals are: the publisher's name + the row counts + creation
-// time. The admin can use the "open" column (a direct moyu URL) to inspect
-// the patch in the browser.
-//
-// Publisher names are resolved in one batch call to OAuth /users/batch (via
-// userclient). If OAuth is unreachable we still write the file with empty
-// names — the publisher_uid alone is enough to look up manually.
 func writeOrphansFile(ctx context.Context, path string, skipped []skip, users *userclient.Client) error {
 	f, err := os.Create(path)
 	if err != nil {
@@ -531,9 +422,6 @@ func writeOrphansFile(ctx context.Context, path string, skipped []skip, users *u
 	return nil
 }
 
-// resolveOrphanPublisherNames batch-fetches user names from OAuth /users/batch
-// for every distinct publisher across the skipped rows. On error it returns
-// an empty map: the orphan report still has publisher_uid, which is enough.
 func resolveOrphanPublisherNames(ctx context.Context, skipped []skip, users *userclient.Client) map[uint]string {
 	idSet := make(map[uint]struct{}, len(skipped))
 	for _, s := range skipped {

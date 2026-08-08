@@ -1,15 +1,5 @@
 package handler
 
-// The old-URL resolver's STATUS LINE, pinned.
-//
-// /tag/:id and /official/:id are pure redirect shells over this route (wave
-// A2-2 / R1), and a shell can only be as honest as the verdict it is handed.
-// Every non-resolving answer here has to be a real status: a shell that gets
-// "no" and still renders 200 is a soft 404 — the crawler keeps the dead URL
-// indexed, keeps spending budget on it, and reads the "已退役" copy as thin
-// content on a live page. So the three verdicts are three status codes, and the
-// fourth case — the resolver itself failing — is deliberately NOT one of them.
-
 import (
 	"io"
 	"net/http"
@@ -23,14 +13,9 @@ import (
 )
 
 func TestResolveTaxonomyIDStatusCodes(t *testing.T) {
-	// The label lane resolves LIVE through the catalog, so it needs an upstream.
-	// The tag lane reads the vendored table and never dials, whatever this says.
 	const (
-		labelHit = `{"code":0,"message":"ok","data":{"label":{"id":8801,"display_name":"Brand"}}}`
-		// The catalog's own miss: the standard envelope + its not-found code.
+		labelHit  = `{"code":0,"message":"ok","data":{"label":{"id":8801,"display_name":"Brand"}}}`
 		labelMiss = `{"code":4,"message":"资源不存在"}`
-		// A ROUTE-level 404 — the router echoing the status into `code`. It is not
-		// a verdict about this official, and must not be reported as one.
 		routeGone = `{"code":404,"message":"Cannot GET /v1/catalog/lookupp"}`
 	)
 
@@ -43,16 +28,13 @@ func TestResolveTaxonomyIDStatusCodes(t *testing.T) {
 		wantBodyHas    string
 	}{
 		{
-			name: "a mapped wiki tag resolves to its successor",
-			path: "/taxonomy/resolve/tag/1",
-			// The first row of the vendored A2-0 artifact: wiki tag 1 -> catalog 55.
+			name:       "a mapped wiki tag resolves to its successor",
+			path:       "/taxonomy/resolve/tag/1",
 			wantStatus: http.StatusOK, wantBodyHas: `"catalog_id":55`,
 		},
 		{
-			name: "a parked wiki tag is GONE, not missing",
-			path: "/taxonomy/resolve/tag/15",
-			// 410: we published this URL and its vocabulary entry is retired
-			// forever. "Never heard of it" would be a different and false claim.
+			name:       "a parked wiki tag is GONE, not missing",
+			path:       "/taxonomy/resolve/tag/15",
 			wantStatus: http.StatusGone,
 		},
 		{
@@ -73,9 +55,6 @@ func TestResolveTaxonomyIDStatusCodes(t *testing.T) {
 			wantStatus: http.StatusNotFound,
 		},
 		{
-			// The case that used to be indistinguishable from the one above: the
-			// catalog never answered, so this URL's fate is UNKNOWN. Reporting 404
-			// would retire a live official because a path was renamed.
 			name:           "an upstream route failure is a failure, not a missing official",
 			path:           "/taxonomy/resolve/official/31",
 			upstreamStatus: http.StatusNotFound, upstreamBody: routeGone,
@@ -104,9 +83,6 @@ func TestResolveTaxonomyIDStatusCodes(t *testing.T) {
 			}))
 			t.Cleanup(upstream.Close)
 
-			// service / users are nil on purpose: this route reads the vendored tag
-			// table and the catalog client, and nothing else. A nil that never
-			// panics is itself the proof.
 			h := New(nil, galgameClient.NewWithKey(upstream.URL, "nm_test_key"), nil, nil)
 			app := fiber.New()
 			app.Get("/taxonomy/resolve/:kind/:id", h.ResolveTaxonomyID)

@@ -14,15 +14,6 @@ func New(db *gorm.DB) *MessageRepository {
 	return &MessageRepository{db: db}
 }
 
-// GetMessages retrieves messages for a user, optionally filtered by type.
-//
-// NOTE: Count and Find MUST run on independent statements. gorm v2 mutates
-// the shared *gorm.DB in place once a chain has been cloned, and Count leaves
-// `SELECT count(*)` on the statement. Reusing the same builder for the
-// subsequent Find produced `SELECT count(*) ... LIMIT n`, scanning one count
-// row into []UserMessage — i.e. an always-empty message list while `total`
-// still looked correct. `.Session(&gorm.Session{})` forks a fresh statement
-// for each finisher so they can't pollute each other.
 func (r *MessageRepository) GetMessages(recipientID int, msgType string, offset, limit int) ([]model.UserMessage, int64, error) {
 	var messages []model.UserMessage
 	var total int64
@@ -41,7 +32,6 @@ func (r *MessageRepository) GetMessages(recipientID int, msgType string, offset,
 	return messages, total, err
 }
 
-// GetUnreadTypes returns distinct types of unread messages
 func (r *MessageRepository) GetUnreadTypes(recipientID int) ([]string, error) {
 	var types []string
 	err := r.db.Model(&model.UserMessage{}).
@@ -50,7 +40,6 @@ func (r *MessageRepository) GetUnreadTypes(recipientID int) ([]string, error) {
 	return types, err
 }
 
-// MarkAsRead marks messages as read by type (or all if type is "all")
 func (r *MessageRepository) MarkAsRead(recipientID int, msgType string) error {
 	query := r.db.Model(&model.UserMessage{}).Where("recipient_id = ? AND status = 0", recipientID)
 	if msgType != "all" {

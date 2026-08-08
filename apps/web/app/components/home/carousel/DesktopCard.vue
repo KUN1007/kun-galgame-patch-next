@@ -3,8 +3,6 @@ import { aboutDirectoryLabelMap } from '~/constants/about'
 
 interface Props {
   post: HomeCarouselMetadata
-  // First slide only: keep its banner eager / high-priority for the LCP; the
-  // rest of the (now all-rendered) carousel slides lazy-load.
   eager?: boolean
 }
 
@@ -15,13 +13,6 @@ const post = computed(() => props.post)
 
 <template>
   <div v-if="post" class="group hidden h-full sm:block">
-    <!-- `block` overrides KunImage's default inline-block wrapper so the
-         carousel's h-full chain (parent h-[300px] / md:h-full → this h-full)
-         can actually take effect. Without it the wrapper is inline-block
-         0×0 pre-load and the whole carousel column collapses. -->
-    <!-- provider="none": banners are already-optimized URLs (image_service CDN
-         webp, or a static /posts/*.avif fallback) — skip the IPX round-trip,
-         which would also reject the external CDN host (not in image.domains). -->
     <KunImage
       :src="post.banner"
       :alt="post.title"
@@ -43,7 +34,6 @@ const post = computed(() => props.post)
       <div class="flex justify-between">
         <div>
           <div class="mb-2 flex items-center gap-3">
-            <!-- size="sm" is size-6, i.e. the same box the raw KunImage had. -->
             <KunAvatar :user="post.author" size="sm" />
             <span class="text-foreground/80 text-sm">
               {{ post.author.name }}

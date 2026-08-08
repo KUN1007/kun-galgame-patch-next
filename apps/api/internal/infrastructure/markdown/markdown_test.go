@@ -13,9 +13,6 @@ func TestMentionLink(t *testing.T) {
 		in   string
 		want string
 	}{
-		// rel="nofollow" is appended by the bluemonday sanitize pass (UGCPolicy)
-		// to every rendered <a>; the mention chip (class + data-id) and the
-		// relative internal href both survive it.
 		{
 			name: "mention with /resource sub-route",
 			in:   "hi [@kun](/user/1/resource) hello",
@@ -74,13 +71,6 @@ func TestRenderEmptyString(t *testing.T) {
 	}
 }
 
-// TestRenderSanitizesRawHTML locks the server-side XSS boundary: goldmark runs
-// with WithUnsafe (raw user HTML passes through) and the bluemonday allow-list
-// (sanitize.go) neutralizes it. This is the only sanitizer now that the frontend
-// binds *_html via v-html with no client-side DOMPurify — each `bad` substring
-// (a live element, event handler, or unsafe scheme) must NOT survive. Note the
-// property is "neutralized", not "escaped": a dangerous attribute is stripped
-// while a safe carrier tag may remain (e.g. <img onerror> → <img src>).
 func TestRenderSanitizesRawHTML(t *testing.T) {
 	cases := []struct{ name, in, bad string }{
 		{"script element", `<script>alert(1)</script>`, "<script"},
@@ -101,11 +91,6 @@ func TestRenderSanitizesRawHTML(t *testing.T) {
 	}
 }
 
-// TestSanitizePreservesRichContent is the companion to the XSS test: the
-// allow-list must NOT strip anything this package's renderers legitimately emit,
-// or real content silently breaks. Each `want` substring is a feature the policy
-// has to let through (mention chip, image blur-up metadata, heading anchor, code
-// language class, GFM task-list + table alignment, internal relative link).
 func TestSanitizePreservesRichContent(t *testing.T) {
 	cases := []struct{ name, in, want string }{
 		{"mention chip class + data-id", "[@kun](/user/1)", `class="kun-mention" data-id="1"`},
@@ -126,10 +111,6 @@ func TestSanitizePreservesRichContent(t *testing.T) {
 	}
 }
 
-// TestRenderStripsDangerousURLs locks goldmark's html.IsDangerousURL behavior
-// for markdown links/images: javascript:/vbscript:/data: destinations must be
-// dropped (href/src emitted empty), so a crafted [x](javascript:…) or
-// ![x](javascript:…) can't execute when the HTML is bound with v-html.
 func TestRenderStripsDangerousURLs(t *testing.T) {
 	cases := []struct{ name, in, bad string }{
 		{"javascript link", "[x](javascript:alert(1))", "javascript:"},
@@ -187,7 +168,6 @@ func TestRenderWithTOCChineseHeadings(t *testing.T) {
 		}
 	}
 
-	// HTML should carry the same id values so anchor links work.
 	for _, item := range toc {
 		needle := `id="` + item.ID + `"`
 		if !strings.Contains(html, needle) {
@@ -225,9 +205,6 @@ func TestRenderWithTOCSkipsHeadingsBeyondLevel3(t *testing.T) {
 func TestContentImageTokenResolution(t *testing.T) {
 	const hash = "278c8e45bb9622b74b6cccd200477aacb05c509c0b9632674eeb5972ab04acdf"
 
-	// With a resolver wired, an exact /image/<hash> token is rewritten to the
-	// resolved CDN URL; everything else (absolute URLs, malformed tokens) passes
-	// through unchanged.
 	markdown.SetContentImageResolver(func(h string) string {
 		return "https://cdn.example.com/" + h[:2] + "/" + h[2:4] + "/" + h + ".webp"
 	})
@@ -265,8 +242,6 @@ func TestContentImageTokenResolution(t *testing.T) {
 }
 
 func TestContentImageTokenWithoutResolverIsLeftAsIs(t *testing.T) {
-	// No resolver wired (the default) → the token stays as-is, so the web
-	// /image/:hash 302 route resolves it at request time.
 	const hash = "278c8e45bb9622b74b6cccd200477aacb05c509c0b9632674eeb5972ab04acdf"
 	out := markdown.MustRender("![pic](/image/" + hash + ")")
 	if !strings.Contains(out, `src="/image/`+hash+`"`) {

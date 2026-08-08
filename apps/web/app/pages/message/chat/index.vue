@@ -14,10 +14,6 @@ const { data: rooms, pending } = await useAsyncData<ChatRoomSummary[]>(
   { default: () => [] }
 )
 
-// 加入测试群组 — the site provides one public group whose link is "kun"
-// (restored from the legacy next-web ChatHint / CreateGroupChatModal default).
-// JoinRoomByLink is idempotent (AddMember = ON CONFLICT DO NOTHING), so this is
-// safe to click whether or not the user is already a member; then we open it.
 const joining = ref(false)
 const joinTestGroup = async () => {
   if (!requireLogin()) return
@@ -42,7 +38,6 @@ const joinTestGroup = async () => {
     <KunLoading v-if="pending" description="正在加载聊天室..." />
 
     <template v-else>
-      <!-- Existing rooms -->
       <NuxtLink
         v-for="room in rooms"
         :key="room.link"
@@ -84,7 +79,6 @@ const joinTestGroup = async () => {
         </span>
       </NuxtLink>
 
-      <!-- Welcome + help hint (restored from the legacy next-web ChatHint). -->
       <KunCard :bordered="true">
         <div class="flex flex-col items-center gap-6 p-4 text-center md:p-6">
           <div class="flex flex-col items-center gap-2">
@@ -193,8 +187,6 @@ const joinTestGroup = async () => {
             </div>
           </div>
 
-          <!-- 加入测试群组: the public group "kun" — "已经为大家提供了一个
-               网站的公共群组, 快点击加入来聊天吧~" -->
           <div class="w-full space-y-2 md:w-4/5">
             <p class="text-default-500 text-sm">
               我们已经为大家提供了一个网站的公共测试群组, 快点击加入来聊天吧~

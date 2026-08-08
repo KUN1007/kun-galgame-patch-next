@@ -1,33 +1,12 @@
 <script setup lang="ts">
 import type { KunUIColor } from '@kungal/ui-core'
 import { kunMoyuMoe } from '~/config/moyu-moe'
-// "My submissions" page — proxies GET /galgame/mine, which since wave 161 reads
-// the registry's per-user claim face rather than the wiki's own list.
-//
-// Shows the caller's open submissions so they can:
-//   - See current state (审核中 / 已拒绝 with the reviewer's note)
-//   - Re-edit a declined submission (on kungal, which owns the edit face)
-//   - Withdraw it via DELETE /galgame/:gid
-//
-// "Withdraw" no longer deletes anything. A registry row is an identity, and an
-// identity does not vanish because a product withdrew a submission: the entry
-// goes back to unclaimed and can be picked up again, by this user or another.
-// The copy says 撤回 and means it.
 
-// Private listing of the caller's own wiki submissions (includes pending /
-// declined drafts). Nothing here that anyone but the owner should see, so
-// disable SEO.
 useKunDisableSeo('我的提交')
 
 const route = useRoute()
 const api = useApi()
 
-// Unauthed users see the login modal in place (via <AuthRequired> in the
-// template), not a redirect to home — see edit/create.vue for the reasoning.
-
-// One row of the per-user claim face. `product_work_id` is the id moyu keys its
-// own pages by; it is null only for a claim with no product anchor, which a
-// submission always has.
 interface MineItem {
   work_id: number
   display_name: string
@@ -54,9 +33,6 @@ const { data, pending, refresh } = await useAsyncData<MineResp>(
   { default: () => ({ items: [], total: 0 }) }
 )
 
-// The id every moyu URL is keyed by. For an entry created after the switchover
-// the registry work id and the product id are the same number; for a wiki-era
-// one the product id is its old gid, so read the anchor and never the work id.
 const patchID = (m: MineItem): number => m.product_work_id ?? m.work_id
 
 const displayName = (m: MineItem): string => m.display_name || `#${patchID(m)}`
@@ -67,7 +43,6 @@ const stateLabel = (s: string): { text: string; color: KunUIColor } => {
   return { text: s, color: 'default' }
 }
 
-// ─── Withdraw (DELETE /galgame/:gid) ──────────────────
 const withdrawing = ref<number | null>(null)
 const handleWithdraw = async (m: MineItem) => {
   const ok = await useKunAlert({
@@ -89,10 +64,7 @@ const handleWithdraw = async (m: MineItem) => {
   }
 }
 
-// ─── Edit (open the draft on kungal) ──────────────────
 const handleEdit = async (m: MineItem) => {
-  // Galgame metadata editing moved to kungal — open the game's kungal page,
-  // which carries the edit entry. External (cross-origin) navigation.
   await navigateTo(`${kunMoyuMoe.domain.kungal}/galgame/${patchID(m)}`, {
     external: true
   })
@@ -133,7 +105,6 @@ const handleEdit = async (m: MineItem) => {
             </div>
           </div>
 
-          <!-- Declined: surface the admin reason inline -->
           <div
             v-if="m.claim_state === 'declined' && m.last_reason"
             class="border-danger/30 bg-danger/10 rounded-lg border p-3 text-sm"

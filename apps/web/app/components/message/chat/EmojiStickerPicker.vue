@@ -1,6 +1,4 @@
 <script setup lang="ts">
-// Ported from next-web EmojiStickerPicker.tsx. Two tabs: emoji (inserted at
-// caret) and stickers (sent immediately as a message).
 import { emojiArray } from '~/constants/emoji'
 
 const emit = defineEmits<{

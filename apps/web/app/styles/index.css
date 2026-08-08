@@ -1,121 +1,39 @@
-/*
- * Tailwind entry — moyu OWNS it now. The published @kungal/ui-nuxt layer ships
- * no Tailwind entry of its own (unlike the old in-repo @kun/ui layer that
- * auto-loaded its theme), so the three required lines live here. Order matters:
- *   1. tailwindcss        — must come first; KunUI never imports it for you.
- *   2. @kungal/ui-tokens  — theme tokens (colors 50–950, rounded-kun-*, z-kun-*,
- *                           keyframes, the `.kun-dark-mode` dark variant) + base
- *                           layer (page bg, font stack, .scrollbar-hide/visible).
- *   3. @kungal/ui-vue/style.css — components' scoped styles (modal/drawer/
- *                           lightbox transitions, spoiler blur, toast anims).
- */
 @import 'tailwindcss';
 @import '@kungal/ui-tokens';
 @import '@kungal/ui-vue/style.css';
-/* @kungal/editor-nuxt's KunUI toolbar/view-switch use raw Tailwind utilities
-   (grid-cols-*, aspect-square, …). Tailwind ignores node_modules, so this file
-   carries a self-relative `@source "./runtime"` — one @import wires the scan,
-   layout-independent (no manual `@source ../../node_modules/...`). Without it the
-   sticker/emoji grid collapses. */
 @import '@kungal/editor-nuxt/tailwind.css';
 
-/* overlayscrollbars base structure (the .os-* layout/visibility rules). The
-   editor's handle is themed in editor.css via --os-* custom properties; this is
-   only the unstyled skeleton, so it must load before our overrides below. */
 @import 'overlayscrollbars/overlayscrollbars.css';
 
-/* moyu-specific styles (prose / editor / code theme — not KunUI primitives). */
 @import './prose.css';
 @import './editor.css';
 @import './editor/code-mirror.css';
 @import './editor/katex.css';
 @import './code-theme.css';
-/* Reference styling for the headless @kungal/editor-vue <KunEditor> hooks
-   (.kun-editor__*, .kun-mention-dropdown*). Loaded LAST so it wins ties against
-   the legacy editor.css prose rules on the shared .ProseMirror surface. */
 @import './kun-editor.css';
 
-/*
- * Tailwind v4 ignores node_modules, so it won't see the compiled KunUI classes
- * (inline-flex, bg-primary, rounded-kun-md, …) unless we point it there. Paths
- * are relative to THIS file (apps/web/app/styles/index.css → ../../node_modules).
- */
 @source '../../node_modules/@kungal/ui-vue';
 @source '../../node_modules/@kungal/ui-core';
 
-/* ─── Global corner-radius knob ─────────────────────────────────────────
- * ONE control for every corner radius on the site. Change --kun-radius-scale
- * to make the whole UI rounder (>1) or sharper (<1); 1 = the current look
- * (0 = square everywhere, 1.5 = 50% rounder, 2 = very round). `rounded-full` /
- * `rounded-none` are intentionally NOT scaled (avatars/pills/switches stay
- * circular; square stays square).
- *
- * This drives BOTH radius systems off the same variable:
- *   - moyu's own Tailwind `rounded-*` → the --radius-* overrides below
- *     (un-layered :root so they beat Tailwind's @theme defaults).
- *   - every KunUI component → @kungal/ui-tokens@>=0.5.1 defines its
- *     --radius-kun-* as calc(base * var(--kun-radius-scale, 1)) itself, so it
- *     reads this variable natively. (We deliberately do NOT redeclare
- *     --radius-kun-* here — the token's own :root wins that cascade, which is
- *     why a direct override had no effect.)
- *
- * The base values below are ALIGNED to KunUI 0.9.0's HeroUI-style scale so
- * moyu's own rounded elements match the components beside them. KunUI:
- * sm=6px, md=12px (the default radius of every control / card), lg=16px
- * (containers / floating panels). Mapped BY ROLE, not by name — moyu's
- * workhorse `rounded-lg` (cards / panels / banners, ~78 uses) is its default
- * card radius, so it maps to KunUI's default 12px (md); the larger buckets
- * step up to KunUI's 16px container radius. Pre-0.9 these were the stock
- * Tailwind values (lg=8px) which read noticeably squarer than the upgraded
- * KunUI components. `rounded` (bare) is a Tailwind literal (4px), not driven
- * by these vars — left as-is (≈ KunUI sm). */
 :root {
   --kun-radius-scale: 1;
 
-  /* ─── Surface opacity knob ──────────────────────────────────────────────
-   * Force every raised / glassy surface fully OPAQUE (no see-through popups).
-   * kun-ui ships two alpha tokens: --kun-surface-opacity (content1 — cards,
-   * modals, popovers, dropdowns, drawers, inputs; already 1) and
-   * --kun-global-opacity (bg-background + bg-default-100 "glass" surfaces,
-   * default 0.7 → translucent). moyu wants solid popup / menu backgrounds, so
-   * pin BOTH to 1. The modal scrim keeps its own dimming (it uses
-   * bg-default-800/70, not these tokens), so overlays still dim the page. */
   --kun-surface-opacity: 1;
   --kun-global-opacity: 1;
 
-  /* Tailwind scale → moyu's own rounded-xs … rounded-3xl, aligned to KunUI */
-  --radius-xs: calc(0.25rem * var(--kun-radius-scale)); /* 4px */
-  --radius-sm: calc(0.375rem * var(--kun-radius-scale)); /* 6px  = KunUI sm */
-  --radius-md: calc(0.5rem * var(--kun-radius-scale)); /* 8px */
-  --radius-lg: calc(0.75rem * var(--kun-radius-scale)); /* 12px = KunUI md (default card/control) */
-  --radius-xl: calc(1rem * var(--kun-radius-scale)); /* 16px = KunUI lg (containers/panels) */
-  --radius-2xl: calc(1rem * var(--kun-radius-scale)); /* 16px = KunUI lg */
-  --radius-3xl: calc(1.25rem * var(--kun-radius-scale)); /* 20px  hero surfaces */
+  --radius-xs: calc(0.25rem * var(--kun-radius-scale));
+  --radius-sm: calc(0.375rem * var(--kun-radius-scale));
+  --radius-md: calc(0.5rem * var(--kun-radius-scale));
+  --radius-lg: calc(0.75rem * var(--kun-radius-scale));
+  --radius-xl: calc(1rem * var(--kun-radius-scale));
+  --radius-2xl: calc(1rem * var(--kun-radius-scale));
+  --radius-3xl: calc(1.25rem * var(--kun-radius-scale));
 }
 
-/* Bare `rounded` (no suffix) is a Tailwind LITERAL (.rounded{border-radius:.25rem}),
- * NOT driven by --radius-*, so on its own it neither scales with --kun-radius-scale
- * nor aligns with the rest of the radii. One un-layered override fixes EVERY bare
- * `rounded` at once — current and future — by pointing it at --radius-sm (= the
- * value `rounded-sm` already resolves to; in Tailwind v4 bare `rounded` and
- * `rounded-sm` are the same 0.25rem bucket, so this just keeps them in lockstep).
- * Un-layered so it beats Tailwind's `@layer utilities .rounded`. NB: this does NOT
- * reach `@apply rounded` (that inlines the literal at build time) — those are
- * written as `@apply rounded-sm` directly in prose.css / editor.css. */
 .rounded {
   border-radius: var(--radius-sm);
 }
 
-/* ─── Opaque modal backdrop ─────────────────────────────────────────────────
- * The opacity tokens above make raised surfaces (content1 panels) + glassy
- * surfaces (background / default-100) opaque, but the MODAL SCRIM is separate:
- * KunModal hard-codes its overlay's backdrop at `bg-default-800/70`
- * (`dark:bg-background/70`) — an independent 70% alpha the tokens don't touch,
- * which is why the page still showed through behind an open modal. Pin that
- * backdrop to full opacity, mirroring the original light/dark colours. The scrim
- * is the first child of the modal container (`.z-kun-modal`); scoping to that
- * class leaves drawers / lightboxes (other `[data-kun-overlay]`s) untouched.
- * Un-layered so it beats the Tailwind `bg-*/70` utilities. */
 .z-kun-modal > div:first-child {
   background-color: oklch(var(--default-800));
 }
@@ -123,15 +41,6 @@
   background-color: oklch(var(--background));
 }
 
-/* ─── Opaque modal panel ────────────────────────────────────────────────────
- * Separate from the scrim above: KunUI's .kun-modal-panel hard-codes
- * `bg-content1/85` — a Tailwind /85 alpha modifier baked into the component
- * class, INDEPENDENT of --kun-surface-opacity (which only sets content1's own
- * alpha). So the panel stays 85% see-through even though the surface tokens are
- * pinned to 1 above. Force it fully opaque with solid content1; the --content1
- * triplet swaps light/dark, so one rule adapts to both. The panel's kun-backdrop
- * blur is kept (now invisible behind the opaque bg) so its open/close transform
- * animation is unchanged. Un-layered → beats the Tailwind utilities layer. */
 .kun-modal-panel {
   background-color: oklch(var(--content1));
 }
@@ -139,35 +48,18 @@
 @layer base {
   html,
   body {
-    /* Root container needs a solid background; otherwise .kun-dark-mode only
-       changes CSS variables and nothing in the DOM paints, so the browser
-       default white bleeds through. The raw --background/--foreground channel
-       vars are OKLCH triplets since @kungal/ui-tokens 1.7.0 (was HSL) — wrap in
-       oklch(), not hsl(), or they'd parse as black. Solid (no alpha) since
-       there's nothing behind the root to composite. */
     background-color: oklch(var(--background));
     color: oklch(var(--foreground));
     min-height: 100vh;
   }
 
   html {
-    /* Reserve the root scrollbar's gutter permanently. When a modal/drawer
-       locks page scroll (useScrollLock -> overflow:hidden), the scrollbar
-       would otherwise vanish and the page would reflow ~15px wider — the
-       visible "jump". A stable gutter keeps the width constant either way.
-       This is the ONLY page-scroll change: the scrollbar's own look (width /
-       color) is left fully native by request — only the editor's bar is
-       restyled (overlayscrollbars). */
     scrollbar-gutter: stable;
   }
 }
 
 cropper-canvas {
   background: color-mix(in oklab, var(--color-default) 20%, transparent);
-  /* Fixed, viewport-bounded crop area so the cropper is a consistent size for
-     any source image (small / portrait / huge) instead of sizing to the image's
-     intrinsic dimensions. The image is fitted inside via image.$center('contain').
-     Responsive: ~52vh on desktop, smaller on short/mobile screens. */
   width: 100%;
   height: clamp(220px, 52vh, 560px);
 }
@@ -180,24 +72,6 @@ cropper-handle[action='select'] {
   background: color-mix(in oklab, var(--color-primary) 20%, transparent);
 }
 
-/* overlayscrollbars handle theme for <KunOverlayScroll>, so the bar reads as
-   part of moyu instead of the library's stock grey.
-
-   Two things this selector has to get right, both of which fail SILENTLY:
-
-   1. It targets `.os-scrollbar`, NOT the host. overlayscrollbars.css declares
-      every --os-* default ON the scrollbar element itself (--os-handle-bg: none
-      etc.), so a value set on the host never reaches it — the element's own
-      declaration always wins over inheritance. Two class levels also put this
-      above the built-in .os-theme-dark, which is applied to the same element.
-   2. Colours are oklch(var(--default-N)) — the RAW KunUI tokens, which hold
-      bare oklch components. The Tailwind-namespaced `var(--color-default-N)`
-      does NOT exist at runtime here; it resolves to nothing and the handle
-      turns invisible.
-
-   The tokens flip under .kun-dark-mode by themselves, so this one rule covers
-   both colour modes with no JS theme swap. Structural bits (track radius,
-   interactive area) stay with the default theme. */
 .kun-os-scroll .os-scrollbar {
   --os-size: 10px;
   --os-padding-perpendicular: 2px;
@@ -207,9 +81,6 @@ cropper-handle[action='select'] {
   --os-handle-bg-active: oklch(var(--default-500));
 }
 
-/* Deep-link highlight: briefly flash a comment scrolled to via
-   /patch/:id/comment#comment-:id. Global (unscoped) because the target lives in
-   a child component (comment/Item.vue). */
 @keyframes kun-comment-flash {
   0%,
   25% {

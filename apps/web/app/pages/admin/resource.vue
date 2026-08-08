@@ -36,9 +36,6 @@ const askDelete = (r: AdminResourceItem) => {
   deleteOpen.value = true
 }
 
-// Mirrors the game-detail resource delete: an admin records an optional reason
-// that the service forwards to the author's notification + the admin audit log
-// (the service only notifies when the author isn't the acting admin).
 const confirmDelete = async () => {
   const r = pendingDelete.value
   if (!r) return
@@ -60,10 +57,6 @@ const confirmDelete = async () => {
   }
 }
 
-// ─── MOYU-PR5 / M3 — Resource file replacement history modal ────────────
-// Surfaces patch_resource_file_history rows for one resource so admins can
-// trace "this download is broken" complaints to who/when/why the file was
-// swapped. Reads /api/v1/admin/resource/:id/history (paginated).
 interface FileHistoryItem {
   id: number
   resource_id: number
@@ -205,7 +198,6 @@ const histTotalPages = computed(() =>
       />
     </div>
 
-    <!-- MOYU-PR5 / M3 — File history modal -->
     <KunModal v-model="deleteOpen" inner-class-name="max-w-md">
       <div class="space-y-4 py-2">
         <h3 class="text-lg font-bold">删除补丁资源？</h3>

@@ -13,8 +13,6 @@ import (
 	"time"
 )
 
-// MockServer is an in-process HTTP server that satisfies the OAuth
-// /users/batch and /users/search contracts using an in-memory map.
 type MockServer struct {
 	Server *httptest.Server
 
@@ -22,8 +20,6 @@ type MockServer struct {
 	users map[uint]*Brief
 }
 
-// NewMockServer starts a test HTTP server that serves the given users.
-// Caller is responsible for Close().
 func NewMockServer(users map[uint]*Brief) *MockServer {
 	ms := &MockServer{users: cloneUserMap(users)}
 	mux := http.NewServeMux()
@@ -33,8 +29,6 @@ func NewMockServer(users map[uint]*Brief) *MockServer {
 	return ms
 }
 
-// NewMock returns a Client backed by an in-memory MockServer. The server is
-// shut down via t.Cleanup.
 func NewMock(t *testing.T, users map[uint]*Brief) *Client {
 	t.Helper()
 	ms := NewMockServer(users)
@@ -48,7 +42,6 @@ func NewMock(t *testing.T, users map[uint]*Brief) *Client {
 	})
 }
 
-// Set replaces or adds a user.
 func (m *MockServer) Set(u *Brief) {
 	m.mu.Lock()
 	defer m.mu.Unlock()

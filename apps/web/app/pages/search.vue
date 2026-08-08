@@ -1,30 +1,14 @@
 <script setup lang="ts">
 import { useDebounceFn } from '@vueuse/core'
 
-// The /search endpoint is intentionally exempt from the global content_limit
-// gate (returns sfw + nsfw together — it's a user-initiated action), which
-// means a crawler hitting /search?q=<nsfw-term> WOULD see NSFW result names
-// in the SSR HTML. Disable SEO on this surface so:
-//   1. /search?q=... URLs don't get indexed at all (avoids polluting search
-//      results with our internal search pages)
-//   2. crawlers ignore the dynamic NSFW-bearing payload regardless of query
 useKunDisableSeo('搜索')
 
-// keepalive: returning from a result restores the search (query / results /
-// page / scroll) instead of remounting and clearing. Safe here — /search is a
-// static route and its state lives in local refs (not route-param computeds),
-// so nothing misfires while the page is cached. Mirrors kungal's search page.
-// Kept alive via the central include list in app.vue, keyed by this name.
 defineOptions({ name: 'search-page' })
 
 const route = useRoute()
 const router = useRouter()
 const api = useApi()
 
-// Two search modes:
-//   - 'galgame' : full-text Galgame search (Meilisearch via POST /search)
-//   - 'model'   : find patch resources by AI-translation model name
-//                 (GET /resource?model=…); results link to /resource/:id
 type SearchMode = 'galgame' | 'model'
 const mode = ref<SearchMode>(
   route.query.mode === 'model' ? 'model' : 'galgame'
@@ -34,12 +18,6 @@ const query = ref(String(route.query.q ?? ''))
 const page = ref(Number(route.query.page ?? 1))
 const limit = 24
 
-// The one search-scope toggle. It widens free-text matching from titles to
-// SYNOPSES (`search_intro` on the catalog works search). Off by default: the
-// narrow search is the high-precision one, and a title hit outranks a synopsis
-// hit regardless. It briefly disappeared in wave A2-2 — the catalog index had
-// no synopsis lane yet, and a checkbox that silently does nothing is worse than
-// no checkbox — and came back with A2-1f.
 const searchInIntroduction = ref(false)
 
 const results = ref<GalgameCard[]>([])
@@ -48,10 +26,6 @@ const total = ref(0)
 const loading = ref(false)
 const hasSearched = ref(false)
 
-// Backend /search delegates to Wiki and returns SearchHit items: the flat
-// GalgameHit fields (name_zh_cn, ...) + has_patch + optional local patch row.
-// GalgameCard.vue expects the enriched shape (name: KunLanguage, count, ...),
-// so map every hit into that shape with safe zero defaults.
 interface SearchHit {
   id: number
   vndb_id: string
@@ -60,24 +34,11 @@ interface SearchHit {
   name_zh_cn: string
   name_zh_tw: string
   banner: string
-  // The pinned cover arrives as a content-addressed HASH, and the legacy
-  // absolute `banner` URL is now always empty on this face — resolveBannerUrl
-  // prefers the hash and only falls back to that URL. So these have to ride
-  // along into the card shape; without them every result card resolves to ''
-  // and renders the placeholder logo instead of its cover.
-  //
-  // The intrinsic dims are deliberately NOT carried: GalgameCard pins a 16:9
-  // box for the uniform grid (and `mini` is a 460×259 thumbnail), so the real
-  // aspect ratio has nothing to change here.
   effective_banner_hash?: string
   effective_banner_thumbhash?: string
   content_limit: string
   release_date?: string | null
   has_patch: boolean
-  // The backend returns the FULL local patch row when this galgame has one here
-  // — the same fields the /galgame card is built from (enricher baseCard). Map
-  // them so search cards match the /galgame cards (tags, counts, stats) instead
-  // of showing empty/zero. Absent (galgame with no patch here) → safe defaults.
   patch?: {
     id: number
     view?: number
@@ -159,8 +120,6 @@ const searchModel = async (q: string) => {
 }
 
 const searchGalgame = async (q: string) => {
-  // Wire shape matches backend SearchRequest: `q` string, flat filters,
-  // required page/limit. Response is response.Paginated → data.{items,total}.
   const res = await api.post<{ items: SearchHit[]; total: number }>('/search', {
     q,
     page: page.value,
@@ -205,7 +164,6 @@ const debouncedSearch = useDebounceFn(() => {
 watch([query, searchInIntroduction], () => {
   debouncedSearch()
 })
-// Mode switches re-search immediately (a deliberate action, not typing).
 watch(mode, () => {
   page.value = 1
   resetResults()
@@ -231,7 +189,6 @@ const onChangePage = (v: number) => {
       description="搜索本站的 Galgame 补丁，或按模型搜索补丁资源"
     />
 
-    <!-- mode toggle -->
     <div class="flex flex-wrap gap-2">
       <KunButton
         :variant="mode === 'galgame' ? 'flat' : 'light'"
@@ -274,7 +231,6 @@ const onChangePage = (v: number) => {
 
     <KunLoading v-if="loading" description="正在搜索..." />
 
-    <!-- Galgame results -->
     <div
       v-else-if="mode === 'galgame' && results.length"
       class="grid grid-cols-2 gap-2 sm:gap-6 lg:grid-cols-3 xl:grid-cols-4"
@@ -282,7 +238,6 @@ const onChangePage = (v: number) => {
       <GalgameCard v-for="p in results" :key="p.id" :patch="p" />
     </div>
 
-    <!-- Model (resource) results — link to /resource/:id via ResourceCard -->
     <div
       v-else-if="mode === 'model' && resourceResults.length"
       class="grid grid-cols-1 gap-3 sm:gap-6 md:grid-cols-2"

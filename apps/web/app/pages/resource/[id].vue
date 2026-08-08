@@ -30,23 +30,17 @@ const {
     )
     return res.code === 0 ? res.data : null
   },
-  // deep:true — Nuxt 4 data is a shallowRef by default, so toggling the favorite
-  // (resource.value.is_favorite = …, a nested mutation) wouldn't re-render.
   { deep: true }
 )
 
 const resource = computed(() => detail.value?.resource ?? null)
 
-// note_html is server-rendered (goldmark, no html.WithUnsafe → already
-// sanitized at the source), so bind it directly without a client sanitizer.
 const noteHtml = computed(() => resource.value?.note_html ?? '')
 
 const patchName = computed(() =>
   detail.value?.patch ? getPreferredLanguageText(detail.value.patch.name) : ''
 )
 
-// Alternate-language names of the owning game (shown under the game title in
-// the header, mirroring patch/[id].vue).
 const patchAlias = computed(() => {
   const p = detail.value?.patch
   if (!p) return [] as string[]
@@ -55,8 +49,6 @@ const patchAlias = computed(() => {
   )
 })
 
-// The resource's OWN title — this is what users came to see ("某某汉化补丁").
-// Falls back to "<游戏名> 的补丁资源" when the uploader left it blank.
 const resourceTitle = computed(() => {
   const r = resource.value
   if (!r) return ''
@@ -69,9 +61,6 @@ const updateTimeLabel = computed(() => {
   return formatDistanceToNow((r.update_time as string) || r.created)
 })
 
-// Composed SEO title (drives <title> only, not the visible heading):
-//   {gameName}{platforms}{languages}{modelName}{types}资源下载
-// e.g. ヴァンパイアクルセイダーズWindows简体中文claude-opus-4.7AI 翻译补丁资源下载
 const mapJoin = (arr: string[] | undefined, m: Record<string, string>) =>
   (arr ?? []).map((k) => m[k] ?? k).join('')
 
@@ -102,10 +91,6 @@ const storageIcon = computed(() =>
   resource.value?.storage === 's3' ? 'lucide:cloud' : 'lucide:link'
 )
 
-// ─── 资源下载 / 更改历史 tabs ──────────────────────────
-// Lifted up here rather than fetched inside the panel: the tab SET depends on
-// whether there is any history at all, and settling that a tick late would
-// visibly flip the bar from one tab to two.
 const {
   items: revisionItems,
   total: revisionTotal,
@@ -136,7 +121,6 @@ const {
   onRemoved
 } = useCommentList(commentTarget)
 
-// Shared by the bar and the panels so their aria wiring lines up.
 const PANEL_GROUP = 'resource-detail'
 const activePanel = ref('download')
 
@@ -144,8 +128,6 @@ const panelTabs = computed(() => {
   const tabs = [
     { value: 'download', textValue: '资源下载', icon: 'lucide:download-cloud' }
   ]
-  // No history → no tab, rather than a tab onto an empty state. Most resources
-  // have never been edited.
   if (hasHistory.value) {
     tabs.push({
       value: 'history',
@@ -156,18 +138,12 @@ const panelTabs = computed(() => {
   return tabs
 })
 
-// ─── Download (fire-and-forget counter bump) ──────────
 const onDownload = () => {
   if (!resource.value) return
   api.put(`/patch/resource/${resource.value.id}/download`).catch(() => {})
   if (detail.value) detail.value.resource.download += 1
 }
 
-// ─── Favorite THIS resource (update subscription) ──
-// Notifies you when this resource's download link / file changes. Game-level
-// 点赞 / 收藏游戏 live on the game page (/patch/:id) — this page is scoped to the
-// single resource, so it only exposes 收藏资源 (removes the like/favorite mix-up).
-// Writable v-model for KunReaction; the setter mutates the (reactive) resource.
 const isResourceFavorite = computed({
   get: () => resource.value?.is_favorite ?? false,
   set: (v) => {
@@ -197,25 +173,13 @@ const onResourceFavoriteChange = async (active: boolean) => {
   }
 }
 
-// ─── Edited via the ⋮ menu ────────────────────────────
-// ResourcePublish's edit mode returns the server-rendered row (note_html and
-// update_time both re-resolved server-side), so swapping it straight in
-// refreshes the note and the 最后更新于 line with no refetch. The nested
-// assignment re-renders because this useAsyncData is deep.
 const onResourceEdited = (updated: PatchResourceHtml) => {
   if (detail.value) detail.value.resource = updated
 }
 
-// ─── Recommendations preview helper ───────────────────
 const recName = (r: PatchResource) =>
   r.name || (r.patch ? getPreferredLanguageText(r.patch.name) : '补丁资源')
 
-// SEO contract (same shape as patch/[id].vue):
-//   - loaded + sfw owning patch → full metadata + structured data
-//   - loaded + nsfw owning patch → disabled (this page exposes the game's name
-//     and the uploader's note → must not index)
-//   - null / not-found → disabled
-// See useResourceSeo for the whole of it.
 useResourceSeo(detail, { title: composedTitle, commentCount: commentTotal })
 </script>
 
@@ -224,7 +188,6 @@ useResourceSeo(detail, { title: composedTitle, commentCount: commentTotal })
     <KunLoading v-if="pending" description="加载资源中..." />
 
     <template v-else-if="detail && resource">
-      <!-- ── Game header (basic game info only) ──────────── -->
       <div
         class="bg-content1 shadow-kun-sm mb-6 overflow-hidden rounded-3xl"
       >
@@ -234,8 +197,6 @@ useResourceSeo(detail, { title: composedTitle, commentCount: commentTotal })
             :to="`/patch/${detail.patch.id}/introduction`"
             class="group shrink-0"
           >
-            <!-- Real aspect ratio (fallback 16/9 pre-backfill) + ThumbHash
-                 blur-up so a portrait cover isn't cropped to 16:9. -->
             <KunImage
               :src="resolveBannerUrl(detail.patch) || '/kungalgame-trans.webp'"
               :alt="patchName"
@@ -254,11 +215,6 @@ useResourceSeo(detail, { title: composedTitle, commentCount: commentTotal })
             </p>
 
             <div class="flex flex-wrap items-center gap-2">
-              <!-- Composed title (game name + platform/language/model/type +
-                   资源下载), the long-tail format matching the SEO <title>. The
-                   game name is a link to the patch's resource page; the
-                   attribute suffix follows as plain text with no space, so it
-                   reads as one title. -->
               <h1 class="text-2xl font-bold break-words sm:text-3xl"><NuxtLink
                   v-if="detail.patch"
                   :to="`/patch/${detail.patch.id}/resource`"
@@ -329,20 +285,12 @@ useResourceSeo(detail, { title: composedTitle, commentCount: commentTotal })
         </div>
       </div>
 
-      <!-- AIEro ad banner — desktop only (mobile copy sits in the main
-           column, mirroring the legacy KunResourceDetail placement). -->
       <KunAdAIEroBanner class-name="mb-6 hidden sm:block" />
 
-      <!-- ── Body grid (resource details) ─────────────────── -->
       <div class="grid grid-cols-1 gap-6 lg:grid-cols-3">
-        <!-- main column -->
         <div class="space-y-6 lg:col-span-2">
           <KunCard :bordered="true" class-name="rounded-2xl">
             <div class="space-y-4 p-2">
-              <!-- Resource title — the patch resource's own name, now visible —
-                   plus the ⋮ management menu (编辑 / 分享 / 删除). The kebab is
-                   pinned to the top-right and shrink-0 inside the component, so
-                   it holds its place instead of reflowing with a wrapping title. -->
               <div class="flex items-start justify-between gap-3">
                 <div class="space-y-1">
                   <h2 class="text-xl font-bold break-words sm:text-2xl">
@@ -386,7 +334,6 @@ useResourceSeo(detail, { title: composedTitle, commentCount: commentTotal })
                 :storage-size="resource.size"
               />
 
-              <!-- publisher: avatar + name, clickable → user profile -->
               <div
                 class="border-default/20 flex items-center gap-2 border-t pt-4"
               >
@@ -412,9 +359,6 @@ useResourceSeo(detail, { title: composedTitle, commentCount: commentTotal })
                 </div>
               </div>
 
-              <!-- This page is scoped to ONE resource, so it only exposes
-                   收藏资源 (subscribe to this resource's updates). Game-level
-                   点赞 / 收藏游戏 live on the game page (/patch/:id). -->
               <div class="space-y-2">
                 <KunReaction
                   v-model="isResourceFavorite"
@@ -426,7 +370,6 @@ useResourceSeo(detail, { title: composedTitle, commentCount: commentTotal })
                   {{ isResourceFavorite ? '已收藏资源' : '收藏资源' }}
                 </KunReaction>
 
-                <!-- A star alone can't say "notify" — spell out 收藏资源. -->
                 <p
                   :class="
                     cn(
@@ -444,7 +387,6 @@ useResourceSeo(detail, { title: composedTitle, commentCount: commentTotal })
                 </p>
               </div>
 
-              <!-- Resource note (备注) -->
               <div
                 v-if="noteHtml"
                 class="kun-prose border-default/20 border-t pt-4 text-sm"
@@ -459,21 +401,8 @@ useResourceSeo(detail, { title: composedTitle, commentCount: commentTotal })
             </div>
           </KunCard>
 
-          <!-- AIEro ad banner — mobile only (desktop copy is above the grid) -->
           <KunAdAIEroBanner class-name="block sm:hidden" />
 
-          <!-- ── 资源下载 / 更改历史 ──────────────────────────
-               KunTabPanels keeps its default mount="eager", so BOTH panels are
-               server-rendered and the inactive one is hidden rather than removed.
-               That matters twice here: the download payload stays in the indexed
-               HTML (this page's whole SEO purpose), and hidden="until-found" lets
-               find-in-page, scroll-to-text fragments and deep links reveal the
-               history — the browser fires `beforematch` and KunTabPanels flips
-               the active tab to match what the reader is about to see.
-
-               `name` must be the SAME on the bar and the panels: it is what the
-               tabs' aria-controls and the panels' aria-labelledby are derived
-               from, and a mismatch breaks the wiring silently. -->
           <KunTab
             v-model="activePanel"
             :items="panelTabs"
@@ -488,8 +417,6 @@ useResourceSeo(detail, { title: composedTitle, commentCount: commentTotal })
               <ResourceDownload :resource="resource" @downloaded="onDownload" />
             </KunTabPanel>
 
-            <!-- Only mounted when there is history at all, which is also what
-                 decides whether the tab exists. -->
             <KunTabPanel v-if="hasHistory" value="history">
               <ResourceHistory
                 v-model:page="revisionPage"
@@ -500,12 +427,6 @@ useResourceSeo(detail, { title: composedTitle, commentCount: commentTotal })
             </KunTabPanel>
           </KunTabPanels>
 
-          <!-- ── 资源评论 ────────────────────────────────────
-               Deliberately NOT a tab panel: the download and the change history
-               are two views of the same thing (pick one), while the comments are
-               a separate conversation that belongs BELOW both — always open, and
-               reachable by a #comment-<id> deep-link without first having to
-               reveal a panel. -->
           <section class="space-y-5">
             <KunHeader
               :name="commentTotal ? `资源评论 ${commentTotal}` : '资源评论'"
@@ -530,7 +451,6 @@ useResourceSeo(detail, { title: composedTitle, commentCount: commentTotal })
           </section>
         </div>
 
-        <!-- sidebar: patch resource recommendations (no wrapper / heading) -->
         <aside class="space-y-3 lg:sticky lg:top-20 lg:self-start">
           <NuxtLink
             v-for="r in detail.recommendations"

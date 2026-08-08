@@ -1,11 +1,4 @@
 <script setup lang="ts">
-// /user/:id/resource returns paginated PatchResources. user/service
-// attaches each row's owning patch summary (id / vndb_id / name / banner)
-// from the Wiki Service via the same path the global resource list uses --
-// see attachPatchSummaries in apps/api/internal/user/service/service.go.
-// keepalive: returning from a detail restores this tab's page + scroll. `page`
-// is a computed off ?page=, so reactivation re-reads the URL for the right page.
-// Kept alive via the central include list in app.vue, keyed by this name.
 defineOptions({ name: 'user-resource' })
 
 const route = useRoute()
@@ -18,8 +11,6 @@ interface ListResponse {
   total: number
 }
 
-// Page in the URL (?page=) so back-nav / shared links restore it; switching to
-// another user lands on a clean URL → page 1.
 const page = computed({
   get: () => Number(route.query.page) || 1,
   set: (v) => router.replace({ query: { ...route.query, page: String(v) } })
@@ -44,9 +35,6 @@ const onChangePage = (v: number) => {
 const patchName = (r: UserResourceItem) =>
   r.patch?.name ? getPreferredLanguageText(r.patch.name) : `补丁 #${r.galgame_id}`
 
-// Title with the resource's OWN name — a user often publishes several resources
-// for the same game, so titling each by the galgame name made the rows
-// indistinguishable. Fall back to the galgame name when the resource is unnamed.
 const resourceTitle = (r: UserResourceItem) => r.name || patchName(r)
 
 const patchBanner = (r: UserResourceItem) =>
@@ -76,9 +64,6 @@ const patchBanner = (r: UserResourceItem) =>
               >
                 {{ resourceTitle(r) }}
               </h3>
-              <!-- galgame name as subtitle so the game context isn't lost (the
-                   banner is the game's), shown only when the title is the
-                   resource's own name to avoid duplicating it. -->
               <p
                 v-if="r.name && r.patch?.name"
                 class="text-default-500 line-clamp-1 text-xs"

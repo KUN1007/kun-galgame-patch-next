@@ -1,34 +1,8 @@
 <script setup lang="ts" generic="T">
-// KunMasonry — column-balanced grid that places each new item into the
-// currently-shortest column. Wraps useMasonryColumns to provide a declarative
-// API mirroring the legacy KunMasonryGrid (Next.js) the project shipped with
-// pre-Nuxt-rewrite.
-//
-// Usage:
-//   <KunMasonry :items="posts" :col-min-width="256" :gap="24">
-//     <template #default="{ item }">
-//       <AboutCard :post="item" />
-//     </template>
-//   </KunMasonry>
-//
-// Why a wrapper around the composable: the composable hands back T[][] (one
-// array per column) and the consumer would otherwise write the v-for /
-// grid-template-columns / per-column flex shell on every call site. This
-// component centralizes that shell, keeping use sites a single declarative
-// element with a scoped slot.
-//
-// SSR: container width is 0 server-side → colCount=1 → all items in one
-// column. After hydration useResizeObserver fires and the layout re-flows;
-// the `opacity-0 → opacity-100` transition keyed on `isReady` masks the
-// otherwise-visible reflow. Trade-off accepted on purpose — alternatives
-// (ClientOnly, sentinel placeholder) hurt either SEO or LCP.
 interface Props {
   items: readonly T[]
-  /** Min column width in px. Default 256 (matches legacy KunMasonryGrid). */
   colMinWidth?: number
-  /** Gap between columns AND between items in a column, in px. Default 24. */
   gap?: number
-  /** Override the wrapper class — e.g. add max-width or padding. */
   className?: string
 }
 const props = withDefaults(defineProps<Props>(), {
@@ -67,8 +41,6 @@ const { columns, colCount, isReady } = useMasonryColumns<T>(
       gap: `${props.gap}px`
     }"
   >
-    <!-- Each column is a vertical flex stack. Items inside the column inherit
-         the same gap so column-axis and row-axis spacing stay symmetric. -->
     <div
       v-for="(col, ci) in columns"
       :key="ci"

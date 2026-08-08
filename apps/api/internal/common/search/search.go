@@ -1,10 +1,3 @@
-// Package search implements POST /api/search: delegate full-text search to the
-// NextMoe catalog, then look up which patches exist locally for the returned vndb_ids.
-//
-// Design (D11, 2026-04-21):
-//   - Search/retrieval is fully delegated to galgame (60k galgame + Meilisearch + CJK tokenization)
-//   - This service only answers "do these galgames have patches here"
-//   - No local index, no local sync
 package search
 
 import (
@@ -20,30 +13,15 @@ import (
 	"gorm.io/gorm"
 )
 
-// Handler handles /api/search requests.
 type Handler struct {
 	db      *gorm.DB
 	galgame *galgameClient.Client
 }
 
-// New constructs a Handler.
 func New(db *gorm.DB, galgame *galgameClient.Client) *Handler {
 	return &Handler{db: db, galgame: galgame}
 }
 
-// SearchRequest is the search request body.
-//
-// The bounds below are the CATALOG search face's, not arbitrary: since wave
-// A2-2 this proxies GET /v1/catalog/works/search, which ANDs up to ten canonical
-// tag ids and takes a SINGLE label / engine id. Lists longer than the face can
-// express are rejected here rather than silently truncated — a search that
-// quietly ignores half the filters the caller asked for is the worst kind of
-// plausible-looking answer.
-//
-// `include_intro` is back (A2-1f). It was dropped for one wave because the
-// catalog works index carried titles only and an accepted-but-ignored flag is a
-// promise the face cannot keep; the index now has a synopsis lane, so the
-// checkbox means something again.
 type SearchRequest struct {
 	Q            string `json:"q" validate:"max=200"`
 	TagIDs       []int  `json:"tag_ids" validate:"omitempty,max=10,dive,min=1"`
@@ -59,41 +37,22 @@ type SearchRequest struct {
 	Limit        int    `json:"limit" validate:"required,min=1,max=50"`
 }
 
-// SearchHit is a single result returned to the frontend: galgame info plus whether this service has a patch.
 type SearchHit struct {
 	galgameClient.GalgameHit
 	HasPatch bool              `json:"has_patch"`
 	Patch    *patchModel.Patch `json:"patch,omitempty"`
 }
 
-// Search POST /api/search
 func (h *Handler) Search(c fiber.Ctx) error {
 	var req SearchRequest
 	if err := utils.ParseAndValidate(c, &req); err != nil {
 		return response.Error(c, errors.ErrBadRequest(err.Error()))
 	}
 
-	// Search is intentionally exempt from the global content_limit gate:
-	// it's a *user-initiated* action (someone typed a query), so by product
-	// rule it should always surface the full result set — both sfw and nsfw.
-	// SEO safety isn't at stake here because crawlers don't submit search
-	// queries, so there's no "passive scrape" surface that needs sfw
-	// safe-by-default. The NSFW chip on each result card lets users see what
-	// they're about to click; the per-patch detail endpoint still applies
-	// the regular gate, so clicking through to a NSFW result will trigger
-	// the confirm-to-view flow for anonymous-and-not-acked callers.
 	contentLimit := utils.ContentLimitAll
 
-	// Call galgame search
 	params := galgameClient.SearchGalgameParams{
-		Q: req.Q,
-		// Public search surfaces published entries only. That used to be spelled
-		// `status=0` against the wiki's own state machine; the catalog has no such
-		// column, so the client asks the search face for `claim_state=live`
-		// instead — unclaimed, draft and withdrawn works never reach a result
-		// page. The publish wizard is unaffected — it uses SearchGalgameForPublish
-		// on the surviving internal face, which intentionally includes the
-		// caller's own pending drafts.
+		Q:            req.Q,
 		ContentLimit: contentLimit,
 		AgeLimit:     req.AgeLimit,
 		OriginalLang: req.OriginalLang,
@@ -109,10 +68,6 @@ func (h *Handler) Search(c fiber.Ctx) error {
 	}
 	galgameResult, err := h.galgame.SearchGalgame(c.Context(), params)
 	if err != nil {
-		// Same split as the calendar: several of these filters (tag_id's
-		// multi-value ceiling, the single-valued label/engine ids, the date
-		// bounds) are rejected by the catalog with a 400, and calling that
-		// "搜索服务暂不可用" blames a healthy service for a malformed query.
 		if gerr, ok := galgameClient.AsBadRequest(err); ok {
 			slog.Warn("galgame 搜索参数被上游拒绝", "error", err)
 			return response.Error(c, errors.ErrBadRequest(gerr.Message))
@@ -121,7 +76,6 @@ func (h *Handler) Search(c fiber.Ctx) error {
 		return response.Error(c, errors.ErrInternal("搜索服务暂不可用"))
 	}
 
-	// Extract vndb_ids and look up the local patch table
 	vndbIDs := make([]string, 0, len(galgameResult.Items))
 	for _, item := range galgameResult.Items {
 		if item.VndbID != "" {
@@ -143,7 +97,6 @@ func (h *Handler) Search(c fiber.Ctx) error {
 		}
 	}
 
-	// Merge: preserve galgame's relevance order; stamp each hit with has_patch + patch details
 	hits := make([]SearchHit, 0, len(galgameResult.Items))
 	for _, item := range galgameResult.Items {
 		h := SearchHit{GalgameHit: item}

@@ -1,22 +1,3 @@
-// cmd/sync-moemoepoint is a ONE-TIME (re-runnable) cache seeder for the
-// moemoepoint OAuth migration.
-//
-// After OAuth becomes the unified source of truth and the §6 merge sets each
-// user's unified starting balance, moyu's local user.moemoepoint column (now
-// just a read-cache for ranking / profile) is stale. This pulls every local
-// user's authoritative balance from OAuth (GET /users/:id/moemoepoint) and
-// writes it into the local column, so the ranking immediately reflects the
-// unified balance instead of waiting for each user's next earn.
-//
-// Idempotent + safe to re-run. Read-only against OAuth; only UPDATEs the local
-// cache. Users OAuth doesn't know yet are logged and skipped (their stale local
-// value is left untouched).
-//
-// Usage:
-//
-//	go run ./cmd/sync-moemoepoint                 # seed all users
-//	go run ./cmd/sync-moemoepoint -dry-run        # print, don't write
-//	go run ./cmd/sync-moemoepoint -concurrency=16
 package main
 
 import (

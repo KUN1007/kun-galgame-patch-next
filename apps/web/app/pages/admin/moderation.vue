@@ -1,9 +1,4 @@
 <script setup lang="ts">
-// Trust & Safety moderation inbox. Proxies the infra trust admin API through
-// moyu's BFF (/admin/trust/*, moderatorAuth, site forced to moyu). A moderator
-// lists review items, opens the evidence (reports + snapshots), claims, then
-// dismisses or applies an enforcement action — which fires the signed callback
-// back to moyu (hide/remove/restore) or the IdP.
 import {
   TRUST_REVIEW_STATUS,
   TRUST_REVIEW_SOURCE,
@@ -47,7 +42,6 @@ watch(page, () => refresh())
 const totalPages = computed(() => Math.ceil((data.value?.total ?? 0) / limit))
 const kindLabel = (k: string) => TRUST_SUBJECT_KIND[k] ?? k
 
-// ── Detail modal ──
 const isDetailOpen = ref(false)
 const detail = ref<ReviewItemDetail | null>(null)
 const detailLoading = ref(false)
@@ -71,14 +65,11 @@ const openDetail = async (id: number) => {
   detailLoading.value = false
 }
 
-// Only pending (0) / claimed (1) items are still actionable.
 const isActionable = computed(() => {
   const s = detail.value?.item.status
   return s === 0 || s === 1
 })
 
-// Prefer the reporter-carried subject_url (works for every kind, incl.
-// patch_comment which has no page of its own), else reconstruct from kind+id.
 const subjectHref = computed(() => {
   if (!detail.value) return undefined
   const fromReport = detail.value.reports.find((r) => r.subject_url)?.subject_url
@@ -220,7 +211,6 @@ const actionOptions = TRUST_ACTIONS.map((a) => ({
           </span>
         </div>
 
-        <!-- Reports (evidence) -->
         <div class="space-y-2">
           <span class="text-default-600 text-sm font-medium">
             举报记录（{{ detail.reports.length }}）
@@ -244,7 +234,6 @@ const actionOptions = TRUST_ACTIONS.map((a) => ({
           </div>
         </div>
 
-        <!-- Decision -->
         <template v-if="isActionable">
           <div class="border-default-200 border-t" />
           <div class="space-y-3">

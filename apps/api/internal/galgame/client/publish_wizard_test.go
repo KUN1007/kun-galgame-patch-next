@@ -1,19 +1,5 @@
 package client
 
-// The publish wizard is moyu's only defence against a user minting a duplicate
-// entry in the shared registry, so its dedup supply is pinned here.
-//
-// The ITEMS half must reach the catalog search with claim_state=live,draft,
-// pending. Narrowing it to `live` hides every unpublished draft, which is
-// exactly the 2026-07-24 failure: 52k of 63k entries invisible, users hitting
-// 提交新作 and creating blank duplicates of drafts that already existed.
-// `pending` is in the list before anything produces it, so that the projector
-// step which starts minting it cannot open the same hole for a deploy's width.
-//
-// The caller's OWN open submissions are no longer part of this call at all —
-// they are the registry's per-user claim face, composed in by the BFF (wave
-// 161). What this file pins is the half that answers "does it already exist".
-
 import (
 	"context"
 	"net/http"
@@ -49,7 +35,6 @@ func (r *wizardRecorder) client(t *testing.T) *Client {
 			  {"id":14,"display_name":"unclaimed","content_rating":"r18","claimed_by":null}
 			]}}`
 		case strings.HasSuffix(req.URL.Path, "/galgame/search"):
-			// Nothing should reach the retiring wiki search any more.
 			r.wikiHits++
 		}
 		r.mu.Unlock()
@@ -92,8 +77,6 @@ func TestPublishWizard_ItemsComeFromTheCatalog(t *testing.T) {
 	if got := rec.catalogQ.Get("limit"); got != "12" {
 		t.Errorf("limit = %q, want 12", got)
 	}
-	// The age gate is unconditional and the EDITING gate is absent: the wizard
-	// is a dedup tool for a submitter, not a browse surface.
 	if got := rec.catalogQ.Get("nsfw"); got != "1" {
 		t.Errorf("nsfw = %q, want 1", got)
 	}
@@ -115,12 +98,9 @@ func TestPublishWizard_ItemsAreGidKeyedAndDropWithdrawnRows(t *testing.T) {
 	if len(out.Items) != 2 {
 		t.Fatalf("items = %d, want 2 (a hidden claim and an unclaimed row are not actionable)", len(out.Items))
 	}
-	// Never the catalog id: both wizard actions (POST /patch {galgame_id} and
-	// POST /galgame/:gid/claim) are keyed by the wiki gid.
 	if out.Items[0].ID != 292 || out.Items[1].ID != 9978 {
 		t.Errorf("ids = %d,%d, want the gids 292,9978", out.Items[0].ID, out.Items[1].ID)
 	}
-	// claim_state is what the wizard branches on now — `draft` is the 认领 CTA.
 	if out.Items[0].ClaimState != "live" || out.Items[1].ClaimState != "draft" {
 		t.Errorf("claim states = %q,%q, want live,draft",
 			out.Items[0].ClaimState, out.Items[1].ClaimState)
@@ -130,9 +110,6 @@ func TestPublishWizard_ItemsAreGidKeyedAndDropWithdrawnRows(t *testing.T) {
 	}
 }
 
-// The wizard's dedup supply must not touch the retiring wiki search at all.
-// While it did, this lane had a second upstream that would go down with the
-// wiki tables and take the whole wizard with it.
 func TestPublishWizard_NeverTouchesTheWikiFace(t *testing.T) {
 	rec := &wizardRecorder{}
 	rec.search(t)
@@ -155,7 +132,6 @@ func TestPublishWizard_EmptyResultIsAnArrayNotNull(t *testing.T) {
 	if err != nil {
 		t.Fatalf("SearchPublishItems: %v", err)
 	}
-	// `null` breaks the page's `results.items.length` reads.
 	if items == nil {
 		t.Error("items = nil, want an empty slice")
 	}

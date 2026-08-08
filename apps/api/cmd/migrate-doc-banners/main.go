@@ -1,25 +1,3 @@
-// cmd/migrate-doc-banners moves legacy static doc banners into image_service.
-//
-// Before migration 016 the /about (now doc) posts used static banner files
-// (`/posts/<category>/<slug>/banner.avif`, served by the web container). The
-// unified doc feature wants all banners in image_service. For each doc that
-// still has a static `banner` and no `banner_image_hash`, this downloads the
-// file from the public site and uploads it to image_service, then stores the
-// returned hash. Idempotent — already-migrated docs (hash set) are skipped, so
-// it is safe to re-run.
-//
-// Usage:
-//
-//	go run ./cmd/migrate-doc-banners                          # uses KUN_* env
-//	go run ./cmd/migrate-doc-banners -dry-run                 # list only
-//	go run ./cmd/migrate-doc-banners -banner-base=https://www.moyu.moe
-//
-// Containerized (must reach image_service on the dokploy network):
-//
-//	docker run --rm --network <net> -e KUN_DATABASE_URL=... \
-//	  -e KUN_IMAGE_SERVICE_BASE_URL=http://image:9278 \
-//	  -e KUN_IMAGE_CDN_BASE=... -e OAUTH_CLIENT_ID=... -e OAUTH_CLIENT_SECRET=... \
-//	  ghcr.io/kunmoe/moyu-tools migrate-doc-banners
 package main
 
 import (
@@ -55,8 +33,6 @@ func main() {
 
 	db := database.NewPostgres(cfg.Database, cfg.Server.Mode)
 
-	// Same credential-defaulting as the server (app.go): fall back to the OAuth
-	// client when the dedicated KUN_IMAGE_OAUTH_* vars are unset.
 	imgCfg := cfg.ImageService
 	if imgCfg.ClientID == "" {
 		imgCfg.ClientID = cfg.OAuth.ClientID

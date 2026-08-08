@@ -1,21 +1,5 @@
 package client
 
-// Two identity keys move during the W1 window and moyu READS both of them:
-//
-//   - the source key that anchors gid lookups (galgame_wiki -> curated), and
-//   - the claim site on claimed_by (galgame_wiki -> kungal).
-//
-// They are written elsewhere, in two DIFFERENT deploy steps, and both fail
-// SILENTLY when reader and data disagree: an unmatched source resolves no gid
-// at all (every galgame page 404s), and an unmatched site yields gid 0, which
-// strips a card's link and mis-attaches its local stats without raising
-// anything.
-//
-// So the reader accepts both spellings instead of being flipped in lockstep
-// with the data. These tests pin that tolerance in both directions; when the
-// legacy halves are removed after the flip has soaked, they are what should
-// fail first.
-
 import (
 	"encoding/json"
 	"net/http"
@@ -41,9 +25,6 @@ func TestClaimSiteAcceptedOnBothSpellings(t *testing.T) {
 			if got := c.gid(); got != tc.want {
 				t.Errorf("gid() on site %q = %d, want %d", tc.site, got, tc.want)
 			}
-			// live() carries the same site test, and it is the ban/publish gate
-			// on every batch and detail read — a site it does not recognise
-			// reads as "not published".
 			if got := c.live(); got != (tc.want != 0) {
 				t.Errorf("live() on site %q = %v, want %v", tc.site, got, tc.want != 0)
 			}
@@ -57,10 +38,7 @@ func TestClaimSiteAcceptedOnBothSpellings(t *testing.T) {
 	}
 }
 
-// The batch lookup must ask for every source key in flight, so it resolves on
-// either side of the rename without a coordinated deploy.
 func TestAnchorBatchLookupAsksForEverySourceKey(t *testing.T) {
-	// Only the LEGACY key answers here, i.e. the state before the infra rename.
 	var asked []string
 	srv := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, req *http.Request) {
 		var body catalogLookupBatchRequest
@@ -97,7 +75,6 @@ func TestAnchorBatchLookupAsksForEverySourceKey(t *testing.T) {
 	}
 }
 
-// And the post-rename side resolves too, from a cold cache.
 func TestAnchorBatchLookupResolvesAfterTheRename(t *testing.T) {
 	srv := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, req *http.Request) {
 		var body catalogLookupBatchRequest
@@ -127,10 +104,6 @@ func TestAnchorBatchLookupResolvesAfterTheRename(t *testing.T) {
 	}
 }
 
-// A batch page must never exceed the wire's item ceiling. One gid now costs one
-// item per source key, so the gid stride has to shrink with the key count —
-// otherwise the extra spelling pushes the page past the limit and the catalog
-// answers 400 for the whole chunk.
 func TestAnchorBatchLookupRespectsTheItemCeiling(t *testing.T) {
 	maxItems := 0
 	srv := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, req *http.Request) {
@@ -166,8 +139,6 @@ func TestAnchorBatchLookupRespectsTheItemCeiling(t *testing.T) {
 	}
 }
 
-// The singular lookups take ONE source, so they walk the keys instead. Both the
-// work bridge and the label bridge must find a row filed under either spelling.
 func TestSingularLookupsWalkEverySourceKey(t *testing.T) {
 	for _, answering := range anchorSourceKeys {
 		t.Run(answering, func(t *testing.T) {

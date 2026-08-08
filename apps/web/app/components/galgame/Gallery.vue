@@ -1,18 +1,4 @@
 <script setup lang="ts">
-// Galgame screenshot 画廊 with a per-rating SFW gate (ported from kungal's
-// galgame/Gallery.vue). Two independent axes, both filtered CLIENT-SIDE:
-//   色情 (sexual)   — the global NSFW mode shows every level; SFW shows only the
-//                     levels the viewer opted into (+ unrated).
-//   暴力 (violence) — independent per-level opt-in (default off, behind a
-//                     warning); the NSFW mode does NOT unlock it (sex and gore
-//                     are separate sensitivities).
-// An image shows iff BOTH its sexual and violence levels are permitted. The
-// filter control stays reachable even when everything is hidden, so a fully
-// rated gallery can still be revealed.
-//
-// Screenshots only carry an image_hash (no cdn_url) and the screenshot preset
-// generates NO image_service variants, so thumb + lightbox both use the full
-// image (imageServiceUrl with no variant).
 import {
   imageServiceUrl,
   imageAspectRatio
@@ -30,8 +16,6 @@ const violenceLevels = computed(
   () => settingStore.data.galleryViolenceLevels ?? []
 )
 
-// 色情: NSFW reveals every level; otherwise unrated (0) + opted-in levels.
-// 暴力: unrated (0) + opted-in levels only, independent of the NSFW mode.
 const sexualOk = (s: GalgameScreenshotRow) =>
   showNsfw.value || s.sexual === 0 || sexualLevels.value.includes(s.sexual)
 const violenceOk = (s: GalgameScreenshotRow) =>
@@ -52,14 +36,10 @@ const sorted = computed(() =>
 
 const hiddenCount = computed(() => allShots.value.length - sorted.value.length)
 
-// Only surface the filter when something is actually rated — an all-unrated
-// gallery needs no control.
 const hasRated = computed(() =>
   allShots.value.some((s) => s.sexual >= 1 || s.violence >= 1)
 )
 
-// Per-level image counts (level 1/2/3 → n) so the filter can show how many
-// images each toggle reveals/hides.
 const countLevels = (axis: 'sexual' | 'violence'): Record<number, number> => {
   const counts: Record<number, number> = { 1: 0, 2: 0, 3: 0 }
   for (const s of allShots.value) {
@@ -71,11 +51,7 @@ const countLevels = (axis: 'sexual' | 'violence'): Record<number, number> => {
 const sexualCounts = computed(() => countLevels('sexual'))
 const violenceCounts = computed(() => countLevels('violence'))
 
-// Per-tile rating rings: outer band = 色情 (warning), inner band = 暴力
-// (danger); colour depth = level (轻/中/高). Nested inset box-shadows on a
-// pointer-events-none overlay above the image, so they can't be clipped or
-// block clicks. An axis with no rating draws nothing.
-const RING_W = 2.5 // px per band
+const RING_W = 2.5
 const RING_DEPTH: Record<number, number> = { 1: 60, 2: 80, 3: 100 }
 const ringColor = (token: 'warning' | 'danger', level: number) =>
   `color-mix(in oklab, var(--color-${token}) ${RING_DEPTH[level] ?? 100}%, transparent)`
@@ -112,9 +88,6 @@ const imgSrc = (s: GalgameScreenshotRow) => imageServiceUrl(s.image_hash)
     </div>
 
     <KunLightboxGallery v-if="sorted.length">
-      <!-- items-start: screenshots render at their real aspect ratio now, so
-           don't stretch a row's cells to equal height (avoids background bars
-           around a shorter shot next to a taller one). -->
       <div
         class="grid grid-cols-1 items-start gap-3 sm:grid-cols-2 lg:grid-cols-3"
       >
@@ -127,10 +100,6 @@ const imgSrc = (s: GalgameScreenshotRow) => imageServiceUrl(s.image_hash)
           class="border-default/20 block overflow-hidden rounded-lg border"
         >
           <div class="relative">
-            <!-- Real aspect ratio (fallback 16/9 until metadata backfills) so a
-                 portrait / non-16:9 screenshot is no longer cropped; ThumbHash
-                 blur-up while the full image loads. Box ratio == image ratio, so
-                 the default object-cover fills without cropping. -->
             <KunImage
               :src="imgSrc(s)"
               :alt="s.caption || s.image_hash.slice(0, 8)"
@@ -139,7 +108,6 @@ const imgSrc = (s: GalgameScreenshotRow) => imageServiceUrl(s.image_hash)
               :thumbhash="s.thumbhash"
               class-name="bg-default-100"
             />
-            <!-- rating rings: outer=色情 inner=暴力, depth=level -->
             <div
               v-if="s.sexual >= 1 || s.violence >= 1"
               class="pointer-events-none absolute inset-0"

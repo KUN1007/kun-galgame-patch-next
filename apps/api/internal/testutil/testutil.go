@@ -1,6 +1,3 @@
-// Package testutil provides helpers for setting up integration tests.
-// It creates a Fiber app with real route wiring, miniredis for Redis,
-// and a real or mocked PostgreSQL database.
 package testutil
 
 import (
@@ -23,14 +20,12 @@ import (
 	"github.com/redis/go-redis/v9"
 )
 
-// TestApp holds a Fiber app and test dependencies
 type TestApp struct {
 	App *fiber.App
 	RDB *redis.Client
 	MR  *miniredis.Miniredis
 }
 
-// NewTestApp creates a minimal Fiber app with miniredis
 func NewTestApp(t *testing.T) *TestApp {
 	t.Helper()
 	mr, err := miniredis.Run()
@@ -53,10 +48,6 @@ func NewTestApp(t *testing.T) *TestApp {
 	return &TestApp{App: app, RDB: rdb, MR: mr}
 }
 
-// CreateTestSession creates a Redis session and returns the cookie value.
-// roles is the OAuth roles set; pass e.g. "admin" / "moderator" to grant
-// privileged access. The fake access_token is a JWT-shaped string with the
-// given roles in its claims, so middleware.GetRoles works in tests too.
 func (ta *TestApp) CreateTestSession(t *testing.T, userID int, roles ...string) string {
 	t.Helper()
 	sessionID := fmt.Sprintf("test-session-%d-%d", userID, time.Now().UnixNano())
@@ -72,9 +63,6 @@ func (ta *TestApp) CreateTestSession(t *testing.T, userID int, roles ...string) 
 	return sessionID
 }
 
-// CreateTestSessionSiteRoles is like CreateTestSession but also stamps
-// site-scoped roles into the fake JWT's `site_roles` claim, so tests can
-// exercise the `roles ∪ site_roles` gating (docs/oauth/12-site-roles.md).
 func (ta *TestApp) CreateTestSessionSiteRoles(t *testing.T, userID int, roles, siteRoles []string) string {
 	t.Helper()
 	sessionID := fmt.Sprintf("test-session-%d-%d", userID, time.Now().UnixNano())
@@ -90,15 +78,10 @@ func (ta *TestApp) CreateTestSessionSiteRoles(t *testing.T, userID int, roles, s
 	return sessionID
 }
 
-// fakeJWTWithRoles builds a header.payload.sig JWT-shaped string whose
-// payload encodes {"roles": [...]}. Signature is dummy; middleware decodes
-// without verifying.
 func fakeJWTWithRoles(roles []string) string {
 	return fakeJWTWithClaims(roles, nil)
 }
 
-// fakeJWTWithClaims is fakeJWTWithRoles plus an optional `site_roles` claim
-// (omitted when nil), so tests can build tokens with site-scoped roles.
 func fakeJWTWithClaims(roles, siteRoles []string) string {
 	header := base64.RawURLEncoding.EncodeToString([]byte(`{"alg":"HS256","typ":"JWT"}`))
 	claims := map[string]any{"roles": roles}
@@ -110,7 +93,6 @@ func fakeJWTWithClaims(roles, siteRoles []string) string {
 	return header + "." + payload + ".sig"
 }
 
-// Request sends an HTTP request to the Fiber app and returns the response
 func (ta *TestApp) Request(t *testing.T, method, path string, body string, sessionID string) *http.Response {
 	t.Helper()
 	var bodyReader io.Reader
@@ -134,7 +116,6 @@ func (ta *TestApp) Request(t *testing.T, method, path string, body string, sessi
 	return resp
 }
 
-// ParseResponse reads and parses the JSON response body
 func ParseResponse(t *testing.T, resp *http.Response) response.Response {
 	t.Helper()
 	body, err := io.ReadAll(resp.Body)
@@ -150,7 +131,6 @@ func ParseResponse(t *testing.T, resp *http.Response) response.Response {
 	return r
 }
 
-// PaginatedResponseBody matches the on-wire shape { code, message, data: { items, total } }.
 type PaginatedResponseBody struct {
 	Code    int    `json:"code"`
 	Message string `json:"message"`
@@ -160,7 +140,6 @@ type PaginatedResponseBody struct {
 	} `json:"data"`
 }
 
-// ParsePaginatedResponse reads and parses the paginated JSON response body.
 func ParsePaginatedResponse(t *testing.T, resp *http.Response) PaginatedResponseBody {
 	t.Helper()
 	body, err := io.ReadAll(resp.Body)
@@ -176,7 +155,6 @@ func ParsePaginatedResponse(t *testing.T, resp *http.Response) PaginatedResponse
 	return r
 }
 
-// ReadBody reads the raw response body as string
 func ReadBody(t *testing.T, resp *http.Response) string {
 	t.Helper()
 	body, err := io.ReadAll(resp.Body)

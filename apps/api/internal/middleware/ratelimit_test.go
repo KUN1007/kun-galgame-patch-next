@@ -39,11 +39,9 @@ func TestRateLimit_BlocksOverLimit(t *testing.T) {
 		},
 	)
 
-	// First 2 should pass
 	ta.Request(t, http.MethodGet, "/limited", "", "")
 	ta.Request(t, http.MethodGet, "/limited", "", "")
 
-	// Third should be rate limited
 	resp := ta.Request(t, http.MethodGet, "/limited", "", "")
 	assert.Equal(t, http.StatusTooManyRequests, resp.StatusCode)
 

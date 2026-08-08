@@ -5,7 +5,6 @@ const api = useApi()
 const page = ref(1)
 const limit = 20
 
-// A single patch (only the local fields needed before enrichment)
 interface OrphanPatch {
   id: number
   vndb_id: string
@@ -22,8 +21,8 @@ interface OrphanPatch {
 interface OrphanListResponse {
   items: OrphanPatch[]
   total: number
-  pending_count: number      // rows with vndb_id = 'pending-N' (never filled)
-  bad_vndb_count: number     // rows with a malformed vndb_id (not vN, not pending-)
+  pending_count: number
+  bad_vndb_count: number
 }
 
 const { data, pending, refresh } = await useAsyncData<OrphanListResponse>(
@@ -43,7 +42,6 @@ watch(page, () => refresh())
 
 const totalPages = computed(() => Math.ceil((data.value?.total ?? 0) / limit))
 
-// Per-row "vndb_id currently being edited"
 const editVndbID = reactive<Record<number, string>>({})
 const submitting = reactive<Record<number, boolean>>({})
 
@@ -60,10 +58,7 @@ const handleRebind = async (galgameId: number) => {
     const res = await api.put(`/patch/${galgameId}`, { vndb_id: newID })
     if (res.code === 0) {
       useKunMessage('已重新绑定，资料库校验通过', 'success')
-      // Clear this row's edit input after a successful rebind; `delete` on the
-      // reactive record is intentional (the row's input field is keyed by id).
-      // eslint-disable-next-line @typescript-eslint/no-dynamic-delete
-      delete editVndbID[galgameId]
+      Reflect.deleteProperty(editVndbID, galgameId)
       await refresh()
     } else {
       useKunMessage(res.message || '重绑失败（资料库里可能还没这个游戏）', 'error')
@@ -109,7 +104,6 @@ const vndbLink = (v: string) =>
       </p>
     </div>
 
-    <!-- Stats cards -->
     <div class="grid gap-3 sm:grid-cols-3">
       <KunCard :bordered="true">
         <p class="text-default-500 text-xs">总计</p>
@@ -140,7 +134,6 @@ const vndbLink = (v: string) =>
     <div v-else class="space-y-3">
       <KunCard v-for="p in data?.items" :key="p.id" :bordered="true">
         <div class="flex flex-col gap-3 lg:flex-row lg:items-start">
-          <!-- Left: basic info -->
           <div class="flex-1 space-y-2">
             <div class="flex flex-wrap items-center gap-2">
               <span class="font-mono text-default-500 text-sm">
@@ -188,7 +181,6 @@ const vndbLink = (v: string) =>
             </div>
           </div>
 
-          <!-- Right: actions -->
           <div class="flex flex-col gap-2 lg:w-96">
             <div class="flex items-center gap-2">
               <KunInput

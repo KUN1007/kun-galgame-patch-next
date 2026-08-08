@@ -10,7 +10,6 @@
 }
 
 .milkdown {
-  /* Map Milkdown Crepe tokens to Tailwind color variables */
   --crepe-color-surface: var(--color-primary-50);
   --crepe-color-surface-low: var(--color-primary-50);
   --crepe-color-on-surface: var(--color-foreground);

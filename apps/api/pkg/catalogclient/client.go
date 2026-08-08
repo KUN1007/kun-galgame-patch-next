@@ -1,13 +1,3 @@
-// Package catalogclient is a thin SDK for the catalog service's S2S face
-// (kun-galgame-infra, port 9281, under /api/v1/catalog).
-//
-// It is deliberately separate from internal/galgame/client, which speaks the
-// PUBLIC /v1 face with an internal-tier X-API-Key. This face is a different
-// channel with a different credential: HTTP Basic with moyu's OAuth
-// client_id/secret, because the catalog reads oauth_clients to decide what a
-// caller may do (the per-client `catalog_site` binding gates every write). Only
-// the reads moyu needs live here; the house {code,message,data} envelope is the
-// same one every other infra service answers with.
 package catalogclient
 
 import (
@@ -23,12 +13,6 @@ import (
 	"time"
 )
 
-// Claim states — the registry's public claim vocabulary (`claimed_by.state`),
-// which replaced the wiki's `status` integers. Eternal wire values.
-//
-// It is a RESHAPE and not a rename: the wiki's status 2 (unclaimed VNDB draft)
-// and status 3 (submitted, awaiting review) both projected onto `draft`, and
-// `hidden` is a state the wiki expressed as a deleted row.
 const (
 	ClaimStateNone     = "none"
 	ClaimStateLive     = "live"
@@ -38,42 +22,28 @@ const (
 	ClaimStateHidden   = "hidden"
 )
 
-// Claim sites moyu recognises as the gid key space — the galgame product it
-// shares with kungal, whose product_work_id IS moyu's own patch id.
-//
-// Two spellings because the W1 window renames it in a step moyu does not deploy
-// alongside. A reader that knows only one of them is silently wrong on the
-// other side of that step, and neither failure raises anything.
 const (
 	ClaimSiteKungal = "kungal"
 	claimSiteLegacy = "galgame_wiki"
 )
 
-// IsGIDClaimSite reports whether a claim site is that key space, under either
-// spelling. Removable down to a comparison once the rename has soaked.
 func IsGIDClaimSite(site string) bool {
 	return site == ClaimSiteKungal || site == claimSiteLegacy
 }
 
-// Config bundles connection settings (created in app.go from config). The Basic
-// credentials are moyu's OAuth client_id/secret.
 type Config struct {
-	BaseURL      string // catalog host base, e.g. http://127.0.0.1:19281 (no /api suffix)
+	BaseURL      string
 	ClientID     string
 	ClientSecret string
-	HTTPClient   *http.Client // optional; defaults to a 15s-timeout client
+	HTTPClient   *http.Client
 }
 
-// Client is a thin wrapper over the catalog S2S HTTP API.
 type Client struct {
 	basicAuth  string
 	baseURL    string
 	httpClient *http.Client
 }
 
-// New constructs a Client. Empty BaseURL/credentials = a client whose calls
-// return ErrNotConfigured; callers check Configured() and skip rather than
-// erroring every tick on a dev box with no catalog.
 func New(cfg Config) *Client {
 	hc := cfg.HTTPClient
 	if hc == nil {
@@ -90,16 +60,10 @@ func New(cfg Config) *Client {
 	}
 }
 
-// Configured reports whether the client can reach the catalog S2S face.
 func (c *Client) Configured() bool { return c.baseURL != "" && c.basicAuth != "" }
 
-// ErrNotConfigured is returned rather than dialling a base URL that is not set.
 var ErrNotConfigured = errors.New("catalogclient: not configured (empty base URL or credentials)")
 
-// APIError is a non-zero envelope code, carrying the HTTP status beside it. The
-// two together are what separate "the catalog refused this request" from "the
-// request never reached the catalog" — a router or proxy 404 echoes the status
-// into `code`, so neither half is conclusive alone.
 type APIError struct {
 	Status  int
 	Code    int

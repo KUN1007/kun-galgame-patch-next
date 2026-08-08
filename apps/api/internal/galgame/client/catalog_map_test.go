@@ -1,18 +1,7 @@
 package client
 
-// Mapper tests: the projections in catalog_map.go that decide what a moyu DTO
-// says, given a catalog record.
-
 import "testing"
 
-// TestVndbIDOfPicksTheWorkAnchor pins which vndb id leaves the mapper.
-//
-// The include=refs block is the registry's COMPLETE set of exact anchors for a
-// work, and vndb contributes two id spaces to it: one work anchor (`v…`) and one
-// RELEASE anchor per release (`r…`). The wire carries {source, external_id} and
-// no kind, so `source == "vndb"` matches both. moyu joins its patch rows on
-// vndb_id, which is the work id — an `r`-id there matches nothing and every
-// affected game reports has_patch = false.
 func TestVndbIDOfPicksTheWorkAnchor(t *testing.T) {
 	cases := []struct {
 		name string

@@ -1,9 +1,6 @@
 <script setup lang="ts">
 useKunDisableSeo('用户清除')
 
-// Stricter than the /admin shell (which admits moderators): this page's
-// endpoints are admin-only (adminAuth) server-side, so gate the page on
-// isAdmin too — a moderator URL-typing here would otherwise hit only 403s.
 const userStore = useUserStore()
 if (!userStore.isAdmin) {
   await navigateTo('/admin')
@@ -11,7 +8,6 @@ if (!userStore.isAdmin) {
 
 const api = useApi()
 
-// Mirrors apps/api/internal/admin/dto.UserPurgePreview / UserPurgeResult.
 interface UserPurgePreview {
   user_id: number
   user_exists: boolean
@@ -38,23 +34,16 @@ interface UserPurgeResult {
   sessions_revoked: number
 }
 
-// KunInput's v-model is string|number and writes the raw input string back, so
-// keep the bound ref a string and derive the numeric id from it.
 const uid = ref('')
 const uidNum = computed(() => Number(uid.value))
 const uidValid = computed(
   () => Number.isInteger(uidNum.value) && uidNum.value > 0
 )
-// Force-delete the user's own patches (galgame entries) + everything beneath
-// them. Required to delete the account when the user owns any patch
-// (patch.user_id is ON DELETE RESTRICT).
 const forcePurgePatches = ref(false)
 const preview = ref<UserPurgePreview | null>(null)
 const previewing = ref(false)
 const executing = ref(false)
 
-// A stale preview must never gate a destructive execute: clear it whenever the
-// target id changes so the admin has to re-preview the new id.
 watch(uid, () => {
   preview.value = null
 })
@@ -83,13 +72,10 @@ const loadPreview = async () => {
   }
 }
 
-// Toggling the force flag changes the collateral counts + can_delete_user_row,
-// so re-preview (only when a preview for the current id is already shown).
 watch(forcePurgePatches, () => {
   if (preview.value) loadPreview()
 })
 
-// Primary breakdown rows (always purged). Computed off the loaded preview.
 const rows = computed<{ label: string; value: number; hint?: string }[]>(() => {
   const p = preview.value
   if (!p) return []
@@ -218,9 +204,6 @@ const execute = async () => {
             强删该用户创建的补丁 (连带其下全部资源 / 评论，含其他用户的内容)
           </KunCheckBox>
 
-          <!-- When the user owns patches, the account row can't be deleted
-               unless the patches go too (patch.user_id RESTRICT). Surface the
-               requirement instead of letting the execute silently 400. -->
           <p
             v-if="preview.owned_patches > 0 && forcePurgePatches"
             class="text-danger text-xs"

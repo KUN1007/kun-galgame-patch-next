@@ -1,7 +1,4 @@
 <script setup lang="ts">
-// Admin doc management (unified about + blog). List incl. drafts + create /
-// edit / delete. A doc lives under /doc/<category>/<name>. Banner + inline
-// images go through image_service (POST /upload/image-service, preset 'topic').
 useKunDisableSeo('文档管理')
 
 const api = useApi()
@@ -20,7 +17,6 @@ const load = async () => {
   else useKunMessage(res.message || '加载失败', 'error')
 }
 
-// ─── editor modal ──────────────────────────────────────
 const modalOpen = ref(false)
 const editingId = ref<number | null>(null)
 const saving = ref(false)
@@ -89,7 +85,6 @@ const openEdit = async (id: number) => {
   modalOpen.value = true
 }
 
-// ─── image_service upload ──────────────────────────────
 const uploadImage = async (
   file: File
 ): Promise<{ hash: string; url: string } | null> => {
@@ -143,7 +138,6 @@ const clearBanner = () => {
   form.bannerPreview = ''
 }
 
-// ─── save / delete ─────────────────────────────────────
 const save = async () => {
   if (!form.category.trim()) return useKunMessage('请填写分类', 'warn')
   if (!form.name.trim()) return useKunMessage('请填写路径名 (slug)', 'warn')
@@ -265,7 +259,6 @@ onMounted(() => {
       </table>
     </div>
 
-    <!-- create / edit modal -->
     <KunModal v-model="modalOpen" inner-class-name="max-w-3xl">
       <div class="space-y-4">
         <h2 class="text-xl font-bold">
@@ -293,7 +286,6 @@ onMounted(() => {
           :rows="2"
         />
 
-        <!-- banner -->
         <div class="space-y-2">
           <p class="text-default-600 text-sm font-medium">封面图</p>
           <img
@@ -323,7 +315,6 @@ onMounted(() => {
           </div>
         </div>
 
-        <!-- content -->
         <div class="space-y-2">
           <div class="flex items-center justify-between">
             <p class="text-default-600 text-sm font-medium">正文 (Markdown)</p>
@@ -363,7 +354,6 @@ onMounted(() => {
       </div>
     </KunModal>
 
-    <!-- delete confirm -->
     <KunModal
       :model-value="!!deleteTarget"
       inner-class-name="max-w-md"

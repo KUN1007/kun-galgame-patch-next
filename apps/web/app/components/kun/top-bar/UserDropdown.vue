@@ -10,18 +10,11 @@ const checking = ref(false)
 const logOpen = ref(false)
 const creatorOpen = ref(false)
 
-// "创作者申请" entry — only for regular users without the creator role:
-// moderators / admins already publish Galgame directly, and existing creators
-// don't need to apply, so both are excluded.
 const isCreator = computed(() => userStore.user.roles?.includes('creator') ?? false)
 const showCreatorApply = computed(
   () => !userStore.isModerator && !isCreator.value
 )
 
-// KunPopover only closes on outside-click / Escape — a click on an inner item
-// is @click.stop'd, so navigating via a menu link leaves it open. Drive it shut
-// ourselves: a route watcher covers every NuxtLink + programmatic navigateTo,
-// and openModal() closes it before surfacing a modal so nothing lingers behind.
 const popover = ref<{ close: () => void } | null>(null)
 const route = useRoute()
 watch(
@@ -36,23 +29,11 @@ const openModal = (target: 'log' | 'logout' | 'creator') => {
   else openLogoutModal()
 }
 
-// Account switching (docs/oauth/09-account-switching.md §3.6). Click-to-expand
-// inline list (not a hover submenu): the active account is already shown at the
-// top of the menu, so this lists the OTHER known accounts + 添加新账号. Both
-// actions are top-level authorize redirects — moyu is cross-TLD from the OP and
-// can't read its session bag over fetch, so switching always bounces through
-// /oauth/authorize. The expand state lives in the popover panel, which KunPopover
-// unmounts on close, so it resets to collapsed every time the menu reopens.
 const showAccountSwitch = ref(false)
 const switchableAccounts = computed(() =>
   accounts.value.filter((a) => a.sub !== userStore.user.sub)
 )
 
-// returnTo = where you are now, so auth bounces you back. EXCEPT your own profile
-// (/user/<your id>/...): that path is bound to the account you're LEAVING, so
-// returning there as a different account shows the wrong person's page (the switch
-// would land you on the previous account's homepage). Drop it then and let the
-// callback fall back to the NEW account's own home (/user/<new id>/resource).
 const returnAfterAuth = (): string | undefined => {
   const ownProfile = `/user/${userStore.user.id}`
   return route.path === ownProfile || route.path.startsWith(`${ownProfile}/`)
@@ -70,9 +51,6 @@ const onAddAccount = () => {
   startOAuthAddAccount(returnAfterAuth())
 }
 
-// Switching INTO an admin account forces an OP re-login (step-up, §3.5) — flag
-// it so the choice isn't surprising. The OP enforces it regardless; this is a
-// hint. `ren` (莲) is a super-admin too, so it gets the same step-up hint.
 const needsReauth = (account: KnownAccount) =>
   (account.roles ?? []).includes('admin') ||
   (account.roles ?? []).includes('ren')
@@ -106,13 +84,6 @@ const handleCheckIn = async () => {
 <template>
   <KunPopover ref="popover" position="bottom-end" inner-class="p-2 min-w-64">
     <template #trigger>
-      <!-- Bare <button> (no KunButton ring/border — that felt foreign next to
-           the rest of the top bar) purely so the trigger is keyboard-focusable
-           and Enter/Space-activatable: since KunUI 0.15.0 the KunPopover wrapper
-           is no longer a role="button"/focusable element, so the slotted trigger
-           must carry its own focusability. KunAvatar renders a plain (non-
-           focusable) image; a native button's activation click bubbles to the
-           popover's own @click. -->
       <button
         type="button"
         aria-label="账号菜单"
@@ -126,8 +97,6 @@ const handleCheckIn = async () => {
       <div class="px-2 py-1">
         <p class="font-semibold">{{ userStore.user.name }}</p>
       </div>
-      <!-- 萌萌点 row doubles as the entry to the records modal — clicking opens
-           the full ledger (OAuth is the source of truth). -->
       <button
         type="button"
         class="text-foreground/80 hover:bg-default-100 flex w-full items-center justify-between rounded px-2 py-1 text-sm"
@@ -149,12 +118,6 @@ const handleCheckIn = async () => {
         <KunIcon name="lucide:user-round" class="size-4" />
         用户主页
       </NuxtLink>
-      <!-- 账号切换 — click to expand this device's other accounts + 添加新账号
-           inline (forum-style accordion, not a hover submenu). The active account
-           is already shown at the top of the menu, so switchableAccounts lists the
-           OTHERS; each switch / add is a top-level authorize redirect (moyu is
-           cross-TLD from the OP; its session bag is the source of truth).
-           See docs/oauth/09-account-switching.md §3.6. -->
       <button
         type="button"
         class="hover:bg-default-100 flex w-full items-center gap-2 rounded px-2 py-2 text-sm"
@@ -212,9 +175,6 @@ const handleCheckIn = async () => {
         <KunIcon name="lucide:circle-help" class="size-4" />
         帮助与反馈
       </NuxtLink>
-      <!-- 创作者申请 — accent-styled so it stands out as an aspirational action.
-           Opens the root-sibling modal below; the popover closes first so it
-           doesn't linger behind. -->
       <button
         v-if="showCreatorApply"
         type="button"
@@ -228,10 +188,6 @@ const handleCheckIn = async () => {
           class="text-primary/50 ml-auto size-4"
         />
       </button>
-      <!-- Admin panel entry — only moderators / admins (OAuth role
-           "moderator" or "admin", i.e. legacy role > 2) can reach /admin;
-           isModerator covers both. The /admin route group is moderator-gated
-           server-side too, so this is a visibility convenience, not the gate. -->
       <NuxtLink
         v-if="userStore.isModerator"
         to="/admin"

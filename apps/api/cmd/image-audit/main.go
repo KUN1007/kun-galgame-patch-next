@@ -1,21 +1,3 @@
-// cmd/image-audit is a schema-derived guard against the two image-migration
-// drift bugs moyu kept hitting (because image refs live in free-text markdown
-// across many columns, hand-enumerated in two places). It enumerates EVERY
-// text/varchar/json column in the DB from information_schema and fails if:
-//
-//	(a) any column still contains a legacy CDN URL (image.moyu.moe /
-//	    image.kungal.com) → migration incomplete, blocks bucket decommission.
-//	(b) any column contains a /image/<hash> content token but is NOT in
-//	    cron.ContentTokenColumns → ref-ping doesn't cover it, so those images
-//	    get GC'd after the ~60d cold-storage TTL.
-//
-// Exit non-zero on any finding so it can run as a CI test or a periodic
-// inspection cron — turning "remember to keep the migration + ref-ping column
-// lists in sync" into an automatic guard. (letmoe doesn't need this because it
-// stores structured hash columns; moyu can't avoid free-text user markdown.)
-//
-//	go run ./cmd/image-audit            # report + exit 1 on findings
-//	go run ./cmd/image-audit -fail=false  # report only (always exit 0)
 package main
 
 import (
@@ -32,8 +14,6 @@ import (
 	"github.com/joho/godotenv"
 )
 
-// legacyHosts are the old image buckets being decommissioned. A reference to any
-// of them in content means that row never got migrated.
 var legacyHosts = []string{"image.moyu.moe", "image.kungal.com"}
 
 func main() {
@@ -46,13 +26,11 @@ func main() {
 	logger.Init(cfg.Server.Mode)
 	db := database.NewPostgres(cfg.Database, cfg.Server.Mode)
 
-	// The authoritative ref-ping coverage list (shared source of truth).
 	covered := map[string]bool{}
 	for _, c := range cron.ContentTokenColumns {
 		covered[c.Table+"."+c.Col] = true
 	}
 
-	// Every scannable column in the app schema.
 	type col struct{ TableName, ColumnName string }
 	var cols []col
 	if err := db.Raw(`
@@ -66,7 +44,6 @@ func main() {
 
 	scanLike := func(table, column, pattern string) int64 {
 		var n int64
-		// table/column come from information_schema (trusted) → double-quote them.
 		q := fmt.Sprintf(`SELECT count(*) FROM %q WHERE %q::text LIKE ?`, table, column)
 		_ = db.Raw(q, pattern).Row().Scan(&n)
 		return n
@@ -82,7 +59,6 @@ func main() {
 	for _, c := range cols {
 		key := c.TableName + "." + c.ColumnName
 
-		// (a) legacy CDN URLs still present → migration incomplete.
 		for _, host := range legacyHosts {
 			if n := scanLike(c.TableName, c.ColumnName, "%"+host+"%"); n > 0 {
 				slog.Error("legacy CDN URL 仍存在(迁移未完成)", "column", key, "host", host, "rows", n)
@@ -90,7 +66,6 @@ func main() {
 			}
 		}
 
-		// (b) /image/<hash> token in a column ref-ping doesn't cover → GC risk.
 		if n := scanRegex(c.TableName, c.ColumnName, `/image/[0-9a-f]{64}`); n > 0 && !covered[key] {
 			slog.Error("内容图 token 所在列未被 ref-ping 覆盖(将被 GC)", "column", key, "rows", n,
 				"fix", "把该列加入 cron.ContentTokenColumns")
@@ -98,7 +73,6 @@ func main() {
 		}
 	}
 
-	// Sanity: a ref-ping entry pointing at a non-existent column is itself a bug.
 	present := map[string]bool{}
 	for _, c := range cols {
 		present[c.TableName+"."+c.ColumnName] = true

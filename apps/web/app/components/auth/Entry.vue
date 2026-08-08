@@ -1,11 +1,4 @@
 <script setup lang="ts">
-// Shared modal body for the top-bar (desktop User.vue + mobile MobileMenu.vue)
-// "登录" entry point. Two buttons — login and register — both bounce to OAuth
-// web; we no longer host a /login or /register page locally.
-//
-// startOAuthLogin / startOAuthRegister are fire-and-forget — they set
-// window.location.href, so we keep loading state on so the button shows the
-// spinner until the navigation commits.
 const loadingLogin = ref(false)
 const loadingRegister = ref(false)
 

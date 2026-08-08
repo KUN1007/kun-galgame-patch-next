@@ -2,24 +2,13 @@
 import { ALL_SUPPORTED_TYPE, SUPPORTED_TYPE_MAP } from '~/constants/resource'
 import { GALGAME_SORT_FIELD_LABEL_MAP } from '~/constants/galgame'
 
-// keepalive: returning from a detail page restores this list's state (page,
-// filters, scroll) instead of remounting and resetting to page 1. Borrowed from
-// kungal's index/search feed. The page is also URL-synced, so a fresh visit or
-// shared link still honors ?page=.
-// Kept alive via the central include list in app.vue, keyed by this name.
 defineOptions({ name: 'galgame-list' })
 
 const route = useRoute()
 const router = useRouter()
 const api = useApi()
-// The "显示无补丁资源的游戏" toggle is forwarded to every request globally by
-// useApi (as include_empty) — so we don't build the param here. We only need
-// the store to WATCH the toggle: the 显示设置 panel lives on this page, so when
-// it flips we reset to page 1 and refetch (other pages remount on navigation).
 const settingStore = useSettingStore()
 
-// SFW-by-default per useApi resolution — listing only contains sfw rows
-// for anonymous crawlers, so a rich keyword-laden description is safe.
 useKunSeoMeta({
   title: 'Galgame 列表',
   description:
@@ -27,18 +16,11 @@ useKunSeoMeta({
 })
 
 const page = ref(Number(route.query.page ?? 1))
-// Crawlable pagination: render <a href> preserving filters/sort. See usePageHref.
 const pageHref = usePageHref()
 const selectedType = ref(String(route.query.type ?? 'all'))
 const sortField = ref(String(route.query.sort_field ?? 'resource_update_time'))
 const sortOrder = ref(String(route.query.sort_order ?? 'desc'))
 
-// 发售日期筛选（高级筛选面板内，参考 kungal GalgameCardNav）。两个正交控件：
-//   • 年份区间 — released_from / released_to（各 '' | 'YYYY'，独立）。两端同年
-//     = 单年；留一端空 = 开区间（"2020 及以后" / "2024 及以前"）。
-//   • 月份多选 — selectedMonths（不连续月集合，wiki §17.10）。与年份区间 AND
-//     组合，且脱离年份也成立（"历年三月" = 只选月不选年）。
-// 空区间 + 空月集 = 不筛。released_from='' → 后端 nil 下界（同理上界 / 月集）。
 const releasedFrom = ref(String(route.query.released_from ?? ''))
 const releasedTo = ref(String(route.query.released_to ?? ''))
 const parseMonthsQuery = (q: unknown): number[] => {
@@ -61,9 +43,6 @@ interface ListResponse {
 const { data, pending, refresh } = await useAsyncData<ListResponse>(
   'galgame-list',
   async () => {
-    // Query params are snake_case to match apps/api/internal/common/handler.go
-    // galgameListRequest. Date params omitted when empty (BE reads absent ==
-    // unset == no bound, per pkg/utils ParseRelease*Bound).
     const params = new URLSearchParams({
       selected_type: selectedType.value,
       sort_field: sortField.value,
@@ -101,7 +80,6 @@ const sortFieldOptions = computed(() =>
   }))
 )
 
-// 年份: 不限 + 今年回溯到 1980（galgame 发售年份跨度大）。横滚容纳。
 const currentYear = new Date().getFullYear()
 const yearOptions = computed(() => [
   { value: '', label: '不限' },
@@ -111,17 +89,13 @@ const yearOptions = computed(() => [
   })
 ])
 
-// 月份多选 1–12（空集合 = 不限月，无需 "全年" 选项）。
 const monthOptions = Array.from({ length: 12 }, (_, i) => ({
   value: i + 1,
   label: `${i + 1} 月`
 }))
 
-// 高级筛选面板开合。面板内含全部发售日期控件，主栏只留类型 + 排序。
 const showFilters = ref(false)
 
-// 主栏排序项之外，发售日期是否有筛选 —— 用于高亮 "高级筛选" 按钮，让收起
-// 状态下也能看出面板里有生效筛选。
 const hasAdvancedFilter = computed(
   () =>
     !!releasedFrom.value ||
@@ -129,7 +103,6 @@ const hasAdvancedFilter = computed(
     selectedMonths.value.length > 0
 )
 
-// 任一维度偏离默认值即可重置。默认: type=all / 排序=补丁更新时间 desc / 无日期。
 const hasActiveFilter = computed(
   () =>
     selectedType.value !== 'all' ||
@@ -160,9 +133,6 @@ const updateQuery = async () => {
   await refresh()
 }
 
-// Toggling "显示无补丁资源的游戏" changes both the rows and the total, so reset
-// to page 1 and refetch. The param itself isn't URL-synced (it's a persisted
-// preference, like title language), but page reset keeps the URL consistent.
 watch(
   () => settingStore.data.showGalgamesWithoutResource,
   () => {
@@ -190,8 +160,6 @@ const setSortOrder = (v: 'asc' | 'desc') => {
   updateQuery()
 }
 
-// 年份区间 setter，带钳制：起始年晚于结束年时拖动另一端跟随，避免倒置区间
-// （PG 上 from > to 会静默返回空）。
 const setFromYear = (year: string) => {
   if (releasedFrom.value === year) return
   releasedFrom.value = year
@@ -238,8 +206,6 @@ const onChangePage = (v: number) => {
 
 const totalPages = computed(() => Math.ceil((data.value?.total ?? 0) / limit))
 
-// Chip-button class shared by every filter row (active lit primary, inactive
-// muted). Mirrors kungal GalgameCardNav's button styling.
 const chipClass = (active: boolean) => [
   'shrink-0 cursor-pointer rounded-md px-2.5 py-1 text-sm whitespace-nowrap transition-colors',
   active
@@ -255,11 +221,6 @@ const chipClass = (active: boolean) => [
       description="本页面默认仅显示了 SFW (内容安全) 的补丁, 您可以在网站右上角切换显示全部补丁 (包括 NSFW, 也就是显示可能带有涩涩的补丁)"
     />
 
-    <!-- Filter bar — modelled on kungal's GalgameCardNav. The main bar keeps
-         only the frequently-toggled dimensions (类型 + 排序); release-date
-         lives in a foldable 高级筛选 panel so the long year/month rows don't
-         clutter the page. Each row is one horizontally-scrollable strip of
-         chip buttons (active lit primary, inactive muted). -->
     <div class="space-y-1.5">
       <div class="-mx-1 flex gap-1 overflow-x-auto px-1 pb-0.5">
         <button
@@ -285,10 +246,6 @@ const chipClass = (active: boolean) => [
         </button>
       </div>
 
-      <!-- Action row: sort direction (explicit asc/desc pair so the
-           alternative is always visible) sits alongside the panel toggle +
-           reset. flex-wrap so on narrow widths the controls wrap to a new
-           line instead of squishing the asc/desc buttons. -->
       <div class="flex flex-wrap items-center gap-1.5">
         <button
           type="button"

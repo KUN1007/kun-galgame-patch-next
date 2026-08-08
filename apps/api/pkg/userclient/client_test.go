@@ -77,7 +77,6 @@ func TestUsers_DedupesAndIgnoresZero(t *testing.T) {
 	require.NoError(t, err)
 	assert.Len(t, out, 2)
 	require.Len(t, captured, 1)
-	// ids must be sorted ascending and free of duplicates / zero
 	assert.Equal(t, "1,2", captured[0])
 }
 
@@ -85,7 +84,6 @@ func TestUsers_ShardsLargeBatch(t *testing.T) {
 	var batches atomic.Int32
 	srv := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		batches.Add(1)
-		// echo back briefs for whatever ids were sent
 		raw := r.URL.Query().Get("ids")
 		var briefs []Brief
 		for p := range strings.SplitSeq(raw, ",") {
@@ -105,7 +103,6 @@ func TestUsers_ShardsLargeBatch(t *testing.T) {
 	out, err := cli.Users(context.Background(), ids)
 	require.NoError(t, err)
 	assert.Len(t, out, 250)
-	// 250 / 100 = 3 batches
 	assert.Equal(t, int32(3), batches.Load())
 }
 
@@ -113,7 +110,6 @@ func TestUsers_SingleflightCoalescesConcurrentMiss(t *testing.T) {
 	var hits atomic.Int32
 	srv := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		hits.Add(1)
-		// sleep so concurrent callers pile up
 		time.Sleep(80 * time.Millisecond)
 		writeBatchResp(w, []Brief{{ID: 7, Name: "kun"}}, nil)
 	}))

@@ -11,7 +11,6 @@ useKunSeoMeta({
     '鲲 Galgame 补丁站按浏览量 / 下载量 / 收藏数排序的 Galgame 补丁排行榜，发现当前最热门的中文汉化 Galgame 与最受欢迎的补丁资源。'
 })
 
-// /api/v1/ranking/patch returns enricher GalgameCard rows directly.
 const { data, pending, refresh } = await useAsyncData<GalgameCard[]>(
   () => `ranking-patch-${sortBy.value}`,
   async () => {
@@ -31,9 +30,6 @@ const sortOptions = [
   { value: 'resource', label: '资源数' }
 ]
 
-// KunSelect's v-model widened to `string | string[] | null` in KunUI 0.14.0
-// (multiple/clearable support). This is a single select → only a string ever
-// arrives; guard the other shapes to satisfy the type.
 const onChangeSort = async (v: string | string[] | null) => {
   if (typeof v !== 'string') return
   sortBy.value = v

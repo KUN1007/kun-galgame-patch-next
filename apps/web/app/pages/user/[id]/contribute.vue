@@ -1,10 +1,4 @@
 <script setup lang="ts">
-// /user/:id/contribute returns a paginated list of GalgameCard-shaped patches
-// the user has contributed to (see apps/api/internal/user/handler GetUserContributions
-// which passes the rows through enricher.EnrichPatches).
-// keepalive: returning from a detail restores this tab's page + scroll. `page`
-// is a computed off ?page=, so reactivation re-reads the URL for the right page.
-// Kept alive via the central include list in app.vue, keyed by this name.
 defineOptions({ name: 'user-contribute' })
 
 const route = useRoute()
@@ -17,8 +11,6 @@ interface ListResponse {
   total: number
 }
 
-// Page in the URL (?page=) so back-nav / shared links restore it; switching to
-// another user lands on a clean URL → page 1.
 const page = computed({
   get: () => Number(route.query.page) || 1,
   set: (v) => router.replace({ query: { ...route.query, page: String(v) } })

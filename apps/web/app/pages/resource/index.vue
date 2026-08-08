@@ -1,17 +1,10 @@
 <script setup lang="ts">
-// keepalive: returning from a resource detail restores this list's page +
-// filters + scroll instead of remounting and resetting to page 1 (borrowed from
-// kungal's feed). The page stays URL-synced for fresh visits / shared links.
-// Kept alive via the central include list in app.vue, keyed by this name.
 defineOptions({ name: 'resource-list' })
 
 const route = useRoute()
 const router = useRouter()
 const api = useApi()
 
-// SFW-only listing for anonymous crawlers (resources whose owning patch is
-// NSFW are filtered out by enricher.FilterByGalgameContentLimit on the
-// /api/resource endpoint).
 useKunSeoMeta({
   title: '最新补丁资源',
   description:
@@ -19,11 +12,9 @@ useKunSeoMeta({
 })
 
 const page = ref(Number(route.query.page ?? 1))
-const pageHref = usePageHref() // crawlable pagination (<a href>)
+const pageHref = usePageHref()
 const limit = 20
 
-// /api/v1/resource is a paginated list — see apps/api/internal/common/handler.go
-// resourceListRequest. sort_field / sort_order are required.
 interface ListResponse {
   items: PatchResource[]
   total: number

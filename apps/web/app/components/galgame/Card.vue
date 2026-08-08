@@ -7,8 +7,6 @@ interface Props {
 
 const props = defineProps<Props>()
 
-// Card display preferences (the /galgame "显示设置" panel; cookie-persisted).
-// `?? default` guards an older cookie written before these keys existed.
 const settingStore = useSettingStore()
 const titleLanguage = computed(() => settingStore.data.titleLanguage ?? 'ja-jp')
 const showJapaneseSubtitle = computed(
@@ -21,8 +19,6 @@ const galgameName = computed(() =>
   getPreferredLanguageText(props.patch.name, titleLanguage.value)
 )
 
-// Opt-in Japanese subtitle under the title — suppressed when it would just
-// duplicate the title (title already 日语, or a zh title that fell back to ja).
 const japaneseSubtitle = computed(() => {
   if (!showJapaneseSubtitle.value) return ''
   const ja = props.patch.name?.['ja-jp'] ?? ''
@@ -33,39 +29,18 @@ const bannerSrc = computed(
   () => resolveBannerUrl(props.patch, 'mini') || '/kungalgame-trans.webp'
 )
 
-// Release date as YYYY-MM-DD. Backend sends RFC3339 ("2016-11-25T00:00:00Z");
-// slicing the first 10 chars is enough for a day-precision date and avoids a
-// date-lib dependency + timezone shift. Null/absent → not shown.
 const releaseDate = computed(() => props.patch.release_date?.slice(0, 10) ?? '')
 
-// No real downloadable patch on moyu (resource_count === 0). Such a card is a
-// wiki galgame surfaced on an entity/calendar/search list that moyu has no patch
-// for; hide the patch-only stats/attributes (which would be empty 0s) and the
-// stub's garbage created-date, and show a 暂无补丁 tag instead. The detail page it
-// links to renders the matching read-only "本站暂无补丁" state.
 const isNoPatch = computed(() => (props.patch.count?.resource ?? 0) === 0)
 </script>
 
 <template>
-  <!-- `p-0` removes KunCard's default outer padding so the banner image is
-       flush with the card edges; the inner info section keeps its own p-3
-       so text doesn't touch the rounded corners. `content-class="gap-0 p-0"`
-       likewise zeroes the wrapper KunCard puts around <slot />. -->
   <KunCard
     :href="`/patch/${props.patch.id}/introduction`"
     class-name="w-full p-0"
     content-class="gap-0 p-0"
   >
     <div class="relative mx-auto w-full text-center">
-      <!-- KunImage owns the skeleton + fade-in via useImageLoadingStatus.
-           Don't add a sibling skeleton or `@load` listener on the component
-           root — KunImage doesn't emit `load`, and any opacity class
-           fall-through to the wrapper hides the whole image stack. -->
-      <!-- Card stays a 16:9 banner card (uniform grid + the `mini` variant is a
-           460×259 16:9 thumbnail), so we don't switch to the real aspect ratio
-           here — only add the ThumbHash blur-up placeholder (pinned cover's
-           thumbhash). The real-aspect-ratio anti-crop fix lives where the FULL
-           cover/screenshot is shown (detail banner, covers/screenshot gallery). -->
       <KunImage
         :src="bannerSrc"
         :alt="galgameName"

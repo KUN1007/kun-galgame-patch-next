@@ -1,28 +1,5 @@
 package client
 
-// The gid <-> catalog work id bridge (wave A2-2).
-//
-// moyu is gid-native: `patch.id` IS the wiki galgame id (the D13 remap), it is
-// burned into every local key, every URL and every foreign key. The catalog
-// addresses works by its OWN id, and `works?ids=` takes catalog ids only.
-// Nothing in moyu stores a catalog work id and — per refs/proj/106 R3 —
-// nothing should: carrying two id spaces through one lane is precisely the
-// failure mode that ruling forbids.
-//
-// So every read that starts from a gid resolves through the catalog's reverse
-// lookup first: POST /v1/catalog/lookup/batch with {source: galgame_wiki,
-// external_id: <gid>}. That is the two-hop cost R3 explicitly accepted. Two
-// things keep it cheap:
-//
-//   - The mapping is an IDENTITY, not content: a gid resolves to the same
-//     catalog work forever (merges emit redirects rather than repointing), so
-//     it caches safely in-process.
-//   - The hydration call returns `claimed_by` itself, so the VOLATILE half —
-//     the claim's visibility state — is always read fresh from the second hop
-//     and never served from this cache. Caching a stale `live` would keep a
-//     banned entry renderable, which is the one error this wave exists to
-//     prevent.
-
 import (
 	"bytes"
 	"context"
@@ -38,34 +15,10 @@ import (
 	"time"
 )
 
-// catalogCodeNotFound is the /v1 catalog face's BUSINESS code for "no such row"
-// — upstream `pkg/errors.ErrNotFound`, which every public catalog handler passes
-// to `response.NotFound` and which is the ONLY 404 those handlers emit. It
-// travels in the standard {code,message} envelope beside the HTTP 404, and it is
-// what makes that 404 mean "absent" rather than "your request never arrived".
 const catalogCodeNotFound = 4
 
-// catalogCodeMoved is the /v1 catalog face's BUSINESS code for "this id was
-// MERGED AWAY" — upstream `pkg/errors.ErrMoved`, paired with HTTP 301 and an
-// envelope whose data carries `current_id`. It is emphatically NOT a miss: the
-// entity exists, under another id, and answering it with moyu's 404 would
-// retire a company page that is very much alive. The pairing discipline is
-// catalogAbsent's: the business code is the proof that the CATALOG answered.
 const catalogCodeMoved = 12
 
-// catalogAbsent reports whether a failed /v1 read is the catalog's DOCUMENTED
-// "the registry has no such row (or you may not see it)" answer, as opposed to
-// any other failure that merely happens to arrive with status 404.
-//
-// The distinction is the difference between a miss and an outage. The catalog
-// answers a real miss with the envelope above; a ROUTE-level 404 — a renamed or
-// mistyped path, a face that moved — answers with the router's own body instead
-// (the framework echoes the HTTP status into `code`, or a proxy returns HTML
-// that is not an envelope at all). Folding those into "absent" is how a whole
-// read face fails SILENTLY: every gid resolves to "not in the registry", moyu
-// renders an archive that looks empty rather than broken, and nothing logs. So
-// the envelope's business code is the proof that the CATALOG answered rather
-// than the router, and anything else surfaces as the error it is.
 func catalogAbsent(status int, err error) bool {
 	if status != http.StatusNotFound {
 		return false
@@ -74,54 +27,18 @@ func catalogAbsent(status int, err error) bool {
 	return errors.As(err, &gerr) && gerr.Code == catalogCodeNotFound
 }
 
-// catalogLookupBatchMax is the reverse lookup's documented pair ceiling. Over
-// it the catalog answers 400 (it does NOT silently truncate, unlike the
-// deprecated batch face) — so this is a chunking size, not a hope.
 const catalogLookupBatchMax = 100
 
-// anchorSourceKeys are the catalog_source KEYS of the provenance every gid-
-// bridged external_ref anchor is filed under, and therefore the only handle the
-// gid -> work id bridge has. That source is being RENAMED from `galgame_wiki`
-// to `curated` in the W1 window; its id does not move, only its key.
-//
-// A list rather than a constant so the rename needs no coordinated moyu deploy.
-// A one-value constant would have to flip in the same deploy as the infra
-// rename, and between the two deploys every gid would resolve to nothing —
-// which presents as "every galgame page 404s", not as anything a reader would
-// trace back to a renamed label. Asking for both keys costs one extra lookup
-// item per gid and is correct on either side of the rename, in either order.
-//
-// Post-rename order: once the rename has soaked the first key answers and the
-// singular lookups are one call again. The legacy key is the only temporary
-// entry; the tests in catalog_rename_test.go fail first when it is removed.
-//
-// NOT the claim SITE (catalogClaimSiteKungal): the two happened to spell
-// `galgame_wiki` alike and stop doing so in two different window steps.
 var anchorSourceKeys = []string{"curated", "galgame_wiki"}
 
-// gidLookupStride is how many gids fit in one batch-lookup page. Each gid costs
-// one item PER source key, so the wire's item ceiling has to be divided by the
-// number of keys in flight — otherwise the extra spelling silently pushes the
-// page over catalogLookupBatchMax and the catalog answers 400.
 func gidLookupStride() int {
 	return max(catalogLookupBatchMax/len(anchorSourceKeys), 1)
 }
 
-// CatalogWorksIDsMax is the `ids=` ceiling on GET /v1/catalog/works. Same
-// value, same posture: 400 on excess, never a short answer that reads as
-// "those works do not exist".
 const CatalogWorksIDsMax = 100
 
-// gidMapTTL bounds how long a resolved gid -> catalog id pair is reused. The
-// mapping is stable, so this is not a correctness window — it exists so that a
-// catalog-side merge (which retires an id in favour of a redirect target)
-// propagates on its own within an hour instead of living for the process's
-// lifetime.
 const gidMapTTL = time.Hour
 
-// gidMapMaxEntries caps the in-process map. moyu pages at <=100 rows, so the
-// working set is small; the cap only guards against a crawler walking the whole
-// archive and pinning 64k entries in memory forever.
 const gidMapMaxEntries = 20000
 
 type gidMapEntry struct {
@@ -129,7 +46,6 @@ type gidMapEntry struct {
 	at        time.Time
 }
 
-// gidMap is the process-local gid -> catalog work id cache described above.
 type gidMap struct {
 	mu sync.RWMutex
 	m  map[int]gidMapEntry
@@ -150,52 +66,14 @@ func (g *gidMap) get(gid int) (int64, bool) {
 func (g *gidMap) put(gid int, catalogID int64) {
 	g.mu.Lock()
 	defer g.mu.Unlock()
-	// Drop everything rather than evict cleverly: the map is a latency
-	// optimization over an idempotent lookup, so a cold restart costs one extra
-	// round-trip per page and nothing else.
 	if len(g.m) >= gidMapMaxEntries {
 		g.m = make(map[int]gidMapEntry, gidMapMaxEntries/4)
 	}
 	g.m[gid] = gidMapEntry{catalogID: catalogID, at: time.Now()}
 }
 
-// ─── content gating ───────────────────────────────────────────────────────
-
-// catalogGate is the catalog-side rendering of one moyu content_limit value.
-//
-// TWO AXES, and doc 106 §38 is entirely about not confusing them:
-//
-//   - content_rating (all_ages | sensitive | r18) is the AGE axis — the
-//     registry's judgement about the GAME. Its companion is the `nsfw` switch,
-//     which decides whether r18 rows are visible to this caller at all.
-//   - content_limit (sfw | nsfw) is the EDITING axis — whether the wiki entry's
-//     own displayed material was sanitized. That is the column moyu's
-//     content_limit has always meant, and the catalog now carries it:
-//     `claimed_by.content_limit` on every face that emits a claim, plus a
-//     `content_limit=` filter on works/search, the works LIST and the calendar.
-//
-// For one wave this gate projected moyu's content_limit onto the AGE axis, and
-// the two do not line up even slightly. On prod, of the 10,929 claimed live
-// entries 10,330 (94.5%) are content_rating=r18, while only 4,812 are EDITED
-// nsfw: `sfw` therefore hid 94.5% of the site, and `nsfw` returned a set that
-// overlapped the intended one by roughly half. The projection is now the wiki
-// face's own, verbatim — exact match on the editing axis:
-//
-//	""     -> nsfw=1                      (no editing-axis filter at all)
-//	"all"  -> nsfw=1
-//	"sfw"  -> nsfw=1 + content_limit=sfw
-//	"nsfw" -> nsfw=1 + content_limit=nsfw (NOT "r18 only")
-//
-// nsfw=1 is UNCONDITIONAL and therefore not a field: the age axis must never
-// again stand in for the editing axis, so the caller's own filter is the only
-// thing that narrows the population. moyu's internal-tier key carries the
-// galgame:nsfw scope for exactly this.
 type catalogGate struct {
-	// contentLimit is the EDITING-axis filter; "" = no filter.
-	contentLimit string
-	// contentRating is the AGE-axis filter; "" = no filter. gateFor NEVER sets
-	// it — it is reserved for the caller that genuinely means "18+ only", which
-	// today is SearchGalgame's own age_limit=r18 parameter.
+	contentLimit  string
 	contentRating string
 }
 
@@ -205,13 +83,11 @@ func gateFor(contentLimit string) catalogGate {
 		return catalogGate{contentLimit: "sfw"}
 	case "nsfw":
 		return catalogGate{contentLimit: "nsfw"}
-	default: // "" and "all"
+	default:
 		return catalogGate{}
 	}
 }
 
-// apply writes the whole gate onto a query. Valid for the three faces that take
-// the filter parameters: works/search, the works LIST and the calendar.
 func (g catalogGate) apply(q url.Values) {
 	applyNSFW(q)
 	if g.contentLimit != "" {
@@ -222,28 +98,12 @@ func (g catalogGate) apply(q url.Values) {
 	}
 }
 
-// allows reports whether a row whose DISPLAY content limit is displayLimit
-// passes this gate.
-//
-// Only for a face that has no content_limit= parameter AND answers with a
-// single record — the work detail. It is not the client-side list filter doc
-// 106 §37 forbids: there is no page and no total here to desync, just this one
-// row's own verdict, which is exactly the 404 the wiki detail used to give.
 func (g catalogGate) allows(displayLimit string) bool {
 	return g.contentLimit == "" || g.contentLimit == displayLimit
 }
 
-// applyNSFW writes the visibility switch alone, for the faces that take no
-// filter parameters at all (the work detail, the tag / label records). A plain
-// function rather than a gate method because it is not a choice: every moyu read
-// is nsfw=1 now (doc 106 §38).
 func applyNSFW(q url.Values) { q.Set("nsfw", "1") }
 
-// ─── the /v1 POST channel ─────────────────────────────────────────────────
-
-// postV1 sends a JSON POST to the /v1 face and returns the envelope's raw
-// `data`. The reverse lookup's batch form is the only POST moyu makes on a READ
-// face — it is a read whose request body is too large for a query string.
 func (c *Client) postV1(ctx context.Context, path string, body any) (json.RawMessage, error) {
 	payload, err := json.Marshal(body)
 	if err != nil {
@@ -279,18 +139,6 @@ func (c *Client) postV1(ctx context.Context, path string, body any) (json.RawMes
 	return env.Data, nil
 }
 
-// ─── resolution ───────────────────────────────────────────────────────────
-
-// resolveGIDs maps wiki gids to catalog work ids, consulting the cache first
-// and batching the misses through POST /v1/catalog/lookup/batch. Unresolvable
-// gids are simply absent from the result (a gid the catalog has never
-// registered is not an error — it is a work moyu knows about and the registry
-// does not yet).
-//
-// The lookup always runs with nsfw=1: this hop resolves IDENTITY, and letting
-// the sfw gate fold an r18 work into a miss here would make it indistinguishable
-// from "no such gid". Content gating belongs on the hydration hop, which applies
-// it to the rows it actually returns.
 func (c *Client) resolveGIDs(ctx context.Context, gids []int) (map[int]int64, error) {
 	out := make(map[int]int64, len(gids))
 	var missing []int
@@ -313,9 +161,6 @@ func (c *Client) resolveGIDs(ctx context.Context, gids []int) (map[int]int64, er
 			Items: make([]catalogLookupPair, 0, len(chunk)*len(anchorSourceKeys)),
 		}
 		for _, gid := range chunk {
-			// A gid comes back once per source key. Both name the SAME registry
-			// source, so both name the same identity; outside the rename only
-			// one of them resolves at all.
 			for _, source := range anchorSourceKeys {
 				body.Items = append(body.Items, catalogLookupPair{
 					Source: source, ExternalID: strconv.Itoa(gid),
@@ -343,8 +188,6 @@ func (c *Client) resolveGIDs(ctx context.Context, gids []int) (map[int]int64, er
 			c.gids.put(gid, it.Work.ID)
 		}
 	}
-	// Anything still unresolved may be an ADOPTED id rather than a bridged one
-	// (see resolveByIdentity).
 	var unbridged []int
 	for _, gid := range missing {
 		if _, ok := out[gid]; !ok {
@@ -363,19 +206,6 @@ func (c *Client) resolveGIDs(ctx context.Context, gids []int) (map[int]int64, er
 	return out, nil
 }
 
-// resolveByIdentity resolves ids that are their own answer.
-//
-// Entries minted through the registry's submission face carry no external_ref
-// bridge: the wiki anchored its gids there because the wiki issued them, and
-// after the wiki retires nobody does — a submission's product id IS the work id
-// the registry minted for it, which both product sites adopt as their local row
-// id (161 §6.P4-verdict 1). So the bridge falls through to identity.
-//
-// The round-trip check is what makes that safe rather than a guess. A legacy
-// gid is also a syntactically valid work id, and reading work 42 for gid 42
-// would otherwise hand back a completely different game. A row only counts when
-// its own claim points back at the id we asked with — which is true by
-// construction for an adopted id and false for a coincidence.
 func (c *Client) resolveByIdentity(ctx context.Context, gids []int) (map[int]int64, error) {
 	out := make(map[int]int64, len(gids))
 	for start := 0; start < len(gids); start += CatalogWorksIDsMax {
@@ -387,14 +217,8 @@ func (c *Client) resolveByIdentity(ctx context.Context, gids []int) (map[int]int
 		q := url.Values{}
 		q.Set("ids", joinInt64s(ids))
 		q.Set("limit", strconv.Itoa(CatalogWorksIDsMax))
-		// Identity resolution is not content: an age gate here would make an
-		// r18 entry indistinguishable from one that does not exist.
 		applyNSFW(q)
 
-		// Decoded through the same absent-vs-broken discipline as every other
-		// lookup here: a documented not-found is a MISS (these ids simply are
-		// not adopted works), while a router or gateway 404 is a fault and must
-		// not read as "the registry has none of them".
 		raw, status, err := c.getV1RawStatus(ctx, "/catalog/works", q)
 		if err != nil {
 			if catalogAbsent(status, err) {
@@ -419,14 +243,6 @@ func (c *Client) resolveByIdentity(ctx context.Context, gids []int) (map[int]int
 	return out, nil
 }
 
-// ClaimStates reports each gid's catalog claim visibility — live | draft |
-// hidden — omitting gids the registry has no work for.
-//
-// This is the ONE hop version of "is this entry publicly readable": it answers
-// from the reverse lookup alone, without hydrating any work. Callers that only
-// need the verdict (the archive importer's post-run draft sweep) should use
-// this rather than GalgameBatch, whose absent-row signal means the same thing
-// but costs a second round-trip per chunk to compute.
 func (c *Client) ClaimStates(ctx context.Context, gids []int) (map[int]string, error) {
 	out := make(map[int]string, len(gids))
 	stride := gidLookupStride()
@@ -469,8 +285,6 @@ func (c *Client) ClaimStates(ctx context.Context, gids []int) (map[int]string, e
 	return out, nil
 }
 
-// resolveGID maps a single wiki gid to its catalog work id. found=false means
-// the registry has no work anchored to that gid.
 func (c *Client) resolveGID(ctx context.Context, gid int) (catalogID int64, found bool, err error) {
 	if gid <= 0 {
 		return 0, false, nil
@@ -478,15 +292,12 @@ func (c *Client) resolveGID(ctx context.Context, gid int) (catalogID int64, foun
 	if id, ok := c.gids.get(gid); ok {
 		return id, true, nil
 	}
-	// The singular lookup takes ONE source, so the rename is walked key by key
-	// rather than asked for in one shot (post-rename order first).
 	for _, source := range anchorSourceKeys {
 		id, found, err := c.resolveGIDBySource(ctx, source, gid)
 		if err != nil || found {
 			return id, found, err
 		}
 	}
-	// No bridge row: it may be an adopted id, which is its own answer.
 	adopted, err := c.resolveByIdentity(ctx, []int{gid})
 	if err != nil {
 		return 0, false, err
@@ -497,9 +308,6 @@ func (c *Client) resolveGID(ctx context.Context, gid int) (catalogID int64, foun
 	return 0, false, nil
 }
 
-// ResolveWorkID maps one gid to the registry work id the lifecycle actions
-// address. found=false means the registry has no work for that id, which the
-// caller answers as a 404 rather than acting on a guess.
 func (c *Client) ResolveWorkID(ctx context.Context, gid int) (int64, bool, error) {
 	return c.resolveGID(ctx, gid)
 }
@@ -528,19 +336,10 @@ func (c *Client) resolveGIDBySource(ctx context.Context, source string, gid int)
 	return data.Work.ID, true, nil
 }
 
-// ResolveWikiLabel maps an old wiki official id (oid) to its catalog label id
-// via GET /v1/catalog/lookup?type=label. found=false means the registry has no
-// label anchored to that oid.
-//
-// Unlike tags, officials need no vendored table: the A2-0 rescue registered all
-// 24,334 of them as exact external refs, so the public lookup answers for every
-// one. `external_id` is matched VERBATIM on the non-work lookup families — the
-// vndb `v`-prefix rule is work-only — and wiki oids are stored bare.
 func (c *Client) ResolveWikiLabel(ctx context.Context, oid int) (int64, bool, error) {
 	if oid <= 0 {
 		return 0, false, nil
 	}
-	// Same key-by-key walk as resolveGID: one source per call, post-rename first.
 	for _, source := range anchorSourceKeys {
 		id, found, err := c.resolveWikiLabelBySource(ctx, source, oid)
 		if err != nil || found {
@@ -578,7 +377,6 @@ func (c *Client) resolveWikiLabelBySource(ctx context.Context, source string, oi
 	return data.Label.ID, true, nil
 }
 
-// joinInt64s renders catalog ids for an `ids=` query value.
 func joinInt64s(xs []int64) string {
 	parts := make([]string, 0, len(xs))
 	for _, x := range xs {

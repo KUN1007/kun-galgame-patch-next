@@ -18,9 +18,6 @@ const closeMenu = () => emit('update:isOpen', false)
 
 const userStore = useUserStore()
 
-// Theme switcher — an inline 3-segmented control. The canonical theme control
-// now lives in /settings/system (the top-bar theme button was removed); this is
-// kept as a convenient quick toggle for phone users.
 const colorMode = useColorMode()
 const themes = [
   { key: 'light', label: '浅色', icon: 'lucide:sun' },
@@ -31,11 +28,6 @@ const setTheme = (key: 'light' | 'dark' | 'system') => {
   colorMode.preference = key
 }
 
-// NSFW content_limit picker (mobile mirror of KunTopBarNSFWSwitcher — that
-// component is a popover that's awkward on touch; the inline 3-tile control
-// matches the theme picker above). location.reload() on change for the same
-// reason as the desktop switcher: useApi captures content_limit at setup
-// time, so an in-place update only takes effect on the next navigation.
 const settingStore = useSettingStore()
 const nsfwOptions = [
   { key: 'sfw', icon: 'lucide:shield-check' },
@@ -47,10 +39,6 @@ const setNsfw = (key: KunNsfwPreference) => {
   if (import.meta.client) location.reload()
 }
 
-// Icon map. Kept in this file (not in constants/top-bar.ts) so the icon
-// asset list scanner picks them up via the literal KunIcon name="..." form
-// at the call sites below; adding a generic `icon?: string` to the
-// constants list would also work but requires re-running `npm run icons`.
 const ICON_BY_HREF: Record<string, string> = {
   '/galgame': 'lucide:gamepad-2',
   '/calendar': 'lucide:calendar-days',
@@ -64,34 +52,22 @@ const ICON_BY_HREF: Record<string, string> = {
 }
 const iconFor = (href: string) => ICON_BY_HREF[href] ?? 'lucide:chevron-right'
 
-// Section grouping: first 4 items (kunNavItem) are the primary nav; the
-// extras after that are utility links. Admin (if present) gets its own
-// section. Keeps the menu scannable instead of one long flat list.
 const primaryItems = computed(() => kunMobileNavItem.slice(0, 4))
 const utilityItems = computed(() => kunMobileNavItem.slice(4))
 const adminItems = computed(() => (userStore.isAdmin ? kunMobileAdminItem : []))
 
-// "登录" button → open the app-wide login modal (useAuthModal, mounted in the
-// default layout — same modal every login-required action/page opens). closeMenu
-// first so the slide-out animation runs cleanly before the modal opens on top.
 const { open: openAuthModal } = useAuthModal()
 const handleLoginClick = () => {
   closeMenu()
   openAuthModal()
 }
 
-// Logout opens the app-wide scope chooser (this site vs + OAuth). Close the
-// drawer first so the modal isn't behind it. See LogoutModal / useLogoutModal.
 const { openLogoutModal } = useLogoutModal()
 const openLogout = () => {
   closeMenu()
   openLogoutModal()
 }
 
-// Body scroll lock — use the shared singleton refcount from @kungal/ui-vue so
-// opening the menu while a Modal is also up doesn't unlock the body when
-// the menu closes. (Previously this file wrote document.body.style
-// directly, which clobbered any concurrent overlay's lock.)
 const { lock, unlock } = useBodyScrollLock()
 let locked = false
 watch(
@@ -113,7 +89,6 @@ onUnmounted(() => {
   }
 })
 
-// Esc to close.
 const onKey = (e: KeyboardEvent) => {
   if (e.key === 'Escape' && props.isOpen) closeMenu()
 }
@@ -126,15 +101,6 @@ onUnmounted(() => {
 </script>
 
 <template>
-  <!-- Teleport to <body> so the menu escapes the parent `<nav>`'s
-       backdrop-filter stacking context. KunTopBar's <nav> has its own
-       `backdrop-blur`, which per CSS spec creates a containing block for
-       backdrop-filter — any descendant's backdrop-blur ends up blurring
-       only the parent's already-rendered surface, not what's behind on
-       the actual viewport, so the frosted-glass effect silently
-       collapses to a flat tint. Teleporting moves the menu DOM out of
-       that boundary while keeping it bound to this component's reactive
-       state, so we get a real backdrop blur over the page content. -->
   <Teleport to="body">
     <Transition
       enter-active-class="transition-all duration-200 ease-out"
@@ -142,13 +108,6 @@ onUnmounted(() => {
       enter-from-class="opacity-0 -translate-y-2"
       leave-to-class="opacity-0 -translate-y-2"
     >
-      <!-- Fixed positioning with `top-16 inset-x-0 bottom-0` + `h-[calc(100dvh-4rem)]`
-         picks up iOS's dynamic viewport (avoids the URL-bar overlap that
-         100vh produces). `pb-[env(safe-area-inset-bottom)]` reserves room
-         for the iOS home indicator so the last list item is fully tappable.
-         `bg-background/70 + backdrop-blur-2xl` gives a frosted-glass effect
-         where the page underneath shows through softly — matches modern
-         iOS / macOS sheet aesthetics. -->
       <div
         v-if="props.isOpen"
         class="bg-background/70 fixed inset-x-0 top-16 bottom-0 z-30 h-[calc(100dvh-4rem)] overflow-y-auto backdrop-blur-2xl backdrop-saturate-150 md:hidden"
@@ -156,8 +115,6 @@ onUnmounted(() => {
         @click.self="closeMenu"
       >
         <div class="mx-auto flex max-w-md flex-col gap-4 px-4 pt-5 pb-6">
-          <!-- ── User card (top): logged-in state shows avatar + name + 萌萌点;
-             logged-out state shows a single primary Login CTA. -->
           <section
             v-if="userStore.isLoggedIn"
             class="border-default/20 bg-default-50/40 flex items-center gap-3 rounded-2xl border p-3"
@@ -225,7 +182,6 @@ onUnmounted(() => {
             </KunButton>
           </section>
 
-          <!-- ── Settings entry (mirrors the desktop dropdown's 系统和用户设置). ── -->
           <NuxtLink
             to="/settings/user"
             class="hover:bg-default-100 active:bg-default-200 border-default/20 bg-default-50/40 flex items-center gap-3 rounded-2xl border px-3 py-3.5 transition-colors"
@@ -242,7 +198,6 @@ onUnmounted(() => {
             />
           </NuxtLink>
 
-          <!-- ── Primary nav ── -->
           <section class="space-y-1">
             <p
               class="text-default-400 px-3 text-xs font-semibold tracking-wider uppercase"
@@ -250,9 +205,6 @@ onUnmounted(() => {
               主菜单
             </p>
             <nav class="flex flex-col gap-0.5">
-              <!-- 首页 — kunMobileNavItem starts at 下载, so the menu had no way
-                   back to the homepage (the logged-in user card has no logo
-                   link). Pin an explicit 首页 entry at the top. -->
               <NuxtLink
                 to="/"
                 class="hover:bg-default-100 active:bg-default-200 flex items-center gap-3 rounded-xl px-3 py-3.5 transition-colors"
@@ -288,7 +240,6 @@ onUnmounted(() => {
             </nav>
           </section>
 
-          <!-- ── Utility links ── -->
           <section v-if="utilityItems.length" class="space-y-1">
             <p
               class="text-default-400 px-3 text-xs font-semibold tracking-wider uppercase"
@@ -316,7 +267,6 @@ onUnmounted(() => {
             </nav>
           </section>
 
-          <!-- ── Admin (gated) ── -->
           <section v-if="adminItems.length" class="space-y-1">
             <p
               class="text-default-400 px-3 text-xs font-semibold tracking-wider uppercase"
@@ -341,17 +291,12 @@ onUnmounted(() => {
             </nav>
           </section>
 
-          <!-- ── Theme switcher ── -->
           <section class="space-y-3">
             <p
               class="text-default-400 px-3 text-xs font-semibold tracking-wider uppercase"
             >
               外观
             </p>
-            <!-- 3-segmented control: each tile equally sized so it reads as
-               a single grouped picker rather than three loose buttons.
-               No menu close on tap — users typically tweak theme then keep
-               browsing other menu items. -->
             <div
               class="border-default/20 bg-default-50/40 grid grid-cols-3 gap-1 rounded-xl border p-1"
             >
@@ -373,7 +318,6 @@ onUnmounted(() => {
             </div>
           </section>
 
-          <!-- ── Content / NSFW switcher ── -->
           <section class="space-y-3">
             <p
               class="text-default-400 px-3 text-xs font-semibold tracking-wider uppercase"

@@ -14,20 +14,15 @@ import (
 	"kun-galgame-patch-api/pkg/trustclient"
 )
 
-// TrustService is the BFF façade over the infra Trust & Safety client: the
-// generic report forwarder (Phase 1) and the moderator-inbox proxy (Phase 3).
 type TrustService struct {
 	trust *trustclient.Client
-	site  string // moyu's catalog_site, to scope the inbox
+	site  string
 }
 
 func NewTrustService(trust *trustclient.Client, site string) *TrustService {
 	return &TrustService{trust: trust, site: site}
 }
 
-// mapAdminErr turns a trustclient AdminError into a moyu AppError, preserving
-// the meaningful statuses (409 claim conflict / illegal transition, 400 bad
-// decision, 403 missing permission).
 func mapAdminErr(err error) *errors.AppError {
 	if stderrors.Is(err, trustclient.ErrNotConfigured) {
 		return errors.ErrInternal("审核服务暂未启用")
@@ -50,8 +45,6 @@ func mapAdminErr(err error) *errors.AppError {
 	return errors.ErrInternal("审核服务请求失败")
 }
 
-// ListReviewItems proxies the inbox, forcing site=moyu so a moyu moderator only
-// sees moyu's items.
 func (s *TrustService) ListReviewItems(
 	ctx context.Context, token string, req *dto.ListReviewItemsRequest,
 ) (json.RawMessage, *errors.AppError) {
@@ -95,10 +88,6 @@ func (s *TrustService) DecideReviewItem(ctx context.Context, token string, id in
 	return data, nil
 }
 
-// Reasons returns the report-reason catalog for the browser dropdown, resolved
-// live from the trust registry (global base + moyu's site extensions). Falls
-// back to the seeded global constant when trust is unconfigured or unreachable,
-// so the report UI always has options.
 func (s *TrustService) Reasons(ctx context.Context) []trust.ReportReason {
 	views, err := s.trust.ListReportReasons(ctx)
 	if err != nil || len(views) == 0 {
@@ -111,9 +100,6 @@ func (s *TrustService) Reasons(ctx context.Context) []trust.ReportReason {
 	return out
 }
 
-// SubmitReport forwards a report to the trust service with the session user as
-// the reporter. subject_kind / subject_id pass through untouched (trust owns
-// validation, dedup, and rate-limiting).
 func (s *TrustService) SubmitReport(
 	ctx context.Context,
 	reporterID int,
@@ -137,8 +123,6 @@ func (s *TrustService) SubmitReport(
 		case stderrors.Is(err, trustclient.ErrNotConfigured):
 			return nil, errors.ErrInternal("举报服务暂未启用")
 		default:
-			// ErrForbidden/ErrUnauthorized are server-side misconfig (site binding /
-			// credentials), not the reporter's fault → 500.
 			return nil, errors.ErrInternal("举报提交失败，请稍后再试")
 		}
 	}

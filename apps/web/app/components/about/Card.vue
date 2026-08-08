@@ -1,15 +1,4 @@
 <script setup lang="ts">
-// Ported from refs/legacy/next-web/components/doc/Card.tsx, structure
-// preserved: title on top, banner in the middle, calendar + type metadata
-// below, and a "点击阅读更多 →" footer separated by a top border.
-//
-// Differences vs the legacy React version:
-//   - Banner loading: legacy hand-rolled imageLoaded + animate-pulse +
-//     scale-105 → scale-100 transition. We rely on KunImage's built-in
-//     skeleton + fade-in (useImageLoadingStatus) — same UX, no per-card
-//     state, and avoids the pattern that previously broke the galgame Card
-//     (KunImage doesn't emit `load`).
-//   - Field name: `text_count` (snake_case from the Go API), not `textCount`.
 interface Props {
   post: KunPostMetadata
 }
@@ -25,9 +14,6 @@ const props = defineProps<Props>()
     <div class="space-y-3 p-4">
       <h2 class="mb-2 text-xl font-bold">{{ props.post.title }}</h2>
 
-      <!-- 16/9 banner. Pre-optimized AVIF authored at build time
-           (/posts/notice/*/banner.avif); `provider="none"` skips the
-           IPX → sharp round-trip + 5-min FS cache miss latency. -->
       <KunImage
         v-if="props.post.banner"
         :src="props.post.banner"

@@ -2,18 +2,6 @@ package model
 
 import "time"
 
-// User is the slimmed local user table.
-//
-// After the OAuth migration, identity (name / email / password / avatar /
-// bio / status / role) lives on the OAuth server. The local row holds only
-// site-local state: counters, daily quotas, follow counts, and the IP /
-// last-login fingerprint. The id is aligned with OAuth.users.id by the
-// migrate-users script, so look-ups go directly by integer id (no
-// oauth_account indirection).
-//
-// IMPORTANT: ID is no longer autoIncrement. New rows are inserted by the
-// OAuth callback with the integer id returned by /oauth/userinfo (see
-// migration 005 which drops the IDENTITY/SERIAL on user.id).
 type User struct {
 	ID              int       `gorm:"primaryKey" json:"id"`
 	IP              string    `gorm:"type:varchar(233);default:''" json:"-"`

@@ -1,10 +1,6 @@
 <script setup lang="ts">
 import { commentPermalink } from '~/shared/utils/commentTarget'
 
-// 动态 — the user-profile overview / landing tab (KunAvatar links here, and
-// /user/:id redirects here). Shows a compact "recent activity" digest by
-// reusing the same per-tab endpoints with a small limit, so there's no new
-// backend surface — each section links to its full tab for more.
 const route = useRoute()
 const api = useApi()
 const userId = computed(() => Number(route.params.id))
@@ -65,7 +61,6 @@ const isEmpty = computed(
     <KunLoading v-if="pending" description="加载中..." />
     <KunNull v-else-if="isEmpty" description="该用户暂无动态" />
     <div v-else class="space-y-8">
-      <!-- 最近发布的 Galgame -->
       <section v-if="data?.galgames.items.length" class="space-y-3">
         <div class="flex items-center justify-between">
           <h2 class="flex items-center gap-2 text-lg font-semibold">
@@ -89,7 +84,6 @@ const isEmpty = computed(
         </div>
       </section>
 
-      <!-- 最近发布的补丁资源 -->
       <section v-if="data?.resources.items.length" class="space-y-3">
         <div class="flex items-center justify-between">
           <h2 class="flex items-center gap-2 text-lg font-semibold">
@@ -129,7 +123,6 @@ const isEmpty = computed(
         </div>
       </section>
 
-      <!-- 最近的评论 -->
       <section v-if="data?.comments.items.length" class="space-y-3">
         <div class="flex items-center justify-between">
           <h2 class="flex items-center gap-2 text-lg font-semibold">

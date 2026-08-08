@@ -1,12 +1,6 @@
 <script setup lang="ts">
 import { kunMoyuMoe } from '~/config/moyu-moe'
 
-// Wide ad banner (ported from the legacy next-web
-// components/kun/ad/AIEroBanner.tsx). Shown to everyone EXCEPT ad-free roles
-// (see AIEroNav for the role-gate rationale). The image is 1920x300; the
-// aspect-ratio box reserves space so it doesn't shift layout while the bytes
-// load. `className` lets call sites add responsive visibility (the resource
-// detail page renders a desktop + a mobile instance).
 interface Props {
   className?: string
 }

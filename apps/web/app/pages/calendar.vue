@@ -1,13 +1,4 @@
 <script setup lang="ts">
-// Galgame 新作发售月表 — release calendar over the wiki calendar API
-// (/galgame/calendar*). Month-at-a-glance grid (sticky) + a date-tile day list
-// you can click-to-scroll into; each card carries a countdown + an inline 收藏
-// (favoriting lazily records a 未收录 game and subscribes to its new-patch
-// notifications). A patch-status filter leans into moyu being a patch site.
-// Unclaimed VNDB drafts (status 2) get a 未发布 badge and route to the publish
-// wizard to 认领. Single month only — no neighbour wheel, no 未定档 buckets.
-//
-// Kept alive via app.vue's include list; `month` is a computed off ?month=.
 defineOptions({ name: 'calendar-page' })
 
 useKunSeoMeta({
@@ -32,11 +23,6 @@ const { data, pending } = await useAsyncData<CalendarMonthResponse | null>(
     const qs = month.value ? `?month=${month.value}` : ''
     const res = await api.get<CalendarMonthResponse>(`/galgame/calendar${qs}`)
     let d = res.code === 0 ? res.data : null
-    // Default landing (no ?month=) on an EMPTY month — e.g. the current month is
-    // past the latest scheduled release (data.meta.max_month) — falls back to the
-    // latest month that actually has releases, so the right side shows that whole
-    // month instead of an empty page. Only kicks in for the default view; an
-    // explicit ?month= is always respected (even if empty).
     if (
       d &&
       !month.value &&
@@ -59,7 +45,6 @@ const meta = computed(() => data.value?.meta ?? null)
 const today = computed(() => data.value?.today ?? '')
 const allItems = computed<CalendarItem[]>(() => data.value?.items ?? [])
 
-// ── Patch-status filter (moyu is a patch site — let users scope to downloadable)
 type PatchFilter = 'all' | 'has' | 'none'
 const patchFilter = ref<PatchFilter>('all')
 const hasCount = computed(() => allItems.value.filter((i) => i.has_patch).length)
@@ -76,9 +61,8 @@ const items = computed<CalendarItem[]>(() => {
 
 const WEEKDAYS = ['日', '一', '二', '三', '四', '五', '六']
 
-// ── Day grouping (filtered). month-precision entries → a trailing 待定 bucket.
 interface DayGroup {
-  key: string // YYYY-MM-DD or 'tbd'
+  key: string
   day: number
   weekday: string
   isToday: boolean
@@ -118,7 +102,6 @@ const dayGroups = computed<DayGroup[]>(() => {
   return groups
 })
 
-// ── Month grid cells (full month; counts from the filtered day groups).
 interface GridCell {
   day: number
   key: string
@@ -152,7 +135,6 @@ const tbdCount = computed(
   () => dayGroups.value.find((g) => g.isTbd)?.items.length ?? 0
 )
 
-// ── Selected day (grid highlight) + click-to-scroll.
 const selected = ref('')
 watch(
   dayGroups,
@@ -183,7 +165,6 @@ const tileClass = (g: DayGroup) => {
   return 'bg-default-100 text-default-500'
 }
 
-// ── Month navigation.
 const monthLabel = computed(() => {
   const [y, mo] = curMonth.value.split('-')
   return y && mo ? `${y} 年 ${Number(mo)} 月` : ''
@@ -192,8 +173,6 @@ const todayMonth = computed(() => today.value.slice(0, 7))
 const isCurrentMonth = computed(() => {
   if (!todayMonth.value) return true
   if (curMonth.value === todayMonth.value) return true
-  // The default view fell back to the latest-data month (current month empty) —
-  // that IS the landing view, so don't show a no-op "回到本月".
   return !month.value && curMonth.value === meta.value?.max_month
 })
 const goPrev = () => {
@@ -214,7 +193,6 @@ const goToday = () => {
       description="按月浏览 Galgame 新作发售月历，收藏感兴趣的作品，有补丁时第一时间通知你"
     />
 
-    <!-- Patch-status filter -->
     <div class="flex flex-wrap items-center gap-2">
       <KunButton
         v-for="f in filters"
@@ -231,7 +209,6 @@ const goToday = () => {
     </div>
 
     <div class="grid gap-6 lg:grid-cols-3">
-      <!-- Left column: month nav + grid, sticky on desktop. -->
       <aside class="lg:col-span-1">
         <div class="space-y-4 lg:sticky lg:top-20">
           <div class="flex items-center justify-between gap-2">
@@ -282,7 +259,6 @@ const goToday = () => {
         </div>
       </aside>
 
-      <!-- Day-row list -->
       <div class="lg:col-span-2">
         <KunLoading v-if="pending && !data" description="正在加载发售月历..." />
 

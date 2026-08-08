@@ -1,13 +1,4 @@
 <script setup lang="ts">
-// Settings shell: one page title, with the section Tab on its lower-left and the
-// routed sub-page (账户 / 系统) on its lower-right; on mobile the Tab collapses
-// to a horizontal bar above the content. Nested-route parent of
-// pages/settings/{user,system,index}.vue.
-//
-// The Tab is a KunTab driven by the current route (not KunTabPanels) — the panel
-// content is route-rendered via <NuxtPage/>. Two CSS-toggled instances
-// (vertical desktop / horizontal mobile) instead of a JS media query, so SSR
-// has no orientation flash.
 const route = useRoute()
 
 const tabs = [
@@ -27,7 +18,6 @@ const active = computed({
   <div class="container mx-auto my-4 px-4">
     <KunHeader name="设置" description="管理您的账户与本地偏好" />
 
-    <!-- Mobile: horizontal tabs above the content. -->
     <KunTab
       v-model="active"
       :items="tabs"
@@ -37,10 +27,7 @@ const active = computed({
       class-name="mt-2 mb-4 md:hidden"
     />
 
-    <!-- md:mt-6 gives the title breathing room above the content on desktop,
-         where the mobile tab bar (which carries that spacing on phones) is hidden. -->
     <div class="flex flex-col gap-6 md:mt-6 md:flex-row md:gap-8">
-      <!-- Desktop: vertical tabs on the lower-left. -->
       <KunTab
         v-model="active"
         :items="tabs"

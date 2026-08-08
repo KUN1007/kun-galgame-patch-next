@@ -41,7 +41,6 @@ func TestAdjust_Success(t *testing.T) {
 	if gotBody.Delta != 3 || gotBody.Reason != "content_approved" || gotBody.IdempotencyKey != "moyu:resource_publish:7" {
 		t.Fatalf("server received wrong body: %+v", gotBody)
 	}
-	// source_app must NOT be sent (server derives it).
 	if gotBody.ActorUserID != 0 {
 		t.Fatalf("actor_user_id should default to 0, got %d", gotBody.ActorUserID)
 	}
@@ -99,7 +98,6 @@ func TestLog(t *testing.T) {
 		if r.Method != http.MethodGet || r.URL.Path != "/users/42/moemoepoint/log" {
 			t.Errorf("unexpected request: %s %s", r.Method, r.URL.Path)
 		}
-		// cursor + limit must be forwarded as query params
 		if got := r.URL.Query().Get("limit"); got != "20" {
 			t.Errorf("limit query = %q, want 20", got)
 		}

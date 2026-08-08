@@ -31,9 +31,6 @@ func New(svc *service.AdminService, galgame *galgameClient.Client, users *usercl
 	return &AdminHandler{service: svc, galgame: galgame, users: users}
 }
 
-// attachUserBriefs is a tiny helper used by every admin list endpoint that
-// previously relied on Preload("User") -- fetches publisher briefs from OAuth
-// /users/batch in one call and stamps the User field on each row.
 func (h *AdminHandler) attachCommentUsers(ctx context.Context, cs []patchModel.PatchComment) {
 	uids := make([]int, 0, len(cs))
 	for _, c := range cs {
@@ -60,12 +57,6 @@ func (h *AdminHandler) attachResourceUsers(ctx context.Context, rs []patchModel.
 	}
 }
 
-// attachPatchSummaries fills the owning-galgame summary (name / banner / vndb_id)
-// on comment / resource rows so the admin UI can show the game's NAME instead of
-// a bare "补丁 #<id>". Names live in Wiki, so this resolves them in one batch via
-// the enricher (AdminService satisfies enricher.PatchSummaryDB). Either slice
-// may be nil. Best-effort: rows whose galgame Wiki can't resolve keep Patch=nil
-// and the frontend falls back to the id.
 func (h *AdminHandler) attachPatchSummaries(ctx context.Context, comments []patchModel.PatchComment, resources []patchModel.PatchResource) {
 	idSet := make(map[int]struct{}, len(comments)+len(resources))
 	for _, m := range comments {
@@ -117,9 +108,6 @@ func getIDParam(c fiber.Ctx, name string) (int, error) {
 	return id, nil
 }
 
-// ===== Comments =====
-
-// GetComments GET /api/admin/comment
 func (h *AdminHandler) GetComments(c fiber.Ctx) error {
 	var req dto.AdminPaginationRequest
 	if err := utils.ParseQueryAndValidate(c, &req); err != nil {
@@ -135,7 +123,6 @@ func (h *AdminHandler) GetComments(c fiber.Ctx) error {
 	return response.Paginated(c, comments, total)
 }
 
-// UpdateComment PUT /api/admin/comment/:id
 func (h *AdminHandler) UpdateComment(c fiber.Ctx) error {
 	id, err := getIDParam(c, "id")
 	if err != nil {
@@ -154,7 +141,6 @@ func (h *AdminHandler) UpdateComment(c fiber.Ctx) error {
 	return response.OKMessage(c, "Comment updated")
 }
 
-// DeleteComment DELETE /api/admin/comment/:id
 func (h *AdminHandler) DeleteComment(c fiber.Ctx) error {
 	id, err := getIDParam(c, "id")
 	if err != nil {
@@ -168,9 +154,6 @@ func (h *AdminHandler) DeleteComment(c fiber.Ctx) error {
 	return response.OKMessage(c, "Comment deleted")
 }
 
-// ===== Resources =====
-
-// GetResources GET /api/admin/resource
 func (h *AdminHandler) GetResources(c fiber.Ctx) error {
 	var req dto.AdminPaginationRequest
 	if err := utils.ParseQueryAndValidate(c, &req); err != nil {
@@ -186,7 +169,6 @@ func (h *AdminHandler) GetResources(c fiber.Ctx) error {
 	return response.Paginated(c, resources, total)
 }
 
-// UpdateResource PUT /api/admin/resource/:id
 func (h *AdminHandler) UpdateResource(c fiber.Ctx) error {
 	id, err := getIDParam(c, "id")
 	if err != nil {
@@ -205,15 +187,12 @@ func (h *AdminHandler) UpdateResource(c fiber.Ctx) error {
 	return response.OKMessage(c, "Resource updated")
 }
 
-// DeleteResource DELETE /api/admin/resource/:id
 func (h *AdminHandler) DeleteResource(c fiber.Ctx) error {
 	id, err := getIDParam(c, "id")
 	if err != nil {
 		return response.Error(c, err.(*errors.AppError))
 	}
 
-	// Optional moderation reason (mirrors the game-detail delete): trimmed and
-	// rune-capped at 500 so it fits admin_log.content + the owner notification.
 	var body struct {
 		Reason string `json:"reason"`
 	}
@@ -230,13 +209,6 @@ func (h *AdminHandler) DeleteResource(c fiber.Ctx) error {
 	return response.OKMessage(c, "Resource deleted")
 }
 
-// ===== User purge (anti-spam, admin-only) =====
-
-// GetUserPurgePreview GET /api/admin/user/:id/purge-preview?purge_owned_patches=
-//
-// Dry run: returns the count breakdown of everything a purge would remove. The
-// purge_owned_patches query flag mirrors the execute-time force option so the
-// owned-patch collateral counts reflect the same choice.
 func (h *AdminHandler) GetUserPurgePreview(c fiber.Ctx) error {
 	id, err := getIDParam(c, "id")
 	if err != nil {
@@ -249,12 +221,6 @@ func (h *AdminHandler) GetUserPurgePreview(c fiber.Ctx) error {
 	return response.OK(c, preview)
 }
 
-// PurgeUser POST /api/admin/user/:id/purge   body: { purge_owned_patches: bool }
-//
-// Irreversibly removes every moyu-side trace of the user (comments, resources +
-// their S3 files, likes/favorites/contributes, follows, chat, private messages)
-// and the local user row, fixing denormalized counters on surviving content.
-// Out of scope: OAuth identity, Wiki, kungal, image_service. Admin-only.
 func (h *AdminHandler) PurgeUser(c fiber.Ctx) error {
 	id, err := getIDParam(c, "id")
 	if err != nil {
@@ -276,15 +242,6 @@ func (h *AdminHandler) PurgeUser(c fiber.Ctx) error {
 	return response.OK(c, res)
 }
 
-// ===== All Patches (admin browse) =====
-
-// GetGalgame GET /api/admin/galgame
-//
-// Lists every patch with pagination. The optional `search` query is matched
-// against vndb_id (game names live in Wiki and cannot be searched locally; the
-// admin frontend pairs this list with the per-row "open detail" link to drill
-// down). Each row is enriched via Wiki so the admin sees the same name/banner
-// they see elsewhere on the site.
 func (h *AdminHandler) GetGalgame(c fiber.Ctx) error {
 	var req dto.AdminPaginationRequest
 	if err := utils.ParseQueryAndValidate(c, &req); err != nil {
@@ -295,23 +252,14 @@ func (h *AdminHandler) GetGalgame(c fiber.Ctx) error {
 	if err != nil {
 		return response.Error(c, errors.ErrInternal(""))
 	}
-	// Admin view sees everything by default — pass "all" so NSFW patches show
-	// up in the admin list regardless of any content_limit query param the
-	// admin's browser session happened to carry over from another page. The
-	// admin console is the canonical "manage every row" surface; filtering
-	// here would hide rows admins need to moderate.
 	cards := enricher.EnrichPatches(c.Context(), h.galgame, h.users, patches, "all")
 	return response.Paginated(c, cards, total)
 }
 
-// ===== Settings =====
-
-// GetCommentVerify GET /api/admin/setting/comment-verify
 func (h *AdminHandler) GetCommentVerify(c fiber.Ctx) error {
 	return response.OK(c, map[string]bool{"enabled": h.service.GetSetting(settingService.KeyCommentVerify)})
 }
 
-// SetCommentVerify PUT /api/admin/setting/comment-verify
 func (h *AdminHandler) SetCommentVerify(c fiber.Ctx) error {
 	var req dto.AdminSettingBoolRequest
 	if err := utils.ParseAndValidate(c, &req); err != nil {
@@ -323,15 +271,10 @@ func (h *AdminHandler) SetCommentVerify(c fiber.Ctx) error {
 	return response.OKMessage(c, "Setting updated")
 }
 
-// GetCreatorOnly GET /api/admin/setting/creator-only
 func (h *AdminHandler) GetCreatorOnly(c fiber.Ctx) error {
 	return response.OK(c, map[string]bool{"enabled": h.service.GetSetting(settingService.KeyCreatorOnly)})
 }
 
-// SetCreatorOnly PUT /api/admin/setting/creator-only
-//
-// When on, only moderators / admins (role > 2) may publish a galgame — enforced
-// in the patch publish handlers (CreatePatch / ClaimGalgame / SubmitGalgame).
 func (h *AdminHandler) SetCreatorOnly(c fiber.Ctx) error {
 	var req dto.AdminSettingBoolRequest
 	if err := utils.ParseAndValidate(c, &req); err != nil {
@@ -343,13 +286,6 @@ func (h *AdminHandler) SetCreatorOnly(c fiber.Ctx) error {
 	return response.OKMessage(c, "Setting updated")
 }
 
-// The "禁止注册" (disable-register) setting was removed — registration is
-// unified on the OAuth server (the local register flow no longer exists), so
-// the toggle is being reimplemented there rather than in this admin panel.
-
-// ===== Stats =====
-
-// GetStats GET /api/admin/stats
 func (h *AdminHandler) GetStats(c fiber.Ctx) error {
 	var req dto.AdminStatsRequest
 	if err := utils.ParseQueryAndValidate(c, &req); err != nil {
@@ -358,24 +294,10 @@ func (h *AdminHandler) GetStats(c fiber.Ctx) error {
 	return response.OK(c, h.service.GetStats(req.Days))
 }
 
-// GetStatsSum GET /api/admin/stats/sum
 func (h *AdminHandler) GetStatsSum(c fiber.Ctx) error {
 	return response.OK(c, h.service.GetStatsSum())
 }
 
-// ===== Logs =====
-
-// GetResourceFileHistory GET /api/admin/resource/:id/history
-//
-// Returns the append-only file-replacement audit trail for one patch_resource
-// (MOYU-PR5 / M3). Admin/moderator only (route gated by moderatorAuth). Rows
-// are paginated newest-first; each row carries the snapshot of the resource's
-// old file pointer (storage / s3_key / blake3 / size / content), the
-// operator-supplied reason, and the actor id+role snapshot.
-//
-// Use case: when a user reports "this download is broken", an admin can pull
-// up the resource's history and see exactly when the file was swapped, by
-// whom, and why.
 func (h *AdminHandler) GetResourceFileHistory(c fiber.Ctx) error {
 	resourceID, perr := strconv.Atoi(c.Params("id"))
 	if perr != nil || resourceID <= 0 {
@@ -392,7 +314,6 @@ func (h *AdminHandler) GetResourceFileHistory(c fiber.Ctx) error {
 	return response.Paginated(c, items, total)
 }
 
-// GetLogs GET /api/admin/log
 func (h *AdminHandler) GetLogs(c fiber.Ctx) error {
 	var req dto.AdminPaginationRequest
 	if err := utils.ParseQueryAndValidate(c, &req); err != nil {
@@ -407,40 +328,12 @@ func (h *AdminHandler) GetLogs(c fiber.Ctx) error {
 	return response.Paginated(c, logs, total)
 }
 
-// ===== Orphan Patches (D12) =====
-
-// GetOrphanPatches GET /api/admin/patch/orphans
-//
-// Lists TRUE "orphan" patches. The `vndb_id` not being a well-formed VNDB id
-// (`vN`) is only a cheap candidate filter (see repository.orphanCond); each
-// candidate is then verified against Wiki BY ID (patch.id == galgame_id) and
-// only the ones Wiki actually lacks are reported. A vndb-less game whose galgame
-// exists by id renders fine and is NOT an orphan. For each true orphan, the
-// admin can:
-//   - Rebind the correct vndb_id via PUT /api/patch/:id (will re-verify with Wiki /galgame/check)
-//   - Or DELETE /api/patch/:id to remove
-//   - If vndb_id is real but not yet created in Wiki, create the galgame in Wiki first, then rebind
-//
-// Alongside `items`, the response returns pending_count (vndb_id = pending-N)
-// and bad_vndb_count (vndb_id malformed — not vN and not pending-).
 func (h *AdminHandler) GetOrphanPatches(c fiber.Ctx) error {
 	var req dto.AdminPaginationRequest
 	if err := utils.ParseQueryAndValidate(c, &req); err != nil {
 		return response.Error(c, errors.ErrBadRequest(err.Error()))
 	}
 
-	// Cheap local candidates (placeholder / malformed vndb_id), then verify each
-	// against Wiki BY ID — whatever Wiki returns exists and is NOT a real orphan
-	// (it renders via id-based enrichment). content_limit="" makes the batch
-	// permissive (returns every id incl. NSFW): we want EXISTENCE, not visibility.
-	//
-	// The chunk size is NOT free tuning. It used to step by 500 against a face
-	// that SILENTLY TRUNCATED to the first 100 ids, so it verified 100 of every
-	// 500 candidates and fabricated orphans out of the other 400 — every dropped
-	// id reads as "the catalog doesn't have it" here. Since the wave-A2-2
-	// re-anchor the ceiling is enforced by a 400 instead of a truncation, so the
-	// same mistake would now fail loudly; the chunking stays because the ceiling
-	// itself has not moved.
 	candidateIDs, err := h.service.GetOrphanCandidateIDs()
 	if err != nil {
 		return response.Error(c, errors.ErrInternal(""))
@@ -450,7 +343,6 @@ func (h *AdminHandler) GetOrphanPatches(c fiber.Ctx) error {
 		end := min(start+galgameClient.BatchMaxIDs, len(candidateIDs))
 		briefs, bErr := h.galgame.GalgameBatch(c.Context(), candidateIDs[start:end], "")
 		if bErr != nil {
-			// Never fabricate an orphan list on a Wiki hiccup (audit F075 spirit).
 			return response.Error(c, errors.ErrInternal("资料库校验失败"))
 		}
 		for _, b := range briefs {
@@ -464,8 +356,6 @@ func (h *AdminHandler) GetOrphanPatches(c fiber.Ctx) error {
 	}
 	pending, badVndb, cErr := h.service.CountOrphanPatches(existing)
 	if cErr != nil {
-		// Don't report a false 0 for pending/bad_vndb on a DB hiccup (audit
-		// F075); fail the request so the admin sees an error, not fake counts.
 		return response.Error(c, errors.ErrInternal(""))
 	}
 	return response.OK(c, map[string]any{

@@ -17,45 +17,27 @@ const { data: resources, pending } = await useAsyncData<PatchResource[]>(
     )
     return res.code === 0 ? res.data : []
   },
-  // deep:true — Nuxt 4 data is a shallowRef by default, so the in-place
-  // favorite toggle (r.is_favorite = …) wouldn't re-render the row. The
-  // create/edit/delete paths reassign resources.value so they work either way;
-  // the per-row favorite needs deep reactivity.
   { default: () => [], deep: true }
 )
 
-// ─── 发布资源 (modal) ─────────────────────────────
-// Login-gated entry; AuthEntry modal already lives in top-bar so we don't
-// duplicate it here — just nudge the user to log in.
 const publishOpen = ref(false)
 const handlePublishClick = () => {
   if (!requireLogin()) return
   publishOpen.value = true
 }
 const handlePublishSuccess = (created: PatchResource) => {
-  // Optimistic prepend so the new row appears immediately. The list is
-  // unpaginated so we don't need to refetch.
   if (resources.value) {
     resources.value = [created, ...resources.value]
   }
 }
 
-// ─── 编辑 / 删除 (owner / moderator) ────────────────
-// Front-end gates the button so non-owners don't see the affordance, but the
-// server's PatchService.UpdateResource + DeleteResource enforce the same
-// predicate (`UserID == caller || isPrivileged`) — UI is for noise reduction
-// only, not security.
 const canEdit = (r: PatchResource) =>
   userStore.isModerator || r.user_id === userStore.user.id
 const canDelete = (r: PatchResource) =>
   userStore.isModerator || r.user_id === userStore.user.id
-// Disable-download: same predicate (owner or moderator/admin). The backend
-// re-checks; the UI gate is noise reduction only.
 const canManage = (r: PatchResource) =>
   userStore.isModerator || r.user_id === userStore.user.id
 
-// status != 0 → resource download is disabled (e.g. pulled for virus). The row
-// stays visible; the detail page it links to withholds the links.
 const isDisabled = (r: PatchResource) => (r.status ?? 0) !== 0
 
 const togglingDisable = ref<number | null>(null)
@@ -79,8 +61,6 @@ const toggleDisable = async (r: PatchResource) => {
   }
 }
 
-// Edit modal state. ResourcePublish handles both create + edit via the
-// `resource` prop; success returns a merged row we splice into the list.
 const editOpen = ref(false)
 const editingResource = ref<PatchResource | null>(null)
 const askEdit = (r: PatchResource) => {
@@ -89,25 +69,15 @@ const askEdit = (r: PatchResource) => {
 }
 const handleEditSuccess = (updated: PatchResource) => {
   if (!resources.value) return
-  // Server returns the canonical, fully-rendered row — drop it straight in.
-  // No more hand-rolled spread merge: the previous version kept old fields
-  // the form doesn't send (e.g. update_time was stale), which surfaced as
-  // "edited row doesn't bubble to top" + "description stuck on old html".
   resources.value = resources.value.map((r) =>
     r.id === updated.id ? updated : r
   )
 }
 
-// True when the row has been edited at least once. Backend stamps
-// UpdateTime = time.Now() on every UpdateResource and leaves it equal to
-// `created` on insert, so a string diff is a reliable "ever edited" signal.
-// Both fields may arrive as Date | string; normalize via getTime for safety.
 const hasBeenEdited = (r: PatchResource) => {
   if (!r.update_time) return false
   const u = new Date(r.update_time as string | Date).getTime()
   const c = new Date(r.created).getTime()
-  // Same-millisecond inserts have u === c; treat anything > 1s apart as edit
-  // to avoid a millisecond-jitter false positive on freshly-inserted rows.
   return Number.isFinite(u) && Number.isFinite(c) && u - c > 1000
 }
 
@@ -115,8 +85,6 @@ const deleteOpen = ref(false)
 const deleting = ref(false)
 const pendingDelete = ref<PatchResource | null>(null)
 const deleteReason = ref('')
-// A moderator deleting SOMEONE ELSE'S resource → offer a reason, recorded in the
-// author's notification + the admin audit log. Owner self-deletes need none.
 const isForeignDelete = computed(
   () => !!pendingDelete.value && pendingDelete.value.user_id !== userStore.user.id
 )
@@ -151,11 +119,9 @@ const confirmDelete = async () => {
   }
 }
 
-// ─── Sorter ───────────────────────────────────────────
-// Client-side (the list endpoint returns the whole set unpaginated).
 type SortField = 'update_time' | 'created' | 'download'
-const sortField = ref<SortField>('update_time') // 更改时间
-const sortDesc = ref(true) // 默认降序：最新更改在最上面
+const sortField = ref<SortField>('update_time')
+const sortDesc = ref(true)
 
 const sortOptions = [
   { value: 'update_time', label: '更改时间' },
@@ -163,12 +129,6 @@ const sortOptions = [
   { value: 'download', label: '下载数' }
 ]
 
-// `update_time` is the canonical 更改时间: the backend sets it = creation
-// time on insert (gorm autoCreateTime) and explicitly bumps it to now() only
-// when the resource is re-edited (UpdateResource). Do NOT use `updated`
-// (gorm autoUpdateTime) — that also bumps on download/like increments, which
-// would jerk rows around for non-edit activity. Mirrors next-api's
-// `update_time: new Date()` on resource update.
 const timeOf = (r: PatchResource, f: 'update_time' | 'created') => {
   const v = f === 'update_time' ? (r.update_time ?? r.created) : r.created
   return new Date(v as string).getTime()
@@ -187,19 +147,6 @@ const sortedResources = computed(() => {
   return list
 })
 
-// NOTE: this list no longer reveals download links inline. The former
-// "获取资源链接" button (and its GET /patch/resource/:id/link call, the per-row
-// reveal block, the BLAKE3 / 提取码 / 解压密码 copy actions and the download
-// counter bump) were removed deliberately: the resource DETAIL page is now the
-// only place a link, code or password is shown, so every download goes through
-// the page that also carries the resource's own notes, change history and
-// comment area. The /link endpoint still exists — the detail page uses it.
-
-// 收藏资源 (per-resource subscription) toggle. Optimistic: backend returns
-// { favorited }, folded onto the local row. Notifies on this resource's
-// download-link / file update (see UpdateResource → notifyResourceFavoritedUsers).
-// KunReaction flips r.is_favorite optimistically (v-model on the reactive row),
-// then fires this — confirm with the server, revert on failure / logged-out.
 const onResourceFavoriteChange = async (r: PatchResource, active: boolean) => {
   if (!requireLogin()) {
     r.is_favorite = !active
@@ -222,9 +169,6 @@ const onResourceFavoriteChange = async (r: PatchResource, active: boolean) => {
   }
 }
 
-// ─── 单资源操作菜单(卡片右上角三个点)──────────────────
-// 公共项:更改历史 / 分享(所有人,含未登录);作者 / 版主额外:编辑 / 删除 /
-// 禁用下载。KunDropdownItem 的形状(本地复刻,避免跨 layer 导入类型路径)。
 interface ResourceMenuItem {
   key: 'edit' | 'delete' | 'disable' | 'history' | 'share' | 'report'
   label: string
@@ -256,7 +200,6 @@ const menuItems = (r: PatchResource): ResourceMenuItem[] => {
   }
   items.push({ key: 'history', label: '更改历史', icon: 'lucide:history' })
   items.push({ key: 'share', label: '分享', icon: 'lucide:share-2' })
-  // Report is offered to everyone EXCEPT the author (mirrors comment items).
   if (r.user_id !== userStore.user.id) {
     items.push({ key: 'report', label: '举报', icon: 'lucide:flag', color: 'danger' })
   }
@@ -294,8 +237,6 @@ const onMenuSelect = (r: PatchResource, item: { key: string }) => {
   }
 }
 
-// Report this resource → global report modal (patch_resource). Deep-link +
-// snapshot the resource name so the moderator console opens it in context.
 const reportResource = (r: PatchResource) => {
   if (!requireLogin()) return
   openReport({
@@ -306,10 +247,6 @@ const reportResource = (r: PatchResource) => {
   })
 }
 
-// ─── 分享(复制链接到剪贴板)────────────────────────────
-// 文案:<游戏名><资源名>资源下载: <origin>/resource/<id>。直接用
-// navigator.clipboard 而非 useKunCopy —— 后者会把整条长链接回显进 toast,
-// 这里只需提示「链接复制成功」。galgame 名来自 [id].vue 的 provide('patch')。
 const patch = inject<Ref<PatchHeader | null>>('patch')
 const galgameName = computed(() =>
   patch?.value ? getPreferredLanguageText(patch.value.name) : ''
@@ -323,10 +260,6 @@ const shareResource = (r: PatchResource) => {
     .catch(() => useKunMessage('复制失败,请手动复制', 'error'))
 }
 
-// ─── 更改历史(按字段 diff,公开)────────────────────────
-// 读公开端点 GET /patch/resource/:id/revisions —— 每条 = 一次编辑,changes 里是
-// 该次编辑变更字段的「改动前 → 改动后」(语言/平台/类型/备注/名称/大小/文件…)。
-// 公开安全:下载链接 / 提取码 / 密码只以「已更新」标记,不含原文。
 interface ResourceFieldChange {
   field: string
   label: string
@@ -393,7 +326,6 @@ watch(histPage, loadHistory)
 
 <template>
   <div class="space-y-4">
-    <!-- 发布按钮 -->
     <div class="flex justify-end">
       <KunButton color="primary" @click="handlePublishClick">
         <KunIcon name="lucide:plus" class="size-4" />
@@ -401,10 +333,8 @@ watch(histPage, loadHistory)
       </KunButton>
     </div>
 
-    <!-- AIEro ad banner (above the resource list, as in legacy) -->
     <KunAdAIEroBanner />
 
-    <!-- sorter -->
     <div
       v-if="!pending && resources && resources.length"
       class="border-default/20 bg-content1 shadow-kun-sm flex flex-wrap items-center gap-2 rounded-2xl border p-3"
@@ -471,15 +401,10 @@ watch(histPage, loadHistory)
                   formatDate(r.created, { isShowYear: true, isPrecise: true })
                 }}
               </span>
-              <!-- 大小 Chip 从右上角移到这里:手机端不再和三个点挤在一起 -->
               <KunChip color="warning" size="xs" variant="flat">
                 <KunIcon name="lucide:database" class="size-3" />
                 {{ r.size }}
               </KunChip>
-              <!-- "编辑时间" chip — only show when update_time > created (i.e.
-                   the row has been edited at least once). Backend stamps
-                   UpdateTime = time.Now() on every UpdateResource and leaves
-                   it = created on insert, so the !== check is reliable. -->
               <KunChip
                 v-if="hasBeenEdited(r)"
                 color="default"
@@ -491,8 +416,6 @@ watch(histPage, loadHistory)
               </KunChip>
             </div>
           </div>
-          <!-- 三个点固定在右上角(shrink-0,不随标题换行);更改历史 / 分享
-               所有人可见,编辑 / 删除 / 禁用下载 作者 / 版主可见。 -->
           <KunDropdown
             :items="menuItems(r)"
             position="bottom-end"
@@ -514,7 +437,6 @@ watch(histPage, loadHistory)
           </KunDropdown>
         </div>
 
-        <!-- Disabled banner: download link is withheld server-side. -->
         <div
           v-if="isDisabled(r)"
           class="border-danger/30 bg-danger/10 text-danger-700 flex items-center gap-2 rounded-xl border p-3 text-sm"
@@ -560,7 +482,6 @@ watch(histPage, loadHistory)
         >
           <div class="flex min-w-0 flex-col gap-1.5">
             <div class="text-default-500 flex items-center gap-4 text-sm">
-              <!-- 收藏资源 = subscribe to THIS resource (star, like 收藏游戏). -->
               <KunReaction
                 v-model="r.is_favorite"
                 icon="lucide:star"
@@ -574,9 +495,7 @@ watch(histPage, loadHistory)
                 <KunIcon name="lucide:download" class="size-4" />
                 {{ r.download }}
               </span>
-              <!-- 编辑 / 删除 / 禁用下载 已移入右上角三个点菜单(见卡片头部) -->
             </div>
-            <!-- Spell out what 收藏资源 does — a star alone can't say "notify". -->
             <p
               :class="
                 cn(
@@ -603,9 +522,6 @@ watch(histPage, loadHistory)
               <KunIcon name="lucide:ban" class="size-3.5" />
               已禁用下载
             </KunChip>
-            <!-- The ONLY way to a download link from this list: the resource's own
-                 page. It is the primary action now that the inline reveal is gone.
-                 href (not @click) so middle-click / ctrl-click opens a new tab. -->
             <KunButton
               color="primary"
               size="sm"
@@ -622,9 +538,6 @@ watch(histPage, loadHistory)
     </div>
     <KunNull v-else description="该 Galgame 暂无补丁资源" />
 
-    <!-- isDismissable=false: form holds an uploaded file + many fields;
-         click-outside / ESC would silently throw it all away. User must
-         click 取消 / 确认 to leave. Same pattern on the edit modal. -->
     <KunModal
       v-model="publishOpen"
       inner-class-name="max-w-3xl"
@@ -696,7 +609,6 @@ watch(histPage, loadHistory)
       </div>
     </KunModal>
 
-    <!-- 更改历史:每条 = 一次编辑,按字段展示「改动前 → 改动后」 -->
     <KunModal v-model="histOpen" inner-class-name="max-w-xl">
       <div class="space-y-4 py-2">
         <div class="flex items-center gap-2">
@@ -714,7 +626,6 @@ watch(histPage, loadHistory)
             :key="rev.id"
             class="border-default/20 bg-default-50 space-y-3 rounded-xl border p-3"
           >
-            <!-- 元信息:时间 + 操作者角色 + 原因 -->
             <div class="flex flex-wrap items-center gap-2 text-xs">
               <KunChip color="primary" variant="flat" size="xs">
                 <KunIcon name="lucide:pencil-line" class="size-3" />
@@ -731,7 +642,6 @@ watch(histPage, loadHistory)
               </span>
             </div>
 
-            <!-- 字段 diff:左 = 改动前,右 = 改动后 -->
             <div class="space-y-2">
               <div v-for="(c, i) in rev.changes" :key="i">
                 <div class="text-default-500 mb-1 text-xs font-medium">

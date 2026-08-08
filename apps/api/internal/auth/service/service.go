@@ -1,14 +1,3 @@
-// Package service holds AuthService: OAuth code/token exchange,
-// /oauth/userinfo retrieval, local user provisioning at first login,
-// and OAuth token revocation.
-//
-// After the OAuth migration:
-//   - The OAuth server is the single source of truth for identity.
-//   - Local user.id == OAuth.users.id (aligned by migrate-users).
-//   - There is no oauth_account indirection table; we look up the local user
-//     directly by the integer id returned in /oauth/userinfo.
-//   - Password / email / verification-code logic lives entirely on the OAuth
-//     server. Site-side has no password handling.
 package service
 
 import (
@@ -30,10 +19,6 @@ import (
 	"gorm.io/gorm"
 )
 
-// ecosystemTTL bounds how long the OAuth app-directory list is cached before a
-// fresh server-to-server refetch. The list is public marketing metadata that
-// changes very rarely, so a 10-minute TTL keeps the login modal instant without
-// hammering the OAuth server.
 const ecosystemTTL = 10 * time.Minute
 
 type AuthService struct {
@@ -42,13 +27,9 @@ type AuthService struct {
 	oauthCfg config.OAuthConfig
 	http     *http.Client
 
-	// ecosystem is an in-memory TTL cache for the OAuth app-directory strip
-	// (GET /oauth/ecosystem). It is shielded behind a RWMutex; on expiry we
-	// refetch server-to-server (no CORS — this runs on the moyu backend), and
-	// on upstream failure we keep serving the last good snapshot.
 	ecoMu      sync.RWMutex
 	ecoApps    []EcosystemApp
-	ecoFetched time.Time // zero until the first successful fetch
+	ecoFetched time.Time
 }
 
 func New(repo *repository.AuthRepository, rdb *redis.Client, oauthCfg config.OAuthConfig) *AuthService {
@@ -56,37 +37,18 @@ func New(repo *repository.AuthRepository, rdb *redis.Client, oauthCfg config.OAu
 		repo:     repo,
 		rdb:      rdb,
 		oauthCfg: oauthCfg,
-		// All OAuth-server round-trips share one timeout-bound client so a
-		// slow/dead OAuth server cannot tie up login / userinfo / revoke
-		// indefinitely (audit finding: http.Post / http.DefaultClient were
-		// previously used here without a timeout).
-		http: &http.Client{Timeout: 10 * time.Second},
+		http:     &http.Client{Timeout: 10 * time.Second},
 	}
 }
 
-// EcosystemApp is one entry in the public OAuth app directory ("可以用这个账号
-// 登录以下网站"). Mirrors the OAuth provider's GET /oauth/ecosystem shape — only
-// public display fields (no secret / redirect / scope). See
-// docs/oauth/10-app-directory.md.
 type EcosystemApp struct {
-	Name       string `json:"name"`
-	SiteDomain string `json:"site_domain"`
-	LogoURL    string `json:"logo_url,omitempty"`
-	Tagline    string `json:"tagline,omitempty"`
-	// AutoConsent marks a first-party ("官方") site. The provider sorts these
-	// ahead of third-party sites and the strip shows an "官方" chip for them.
-	AutoConsent bool `json:"auto_consent"`
+	Name        string `json:"name"`
+	SiteDomain  string `json:"site_domain"`
+	LogoURL     string `json:"logo_url,omitempty"`
+	Tagline     string `json:"tagline,omitempty"`
+	AutoConsent bool   `json:"auto_consent"`
 }
 
-// ListEcosystem returns the OAuth app-directory strip, served same-origin from
-// moyu so the browser never has to cross-origin fetch the OAuth provider (whose
-// CORS allow-list does not include moyu's www subdomain).
-//
-// Caching: fresh in-memory snapshots live for ecosystemTTL. On a miss/expiry we
-// refetch the provider's public GET /oauth/ecosystem server-to-server. If that
-// refetch fails we serve the last good snapshot (stale-on-error); if we have no
-// snapshot at all we return an empty slice — a marketing strip must never break
-// the login modal, so this method never surfaces an error to the caller.
 func (s *AuthService) ListEcosystem() []EcosystemApp {
 	s.ecoMu.RLock()
 	apps, fetched := s.ecoApps, s.ecoFetched
@@ -97,8 +59,6 @@ func (s *AuthService) ListEcosystem() []EcosystemApp {
 
 	fresh, err := s.fetchEcosystem()
 	if err != nil {
-		// Serve the last good snapshot on upstream failure; apps is nil (→ [])
-		// on a cold start, which the handler renders as an empty strip.
 		slog.Warn("OAuth ecosystem refetch failed; serving stale cache", "error", err, "stale_count", len(apps))
 		return apps
 	}
@@ -109,9 +69,6 @@ func (s *AuthService) ListEcosystem() []EcosystemApp {
 	return fresh
 }
 
-// fetchEcosystem performs the server-to-server GET against the OAuth provider's
-// public app-directory endpoint and unwraps the {code, message, data:{apps}}
-// envelope.
 func (s *AuthService) fetchEcosystem() ([]EcosystemApp, error) {
 	req, err := http.NewRequest(http.MethodGet, s.oauthCfg.ServerURL+"/oauth/ecosystem", nil)
 	if err != nil {
@@ -144,7 +101,6 @@ func (s *AuthService) fetchEcosystem() ([]EcosystemApp, error) {
 	return env.Data.Apps, nil
 }
 
-// OAuthTokenResponse is the OAuth /oauth/token response payload.
 type OAuthTokenResponse struct {
 	AccessToken  string `json:"access_token"`
 	RefreshToken string `json:"refresh_token"`
@@ -152,25 +108,16 @@ type OAuthTokenResponse struct {
 	TokenType    string `json:"token_type"`
 }
 
-// OAuthUserInfo is the /oauth/userinfo payload. ID is the integer primary key
-// in OAuth.users (and, after migrate-users, the same integer used as the
-// local user.id). Sub is the OIDC UUID. Roles is the OAuth-side role set
-// (e.g. ["user", "admin"]).
 type OAuthUserInfo struct {
-	ID      int      `json:"id"`
-	Sub     string   `json:"sub"`
-	Name    string   `json:"name"`
-	Email   string   `json:"email"`
-	Picture string   `json:"picture"`
-	Roles   []string `json:"roles"`
-	// SiteRoles are moyu-scoped roles (never admin/ren); see 12-site-roles.md.
+	ID        int      `json:"id"`
+	Sub       string   `json:"sub"`
+	Name      string   `json:"name"`
+	Email     string   `json:"email"`
+	Picture   string   `json:"picture"`
+	Roles     []string `json:"roles"`
 	SiteRoles []string `json:"site_roles"`
 }
 
-// ExchangeCode trades an authorization code (+ PKCE verifier) for tokens.
-//
-// KUN OAuth takes a JSON body, not RFC-6749 form-encoded, and wraps the
-// response in {code, message, data}. See docs/oauth/oauth-integration-guide.md.
 func (s *AuthService) ExchangeCode(code, codeVerifier string) (*OAuthTokenResponse, error) {
 	var tokenResp OAuthTokenResponse
 	err := s.oauthPostJSON("/oauth/token", map[string]string{
@@ -187,13 +134,8 @@ func (s *AuthService) ExchangeCode(code, codeVerifier string) (*OAuthTokenRespon
 	return &tokenResp, nil
 }
 
-// ErrUserBanned is returned by GetUserInfo when the OAuth server signals
-// the account is banned (HTTP 403 + envelope code 10014). The caller MUST
-// translate this into errors.ErrAccountBanned so the frontend can redirect
-// to a banned-account page rather than the login page.
 var ErrUserBanned = errors.New("oauth user banned")
 
-// GetUserInfo fetches the current user's identity from /oauth/userinfo.
 func (s *AuthService) GetUserInfo(accessToken string) (*OAuthUserInfo, error) {
 	req, err := http.NewRequest(http.MethodGet, s.oauthCfg.ServerURL+"/oauth/userinfo", nil)
 	if err != nil {
@@ -207,12 +149,6 @@ func (s *AuthService) GetUserInfo(accessToken string) (*OAuthUserInfo, error) {
 	}
 	defer resp.Body.Close()
 
-	// /oauth/userinfo is an OIDC protocol endpoint: the body IS the userinfo
-	// object (RFC 6750 / OIDC Core §5.3.3), and failures are
-	// {error,error_description} with a WWW-Authenticate challenge.
-	//
-	// A ban has no RFC 6750 error code, so it arrives as a bare HTTP 403 — the
-	// status check below is load-bearing, not belt-and-braces.
 	respBody, _ := io.ReadAll(resp.Body)
 
 	if resp.StatusCode == http.StatusForbidden {
@@ -228,15 +164,6 @@ func (s *AuthService) GetUserInfo(accessToken string) (*OAuthUserInfo, error) {
 	return &info, nil
 }
 
-// FindOrCreateUserByID looks up the local user row by id, inserting an empty
-// site-local row if it does not exist. The id MUST be the integer returned
-// by /oauth/userinfo -- that's the contract that ties this site's user.id to
-// OAuth.users.id (aligned by migrate-users).
-//
-// We do NOT copy name/email/avatar/etc. into the local row -- those fields
-// live on OAuth and the local row only carries site-local state (moemoepoint,
-// daily counters, follow counts, ...). Phase 5-6 will drop the OAuth-managed
-// columns from this struct via migration 005.
 func (s *AuthService) FindOrCreateUserByID(id int) (*authModel.User, error) {
 	user, err := s.repo.FindUserByID(id)
 	if err == nil {
@@ -250,11 +177,6 @@ func (s *AuthService) FindOrCreateUserByID(id int) (*authModel.User, error) {
 	if err := s.repo.CreateUser(newUser); err != nil {
 		return nil, fmt.Errorf("failed to create local user row: %w", err)
 	}
-	// Re-read the canonical row: under a concurrent first-login the
-	// ON CONFLICT DO NOTHING insert may have been a no-op (the other request
-	// won the race), so fetch the persisted row to return real values either
-	// way (audit F066). Fall back to the stub on a transient read error — its
-	// defaults still match a brand-new row.
 	if persisted, ferr := s.repo.FindUserByID(id); ferr == nil {
 		return persisted, nil
 	}
@@ -262,18 +184,12 @@ func (s *AuthService) FindOrCreateUserByID(id int) (*authModel.User, error) {
 	return newUser, nil
 }
 
-// RevokeOAuthToken is fire-and-forget per RFC 7009: the endpoint always returns
-// 200 regardless of whether the token was valid, so we only log transport-level
-// failures.
 func (s *AuthService) RevokeOAuthToken(token string) {
 	if err := s.oauthPostJSON("/oauth/revoke", map[string]string{"token": token}, nil); err != nil {
 		slog.Error("OAuth revoke failed", "error", err)
 	}
 }
 
-// oauthPostJSON POSTs JSON to the OAuth server and decodes the wrapped
-// {code, message, data} envelope into out (when not nil). A non-zero envelope
-// code is surfaced as an error.
 func (s *AuthService) oauthPostJSON(path string, body any, out any) error {
 	payload, err := json.Marshal(body)
 	if err != nil {
@@ -292,14 +208,11 @@ func (s *AuthService) oauthPostJSON(path string, body any, out any) error {
 
 	respBody, _ := io.ReadAll(resp.Body)
 
-	// These are OAuth protocol endpoints (/oauth/token, /oauth/revoke): the body
-	// IS the payload (RFC 6749 §5.1), and failures are {error,error_description}
-	// (§5.2). RFC 7009 revoke answers 200 with an empty body.
 	var oauthErr struct {
 		Error            string `json:"error"`
 		ErrorDescription string `json:"error_description"`
 	}
-	_ = json.Unmarshal(respBody, &oauthErr) // best-effort; body may be non-JSON on 5xx
+	_ = json.Unmarshal(respBody, &oauthErr)
 
 	if resp.StatusCode != 200 {
 		msg := oauthErr.ErrorDescription
@@ -329,18 +242,6 @@ func truncate(s string, n int) string {
 	return s[:n] + "..."
 }
 
-// ProxyUserToOAuth forwards a logged-in user's request to an OAuth self-
-// service endpoint (PATCH /auth/me, PUT /auth/password, etc.). The user's
-// access_token is sent as Bearer so OAuth identifies the actor itself —
-// moyu never re-implements identity validation, it just relays the body.
-//
-// docs/oauth/02-user-profile.md "代理模式": "站点保留自己的 /me 端点，
-// 但内部把请求转发到 OAuth 端点。要求请求带的是终端用户 JWT
-// （不是 OAuth Client Basic Auth）"。
-//
-// Returns the raw response body bytes + the OAuth-side HTTP status. The
-// handler can re-emit the envelope verbatim so the FE sees the exact same
-// {code, message, data} OAuth would have returned.
 func (s *AuthService) ProxyUserToOAuth(
 	method, path, accessToken string,
 	body []byte,

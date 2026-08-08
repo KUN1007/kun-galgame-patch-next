@@ -1,29 +1,4 @@
 <script setup lang="ts">
-// Patch-resource publish / edit modal.
-//
-// Same component covers both create and edit modes so layout + validation +
-// upload code don't fork. Mode is decided by whether `resource` prop is
-// supplied:
-//   - create: POST /patch/:id/resource         — fresh row
-//   - edit:   PUT  /patch/resource/:resourceId — mutate existing
-//
-// Two storage modes (mutually exclusive form shapes):
-//   storage='s3'   : a file is uploaded; server stamps content = s3_key and
-//                    materializes the download URL at /resource/:id/link time
-//                    via S3Client.PublicURL.
-//   storage='user' : `content` is the user's own comma-separated link list.
-//
-// Edit-mode niceties:
-//   - existing s3 file is shown as-is; user must click "替换文件" to enter
-//     the upload flow (otherwise PUT carries the unchanged s3_key/content and
-//     server skips the file-history audit row — pure metadata edit).
-//   - a "修改原因 / reason" field appears, gets serialized into the
-//     PatchResourceFileHistory.reason when the file actually changes.
-//
-// Drag-and-drop: the drop zone wraps the upload section. When the user is
-// dragging a file over the modal, the zone highlights; on drop we feed the
-// File through the same handleFilePicked path as the click-to-pick button.
-// KunFileInput itself has no DnD support, so we implement it locally.
 import {
   resourceTypes,
   storageTypes,
@@ -37,18 +12,12 @@ import { pickRoleBadge } from '~/constants/user'
 
 interface Props {
   patchId: number
-  // When supplied → edit mode; the form is pre-populated from this row and
-  // submit goes via PUT instead of POST. Pass the same PatchResource shape
-  // the list endpoint returns.
   resource?: PatchResource | null
 }
 const props = withDefaults(defineProps<Props>(), { resource: null })
 
 const emit = defineEmits<{
   close: []
-  // create mode: full new row (composeResource shape).
-  // edit mode:   the locally-mutated row (server returns OKMessage, no body,
-  //              so we hand back the form state merged onto the original).
   success: [resource: PatchResource]
 }>()
 
@@ -58,20 +27,12 @@ const uploader = useResourceUpload()
 
 const isEdit = computed(() => props.resource !== null)
 
-// ─── Form state ───────────────────────────────────────────
 const form = reactive({
   storage: (props.resource?.storage as 's3' | 'user') ?? 's3',
   name: props.resource?.name ?? '',
   model_name: props.resource?.model_name ?? '',
-  // edit-mode pre-fills with the existing s3_key (legacy rows) — kept as-is
-  // unless the user replaces the file via the "替换文件" affordance below.
   s3_key: props.resource?.s3_key ?? '',
-  // artifact-backed blob id (current upload path). Set on a fresh upload;
-  // pre-filled in edit mode so a metadata-only save preserves the file pointer.
   artifact_uuid: props.resource?.artifact_uuid ?? '',
-  // For storage='user' content is the link list; for storage='s3' the server
-  // overwrites Content = S3Key on submit, so this field is informational only.
-  // Pre-fill with the raw stored value (it's the s3_key, not the public URL).
   content: props.resource?.content ?? '',
   size: props.resource?.size ?? '',
   code: props.resource?.code ?? '',
@@ -81,10 +42,6 @@ const form = reactive({
   language: [...(props.resource?.language ?? [])],
   platform: [...(props.resource?.platform ?? [])]
 })
-// Reason memo — only meaningful in edit mode + only persisted into the
-// patch_resource_file_history row when the file substantively changed
-// (storage / s3_key / content differs from current). Pure metadata edits
-// don't write history regardless of whether reason was filled.
 const reason = ref('')
 
 const toggle = (list: string[], v: string) => {
@@ -96,8 +53,6 @@ const toggle = (list: string[], v: string) => {
 watch(
   () => form.storage,
   () => {
-    // Switching storage type invalidates any in-progress upload state and
-    // the previous file pointer — fresh start in both create and edit.
     form.s3_key = ''
     form.artifact_uuid = ''
     form.content = ''
@@ -109,26 +64,15 @@ watch(
   }
 )
 
-// ─── File picker + upload ──────────────────────────────────
 const pickedFile = ref<File | null>(null)
 const uploadError = ref('')
-// In edit mode the original file is shown until the user clicks "替换文件".
-// replaceMode flips the UI from "file summary card" to "drop zone + picker".
 const replaceMode = ref(false)
-// ─── Resumable uploads ────────────────────────────────────
-// Interrupted multipart uploads for THIS galgame are persisted (uuid + file
-// identity + progress) in localStorage so the modal can offer to continue them
-// across a page reload. resumeUuid is set when the staged file matches a pending
-// record (size+lastModified) — submit then resumes from the breakpoint instead
-// of restarting; the already-uploaded parts live in B2 on the artifact side.
 const resumeStore = useResourceResumeUploads(props.patchId)
 const pending = ref<PatchPendingUpload[]>([])
 const resumeUuid = ref<string | null>(null)
 const refreshPending = () => {
   pending.value = resumeStore.list()
 }
-// Match the staged file against the pending records (size+lastModified, not name)
-// so a re-picked / moved / renamed-but-identical file resumes from its breakpoint.
 const syncResumeForPicked = () => {
   const f = pickedFile.value
   const match = f
@@ -140,8 +84,6 @@ const syncResumeForPicked = () => {
 }
 onMounted(refreshPending)
 
-// True iff we're showing the existing file with no replacement chosen.
-// Used to lock the file-card affordances to a read-only summary.
 const showingExistingFile = computed(
   () =>
     isEdit.value &&
@@ -150,9 +92,6 @@ const showingExistingFile = computed(
     !pickedFile.value
 )
 
-// ─── Drag and drop ────────────────────────────────────────
-// Counter (not boolean) so nested children's dragenter/dragleave don't flicker
-// the highlight off — every enter is matched by exactly one leave per element.
 const dragDepth = ref(0)
 const isDragging = computed(() => dragDepth.value > 0)
 const onDragEnter = (e: DragEvent) => {
@@ -163,7 +102,6 @@ const onDragEnter = (e: DragEvent) => {
 const onDragOver = (e: DragEvent) => {
   if (!e.dataTransfer?.types?.includes('Files')) return
   e.preventDefault()
-  // dropEffect=copy gives the OS-level "+" cursor; UX cue that drop is allowed.
   e.dataTransfer.dropEffect = 'copy'
 }
 const onDragLeave = (e: DragEvent) => {
@@ -175,8 +113,6 @@ const onDrop = (e: DragEvent) => {
   dragDepth.value = 0
   const file = e.dataTransfer?.files?.[0]
   if (!file) return
-  // In edit mode dropping a file always enters replaceMode — matches the
-  // click-to-pick path's semantics.
   if (showingExistingFile.value) replaceMode.value = true
   handleFilePicked([file])
 }
@@ -186,14 +122,6 @@ const isValidExt = (name: string) => {
   return ALLOWED_EXTENSIONS.some((ext) => lower.endsWith(ext))
 }
 
-// Stage-then-confirm flow:
-//   handleFilePicked  → validate ext + setPickedFile (no upload, instant)
-//   confirmUpload     → user-initiated; only now do we hit the upload API
-//
-// Reading File.name / size / type is O(1) metadata — even a 5 GB drop is
-// instant. Bytes aren't touched until xhr.send(blob) inside the composable,
-// and that's stream-read by the browser one chunk at a time (multipart caps
-// at 10 MiB × 4 parallel = ~40 MiB resident).
 const handleFilePicked = (files: File[]) => {
   const f = files[0]
   if (!f) return
@@ -202,16 +130,11 @@ const handleFilePicked = (files: File[]) => {
     return
   }
   uploadError.value = ''
-  // Drop / re-pick after an aborted or errored upload: reset uploader state
-  // so the new file's confirm button starts clean (no stale progress %).
   uploader.reset()
   pickedFile.value = f
-  // Re-picking the file of an interrupted upload offers to resume from the
-  // breakpoint instead of restarting.
   syncResumeForPicked()
 }
 
-// New uploads are artifact-backed; clear any stale legacy s3_key.
 const applyUploadResult = (result: { artifactUuid: string; size: number }) => {
   form.artifact_uuid = result.artifactUuid
   form.s3_key = ''
@@ -230,15 +153,11 @@ const confirmUpload = async () => {
   } catch (e) {
     uploadError.value = e instanceof Error ? e.message : '上传失败'
   } finally {
-    // A completed upload drops its resume record (→ resumeUuid clears); an
-    // interrupted one keeps it so 重试 resumes from the breakpoint.
     refreshPending()
     syncResumeForPicked()
   }
 }
 
-// From the on-open resume list: the user re-picked the matching file (validated
-// in ResumeList), so stage it and continue from the breakpoint.
 const handleContinuePending = async (
   record: PatchPendingUpload,
   file: File
@@ -262,8 +181,6 @@ const handleContinuePending = async (
   }
 }
 
-// Discard an unfinished upload: soft-delete the artifact (its B2 parts are
-// reclaimed by GC) and drop the local record.
 const handleDeletePending = async (artifactUuid: string) => {
   await api.post('/upload/abort', { artifact_uuid: artifactUuid }).catch(() => {})
   resumeStore.remove(artifactUuid)
@@ -272,14 +189,10 @@ const handleDeletePending = async (artifactUuid: string) => {
 }
 
 const removeFile = () => {
-  // Cancel covers in-flight uploads (xhr.abort + multipart abort); for staged
-  // files it's a no-op since uploader.status is still 'idle'.
   uploader.cancel()
   uploader.reset()
   pickedFile.value = null
   if (isEdit.value && props.resource) {
-    // Restore the existing-file summary so the user can submit without
-    // changing the file (treat "移除" in edit mode as "cancel my replacement").
     form.s3_key = props.resource.s3_key ?? ''
     form.artifact_uuid = props.resource.artifact_uuid ?? ''
     form.size = props.resource.size ?? ''
@@ -289,8 +202,6 @@ const removeFile = () => {
     form.artifact_uuid = ''
     form.size = ''
   }
-  // cancel() aborts+drops the record only if a flow started this session; an
-  // old pending record (matched but never resumed) stays for the ResumeList.
   resumeUuid.value = null
   refreshPending()
 }
@@ -302,19 +213,13 @@ const uploadingNow = computed(
     uploader.status.value === 'completing'
 )
 
-// Staged = file picked but upload not yet started (or failed/aborted, ready
-// to retry). Distinguished from `uploadingNow` and `uploadedOk` so the UI
-// can offer the appropriate primary action.
 const uploadedOk = computed(() => uploader.status.value === 'done')
 const stagedNotUploaded = computed(
   () => pickedFile.value !== null && !uploadingNow.value && !uploadedOk.value
 )
 
-// Format File.size (bytes) — used pre-upload while we only have the local
-// File. After upload completes the server-verified size lands in form.size.
 const formatBytesMB = (n: number) => `${(n / (1024 * 1024)).toFixed(3)} MB`
 
-// ─── User-link mode (storage='user') ────────────────────────
 const userLinks = computed<string[]>({
   get: () =>
     form.storage === 'user'
@@ -342,7 +247,6 @@ const removeUserLink = (i: number) => {
   form.content = next.join(',')
 }
 
-// ─── Validation + submit ───────────────────────────────────
 const submitting = ref(false)
 const validate = (): string | null => {
   if (form.type.length === 0) return '请选择资源类型'
@@ -350,11 +254,8 @@ const validate = (): string | null => {
   if (form.platform.length === 0) return '请选择平台'
   if (!form.size.trim()) return '请填写资源大小'
   if (form.storage === 's3') {
-    // staged-but-not-uploaded: distinct message vs no-file-at-all so the
-    // user knows the next step is "点击确认上传" rather than "重选文件".
     if (stagedNotUploaded.value) return '请点击 "确认上传" 完成文件上传'
     if (uploadingNow.value) return '文件正在上传中，请稍候'
-    // artifact-backed (new/replaced) OR legacy s3_key (metadata-only edit).
     if (!form.artifact_uuid && !form.s3_key) return '请上传补丁文件'
   } else {
     if (userLinks.value.filter((l) => l.trim()).length === 0)
@@ -389,10 +290,6 @@ const handleSubmit = async () => {
     }
 
     if (isEdit.value && props.resource) {
-      // Server returns the fully-rendered row (note_html, update_time, user
-      // brief all re-resolved server-side) — use it directly. The previous
-      // hand-rolled merge kept the old note_html so the resource description
-      // appeared "stuck" until a full page refetch.
       const res = await api.put<PatchResource>(
         `/patch/resource/${props.resource.id}`,
         { ...basePayload, reason: reason.value }
@@ -422,8 +319,6 @@ const handleSubmit = async () => {
   }
 }
 
-// ─── Display helpers ───────────────────────────────────────
-
 const STATUS_LABEL: Record<string, string> = {
   preparing: '正在准备上传...',
   uploading: '正在上传中...',
@@ -436,10 +331,6 @@ const uploadStatusLabel = computed(
   () => STATUS_LABEL[uploader.status.value] ?? ''
 )
 
-// Per-role caps mirror the backend constants.UploadTier; the server is
-// authoritative. dailyQuotaBytes < 0 means unlimited (admin/ren). Tiers checked
-// high-to-low: admin/ren 20GB·∞ > moderator 10GB·5000GB > creator 5GB·100GB >
-// user 1GB·1GB. isAdmin/isModerator fold admin in, so each branch is its tier.
 const GiB = 1024 * 1024 * 1024
 const maxFileBytes = computed(() =>
   userStore.isAdmin
@@ -470,16 +361,10 @@ const quotaPercent = computed(() =>
         Math.round((quotaUsedBytes.value / dailyQuotaBytes.value) * 100)
       )
 )
-// Canonical site-wide role label per the contract (莲 / 管理员 / 版主 / 创作者 /
-// 普通用户; see constants/user.ts). The previous hand-rolled ternary had no
-// creator case (so creators showed "普通用户") and mislabeled moderator.
 const roleLabel = computed(
   () => pickRoleBadge(userStore.user.roles, userStore.user.site_roles).label
 )
 
-// File name to display in the "existing file" summary card. We don't have the
-// original filename in the row (s3_key is sanitized path); show the trailing
-// segment so the user at least recognizes it.
 const existingFileName = computed(() => {
   if (!props.resource?.s3_key) return ''
   const parts = props.resource.s3_key.split('/')
@@ -488,9 +373,6 @@ const existingFileName = computed(() => {
 </script>
 
 <template>
-  <!-- Outer wrapper owns drag-and-drop listeners so a file dropped anywhere
-       inside the modal (not just on the picker button) is captured. The
-       highlight ring on `isDragging` is a UX cue. -->
   <div
     class="flex max-h-[80vh] w-full max-w-2xl flex-col gap-4"
     :class="
@@ -504,7 +386,6 @@ const existingFileName = computed(() => {
     @dragleave="onDragLeave"
     @drop="onDrop"
   >
-    <!-- header -->
     <div class="space-y-2">
       <h2 class="text-xl font-bold">
         {{ isEdit ? '编辑补丁资源' : '创建补丁资源' }}
@@ -534,10 +415,8 @@ const existingFileName = computed(() => {
       </div>
     </div>
 
-    <!-- body (scrollable) -->
     <div class="-mx-1 flex-1 overflow-y-auto px-1">
       <form class="space-y-6" @submit.prevent="handleSubmit">
-        <!-- storage type ----------------------------------- -->
         <section class="space-y-3">
           <h3 class="text-lg font-medium">选择存储方式</h3>
           <p class="text-default-500 text-sm">
@@ -585,7 +464,6 @@ const existingFileName = computed(() => {
           </div>
         </section>
 
-        <!-- file uploader (s3 mode) ----------------------- -->
         <section v-if="form.storage === 's3'" class="space-y-2">
           <h3 class="text-lg font-medium">
             {{ isEdit ? '补丁文件' : '上传资源' }}
@@ -600,9 +478,6 @@ const existingFileName = computed(() => {
             </span>
           </p>
 
-          <!-- Interrupted uploads for this galgame (persisted across reloads).
-               Resuming needs the user to re-pick the file (the browser can't
-               read it by path), so the hint spells that out. -->
           <div v-if="pending.length && !pickedFile" class="space-y-2">
             <div
               class="text-warning border-warning/30 bg-warning/10 flex items-start gap-2 rounded-lg border p-3 text-sm"
@@ -620,7 +495,6 @@ const existingFileName = computed(() => {
             />
           </div>
 
-          <!-- Existing file summary (edit mode, no replacement chosen) -->
           <div
             v-if="showingExistingFile"
             class="border-default/20 bg-default-50 flex items-center justify-between gap-3 rounded-lg border p-4"
@@ -648,7 +522,6 @@ const existingFileName = computed(() => {
             </KunButton>
           </div>
 
-          <!-- Picker (create mode, or edit-mode replacement chosen) -->
           <div v-else-if="!pickedFile" class="space-y-2">
             <div
               :class="
@@ -695,12 +568,6 @@ const existingFileName = computed(() => {
             </div>
           </div>
 
-          <!-- File card — three states stacked vertically depending on the
-               uploader's status:
-                 staged       : show "确认上传" (primary) + "移除"
-                 uploading    : show progress bar + "取消上传"
-                 uploaded     : show success badge + "重新选择"
-                 error/aborted: show error + "重试上传" / "移除" -->
           <div
             v-else
             class="border-default/20 bg-default-50 space-y-3 rounded-lg border p-4"
@@ -723,9 +590,7 @@ const existingFileName = computed(() => {
                 </div>
               </div>
 
-              <!-- Primary action button — semantics vary by state -->
               <div class="flex gap-2">
-                <!-- staged: 确认上传 -->
                 <KunButton
                   v-if="stagedNotUploaded && uploader.status.value !== 'error'"
                   color="primary"
@@ -735,7 +600,6 @@ const existingFileName = computed(() => {
                   <KunIcon name="lucide:cloud-upload" class="size-4" />
                   {{ resumeUuid ? '继续上传' : '确认上传' }}
                 </KunButton>
-                <!-- error: 重试 -->
                 <KunButton
                   v-else-if="uploader.status.value === 'error'"
                   color="warning"
@@ -745,7 +609,6 @@ const existingFileName = computed(() => {
                   <KunIcon name="lucide:rotate-cw" class="size-4" />
                   重试上传
                 </KunButton>
-                <!-- Remove / cancel — label changes by state -->
                 <KunButton
                   color="danger"
                   :variant="uploadingNow ? 'light' : 'flat'"
@@ -757,8 +620,6 @@ const existingFileName = computed(() => {
               </div>
             </div>
 
-            <!-- Breakpoint hint: the staged file matches an interrupted upload,
-                 so submitting continues from where it stopped. -->
             <p
               v-if="resumeUuid && stagedNotUploaded"
               class="text-warning flex items-center gap-1.5 text-xs"
@@ -788,7 +649,6 @@ const existingFileName = computed(() => {
           </div>
         </section>
 
-        <!-- resource links (user mode) ---------------------- -->
         <section v-if="form.storage === 'user'" class="space-y-2">
           <h3 class="text-lg font-medium">资源链接</h3>
           <p class="text-default-500 text-sm">
@@ -833,7 +693,6 @@ const existingFileName = computed(() => {
           </div>
         </section>
 
-        <!-- type / language / platform / size --------------- -->
         <section class="space-y-3">
           <h3 class="text-lg font-medium">资源详情</h3>
 
@@ -911,7 +770,6 @@ const existingFileName = computed(() => {
           />
         </section>
 
-        <!-- optional metadata ------------------------------- -->
         <section class="space-y-3">
           <KunInput
             v-model="form.name"
@@ -935,16 +793,11 @@ const existingFileName = computed(() => {
           />
         </section>
 
-        <!-- note (markdown) -------------------------------- -->
         <section class="space-y-2">
           <h3 class="text-lg font-medium">资源备注</h3>
           <div class="text-default-500 text-sm">
             建议详细说明补丁的使用方法、注意事项、原创/授权声明、更新日志等。
           </div>
-          <!-- Rich markdown editor (same as comments / galgame intro): supports
-               formatting, image upload, and @mention. Uncontrolled — key by the
-               resource id so it remounts with the right initial note when the
-               edit modal is reused for a different resource. -->
           <KunMarkdownEditor
             :key="`note-${props.resource?.id ?? 'new'}`"
             :model-value="form.note"
@@ -952,7 +805,6 @@ const existingFileName = computed(() => {
           />
         </section>
 
-        <!-- edit-mode: reason memo for audit trail -->
         <section v-if="isEdit" class="space-y-2">
           <h3 class="text-lg font-medium">修改原因（可选）</h3>
           <p class="text-default-500 text-sm">
@@ -966,7 +818,6 @@ const existingFileName = computed(() => {
       </form>
     </div>
 
-    <!-- footer -->
     <div class="flex items-center justify-end gap-2 border-t border-default/15 pt-3">
       <KunButton color="danger" variant="light" @click="emit('close')">
         取消

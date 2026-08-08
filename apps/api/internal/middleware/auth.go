@@ -1,12 +1,3 @@
-// Package middleware: session-cookie auth backed by Redis, plus role-gated
-// helpers that read OAuth roles from the access_token JWT.
-//
-// The session is intentionally minimal -- only userID, sub and the OAuth tokens.
-// Display fields (name, avatar, bio) are fetched from OAuth on demand by
-// downstream handlers via pkg/userclient. Roles are read from the JWT roles
-// claim in the OAuth access_token (no signature verify needed: the token was
-// stored in this Redis session by us, so it's not user-controlled at request
-// time).
 package middleware
 
 import (
@@ -34,21 +25,11 @@ import (
 	"github.com/redis/go-redis/v9"
 )
 
-// UserInfo is the slim per-request identity stamped onto fiber locals by
-// the Auth / OptionalAuth middleware.
-//
-// `id` matches the DB-truth chain (Prisma user.id → Go MeResponse.id →
-// /user/:id → KunUser). The JWT/URL label `userID` was a transport-layer
-// alias for the same integer; it lives at the OAuth layer only and does
-// not propagate into local types.
 type UserInfo struct {
 	ID  int    `json:"id"`
 	Sub string `json:"sub"`
 }
 
-// SessionData is the JSON value stored in Redis under "session:<id>".
-// OAuth tokens live here so middleware can refresh them in the background
-// and HasRole can read the roles claim.
 type SessionData struct {
 	UserInfo
 	OAuthAccessToken  string `json:"oauth_access_token"`
@@ -57,26 +38,9 @@ type SessionData struct {
 }
 
 const (
-	// SessionCookieName / SessionPrefix MUST be distinct from kungal's
-	// (kun-galgame-forum) values. In local dev both sites run on
-	// 127.0.0.1 — cookies are domain-scoped, NOT port-scoped — and share
-	// one Redis. A shared cookie name + key prefix made kungal and moyu
-	// read/refresh/delete each other's sessions, producing cross-site
-	// logout (client_id_mismatch on the OAuth server). Keep site-unique.
-	SessionCookieName = "moyu_session"
-	// SessionTTL is the SLIDING session lifetime (Redis entry + cookie),
-	// re-extended on activity by renewSlidingSession. 90 days matches the OAuth
-	// refresh_token default so the local session and the upstream grant lapse
-	// together for an idle user; an active user slides both forward. The hard
-	// cap is the upstream refresh_token — once it can't refresh,
-	// refreshOAuthToken deletes the session regardless of this window. Was a
-	// FIXED 7 days set once at login and never renewed → logged everyone out
-	// ~weekly regardless of activity.
-	SessionTTL    = 90 * 24 * time.Hour
-	SessionPrefix = "moyu:session:"
-	// sessionRenewPrefix keys the per-session cookie-renewal throttle marker,
-	// kept OFF SessionPrefix so RevokeUserSessions' "moyu:session:*" scan never
-	// picks it up.
+	SessionCookieName     = "moyu_session"
+	SessionTTL            = 90 * 24 * time.Hour
+	SessionPrefix         = "moyu:session:"
 	sessionRenewPrefix    = "moyu:session-renew:"
 	userContextKey        = "user"
 	rolesContextKey       = "oauth_roles"
@@ -84,16 +48,6 @@ const (
 	accessTokenContextKey = "oauth_access_token"
 )
 
-// RevokeUserSessions best-effort deletes every Redis session belonging to a
-// user, matched by the id embedded in SessionData. Used by the admin user
-// purge: the request path reads identity from the session blob (not the DB
-// row), so without this a purged spammer's active scripted session would keep
-// authenticating for the rest of its 7-day TTL. Returns the count deleted.
-//
-// SCANs moyu:session:* with a cursor (non-blocking). A GET/parse miss on one
-// key is skipped, not fatal — this is cleanup, not an auth gate. NOTE: this
-// does not revoke the upstream OAuth grant; a truly persistent spammer must
-// also be banned on the OAuth console (out of moyu's scope).
 func RevokeUserSessions(ctx context.Context, rdb *redis.Client, userID int) (int, error) {
 	var (
 		cursor  uint64
@@ -149,32 +103,14 @@ func Auth(rdb *redis.Client, oauthCfg config.OAuthConfig) fiber.Handler {
 			return response.Error(c, errors.ErrInternal(""))
 		}
 
-		// Two-tier refresh:
-		//   - HARD expired (now >= ExpiresAt): synchronous refresh. If OAuth
-		//     permanently rejects (invalid_grant / revoked / 401), the
-		//     refresher itself deletes the Redis session; we then clear the
-		//     cookie and reject the request so the user re-logs in.
-		//   - SOFT window (T-5min .. T): the token is still valid, refresh in
-		//     the background and let the request through.
 		now := time.Now().Unix()
 		if session.OAuthExpiresAt > 0 && now >= session.OAuthExpiresAt {
 			if err := refreshOAuthToken(ctx, rdb, oauthCfg, sessionID, &session); err != nil {
-				// Lock contention: another concurrent request is refreshing
-				// this very session right now (the SSR fan-out norm). Wait
-				// for it to publish the fresh tokens instead of clearing the
-				// cookie and kicking the user.
 				if stderrors.Is(err, errRefreshLockContended) &&
 					waitForRefreshedSession(ctx, rdb, sessionID, &session) {
-					// fresh session loaded into `session`; fall through.
 				} else {
 					slog.Warn("OAuth access token expired and refresh failed; rejecting request",
 						"sessionPrefix", sessionID[:min(8, len(sessionID))], "error", err)
-					// Only destroy the cookie on a definitively-dead session.
-					// refreshOAuthToken already DELETEs the Redis session on a
-					// permanent OAuth reject; contention/transient leaves it,
-					// so a missing Redis key is our "permanent" signal. On a
-					// transient/contention-timeout we keep the cookie so the
-					// next request retries (matches kungal's behavior).
 					if exists, _ := rdb.Exists(ctx, SessionPrefix+sessionID).Result(); exists == 0 {
 						clearSessionCookie(c)
 					}
@@ -189,10 +125,6 @@ func Auth(rdb *redis.Client, oauthCfg config.OAuthConfig) fiber.Handler {
 			}(session)
 		}
 
-		// Rolling session: slide the cookie + Redis TTL forward while the user
-		// is active (throttled to once per half-window) so an active user is
-		// never logged out at the fixed window; the upstream refresh_token is
-		// the absolute cap. Anonymous callers already returned above.
 		renewSlidingSession(c, rdb, sessionID)
 
 		roles, siteRoles := decodeJWTClaims(session.OAuthAccessToken)
@@ -222,20 +154,12 @@ func OptionalAuth(rdb *redis.Client, oauthCfg config.OAuthConfig) fiber.Handler 
 			return c.Next()
 		}
 
-		// Same two-tier policy as Auth, but on hard-expired-and-cannot-refresh
-		// we degrade to anonymous (continue without user context) instead of
-		// returning an error -- OptionalAuth's contract is "best effort".
 		now := time.Now().Unix()
 		if session.OAuthExpiresAt > 0 && now >= session.OAuthExpiresAt {
 			if err := refreshOAuthToken(ctx, rdb, oauthCfg, sessionID, &session); err != nil {
 				if stderrors.Is(err, errRefreshLockContended) &&
 					waitForRefreshedSession(ctx, rdb, sessionID, &session) {
-					// fresh session loaded; fall through with user context.
 				} else {
-					// OptionalAuth contract is best-effort: only drop the
-					// cookie when the session is definitively dead (Redis
-					// key gone = permanent reject); otherwise just degrade
-					// to anonymous and keep the cookie for a later retry.
 					if exists, _ := rdb.Exists(ctx, SessionPrefix+sessionID).Result(); exists == 0 {
 						clearSessionCookie(c)
 					}
@@ -250,10 +174,6 @@ func OptionalAuth(rdb *redis.Client, oauthCfg config.OAuthConfig) fiber.Handler 
 			}(session)
 		}
 
-		// Rolling session: slide the cookie + Redis TTL forward while the user
-		// is active (throttled to once per half-window) so an active user is
-		// never logged out at the fixed window; the upstream refresh_token is
-		// the absolute cap. Anonymous callers already returned above.
 		renewSlidingSession(c, rdb, sessionID)
 
 		roles, siteRoles := decodeJWTClaims(session.OAuthAccessToken)
@@ -285,11 +205,6 @@ func GetUserID(c fiber.Ctx) int {
 	return user.ID
 }
 
-// GetAccessToken returns the OAuth access_token bound to the current session
-// (empty string if no session). Handlers that proxy write operations to
-// upstream services (e.g. the Galgame Wiki Service) forward this token as
-// `Authorization: Bearer ...` so the upstream can validate user identity and
-// apply its own creator/admin authorization.
 func GetAccessToken(c fiber.Ctx) string {
 	v, ok := c.Locals(accessTokenContextKey).(string)
 	if !ok {
@@ -298,8 +213,6 @@ func GetAccessToken(c fiber.Ctx) string {
 	return v
 }
 
-// GetRoles returns the OAuth roles for the current request, or an empty slice
-// if no session is attached. Roles come from the access_token JWT roles claim.
 func GetRoles(c fiber.Ctx) []string {
 	v, ok := c.Locals(rolesContextKey).([]string)
 	if !ok {
@@ -308,9 +221,6 @@ func GetRoles(c fiber.Ctx) []string {
 	return v
 }
 
-// GetSiteRoles returns the site-scoped roles (the access_token `site_roles`
-// claim) for the current request — roles that apply ONLY on moyu and never
-// carry admin/ren (docs/oauth/12-site-roles.md §3). Empty if none.
 func GetSiteRoles(c fiber.Ctx) []string {
 	v, ok := c.Locals(siteRolesContextKey).([]string)
 	if !ok {
@@ -319,7 +229,6 @@ func GetSiteRoles(c fiber.Ctx) []string {
 	return v
 }
 
-// mergeRoles returns the de-duplicated union of two role sets (order-preserving).
 func mergeRoles(a, b []string) []string {
 	if len(b) == 0 {
 		return a
@@ -333,22 +242,14 @@ func mergeRoles(a, b []string) []string {
 	return out
 }
 
-// effectiveRoles is the set every capability check runs against:
-// `roles ∪ site_roles` (docs/oauth/12-site-roles.md §5). Unioning the
-// site-scoped roles lets a moyu-only moderator pass IsModerator with no new
-// decision path; because site_roles can never be admin/ren, IsAdmin is
-// unaffected.
 func effectiveRoles(c fiber.Ctx) []string {
 	return mergeRoles(GetRoles(c), GetSiteRoles(c))
 }
 
-// HasRole reports whether the current request's effective roles contain role.
 func HasRole(c fiber.Ctx, role string) bool {
 	return slices.Contains(effectiveRoles(c), role)
 }
 
-// HasAnyRole reports whether the current request's effective roles contain any
-// of the listed roles. Pass nothing to require "at least logged in".
 func HasAnyRole(c fiber.Ctx, roles ...string) bool {
 	if len(roles) == 0 {
 		return GetUser(c) != nil
@@ -362,32 +263,17 @@ func HasAnyRole(c fiber.Ctx, roles ...string) bool {
 	return false
 }
 
-// SuperAdminRoles / ModeratorRoles are the single source of moyu's privilege
-// tiers. The DB-preset `ren` (莲) is a full super-admin and is honored
-// everywhere `admin` is — listing it here means no gate has to remember it.
-// ren ranks with admin; moderator is the tier below. Use IsAdmin / IsModerator
-// (or pass these to RequireRole) instead of repeating role-name literals.
 var (
 	SuperAdminRoles = []string{"admin", "ren"}
 	ModeratorRoles  = []string{"admin", "ren", "moderator"}
 )
 
-// IsAdmin reports whether the caller holds a super-admin role (admin or ren).
 func IsAdmin(c fiber.Ctx) bool { return HasAnyRole(c, SuperAdminRoles...) }
 
-// IsModerator reports whether the caller can moderate: super-admins or moderators.
 func IsModerator(c fiber.Ctx) bool { return HasAnyRole(c, ModeratorRoles...) }
 
-// SecureCookies controls whether the session cookie is HTTPS-only. Set by
-// the app at startup based on KUN_SERVER_MODE; in dev over HTTP this must
-// be false or the browser refuses to store the cookie.
 var SecureCookies = true
 
-// oauthRefreshHTTP is the timeout-bound HTTP client used for OAuth
-// /oauth/token refresh calls in the auth middleware. Shared (and reused)
-// across middleware invocations because the middleware itself is constructed
-// per-route and would otherwise allocate a fresh client every call.
-// 10s is consistent with the wiki/userclient transports.
 var oauthRefreshHTTP = &http.Client{Timeout: 10 * time.Second}
 
 func CreateSession(c fiber.Ctx, rdb *redis.Client, session *SessionData) error {
@@ -418,22 +304,6 @@ func CreateSession(c fiber.Ctx, rdb *redis.Client, session *SessionData) error {
 	return nil
 }
 
-// renewSlidingSession implements the rolling half of the session-timeout
-// model: while the user is active it slides the cookie + Redis TTL forward, so
-// a returning user is never logged out as long as they came back within
-// SessionTTL of their last visit. The absolute ceiling is the upstream OAuth
-// refresh_token — once it can no longer refresh, refreshOAuthToken deletes the
-// session and the user re-logs in regardless of this window.
-//
-// To avoid a Set-Cookie on every request it renews at most once per
-// half-window — the heuristic ASP.NET Core's SlidingExpiration uses. The
-// throttle is a marker key whose SetNX succeeds only after the previous marker
-// has expired (>SessionTTL/2 since the last renewal).
-//
-// The TTL is slid with EXPIRE, NOT a blob rewrite, so it can never race the
-// background token refresh / rotation and clobber freshly-rotated tokens.
-// Best-effort: a Redis hiccup just skips this round. Call only with a
-// validated session present.
 func renewSlidingSession(c fiber.Ctx, rdb *redis.Client, sessionID string) {
 	ctx := c.Context()
 	if ok, _ := rdb.SetNX(ctx, sessionRenewPrefix+sessionID, "1", SessionTTL/2).Result(); !ok {
@@ -478,12 +348,6 @@ func generateSessionID() (string, error) {
 	return hex.EncodeToString(b), nil
 }
 
-// decodeJWTClaims extracts the `roles` and `site_roles` claims from a JWT
-// without verifying the signature. Safe here because the token came out of our
-// Redis session (placed by OAuthCallback after a verified /oauth/token
-// exchange) -- it is never user-controlled at request time. Returns nil, nil on
-// any decode error. `site_roles` (docs/oauth/12-site-roles.md) is a site-scoped
-// role set that the capability checks union with `roles`.
 func decodeJWTClaims(token string) (roles, siteRoles []string) {
 	if token == "" {
 		return nil, nil
@@ -494,7 +358,6 @@ func decodeJWTClaims(token string) (roles, siteRoles []string) {
 	}
 	payload, err := base64.RawURLEncoding.DecodeString(parts[1])
 	if err != nil {
-		// Some encoders pad; try the std variant.
 		payload, err = base64.URLEncoding.DecodeString(parts[1])
 		if err != nil {
 			return nil, nil
@@ -510,41 +373,8 @@ func decodeJWTClaims(token string) (roles, siteRoles []string) {
 	return claims.Roles, claims.SiteRoles
 }
 
-// refreshOAuthToken performs one OAuth refresh round-trip and persists the
-// new tokens back to Redis on success. Semantics:
-//
-//   - Returns nil on success. The passed-in *session pointer is mutated to
-//     the new tokens, and the Redis session blob is rewritten.
-//   - Returns a non-nil error in all other cases. Two distinct buckets:
-//   - PERMANENT: OAuth says the refresh_token is invalid / revoked / expired
-//     (4xx). The Redis session is DELETED as a side effect — any future
-//     request bearing this cookie should fail closed.
-//   - TRANSIENT: network errors, 5xx, JSON decode errors. The Redis session
-//     is left intact so a subsequent retry can succeed.
-//
-// A per-session Redis lock (`lock:refresh:<sid>`, 30s TTL) prevents
-// concurrent refreshes; a lock miss returns a transient error so callers can
-// re-read the (possibly already-refreshed) session.
-// errRefreshLockContended means another in-flight request already holds the
-// per-session refresh lock and is doing the OAuth round-trip right now. This
-// is the NORMAL case under SSR concurrency (one page load fans out into many
-// parallel API calls that all hit hard-expiry together). It is NOT a refresh
-// failure — the caller must wait for the winner to publish the new session
-// and then proceed, NOT clear the cookie / kick the user. Treating contention
-// as a hard failure was the moyu-specific logout bug (kungal's middleware
-// already waits for the winner; moyu didn't).
 var errRefreshLockContended = stderrors.New("refresh lock contended")
 
-// waitForRefreshedSession is the lock-loser path. Another request holds the
-// per-session refresh lock and is doing the OAuth round-trip; we poll Redis
-// for it to publish the new session blob, then load it into *session and
-// return true so the caller can proceed with the fresh tokens.
-//
-// Returns false if: the session disappears (winner hit a permanent OAuth
-// reject and deleted it), or the deadline passes (winner still in flight /
-// died). The 3s deadline sits below the 30s lock TTL and the 10s OAuth HTTP
-// timeout's realistic p99 (refresh is normally <500ms), with a 100ms poll
-// for sub-second hand-off. Mirrors kungal's waitForRefresh.
 func waitForRefreshedSession(ctx context.Context, rdb *redis.Client, sessionID string, session *SessionData) bool {
 	prevExpiresAt := session.OAuthExpiresAt
 	deadline := time.Now().Add(3 * time.Second)
@@ -553,15 +383,12 @@ func waitForRefreshedSession(ctx context.Context, rdb *redis.Client, sessionID s
 
 		data, err := rdb.Get(ctx, SessionPrefix+sessionID).Result()
 		if err != nil {
-			// redis.Nil → winner deleted it (permanent reject). Any other
-			// error → can't tell; bail and let the caller fail closed.
 			return false
 		}
 		var fresh SessionData
 		if json.Unmarshal([]byte(data), &fresh) != nil {
 			continue
 		}
-		// Winner published when OAuthExpiresAt advanced past what we read.
 		if fresh.OAuthExpiresAt > prevExpiresAt {
 			*session = fresh
 			return true
@@ -581,8 +408,6 @@ func refreshOAuthToken(ctx context.Context, rdb *redis.Client, oauthCfg config.O
 	}
 	defer rdb.Del(ctx, lockKey)
 
-	// KUN OAuth Server takes JSON, not form-urlencoded -- see
-	// docs/oauth/oauth-integration-guide.md.
 	payload, _ := json.Marshal(map[string]string{
 		"grant_type":    "refresh_token",
 		"refresh_token": session.OAuthRefreshToken,
@@ -603,8 +428,6 @@ func refreshOAuthToken(ctx context.Context, rdb *redis.Client, oauthCfg config.O
 	defer resp.Body.Close()
 
 	respBody, _ := io.ReadAll(resp.Body)
-	// /oauth/token is an OAuth protocol endpoint: the body IS the token response
-	// (RFC 6749 §5.1), and failures are {error,error_description} (§5.2).
 	var env struct {
 		Error            string `json:"error"`
 		ErrorDescription string `json:"error_description"`
@@ -614,9 +437,6 @@ func refreshOAuthToken(ctx context.Context, rdb *redis.Client, oauthCfg config.O
 	}
 	_ = json.Unmarshal(respBody, &env)
 
-	// Map the RFC error string onto the failure class the check below branches
-	// on: invalid_grant / unauthorized_client (grant not allowed) and
-	// invalid_client all mean the refresh token is permanently dead.
 	code := 0
 	msg := env.ErrorDescription
 	switch env.Error {
@@ -629,17 +449,6 @@ func refreshOAuthToken(ctx context.Context, rdb *redis.Client, oauthCfg config.O
 		msg = env.Error
 	}
 
-	// Permanent reject: 401/403 (RFC 6749 invalid_grant style) or the
-	// OAuth-side business codes that mean "this session can never refresh":
-	//   10002 invalid token / 10003 token expired / 15003 invalid auth code /
-	//   10014 account banned / 15005 grant-type not enabled / 15008 invalid
-	//   client secret.
-	// Per docs/oauth/README.md, OAuth returns some of these as HTTP 200 with a
-	// non-zero `code` (business 401 → HTTP 200), so we MUST match on the code
-	// and not rely on the HTTP status — otherwise these dead sessions fall
-	// through to the transient branch below and retry every request forever
-	// instead of being cleared (audit F077).
-	// In every case we destroy the local session — there is no recovery.
 	if resp.StatusCode == http.StatusUnauthorized ||
 		resp.StatusCode == http.StatusForbidden ||
 		code == 10002 || code == 10003 || code == 15003 ||
@@ -649,7 +458,6 @@ func refreshOAuthToken(ctx context.Context, rdb *redis.Client, oauthCfg config.O
 		rdb.Del(ctx, SessionPrefix+sessionID)
 		return fmt.Errorf("refresh permanently rejected (status=%d code=%d)", resp.StatusCode, code)
 	}
-	// Transient failure: leave the session for a future retry.
 	if resp.StatusCode != 200 {
 		return fmt.Errorf("oauth refresh status=%d body=%s", resp.StatusCode, truncate(string(respBody), 200))
 	}
@@ -658,8 +466,6 @@ func refreshOAuthToken(ctx context.Context, rdb *redis.Client, oauthCfg config.O
 	}
 
 	access, refresh, expires := env.AccessToken, env.RefreshToken, env.ExpiresIn
-	// A 200 with no token is malformed — treat as transient rather than storing
-	// an empty access token into the session.
 	if access == "" {
 		return fmt.Errorf("oauth refresh returned no access_token body=%s", truncate(string(respBody), 200))
 	}
@@ -672,10 +478,6 @@ func refreshOAuthToken(ctx context.Context, rdb *redis.Client, oauthCfg config.O
 	return rdb.Set(ctx, SessionPrefix+sessionID, blob, SessionTTL).Err()
 }
 
-// clearSessionCookie wipes the kun_session cookie on the response. Used
-// when we reject a request because the upstream OAuth refresh permanently
-// failed -- the cookie no longer points to a valid Redis session so it
-// shouldn't keep being presented.
 func clearSessionCookie(c fiber.Ctx) {
 	c.Cookie(&fiber.Cookie{
 		Name:     SessionCookieName,

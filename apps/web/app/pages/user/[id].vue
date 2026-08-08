@@ -16,14 +16,6 @@ const { data: user, refresh } = await useAsyncData<UserInfo | null>(
   }
 )
 
-// User profile pages are safe to index when the user exists (no NSFW
-// content on the user shell itself — the per-tab patch/resource listings
-// already pass through the same NSFW filter as elsewhere). Disable when
-// the user wasn't found so we don't index a 404 stub.
-//
-// avatar/bio are wiki-OAuth fields kept up to date by the user/handler
-// enricher (see internal/user/service/service.go GetUserInfo); name+bio
-// stays correct post-D12.
 if (user.value && user.value.name) {
   useKunSeoMeta({
     title: `${user.value.name} 的主页`,
@@ -49,19 +41,11 @@ const tabs = computed(() => [
   { key: 'comment', title: '评论', href: `/user/${userId.value}/comment` }
 ])
 
-// Writable computed so it can drive KunTab's v-model — `set` is a no-op
-// since KunTab.href triggers navigateTo() and the route change re-runs
-// the getter.
 const currentTab = computed({
   get: () => route.path.split('/').filter(Boolean).pop() ?? 'resource',
   set: () => {}
 })
 
-// Follower / following modal. One modal driven by `followMode` so the two
-// triggers share state and only one is open at a time. After a follow /
-// unfollow inside the modal, refresh the profile so the counts in the
-// sidebar are accurate (backend updates follower_count / following_count
-// in PUT/DELETE /:id/follow per repository.UpdateFollowCounts).
 const followOpen = ref(false)
 const followMode = ref<'follower' | 'following'>('follower')
 const openFollowList = (mode: 'follower' | 'following') => {
@@ -69,10 +53,6 @@ const openFollowList = (mode: 'follower' | 'following') => {
   followOpen.value = true
 }
 
-// 发消息: resolves or creates the private chat room between the current
-// user and the profile owner, then navigates to its transcript. Backend
-// endpoint is POST /chat/room/private (link format "<minUID>-<maxUID>"
-// converges both directions).
 const startingChat = ref(false)
 const handleStartPrivateChat = async () => {
   if (!requireLogin()) return
@@ -102,7 +82,6 @@ const toggleFollow = async () => {
   if (!user.value) return
   followLoading.value = true
   try {
-    // Backend uses PUT to follow and DELETE to unfollow — see router.go.
     const res = user.value.is_followed
       ? await api.delete(`/user/${user.value.id}/follow`)
       : await api.put(`/user/${user.value.id}/follow`)
@@ -130,7 +109,6 @@ const toggleFollow = async () => {
               class-name="shrink-0"
             />
             <div class="flex min-w-0 flex-col gap-2">
-              <!-- name + role share one line -->
               <div class="flex flex-wrap items-center gap-2">
                 <h4 class="text-2xl font-bold break-words">{{ user.name }}</h4>
                 <KunChip
@@ -146,7 +124,6 @@ const toggleFollow = async () => {
                 </KunChip>
               </div>
 
-              <!-- 粉丝 / 关注 sit below the name+role line -->
               <div class="text-default-500 flex gap-3 text-sm">
                 <button
                   type="button"
@@ -171,7 +148,6 @@ const toggleFollow = async () => {
               </div>
             </div>
           </div>
-          <!-- whitespace-pre-line so a multi-line bio keeps its line breaks -->
           <p
             v-if="user.bio"
             class="text-default-600 mt-4 break-words whitespace-pre-line"
@@ -250,8 +226,6 @@ const toggleFollow = async () => {
                 <div class="text-xl font-bold">
                   {{ user.patch_count }}
                 </div>
-                <!-- patch.user_id 计数 = 在 moyu 发布/登记的 Galgame（非 wiki 词条
-                     创建者口径）。措辞用「发布」与各 Tab 一致，避免被读成「创建」。 -->
                 <div class="text-default-500 text-xs">发布 Galgame</div>
               </div>
             </div>
@@ -281,12 +255,6 @@ const toggleFollow = async () => {
         </div>
       </div>
 
-      <!-- min-w-0: a grid item defaults to min-width:auto (= its content's
-           intrinsic width), so without this the KunTab strip's full width grows
-           this column past the viewport on mobile instead of letting KunTab's
-           own overflow-x scroll kick in. (KunTab ≥2.16 auto-handles the
-           horizontal overflow itself, so no `scrollable` opt-in is needed — but
-           this wrapper's min-w-0 is still required to clamp the grid column.) -->
       <div class="min-w-0 lg:col-span-2">
         <KunTab
           v-model="currentTab"

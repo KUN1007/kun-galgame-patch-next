@@ -1,31 +1,3 @@
-// cmd/backfill-release-date mirrors Wiki's galgame.release_date into the local
-// patch.release_date column (added in migration 010). This is the one-time
-// half of the A-lite sync model: new patches get release_date stamped at
-// creation (PatchService.CreatePatch); this command fills in existing rows.
-//
-// It reads every patch id (or only the NULL ones) and calls Wiki
-// GET /galgame/:gid per id (concurrently) to fetch release_date, then UPDATEs
-// the local row.
-//
-// Why per-id GetGalgame and NOT /galgame/batch: the lightweight batch endpoint
-// does NOT return release_date — it only carries id / name / banner /
-// content_limit / status / user_id / resource_update_time / original_language
-// / age_limit. Only the single-detail endpoint (and the list/search endpoints)
-// include release_date. GetGalgame is the simplest "only fetch the ids I need"
-// option (vs paginating the whole 60k-row wiki to build a map).
-//
-// content_limit="" (no NSFW filter) so SFW + NSFW games are both backfilled —
-// the column is a neutral metadata mirror, not a gated surface.
-//
-// Usage:
-//
-//	go run ./cmd/backfill-release-date                  # fill only NULL rows
-//	go run ./cmd/backfill-release-date -dry-run         # plan only, no write
-//	go run ./cmd/backfill-release-date -only-null=false # refresh ALL rows
-//	go run ./cmd/backfill-release-date -concurrency=16  # parallel GetGalgame
-//
-// Requires the Wiki API server to be ONLINE (HTTP), unlike the offline db
-// migration cmds — run it after services are up.
 package main
 
 import (
@@ -89,8 +61,6 @@ func main() {
 				slog.Info("进度", "scanned", n, "updated", updated.Load(), "no_date", noDate.Load(), "failed", failed.Load())
 			}
 
-			// GetGalgame returns release_date; batch does not. content_limit=""
-			// so NSFW games are included.
 			env, err := galgame.GetGalgame(ctx, id, "")
 			if err != nil || env == nil {
 				failed.Add(1)

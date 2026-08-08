@@ -3,20 +3,12 @@ useKunDisableSeo('网站设置')
 
 const api = useApi()
 
-// Each toggle is a separate endpoint on the backend — see
-// apps/api/internal/app/router.go /admin/setting/* routes. All current toggles
-// are phrased positively ({enabled}); isInverse is kept for future negatively-
-// phrased flags.
-//
-// NOTE: 禁止注册 was removed — registration is unified on the OAuth server, so
-// the toggle is being reimplemented there, not here.
 type SettingKey = 'comment-verify' | 'creator-only'
 
 interface SettingDefinition {
   key: SettingKey
   name: string
   description: string
-  // Whether the underlying backend flag is phrased as "disabled" (true=off behaviour).
   isInverse: boolean
 }
 

@@ -1,20 +1,13 @@
-/* See note in editor.css — @reference makes @apply resolve KunUI tokens. */
 @reference './_reference.css';
 
 .kun-prose {
-  /* min-w-0: when .kun-prose is itself a flex item (e.g. chat bubbles), allow it
-     to shrink below its content's intrinsic width so a `<pre>` code block scrolls
-     (overflow-x-auto) instead of forcing the flex item — and the card — wider.
-     For flex items that WRAP .kun-prose (comment cards), add min-w-0 there too. */
   @apply text-default-800 min-w-0 leading-7 text-inherit;
 
-  /* Paragraphs */
   & p {
     @apply py-1;
     overflow-wrap: break-word;
   }
 
-  /* Links */
   & a {
     @apply text-primary-500 decoration-primary-200 hover:text-primary-600 hover:decoration-primary-400 font-medium break-all underline underline-offset-2 transition-colors duration-200;
   }
@@ -23,15 +16,10 @@
     @apply text-default-800 hover:text-primary-500 no-underline;
   }
 
-  /* @mention chips. The backend stamps `class="kun-mention"` on every resolved
-     [@name](/user/:id) link (markdown.go's mention renderer), so this reads as a
-     name chip rather than a body link: no underline, no break-all. Two classes
-     (0,2,0) outrank the plain `& a` above (0,1,1). */
   & .kun-mention {
     @apply text-primary-500 hover:text-primary-600 font-medium no-underline;
   }
 
-  /* Headings */
   & h1 {
     @apply text-default-900 border-default-200 mt-8 mb-4 scroll-m-20 pt-4 text-2xl leading-tight font-bold tracking-tight;
   }
@@ -51,7 +39,6 @@
     @apply text-default-800 my-3 text-xs leading-snug font-medium tracking-tight;
   }
 
-  /* Lists */
   & ul {
     @apply marker:text-default-400 my-6 list-outside list-disc space-y-3 pl-8 text-inherit;
   }
@@ -67,17 +54,10 @@
     }
   }
 
-  /* Blockquote */
   & blockquote {
     @apply border-primary-200 bg-primary-50/50 text-default-800 my-8 rounded-r-lg border-l-4 py-1 pr-4 pl-6 font-medium;
   }
 
-  /* Tables. The backend emits a BARE `<table>` — there is no wrapper element to
-     hang a scroll container off — so the table carries its own frame AND its own
-     horizontal scrolling: `block` + `w-max` + `max-w-full` (the GitHub-markdown
-     technique) lets a wide table scroll inside the prose column instead of
-     widening the page, and makes the rounded corners clip the header fill.
-     Cells keep their `table-cell` display, so columns still line up. */
   & table {
     @apply border-default-200 my-8 block w-max max-w-full border-collapse border-spacing-0 overflow-x-auto rounded-lg border text-sm;
   }
@@ -102,9 +82,6 @@
     @apply bg-default-50/50 transition-colors duration-200;
   }
 
-  /* Server-rendered wrapper, should a future renderer emit it: the container
-     takes over the scrolling, so the table reverts to a normal full-width
-     `display: table` and stops scrolling itself. */
   & .kun-table-container {
     @apply w-full overflow-x-auto;
 
@@ -113,7 +90,6 @@
     }
   }
 
-  /* Others */
   & hr {
     @apply border-default-200 my-12;
   }
@@ -134,7 +110,6 @@
     }
   }
 
-  /* Definition lists */
   & dt {
     @apply text-default-900 mt-4 font-semibold;
   }
@@ -142,27 +117,18 @@
     @apply border-default-200 mt-2 border-l-2 pl-4;
   }
 
-  /* Keyboard shortcuts */
   & kbd {
     @apply bg-default-100 border-default-300 text-default-700 rounded-sm border px-2 py-1 font-mono text-sm;
   }
 
-  /* Mark text */
   & mark {
     @apply bg-warning-100 text-warning-800 rounded-sm px-1;
   }
 
-  /* Inline code. The pill is stripped off fenced-block code by the more
-     specific `& pre code` rule below. */
   & code {
     @apply bg-primary/15 rounded-lg px-2 py-0.5 font-mono text-sm;
   }
 
-  /* Fenced code blocks. The backend (goldmark) emits a bare
-     `<pre><code class="language-…">` with NO .kun-code-container wrapper, so
-     `pre` must be styled directly: a scrollable block whose inner `code` drops
-     the inline pill. Without this the whole block inherits the inline-`code`
-     pill above and renders as one long, overflowing inline code run. */
   & pre {
     @apply bg-default-100 text-default-800 my-4 overflow-x-auto rounded-xl p-4 font-mono text-sm leading-relaxed;
 
@@ -171,9 +137,6 @@
     }
   }
 
-  /* Server-rendered block WITH header/copy chrome (.kun-code-container), should
-     a future renderer emit it: the container owns the border/radius, so strip
-     the bare-`pre` chrome above to avoid double borders/fills. */
   & .kun-code-container {
     @apply border-default-200 relative my-6 overflow-x-auto rounded-xl border;
 
@@ -236,7 +199,6 @@
   }
 }
 
-/* prose-normal variant */
 .kun-prose-normal {
   @apply leading-7 whitespace-normal;
 
@@ -245,15 +207,9 @@
   }
 }
 
-/* Compact density — KunContent's `compact` prop adds `.kun-prose-compact`
- * ALONGSIDE `.kun-prose` (it does not replace it), so the base typography +
- * code-block styling above still apply; this only tightens the article-sized
- * vertical rhythm so short threaded comments / replies don't sprawl. Declared
- * AFTER `.kun-prose` so its equal-specificity rules win the cascade. */
 .kun-prose-compact {
   @apply text-sm leading-6;
 
-  /* Sit flush with the comment header / card — no leading/trailing block gap. */
   & > :first-child {
     @apply mt-0 pt-0;
   }
@@ -301,17 +257,6 @@
   }
 }
 
-/* Comment (compact) images: cap the height so a tall image doesn't dominate the
- * thread, and pin them to the START (left) instead of centered — block, on their
- * own line, hugging the left edge (mx-0 kills any inherited margin-inline:auto).
- *
- * Written with BOTH classes (.kun-prose.kun-prose-compact, which KunContent's
- * `compact` always sets together) so its (0,2,1) specificity beats the base
- * `.kun-prose img` regardless of stylesheet load order — the compact override
- * must not depend on this file's internal ordering to win.
- * Stickers (small inline w-32) are excluded. Only
- * compact prose (comments / chat) is affected — article prose (resource notes,
- * galgame 简介, docs) keeps its full-size images. */
 .kun-prose.kun-prose-compact img:not([alt='Sticker']) {
   @apply mx-0 my-3 block max-h-72 w-auto max-w-full object-contain object-left;
 }

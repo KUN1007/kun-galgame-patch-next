@@ -16,7 +16,6 @@ func New(code int, message string, httpStatus int) *AppError {
 	return &AppError{Code: code, Message: message, HTTPStatus: httpStatus}
 }
 
-// Authentication related
 func ErrUnauthorized() *AppError {
 	return New(40100, "Please log in first", fiber.StatusUnauthorized)
 }
@@ -29,7 +28,6 @@ func ErrForbidden() *AppError {
 	return New(40300, "Insufficient permissions", fiber.StatusForbidden)
 }
 
-// Request related
 func ErrBadRequest(msg string) *AppError {
 	if msg == "" {
 		msg = "Invalid request parameters"
@@ -48,7 +46,6 @@ func ErrValidation(msg string) *AppError {
 	return New(42200, msg, fiber.StatusUnprocessableEntity)
 }
 
-// Server related
 func ErrInternal(msg string) *AppError {
 	if msg == "" {
 		msg = "Internal server error"
@@ -56,14 +53,10 @@ func ErrInternal(msg string) *AppError {
 	return New(50000, msg, fiber.StatusInternalServerError)
 }
 
-// Business related
 func ErrBusiness(msg string) *AppError {
 	return New(40000, msg, fiber.StatusBadRequest)
 }
 
-// ErrGalgameNotFound is returned by POST /patch when the supplied
-// vndb_id does not yet exist on the NextMoe catalog. Distinct code (44001) so
-// the frontend can render a "前往 Wiki 创建" CTA instead of a generic toast.
 func ErrGalgameNotFound(msg string) *AppError {
 	if msg == "" {
 		msg = "游戏资料库中不存在该游戏，请先提交新作"
@@ -71,9 +64,6 @@ func ErrGalgameNotFound(msg string) *AppError {
 	return New(44001, msg, fiber.StatusBadRequest)
 }
 
-// ErrAccountBanned mirrors OAuth's code 10014 (HTTP 403). Per
-// docs/oauth/api-reference.md the frontend should land users on an
-// "account banned" page rather than the login page — re-login will not help.
 func ErrAccountBanned(msg string) *AppError {
 	if msg == "" {
 		msg = "账号已被封禁，无法登录"
@@ -81,17 +71,6 @@ func ErrAccountBanned(msg string) *AppError {
 	return New(10014, msg, fiber.StatusForbidden)
 }
 
-// ErrCatalogReauthRequired is the catalog user plane refusing a write because
-// the session's OAuth access token predates the `catalog:edit` scope. A refresh
-// cannot widen a grant, so the only fix is a re-login — the frontend must say
-// exactly that and must NOT log the user out or bounce them anywhere, because
-// everything else about the session still works.
-//
-// Code 40399 is local to moyu on purpose: this house numbers its own errors in
-// the HTTP-derived 4xxNN space (40300 forbidden, 40400 not found, 44001 galgame
-// missing), so 40399 reads as "a 403 subcase, ours" and cannot collide with
-// OAuth's published 1xxxx authentication codes (10010-10016, docs/oauth/04),
-// which moyu only ever mirrors verbatim (see ErrAccountBanned / 10014).
 func ErrCatalogReauthRequired(msg string) *AppError {
 	if msg == "" {
 		msg = "登录凭证尚未包含资料库投稿权限，请退出登录后重新登录一次即可继续"

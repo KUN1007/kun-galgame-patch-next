@@ -1,9 +1,3 @@
-// Package service is the business logic layer for the chat module.
-//
-// D9 (2026-04-21): all reads and writes go through REST; no real-time push.
-// The frontend polls GetMessages(after=lastMsgId) every 3s for new messages;
-// edits/deletes/reaction state changes are not synced via polling and are only
-// visible after a page refresh.
 package service
 
 import (
@@ -25,20 +19,15 @@ func New(repo *repository.ChatRepository) *ChatService {
 	return &ChatService{repo: repo}
 }
 
-// ─── Room ───────────────────────────────────────────
-
-// ListRooms lists all rooms the user has joined.
 func (s *ChatService) ListRooms(userID int) ([]model.ChatRoom, error) {
 	return s.repo.ListRoomsByUser(userID)
 }
 
-// CreateGroupRoom creates a group chat. Only role >= 4 is allowed (checked in the handler layer).
 func (s *ChatService) CreateGroupRoom(ownerUID int, name, avatar string) (*model.ChatRoom, error) {
-	link := xid.New().String() // 20-char sortable unique id
+	link := xid.New().String()
 	return s.repo.CreateRoom(ownerUID, name, link, avatar)
 }
 
-// JoinRoomByLink joins a room via its link.
 func (s *ChatService) JoinRoomByLink(userID int, link string) (*model.ChatRoom, error) {
 	room, err := s.repo.FindRoomByLink(link)
 	if err != nil {
@@ -50,21 +39,15 @@ func (s *ChatService) JoinRoomByLink(userID int, link string) (*model.ChatRoom, 
 	return room, nil
 }
 
-// StartPrivateChat returns the private chat room between the current user
-// and peerUID, creating it on first call. The caller then navigates to
-// /message/chat/<room.link>.
 func (s *ChatService) StartPrivateChat(userID, peerUID int) (*model.ChatRoom, error) {
 	return s.repo.FindOrCreatePrivateRoom(userID, peerUID)
 }
 
-// RoomDetail is the shape returned by GET /api/v1/chat/room/:link:
-// room metadata plus the full member list with each user's profile.
 type RoomDetail struct {
 	model.ChatRoom
 	Member []model.ChatMember `json:"member"`
 }
 
-// GetRoomDetail returns the room and its members. Caller must be a member.
 func (s *ChatService) GetRoomDetail(userID int, link string) (*RoomDetail, error) {
 	room, err := s.resolveRoomForMember(userID, link)
 	if err != nil {
@@ -77,11 +60,6 @@ func (s *ChatService) GetRoomDetail(userID int, link string) (*RoomDetail, error
 	return &RoomDetail{ChatRoom: *room, Member: members}, nil
 }
 
-// ─── Messages ───────────────────────────────────────
-
-// GetMessages polls for new messages.
-//
-// Resolves the room by link and checks membership first, then fetches by after/limit.
 func (s *ChatService) GetMessages(userID int, link string, after, before, limit int) ([]model.ChatMessage, error) {
 	room, err := s.resolveRoomForMember(userID, link)
 	if err != nil {
@@ -90,14 +68,10 @@ func (s *ChatService) GetMessages(userID int, link string, after, before, limit 
 	return s.repo.ListMessages(room.ID, after, before, limit)
 }
 
-// LatestMessagePerRoom passthrough for room-list last-message previews.
 func (s *ChatService) LatestMessagePerRoom(roomIDs []int) (map[int]model.ChatMessage, error) {
 	return s.repo.LatestMessagePerRoom(roomIDs)
 }
 
-// GetMessagesByIDsInRoom returns the given messages, scoped to the room (and
-// verifying caller membership) so a member can only refresh messages from a
-// room they belong to. Used for the in-place post-mutation refresh.
 func (s *ChatService) GetMessagesByIDsInRoom(userID int, link string, ids []int) ([]model.ChatMessage, error) {
 	room, err := s.resolveRoomForMember(userID, link)
 	if err != nil {
@@ -106,7 +80,6 @@ func (s *ChatService) GetMessagesByIDsInRoom(userID int, link string, ids []int)
 	return s.repo.ListMessagesByIDsInRoom(room.ID, ids)
 }
 
-// CreateMessage sends a message and updates the room's last_message_time.
 func (s *ChatService) CreateMessage(userID int, link string, content, fileURL string, replyToID *int) (*model.ChatMessage, error) {
 	room, err := s.resolveRoomForMember(userID, link)
 	if err != nil {
@@ -115,11 +88,6 @@ func (s *ChatService) CreateMessage(userID int, link string, content, fileURL st
 	if content == "" && fileURL == "" {
 		return nil, fmt.Errorf("消息内容不能为空")
 	}
-	// Reply target must live in THIS room. Without this check a member of
-	// room A could reply-to any message id from a PRIVATE room B they aren't
-	// in; the quote preview built on fetch would then leak that message's
-	// content + author name (cross-room IDOR). enrichMessages also re-scopes
-	// the quote read to the room as defense-in-depth.
 	if replyToID != nil {
 		target, terr := s.repo.GetMessage(*replyToID)
 		if terr != nil || target.ChatRoomID != room.ID {
@@ -140,7 +108,6 @@ func (s *ChatService) CreateMessage(userID int, link string, content, fileURL st
 	return msg, nil
 }
 
-// UpdateMessage edits a message. Only the sender may edit.
 func (s *ChatService) UpdateMessage(userID, messageID int, newContent string) error {
 	m, err := s.repo.GetMessage(messageID)
 	if err != nil {
@@ -155,7 +122,6 @@ func (s *ChatService) UpdateMessage(userID, messageID int, newContent string) er
 	return s.repo.UpdateMessageContent(m, m.Content, newContent)
 }
 
-// DeleteMessage soft-deletes a message. Sender or moderator/admin may delete.
 func (s *ChatService) DeleteMessage(userID int, isPrivileged bool, messageID int) error {
 	m, err := s.repo.GetMessage(messageID)
 	if err != nil {
@@ -168,16 +134,11 @@ func (s *ChatService) DeleteMessage(userID int, isPrivileged bool, messageID int
 	return s.repo.SoftDeleteMessage(messageID, userID, now)
 }
 
-// ToggleReaction toggles an emoji reaction.
 func (s *ChatService) ToggleReaction(userID, messageID int, emoji string) (bool, error) {
 	m, err := s.repo.GetMessage(messageID)
 	if err != nil {
 		return false, fmt.Errorf("消息不存在")
 	}
-	// Membership check: every other message-scoped op resolves the room and
-	// verifies membership; without it here, any authenticated user could
-	// add/remove reactions on messages inside PRIVATE rooms they don't belong
-	// to (IDOR). Reactions need no moderator bypass.
 	ok, err := s.repo.IsMember(userID, m.ChatRoomID)
 	if err != nil {
 		return false, err
@@ -188,7 +149,6 @@ func (s *ChatService) ToggleReaction(userID, messageID int, emoji string) (bool,
 	return s.repo.ToggleReaction(messageID, userID, emoji)
 }
 
-// MarkSeen marks messages as seen in bulk.
 func (s *ChatService) MarkSeen(userID int, link string, messageIDs []int) error {
 	room, err := s.resolveRoomForMember(userID, link)
 	if err != nil {
@@ -197,9 +157,6 @@ func (s *ChatService) MarkSeen(userID int, link string, messageIDs []int) error 
 	return s.repo.MarkSeen(room.ID, userID, messageIDs)
 }
 
-// ─── helpers ────────────────────────────────────────
-
-// resolveRoomForMember fetches the room and confirms userID is a member, else returns an error.
 func (s *ChatService) resolveRoomForMember(userID int, link string) (*model.ChatRoom, error) {
 	room, err := s.repo.FindRoomByLink(link)
 	if err != nil {
@@ -215,9 +172,6 @@ func (s *ChatService) resolveRoomForMember(userID int, link string) (*model.Chat
 	return room, nil
 }
 
-// ReactionsByMessageIDs / MessagesByIDs are thin passthroughs the handler
-// uses to enrich a message page with reactions + reply quotes in two extra
-// batched queries (no N+1).
 func (s *ChatService) ReactionsByMessageIDs(ids []int) ([]model.ChatMessageReaction, error) {
 	return s.repo.ListReactionsByMessageIDs(ids)
 }
@@ -226,5 +180,4 @@ func (s *ChatService) MessagesByIDs(ids []int) ([]model.ChatMessage, error) {
 	return s.repo.GetMessagesByIDs(ids)
 }
 
-// IsNotFound exposes an ErrRecordNotFound check for callers to distinguish business errors.
 func IsNotFound(err error) bool { return err == gorm.ErrRecordNotFound }

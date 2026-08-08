@@ -1,7 +1,4 @@
 <script setup lang="ts">
-// Ported from next-web ChatMessageContextMenu.tsx. A fixed-position panel
-// anchored at the right-click point: quick-reaction grid, message actions
-// (reply / edit / delete), and a read-only breakdown of existing reactions.
 import { onClickOutside } from '@vueuse/core'
 
 const props = defineProps<{
@@ -43,7 +40,6 @@ const onKey = (e: KeyboardEvent) => {
 onMounted(() => document.addEventListener('keydown', onKey))
 onBeforeUnmount(() => document.removeEventListener('keydown', onKey))
 
-// Group reactions by emoji for the read-only detail section.
 const grouped = computed(() => {
   const acc: Record<string, ChatMessageReactionItem[]> = {}
   for (const r of props.reactions ?? []) {
@@ -52,7 +48,6 @@ const grouped = computed(() => {
   return Object.entries(acc)
 })
 
-// Keep the panel on-screen: clamp so it doesn't overflow the viewport.
 const style = computed(() => {
   if (!import.meta.client) return {}
   const pad = 8
@@ -77,7 +72,6 @@ const pick = (emoji: string) => {
         class="kun-ctx-panel bg-content1 shadow-kun-lg fixed z-[200] w-70 origin-top-left rounded-xl p-2"
         :style="style"
       >
-      <!-- quick reactions -->
       <div class="grid grid-cols-5 gap-1 pb-2">
         <KunButton
           v-for="e in commonReactions"

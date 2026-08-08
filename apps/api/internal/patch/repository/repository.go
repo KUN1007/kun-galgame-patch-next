@@ -17,8 +17,6 @@ func New(db *gorm.DB) *PatchRepository {
 	return &PatchRepository{db: db}
 }
 
-// ===== Patch CRUD =====
-
 func (r *PatchRepository) CreatePatch(patch *model.Patch) error {
 	return r.db.Create(patch).Error
 }
@@ -29,13 +27,6 @@ func (r *PatchRepository) GetPatchByID(id int) (*model.Patch, error) {
 	return &patch, err
 }
 
-// GetPatchesByIDs fetches multiple patch rows in one query, preserving the
-// caller-supplied id order so the enricher's downstream join keeps galgame
-// ordering intact. Empty id slice returns nil without hitting the DB.
-//
-// Used by GalgameTaxonomyDetailProxy to attach moyu-side counts/dates to galgame's
-// tag/official galgame listings — galgame only knows metadata (name / banner /
-// content_limit), the per-patch stats live here.
 func (r *PatchRepository) GetPatchesByIDs(ids []int) ([]model.Patch, error) {
 	if len(ids) == 0 {
 		return nil, nil
@@ -44,9 +35,6 @@ func (r *PatchRepository) GetPatchesByIDs(ids []int) ([]model.Patch, error) {
 	if err := r.db.Where("id IN ?", ids).Find(&rows).Error; err != nil {
 		return nil, err
 	}
-	// Reorder to match `ids` so the response preserves galgame's intended order
-	// (galgame may sort by relevance / popularity / chronology — we don't want
-	// to scramble that during enrichment).
 	byID := make(map[int]model.Patch, len(rows))
 	for _, p := range rows {
 		byID[p.ID] = p
@@ -71,18 +59,6 @@ func (r *PatchRepository) UpdatePatch(patch *model.Patch) error {
 }
 
 func (r *PatchRepository) DeletePatch(id int) error {
-	// user_message has NO FK to patch / patch_resource, so the DB CASCADE that
-	// wipes the owned rows leaves notification rows dangling — every link into
-	// the patch would then 404. Delete them in the SAME tx, BEFORE the patch
-	// (and its CASCADE'd resources) go away, so the resource ids are still
-	// resolvable. (Migrations 019 + 025 are the one-time cleanups of rows that
-	// pre-date this.)
-	//
-	// Match EVERY link shape under the patch, not just /patch/:id/resource:
-	// notifications are also written at /patch/:id/introduction (favorite +
-	// galgame-sync), /patch/:id/comment[#comment-:cid] and bare /patch/:id.
-	// The trailing slash in the LIKE keeps id prefixes apart (/patch/249/… must
-	// not match patch 2498).
 	return r.db.Transaction(func(tx *gorm.DB) error {
 		if err := tx.Exec(
 			`DELETE FROM user_message
@@ -97,11 +73,6 @@ func (r *PatchRepository) DeletePatch(id int) error {
 	})
 }
 
-// GetPatchLiveArtifactUUIDs returns the non-empty artifact_uuids of the patch's
-// resources, enumerated BEFORE DeletePatch so the blobs can be soft-deleted
-// after the FK CASCADE removes the rows. Completed artifact blobs are NOT
-// auto-reclaimed (the artifact GC only sweeps never-completed uploads), so
-// without this they leak permanently.
 func (r *PatchRepository) GetPatchLiveArtifactUUIDs(patchID int) ([]string, error) {
 	var uuids []string
 	err := r.db.Model(&model.PatchResource{}).
@@ -115,8 +86,6 @@ func (r *PatchRepository) IncrementView(id int) error {
 		UpdateColumn("view", gorm.Expr("view + 1")).Error
 }
 
-// includeEmpty=false hides games with no patch resources (the "显示无补丁资源的
-// 游戏" toggle, default off) so "随机游戏" never lands on a patch-less game.
 func (r *PatchRepository) GetRandomPatchID(includeEmpty bool) (int, error) {
 	var id int
 	q := r.db.Model(&model.Patch{}).Select("id")
@@ -127,11 +96,6 @@ func (r *PatchRepository) GetRandomPatchID(includeEmpty bool) (int, error) {
 	return id, err
 }
 
-// GetRandomPatchIDs returns up to n random patch ids. Used by the random-patch
-// endpoint so the service layer can ask galgame to filter the candidate set by
-// content_limit before picking one — a single RANDOM() pick has no way to
-// "retry" if it lands on a NSFW row under a sfw caller. includeEmpty=false also
-// drops patch-less games up front (see GetRandomPatchID).
 func (r *PatchRepository) GetRandomPatchIDs(n int, includeEmpty bool) ([]int, error) {
 	if n <= 0 {
 		return nil, nil
@@ -145,24 +109,10 @@ func (r *PatchRepository) GetRandomPatchIDs(n int, includeEmpty bool) ([]int, er
 	return ids, err
 }
 
-// NOTE: ReplaceAliases is deprecated per D12 (2026-04-21). Aliases are owned by galgame /galgame/:gid/aliases.
-
-// ===== Comments =====
-
 func (r *PatchRepository) GetComments(patchID, offset, limit int) ([]model.PatchComment, int64, error) {
 	var comments []model.PatchComment
 	var total int64
 
-	// Independent statements for Count vs Find — see gorm v2 reuse footgun
-	// in message/repository.go GetMessages.
-	// status = 0 → only APPROVED comments are public; pending (status=1) ones
-	// stay hidden until an admin approves (comment-verify). Applied to both the
-	// top-level query and the Replies preload so a pending reply is hidden too.
-	//
-	// resource_id IS NULL keeps the patch's comment tab to the patch's OWN
-	// comments: a resource comment also carries this galgame_id (it needs it for
-	// the NSFW gate), so filtering on galgame_id alone would pull every
-	// resource's comments into the game's comment list.
 	base := r.db.Model(&model.PatchComment{}).
 		Where("galgame_id = ? AND resource_id IS NULL AND parent_id IS NULL AND status = 0", patchID)
 	if err := base.Session(&gorm.Session{}).Count(&total).Error; err != nil {
@@ -177,10 +127,6 @@ func (r *PatchRepository) GetComments(patchID, offset, limit int) ([]model.Patch
 	return comments, total, err
 }
 
-// GetResourceComments is GetComments for a single resource's comment area
-// (migration 028). Same shape and ordering as the patch list — one page of
-// approved roots, each with its approved replies preloaded — keyed on
-// resource_id instead of galgame_id.
 func (r *PatchRepository) GetResourceComments(resourceID, offset, limit int) ([]model.PatchComment, int64, error) {
 	var comments []model.PatchComment
 	var total int64
@@ -199,8 +145,6 @@ func (r *PatchRepository) GetResourceComments(resourceID, offset, limit int) ([]
 	return comments, total, err
 }
 
-// CountResourceComments counts a resource's approved comments (roots + replies)
-// — the number the resource detail page's 评论 tab shows.
 func (r *PatchRepository) CountResourceComments(resourceID int) (int64, error) {
 	var n int64
 	err := r.db.Model(&model.PatchComment{}).
@@ -213,8 +157,6 @@ func (r *PatchRepository) CreateComment(comment *model.PatchComment) error {
 	return r.db.Create(comment).Error
 }
 
-// UpdateCommentStatus sets a comment's moderation status (0=approved,
-// 1=pending). Used by PatchService.ApproveComment.
 func (r *PatchRepository) UpdateCommentStatus(commentID, status int) error {
 	return r.db.Model(&model.PatchComment{}).Where("id = ?", commentID).
 		Update("status", status).Error
@@ -226,16 +168,6 @@ func (r *PatchRepository) GetCommentByID(id int) (*model.PatchComment, error) {
 	return &comment, err
 }
 
-// CountRootCommentsBefore returns how many APPROVED root comments of the same
-// comment AREA sort BEFORE the given root under the list order
-// (created DESC, id DESC). (created, id) > (created, id) row-comparison
-// reproduces "earlier in a DESC sort". Used by LocateComment to compute which
-// page a comment lands on.
-//
-// The area is the one the root itself belongs to: a resource comment is
-// paginated within its resource's list, a patch comment within the patch's. The
-// two must not be counted together or a deep-link would resolve to a page the
-// comment isn't on.
 func (r *PatchRepository) CountRootCommentsBefore(root *model.PatchComment) (int64, error) {
 	var n int64
 	q := r.db.Model(&model.PatchComment{}).
@@ -255,13 +187,6 @@ func (r *PatchRepository) UpdateComment(comment *model.PatchComment) error {
 }
 
 func (r *PatchRepository) DeleteComment(id int) error {
-	// Same no-FK problem as DeletePatch: notifications deep-link to a comment as
-	// /patch/:pid/comment#comment-:cid, and patch_comment.parent_id CASCADEs
-	// RECURSIVELY, so deleting one comment can take a whole reply subtree with
-	// it — every notification anchored to any of them then lands on the comment
-	// list with nothing highlighted. Resolve the subtree the CASCADE is about to
-	// take and drop those rows in the SAME tx, BEFORE the delete. (Migration 026
-	// is the one-time sweep for rows that pre-date this.)
 	return r.db.Transaction(func(tx *gorm.DB) error {
 		if err := tx.Exec(
 			`WITH RECURSIVE doomed AS (
@@ -280,11 +205,6 @@ func (r *PatchRepository) DeleteComment(id int) error {
 	})
 }
 
-// CountCommentAndReplies counts a comment + its direct replies, restricted to
-// APPROVED rows (status = 0). DeleteComment uses this to decrement
-// patch.comment_count, and only approved comments were ever added to that
-// count (pending ones are deferred to approval) — so a pending comment being
-// deleted must not subtract from it.
 func (r *PatchRepository) CountCommentAndReplies(commentID int) (int64, error) {
 	var count int64
 	r.db.Model(&model.PatchComment{}).
@@ -299,9 +219,6 @@ func (r *PatchRepository) GetCommentMarkdown(commentID int) (string, error) {
 	return content, err
 }
 
-// GetResourcePatchID returns the resource's owning patch.id, for handlers that
-// need to NSFW-gate a resource sub-resource (its comment list) before serving
-// it. Returns 0 + ErrRecordNotFound when the resource doesn't exist.
 func (r *PatchRepository) GetResourcePatchID(resourceID int) (int, error) {
 	var patchID int
 	err := r.db.Model(&model.PatchResource{}).Where("id = ?", resourceID).
@@ -315,9 +232,6 @@ func (r *PatchRepository) GetResourcePatchID(resourceID int) (int, error) {
 	return patchID, nil
 }
 
-// GetCommentPatchID returns the comment's owning patch.id — used by handlers
-// that need to NSFW-gate the comment's content (markdown view, etc.). Returns
-// 0 + ErrRecordNotFound when the comment doesn't exist.
 func (r *PatchRepository) GetCommentPatchID(commentID int) (int, error) {
 	var patchID int
 	err := r.db.Model(&model.PatchComment{}).Where("id = ?", commentID).Pluck("galgame_id", &patchID).Error
@@ -329,8 +243,6 @@ func (r *PatchRepository) GetCommentPatchID(commentID int) (int, error) {
 	}
 	return patchID, nil
 }
-
-// ===== Comment Likes =====
 
 func (r *PatchRepository) FindCommentLike(userID, commentID int) (*model.UserPatchCommentLikeRelation, error) {
 	var rel model.UserPatchCommentLikeRelation
@@ -346,13 +258,8 @@ func (r *PatchRepository) DeleteCommentLike(id int) error {
 	return r.db.Delete(&model.UserPatchCommentLikeRelation{}, id).Error
 }
 
-// ===== Resources =====
-
 func (r *PatchRepository) GetResources(patchID int) ([]model.PatchResource, error) {
 	var resources []model.PatchResource
-	// status <> 2 hides moderation-hidden resources (trust `hide`); disabled
-	// resources (status=1, the "pull a bad download" toggle) stay visible with
-	// their link withheld, so their card still shows they exist.
 	err := r.db.Where("galgame_id = ? AND status <> 2", patchID).
 		Order("created DESC, id DESC").
 		Find(&resources).Error
@@ -369,23 +276,7 @@ func (r *PatchRepository) GetResourceByID(id int) (*model.PatchResource, error) 
 	return &resource, err
 }
 
-// NOTE: the former PatchRepository.UpdateResource(resource) helper was
-// removed (MOYU-PR5 / M3). All resource updates now go through
-// PatchService.UpdateResource which wraps the same Save inside a transaction
-// that ALSO writes patch_resource_file_history on file-substantive change.
-// Calling tx.Save directly via the repo would silently bypass the audit
-// trail — keep the entry point at the service layer.
-
 func (r *PatchRepository) DeleteResource(id int) error {
-	// Drop any notification linking to this resource's detail page in the same
-	// tx — user_message has no FK to cascade, so a deleted resource would
-	// otherwise leave a dangling /resource/:id link. (See migration 019.)
-	//
-	// Since migration 028 the resource also owns comments, and patch_comment
-	// .resource_id CASCADEs: the delete below silently takes every comment on
-	// this resource, whose own notifications deep-link to
-	// /resource/:id#comment-:cid. Match the bare link AND that anchored form
-	// (prefix-anchored on "#" so /resource/12 never eats /resource/123's rows).
 	return r.db.Transaction(func(tx *gorm.DB) error {
 		if err := tx.Exec(
 			"DELETE FROM user_message WHERE link = ? OR link LIKE ?",
@@ -409,33 +300,20 @@ func (r *PatchRepository) IncrementResourceDownload(resourceID, patchID int) err
 	})
 }
 
-// ToggleResourceStatus flips enabled ↔ disabled (0 ↔ 1) ONLY. status=2
-// (moderation-hidden by trust enforcement) is left untouched — a bare
-// `ELSE 0` would let the resource owner un-hide a mod-hidden resource with a
-// single disable-toggle call. Exiting status=2 goes through
-// RestoreResourceFromModHide (trust dismiss callback) exclusively.
 func (r *PatchRepository) ToggleResourceStatus(resourceID int) error {
 	return r.db.Model(&model.PatchResource{}).Where("id = ?", resourceID).
 		UpdateColumn("status", gorm.Expr("CASE WHEN status = 0 THEN 1 WHEN status = 1 THEN 0 ELSE status END")).Error
 }
 
-// SetResourceStatus forces a resource to a specific status. Used by trust
-// enforcement: status=2 = moderation-hidden (filtered from listings + download
-// withheld). Idempotent.
 func (r *PatchRepository) SetResourceStatus(id, status int) error {
 	return r.db.Model(&model.PatchResource{}).Where("id = ?", id).
 		Update("status", status).Error
 }
 
-// RestoreResourceFromModHide reverses a trust `hide` (status 2 → 0) on a
-// dismiss/release-hold callback. Scoped to status=2 so it can NEVER un-disable a
-// status=1 (author/admin-disabled) resource — only mod-hidden ones are restored.
 func (r *PatchRepository) RestoreResourceFromModHide(id int) error {
 	return r.db.Model(&model.PatchResource{}).Where("id = ? AND status = 2", id).
 		Update("status", 0).Error
 }
-
-// ===== Resource Likes =====
 
 func (r *PatchRepository) FindResourceLike(userID, resourceID int) (*model.UserPatchResourceLikeRelation, error) {
 	var rel model.UserPatchResourceLikeRelation
@@ -451,8 +329,6 @@ func (r *PatchRepository) DeleteResourceLike(id int) error {
 	return r.db.Delete(&model.UserPatchResourceLikeRelation{}, id).Error
 }
 
-// ===== Resource Favorites (per-resource subscription) =====
-
 func (r *PatchRepository) FindResourceFavorite(userID, resourceID int) (*model.UserPatchResourceFavoriteRelation, error) {
 	var rel model.UserPatchResourceFavoriteRelation
 	err := r.db.Where("user_id = ? AND resource_id = ?", userID, resourceID).First(&rel).Error
@@ -466,8 +342,6 @@ func (r *PatchRepository) CreateResourceFavorite(rel *model.UserPatchResourceFav
 func (r *PatchRepository) DeleteResourceFavorite(id int) error {
 	return r.db.Delete(&model.UserPatchResourceFavoriteRelation{}, id).Error
 }
-
-// ===== Favorites =====
 
 func (r *PatchRepository) FindFavorite(userID, patchID int) (*model.UserPatchFavoriteRelation, error) {
 	var rel model.UserPatchFavoriteRelation
@@ -483,12 +357,6 @@ func (r *PatchRepository) DeleteFavorite(id int) error {
 	return r.db.Delete(&model.UserPatchFavoriteRelation{}, id).Error
 }
 
-// ===== Contributors =====
-
-// GetContributorIDs returns the user_ids of every contributor on a patch.
-// The handler layer batches these via OAuth /users/batch (pkg/userclient)
-// to assemble the wire shape; we no longer SELECT name/avatar from the local
-// user table because those columns are owned by OAuth (migration 005).
 func (r *PatchRepository) GetContributorIDs(patchID int) ([]int, error) {
 	var ids []int
 	err := r.db.Table("user_patch_contribute_relation").
@@ -509,8 +377,6 @@ func (r *PatchRepository) EnsureContributor(userID, patchID int) error {
 	}
 	return nil
 }
-
-// ===== Aggregate Updates =====
 
 func (r *PatchRepository) RecalculatePatchAggregates(patchID int) error {
 	var resources []model.PatchResource
@@ -547,12 +413,6 @@ func (r *PatchRepository) UpdateCount(patchID int, field string, delta int) erro
 		UpdateColumn(field, gorm.Expr(expr)).Error
 }
 
-// moemoepoint is no longer mutated locally — OAuth is the unified source of
-// truth (see pkg/moemoepoint). The local user.moemoepoint column is a read-cache
-// updated from each OAuth adjust response by moemoepoint.Awarder.
-
-// ===== Liked resource IDs for a user =====
-
 func (r *PatchRepository) GetLikedResourceIDs(userID int, resourceIDs []int) ([]int, error) {
 	var ids []int
 	err := r.db.Model(&model.UserPatchResourceLikeRelation{}).
@@ -561,9 +421,6 @@ func (r *PatchRepository) GetLikedResourceIDs(userID int, resourceIDs []int) ([]
 	return ids, err
 }
 
-// GetFavoritedResourceIDs returns the subset of resourceIDs the user has
-// subscribed to (收藏资源) — mirrors GetLikedResourceIDs, used to stamp
-// is_favorite on the resource list.
 func (r *PatchRepository) GetFavoritedResourceIDs(userID int, resourceIDs []int) ([]int, error) {
 	var ids []int
 	err := r.db.Model(&model.UserPatchResourceFavoriteRelation{}).
@@ -588,11 +445,6 @@ func setToSlice(s map[string]bool) []string {
 	return result
 }
 
-// GetResourceFileHistory returns the file-replacement audit rows for one
-// resource, newest first. Public surface (the privacy-safe projection that
-// drops old_s3_key / old_content happens in the service). Mirrors
-// AdminRepository.GetResourceFileHistory so the public history endpoint does
-// not reach across modules into the admin repo.
 func (r *PatchRepository) GetResourceFileHistory(resourceID, offset, limit int) ([]model.PatchResourceFileHistory, int64, error) {
 	var rows []model.PatchResourceFileHistory
 	var total int64
@@ -607,8 +459,6 @@ func (r *PatchRepository) GetResourceFileHistory(resourceID, offset, limit int) 
 	return rows, total, err
 }
 
-// GetResourceRevisions returns the per-field edit-diff history for one resource,
-// newest first. Public (stored Changes are secret-free). Paginated.
 func (r *PatchRepository) GetResourceRevisions(resourceID, offset, limit int) ([]model.PatchResourceRevision, int64, error) {
 	var rows []model.PatchResourceRevision
 	var total int64

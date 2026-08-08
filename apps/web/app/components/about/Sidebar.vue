@@ -1,7 +1,4 @@
 <script setup lang="ts">
-// Fixed-width sidebar listing the entire posts tree. Used on both the /doc
-// index page and the doc-detail page; the tree itself is fetched once via
-// /doc/posts.
 interface Props {
   tree: KunTreeNode
   activeSlug?: string
@@ -9,17 +6,12 @@ interface Props {
 
 const props = withDefaults(defineProps<Props>(), { activeSlug: '' })
 
-// Skip the synthetic "about" root and render its children directly.
 const children = computed(() =>
   props.tree.type === 'directory' ? props.tree.children ?? [] : []
 )
 </script>
 
 <template>
-  <!-- The parent <aside> handles sticky positioning + scroll bounds; this
-       component is just the styled chrome. Matches the next-web original:
-       a right divider (border-r) only, not a boxed card — the sidebar is
-       part of the page layout, not a floating panel. -->
   <nav class="border-default-200 pr-3 lg:border-r">
     <NuxtLink
       to="/doc"

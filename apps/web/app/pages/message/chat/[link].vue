@@ -2,13 +2,6 @@
 import { useIntervalFn } from '@vueuse/core'
 import { useContentBlurUp } from '@kungal/ui-vue'
 
-// Chat room. Feature-parity port of the next-web chat window MINUS realtime
-// (D9: REST-only). New messages arrive via a 5s incremental poll; edits /
-// deletes / reactions are reflected by reloading the recent window after the
-// local action (no socket push). Supported: markdown rendering, right-click
-// context menu, reply (banner + quote + jump), edit modal, delete tombstone,
-// emoji reactions, emoji/sticker picker.
-
 useKunDisableSeo('聊天')
 
 const route = useRoute()
@@ -33,12 +26,7 @@ const input = ref('')
 const sending = ref(false)
 const loading = ref(false)
 const scrollArea = ref<HTMLElement | null>(null)
-// ThumbHash blur-up for message-body images. One observer on the scroll
-// container covers every message (quote + body); its MutationObserver picks up
-// newly polled-in messages automatically.
 useContentBlurUp(scrollArea)
-// KunTextarea exposes { focus, blur, select, insertAtCaret, textareaRef }
-// — we use focus() for autofocus-on-reply and insertAtCaret() for emoji.
 type KunTextareaExposed = {
   focus: () => void
   blur: () => void
@@ -48,17 +36,6 @@ type KunTextareaExposed = {
 }
 const inputEl = ref<KunTextareaExposed | null>(null)
 
-// content_html and quote_message.content are both server-rendered HTML
-// (markdown.MustRender — goldmark with no html.WithUnsafe, so raw HTML is
-// escaped and dangerous URLs dropped at the source). They're bound directly;
-// no client-side sanitizer.
-
-// Pagination model (REST-only, no realtime):
-//   - loadLatest(): the most recent page, used on entry + after any in-place
-//     mutation (edit/delete/reaction). Jumps to the bottom.
-//   - loadOlder(): scroll-up history; prepends older messages, preserving the
-//     visual scroll position.
-//   - poll: `after=<lastId>` appends genuinely new messages every 5s.
 const PAGE = 50
 const loadingOlder = ref(false)
 const hasMoreOlder = ref(true)
@@ -77,10 +54,6 @@ const scrollToBottom = async () => {
     if (el) el.scrollTop = el.scrollHeight
   }
   pin()
-  // Avatars / stickers / markdown images finish loading AFTER the first
-  // layout and grow the transcript, leaving the view stuck near the top.
-  // Re-pin across a few frames so the initial load actually lands on the
-  // newest message. Cheap and bounded — no permanent listeners.
   requestAnimationFrame(pin)
   setTimeout(pin, 120)
   setTimeout(pin, 360)
@@ -94,7 +67,6 @@ const atBottom = () =>
       120
     : true
 
-// Latest page → entry point + post-mutation refresh. Always lands at bottom.
 const loadLatest = async (silent = false) => {
   if (!room.value) return
   if (!silent) loading.value = true
@@ -111,14 +83,9 @@ const loadLatest = async (silent = false) => {
   } finally {
     if (!silent) loading.value = false
   }
-  // Scroll only AFTER `loading` is cleared: while it's true the template
-  // shows <KunLoading> and the message list isn't in the DOM yet, so a
-  // scroll here would target the placeholder and leave us at the top.
   if (ok) await scrollToBottom()
 }
 
-// Older page (scroll-up). Prepends and keeps the viewport anchored on the
-// message the user was looking at.
 const loadOlder = async () => {
   if (
     !room.value ||
@@ -151,8 +118,6 @@ const loadOlder = async () => {
   }
 }
 
-// Forward poll: only genuinely new messages (id > lastId). No-op until the
-// first page is loaded so it never collides with loadLatest.
 const pollNew = async () => {
   if (!room.value || !messages.value.length) return
   const res = await api.get<ChatMessageItem[]>(
@@ -173,10 +138,6 @@ const onScroll = () => {
   if (scrollArea.value && scrollArea.value.scrollTop < 60) loadOlder()
 }
 
-// In-place refresh after an edit / delete / reaction. Re-fetches ONLY the
-// currently-loaded message ids and patches them back into the same slots —
-// no re-paging, no array reorder, and crucially no scroll, so the view stays
-// exactly where the user was instead of jumping to the newest message.
 const refreshLoaded = async () => {
   if (!room.value || !messages.value.length) return
   const ids = messages.value.map((m) => m.id)
@@ -188,7 +149,6 @@ const refreshLoaded = async () => {
   messages.value = messages.value.map((m) => byId.get(m.id) ?? m)
 }
 
-// ─── Reply ────────────────────────────────────────────
 const replyTo = ref<ChatMessageItem | null>(null)
 const startReply = (m: ChatMessageItem) => {
   replyTo.value = m
@@ -196,14 +156,8 @@ const startReply = (m: ChatMessageItem) => {
 }
 const cancelReply = () => (replyTo.value = null)
 
-// Quotes whose target message isn't in the loaded window: clicking them
-// can't scroll anywhere, so instead expand the quote in-place to show the
-// full quoted content (it's already fully present in quote_message.content,
-// the template just visually clamps it). Keyed by the *replying* message id.
 const expandedQuotes = reactive(new Set<number>())
 
-// Click handler for a reply quote. If the referenced message is loaded,
-// scroll+highlight it; otherwise expand this quote to reveal it in full.
 const onQuoteClick = (m: ChatMessageItem) => {
   if (!m.reply_to_id) return
   const el = document.getElementById(`chat-msg-${m.reply_to_id}`)
@@ -213,12 +167,10 @@ const onQuoteClick = (m: ChatMessageItem) => {
     setTimeout(() => el.classList.remove('ring-2', 'ring-secondary'), 1500)
     return
   }
-  // Not loaded → toggle full quoted content inline.
   if (expandedQuotes.has(m.id)) expandedQuotes.delete(m.id)
   else expandedQuotes.add(m.id)
 }
 
-// ─── Send ─────────────────────────────────────────────
 const postMessage = async (content: string) => {
   if (!content.trim() || !room.value) return
   sending.value = true
@@ -232,7 +184,6 @@ const postMessage = async (content: string) => {
     if (res.code === 0) {
       input.value = ''
       replyTo.value = null
-      // Append the just-sent (already enriched) message and always jump to it.
       if (res.data) {
         const seen = new Set(messages.value.map((m) => m.id))
         if (!seen.has(res.data.id)) {
@@ -252,13 +203,9 @@ const postMessage = async (content: string) => {
 const sendMessage = () => postMessage(input.value.trim())
 
 const onStickerSend = (url: string) => {
-  // Send as a markdown image so it renders via the same pipeline.
   postMessage(`![sticker](${url})`)
 }
 const onEmojiSelect = (emoji: string) => {
-  // KunTextarea.insertAtCaret handles selection splice + focus + caret
-  // restore. Fallback only when the ref hasn't mounted (shouldn't happen
-  // post-mount but kept for SSR-safety / disabled-state edge cases).
   if (inputEl.value) {
     inputEl.value.insertAtCaret(emoji)
     return
@@ -273,7 +220,6 @@ const handleKeydown = (e: KeyboardEvent) => {
   }
 }
 
-// ─── Context menu ─────────────────────────────────────
 const menuOpen = ref(false)
 const menuAnchor = ref({ x: 0, y: 0 })
 const menuTarget = ref<ChatMessageItem | null>(null)
@@ -293,8 +239,6 @@ const onBubbleClick = (e: MouseEvent, m: ChatMessageItem) => {
   if (isMobile.value) openMenu(e, m)
 }
 
-// Group the flat reaction list into one pill per emoji: { emoji, count, mine }.
-// (The backend stores one row per user+emoji; the UI shows a grouped count.)
 const groupReactions = (m: ChatMessageItem) => {
   const map = new Map<string, { emoji: string; count: number; mine: boolean }>()
   for (const r of m.reaction ?? []) {
@@ -315,7 +259,6 @@ const toggleReaction = async (m: ChatMessageItem, emoji: string) => {
   else useKunMessage(res.message || '操作失败', 'error')
 }
 
-// ─── Edit ─────────────────────────────────────────────
 const editOpen = ref(false)
 const editTarget = ref<ChatMessageItem | null>(null)
 const openEdit = (m: ChatMessageItem) => {
@@ -333,7 +276,6 @@ const saveEdit = async (content: string) => {
   }
 }
 
-// ─── Delete ───────────────────────────────────────────
 const deleteOpen = ref(false)
 const deleteTarget = ref<ChatMessageItem | null>(null)
 const askDelete = (m: ChatMessageItem) => {
@@ -375,7 +317,6 @@ onBeforeUnmount(() => pause())
 <template>
   <div class="flex h-[calc(100vh-12rem)] flex-col">
     <template v-if="room">
-      <!-- header -->
       <div class="border-default/20 flex items-center gap-3 border-b px-3 py-2">
         <NuxtLink to="/message/chat" class="md:hidden">
           <KunIcon name="lucide:chevron-left" class="size-5" />
@@ -405,7 +346,6 @@ onBeforeUnmount(() => pause())
         </div>
       </div>
 
-      <!-- messages -->
       <div
         ref="scrollArea"
         class="flex-1 space-y-2 overflow-y-auto px-3 py-4"
@@ -426,7 +366,6 @@ onBeforeUnmount(() => pause())
             没有更早的消息了
           </div>
           <template v-for="m in messages" :key="m.id">
-            <!-- deleted tombstone -->
             <div v-if="m.status === 'DELETED'" class="my-1 flex justify-center">
               <span
                 class="bg-default-100 text-default-500 rounded-full px-3 py-1 text-xs"
@@ -465,7 +404,6 @@ onBeforeUnmount(() => pause())
                     {{ m.sender?.name }}
                   </span>
 
-                  <!-- reply quote -->
                   <div
                     v-if="m.quote_message"
                     class="border-secondary bg-secondary/10 my-1 cursor-pointer overflow-hidden rounded-lg border-l-3 px-2 py-1"
@@ -495,8 +433,6 @@ onBeforeUnmount(() => pause())
                   </div>
                 </div>
 
-                <!-- reaction pills — one per emoji (grouped), with a count and
-                     "did I react" active state. -->
                 <div
                   v-if="m.reaction && m.reaction.length"
                   class="mt-1 flex flex-wrap gap-1"
@@ -529,7 +465,6 @@ onBeforeUnmount(() => pause())
         <KunNull v-else description="暂无消息, 发一条吧!" />
       </div>
 
-      <!-- reply banner -->
       <div
         v-if="replyTo"
         class="border-default/20 bg-default-50 mx-3 mb-2 flex items-center justify-between rounded-lg border p-2"
@@ -553,7 +488,6 @@ onBeforeUnmount(() => pause())
         </KunButton>
       </div>
 
-      <!-- input -->
       <div class="border-default/20 border-t p-3">
         <div class="flex items-end gap-2">
           <KunPopover position="top-start" inner-class="p-0">
@@ -600,7 +534,6 @@ onBeforeUnmount(() => pause())
     </template>
     <KunNull v-else description="聊天会话不存在" />
 
-    <!-- context menu -->
     <MessageChatContextMenu
       v-if="menuTarget"
       :open="menuOpen"
@@ -614,7 +547,6 @@ onBeforeUnmount(() => pause())
       @reaction="(e) => toggleReaction(menuTarget!, e)"
     />
 
-    <!-- edit modal -->
     <MessageChatEditModal
       v-if="editTarget"
       v-model:open="editOpen"
@@ -622,7 +554,6 @@ onBeforeUnmount(() => pause())
       @save="saveEdit"
     />
 
-    <!-- delete confirm -->
     <KunModal
       :model-value="deleteOpen"
       inner-class-name="max-w-md"

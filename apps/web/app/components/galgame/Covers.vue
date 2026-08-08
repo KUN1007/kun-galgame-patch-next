@@ -1,16 +1,4 @@
 <script setup lang="ts">
-// "查看所有封面" modal for the galgame detail banner.
-//
-// The patch header (/patch/:id) is enriched from the wiki's /galgame/batch,
-// which is a whitelist DTO that does NOT carry the `covers` array (only
-// `effective_banner_hash`). So we lazily fetch /patch/:id/detail (backed by the
-// single /galgame/:gid, which returns the full covers) the first time the modal
-// opens — no cost unless the user actually wants to see the covers.
-//
-// The wiki syncs a VN's whole VNDB /cv gallery (main + every release cover), each
-// tagged with `kind`; we group by kind so 主封面 / 盒装正面 / 数字版 / 封底 … are
-// separated. Covers are galgame_banner-preset image_service images, so they have a
-// `mini` variant for the grid thumbnail; the lightbox opens the full image.
 import {
   imageServiceUrl,
   imageAspectRatio
@@ -25,8 +13,6 @@ const covers = ref<GalgameCoverRow[] | null>(null)
 const loading = ref(false)
 const failed = ref(false)
 
-// Kind → display label, in the order sections should appear. Anything unknown /
-// empty falls into 其它 at the end.
 const KIND_LABEL: Record<string, string> = {
   main: '主封面',
   pkgfront: '盒装正面',
@@ -39,7 +25,6 @@ const KIND_LABEL: Record<string, string> = {
 }
 const KIND_ORDER = Object.keys(KIND_LABEL)
 
-// Covers grouped into ordered, labeled sections (only non-empty kinds shown).
 const groups = computed(() => {
   const byKind = new Map<string, GalgameCoverRow[]>()
   for (const c of covers.value ?? []) {
@@ -54,7 +39,6 @@ const groups = computed(() => {
   }))
 })
 
-// Fetch once and cache: covers don't change while the page is open.
 const load = async () => {
   if (covers.value || loading.value) return
   loading.value = true
@@ -94,11 +78,6 @@ watch(open, (v) => {
               {{ g.label }}
               <span class="text-default-400">({{ g.covers.length }})</span>
             </h3>
-            <!-- items-start: covers now have varied real aspect ratios, so the
-                 grid must NOT stretch a row's cells to equal height — otherwise
-                 a short (landscape) cell shows its figure background as bars
-                 next to a tall (portrait) neighbour. Top-align so each figure
-                 hugs its own cover. -->
             <div class="grid grid-cols-1 items-start gap-3 sm:grid-cols-2">
               <KunLightboxGalleryItem
                 v-for="c in g.covers"
@@ -108,15 +87,6 @@ watch(open, (v) => {
                 as="figure"
                 class="border-default/20 bg-default-100 block overflow-hidden rounded-lg border"
               >
-                <!-- Covers are often portrait box art. Size the box to the
-                     cover's REAL aspect ratio and load the FULL image with the
-                     default object-cover, so box ratio == image ratio: no crop
-                     AND no letterbox bars. (The `mini` variant is a 16:9 CROP —
-                     pairing it with a real-ratio box left white bars and a
-                     pre-cropped cover, so we don't use it here.) Pre-backfill
-                     the ratio falls back to 16/9. This is an opt-in modal with
-                     few covers and the lightbox loads the full image on click
-                     anyway, so serving full here costs little. -->
                 <KunImage
                   :src="imageServiceUrl(c.image_hash)"
                   :alt="g.label"

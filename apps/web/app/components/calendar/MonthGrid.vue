@@ -1,10 +1,7 @@
 <script setup lang="ts">
-// Sticky month-at-a-glance grid. Each day with releases is a clickable cell
-// (count badge + state color); clicking emits `select` so the page scrolls its
-// day-row list to that day. Pure presentation — the page computes `cells`.
 interface GridCell {
-  day: number // 0 = leading/trailing blank
-  key: string // YYYY-MM-DD, '' for a blank
+  day: number
+  key: string
   count: number
   state: 'today' | 'upcoming' | 'past' | 'empty'
 }

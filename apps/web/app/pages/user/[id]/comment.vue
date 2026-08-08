@@ -1,13 +1,6 @@
 <script setup lang="ts">
 import { commentPermalink } from '~/shared/utils/commentTarget'
 
-// /user/:id/comment returns paginated PatchComments with the owning patch
-// summary attached (see user/service.attachPatchSummaries). The row carries
-// the local `like_count` and `galgame_id`; backend does not currently fill
-// content_html for this list since the user-profile view shows plain content.
-// keepalive: returning from a detail restores this tab's page + scroll. `page`
-// is a computed off ?page=, so reactivation re-reads the URL for the right page.
-// Kept alive via the central include list in app.vue, keyed by this name.
 defineOptions({ name: 'user-comment' })
 
 const route = useRoute()
@@ -20,8 +13,6 @@ interface ListResponse {
   total: number
 }
 
-// Page in the URL (?page=) so back-nav / shared links restore it; switching to
-// another user lands on a clean URL → page 1.
 const page = computed({
   get: () => Number(route.query.page) || 1,
   set: (v) => router.replace({ query: { ...route.query, page: String(v) } })

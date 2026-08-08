@@ -1,18 +1,7 @@
 <script setup lang="ts">
-// Per-rating gallery filter (galgame detail 画廊), ported from kungal. Two
-// independent axes:
-//   色情 (sexual)   — gated by the global NSFW mode: NSFW shows every level,
-//                     SFW reveals only the levels opted-in here.
-//   暴力 (violence) — ALWAYS an explicit per-level opt-in (default off), shown
-//                     behind a prominent confirm. The NSFW mode does NOT unlock
-//                     it (sex and gore are separate sensitivities).
-// Each level shows how many images carry it. The actual hide/show runs in
-// Gallery.vue; this only edits the persisted level sets (settingStore, cookie-
-// persisted so the choice survives across pages / sessions).
 const props = defineProps<{
   showNsfw: boolean
   hiddenCount: number
-  // level (1/2/3) → number of screenshots carrying that rating
   sexualCounts: Record<number, number>
   violenceCounts: Record<number, number>
 }>()
@@ -29,7 +18,6 @@ const LEVELS = [
   { value: 3, label: '高' }
 ]
 
-// Only offer levels that actually have images.
 const sexualShown = computed(() =>
   LEVELS.filter((lv) => (props.sexualCounts[lv.value] ?? 0) > 0)
 )
@@ -40,9 +28,6 @@ const violenceShown = computed(() =>
 const toggleSexual = (level: number) =>
   settingStore.toggleGalleryLevel('sexual', level)
 
-// Violence: turning it ON from the all-off state pops a confirm first; once any
-// violence level is on (or persisted from a prior session), further toggles
-// don't re-prompt.
 const warnOpen = ref(false)
 const pendingLevel = ref<number | null>(null)
 
@@ -78,7 +63,6 @@ const confirmViolence = () => {
     </template>
 
     <div class="space-y-4">
-      <!-- 色情 -->
       <div class="space-y-2">
         <p class="text-default-700 text-sm font-medium">色情评级</p>
         <p v-if="!sexualShown.length" class="text-default-400 text-xs">
@@ -102,7 +86,6 @@ const confirmViolence = () => {
 
       <KunDivider />
 
-      <!-- 暴力 -->
       <div class="space-y-2">
         <div class="flex items-center gap-1.5">
           <KunIcon name="lucide:triangle-alert" class="text-danger-500" />

@@ -9,74 +9,35 @@ import (
 )
 
 func (a *App) RegisterRoutes() {
-	// Liveness probe — root /healthz, used by container HEALTHCHECK (no auth, no
-	// DB touch). The `server healthcheck` subcommand GETs this and exits 0/1 —
-	// see cmd/server/main.go + pkg/health. Unified to /healthz across services.
 	a.Fiber.Get("/healthz", func(c fiber.Ctx) error {
 		return c.JSON(fiber.Map{"status": "ok"})
 	})
 
-	// Versioned API prefix, aligned with the frontend apiBase=http://host/api/v1
 	api := a.Fiber.Group("/api/v1")
 
 	auth := middleware.Auth(a.RDB, a.Config.OAuth)
 	optionalAuth := middleware.OptionalAuth(a.RDB, a.Config.OAuth)
-	// OAuth role mapping (see docs/user-migration/02-data-mapping.md §7):
-	//   moyu super-admin (legacy role 4) -> "admin" (and the DB-preset "ren")
-	//   moyu/kungal admin (legacy role 3) -> "moderator"
-	// Role sets live in middleware (SuperAdminRoles / ModeratorRoles) so "ren"
-	// counts as admin everywhere without repeating it here.
 	moderatorAuth := middleware.RequireRole(middleware.ModeratorRoles...)
 	adminAuth := middleware.RequireRole(middleware.SuperAdminRoles...)
 
-	// Trust & Safety enforcement callback (PUBLIC — authenticated by the HMAC
-	// X-Trust-Signature over the raw body, not a session). Idempotent.
 	api.Post("/trust/callback", a.TrustHandler.Callback)
 
-	// Content reporting → infra Trust & Safety (Phase 1). Session-authed generic
-	// passthrough; the reporter is the session user, subject kind/id from the body.
 	reportRoutes := api.Group("/report", auth)
 	reportRoutes.Get("/reasons", a.TrustHandler.GetReasons)
 	reportRoutes.Post("/submit", a.TrustHandler.SubmitReport)
 
-	// NOTE: We do NOT rate-limit /user/check-in via Redis.
-	// "Once per day" is enforced by user.daily_check_in plus the daily cron
-	// reset at 00:00 (see internal/infrastructure/cron/cron.go). A separate
-	// rolling-24h Redis limiter would create a dead window every day after
-	// midnight when the DB flag is already cleared but the Redis key has
-	// not yet expired, causing spurious 429s. The DB flag is the single
-	// source of truth -- the service rejects with "already checked in today".
-
-	// ===== Auth Routes =====
 	authRoutes := api.Group("/auth")
 	authRoutes.Post("/oauth/callback", a.AuthHandler.OAuthCallback)
-	// Public OAuth app-directory strip ("可以用这个账号登录以下网站") on the login
-	// modal. Backend-proxied + TTL-cached so the browser reads it same-origin
-	// (moyu's TLD is not in the OAuth provider's CORS allow-list). No auth.
 	authRoutes.Get("/oauth/ecosystem", a.AuthHandler.Ecosystem)
 	authRoutes.Post("/logout", a.AuthHandler.Logout)
 	authRoutes.Get("/me", auth, a.AuthHandler.Me)
-	// OAuth display-layer proxy (docs/oauth/02-user-profile.md §身份操作 vs
-	// 展示操作). ONLY name / bio / avatar are proxied here — these are
-	// "展示层" per the 2026-05-23 policy and downstream sites are free to
-	// expose their own UI for them.
-	//
-	// Identity-layer ops (改密码 / 改邮箱 / 2FA / 注销账号) MUST stay on
-	// OAuth's own profile UI and are NOT proxied — the moyu frontend uses
-	// a jump button to https://oauth.kungal.com/profile?return=<url>.
-	// Reason: security audit, future 2FA / anomaly-notify rollouts, and
-	// avoiding email-hijack attack surface across multiple sites.
 	authRoutes.Patch("/me", auth, a.AuthHandler.UpdateMe)
 	authRoutes.Post("/me/avatar", auth, a.AuthHandler.UploadAvatar)
 
-	// ===== Patch Routes =====
 	patchRoutes := api.Group("/patch")
 
-	// Create: register a local carrier for an already-published galgame,
-	// JSON { galgame_id }. The publish wizard's "选择此条目" is the only caller.
 	patchRoutes.Post("/", auth, a.PatchHandler.CreatePatch)
 
-	// Public / optional auth
 	patchRoutes.Get("/:id", optionalAuth, a.PatchHandler.GetPatch)
 	patchRoutes.Get("/:id/detail", optionalAuth, a.PatchHandler.GetPatchDetail)
 	patchRoutes.Get("/:id/comment", optionalAuth, a.PatchHandler.GetComments)
@@ -85,11 +46,8 @@ func (a *App) RegisterRoutes() {
 	patchRoutes.Put("/:id/view", a.PatchHandler.IncrementView)
 	patchRoutes.Get("/comment/:commentId/markdown", a.PatchHandler.GetCommentMarkdown)
 	patchRoutes.Get("/comment/:commentId/locate", optionalAuth, a.PatchHandler.LocateComment)
-	// One resource's comment area (migration 028). The edit / delete / like
-	// routes above are comment-addressed, so both areas share them.
 	patchRoutes.Get("/resource/:resourceId/comment", optionalAuth, a.PatchHandler.GetResourceComments)
 
-	// Authenticated
 	patchRoutes.Put("/:id", auth, a.PatchHandler.UpdatePatch)
 	patchRoutes.Delete("/:id", auth, a.PatchHandler.DeletePatch)
 	patchRoutes.Post("/:id/comment", auth, a.PatchHandler.CreateComment)
@@ -101,29 +59,12 @@ func (a *App) RegisterRoutes() {
 	patchRoutes.Put("/resource/:resourceId", auth, a.PatchHandler.UpdateResource)
 	patchRoutes.Delete("/resource/:resourceId", auth, a.PatchHandler.DeleteResource)
 	patchRoutes.Put("/resource/:resourceId/disable", auth, a.PatchHandler.ToggleResourceDisable)
-	// MOYU-PR8 (M6) — rate-limit the link-reveal endpoint to deter mass
-	// scraping. Original plan §4.6 proposed size-scaled presigned-URL TTL,
-	// but the current architecture serves downloads as public S3 URLs (no
-	// presigned URL involved), so TTL scaling doesn't apply. The actual
-	// abuse surface is bulk-fetching `/link` to harvest URLs — capping at
-	// 30/min per userID (or per IP when anonymous) keeps legitimate browsing
-	// (one user opens 10 patch resource pages = ~10-30 calls) untouched
-	// while breaking automated scraping. Returns 429 on overflow.
-	// optionalAuth runs BEFORE the limiter so it can key by userID for
-	// logged-in callers (the documented "30/min per userID, per IP when
-	// anonymous"). Without it the user context is never populated and the
-	// limiter always falls back to IP — collectively throttling logged-in
-	// users behind a shared NAT/proxy.
 	patchRoutes.Get(
 		"/resource/:resourceId/link",
 		optionalAuth,
 		middleware.RateLimit(a.RDB, "resource-link", 30, time.Minute),
 		a.PatchHandler.GetResourceDownloadInfo,
 	)
-	// Public counter, but rate-limited (audit F069): without a cap anyone can
-	// script this to inflate a resource's/patch's download count (pollutes
-	// rankings + sort). optionalAuth lets it key by userID when logged in,
-	// else per IP — same shape as the /link limiter above.
 	patchRoutes.Put(
 		"/resource/:resourceId/download",
 		optionalAuth,
@@ -131,13 +72,7 @@ func (a *App) RegisterRoutes() {
 		a.PatchHandler.IncrementResourceDownload,
 	)
 	patchRoutes.Put("/resource/:resourceId/like", auth, a.PatchHandler.ToggleResourceLike)
-	// Per-resource subscription: notified (patchResourceUpdate) when this
-	// resource's file/link changes. Distinct from /like and the galgame /favorite.
 	patchRoutes.Put("/resource/:resourceId/favorite", auth, a.PatchHandler.ToggleResourceFavorite)
-	// Public per-field edit history (diff) for one resource (anyone, incl.
-	// anonymous). Rate-limited like the other id-keyed resource reads. Changes
-	// are secret-free (service strips download links / codes) — distinct from
-	// the admin-only /admin/resource/:id/history file-replacement audit.
 	patchRoutes.Get(
 		"/resource/:resourceId/revisions",
 		middleware.RateLimit(a.RDB, "resource-revisions", 60, time.Minute),
@@ -145,76 +80,22 @@ func (a *App) RegisterRoutes() {
 	)
 	patchRoutes.Put("/:id/favorite", auth, a.PatchHandler.ToggleFavorite)
 
-	// ===== galgame submission proxies (docs/galgame_wiki/07-submission.md) =====
-	//
-	// User-facing endpoints for the new publish-galgame flow. Each one
-	// forwards the user's OAuth access_token to galgame and surfaces galgame's
-	// business errors (20003 / 20004 / 20006 / 20007 / 20008 / 20009) verbatim.
-	//
-	// IMPORTANT: order matters here. /galgame/mine, /galgame/submit and
-	// /galgame/search/publish must be registered BEFORE the parameterized
-	// /galgame/:gid routes below so Fiber doesn't match "mine"/"submit"/etc.
-	// as a :gid value.
-	//
-	// Wave 161 (N5) moved this whole family onto the registry's claim lifecycle
-	// and retired PATCH /galgame/:gid with it: "re-edit my declined draft" has
-	// been an external navigate to kungal since the editing face moved there, so
-	// a census found no caller, and the wiki write face it proxied to is gone.
-	//
-	// Wave 159 (N4) retired three more of these: the wiki notification inbox
-	// read /galgame/messages/mine and its GET/PUT read-state pair. moyu never
-	// called any of them — its wiki notifications are the ordinary user_message
-	// rows the message-sync cron writes, and wiki_message_read_state stayed
-	// empty. Editing PUT /galgame/:gid went the same way: every "编辑游戏信息"
-	// affordance on moyu is an external navigate to kungal, so no UI drove it.
-	// Release calendar (发售月表) — public read, delegated to the galgame and
-	// stamped with has_patch. Literal path, so it also sits above /galgame/:gid.
-	// optionalAuth so each card can be stamped is_favorite for the logged-in
-	// viewer (inline 收藏 state) without requiring login to browse. The month
-	// lane is the whole surface: the /calendar/{pending,tba} buckets were
-	// census-verified FE-dead and retired in wave A1.
 	api.Get("/galgame/calendar", optionalAuth, a.CommonHandler.GetGalgameCalendar)
 	api.Get("/galgame/mine", auth, a.PatchHandler.ListMyGalgames)
 	api.Get("/galgame/search/publish", auth, a.PatchHandler.SearchGalgameForPublish)
 	api.Post("/galgame/submit", auth, a.PatchHandler.SubmitGalgame)
 	api.Post("/galgame/:gid/claim", auth, a.PatchHandler.ClaimGalgame)
-	// DELETE is kept as the verb a client already speaks, but the action behind
-	// it is WITHDRAW: the registry row survives, unclaimed and unpublished (03
-	// §9-3). A submission taken back is not an identity that stops existing.
 	api.Delete("/galgame/:gid", auth, a.PatchHandler.WithdrawGalgameSubmission)
 
-	// Galgame metadata editing (revision history, edit-request PRs, direct
-	// edit) moved to kungal — moyu retired its revision/PR proxy + UI in the
-	// "编辑面归 kungal" wave. The links / aliases relation writes outlived it by
-	// a few waves and were retired in wave 159 (N4): their composable functions
-	// never had a single call site, so no UI ever drove them and they were
-	// reachable only by a hand-made API call.
-	//
-	// galgame contributor list / removal is likewise not surfaced: contributors
-	// are an attribution attribute owned by galgame and not editable from the
-	// moyu side. The local /patch/:id/contributor route above is a different
-	// concept (people who uploaded patch resources on moyu) — that one stays.
-
-	// ===== User Routes =====
-	//
-	// Profile mutations (username/bio/password/email/avatar) live on OAuth and
-	// are intentionally absent here. The frontend either redirects to
-	// oauth.kungal.com/profile or proxies PATCH /auth/me to OAuth itself.
 	userRoutes := api.Group("/user")
 
 	userRoutes.Post("/check-in", auth, a.UserHandler.CheckIn)
 	userRoutes.Get("/search", auth, a.UserHandler.SearchUsers)
-	// Self-service moemoepoint ledger (own records only; id from session).
-	// Registered BEFORE /:id so Fiber doesn't match "moemoepoint" as a :id.
 	userRoutes.Get("/moemoepoint/log", auth, a.UserHandler.GetMoemoepointLog)
 
-	// Creator-role application: moyu checks its eligibility (galgame PR stats +
-	// own published patch resources), then files on the central OAuth queue.
-	// Fixed paths, registered BEFORE /:id. See docs/auth/01-creator-role-design.md.
 	userRoutes.Get("/creator/status", auth, a.UserHandler.CreatorStatus)
 	userRoutes.Post("/creator/apply", auth, a.UserHandler.CreatorApply)
 
-	// Public user profiles
 	userRoutes.Get("/:id", optionalAuth, a.UserHandler.GetUserInfo)
 	userRoutes.Get("/:id/floating", a.UserHandler.GetUserFloating)
 	userRoutes.Get("/:id/patch", a.UserHandler.GetUserPatches)
@@ -225,140 +106,73 @@ func (a *App) RegisterRoutes() {
 	userRoutes.Get("/:id/follower", optionalAuth, a.UserHandler.GetFollowers)
 	userRoutes.Get("/:id/following", optionalAuth, a.UserHandler.GetFollowing)
 
-	// Follow/Unfollow
 	userRoutes.Put("/:id/follow", auth, a.UserHandler.Follow)
 	userRoutes.Delete("/:id/follow", auth, a.UserHandler.Unfollow)
 
-	// ===== Message Routes =====
 	msgRoutes := api.Group("/message", auth)
 	msgRoutes.Get("/", a.MessageHandler.GetMessages)
 	msgRoutes.Get("/all", a.MessageHandler.GetAllMessages)
 	msgRoutes.Get("/unread", a.MessageHandler.GetUnreadTypes)
-	// NOTE: POST /message was removed (API audit 2026-05-29). It let ANY
-	// authenticated user write an arbitrary notification (client-controlled
-	// recipient_id / type / content / link, no rate limit) into ANY other
-	// user's inbox — a spam/phishing primitive. It had no frontend caller;
-	// all legitimate notifications are created server-side via the patch
-	// service's createDedupMessage. Re-add only with recipient restricted to
-	// an existing relationship + enum-validated type + rate limiting.
 	msgRoutes.Put("/read", a.MessageHandler.MarkAsRead)
 
-	// ===== Admin Routes =====
-	//
-	// User management (/admin/user/*), creator-application approvals
-	// (/admin/creator/*), and the creator-only setting were removed when
-	// identity moved to OAuth and the creator role was retired.
 	adminRoutes := api.Group("/admin", auth, moderatorAuth)
 
-	// Comments
 	adminRoutes.Get("/comment", a.AdminHandler.GetComments)
 	adminRoutes.Put("/comment/:id", a.AdminHandler.UpdateComment)
 	adminRoutes.Delete("/comment/:id", a.AdminHandler.DeleteComment)
-	// Approve a pending (comment-verify) comment → visible. PatchHandler owns it
-	// because the approval reuses PatchService's comment side-effect logic
-	// (count / moemoepoint / contributor / notifications).
 	adminRoutes.Put("/comment/:id/approve", a.PatchHandler.ApproveComment)
 
-	// Resources
 	adminRoutes.Get("/resource", a.AdminHandler.GetResources)
 	adminRoutes.Put("/resource/:id", a.AdminHandler.UpdateResource)
 	adminRoutes.Delete("/resource/:id", a.AdminHandler.DeleteResource)
-	// MOYU-PR5 / M3 — append-only file-replacement audit trail for one resource.
 	adminRoutes.Get("/resource/:id/history", a.AdminHandler.GetResourceFileHistory)
 
-	// User purge (anti-spam): wipe all moyu-side traces of one user. Account-
-	// level destruction → admin-only (stricter than the moderator-level single
-	// comment/resource deletes above). Preview is a dry run; purge executes.
 	adminRoutes.Get("/user/:id/purge-preview", adminAuth, a.AdminHandler.GetUserPurgePreview)
 	adminRoutes.Post("/user/:id/purge", adminAuth, a.AdminHandler.PurgeUser)
 
-	// Settings
 	adminRoutes.Get("/setting/comment-verify", a.AdminHandler.GetCommentVerify)
 	adminRoutes.Put("/setting/comment-verify", adminAuth, a.AdminHandler.SetCommentVerify)
 	adminRoutes.Get("/setting/creator-only", a.AdminHandler.GetCreatorOnly)
 	adminRoutes.Put("/setting/creator-only", adminAuth, a.AdminHandler.SetCreatorOnly)
-	// NOTE: the "禁止注册" (disable-register) setting was removed — registration
-	// is unified on the OAuth server (local register flow is gone), so the toggle
-	// belongs there, not here.
 
-	// Trust & Safety moderator inbox (Phase 3) — proxied to the trust admin API
-	// with the moderator's OAuth token; site is forced to moyu. moderator-gated
-	// by the adminRoutes group.
 	adminRoutes.Get("/trust/review-items", a.TrustHandler.ListReviewItems)
 	adminRoutes.Get("/trust/review-items/:id", a.TrustHandler.GetReviewItem)
 	adminRoutes.Post("/trust/review-items/:id/claim", a.TrustHandler.ClaimReviewItem)
 	adminRoutes.Post("/trust/review-items/:id/decide", a.TrustHandler.DecideReviewItem)
 
-	// Stats & Logs
 	adminRoutes.Get("/stats", a.AdminHandler.GetStats)
 	adminRoutes.Get("/stats/sum", a.AdminHandler.GetStatsSum)
 	adminRoutes.Get("/log", a.AdminHandler.GetLogs)
 
-	// All patches (admin browse, paginated, optional vndb_id search)
 	adminRoutes.Get("/galgame", a.AdminHandler.GetGalgame)
 
-	// D12: "orphan patches" whose galgame is missing in galgame, for admin manual handling
 	adminRoutes.Get("/patch/orphans", a.AdminHandler.GetOrphanPatches)
 
-	// Doc management (migration 016; unified about+blog). Create/edit/delete
-	// docs; list includes drafts. Banners / inline images come from
-	// image_service (uploaded via /upload/image-service). moderator+ (group default).
 	adminRoutes.Get("/doc", a.DocHandler.AdminListPosts)
 	adminRoutes.Get("/doc/:id", a.DocHandler.AdminGetPost)
 	adminRoutes.Post("/doc", a.DocHandler.CreatePost)
 	adminRoutes.Put("/doc/:id", a.DocHandler.UpdatePost)
 	adminRoutes.Delete("/doc/:id", a.DocHandler.DeletePost)
 
-	// ===== Public taxonomy browse pages =====
-	//
-	// Wave 159 (N4) retired moyu's taxonomy STAFF console entirely — the CRUD
-	// proxies for tag / official / engine / series, the `/taxonomy/:kind/:id`
-	// edit-form read-back, and the 4x3 revision/revert proxies all went with the
-	// page that drove them (`pages/galgame/taxonomy.vue`, which had no nav entry
-	// on either the site or the admin shell and was reachable by direct URL
-	// only). The catalog is the vocabulary owner now; taxonomy field editing
-	// becomes an edit-engine family there, and until then kungal's console is
-	// the one staff surface. See infra
-	// refs/plans/10-data-layer-retirement/03-editing-face-nativization.md §4.
-	//
-	// What survives is the PUBLIC browse lane, and only it. `/tag/:name` and
-	// `/official/:name` carry an associated `galgame` list — we rewrite the
-	// response in GalgameTaxonomyDetailProxy so each entry has moyu's enriched
-	// GalgameCard shape (per-patch counts, KunLanguage name etc.), letting the
-	// FE render the same <GalgameCard> as home / galgame index. The `:name`
-	// segment is cosmetic; the real key is the `tag_id` / `official_id` query
-	// param, in the CATALOG id space.
 	api.Get("/tag/:name", a.PatchHandler.GalgameTaxonomyDetailProxy)
 	api.Get("/official/:name", a.PatchHandler.GalgameTaxonomyDetailProxy)
 
-	// Old-id resolver for the taxonomy redirect shells (wave A2-2 / R1). Public:
-	// it answers only "where did this old id go", which is exactly what a
-	// crawler following a years-old link needs.
 	api.Get("/taxonomy/resolve/:kind/:id", a.PatchHandler.ResolveTaxonomyID)
 
-	// ===== Common Routes =====
 	api.Get("/home", a.CommonHandler.GetHome)
 	api.Get("/home/random", a.PatchHandler.GetRandomPatch)
 	api.Get("/galgame", a.CommonHandler.GetGalgameList)
 	api.Get("/comment", a.CommonHandler.GetGlobalComments)
 	api.Get("/resource", a.CommonHandler.GetGlobalResources)
-	// optionalAuth so the detail page can reflect the viewer's like state.
-	// Rate-limited (audit GPT-M03): this endpoint returns the main resource's
-	// real download payload (content/code/password), so an unthrottled id-walk
-	// could harvest every resource's links — the same scraping vector the
-	// /patch/resource/:id/link limiter exists to stop. 60/min/(user|IP) keeps
-	// normal browsing untouched.
 	api.Get("/resource/:id",
 		optionalAuth,
 		middleware.RateLimit(a.RDB, "resource-detail", 60, time.Minute),
 		a.CommonHandler.GetResourceDetail,
 	)
 
-	// Rankings (public).
 	api.Get("/ranking/user", a.CommonHandler.GetUserRanking)
 	api.Get("/ranking/patch", a.CommonHandler.GetPatchRanking)
 
-	// ===== Chat Routes (D9: REST only, no WebSocket) =====
 	chatRoutes := api.Group("/chat", auth)
 	chatRoutes.Get("/room", a.ChatHandler.ListRooms)
 	chatRoutes.Post("/room", a.ChatHandler.CreateRoom)
@@ -372,32 +186,19 @@ func (a *App) RegisterRoutes() {
 	chatRoutes.Delete("/message/:id", a.ChatHandler.DeleteMessage)
 	chatRoutes.Post("/message/:id/reaction", a.ChatHandler.ToggleReaction)
 
-	// ===== Upload Routes (server-driven presigned upload via the artifact service) =====
-	// One flow: init → (single PUT | multipart parts) → complete; abort cancels.
 	uploadRoutes := api.Group("/upload", auth)
 	uploadRoutes.Post("/init", a.UploadHandler.Init)
 	uploadRoutes.Post("/complete", a.UploadHandler.Complete)
 	uploadRoutes.Post("/resume", a.UploadHandler.Resume)
 	uploadRoutes.Post("/abort", a.UploadHandler.Abort)
-	// W2 / PR3b: multipart file → image_service → hash + variant URLs.
-	// Used by the screenshot editor (galgame accepts no multipart for those).
 	uploadRoutes.Post("/image-service", a.UploadHandler.UploadImageService)
 
-	// Full-text search (Meilisearch)
 	api.Post("/search", a.SearchHandler.Search)
 
-	// External APIs.
-	// Hikari is a public partner API (Hikarinagi / ShionLib / TouchGal / …):
-	// its own CORS domain allowlist (via Use so the OPTIONS preflight is
-	// answered too) + a generous 10000/min/IP rate limit. The handler returns
-	// only public metadata — no uploader identity, no download secrets.
 	api.Use("/hikari", middleware.HikariCORS())
 	api.Get("/hikari", middleware.RateLimit(a.RDB, "hikari", 10000, time.Minute), a.CommonHandler.GetHikari)
 	api.Get("/moyu/patch/has-patch", a.CommonHandler.GetMoyuHasPatch)
 
-	// Doc (public, published-only; migration 016 — unified about+blog). Posts
-	// list + category tree; detail renders markdown and derives the
-	// image_service banner URL. View counter is anonymous.
 	api.Get("/doc/posts", a.DocHandler.ListPosts)
 	api.Get("/doc/pinned", a.DocHandler.ListPinnedPosts)
 	api.Get("/doc/post", a.DocHandler.GetPost)

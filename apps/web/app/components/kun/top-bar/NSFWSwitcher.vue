@@ -18,12 +18,6 @@ const isDanger = computed(() => {
   return !!v && v !== 'sfw'
 })
 
-// onSelect takes the narrowed KunNsfwPreference (not raw string) so the
-// store mutation type-checks against the recently-tightened store schema.
-// location.reload() is intentional: every useApi composable captures the
-// content_limit at setup time, so an in-place store update would only take
-// effect on the *next* page navigation. A hard reload guarantees the
-// switch takes effect immediately on the current page.
 const onSelect = (key: KunNsfwPreference) => {
   settingStore.setNsfwPreference(key)
   if (import.meta.client) location.reload()

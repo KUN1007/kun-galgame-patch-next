@@ -25,19 +25,8 @@ import (
 	"gorm.io/gorm/clause"
 )
 
-// ErrGalgameMissing is returned by CreatePatch when the supplied
-// vndb_id has no corresponding row on the NextMoe catalog yet. The handler
-// translates this into the typed AppError so the frontend can pick it up
-// via code = 44001 and render a "前往 Wiki 创建" CTA.
 var ErrGalgameMissing = errors.New("galgame missing for vndb_id")
 
-// AuditLogger records privileged moderation actions to the admin audit log.
-// It's defined HERE — in the canonical owner of resource/comment deletes — so
-// every delete entry point (public game-detail-page button, admin panel, any
-// future caller) audits a privileged-delete-of-someone-else's-content
-// automatically; the audit can't be forgotten at a call site. The admin repo's
-// CreateLog satisfies it (dependency inversion: patch-service depends only on
-// this interface, app.go wires the admin repo in). Nil = no audit sink (tests).
 type AuditLogger interface {
 	CreateLog(actorID int, action string, data any) error
 }
@@ -57,19 +46,6 @@ func New(repo *repository.PatchRepository, setting *settingService.Service, db *
 	return &PatchService{repo: repo, setting: setting, db: db, art: art, galgame: galgame, users: users, mp: mp, audit: audit}
 }
 
-// ===== Patch =====
-
-// CreatePatchByGalgameID registers a local patch carrier by catalog galgame_id
-// — the path the publish wizard ("选择此条目") uses, and since 2026-07 the only
-// one: POST /api/patch no longer accepts a vndb_id (see PatchHandler.CreatePatch).
-// Keying on the id also covers 原创/同人 works with NO vndb_id (their row stores
-// a deterministic `wiki-<id>` placeholder, the same one ensureLocalPatch uses).
-//
-// Verifies the galgame is publicly published — the batch read is served by the
-// /v1 public face, which returns status=0 rows only, so an unclaimed VNDB draft
-// (status=2) is correctly rejected here with ErrGalgameMissing → AppError 44001,
-// and the frontend renders its "提交新作" CTA. Claiming a draft is a different
-// entry point (POST /galgame/:gid/claim), which publishes it first.
 func (s *PatchService) CreatePatchByGalgameID(ctx context.Context, userID, galgameID int) (int, error) {
 	briefs, err := s.galgame.GalgameBatch(ctx, []int{galgameID}, "")
 	if err != nil {
@@ -83,30 +59,16 @@ func (s *PatchService) CreatePatchByGalgameID(ctx context.Context, userID, galga
 		}
 	}
 	if brief == nil {
-		// Not publicly visible (doesn't exist / banned / someone's private draft).
 		return 0, ErrGalgameMissing
 	}
 	vndb := brief.VndbID
 	if vndb == "" {
-		// Persisted synthetic vndb_id for 原创/同人 works with no VNDB entry. The
-		// "wiki-%d" prefix is a stored data value (patch.vndb_id) — DO NOT rename
-		// it (existing prod rows use it; changing the format splits identity).
 		vndb = fmt.Sprintf("wiki-%d", galgameID)
 	}
 	return s.createPatchRow(ctx, userID, galgameID, vndb)
 }
 
-// createPatchRow is the shared register-a-carrier body for both entrypoints:
-// idempotent dedup by id (= galgame_id), mirror the galgame release_date, then one
-// transaction (insert patch + register the publisher as contributor + bump
-// contribute_count) and the post-commit +3 moemoepoint.
 func (s *PatchService) createPatchRow(ctx context.Context, userID, galgameID int, vndbID string) (int, error) {
-	// "选择此条目" on an existing row. Two cases:
-	//   - is_stub row (a prior favorite/comment lazily recorded it with the galgame
-	//     creator as placeholder owner): this IS the first real publish → ADOPT it
-	//     (transfer ownership, clear the flag, register the contributor, grant +3).
-	//   - real registration: idempotent return — re-selecting neither
-	//     double-rewards nor steals ownership.
 	if existing, _ := s.repo.GetPatchDetail(galgameID); existing != nil && existing.ID != 0 {
 		if existing.IsStub {
 			return s.adoptStub(ctx, userID, galgameID)
@@ -114,16 +76,11 @@ func (s *PatchService) createPatchRow(ctx context.Context, userID, galgameID int
 		return existing.ID, nil
 	}
 
-	// Mirror galgame's release_date locally so /api/galgame can sort/filter by
-	// 发售日期 (best-effort; a galgame blip just leaves it NULL). MUST use GetGalgame
-	// — GalgameBatch does not include release_date.
 	var releaseDate *time.Time
 	if env, gErr := s.galgame.GetGalgame(ctx, galgameID, ""); gErr == nil && env != nil && env.Galgame.ReleaseDate != nil {
 		releaseDate = utils.ParseGalgameReleaseDate(*env.Galgame.ReleaseDate)
 	}
 
-	// D13: patch.id IS the galgame_id (assigned explicitly). A concurrent
-	// first-publish that passed the dedup above hits the pkey on id as a safety net.
 	var patchID int
 	txErr := s.db.Transaction(func(tx *gorm.DB) error {
 		p := &model.Patch{
@@ -151,20 +108,11 @@ func (s *PatchService) createPatchRow(ctx context.Context, userID, galgameID int
 	if txErr != nil {
 		return 0, txErr
 	}
-	// +3 reward for registering a galgame on moyu — post-commit via OAuth s2s.
 	go s.mp.Award(context.Background(), userID, 3, "content_approved",
 		fmt.Sprintf("galgame:%d", patchID), fmt.Sprintf("moyu:patch_create:%d", patchID))
 	return patchID, nil
 }
 
-// adoptStub upgrades an interaction-stub (a favorite/comment lazily recorded the
-// galgame with the galgame creator as placeholder owner) into a real registration
-// owned by the publisher: transfer user_id, clear is_stub, register the
-// contributor, grant +3. The `is_stub = true` guard on the UPDATE makes
-// concurrent first-publishes race-safe — only the winner flips the flag and is
-// rewarded; a loser sees RowsAffected==0 and returns idempotently. The +3 key
-// (moyu:patch_create:<id>) was never used by favorite/comment, so this is the
-// galgame's first publish reward (and OAuth-idempotent regardless).
 func (s *PatchService) adoptStub(ctx context.Context, userID, galgameID int) (int, error) {
 	var adopted bool
 	txErr := s.db.WithContext(ctx).Transaction(func(tx *gorm.DB) error {
@@ -175,13 +123,10 @@ func (s *PatchService) adoptStub(ctx context.Context, userID, galgameID int) (in
 			return res.Error
 		}
 		if res.RowsAffected == 0 {
-			// A concurrent publish already adopted it → idempotent, no reward.
 			return nil
 		}
 		adopted = true
 
-		// Register the publisher as the first contributor. Idempotent: if they
-		// already commented (and so are a contributor), don't double-bump the count.
 		rel := model.UserPatchContributeRelation{UserID: userID, GalgameID: galgameID}
 		cr := tx.Clauses(clause.OnConflict{DoNothing: true}).Create(&rel)
 		if cr.Error != nil {
@@ -205,60 +150,18 @@ func (s *PatchService) adoptStub(ctx context.Context, userID, galgameID int) (in
 	return galgameID, nil
 }
 
-// GetPatch returns the local patch row, or gorm.ErrRecordNotFound when moyu has
-// none. It does NOT materialize: a galgame that only exists on the galgame ("本站
-// 尚未收录") must NOT silently get a stub row on mere view. The row is created only
-// on a real publish/claim (CreatePatch / RegisterClaimedGalgame), per
-// docs/galgame_wiki/00-handbook-for-downstream.md §7.1.4a ("INSERT on select").
-// The handler turns ErrRecordNotFound into a read-only galgame-only card.
 func (s *PatchService) GetPatch(ctx context.Context, id int) (*model.Patch, error) {
 	return s.repo.GetPatchDetail(id)
 }
 
-// GetPatchesByIDs returns existing patches for the given ids in the caller-
-// supplied order — no lazy materialization. Used by handlers that enrich a
-// list of galgame ids with moyu-side stats; ids that have no local row
-// are simply absent from the result so the caller can degrade to a galgame-
-// only card (banner + name + content_limit, zero stats) for those entries.
 func (s *PatchService) GetPatchesByIDs(ids []int) ([]model.Patch, error) {
 	return s.repo.GetPatchesByIDs(ids)
 }
 
-// GetPatchDetail returns the local patch row, or gorm.ErrRecordNotFound when moyu
-// has none. Like GetPatch it does NOT materialize on view (see GetPatch) — the
-// handler renders galgame-only metadata for a not-yet-收录 galgame. Materialization
-// happens only on a real publish/claim per handbook §7.1.4a ("INSERT on select").
 func (s *PatchService) GetPatchDetail(ctx context.Context, id int) (*model.Patch, error) {
 	return s.repo.GetPatchDetail(id)
 }
 
-// ensureLocalPatch reads the local patch row, lazily INSERTing a zero-stat stub
-// when it's missing. It is called from the INTERACTION paths (ToggleFavorite /
-// CreateComment / CreateResource) to record a galgame-catalogue galgame the moment a
-// user first interacts with it — matching kungal's EnsureLocalStub-on-interaction
-// model. It is deliberately NOT called on view: opening a galgame must not
-// silently 收录 it (GetPatch/GetPatchDetail read directly and the handler renders
-// a galgame-only card instead).
-//
-// Returns gorm.ErrRecordNotFound when the galgame is not a publicly-published
-// galgame entry, so the caller can reject the interaction. The stub is a PURE STATS
-// row: no +3 moemoepoint, no contributor — the publish reward is granted only on
-// a real resource publish.
-//
-// actorID is the user whose interaction is materializing the row, and becomes
-// the stub's PLACEHOLDER owner. It used to be the wiki entry's creator, read
-// live off the wiki's ownership-meta face; that face retires with the wiki
-// tables, and the registry deliberately does not mirror another service's user
-// model (refs/proj/106 R2 lane ①), so there is no successor read to point at.
-//
-// The interacting user is the right stand-in rather than a second-best one:
-// patch.user_id has a hard FK to the local user table, so it cannot be left
-// unset, and this is the one person who provably exists locally at this moment.
-// It is a placeholder either way — the first REAL publish adopts the stub and
-// transfers ownership (adoptStub) — and the honest "who wrote this wiki entry"
-// answer lives in the separate creator_id column, which migration 027 already
-// declared null-means-unknown for exactly the rows created after the wiki face
-// retires.
 func (s *PatchService) ensureLocalPatch(ctx context.Context, id, actorID int) (*model.Patch, error) {
 	patch, err := s.repo.GetPatchDetail(id)
 	if err == nil {
@@ -268,11 +171,9 @@ func (s *PatchService) ensureLocalPatch(ctx context.Context, id, actorID int) (*
 		return nil, err
 	}
 
-	// No local row. Ask galgame (anonymously → status=0 only) whether this is a
-	// publicly published galgame and grab its vndb_id + creator.
 	briefs, bErr := s.galgame.GalgameBatch(ctx, []int{id}, "")
 	if bErr != nil {
-		return nil, err // surface as not-found; galgame transient failure
+		return nil, err
 	}
 	var brief *galgameClient.GalgameBrief
 	for i := range briefs {
@@ -282,33 +183,15 @@ func (s *PatchService) ensureLocalPatch(ctx context.Context, id, actorID int) (*
 		}
 	}
 	if brief == nil {
-		return nil, err // not publicly visible → real "can't interact"
+		return nil, err
 	}
 
 	vndb := brief.VndbID
 	if vndb == "" {
-		// vndb_id is uniqueIndex/NOT NULL; original works have none. id is
-		// already unique, so a deterministic placeholder keeps the index sane.
-		// "wiki-%d" is a persisted data value — DO NOT rename (see CreatePatchByGalgameID).
 		vndb = fmt.Sprintf("wiki-%d", id)
 	}
 
-	// Pure stats STUB row (is_stub=true). ON CONFLICT DO NOTHING makes concurrent
-	// first-interactions idempotent; we always re-read the canonical row after.
-	//
-	// resource_update_time is stamped NOW rather than inherited: it used to copy
-	// the wiki's own value, which the catalog does not carry (it is moyu-shaped
-	// data about moyu's resources, ruled moyu-owned in R12). "Now" is the honest
-	// answer for a row moyu is materializing at this instant, and the row has no
-	// resources yet, so the "最近更新" sort it feeds is not misled either way.
-	// creator_id is left NULL: "unknown", which is what migration 027 wrote down
-	// as the terminal value for rows materialized after the wiki face retires.
 	row := &model.Patch{ID: id, VndbID: vndb, UserID: actorID, IsStub: true}
-	// The interacting user is authenticated, so a local anchor row normally
-	// exists — but the session only proves OAuth identity, and a first-ever
-	// interaction can precede the local row. Provision it (id only; profile
-	// fields live on OAuth), the same shape AuthService.FindOrCreateUserByID
-	// writes, or patch_user_id_fkey (23503) rejects the insert.
 	if row.UserID > 0 {
 		if uErr := s.db.WithContext(ctx).
 			Clauses(clause.OnConflict{DoNothing: true}).
@@ -324,28 +207,11 @@ func (s *PatchService) ensureLocalPatch(ctx context.Context, id, actorID int) (*
 	return s.repo.GetPatchDetail(id)
 }
 
-// RegisterClaimedGalgame creates the local patch row for a galgame the user
-// just claimed on galgame (status 2 → 0), awarding +3 moemoepoint and
-// registering the contributor — all in one transaction.
-//
-// Per docs/galgame_wiki/00-handbook-for-downstream.md §9 the local
-// side-effects for "Claim" are exactly: INSERT patch(zeros) + moemoepoint+=3.
-// We deliberately do NOT call galgame /galgame/check here (the caller just
-// claimed it, so it exists and is published).
-//
-// Idempotent: if the patch row already exists (the galgame was interacted
-// with before, or a double-submit), we return its id without re-rewarding.
-// This is the single source of the claim reward — the handler must NOT also
-// call a separate reward path (that was the prior double-+3 bug).
 func (s *PatchService) RegisterClaimedGalgame(userID, galgameID int, vndbID string) (int, error) {
 	if galgameID <= 0 {
 		return 0, fmt.Errorf("invalid galgame id")
 	}
 	if existing, _ := s.repo.GetPatchByID(galgameID); existing != nil && existing.ID != 0 {
-		// Already materialized (e.g. the galgame was browsed before claiming) —
-		// no reward, but claiming is still a content action → refresh
-		// resource_update_time so it surfaces in 最近更新. (A brand-new patch
-		// below gets now() from autoCreateTime, so both claim paths bump.)
 		s.TouchResourceUpdateTime(galgameID)
 		return existing.ID, nil
 	}
@@ -372,37 +238,18 @@ func (s *PatchService) RegisterClaimedGalgame(userID, galgameID int, vndbID stri
 	if txErr != nil {
 		return 0, txErr
 	}
-	// Claim reward +3 — awarded once per claim (the early-return above guards
-	// re-claims) AFTER commit via OAuth. Key by galgame id so it's replay-safe.
 	go s.mp.Award(context.Background(), userID, 3, "content_approved",
 		fmt.Sprintf("galgame:%d", patchID), fmt.Sprintf("moyu:claim:%d", patchID))
 	return patchID, nil
 }
 
-// DB exposes the underlying *gorm.DB so a few thin "no-business-logic" handler
-// endpoints (the galgame messages read-state shims) can do single-table reads /
-// upserts without round-tripping through a dedicated repo + service layer.
-// Anything with real business logic should still live in a service method.
 func (s *PatchService) DB() *gorm.DB { return s.db }
 
-// TouchResourceUpdateTime bumps a galgame's patch.resource_update_time to now —
-// the moyu "最近更新" sort key. Called after a successful galgame-info edit
-// so editing metadata also surfaces the galgame (publish/claim already stamp it
-// on their own paths). No-op if the galgame has no local patch row yet — it'll
-// get a correct time when the row is first materialized.
 func (s *PatchService) TouchResourceUpdateTime(gid int) {
 	s.db.Model(&model.Patch{}).Where("id = ?", gid).
 		Update("resource_update_time", time.Now())
 }
 
-// UpdatePatch: after D13, patch.id IS the galgame_id, so changing vndb_id
-// to one that resolves to a different galgame_id would require remapping
-// patch.id (and every FK in child tables) — that is the job of the
-// cmd/remap-patch-ids migration script, not a per-request handler.
-//
-// Here we accept rebinding only when the new vndb_id resolves to the same
-// galgame_id we already have (i.e. galgame updated the metadata for an existing
-// galgame). Anything else is rejected with a clear hint.
 func (s *PatchService) UpdatePatch(ctx context.Context, id, userID int, isPrivileged bool, vndbID string) error {
 	existing, err := s.repo.GetPatchByID(id)
 	if err != nil {
@@ -436,11 +283,6 @@ func (s *PatchService) DeletePatch(id, userID int, isAdmin bool) error {
 		return fmt.Errorf("no permission to delete this patch")
 	}
 
-	// Snapshot the patch's live artifact_uuids BEFORE the FK CASCADE removes the
-	// resource rows. Completed artifact blobs are NOT auto-reclaimed (the artifact
-	// GC only sweeps never-completed uploads), so each must be explicitly
-	// soft-deleted or it leaks. (Legacy s3_key objects are intentionally left in
-	// the frozen backup bucket, not reclaimed.)
 	uuids, uErr := s.repo.GetPatchLiveArtifactUUIDs(id)
 	if uErr != nil {
 		slog.Warn("DeletePatch: failed to enumerate artifact_uuids for cleanup", "patch_id", id, "error", uErr)
@@ -451,11 +293,6 @@ func (s *PatchService) DeletePatch(id, userID int, isAdmin bool) error {
 		return err
 	}
 
-	// Best-effort artifact soft-delete AFTER the DB delete (rows already gone,
-	// no rollback path; failures only WARN and can be reclaimed out-of-band).
-	// Only the live set is handled: history old_artifact_uuids were soft-deleted
-	// (best-effort) at replace time — re-draining them here would be redundant
-	// deletes for the common case, and a rare replace-time failure was logged then.
 	if len(uuids) > 0 {
 		ctx, cancel := context.WithTimeout(context.Background(), 5*time.Minute)
 		defer cancel()
@@ -464,10 +301,6 @@ func (s *PatchService) DeletePatch(id, userID int, isAdmin bool) error {
 	return nil
 }
 
-// SoftDeleteArtifacts best-effort soft-deletes a batch of artifact blobs. Used by
-// bulk delete paths that CASCADE resource rows away (DeletePatch, admin
-// user-purge) where completed blobs would otherwise leak. Failures only WARN —
-// the DB rows are already gone; a straggler blob can be reclaimed out-of-band.
 func (s *PatchService) SoftDeleteArtifacts(ctx context.Context, uuids []string) {
 	for _, uuid := range uuids {
 		if uuid == "" {
@@ -483,14 +316,6 @@ func (s *PatchService) IncrementView(id int) error {
 	return s.repo.IncrementView(id)
 }
 
-// GetRandomPatchID returns a random patch id, optionally constrained by the
-// caller's content_limit. The single-row RANDOM() path can land on a NSFW
-// patch, which is fine for cl == "" but a SEO leak the moment the random
-// landing page renders. With a non-empty cl we sample a batch of candidates,
-// ask galgame to filter them, and pick from the survivors. Returns gorm's
-// ErrRecordNotFound (mapped to ErrInternal by the handler) when no candidate
-// passes the filter — extremely rare in practice (would need the entire
-// 60-row random sample to be NSFW).
 func (s *PatchService) GetRandomPatchID(ctx context.Context, contentLimit string, includeEmpty bool) (int, error) {
 	if contentLimit == "" {
 		return s.repo.GetRandomPatchID(includeEmpty)
@@ -502,23 +327,14 @@ func (s *PatchService) GetRandomPatchID(ctx context.Context, contentLimit string
 	}
 	briefs, bErr := s.galgame.GalgameBatch(ctx, ids, contentLimit)
 	if bErr != nil {
-		// Fail closed so we don't ship a NSFW landing page on galgame blip.
 		return 0, bErr
 	}
 	if len(briefs) == 0 {
 		return 0, gorm.ErrRecordNotFound
 	}
-	// galgame returns matching briefs but in arbitrary order; pick a uniform
-	// random element of the filtered set. Don't reuse ids' order — that
-	// would bias toward the original RANDOM() pick when only one survives.
 	return briefs[rand.Intn(len(briefs))].ID, nil
 }
 
-// ===== Comments =====
-
-// GetComments returns a page of top-level comments (plus their replies),
-// renders content_html, attaches publisher briefs from OAuth /users/batch,
-// and marks is_liked for the given currentUID (0 = anonymous, no like marks).
 func (s *PatchService) GetComments(ctx context.Context, patchID, currentUID, page, limit int) ([]model.PatchComment, int64, error) {
 	offset := (page - 1) * limit
 	comments, total, err := s.repo.GetComments(patchID, offset, limit)
@@ -529,8 +345,6 @@ func (s *PatchService) GetComments(ctx context.Context, patchID, currentUID, pag
 	return comments, total, nil
 }
 
-// GetResourceComments is GetComments for a single resource's comment area
-// (migration 028) — same page shape, same enrichment, keyed on the resource.
 func (s *PatchService) GetResourceComments(ctx context.Context, resourceID, currentUID, page, limit int) ([]model.PatchComment, int64, error) {
 	offset := (page - 1) * limit
 	comments, total, err := s.repo.GetResourceComments(resourceID, offset, limit)
@@ -541,24 +355,15 @@ func (s *PatchService) GetResourceComments(ctx context.Context, resourceID, curr
 	return comments, total, nil
 }
 
-// CountResourceComments is the resource's approved comment count (roots +
-// replies) — what the detail page labels its 评论 tab with.
 func (s *PatchService) CountResourceComments(resourceID int) (int64, error) {
 	return s.repo.CountResourceComments(resourceID)
 }
 
-// GetResourcePatchID returns the resource's owning patch.id so a handler can
-// NSFW-gate the resource's comment area.
 func (s *PatchService) GetResourcePatchID(resourceID int) (int, error) {
 	return s.repo.GetResourcePatchID(resourceID)
 }
 
-// enrichComments fills in everything the wire shape needs but the DB doesn't
-// hold: rendered markdown, author briefs from OAuth /users/batch, and the
-// current user's like marks. Shared by both comment areas so they cannot drift.
 func (s *PatchService) enrichComments(ctx context.Context, comments []model.PatchComment, currentUID int) {
-	// Render content_html for every top-level comment and each reply. Done
-	// here so all consumers of GetComments share the same rendered output.
 	for i := range comments {
 		comments[i].ContentHTML = markdown.MustRender(comments[i].Content)
 		for j := range comments[i].Replies {
@@ -566,7 +371,6 @@ func (s *PatchService) enrichComments(ctx context.Context, comments []model.Patc
 		}
 	}
 
-	// Batch-fetch publisher briefs for top-level + replies in one OAuth call.
 	uids := make([]int, 0, len(comments)*2)
 	for i := range comments {
 		uids = append(uids, comments[i].UserID)
@@ -586,7 +390,6 @@ func (s *PatchService) enrichComments(ctx context.Context, comments []model.Patc
 		return
 	}
 
-	// Collect all comment IDs (top-level + replies) for the like-marking query.
 	ids := make([]int, 0, len(comments))
 	for i := range comments {
 		ids = append(ids, comments[i].ID)
@@ -596,8 +399,6 @@ func (s *PatchService) enrichComments(ctx context.Context, comments []model.Patc
 	}
 	liked, err := s.repo.GetLikedCommentIDs(currentUID, ids)
 	if err != nil {
-		// Like marks are cosmetic — a failure here leaves every pill un-pressed
-		// rather than failing the whole list read.
 		return
 	}
 	likedSet := make(map[int]bool, len(liked))
@@ -612,8 +413,6 @@ func (s *PatchService) enrichComments(ctx context.Context, comments []model.Patc
 	}
 }
 
-// briefToPatchUser is the small adapter from OAuth /users/batch shape to the
-// embedded PatchUser wire shape ({id, name, avatar}).
 func briefToPatchUser(b *userclient.Brief) *model.PatchUser {
 	if b == nil {
 		return nil
@@ -622,9 +421,6 @@ func briefToPatchUser(b *userclient.Brief) *model.PatchUser {
 }
 
 func (s *PatchService) CreateComment(patchID, userID int, content string, parentID *int) (*model.PatchComment, error) {
-	// Commenting on a not-yet-收录 galgame lazily records it (the patch_comment FK
-	// to patch(id) would 23503 otherwise). No-op when the row exists; errors when
-	// the galgame isn't a public galgame entry.
 	if _, err := s.ensureLocalPatch(context.Background(), patchID, userID); err != nil {
 		return nil, fmt.Errorf("patch not found")
 	}
@@ -634,19 +430,11 @@ func (s *PatchService) CreateComment(patchID, userID int, content string, parent
 	return s.createComment(patchID, nil, userID, content, parentID)
 }
 
-// CreateResourceComment posts to ONE resource's comment area (migration 028).
-// The owning patch is taken from the resource rather than the caller, so a
-// resource comment can never be filed against a galgame it doesn't belong to —
-// galgame_id is what NSFW-gates it on every later read.
 func (s *PatchService) CreateResourceComment(resourceID, userID int, content string, parentID *int) (*model.PatchComment, error) {
 	resource, err := s.repo.GetResourceByID(resourceID)
 	if err != nil {
 		return nil, fmt.Errorf("resource not found")
 	}
-	// status 2 = hidden by trust enforcement: the detail page 404s, so its
-	// comment area is unreachable through the UI — reject the direct POST too
-	// rather than letting content accumulate on a hidden resource. status 1
-	// (download disabled) still renders, so commenting there stays open.
 	if resource.Status == 2 {
 		return nil, fmt.Errorf("resource not found")
 	}
@@ -656,11 +444,6 @@ func (s *PatchService) CreateResourceComment(resourceID, userID int, content str
 	return s.createComment(resource.GalgameID, &resourceID, userID, content, parentID)
 }
 
-// checkCommentParent validates a reply's parent before the insert. Replies are
-// ONE tier (the frontend always attaches to a root), and a parent must live in
-// the very same comment area — otherwise a reply lands in a list its parent
-// isn't in and is unreachable. Nothing enforced this until resource comments
-// made cross-surface attachment reachable at all.
 func (s *PatchService) checkCommentParent(parentID *int, galgameID int, resourceID *int) error {
 	if parentID == nil {
 		return nil
@@ -681,14 +464,7 @@ func (s *PatchService) checkCommentParent(parentID *int, galgameID int, resource
 	return nil
 }
 
-// createComment is the shared insert for both comment areas. resourceID nil =
-// a patch comment.
 func (s *PatchService) createComment(patchID int, resourceID *int, userID int, content string, parentID *int) (*model.PatchComment, error) {
-	// When the admin "评论需要审核" toggle is on, the comment is created in the
-	// pending state (status=1), hidden from public reads until approved. All
-	// the visible-comment side effects (comment_count++, owner moemoepoint,
-	// contributor) are DEFERRED to ApproveComment so pending / rejected
-	// comments never inflate counts or farm points.
 	pending := s.IsCommentVerifyEnabled()
 	status := 0
 	if pending {
@@ -710,18 +486,11 @@ func (s *PatchService) createComment(patchID int, resourceID *int, userID int, c
 		s.applyCommentSideEffects(patchID, userID, comment.ID)
 	}
 
-	// Pre-render content_html so the immediate POST response can be appended
-	// directly into the comment list on the frontend without a second fetch
-	// (only done for approved comments — pending ones aren't shown).
 	comment.ContentHTML = markdown.MustRender(comment.Content)
 
 	return comment, nil
 }
 
-// applyCommentSideEffects runs the once-per-visible-comment bookkeeping:
-// bump the patch's comment_count, award the owner +1 moemoepoint (unless they
-// authored it), and record the commenter as a contributor. Shared by
-// CreateComment (verify off) and ApproveComment (verify on, deferred).
 func (s *PatchService) applyCommentSideEffects(patchID, userID, commentID int) {
 	s.repo.UpdateCount(patchID, "comment_count", 1)
 	patch, _ := s.repo.GetPatchByID(patchID)
@@ -732,9 +501,6 @@ func (s *PatchService) applyCommentSideEffects(patchID, userID, commentID int) {
 	s.repo.EnsureContributor(userID, patchID)
 }
 
-// ApproveComment flips a pending comment to approved and applies the deferred
-// visible-comment side effects. Idempotent: approving an already-approved
-// comment is a no-op. Returns the comment with content_html rendered.
 func (s *PatchService) ApproveComment(commentID int) (*model.PatchComment, error) {
 	comment, err := s.repo.GetCommentByID(commentID)
 	if err != nil {
@@ -766,14 +532,10 @@ func (s *PatchService) UpdateComment(commentID, userID int, content string) (*mo
 	if err := s.repo.UpdateComment(comment); err != nil {
 		return nil, err
 	}
-	// Render content_html so the frontend can apply the edit optimistically,
-	// mirroring CreateComment (which also returns the rendered comment).
 	comment.ContentHTML = markdown.MustRender(comment.Content)
 	return comment, nil
 }
 
-// reason: optional moderation reason, recorded in the author notification +
-// audit when a privileged user deletes someone else's comment.
 func (s *PatchService) DeleteComment(commentID, userID int, isPrivileged bool, reason string) error {
 	comment, err := s.repo.GetCommentByID(commentID)
 	if err != nil {
@@ -789,9 +551,6 @@ func (s *PatchService) DeleteComment(commentID, userID int, isPrivileged bool, r
 	}
 	s.repo.UpdateCount(comment.GalgameID, "comment_count", -int(count))
 
-	// Privileged-foreign delete (a mod/admin removed someone else's comment):
-	// notify the author + audit, mirroring DeleteResource. Best-effort; the
-	// author may be a since-deleted account (FK fails → skipped, not resurrected).
 	if comment.UserID != userID {
 		content := "您发布的评论已被版主删除。"
 		if reason != "" {
@@ -799,9 +558,6 @@ func (s *PatchService) DeleteComment(commentID, userID int, isPrivileged bool, r
 		} else {
 			content += "如有疑问可联系管理员。"
 		}
-		// Link to the AREA the comment lived in, not the deleted comment itself
-		// (its anchor no longer resolves): the resource page for a resource
-		// comment, the game's comment tab otherwise.
 		area := fmt.Sprintf("/patch/%d/comment", comment.GalgameID)
 		if comment.ResourceID != nil {
 			area = fmt.Sprintf("/resource/%d", *comment.ResourceID)
@@ -819,9 +575,6 @@ func (s *PatchService) DeleteComment(commentID, userID int, isPrivileged bool, r
 			slog.Warn("DeleteComment: 写评论删除通知失败",
 				"comment_id", commentID, "owner", comment.UserID, "error", err)
 		}
-		// actor 0 = system (trust enforcement): admin_log.user_id has a NOT NULL
-		// FK to user(id), so a 0 insert can only fail — skip it; the trust service
-		// keeps its own disposition audit and enforce.Apply logs the action.
 		if s.audit != nil && userID != 0 {
 			_ = s.audit.CreateLog(userID, "deleteComment", map[string]any{
 				"comment_id": commentID,
@@ -842,7 +595,6 @@ func (s *PatchService) ToggleCommentLike(commentID, userID int) (bool, error) {
 
 	existing, err := s.repo.FindCommentLike(userID, commentID)
 	if err == nil {
-		// Unlike — reverse the like with the same ref; per-relation-instance key.
 		s.repo.DeleteCommentLike(existing.ID)
 		s.db.Model(&model.PatchComment{}).Where("id = ?", commentID).
 			UpdateColumn("like_count", gorm.Expr("GREATEST(like_count - 1, 0)"))
@@ -853,7 +605,6 @@ func (s *PatchService) ToggleCommentLike(commentID, userID int) (bool, error) {
 		return false, nil
 	}
 
-	// Like
 	rel := &model.UserPatchCommentLikeRelation{UserID: userID, CommentID: commentID}
 	s.repo.CreateCommentLike(rel)
 	s.db.Model(&model.PatchComment{}).Where("id = ?", commentID).
@@ -861,9 +612,6 @@ func (s *PatchService) ToggleCommentLike(commentID, userID int) (bool, error) {
 	if comment.UserID != userID {
 		go s.mp.Award(context.Background(), comment.UserID, 1, "liked",
 			fmt.Sprintf("comment:%d", commentID), fmt.Sprintf("moyu:comment_like:%d", rel.ID))
-		// Notify the comment owner. The helper existed but was never wired
-		// into this path (audit F070); createDedupMessage dedups so a
-		// like/unlike/like cycle won't spam the owner.
 		go s.CreateLikeCommentNotification(userID, comment)
 	}
 	return true, nil
@@ -873,13 +621,9 @@ func (s *PatchService) GetCommentMarkdown(commentID int) (string, error) {
 	return s.repo.GetCommentMarkdown(commentID)
 }
 
-// GetCommentPatchID returns the comment's owning patch.id so the handler can
-// NSFW-gate it before serving the markdown body.
 func (s *PatchService) GetCommentPatchID(commentID int) (int, error) {
 	return s.repo.GetCommentPatchID(commentID)
 }
-
-// ===== Resources =====
 
 func (s *PatchService) GetResources(ctx context.Context, patchID, currentUID int) ([]model.PatchResource, error) {
 	resources, err := s.repo.GetResources(patchID)
@@ -893,8 +637,6 @@ func (s *PatchService) GetResources(ctx context.Context, patchID, currentUID int
 	return resources, nil
 }
 
-// markResourceLiked stamps is_liked on each resource for the given currentUID.
-// Anonymous (currentUID == 0) leaves is_liked false everywhere.
 func (s *PatchService) markResourceLiked(currentUID int, rs []model.PatchResource) {
 	if currentUID == 0 || len(rs) == 0 {
 		return
@@ -916,9 +658,6 @@ func (s *PatchService) markResourceLiked(currentUID int, rs []model.PatchResourc
 	}
 }
 
-// markResourceFavorited stamps is_favorite (收藏资源 subscription) on each
-// resource for the given currentUID. Anonymous (0) leaves it false. Mirrors
-// markResourceLiked.
 func (s *PatchService) markResourceFavorited(currentUID int, rs []model.PatchResource) {
 	if currentUID == 0 || len(rs) == 0 {
 		return
@@ -940,8 +679,6 @@ func (s *PatchService) markResourceFavorited(currentUID int, rs []model.PatchRes
 	}
 }
 
-// attachUsersToResources batch-fetches publisher briefs from OAuth and
-// stamps the User field on each resource row.
 func attachUsersToResources(ctx context.Context, users *userclient.Client, rs []model.PatchResource) {
 	if users == nil || len(rs) == 0 {
 		return
@@ -959,52 +696,23 @@ func attachUsersToResources(ctx context.Context, users *userclient.Client, rs []
 func (s *PatchService) CreateResource(ctx context.Context, resource *model.PatchResource, userID int) error {
 	resource.UserID = userID
 
-	// Publishing a resource on a not-yet-收录 galgame lazily records it (the
-	// patch_resource FK to patch(id) would 23503 otherwise). No-op in the normal
-	// publish flow (the wizard's CreatePatch already made the row).
 	if _, err := s.ensureLocalPatch(ctx, resource.GalgameID, userID); err != nil {
 		return fmt.Errorf("patch not found")
 	}
 
-	// MOYU-PR7 / M5 — upload-handle integrity.
-	//
-	// The D10 upload flow has no upload_session table; the client just hands
-	// the server an s3_key string and we trust it. Without these two checks
-	// a malicious / buggy client could submit:
-	//   (a) an s3_key pointing OUTSIDE the patch upload area (e.g. paths the
-	//       upload service would never have minted, possibly disclosing
-	//       other tenants' objects via signed-URL probing), or
-	//   (b) an s3_key already attached to another patch_resource (single-use
-	//       violation — same upload claimed by N rows).
-	//
-	// Migration 008 adds a partial UNIQUE INDEX on (s3_key) WHERE storage='s3'
-	// AND s3_key<>'' so (b) is also enforced at the DB layer (caller sees a
-	// "duplicate key" error if two CreateResource races to the same key).
 	if resource.Storage == "s3" {
-		// New s3 resources are artifact-backed: the blob lives in the artifact
-		// service, addressed by an opaque uuid. There is no local s3_key/content
-		// — the public download URL is resolved at GET /resource/:id/link time
-		// via artifact.Download, so a CDN/domain switch needs no DB backfill.
-		// (The per-blob single-use guarantee is enforced by the partial unique
-		// index on artifact_uuid; see migration 021.)
 		if resource.ArtifactUUID == "" {
 			return fmt.Errorf("缺少上传文件标识")
 		}
 		resource.S3Key = ""
 		resource.Content = ""
 	} else {
-		// "user" mode: the frontend supplied the user's own download link(s).
-		// Require at least one — DTO-level validation is intentionally relaxed
-		// (no min=1) since it would also reject the s3 branch above.
 		if strings.TrimSpace(resource.Content) == "" {
 			return fmt.Errorf("请填写资源链接")
 		}
 	}
 
 	if err := s.repo.CreateResource(resource); err != nil {
-		// Surface duplicate-key errors as a clear user-facing message rather
-		// than a raw Postgres unique-violation; the partial unique index on
-		// (s3_key) enforces single-use of an upload.
 		msg := err.Error()
 		if strings.Contains(msg, "idx_patch_resource_s3_key_unique") ||
 			strings.Contains(msg, "idx_patch_resource_artifact_uuid_unique") ||
@@ -1014,32 +722,21 @@ func (s *PatchService) CreateResource(ctx context.Context, resource *model.Patch
 		return err
 	}
 
-	// Update aggregates
 	s.repo.UpdateCount(resource.GalgameID, "resource_count", 1)
 	s.repo.RecalculatePatchAggregates(resource.GalgameID)
 
-	// Update resource_update_time
 	s.db.Model(&model.Patch{}).Where("id = ?", resource.GalgameID).
 		Update("resource_update_time", time.Now())
 
-	// Moemoepoint +3 for publishing a resource (unified via OAuth).
 	go s.mp.Award(context.Background(), userID, 3, "content_approved",
 		fmt.Sprintf("resource:%d", resource.ID), fmt.Sprintf("moyu:resource_publish:%d", resource.ID))
 
-	// Ensure contributor
 	s.repo.EnsureContributor(userID, resource.GalgameID)
 
-	// Notify favorited users
 	s.notifyFavoritedUsers(resource.GalgameID, userID)
 
-	// Pre-render note_html for the immediate POST response.
 	resource.NoteHTML = markdown.MustRender(resource.Note)
 
-	// Attach publisher brief so the response shape matches GetResources (which
-	// renders r.user.name on the resource card). Without this the frontend's
-	// optimistic prepend onto the list would render undefined → "Cannot read
-	// properties of undefined (reading 'name')" NPE. Reuses the same OAuth
-	// /users/batch path the list endpoint uses so failures degrade identically.
 	if s.users != nil {
 		one := []model.PatchResource{*resource}
 		attachUsersToResources(ctx, s.users, one)
@@ -1049,49 +746,21 @@ func (s *PatchService) CreateResource(ctx context.Context, resource *model.Patch
 	return nil
 }
 
-// UpdateResource mutates a resource in place. When the FILE fields (Storage /
-// S3Key / Content) differ from the current row, an append-only history row is
-// written first inside the same transaction (MOYU-PR5 / M3) so the previous
-// file pointer + blake3 + size + reason + actor are recoverable for support
-// triage. Pure metadata edits (name / note / type / ...) skip history.
-//
-// reason is the operator's optional explanation (DTO PatchResourceUpdateRequest
-// .Reason, max 500 chars). actorRole is the role-snapshot integer (3=admin,
-// 2=moderator, 1=user, 0=unknown) so the audit row records the privilege at
-// time of edit.
 func (s *PatchService) UpdateResource(ctx context.Context, resourceID, userID int, update *model.PatchResource, reason string, actorRole int) (*model.PatchResource, error) {
 	existing, err := s.repo.GetResourceByID(resourceID)
 	if err != nil {
 		return nil, fmt.Errorf("resource not found")
 	}
-	// Moderators / admins bypass the owner check so they can edit any
-	// resource from the public resource page (option B per the spec —
-	// "admin can edit in-place on the front-end"). actorRole is already
-	// resolved by the handler from the OAuth roles claim (3=admin / 2=mod
-	// / 1=user / 0=unknown). The bypass also flows into the file-history
-	// row's ActorRole field so audit shows it was a mod/admin edit.
 	if existing.UserID != userID && actorRole < 2 {
 		return nil, fmt.Errorf("can only edit your own resources")
 	}
 
-	// Storage-aware normalization, mirroring CreateResource. storage="s3" is
-	// artifact-backed for new/replaced files (identified by artifact_uuid;
-	// download URL derived at /link time); legacy direct-B2 rows still carry an
-	// s3_key (Content=S3Key). storage="user" → Content is the user's link.
-	// Single-use + cross-row anti-tamper are enforced by the owner check above
-	// and the partial unique indexes on artifact_uuid / s3_key (migration 021 /
-	// 008).
 	if update.Storage == "s3" {
 		switch {
 		case update.ArtifactUUID != "":
-			// Artifact-backed (new upload or a replaced file). Download URL is
-			// resolved at /link time; no local s3_key/content.
 			update.S3Key = ""
 			update.Content = ""
 		case update.S3Key != "":
-			// Legacy direct-B2 row, metadata-only edit: the FE re-sends the
-			// existing s3_key unchanged (replacing a file always goes through the
-			// artifact path above). Keep the s3_key→Content invariant.
 			update.Content = update.S3Key
 		default:
 			return nil, fmt.Errorf("缺少上传文件标识")
@@ -1102,32 +771,17 @@ func (s *PatchService) UpdateResource(ctx context.Context, resourceID, userID in
 		}
 	}
 
-	// File-substantive change detection. We compare update vs existing on
-	// the three fields that together identify "the file/link" — storage
-	// class, the S3 object key, and the external link content. Anything
-	// else (note, code, password, size string, type/lang/platform jsonb) is
-	// metadata-only and doesn't merit a history row.
 	fileChanged := update.Storage != existing.Storage ||
 		update.S3Key != existing.S3Key ||
 		update.Content != existing.Content ||
 		update.ArtifactUUID != existing.ArtifactUUID
 
-	// Snapshot the old object(s) to reclaim AFTER the transaction commits (the
-	// txn body overwrites `existing` in place). Two disjoint cases:
-	//   - legacy s3_key: delete the B2 object directly.
-	//   - artifact_uuid: soft-delete via the artifact service (its GC reclaims).
-	// Set only when the old pointer is NOT reused by the new state (covers
-	// "replaced file" and "switched away from s3").
 	var orphanArtifactUUID string
 	if existing.ArtifactUUID != "" && update.ArtifactUUID != existing.ArtifactUUID {
 		orphanArtifactUUID = existing.ArtifactUUID
 	}
 
 	galgameID := existing.GalgameID
-	// Per-field edit diff (public-safe) — computed from existing(before) vs
-	// update(after) BEFORE the txn overwrites `existing` below. Stored as a
-	// PatchResourceRevision so the resource page can show 改动前 → 改动后 for
-	// language / platform / type / note / name / size / file. Empty = no-op save.
 	changes := diffResourceFields(existing, update)
 	if err := s.db.Transaction(func(tx *gorm.DB) error {
 		if fileChanged {
@@ -1182,11 +836,6 @@ func (s *PatchService) UpdateResource(ctx context.Context, resourceID, userID in
 		return nil, err
 	}
 
-	// Best-effort old-artifact soft-delete AFTER the txn so we don't hold a DB
-	// connection during the external IO call. Failure only warns — the row
-	// already points at the new blob (no user-facing impact); the artifact
-	// service's GC reclaims the old blob after its soft-delete TTL. (Legacy
-	// s3_key objects are left in the frozen backup bucket, not reclaimed.)
 	if orphanArtifactUUID != "" {
 		cleanupCtx, cancel := context.WithTimeout(context.Background(), 30*time.Second)
 		defer cancel()
@@ -1195,20 +844,11 @@ func (s *PatchService) UpdateResource(ctx context.Context, resourceID, userID in
 		}
 	}
 
-	// Aggregate refresh outside the transaction — it's a derived counter
-	// touching the parent patch row; doesn't need to share the txn.
 	s.repo.RecalculatePatchAggregates(galgameID)
 
-	// Editing a resource is a content update → bump resource_update_time so the
-	// galgame rises in the "最近更新" sort (mirrors CreateResource).
 	s.db.Model(&model.Patch{}).Where("id = ?", galgameID).
 		Update("resource_update_time", time.Now())
 
-	// Re-render note_html + attach publisher brief so the response shape
-	// matches GetResources / CreateResource. Without this the frontend's
-	// optimistic list-row replacement would keep showing the OLD note_html
-	// (form only sends raw markdown `note`, not rendered HTML) → "note 改了
-	// 但简介不更新" bug. Same OAuth /users/batch hop the list endpoint uses.
 	existing.NoteHTML = markdown.MustRender(existing.Note)
 	if s.users != nil {
 		one := []model.PatchResource{*existing}
@@ -1216,27 +856,17 @@ func (s *PatchService) UpdateResource(ctx context.Context, resourceID, userID in
 		existing.User = one[0].User
 	}
 
-	// Per-resource subscribers get a patchResourceUpdate notification — but ONLY
-	// when the download link / file actually changed (fileChanged), per product
-	// decision. Pure metadata edits (note / name / type / …) stay silent.
 	if fileChanged {
 		s.notifyResourceFavoritedUsers(resourceID, userID)
 	}
 	return existing, nil
 }
 
-// reason is the optional moderation reason, recorded in BOTH the owner
-// notification and the audit log when a privileged user deletes someone else's
-// resource. Empty for self-deletes (and for callers that don't collect one).
 func (s *PatchService) DeleteResource(resourceID, userID int, isPrivileged bool, reason string) error {
 	resource, err := s.repo.GetResourceByID(resourceID)
 	if err != nil {
 		return fmt.Errorf("resource not found")
 	}
-	// Same option-B bypass as UpdateResource: moderators / admins can delete
-	// any resource from the front-end public page without round-tripping
-	// through /admin/resource/:id. The admin route still exists for audit /
-	// management; both code paths converge on best-effort S3 cleanup below.
 	if resource.UserID != userID && !isPrivileged {
 		return fmt.Errorf("can only delete your own resources")
 	}
@@ -1245,12 +875,6 @@ func (s *PatchService) DeleteResource(resourceID, userID int, isPrivileged bool,
 		return err
 	}
 
-	// Legacy s3_key objects are left in the frozen backup bucket (retired
-	// separately), not reclaimed here.
-	//
-	// Soft-delete the artifact blob for artifact-backed rows (its GC reclaims it
-	// after the soft-delete TTL). History old_artifact_uuids were already
-	// soft-deleted at their replace time, so only the current one is handled here.
 	if resource.ArtifactUUID != "" {
 		ctx, cancel := context.WithTimeout(context.Background(), 30*time.Second)
 		defer cancel()
@@ -1261,31 +885,9 @@ func (s *PatchService) DeleteResource(resourceID, userID int, isPrivileged bool,
 
 	s.repo.UpdateCount(resource.GalgameID, "resource_count", -1)
 	s.repo.RecalculatePatchAggregates(resource.GalgameID)
-	// Moemoepoint always decremented from the resource OWNER, not the caller.
-	// When a mod/admin deletes someone else's resource the owner still loses
-	// the +3 they earned at upload time. Same ref as the publish award so OAuth
-	// can reconcile (content_removed reverses content_approved).
 	go s.mp.Award(context.Background(), resource.UserID, -3, "content_removed",
 		fmt.Sprintf("resource:%d", resource.ID), fmt.Sprintf("moyu:resource_delete:%d", resource.ID))
 
-	// Notify the OWNER when a moderator/admin deletes their resource (caller is
-	// not the owner). Without this the uploader's resource + its +3 just vanish
-	// with no explanation — the exact "资源没了、消息里也没有删除通知" user report.
-	// Self-deletes (owner == caller) need no notice. A "system" message renders
-	// in the notification center (same type the galgame-sync uses) and links to the
-	// galgame's resource tab for context. Direct insert, not createDedupMessage:
-	// each deletion is a distinct event (dedup keys on type+sender+recipient+link
-	// and every delete shares the same /patch/:id/resource link, so it would
-	// collapse multiple deletions into one).
-	//
-	// Best-effort + isolated: this runs OUTSIDE the delete (the row is already
-	// committed above), so a failed insert only logs — it can't roll back the
-	// delete. The owner usually exists (they uploaded while logged in), but may
-	// SINCE have been deleted (admin user-removal) → recipient_id FK fails; we
-	// then just skip. We deliberately do NOT anchor/recreate the user here to
-	// force the notice through (that's right for the galgame-sync cron, whose
-	// targets are legit never-logged-in submitters — but here a missing owner is
-	// a *deleted* account and must not be resurrected).
 	if resource.UserID != userID {
 		subject := "一个补丁资源"
 		if resource.Name != "" {
@@ -1311,12 +913,6 @@ func (s *PatchService) DeleteResource(resourceID, userID int, isPrivileged bool,
 				"resource_id", resourceID, "owner", resource.UserID, "error", err)
 		}
 
-		// Audit the moderation action (every privileged-foreign delete, from any
-		// entry point, lands here — see AuditLogger). Best-effort; nil sink in
-		// tests. actor 0 = system (trust enforcement): admin_log.user_id has a
-		// NOT NULL FK to user(id), so a 0 insert can only fail — skip it; the
-		// trust service keeps its own disposition audit and enforce.Apply logs
-		// the action.
 		if s.audit != nil && userID != 0 {
 			_ = s.audit.CreateLog(userID, "deleteResource", map[string]any{
 				"resource_id": resource.ID,
@@ -1330,10 +926,6 @@ func (s *PatchService) DeleteResource(resourceID, userID int, isPrivileged bool,
 	return nil
 }
 
-// ToggleResourceDisable flips a resource between enabled (status 0, downloadable)
-// and disabled (status 1, download link blocked — used to pull a virus-infected
-// resource without deleting it). Permitted for the resource owner or a
-// privileged user (moderator/admin). Returns the resulting status.
 func (s *PatchService) ToggleResourceDisable(resourceID, userID int, isPrivileged bool) (int, error) {
 	resource, err := s.repo.GetResourceByID(resourceID)
 	if err != nil {
@@ -1342,18 +934,12 @@ func (s *PatchService) ToggleResourceDisable(resourceID, userID int, isPrivilege
 	if resource.UserID != userID && !isPrivileged {
 		return 0, fmt.Errorf("no permission to operate on this resource")
 	}
-	// status=2 = moderation-hidden (trust enforcement). Neither the owner nor a
-	// moderator may toggle out of it here — only the trust dismiss callback
-	// restores it (RestoreResourceFromModHide). The repo CASE also skips 2, but
-	// failing loudly beats silently reporting a status that didn't change.
 	if resource.Status == 2 {
 		return 0, fmt.Errorf("resource is hidden by moderation and cannot be toggled")
 	}
 	if err := s.repo.ToggleResourceStatus(resourceID); err != nil {
 		return 0, err
 	}
-	// Repo flips 0↔1 atomically (SQL CASE); the new value is the inverse of the
-	// one we just read.
 	if resource.Status == 0 {
 		return 1, nil
 	}
@@ -1368,10 +954,6 @@ func (s *PatchService) IncrementResourceDownload(resourceID int) error {
 	return s.repo.IncrementResourceDownload(resourceID, resource.GalgameID)
 }
 
-// GetResourceDownloadInfo backs the lightweight GET /patch/resource/:id/link.
-// The /resource/:id detail endpoint additionally galgame-enriches the owning
-// patch and fetches 5 recommendations, which is wasteful when the caller
-// only wants the download links. This returns the bare resource row.
 func (s *PatchService) GetResourceDownloadInfo(resourceID int) (*model.PatchResource, error) {
 	r, err := s.repo.GetResourceByID(resourceID)
 	if err != nil {
@@ -1380,12 +962,6 @@ func (s *PatchService) GetResourceDownloadInfo(resourceID int) (*model.PatchReso
 	return r, nil
 }
 
-// ResolveDownloadURL fills r.DownloadURL for artifact-backed rows by asking the
-// artifact service to issue a download URL (presigned, or a CDN/Worker URL for
-// public). Call it ONLY after the caller's access gates (NSFW / disabled) pass —
-// it issues a usable URL. Legacy rows are left untouched (Content holds the bare
-// s3_key/link and the FE assembles the URL, so swapping the old CDN/domain stays
-// a single frontend-config change).
 func (s *PatchService) ResolveDownloadURL(ctx context.Context, r *model.PatchResource) error {
 	if r == nil || r.ArtifactUUID == "" {
 		return nil
@@ -1429,11 +1005,6 @@ func (s *PatchService) ToggleResourceLike(resourceID, userID int) (bool, error) 
 	return true, nil
 }
 
-// ToggleResourceFavorite subscribes / unsubscribes the user to a SINGLE
-// resource's updates. Unlike ToggleResourceLike there is no public count and no
-// moemoepoint — it is a private subscription. While subscribed, the user gets a
-// patchResourceUpdate notification whenever this resource's file/link changes
-// (see UpdateResource → notifyResourceFavoritedUsers).
 func (s *PatchService) ToggleResourceFavorite(resourceID, userID int) (bool, error) {
 	resource, err := s.repo.GetResourceByID(resourceID)
 	if err != nil {
@@ -1446,11 +1017,6 @@ func (s *PatchService) ToggleResourceFavorite(resourceID, userID int) (bool, err
 		}
 		return false, nil
 	}
-	// Only a genuine "no row yet" means we should create. ANY other error (e.g.
-	// the relation table is missing because migration 017 hasn't run, or a
-	// transport failure) MUST surface — otherwise the create silently fails and
-	// we report a fake "已收藏" that never persists and can never be undone
-	// (the un-favorite branch never matches because the row was never written).
 	if !errors.Is(err, gorm.ErrRecordNotFound) {
 		return false, err
 	}
@@ -1469,12 +1035,7 @@ func (s *PatchService) IsResourceFavorited(userID, resourceID int) bool {
 	return err == nil
 }
 
-// ===== Favorites =====
-
 func (s *PatchService) ToggleFavorite(patchID, userID int) (bool, error) {
-	// Favoriting a not-yet-收录 galgame lazily records it (creates the local row),
-	// matching kungal's interaction-driven ingest. No-op when the row already
-	// exists; ErrRecordNotFound when the galgame isn't a public galgame entry.
 	patch, err := s.ensureLocalPatch(context.Background(), patchID, userID)
 	if err != nil {
 		return false, fmt.Errorf("patch not found")
@@ -1492,7 +1053,6 @@ func (s *PatchService) ToggleFavorite(patchID, userID int) (bool, error) {
 		}
 		return false, nil
 	}
-	// A real DB error (not just "no row") must surface — don't fake success.
 	if !errors.Is(err, gorm.ErrRecordNotFound) {
 		return false, err
 	}
@@ -1516,24 +1076,13 @@ func (s *PatchService) IsFavorited(userID, patchID int) bool {
 	return err == nil
 }
 
-// ===== Contributors =====
-
-// GetContributorIDs returns the user_ids of every contributor on a patch.
-// Handler enriches them via OAuth /users/batch (pkg/userclient).
 func (s *PatchService) GetContributorIDs(patchID int) ([]int, error) {
 	return s.repo.GetContributorIDs(patchID)
 }
 
-// ===== Mention detection =====
-
-// ExtractMentionUserIDs delegates to the markdown package so the regex used
-// for notification routing matches exactly what the renderer treats as a
-// mention link.
 func (s *PatchService) ExtractMentionUserIDs(content string) []int {
 	return markdown.ExtractMentionedUserIDs(content)
 }
-
-// ===== Notifications (simplified) =====
 
 func (s *PatchService) notifyFavoritedUsers(patchID, senderID int) {
 	var userIDs []int
@@ -1548,12 +1097,6 @@ func (s *PatchService) notifyFavoritedUsers(patchID, senderID int) {
 	}
 }
 
-// notifyResourceFavoritedUsers notifies every user subscribed to a SINGLE
-// resource that its file/link changed. Called from UpdateResource ONLY on a
-// file-substantive change (storage / s3_key / content) — metadata-only edits
-// don't notify. redeliverAfterRead=true: repeated updates while the previous
-// notice is unread collapse into one, but a new update AFTER the subscriber has
-// read it re-notifies (so it isn't a one-time-only notification).
 func (s *PatchService) notifyResourceFavoritedUsers(resourceID, senderID int) {
 	var userIDs []int
 	s.db.Model(&model.UserPatchResourceFavoriteRelation{}).
@@ -1567,22 +1110,13 @@ func (s *PatchService) notifyResourceFavoritedUsers(resourceID, senderID int) {
 	}
 }
 
-// createDedupMessage inserts a user_message unless a matching one already exists.
-// redeliverAfterRead controls the dedup window:
-//   - false: dedup against ALL prior messages (type+sender+recipient+link) →
-//     notify at most once EVER. Anti-spam for social events (like / mention /
-//     reply) where a repeat from the same actor on the same target is noise.
-//   - true:  dedup only against UNREAD ones → multiple events while the previous
-//     notice is unread collapse into one, but once the recipient has READ it a
-//     new event re-notifies. For content subscriptions (new / updated resource),
-//     so they aren't a one-time-only notification.
 func (s *PatchService) createDedupMessage(senderID, recipientID int, msgType, content, link string, redeliverAfterRead bool) {
 	q := s.db.Table("user_message").Where(
 		"type = ? AND sender_id = ? AND recipient_id = ? AND link = ?",
 		msgType, senderID, recipientID, link,
 	)
 	if redeliverAfterRead {
-		q = q.Where("status = ?", 0) // only an UNREAD duplicate suppresses a new one
+		q = q.Where("status = ?", 0)
 	}
 	var count int64
 	q.Count(&count)
@@ -1601,11 +1135,6 @@ func (s *PatchService) createDedupMessage(senderID, recipientID int, msgType, co
 	}
 }
 
-// commentAnchorLink is the deep-link that lands a reader on this exact comment.
-// The surface depends on which area the comment belongs to, so every
-// notification path builds it here — a resource comment is NOT reachable at
-// /patch/:gid/comment (that list filters resource_id IS NULL), so hard-coding
-// the patch shape would send the recipient to a page their comment isn't on.
 func commentAnchorLink(c *model.PatchComment) string {
 	if c.ResourceID != nil {
 		return fmt.Sprintf("/resource/%d#comment-%d", *c.ResourceID, c.ID)
@@ -1613,8 +1142,6 @@ func commentAnchorLink(c *model.PatchComment) string {
 	return fmt.Sprintf("/patch/%d/comment#comment-%d", c.GalgameID, c.ID)
 }
 
-// CreateMentionMessages notifies every @mentioned user, deep-linking straight
-// to the comment carrying the mention instead of just the patch page.
 func (s *PatchService) CreateMentionMessages(senderID int, comment *model.PatchComment, content string) {
 	ids := s.ExtractMentionUserIDs(content)
 	excerpt := content
@@ -1633,31 +1160,20 @@ func (s *PatchService) CreateCommentNotification(senderID int, comment *model.Pa
 	if comment.ParentID != nil {
 		parent, err := s.repo.GetCommentByID(*comment.ParentID)
 		if err == nil && parent.UserID != senderID {
-			// Deep-link to the reply so the recipient lands on it directly.
 			s.createDedupMessage(senderID, parent.UserID, "comment",
 				"回复了您的评论", commentAnchorLink(comment), false)
 		}
 	}
 }
 
-// LocateCommentResult tells the FE which page of the paginated comment list a
-// comment lives on, so a deep-link (/patch/:id/comment#comment-:cid) can jump
-// straight to it. RootID is the owning top-level comment (== the comment itself
-// when it's not a reply); IsReply lets the FE expand the thread drawer if the
-// reply isn't among the inline-shown ones.
 type LocateCommentResult struct {
-	Page      int  `json:"page"`
-	RootID    int  `json:"root_id"`
-	IsReply   bool `json:"is_reply"`
-	GalgameID int  `json:"galgame_id"`
-	// ResourceID is set when the comment lives in a RESOURCE's comment area,
-	// i.e. the page to jump to is /resource/:rid, not /patch/:gid/comment. The
-	// page number above is computed within that area's own listing.
+	Page       int  `json:"page"`
+	RootID     int  `json:"root_id"`
+	IsReply    bool `json:"is_reply"`
+	GalgameID  int  `json:"galgame_id"`
 	ResourceID *int `json:"resource_id,omitempty"`
 }
 
-// LocateComment resolves a comment id to its page in the root-comment listing.
-// limit MUST match the list's page size (clamped to the same 1..30 bound).
 func (s *PatchService) LocateComment(commentID, limit int) (*LocateCommentResult, error) {
 	if limit <= 0 || limit > 30 {
 		limit = 30
@@ -1675,8 +1191,6 @@ func (s *PatchService) LocateComment(commentID, limit int) (*LocateCommentResult
 			return nil, fmt.Errorf("comment not found")
 		}
 	}
-	// Only approved roots ever render in the public list, so anything else
-	// (pending/removed root) isn't locatable.
 	if root.Status != 0 || root.ParentID != nil {
 		return nil, fmt.Errorf("comment not locatable")
 	}
@@ -1695,15 +1209,11 @@ func (s *PatchService) LocateComment(commentID, limit int) (*LocateCommentResult
 
 func (s *PatchService) CreateLikeCommentNotification(senderID int, comment *model.PatchComment) {
 	if comment.UserID != senderID {
-		// Anchored at the comment itself — the old link pointed at the bare patch
-		// page, which for a resource comment isn't even the right surface.
 		s.createDedupMessage(senderID, comment.UserID, "likeComment",
 			"赞了您的评论", commentAnchorLink(comment), false)
 	}
 }
 
-// galgameDisplayName picks a human-readable name from a galgame brief, preferring
-// zh-CN, then ja-JP, en-US, zh-TW, falling back to the VNDB id.
 func galgameDisplayName(b *galgameClient.GalgameBrief) string {
 	for _, n := range []string{b.NameZhCn, b.NameJaJp, b.NameEnUs, b.NameZhTw} {
 		if n != "" {
@@ -1713,9 +1223,6 @@ func galgameDisplayName(b *galgameClient.GalgameBrief) string {
 	return b.VndbID
 }
 
-// resolveGalgameName fetches a patch's galgame display name. patch.id IS the
-// galgame id (D13: patch.id == galgame_id), so a single batch lookup suffices.
-// Best-effort: "" on any miss/error so the caller falls back to a name-less line.
 func (s *PatchService) resolveGalgameName(patchID int) string {
 	briefs, err := s.galgame.GalgameBatch(context.Background(), []int{patchID}, "")
 	if err != nil {
@@ -1729,13 +1236,6 @@ func (s *PatchService) resolveGalgameName(patchID int) string {
 	return ""
 }
 
-// notifyContentInteraction creates a "someone liked / favorited your content"
-// notification. msgType distinguishes the interaction so the message center
-// renders each kind separately: likeResource (点赞资源) / favoriteResource
-// (收藏资源) / favorite (收藏补丁). The galgame name is resolved for a richer
-// line; deduped once-ever per (type, actor, owner, link). Best-effort — meant to
-// run in a goroutine. Restores notifications that the legacy site emitted and the
-// Go rewrite had dropped.
 func (s *PatchService) notifyContentInteraction(actorID, ownerID, patchID int, msgType, link string) {
 	if ownerID == 0 || ownerID == actorID {
 		return
@@ -1754,8 +1254,6 @@ func (s *PatchService) notifyContentInteraction(actorID, ownerID, patchID int, m
 			content = fmt.Sprintf("收藏了您在 %s 下发布的补丁资源", name)
 		}
 	case "favorite":
-		// Legacy style: bare game name; the 收藏补丁 chip in MessageCard supplies
-		// the verb. Falls back to a full sentence when the name can't be resolved.
 		content = "收藏了您发布的补丁"
 		if name != "" {
 			content = name
@@ -1766,26 +1264,14 @@ func (s *PatchService) notifyContentInteraction(actorID, ownerID, patchID int, m
 	s.createDedupMessage(actorID, ownerID, msgType, content, link, false)
 }
 
-// ===== Admin Settings Check =====
-//
-// Source of truth is the site_setting table via settingService (durable +
-// audited), read directly — see internal/setting.
-
 func (s *PatchService) IsCommentVerifyEnabled() bool {
 	return s.setting.GetBool(settingService.KeyCommentVerify)
 }
 
-// IsCreatorOnlyEnabled reports the admin "仅创作者 / 版主 / 管理员可发布 Galgame" toggle.
-// When on, the publish handlers reject users without creator / moderator / admin.
 func (s *PatchService) IsCreatorOnlyEnabled() bool {
 	return s.setting.GetBool(settingService.KeyCreatorOnly)
 }
 
-// GetResourceFileHistory returns the privacy-safe, paginated file-replacement
-// audit for one resource. Public (any visitor, incl. anonymous): deliberately
-// omits old_s3_key (internal storage key) and old_content (the old download
-// links) — those stay behind the rate-limited /link endpoint. Callers see only
-// when / who-role / why / old size + hash.
 func (s *PatchService) GetResourceFileHistory(resourceID, page, limit int) ([]dto.PublicResourceFileHistoryItem, int64, error) {
 	rows, total, err := s.repo.GetResourceFileHistory(resourceID, (page-1)*limit, limit)
 	if err != nil {
@@ -1806,10 +1292,6 @@ func (s *PatchService) GetResourceFileHistory(resourceID, page, limit int) ([]dt
 	return items, total, nil
 }
 
-// diffResourceFields computes the public-safe per-field diff between the
-// pre-edit (before) and post-edit (after) resource. Secrets (download link /
-// s3 key / extract code / unzip password) are never emitted as raw values —
-// only a single "已更新" marker. Used by UpdateResource to record a revision.
 func diffResourceFields(before, after *model.PatchResource) model.ResourceChangeList {
 	var ch model.ResourceChangeList
 	addStr := func(field, label, b, a string) {
@@ -1827,9 +1309,6 @@ func diffResourceFields(before, after *model.PatchResource) model.ResourceChange
 	addStr("size", "文件大小", before.Size, after.Size)
 	addStr("model_name", "AI 模型", before.ModelName, after.ModelName)
 	addStr("storage", "存储方式", before.Storage, after.Storage)
-	// blake3 故意不在此 diff:它由文件自动计算、UpdateResource 不写入它(编辑表单
-	// 也不回传),直接比较会让每次元数据编辑都误报 "hash → (空)"。文件替换通过
-	// size/storage 变化 + 下面的「已更新」标记体现,blake3 本身不参与字段 diff。
 	addStr("note", "备注", before.Note, after.Note)
 	addArr("language", "语言", before.Language, after.Language)
 	addArr("platform", "平台", before.Platform, after.Platform)
@@ -1848,8 +1327,6 @@ func diffResourceFields(before, after *model.PatchResource) model.ResourceChange
 	return ch
 }
 
-// GetResourceRevisions returns the paginated per-field edit history for one
-// resource (public; Changes are secret-free).
 func (s *PatchService) GetResourceRevisions(resourceID, page, limit int) ([]model.PatchResourceRevision, int64, error) {
 	return s.repo.GetResourceRevisions(resourceID, (page-1)*limit, limit)
 }

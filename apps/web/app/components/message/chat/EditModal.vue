@@ -1,6 +1,4 @@
 <script setup lang="ts">
-// Ported from next-web EditMessageModal.tsx. Edits the raw markdown
-// (message.content); the backend re-renders and flips status to EDITED.
 const props = defineProps<{
   open: boolean
   initial: string
@@ -28,9 +26,6 @@ const save = () => {
 </script>
 
 <template>
-  <!-- isDismissable=false: user is mid-typing a markdown edit; backdrop
-       click / ESC would discard the draft silently. Use 取消 / 保存 to
-       leave the modal explicitly. -->
   <KunModal
     :model-value="open"
     inner-class-name="max-w-lg"

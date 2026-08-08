@@ -26,9 +26,6 @@ type UserService struct {
 	repo    *repository.UserRepository
 	users   *userclient.Client
 	galgame *galgameClient.Client
-	// catalog answers the per-user contribution counters creator eligibility
-	// reads. May be nil / unconfigured; the counters then degrade to 0 rather
-	// than failing the snapshot (see creatorEligibility).
 	catalog *catalogclient.Client
 	db      *gorm.DB
 	mp      *moemoepoint.Awarder
@@ -45,8 +42,6 @@ func New(
 	return &UserService{repo: repo, users: users, galgame: galgame, catalog: catalog, db: db, mp: mp}
 }
 
-// patchSummaryFinder adapts *gorm.DB to enricher.patchSummaryDB so we can
-// reuse the same Wiki-batch summary builder the global handlers use.
 type patchSummaryFinder struct{ db *gorm.DB }
 
 func (p patchSummaryFinder) LookupPatchesByIDs(ids []int) ([]patchModel.Patch, error) {
@@ -58,9 +53,6 @@ func (p patchSummaryFinder) LookupPatchesByIDs(ids []int) ([]patchModel.Patch, e
 	return rows, err
 }
 
-// attachPatchSummaries stamps the `Patch` field on each resource and each
-// comment in one Wiki batch call (name + banner come from the Wiki Service).
-// Either slice may be nil.
 func (s *UserService) attachPatchSummaries(ctx context.Context, comments []patchModel.PatchComment, resources []patchModel.PatchResource) {
 	if len(comments) == 0 && len(resources) == 0 {
 		return
@@ -95,11 +87,6 @@ func (s *UserService) attachPatchSummaries(ctx context.Context, comments []patch
 	}
 }
 
-// GetUserInfo composes the public user profile: site-local row (moemoepoint,
-// follower/following counts, content counts) + OAuth brief (name/avatar/bio).
-//
-// On OAuth lookup failure name/avatar/bio come back empty -- the page still
-// renders, just without display fields.
 func (s *UserService) GetUserInfo(ctx context.Context, userID, currentUID int) (*dto.UserInfoResponse, error) {
 	user, err := s.repo.FindByID(userID)
 	if err != nil {
@@ -136,12 +123,10 @@ func (s *UserService) GetUserInfo(ctx context.Context, userID, currentUID int) (
 	return resp, nil
 }
 
-// GetUserFloating retrieves the floating-card view of a user.
 func (s *UserService) GetUserFloating(ctx context.Context, userID int) (*dto.UserInfoResponse, error) {
 	return s.GetUserInfo(ctx, userID, 0)
 }
 
-// Follow creates a follow relation and bumps the denormalized counts.
 func (s *UserService) Follow(followerID, followingID int) error {
 	if followerID == followingID {
 		return fmt.Errorf("cannot follow yourself")
@@ -152,11 +137,7 @@ func (s *UserService) Follow(followerID, followingID int) error {
 		return fmt.Errorf("already following this user")
 	}
 
-	// Relation insert + count bump commit atomically (audit F029).
 	if err := s.repo.CreateFollowAndIncrement(followerID, followingID); err != nil {
-		// The followee id comes from OAuth and may legitimately lack a local
-		// `user` row; the following_id FK then rejects the insert. Map that to
-		// a clean message instead of leaking the raw Postgres SQLSTATE string.
 		if strings.Contains(err.Error(), "violates foreign key") || strings.Contains(err.Error(), "23503") {
 			return fmt.Errorf("用户不存在")
 		}
@@ -165,11 +146,6 @@ func (s *UserService) Follow(followerID, followingID int) error {
 	return nil
 }
 
-// Unfollow removes a follow relation and decrements counts ONLY when a
-// relation actually existed. Without the rows-affected guard, calling unfollow
-// on a user you never followed would still decrement their follower_count,
-// letting anyone corrupt/harass another user's count (GREATEST clamps at 0 but
-// can't prevent corrupting a legitimate positive count).
 func (s *UserService) Unfollow(followerID, followingID int) error {
 	affected, err := s.repo.DeleteFollowAndDecrement(followerID, followingID)
 	if err != nil {
@@ -181,10 +157,6 @@ func (s *UserService) Unfollow(followerID, followingID int) error {
 	return nil
 }
 
-// GetFollowers returns follower user briefs, batch-resolved from OAuth.
-// `viewerID` (0 for anonymous) is used to stamp each row with the viewer-
-// relative is_followed flag so the FE can render per-row follow buttons
-// without per-row round-trips.
 func (s *UserService) GetFollowers(ctx context.Context, userID, viewerID, page, limit int) ([]model.UserFollowItem, int64, error) {
 	ids, total, err := s.repo.GetFollowerIDs(userID, (page-1)*limit, limit)
 	if err != nil {
@@ -193,8 +165,6 @@ func (s *UserService) GetFollowers(ctx context.Context, userID, viewerID, page, 
 	return s.briefsToFollowItems(ctx, ids, viewerID), total, nil
 }
 
-// GetFollowing returns followee user briefs, batch-resolved from OAuth.
-// See GetFollowers for `viewerID` semantics.
 func (s *UserService) GetFollowing(ctx context.Context, userID, viewerID, page, limit int) ([]model.UserFollowItem, int64, error) {
 	ids, total, err := s.repo.GetFollowingIDs(userID, (page-1)*limit, limit)
 	if err != nil {
@@ -203,11 +173,9 @@ func (s *UserService) GetFollowing(ctx context.Context, userID, viewerID, page, 
 	return s.briefsToFollowItems(ctx, ids, viewerID), total, nil
 }
 
-// briefsToFollowItems is briefsToUserBasic + per-row is_followed stamp.
-// One follow-set lookup covers the whole page.
 func (s *UserService) briefsToFollowItems(ctx context.Context, ids []int, viewerID int) []model.UserFollowItem {
 	briefs := userclient.BriefMapByInt(ctx, s.users, ids)
-	followed, _ := s.repo.WhichFollowed(viewerID, ids) // nil on error → empty map → all false
+	followed, _ := s.repo.WhichFollowed(viewerID, ids)
 	out := make([]model.UserFollowItem, 0, len(ids))
 	for _, id := range ids {
 		if b := briefs[id]; b != nil {
@@ -222,9 +190,6 @@ func (s *UserService) briefsToFollowItems(ctx context.Context, ids []int, viewer
 	return out
 }
 
-// SearchUsers proxies OAuth /users/search and returns the slim wire shape.
-//
-// limit is capped server-side at 50 (the OAuth API's max).
 func (s *UserService) SearchUsers(ctx context.Context, query string, limit int) ([]model.UserBasic, error) {
 	if s.users == nil {
 		return []model.UserBasic{}, nil
@@ -243,8 +208,6 @@ func (s *UserService) SearchUsers(ctx context.Context, query string, limit int) 
 	return out, nil
 }
 
-// briefsToUserBasic batches an id list through OAuth and returns the wire
-// shape. IDs missing on OAuth are silently dropped from the result.
 func (s *UserService) briefsToUserBasic(ctx context.Context, ids []int) []model.UserBasic {
 	briefs := userclient.BriefMapByInt(ctx, s.users, ids)
 	out := make([]model.UserBasic, 0, len(ids))
@@ -256,12 +219,7 @@ func (s *UserService) briefsToUserBasic(ctx context.Context, ids []int) []model.
 	return out
 }
 
-// CheckIn performs daily check-in.
 func (s *UserService) CheckIn(userID int) (int, error) {
-	// Atomic check-and-set (audit GPT-M04): only the request that actually
-	// flips daily_check_in 0→1 proceeds. The previous read-then-write let two
-	// concurrent requests both pass the "already checked in" guard and both
-	// return a success + random reward.
 	affected, err := s.repo.CheckIn(userID)
 	if err != nil {
 		return 0, err
@@ -270,12 +228,7 @@ func (s *UserService) CheckIn(userID int) (int, error) {
 		return 0, fmt.Errorf("already checked in today")
 	}
 
-	points := rand.Intn(8) // 0-7
-	// Award via OAuth (unified balance). Best-effort; the daily flag is already
-	// set so a missed award doesn't let the user re-check. Key is per-user-per-
-	// day, with the date pinned to Asia/Shanghai so it agrees with the daily-
-	// reset cron's "day" boundary (audit F085) → replay-safe. points==0 is a
-	// no-op (Awarder skips a zero delta, satisfying OAuth's non-zero rule).
+	points := rand.Intn(8)
 	loc, lerr := time.LoadLocation("Asia/Shanghai")
 	if lerr != nil || loc == nil {
 		loc = time.Local
@@ -286,9 +239,6 @@ func (s *UserService) CheckIn(userID int) (int, error) {
 	return points, nil
 }
 
-// GetMoemoepointLog reads a page of the user's OWN moemoepoint ledger from OAuth
-// (the unified source of truth — moyu stores no local ledger). Cursor paginated
-// via beforeID (0 = newest page); reason is an optional filter.
 func (s *UserService) GetMoemoepointLog(ctx context.Context, userID, limit int, beforeID int64, reason string) ([]moemoepoint.LogEntry, bool, error) {
 	items, hasMore, err := s.mp.Log(ctx, userID, limit, beforeID, reason)
 	if err != nil {
@@ -298,11 +248,6 @@ func (s *UserService) GetMoemoepointLog(ctx context.Context, userID, limit int, 
 	return items, hasMore, nil
 }
 
-// attachMoemoepointLinks fills LogEntry.Link for moyu-local rows so the records
-// modal can deep-link them. resource / galgame refs map straight to a page;
-// comment refs carry only the comment id, so resolve each to its galgame id in
-// one batch query (deleted comments stay linkless). Cross-app rows (forum / wiki)
-// are left linkless — their refs point at content moyu doesn't own.
 func (s *UserService) attachMoemoepointLinks(items []moemoepoint.LogEntry) {
 	commentIDs := make([]int, 0)
 	for i := range items {
@@ -348,8 +293,6 @@ func (s *UserService) attachMoemoepointLinks(items []moemoepoint.LogEntry) {
 	}
 }
 
-// parseRef splits a "type:id" moemoepoint ref (e.g. "comment:42") into its kind
-// and numeric id; id is 0 when absent / unparseable.
 func parseRef(ref string) (kind string, id int) {
 	k, rest, ok := strings.Cut(ref, ":")
 	if !ok {
@@ -359,15 +302,10 @@ func parseRef(ref string) (kind string, id int) {
 	return k, id
 }
 
-// GetUserPatches retrieves the user's patch list.
 func (s *UserService) GetUserPatches(userID, page, limit int, includeEmpty bool) ([]patchModel.Patch, int64, error) {
 	return s.repo.GetUserPatches(userID, (page-1)*limit, limit, includeEmpty)
 }
 
-// GetUserResources retrieves the user's resource list with each resource
-// enriched with its owning patch's Wiki summary (name + banner) so the
-// /user/:id/resource page can render the game thumbnail + title without an
-// extra round-trip per row.
 func (s *UserService) GetUserResources(ctx context.Context, userID, page, limit int) ([]patchModel.PatchResource, int64, error) {
 	rs, total, err := s.repo.GetUserResources(userID, (page-1)*limit, limit)
 	if err != nil {
@@ -379,14 +317,10 @@ func (s *UserService) GetUserResources(ctx context.Context, userID, page, limit 
 	return rs, total, nil
 }
 
-// GetUserFavorites retrieves the user's favorite list.
 func (s *UserService) GetUserFavorites(userID, page, limit int, includeEmpty bool) ([]patchModel.Patch, int64, error) {
 	return s.repo.GetUserFavorites(userID, (page-1)*limit, limit, includeEmpty)
 }
 
-// GetUserComments retrieves the user's comment list with each comment
-// enriched with its owning patch's Wiki summary (name only — banner is not
-// needed for the "评论在 <game>" link on the user-comments page).
 func (s *UserService) GetUserComments(ctx context.Context, userID, page, limit int) ([]patchModel.PatchComment, int64, error) {
 	cs, total, err := s.repo.GetUserComments(userID, (page-1)*limit, limit)
 	if err != nil {
@@ -397,18 +331,14 @@ func (s *UserService) GetUserComments(ctx context.Context, userID, page, limit i
 	return cs, total, nil
 }
 
-// GetUserContributions retrieves the user's contribution list.
 func (s *UserService) GetUserContributions(userID, page, limit int, includeEmpty bool) ([]patchModel.Patch, int64, error) {
 	return s.repo.GetUserContributions(userID, (page-1)*limit, limit, includeEmpty)
 }
 
-// GetUserByID retrieves the local user row (site-local fields only).
 func (s *UserService) GetUserByID(userID int) (*authModel.User, error) {
 	return s.repo.FindByID(userID)
 }
 
-// attachResourceUsers / attachCommentUsers stamp the User field on rows
-// returned to the user-profile pages.
 func (s *UserService) attachResourceUsers(ctx context.Context, rs []patchModel.PatchResource) {
 	uids := make([]int, 0, len(rs))
 	for _, r := range rs {

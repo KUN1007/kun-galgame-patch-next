@@ -27,10 +27,6 @@ watch(page, () => refresh())
 
 const totalPages = computed(() => Math.ceil((data.value?.total ?? 0) / limit))
 
-// Render a log row's content. Legacy rows (retired Next.js admin) store full
-// Chinese prose → show verbatim. Current rows (Go admin / patch-service audit)
-// store JSON ({resource_id, owner_id, galgame_id, name, reason, ...}) → flatten
-// to a readable line so the audit is legible without reading raw JSON.
 const formatLogContent = (l: AdminLog): string => {
   const c = (l.content ?? '').trim()
   if (!c.startsWith('{')) return c

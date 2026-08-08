@@ -17,16 +17,6 @@ import (
 	"gorm.io/gorm"
 )
 
-// TestGetHikariIntegration exercises the external Hikari endpoint end-to-end
-// against a real Postgres (so the jsonb JSONArray columns behave like prod).
-//
-// It is SKIPPED unless HIKARI_TEST_DSN points at a throwaway database, so the
-// normal `go test ./...` / CI run (no DB) stays green. Spin one with:
-//
-//	docker run -d --name pg -e POSTGRES_PASSWORD=test -e POSTGRES_DB=hikari_test \
-//	  -p 55432:5432 postgres:16-alpine
-//	HIKARI_TEST_DSN='postgresql://postgres:test@localhost:55432/hikari_test?sslmode=disable' \
-//	  go test ./internal/common/ -run TestGetHikariIntegration -v
 func TestGetHikariIntegration(t *testing.T) {
 	dsn := os.Getenv("HIKARI_TEST_DSN")
 	if dsn == "" {
@@ -37,7 +27,6 @@ func TestGetHikariIntegration(t *testing.T) {
 	if err != nil {
 		t.Fatalf("open db: %v", err)
 	}
-	// Clean slate so reruns are deterministic.
 	db.Exec("DROP TABLE IF EXISTS patch_resource, patch CASCADE")
 	if err := db.AutoMigrate(&patchModel.Patch{}, &patchModel.PatchResource{}); err != nil {
 		t.Fatalf("automigrate: %v", err)
@@ -59,8 +48,6 @@ func TestGetHikariIntegration(t *testing.T) {
 		t.Fatalf("seed patch: %v", err)
 	}
 
-	// One visible resource (status 0) carrying every secret we must NOT leak,
-	// plus one disabled resource (status 1) that must be filtered out.
 	visible := patchModel.PatchResource{
 		Storage:   "s3",
 		Name:      "汉化补丁 v1.0",
@@ -90,9 +77,6 @@ func TestGetHikariIntegration(t *testing.T) {
 		t.Fatalf("seed disabled resource: %v", err)
 	}
 
-	// Build the real route. wiki/users are nil on purpose: GetHikari must NOT
-	// consult them — a nil wiki that never panics is itself the proof that the
-	// NSFW gate is gone (the patch returns regardless of any NSFW rating).
 	h := NewHandler(db, nil, nil, nil, nil)
 	app := fiber.New()
 	api := app.Group("/api/v1")
@@ -100,7 +84,6 @@ func TestGetHikariIntegration(t *testing.T) {
 	api.Get("/hikari", h.GetHikari)
 
 	do := func(t *testing.T, target, origin string) (int, string, http.Header) {
-		// Absolute URL so net/http populates the Host header fasthttp requires.
 		req, _ := http.NewRequest(http.MethodGet, "http://localhost"+target, nil)
 		if origin != "" {
 			req.Header.Set("Origin", origin)
@@ -155,7 +138,6 @@ func TestGetHikariIntegration(t *testing.T) {
 		if r["hash"] != "abc123hashvalue" || r["patch_id"] == nil || r["update_time"] == nil {
 			t.Errorf("legacy field names missing/renamed: %v", r)
 		}
-		// Download secrets must still be gone — the one deliberate departure.
 		for _, leaked := range []string{"code", "password", "s3_key", "content"} {
 			if _, ok := r[leaked]; ok {
 				t.Errorf("LEAK: resource exposes %q", leaked)
@@ -166,10 +148,6 @@ func TestGetHikariIntegration(t *testing.T) {
 				t.Errorf("LEAK: body contains secret %q", leaked)
 			}
 		}
-		// The public uploader object IS restored (legacy KunUser shape) — this is
-		// what partners read as `patch.user.id` / `resource.user.id`. The resource
-		// was seeded with UserID 7, the patch with UserID 3. (name/avatar come from
-		// OAuth and are empty here since the users client is nil — verified live.)
 		if got := r["user_id"]; got != float64(7) {
 			t.Errorf("resource user_id: want 7, got %v", got)
 		}

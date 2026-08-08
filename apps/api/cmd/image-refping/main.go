@@ -1,17 +1,3 @@
-// cmd/image-refping runs the image_service ref-ping once and exits non-zero on
-// any problem. It's the SAME logic the in-process daily cron runs (cron.Run-
-// ReferencePing) — extracted as a standalone binary so it can be scheduled
-// externally (crontab / systemd timer / k8s CronJob) where a non-zero exit is
-// an alertable signal. An in-process robfig cron can only slog.Error; it can't
-// fail "loudly" to a monitor. Running both is harmless (ping is idempotent);
-// switching the daily refresh to this external runner is the eventual goal.
-//
-// Exits 1 when: image_service unconfigured, the DB scan fails, the ping HTTP
-// call fails, OR image_service refreshed 0 of N referenced hashes (the silent-
-// breakage signature — see cron.RunReferencePing).
-//
-//	go run ./cmd/image-refping
-//	docker run --rm --network <net> --env-file <api.env> ghcr.io/kunmoe/moyu-tools image-refping
 package main
 
 import (
@@ -35,7 +21,6 @@ func main() {
 	cfg := config.Load()
 	logger.Init(cfg.Server.Mode)
 
-	// Same credential-defaulting as the server (app.go).
 	imgCfg := cfg.ImageService
 	if imgCfg.ClientID == "" {
 		imgCfg.ClientID = cfg.OAuth.ClientID

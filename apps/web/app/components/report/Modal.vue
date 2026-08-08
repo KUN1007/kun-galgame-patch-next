@@ -1,7 +1,4 @@
 <script setup lang="ts">
-// The single global report modal, mounted once at app.vue root (a stable node)
-// so it animates on close and isn't torn down when a triggering ⋯ popover
-// closes. Driven by useReportModal(); <ReportButton> only calls open().
 const { isOpen, target } = useReportModal()
 const { reasons, load } = useReportReasons()
 const api = useApi()
@@ -34,7 +31,6 @@ const submit = async () => {
     subject_id: String(target.value.subjectId),
     reason_key: reasonKey.value,
     note: note.value,
-    // Cap evidence length (the BFF validates snapshot ≤ 2000).
     snapshot: (target.value.snapshot ?? '').slice(0, 1000),
     subject_url: target.value.subjectUrl ?? ''
   })

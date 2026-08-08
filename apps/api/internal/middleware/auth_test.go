@@ -142,9 +142,6 @@ func TestRequireRole_SufficientRole(t *testing.T) {
 	assert.Equal(t, 0, r.Code)
 }
 
-// A moyu-only moderator — site_roles=["moderator"] with NO global roles —
-// passes a moderator gate: the `roles ∪ site_roles` union grants moderation on
-// this site without any new decision path (docs/oauth/12-site-roles.md §5).
 func TestRequireRole_SiteRoleGrantsModerator(t *testing.T) {
 	ta := testutil.NewTestApp(t)
 	oauthCfg := config.OAuthConfig{}
@@ -165,9 +162,6 @@ func TestRequireRole_SiteRoleGrantsModerator(t *testing.T) {
 	assert.Equal(t, 0, r.Code)
 }
 
-// The ceiling holds: a site moderator still cannot reach an admin-only gate.
-// site_roles can never be admin/ren (docs/oauth/12-site-roles.md §3), so the
-// union grants moderation but never management.
 func TestRequireRole_SiteModeratorDeniedAdmin(t *testing.T) {
 	ta := testutil.NewTestApp(t)
 	oauthCfg := config.OAuthConfig{}

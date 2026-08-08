@@ -14,10 +14,6 @@ import (
 	"gorm.io/gorm"
 )
 
-// ErrUserOwnsPatches is returned by PurgeUser when the target still owns ≥1
-// patch and purgeOwnedPatches is false: DELETE FROM "user" would violate the
-// patch.user_id ON DELETE RESTRICT FK. The service maps this to a 400 telling
-// the admin to enable the force-delete option.
 var ErrUserOwnsPatches = stderrors.New("user still owns patches")
 
 type AdminRepository struct {
@@ -28,20 +24,14 @@ func New(db *gorm.DB) *AdminRepository {
 	return &AdminRepository{db: db}
 }
 
-// ===== Comments =====
-
 func (r *AdminRepository) GetComments(search, status string, offset, limit int) ([]patchModel.PatchComment, int64, error) {
 	var comments []patchModel.PatchComment
 	var total int64
 
-	// Independent statements for Count vs Find — see gorm v2 reuse footgun
-	// documented in message/repository.go GetMessages.
 	base := r.db.Model(&patchModel.PatchComment{})
 	if search != "" {
 		base = base.Where("content ILIKE ?", "%"+search+"%")
 	}
-	// status filter for the review queue: "pending" = awaiting approval,
-	// "approved" = visible, "all"/"" = both.
 	switch status {
 	case "pending":
 		base = base.Where("status <> 0")
@@ -60,14 +50,6 @@ func (r *AdminRepository) UpdateComment(commentID int, content string) error {
 	return r.db.Model(&patchModel.PatchComment{}).Where("id = ?", commentID).
 		Update("content", content).Error
 }
-
-// Deleting a comment as an admin has no repository method here on purpose:
-// AdminService.DeleteComment delegates to PatchService.DeleteComment, which owns
-// the full side-effect set (comment_count, the author notification + reason, the
-// audit log, and the dangling-anchor cleanup). A local mirror was removed once it
-// went unused — re-adding one would silently drop those side effects.
-
-// ===== Resources =====
 
 func (r *AdminRepository) GetResources(search string, offset, limit int) ([]patchModel.PatchResource, int64, error) {
 	var resources []patchModel.PatchResource
@@ -91,8 +73,6 @@ func (r *AdminRepository) UpdateResource(resourceID int, note string) error {
 }
 
 func (r *AdminRepository) DeleteResource(resourceID int) error {
-	// Drop any notification linking to this resource (no FK to cascade), in the
-	// same tx — mirrors PatchRepository.DeleteResource. (See migration 019.)
 	return r.db.Transaction(func(tx *gorm.DB) error {
 		if err := tx.Exec(
 			"DELETE FROM user_message WHERE link = ?",
@@ -103,11 +83,6 @@ func (r *AdminRepository) DeleteResource(resourceID int) error {
 		return tx.Delete(&patchModel.PatchResource{}, resourceID).Error
 	})
 }
-
-// User management & creator-application repo methods are gone with the
-// migration: identity is owned by OAuth, and the creator role was retired.
-
-// ===== Stats =====
 
 func (r *AdminRepository) GetStats(since time.Time) (newUser, newActive, newGalgame, newResource, newComment int64) {
 	r.db.Model(&authModel.User{}).Where("created >= ?", since).Count(&newUser)
@@ -126,11 +101,6 @@ func (r *AdminRepository) GetStatsSum() (userCount, galgameCount, resourceCount,
 	return
 }
 
-// ===== Resource file history (MOYU-PR5 / M3) =====
-
-// GetResourceFileHistory returns the audit trail for one resource, newest
-// first. Page-based; default limit comes from the caller. Admin-only — exposed
-// at GET /api/v1/admin/resource/:id/history.
 func (r *AdminRepository) GetResourceFileHistory(
 	resourceID, offset, limit int,
 ) ([]patchModel.PatchResourceFileHistory, int64, error) {
@@ -148,8 +118,6 @@ func (r *AdminRepository) GetResourceFileHistory(
 		Find(&rows).Error
 	return rows, total, err
 }
-
-// ===== Admin Logs =====
 
 func (r *AdminRepository) GetLogs(offset, limit int) ([]adminModel.AdminLog, int64, error) {
 	var logs []adminModel.AdminLog
@@ -174,12 +142,6 @@ func (r *AdminRepository) CreateLog(adminUID int, logType string, data any) erro
 	return r.db.Create(log).Error
 }
 
-// ===== All Patches (admin browse) =====
-
-// GetAllPatches lists every patch with pagination, optionally filtering by
-// substring of vndb_id (game names are owned by Wiki and cannot be searched
-// locally; the admin frontend pairs this listing with the patch_id-based
-// patch detail link to navigate further).
 func (r *AdminRepository) GetAllPatches(search string, offset, limit int) ([]patchModel.Patch, int64, error) {
 	var patches []patchModel.Patch
 	var total int64
@@ -196,10 +158,6 @@ func (r *AdminRepository) GetAllPatches(search string, offset, limit int) ([]pat
 	return patches, total, err
 }
 
-// LookupPatchesByIDs returns the minimal patch projection (id + vndb_id) for a
-// set of ids. Satisfies enricher.PatchSummaryDB so admin list endpoints can
-// attach the owning galgame's name/banner (resolved from Wiki) to comment /
-// resource rows — same mechanism the global lists use.
 func (r *AdminRepository) LookupPatchesByIDs(ids []int) ([]patchModel.Patch, error) {
 	if len(ids) == 0 {
 		return nil, nil
@@ -209,34 +167,14 @@ func (r *AdminRepository) LookupPatchesByIDs(ids []int) ([]patchModel.Patch, err
 	return rows, err
 }
 
-// ===== Orphan Patches (D12 cleanup) =====
-
-// orphanCond is the cheap LOCAL pre-filter for "candidate" orphans: a patch
-// whose vndb_id is not a well-formed VNDB id (`vN`) — `pending-N` placeholders
-// and malformed ids (release `rN`, stray slashes). It is ONLY a candidate
-// filter: moyu enriches by id (patch.id == galgame_id, via galgame.GalgameBatch),
-// so a vndb-less game whose galgame exists by id renders fine and is NOT a real
-// orphan. The handler verifies each candidate against Wiki BY ID and passes the
-// confirmed-existing ones back here as excludeIDs.
-//
-// D13 NOTE: the old per-row `galgame_id==0` sentinel was dropped when patch.id
-// became the galgame id. Tradeoff: pre-filtering by vndb shape means a
-// well-formed vndb whose galgame Wiki nonetheless lacks isn't a candidate (rare;
-// out of scope) — being exact would need an all-rows Wiki scan per request.
 const orphanCond = "vndb_id !~ '^v[0-9]+$'"
 
-// GetOrphanCandidateIDs returns the ids of all candidate orphans (cheap local
-// filter only — the handler then verifies them against Wiki by id).
 func (r *AdminRepository) GetOrphanCandidateIDs() ([]int, error) {
 	var ids []int
 	err := r.db.Model(&patchModel.Patch{}).Where(orphanCond).Pluck("id", &ids).Error
 	return ids, err
 }
 
-// GetOrphanPatches returns a paginated list of orphan patches (see orphanCond),
-// ordered by resource count descending so admins can prioritize "important"
-// orphans that already have resources. excludeIDs = candidates Wiki confirmed
-// exist by id → not real orphans.
 func (r *AdminRepository) GetOrphanPatches(offset, limit int, excludeIDs []int) ([]patchModel.Patch, int64, error) {
 	var patches []patchModel.Patch
 	var total int64
@@ -254,9 +192,6 @@ func (r *AdminRepository) GetOrphanPatches(offset, limit int, excludeIDs []int) 
 	return patches, total, err
 }
 
-// CountOrphanPatches splits the orphan total into the two locally-knowable
-// categories: pending placeholders (`pending-N`) vs. otherwise-malformed
-// vndb_ids (not `vN`, not `pending-`). excludeIDs are excluded (Wiki-confirmed).
 func (r *AdminRepository) CountOrphanPatches(excludeIDs []int) (pendingCount, badVndbCount int64, err error) {
 	pend := r.db.Model(&patchModel.Patch{}).Where("vndb_id LIKE 'pending-%'")
 	bad := r.db.Model(&patchModel.Patch{}).Where(orphanCond + " AND vndb_id NOT LIKE 'pending-%'")
@@ -271,10 +206,6 @@ func (r *AdminRepository) CountOrphanPatches(excludeIDs []int) (pendingCount, ba
 	return
 }
 
-// ===== User purge (anti-spam) =====
-
-// PurgePreviewCounts is the raw count breakdown for a user purge dry-run. The
-// service maps it to dto.UserPurgePreview (and derives CanDeleteUserRow).
 type PurgePreviewCounts struct {
 	UserExists          bool
 	Comments            int64
@@ -291,19 +222,13 @@ type PurgePreviewCounts struct {
 	OwnedPatches        int64
 	OwnedPatchResources int64
 	OwnedPatchComments  int64
-	// MiscTraces: rows in tables that store a user id WITHOUT a FK to "user"
-	// (so the user-row CASCADE can't reach them) — wiki_message_read_state +
-	// patch_resource_file_history authored by the user. Purged explicitly.
-	MiscTraces int64
+	MiscTraces          int64
 }
 
-// ownedPatchIDsSubquery is the `id IN (patches owned by U)` building block,
-// reused across the owned-patch collateral counts and the S3-key collection.
 func (r *AdminRepository) ownedPatchIDsSubquery(userID int) *gorm.DB {
 	return r.db.Model(&patchModel.Patch{}).Select("id").Where("user_id = ?", userID)
 }
 
-// PurgePreview returns the count breakdown without mutating anything.
 func (r *AdminRepository) PurgePreview(userID int, includeOwnedPatches bool) (*PurgePreviewCounts, error) {
 	var c PurgePreviewCounts
 
@@ -313,7 +238,6 @@ func (r *AdminRepository) PurgePreview(userID int, includeOwnedPatches bool) (*P
 	}
 	c.UserExists = userCount > 0
 
-	// count runs a scoped COUNT and stores into dst; first error short-circuits.
 	var firstErr error
 	count := func(dst *int64, q *gorm.DB) {
 		if firstErr != nil {
@@ -337,7 +261,6 @@ func (r *AdminRepository) PurgePreview(userID int, includeOwnedPatches bool) (*P
 	count(&c.PrivateMessages, r.db.Table("user_message").Where("sender_id = ? OR recipient_id = ?", userID, userID))
 	count(&c.OwnedPatches, r.db.Model(&patchModel.Patch{}).Where("user_id = ?", userID))
 
-	// FK-less per-user tables (the user-row CASCADE can't reach these).
 	var readStates, fileHistory int64
 	count(&readStates, r.db.Table("wiki_message_read_state").Where("user_id = ?", userID))
 	count(&fileHistory, r.db.Table("patch_resource_file_history").Where("actor_id = ?", userID))
@@ -354,10 +277,6 @@ func (r *AdminRepository) PurgePreview(userID int, includeOwnedPatches bool) (*P
 	return &c, nil
 }
 
-// CollectUserArtifactUUIDs returns the deduped live artifact_uuids a purge will
-// strand: the user's own resources + (when force-deleting owned patches) every
-// resource under those patches. Completed artifact blobs aren't auto-reclaimed,
-// so the service soft-deletes these after the DB purge.
 func (r *AdminRepository) CollectUserArtifactUUIDs(userID int, includeOwnedPatches bool) ([]string, error) {
 	seen := make(map[string]struct{})
 	add := func(uuids []string) {
@@ -390,13 +309,6 @@ func (r *AdminRepository) CollectUserArtifactUUIDs(userID int, includeOwnedPatch
 	return out, nil
 }
 
-// PurgeUser wipes every moyu-side trace of a user in one transaction.
-//
-// CASCADE from the user row removes all user_id=U rows automatically; this
-// method only does what CASCADE can't: clear the two RESTRICT FKs first
-// (follows + optionally owned patches) and recompute the denormalized counters
-// left dangling on SURVIVING content. Affected-id sets are snapshotted before
-// the deletes so the post-cascade recompute targets the right rows.
 func (r *AdminRepository) PurgeUser(userID int, purgeOwnedPatches bool) error {
 	return r.db.Transaction(func(tx *gorm.DB) error {
 		var ownedPatches int64
@@ -407,7 +319,6 @@ func (r *AdminRepository) PurgeUser(userID int, purgeOwnedPatches bool) error {
 			return ErrUserOwnsPatches
 		}
 
-		// Snapshot affected ids for the counter recompute BEFORE deleting.
 		distinctInts := func(table, col, where string, args ...any) ([]int, error) {
 			var ids []int
 			err := tx.Table(table).Where(where, args...).Distinct().Pluck(col, &ids).Error
@@ -449,18 +360,11 @@ func (r *AdminRepository) PurgeUser(userID int, purgeOwnedPatches bool) error {
 		}
 		peers := unionInts(followingPeers, followerPeers)
 
-		// 1. Delete follow rows (clears the being-followed RESTRICT on following_id).
 		if err := tx.Where("follower_id = ? OR following_id = ?", userID, userID).
 			Delete(&userModel.UserFollowRelation{}).Error; err != nil {
 			return err
 		}
 
-		// 1b. FK-less per-user tables — the user-row CASCADE below can't reach
-		//     these, so clear them explicitly or they'd dangle:
-		//       - wiki_message_read_state: per-user read marker (PK user_id)
-		//       - patch_resource_file_history.actor_id: file-replacement audit
-		//         authored by U (own-resource rows also CASCADE via resource_id;
-		//         actor rows on OTHER users' resources would otherwise survive).
 		if err := tx.Exec(`DELETE FROM wiki_message_read_state WHERE user_id = ?`, userID).Error; err != nil {
 			return err
 		}
@@ -469,17 +373,6 @@ func (r *AdminRepository) PurgeUser(userID int, purgeOwnedPatches bool) error {
 			return err
 		}
 
-		// 1c. Notifications pointing at content this purge is about to remove.
-		//     user_message has no FK, so neither the patch CASCADE (step 2) nor
-		//     the user-row CASCADE (step 3) can reach it — without this the
-		//     links 404 for whoever received them. Must run BEFORE the deletes,
-		//     while the ids are still resolvable. (Same shapes as
-		//     PatchRepository.DeletePatch; migrations 019 + 025 clean up rows
-		//     that pre-date this.)
-		//
-		//     Resource links first: step 3's user-row CASCADE removes EVERY
-		//     patch_resource authored by U, including ones on other people's
-		//     patches, so this is not limited to the force-deleted patches.
 		if err := tx.Exec(
 			`DELETE FROM user_message
 			 WHERE link IN (SELECT '/resource/' || id FROM patch_resource WHERE user_id = ?)`,
@@ -488,12 +381,7 @@ func (r *AdminRepository) PurgeUser(userID int, purgeOwnedPatches bool) error {
 			return err
 		}
 
-		// 2. Force-delete owned patches if requested (CASCADEs their resources,
-		//    comments, links, fav/contribute relations; clears patch RESTRICT).
 		if purgeOwnedPatches && ownedPatches > 0 {
-			// Every link into a patch that is about to disappear, plus the
-			// /resource/:id links of resources the patch CASCADE will take
-			// (authored by anyone, so the user_id sweep above misses them).
 			if err := tx.Exec(
 				`DELETE FROM user_message m
 				 USING patch p
@@ -518,15 +406,10 @@ func (r *AdminRepository) PurgeUser(userID int, purgeOwnedPatches bool) error {
 			}
 		}
 
-		// 3. Delete the user row → CASCADE removes every remaining user_id=U row
-		//    (comments, resources, chat, messages, likes, favorites, contributes,
-		//    follower-side follows, admin_log).
 		if err := tx.Delete(&authModel.User{}, userID).Error; err != nil {
 			return err
 		}
 
-		// 4. Recompute denormalized counters on survivors. Force-deleted patches
-		//    won't match the IN list, so they're skipped harmlessly.
 		if len(affectedPatchIDs) > 0 {
 			if err := tx.Exec(`UPDATE patch SET
 				comment_count    = (SELECT COUNT(*) FROM patch_comment WHERE patch_comment.galgame_id = patch.id),
@@ -563,8 +446,6 @@ func (r *AdminRepository) PurgeUser(userID int, purgeOwnedPatches bool) error {
 	})
 }
 
-// unionInts merges several int slices into one deduped slice (order unimportant
-// — used only for `WHERE id IN (...)` recompute targets).
 func unionInts(slices ...[]int) []int {
 	seen := make(map[int]struct{})
 	for _, s := range slices {

@@ -1,28 +1,4 @@
 <script setup lang="ts">
-// One comment node — the SINGLE node component behind every comment area on the
-// site (the patch comment tab and a resource's comment area). Everything
-// area-specific comes from the target's descriptor in shared/utils/commentTarget.
-//
-// The structural model is two tiers:
-//
-//   depth 0 = root; depth 1 = reply (parent_id = the ROOT's id, never a reply)
-//
-// A root renders its own replies; replying to a reply pre-fills an @mention of
-// that reply's author so the "回复 @某人" context survives without a deeper tree.
-// It owns the network calls and emits the RESULT — the container holds the
-// comments array and patches it by id (we never mutate the `comment` prop).
-//
-// LAYOUT NOTES. This is kungal's comment-row rhythm, adopted verbatim so every
-// comment area across both sites reads the same. Three things carry it:
-//   1. ONE action strip of uniform KunReaction pills, with every secondary
-//      action behind ⋯. Previously moyu put edit/delete in a top-right ⋮ and
-//      sat a like pill next to a taller 回复 button, so the row never read as a
-//      single line.
-//   2. An explicit meta → body → actions cadence (2 / 2.5) rather than a flat
-//      space-y, so the body is the element with room around it.
-//   3. Tier grouping is carried purely by SPACING CONTRAST — 4 inside a reply
-//      group against 8 between roots (set by the container). kungal tried a rule
-//      + indent here and dropped it: the spacing alone separates the tiers.
 import {
   commentAnchorId,
   commentAbsoluteUrl,
@@ -36,8 +12,6 @@ const props = withDefaults(
     target: CommentTarget
     depth?: number
     canModerate?: boolean
-    // Root-only: whether this root's replies are fully expanded (owned by the
-    // container so a deep-link jump can open the right thread).
     expanded?: boolean
   }>(),
   { depth: 0, canModerate: false, expanded: false }
@@ -56,17 +30,13 @@ const userStore = useUserStore()
 const { requireLogin } = useAuthModal()
 const { open: openReport } = useReportModal()
 
-// A mounted area never changes kind, so resolve the descriptor once.
 const surface = commentSurface(props.target)
 
 const isAuthor = computed(() => userStore.user.id === props.comment.user_id)
-// Edit is author-only; delete is author OR moderator (mirrors the backend
-// DeleteComment privilege check — the patch owner is NOT privileged there).
 const canEdit = computed(() => isAuthor.value)
 const canDelete = computed(() => isAuthor.value || props.canModerate)
 const isEdited = computed(() => !!props.comment.edit)
 
-// ─── Replies (root only) ───────────────────────────────
 const INLINE_LIMIT = 3
 const replies = computed(() => props.comment.reply ?? [])
 const visibleReplies = computed(() =>
@@ -74,9 +44,6 @@ const visibleReplies = computed(() =>
 )
 const canToggle = computed(() => replies.value.length > INLINE_LIMIT)
 
-// ─── Like ──────────────────────────────────────────────
-// KunReaction is an optimistic v-model toggle, so mirror the (parent-owned)
-// comment into local refs it can drive, kept in sync if the parent patches it.
 const liked = ref(props.comment.is_liked)
 const likeCount = ref(props.comment.like_count)
 watch(
@@ -109,15 +76,11 @@ const onLikeChange = async (active: boolean) => {
   }
 }
 
-// ─── Reply ─────────────────────────────────────────────
 const replying = ref(false)
 const replySeed = ref('')
 
 const openReply = () => {
   if (!requireLogin()) return
-  // Replying to a reply (depth 1): seed an @mention so the target is clear,
-  // while still attaching to the root (one tier). Markdown renders
-  // [@name](/user/id) as a kun-mention link.
   replySeed.value =
     props.depth === 1 && props.comment.user
       ? `[@${props.comment.user.name}](/user/${props.comment.user_id}) `
@@ -125,7 +88,6 @@ const openReply = () => {
   replying.value = true
 }
 
-// A reply always attaches to the ROOT: at depth 1 that is our own parent.
 const rootId = computed(() =>
   props.depth === 1 ? (props.comment.parent_id ?? props.comment.id) : props.comment.id
 )
@@ -135,7 +97,6 @@ const onReplySubmitted = (reply: PatchPageComment) => {
   emit('replyAdded', reply)
 }
 
-// ─── Edit ──────────────────────────────────────────────
 const editing = ref(false)
 const editContent = ref('')
 const editKey = ref(0)
@@ -175,12 +136,9 @@ const submitEdit = async () => {
   }
 }
 
-// ─── Delete ────────────────────────────────────────────
 const deleteOpen = ref(false)
 const deleting = ref(false)
 const deleteReason = ref('')
-// A moderator deleting SOMEONE ELSE'S comment → offer a reason, recorded in the
-// author's notification + the admin audit log. Author self-deletes need none.
 const isForeignDelete = computed(() => !isAuthor.value)
 
 const askDelete = () => {
@@ -207,8 +165,6 @@ const confirmDelete = async () => {
   }
 }
 
-// Report → global report modal (patch_comment). Snapshot the content as
-// evidence; the deep-link resolves on whichever surface the comment lives on.
 const reportComment = () => {
   if (!requireLogin()) return
   openReport({
@@ -219,23 +175,16 @@ const reportComment = () => {
   })
 }
 
-// ─── ⋯ menu ────────────────────────────────────────────
-// Every secondary action lives here, so the visible row stays uniform pills.
-// Hidden entirely when it would be empty.
 const showMenu = computed(
   () => canEdit.value || canDelete.value || !isAuthor.value
 )
 </script>
 
 <template>
-  <!-- Anchor for deep-linking from messages / home / the global comment feed.
-       scroll-mt keeps the target clear of the sticky header when scrolled to. -->
   <div :id="commentAnchorId(comment.id)" class="flex scroll-mt-24 gap-3">
     <KunAvatar :user="comment.user" :size="depth === 0 ? 'md' : 'sm'" />
 
     <div class="min-w-0 flex-1">
-      <!-- Meta line. gap-x is wider than gap-y so a wrapped line still reads as
-           one strip, and the name carries the only strong weight here. -->
       <div
         class="flex flex-wrap items-baseline gap-x-2 gap-y-1 text-xs leading-5"
       >
@@ -248,7 +197,6 @@ const showMenu = computed(
         <span v-if="isEdited" class="text-default-400 italic">已编辑</span>
       </div>
 
-      <!-- View vs edit -->
       <KunContent
         v-if="!editing"
         class="mt-2"
@@ -282,10 +230,6 @@ const showMenu = computed(
         </div>
       </div>
 
-      <!-- Action row: ONE strip of uniform KunReaction pills. Everything here is
-           the same component in the same skin (`:toggle="false"` = a one-shot
-           action in the like pill's clothing), so the like button sits flush with
-           its neighbours instead of next to a taller icon button. -->
       <div v-if="!editing" class="mt-2.5 flex items-center gap-1">
         <KunTooltip text="回复">
           <KunReaction
@@ -359,7 +303,6 @@ const showMenu = computed(
         </KunPopover>
       </div>
 
-      <!-- Reply composer -->
       <KunFadeCard>
         <CommentComposer
           v-if="replying"
@@ -373,9 +316,6 @@ const showMenu = computed(
         />
       </KunFadeCard>
 
-      <!-- Reply tier (root only). Replies render flush — the smaller avatar plus
-           the tighter spacing inside the group (4 here against 8 between roots)
-           is what marks them, not a rule or an indent. -->
       <div v-if="depth === 0 && visibleReplies.length" class="mt-4 space-y-4">
         <CommentRow
           v-for="r in visibleReplies"
@@ -409,7 +349,6 @@ const showMenu = computed(
       </KunButton>
     </div>
 
-    <!-- Delete confirm -->
     <KunModal v-model="deleteOpen" inner-class-name="max-w-md">
       <div class="space-y-4 py-2">
         <h3 class="text-lg font-bold">删除评论？</h3>

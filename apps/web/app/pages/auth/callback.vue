@@ -1,10 +1,6 @@
 <script setup lang="ts">
 import type { UserState } from '~/stores/userStore'
 
-// OAuth callback is a pure transit page (exchanges the code for a session
-// then redirects). Nothing to index — disable SEO so the URL doesn't show
-// up in search results, and the noindex/nofollow stop crawlers from
-// following the redirect chain.
 useKunDisableSeo('OAuth 回调')
 
 definePageMeta({
@@ -36,9 +32,6 @@ onMounted(async () => {
 
   if (res.code !== 0) {
     error.value = res.message
-    // Per docs/oauth/api-reference.md, code 10014 (HTTP 403) means the
-    // account is banned — re-logging in won't help, so go to the dedicated
-    // banned-account page instead of looping back to /login.
     if (res.code === 10014) {
       await navigateTo({
         path: '/account-banned',
@@ -52,14 +45,8 @@ onMounted(async () => {
   }
 
   userStore.setUser(res.data)
-  // Snapshot this account into the local switch list (account switching §3.6).
   rememberUser(userStore.user)
   useKunMessage('登录成功!', 'success')
-  // A switch/add flow stashes where to return; plain logins fall back to the
-  // user's own resource page. consumeOAuthReturnTo only ever returns a vetted
-  // same-origin path, but guard the navigation anyway: this is the last awaited
-  // statement, so a throw here would otherwise strand the (already logged-in)
-  // user on /auth/callback.
   const fallback = `/user/${res.data.id}/resource`
   try {
     await navigateTo(consumeOAuthReturnTo() ?? fallback)
@@ -70,9 +57,6 @@ onMounted(async () => {
 </script>
 
 <template>
-  <!-- w-full is required: the default layout wraps the page in a flex ROW, so
-       without it this node shrinks to content width and pins left instead of
-       centering. Card mirrors the sibling /account-banned status page. -->
   <div class="flex min-h-[60vh] w-full items-center justify-center px-4">
     <KunCard class-name="w-full max-w-sm">
       <div class="flex flex-col items-center gap-4 px-6 py-10 text-center">

@@ -6,23 +6,17 @@ import (
 	"strings"
 )
 
-// parsedPatch is the structured form of a standardized patch filename, ported
-// from the legacy sync-patch tool's vn-sync/parse.ts. The naming convention is
-// unchanged from the old moyu:
-//
-//	[会社][YYYYMMDD]游戏名[v31700][Windows][汉化组][YYYYMMDD][CHS].rar
-//	  ↑company ↑startDate ↑title ↑vndbId  ↑platform ↑group  ↑publishDate ↑lang
 type parsedPatch struct {
 	Company     string
 	StartDate   string
 	GameName    string
-	VndbID      string // with leading 'v', e.g. "v31700"
+	VndbID      string
 	PlatformRaw string
-	Platform    string // "windows" | "other"
+	Platform    string
 	GroupName   string
 	PublishDate string
-	LangRaw     string   // "CHS" | "CHT" | "CHS&CHT"
-	Languages   []string // e.g. ["zh-Hans"] or ["zh-Hans","zh-Hant"] for CHS&CHT
+	LangRaw     string
+	Languages   []string
 	FileName    string
 	FilePath    string
 }
@@ -35,10 +29,6 @@ var (
 	extStripRe      = regexp.MustCompile(`\.[^.]+$`)
 )
 
-// normalizeLanguages maps the language bracket to the resource's language list.
-// Real archive names carry combined values like "CHS&CHT" (simplified +
-// traditional in one release) — patch_resource.language is an array, so both are
-// kept. Defaults to zh-Hans when nothing recognizable is present.
 func normalizeLanguages(lang string) []string {
 	s := strings.ToUpper(lang)
 	var out []string
@@ -64,14 +54,10 @@ func normalizePlatform(p string) string {
 	return "other"
 }
 
-// parsePatchFileName parses a standardized patch filename. Returns nil when the
-// name does not match the convention (no parseable [v####] VNDB segment) — the
-// caller records it as unrecognized and skips, keeping the batch robust.
 func parsePatchFileName(filePath string) *parsedPatch {
 	fileName := filepath.Base(filePath)
 	withoutExt := extStripRe.ReplaceAllString(fileName, "")
 
-	// Positions of every [..] group, so the title = text between the 2nd and 3rd.
 	locs := bracketRe.FindAllStringIndex(withoutExt, -1)
 	inner := bracketInnerRe.FindAllStringSubmatch(withoutExt, -1)
 	if len(locs) < 7 || len(inner) < 7 {

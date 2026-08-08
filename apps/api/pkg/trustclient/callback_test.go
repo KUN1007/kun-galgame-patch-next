@@ -6,9 +6,6 @@ import (
 	"time"
 )
 
-// The signature gate is the ONLY authentication on the public /trust/callback
-// route, so every rejection path must hold (mirrors kungal's coverage).
-
 func TestVerifyCallbackSignature(t *testing.T) {
 	secret := "test-secret"
 	body := []byte(`{"disposition_id":1,"subject_kind":"patch_resource","subject_id":"7","action":1,"reason_code":"spam"}`)
@@ -23,8 +20,6 @@ func TestVerifyCallbackSignature(t *testing.T) {
 	})
 
 	t.Run("empty secret fails closed", func(t *testing.T) {
-		// Unconfigured moyu must reject EVERY callback, even a correctly signed
-		// one for an empty secret.
 		if VerifyCallbackSignature("", ts, SignPayload("", ts, body), body, now) {
 			t.Fatal("empty secret must reject all callbacks")
 		}
@@ -66,7 +61,6 @@ func TestVerifyCallbackSignature(t *testing.T) {
 	})
 
 	t.Run("timestamp window", func(t *testing.T) {
-		// Just inside ±CallbackWindow passes; just outside fails (replay guard).
 		for _, tc := range []struct {
 			name string
 			at   time.Time

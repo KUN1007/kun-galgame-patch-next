@@ -12,10 +12,6 @@ import (
 
 func CORS(cfg config.CORSConfig) fiber.Handler {
 	return cors.New(cors.Config{
-		// /api/v1/hikari is a public external API with its OWN partner-domain
-		// allowlist (HikariCORS) — skip the app-frontend CORS for it so the
-		// route owns the preflight + Access-Control-Allow-Origin (this CORS
-		// allows only moyu's own origins, which would reject every partner).
 		Next: func(c fiber.Ctx) bool {
 			return strings.HasPrefix(c.Path(), "/api/v1/hikari")
 		},
@@ -27,9 +23,6 @@ func CORS(cfg config.CORSConfig) fiber.Handler {
 	})
 }
 
-// splitOrigins turns the comma-separated CORS_ALLOW_ORIGINS env value into the
-// []string that Fiber v3's cors.Config expects, trimming incidental whitespace
-// (v3 matches origins exactly, so a stray space would silently break CORS).
 func splitOrigins(csv string) []string {
 	parts := strings.Split(csv, ",")
 	out := make([]string, 0, len(parts))
@@ -41,9 +34,6 @@ func splitOrigins(csv string) []string {
 	return out
 }
 
-// hikariOriginPatterns is the partner-site allowlist for the external Hikari
-// API, ported 1:1 from the legacy next-api/hikari route. The ([\w-]+\.)*
-// prefix allows wildcard subdomains (e.g. cdn.shionlib.com).
 var hikariOriginPatterns = []*regexp.Regexp{
 	regexp.MustCompile(`^http://localhost:\d+$`),
 	regexp.MustCompile(`^http://127\.0\.0\.1:\d+$`),
@@ -74,10 +64,6 @@ func hikariOriginAllowed(origin string) bool {
 	return false
 }
 
-// HikariCORS is the dynamic CORS for the external Hikari API: it reflects the
-// request Origin ONLY when it matches a partner-site pattern, and answers the
-// OPTIONS preflight. Public read API → no credentials. Applied via api.Use so
-// it runs for both GET and the OPTIONS preflight.
 func HikariCORS() fiber.Handler {
 	return func(c fiber.Ctx) error {
 		origin := c.Get("Origin")

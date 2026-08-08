@@ -19,8 +19,6 @@ const { data: detail } = await useAsyncData<PatchDetail | null>(
 
 const lang = ref<Language>('zh-cn')
 
-// ThumbHash blur-up for the intro's body images (KunUI decodes the
-// data-thumbhash the API emits on each <img>; width/height reserve the ratio).
 const introEl = ref<HTMLElement | null>(null)
 useContentBlurUp(introEl)
 
@@ -36,36 +34,17 @@ watchEffect(() => {
   lang.value = pickInitialLang()
 })
 
-// introduction_html is pre-rendered server-side via the markdown package
-// (goldmark, no html.WithUnsafe → raw HTML escaped + dangerous URLs dropped),
-// so it's already safe and bound directly. The renderer keeps mention links'
-// class="kun-mention" + data-id.
 const introHtml = computed(() => {
   if (!detail.value?.introduction_html) return ''
   return getPreferredLanguageText(detail.value.introduction_html, lang.value)
 })
 
-// KunSelect became generic over its option type in KunUI 2.12.0, so the option
-// values must match the v-model's `Language`, not the widened `string`.
 const langOptions: { value: Language; label: string }[] = [
   { value: 'zh-cn', label: '中文' },
   { value: 'ja-jp', label: '日本語' },
   { value: 'en-us', label: 'English' }
 ]
 
-// ─── Tag display: color-by-category + manual spoiler / category filter ──
-// content=primary, sexual=danger, plus a "显示剧透" checkbox for
-// spoiler_level>0 tags.
-//
-// The category axis is now TWO-valued. The wiki's own
-// content|sexual|technical vocabulary retired with it in wave A2-2; the
-// canonical catalog publishes a per-tag `sexual` BOOLEAN instead (the safety
-// axis, refs/proj/106 R8), and the backend derives this field from it. So
-// `sexual` still means exactly what it always did — which is what keeps the
-// safe-mode gate below correct — while `technical` is gone rather than faked:
-// nothing but the wiki ever asserted it, and manufacturing a third value out of
-// the catalog's tier/kind (a different coordinate system) would be a guess
-// wearing data's clothes.
 type TagCategory = 'content' | 'sexual'
 const CATEGORY_LABEL: Record<TagCategory, string> = {
   content: '内容',
@@ -73,28 +52,18 @@ const CATEGORY_LABEL: Record<TagCategory, string> = {
 }
 const tagColor = (cat: string): 'primary' | 'danger' => {
   if (cat === 'sexual') return 'danger'
-  return 'primary' // content + unknown fallback
+  return 'primary'
 }
-// Static class map — Tailwind JIT only sees literal class strings, so we can
-// NEVER write `text-${color}-600` (the spec calls this out as a latent bug).
 const TAG_CATEGORY_TEXT_CLASS: Record<TagCategory, string> = {
   content: 'text-primary-600',
   sexual: 'text-danger-600'
 }
 
-// SFW (safe) mode never shows sexual tags — not even behind the toggle. The
-// category checkboxes only offer the categories allowed in the current mode.
 const isSafeMode = computed(() => settingStore.data.kunNsfwEnable === 'sfw')
 const availableCategories = computed<TagCategory[]>(() =>
   isSafeMode.value ? ['content'] : ['content', 'sexual']
 )
 
-// Spoiler filtering follows VNDB's 3-level model (tag.spoiler_level 0/1/2 =
-// none / minor / major). The control picks the MAX level to reveal, so it's a
-// graduated 剧透等级 filter, not just a show/hide toggle:
-//   none  → only spoiler_level 0   (default; safe)
-//   minor → spoiler_level <= 1
-//   all   → everything (incl. major)
 type SpoilerMode = 'none' | 'minor' | 'all'
 const spoilerMode = ref<SpoilerMode>('none')
 const spoilerThreshold = computed(() =>
@@ -110,7 +79,6 @@ const visibleCategories = ref<Set<TagCategory>>(new Set(['content', 'sexual']))
 const toggleCategory = (c: TagCategory) => {
   if (visibleCategories.value.has(c)) visibleCategories.value.delete(c)
   else visibleCategories.value.add(c)
-  // trigger reactivity by re-assigning the Set
   visibleCategories.value = new Set(visibleCategories.value)
 }
 
@@ -118,7 +86,6 @@ const filteredTags = computed(() => {
   if (!detail.value?.tags) return []
   return detail.value.tags.filter((t) => {
     const cat = (t.category || 'content') as TagCategory
-    // SFW mode hard-hides sexual tags regardless of the manual toggle.
     if (isSafeMode.value && cat === 'sexual') return false
     if ((t.spoiler_level ?? 0) > spoilerThreshold.value) return false
     if (!visibleCategories.value.has(cat)) return false
@@ -131,15 +98,9 @@ const hiddenByFilterCount = computed(() => {
   return detail.value.tags.length - filteredTags.value.length
 })
 
-// The 会社 chips' brand logo (wave 170 P3). `_mini` is the 360px inside-fit
-// variant — a chip is ~20px tall, so the original would be a hundredfold
-// overdraw on a page that already carries covers and screenshots. '' for a
-// label with no logo, and the chip then renders text-only exactly as before.
 const officialLogoSrc = (o: PatchDetailOfficial) =>
   imageServiceUrl((o.logo_hash ?? '').trim(), 'mini')
 
-// Galgame metadata home (E3b: the wiki frontend is retiring — the metadata
-// pages live on kungal now; deep links go to /galgame/:gid there).
 const kungalOrigin = kunMoyuMoe.domain.kungal
 </script>
 
@@ -227,12 +188,6 @@ const kungalOrigin = kunMoyuMoe.domain.kungal
       </div>
     </section>
 
-    <!-- Tags & officials (developers/publishers) come pre-resolved from Wiki
-         by the backend enricher — see apps/api/internal/galgame/enricher/
-         enricher.go. Links navigate to moyu's /galgame/tag/:id and
-         /galgame/official/:id detail pages — CATALOG ids since wave A2-2, which
-         is why they are NOT the bare /tag/:id and /official/:id (those are
-         redirect shells keyed by the old wiki id space). -->
     <section v-if="detail.tags?.length">
       <div
         class="mb-4 flex flex-col items-start gap-3 sm:flex-row sm:items-center sm:justify-between"
@@ -242,7 +197,6 @@ const kungalOrigin = kunMoyuMoe.domain.kungal
           <h2 class="text-2xl font-bold">标签</h2>
         </div>
         <div class="flex flex-wrap items-center gap-x-6 gap-y-3 text-sm">
-          <!-- 剧透等级：互斥单选（隐藏 / 轻微 / 完全） -->
           <div class="flex items-center gap-2">
             <span class="text-default-500 shrink-0">剧透</span>
             <KunRadioGroup
@@ -251,8 +205,6 @@ const kungalOrigin = kunMoyuMoe.domain.kungal
               :options="spoilerOptions"
             />
           </div>
-          <!-- 分类：多选。span 仅用于按类别上色；方框与文字的间距由
-               KunCheckBox 自带的 gap 提供（@kungal/ui-vue >= 0.6.2）。 -->
           <div class="flex flex-wrap items-center gap-x-4 gap-y-2">
             <span class="text-default-500 shrink-0">分类</span>
             <KunCheckBox
@@ -331,15 +283,10 @@ const kungalOrigin = kunMoyuMoe.domain.kungal
       </div>
     </section>
 
-    <!-- W2 / PR3b — screenshots gallery (inline from Wiki PUT-managed list).
-         Per-rating SFW gate (色情 + 暴力 axes) + the shared lightbox live in
-         GalgameGallery (ported from kungal); it renders its own 截图/画廊
-         header and the 分级筛选 control. -->
     <section v-if="detail.galgame?.screenshots?.length">
       <GalgameGallery :screenshots="detail.galgame.screenshots" />
     </section>
 
-    <!-- kungal link footer for richer info (metadata, revision history). -->
     <section v-if="detail.galgame">
       <p class="text-default-500 text-sm">
         游戏资料、修订历史等更多信息请查看

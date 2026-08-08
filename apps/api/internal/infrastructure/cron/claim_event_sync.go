@@ -1,35 +1,5 @@
 package cron
 
-// Catalog claim transitions → local notifications + moemoepoint.
-//
-// This replaces the wiki message sync, whose upstream (`galgame_message` and
-// its /galgame/messages/feed) retires with the wiki tables in wave 161. The two
-// feeds are not translations of each other, and the differences are what this
-// file is mostly about:
-//
-//   - The wiki delivered TYPED messages (approved / declined / banned /
-//     unbanned). The registry delivers TRANSITIONS (from_state, to_state). A
-//     type word is a claim about intent; a transition is a fact, and one
-//     destination can be reached by more than one route — `live` is reached both
-//     by a reviewer approving a submission and by an owner publishing their own
-//     draft, and only the first of those is an approval to announce.
-//   - The wiki named the BENEFICIARY of each message (`target_user_id`). The
-//     registry names the ACTOR, who on every review action is the REVIEWER.
-//     Notifying or paying the actor would invert every effect below, so the
-//     recipient is recovered from the transition INTO `pending`, which the cron
-//     records as it goes past (claim_event_processed, migration 029).
-//   - Both id spaces are small integers and disjoint, so the cursor row AND the
-//     moemoepoint idempotency prefix both move into fresh namespaces. Sharing
-//     either would let wiki message 42 be mistaken for claim event 42 —
-//     silently, in both directions.
-//
-// Delivery semantics are unchanged and deliberately so: at-least-once plus
-// idempotent side effects, one transaction per event covering the idempotency
-// insert, the side effects and the cursor advance. The per-EVENT transaction
-// (rather than per-page) is the 2026-05-30 F025 finding carried over: it bounds
-// the synchronous OAuth award to one call per open transaction, so a slow OAuth
-// cannot pin a connection across a whole feed page.
-
 import (
 	"context"
 	"fmt"
@@ -46,21 +16,12 @@ import (
 )
 
 const (
-	// claimSyncCronName is the cron_state cursor row. A NEW name: the wiki row
-	// (`wiki_msg_sync`) holds a wiki message id, and pointing this feed at it
-	// would start the run at an arbitrary place in a different id space. The old
-	// row is never written or deleted, so a rollback resumes exactly where it
-	// stopped.
 	claimSyncCronName = "catalog_claim_sync"
-	claimSyncSchedule = "*/10 * * * *" // every 10 minutes, as the wiki sync was
+	claimSyncSchedule = "*/10 * * * *"
 	claimSyncBatch    = 500
-	// claimSyncMaxPages bounds one run. The feed is ascending and the cursor is
-	// durable, so a backlog longer than this is simply finished next tick.
 	claimSyncMaxPages = 50
 )
 
-// RunClaimEventSync executes one sync cycle. Exported so it can be driven
-// manually. Returns the number of events applied and the resulting cursor.
 func RunClaimEventSync(
 	ctx context.Context,
 	db *gorm.DB,
@@ -77,14 +38,6 @@ func RunClaimEventSync(
 		return 0, 0, err
 	}
 	if !seeded {
-		// First run after the switch: position at the feed's head, do NOT ingest
-		// from 0.
-		//
-		// This is a correctness requirement, not an optimisation. The window's
-		// re-site step mints one backfill event per existing claim — tens of
-		// thousands of them, most with to_state=live — and consuming those would
-		// fire an "approved, +3 萌萌点" notification for every entry in the
-		// registry. The feed exists to carry what happens NEXT.
 		head, herr := claimFeedHead(ctx, catalog)
 		if herr != nil {
 			return 0, 0, fmt.Errorf("seek claim feed head: %w", herr)
@@ -115,8 +68,6 @@ func RunClaimEventSync(
 				return writeClaimCursorTx(tx, next)
 			})
 			if txErr != nil {
-				// Hold the cursor BEFORE this event; every effect is idempotent,
-				// so the next tick re-applies it.
 				return applied, cursor, txErr
 			}
 			cursor = next
@@ -129,8 +80,6 @@ func RunClaimEventSync(
 	return applied, cursor, nil
 }
 
-// claimFeedHead walks the feed once WITHOUT applying anything, to learn its
-// current last id. Used only to seed a fresh cursor.
 func claimFeedHead(ctx context.Context, catalog *catalogclient.Client) (int64, error) {
 	var head int64
 	for page := 1; page <= claimSyncMaxPages; page++ {
@@ -149,7 +98,6 @@ func claimFeedHead(ctx context.Context, catalog *catalogclient.Client) (int64, e
 	return head, nil
 }
 
-// claimEffect is what one transition asks moyu to do locally.
 type claimEffect int
 
 const (
@@ -162,26 +110,7 @@ const (
 	claimEffectUnknownState
 )
 
-// effectOf maps one transition onto its local effect, reproducing the four wiki
-// message types the old cron handled and nothing more.
-//
-// `live` needs the ORIGIN as well as the destination, because three different
-// things arrive there:
-//
-//   - from `pending`  — a reviewer approved a submission. This is the +3.
-//   - from `hidden`   — an unban restored the entry to what it was.
-//   - from `draft`    — the owner published their own draft. moyu already pays
-//     for that in the request path under its own idempotency key
-//     (`moyu:claim:<gid>`), and the wiki feed never emitted a message for it
-//     either, so announcing it here would both double-pay and double-notify.
-//
-// Two destinations do nothing on purpose: `draft` (a withdrawal is reversible
-// and the entry was taken down, not judged) and `none` (a claim released back
-// to the registry, which is not a verdict about anyone's submission).
 func effectOf(ev *catalogclient.ClaimEventFeedItem) claimEffect {
-	// No product-side anchor = nothing local to say. moyu's key space is the
-	// gid, and a registry-only claim has no id in it; inventing one from the
-	// work id would link the notification to a different game (doc 106 R3).
 	if ev.ProductWorkID == nil || *ev.ProductWorkID <= 0 {
 		return claimEffectNone
 	}
@@ -189,7 +118,6 @@ func effectOf(ev *catalogclient.ClaimEventFeedItem) claimEffect {
 	case catalogclient.ClaimStateLive:
 		switch {
 		case ev.FromState == nil:
-			// A claim born straight into `live` is an import, not a review.
 			return claimEffectNone
 		case *ev.FromState == catalogclient.ClaimStatePending:
 			return claimEffectApproved
@@ -211,15 +139,6 @@ func effectOf(ev *catalogclient.ClaimEventFeedItem) claimEffect {
 	}
 }
 
-// The tenant filter is applied HERE rather than as a `site=` on the request: a
-// server-side filter naming one spelling of the mid-window rename would
-// silently consume and discard every event on the other side of it, advancing
-// the cursor past transitions it never applied. Client-side the cost is one
-// comparison per event, and other tenants' events fall out with no effect.
-
-// applyClaimEvent handles a single transition inside an open tx. It is the
-// idempotency boundary: a non-zero RowsAffected on the INSERT means this is the
-// first time we are seeing this event — only then do the side effects run.
 func applyClaimEvent(
 	ctx context.Context,
 	tx *gorm.DB,
@@ -229,8 +148,6 @@ func applyClaimEvent(
 ) error {
 	effect := effectOf(ev)
 	if !catalogclient.IsGIDClaimSite(ev.Site) {
-		// Another product's tenant. Consume nothing, remember nothing — the
-		// cursor still advances, which is the point of reading unfiltered.
 		return nil
 	}
 	if effect == claimEffectUnknownState {
@@ -242,8 +159,6 @@ func applyClaimEvent(
 		return nil
 	}
 
-	// Idempotency gate + the submitter ledger, one row. ON CONFLICT DO NOTHING;
-	// RowsAffected == 0 means a prior run already applied this event.
 	res := tx.Exec(`
 		INSERT INTO claim_event_processed(event_id, work_id, to_state, actor_uid)
 		VALUES (?, ?, ?, ?)
@@ -256,7 +171,6 @@ func applyClaimEvent(
 		return nil
 	}
 	if effect == claimEffectRememberSubmitter {
-		// The row above IS the memo; nothing else to do for a submission.
 		return nil
 	}
 
@@ -266,21 +180,11 @@ func applyClaimEvent(
 		return fmt.Errorf("look up submitter (work=%d): %w", ev.WorkID, err)
 	}
 	if recipient <= 0 {
-		// Loud, and only ever a missing NOTIFICATION: the transition itself has
-		// already happened upstream. A submission whose `pending` event predates
-		// this cursor — every wiki-era one — has no recorded submitter, and the
-		// actor on hand is the reviewer. Saying nothing is the only honest
-		// option; saying it to the reviewer is not.
 		slog.Error("claim 事件无法归属投稿人, 跳过通知与发奖",
 			"event", ev.ID, "work", ev.WorkID, "gid", gid, "to_state", ev.ToState)
 		return nil
 	}
 
-	// Ensure the recipient has a LOCAL user anchor before any user-FK'd write.
-	// A submitter can exist in OAuth and have NEVER logged into moyu, and
-	// user_message_recipient_id_fkey (23503) would roll the per-event tx back
-	// forever, wedging the cursor and starving every later event (observed on
-	// the wiki cron in prod: ~90 failures/72h, stuck at cursor 98).
 	if err := tx.Clauses(clause.OnConflict{DoNothing: true}).
 		Create(&authModel.User{ID: recipient}).Error; err != nil {
 		return fmt.Errorf("ensure recipient user anchor (uid=%d): %w", recipient, err)
@@ -294,11 +198,6 @@ func applyClaimEvent(
 
 	switch effect {
 	case claimEffectApproved:
-		// +3 through OAuth, the single source of truth for the balance. The key
-		// is per-EVENT and its prefix is new: `wiki_approved` holds wiki message
-		// ids and the two sequences overlap numerically, so reusing it would let
-		// one suppress the other's award. A failure returns an error → the tx
-		// rolls back → the cursor holds → the next tick retries.
 		if mp != nil {
 			awarded, aerr := mp.Adjust(ctx, recipient, moemoepoint.AdjustRequest{
 				Delta:          3,
@@ -336,9 +235,6 @@ func applyClaimEvent(
 	return nil
 }
 
-// submitterOf reads the actor of the latest transition INTO `pending` for a
-// work — the person the verdict is about. Zero when the cron never saw that
-// transition go past.
 func submitterOf(tx *gorm.DB, workID int64) (int, error) {
 	var uid int
 	err := tx.Raw(`
@@ -349,9 +245,6 @@ func submitterOf(tx *gorm.DB, workID int64) (int, error) {
 	return uid, err
 }
 
-// claimWorkName resolves a display name for the notification body. Best-effort
-// enrichment outside the transaction's business: a lookup failure degrades to
-// the id rather than holding up a verdict the user is waiting on.
 func claimWorkName(ctx context.Context, galgame *galgameClient.Client, gid int) string {
 	if galgame != nil {
 		if briefs, err := galgame.GalgameBatch(ctx, []int{gid}, ""); err == nil {
@@ -372,11 +265,6 @@ func claimWorkName(ctx context.Context, galgame *galgameClient.Client, gid int) 
 	return fmt.Sprintf("#%d", gid)
 }
 
-// writeClaimNotification inserts the local user_message row, linking to the
-// patch page so the recipient is one click from the entry.
-//
-// GORM Create rather than a raw INSERT: the model's autoCreateTime tags
-// populate `created` / `updated`, both NOT NULL without a default.
 func writeClaimNotification(tx *gorm.DB, recipient, gid int, text string) error {
 	return tx.Create(&userModel.UserMessage{
 		Type:        "system",
@@ -388,9 +276,6 @@ func writeClaimNotification(tx *gorm.DB, recipient, gid int, text string) error 
 	}).Error
 }
 
-// readClaimCursor distinguishes "never seeded" from "0", which a bare int64
-// cannot express and which must not be conflated: the first means seed at the
-// head, the second would mean replay the entire backfill.
 func readClaimCursor(db *gorm.DB) (cursor int64, seeded bool, err error) {
 	var rows []int64
 	if err := db.Raw(

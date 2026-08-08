@@ -1,20 +1,4 @@
-/*
- * @kungal/editor-vue is HEADLESS (ships zero CSS) — it renders only stable class
- * hooks (`.kun-editor__*`, `.kun-mention-dropdown*`) and `data-*` state. This is
- * the reference styling of those hooks, themed with KunUI tokens. Keep in sync
- * when the editor adds hooks.
- *
- * Since editor-nuxt 0.31.1 that reference ships with the layer, so a host can
- * `@import '@kungal/editor-nuxt/editor.css'` and get style fixes with a version
- * bump. moyu deliberately does NOT: the shipped file animates the loading
- * skeleton with a `linear-gradient` sweep, and background gradients are banned
- * here (see the skeleton rules at the bottom). Port upstream fixes by hand.
- *
- * It also carries the two structural rules the editor genuinely needs to
- * function: ProseMirror's `white-space` and the popover positioning / show-hide.
- */
 
-/* ── Shell + dual-view tabs ─────────────────────────────────────────────── */
 .kun-editor {
   display: flex;
   flex-direction: column;
@@ -41,7 +25,6 @@
   color: var(--color-primary-foreground, #fff);
 }
 
-/* ── WYSIWYG surface (ProseMirror) ──────────────────────────────────────── */
 .kun-editor__wysiwyg .milkdown {
   outline: none;
 }
@@ -52,21 +35,10 @@
   border: 1px solid var(--color-default-200);
   border-radius: 0.5rem;
   outline: none;
-  /* ProseMirror REQUIRES a white-space rule; pre-wrap keeps wrapping + spaces. */
   white-space: pre-wrap;
   word-wrap: break-word;
 }
 
-/* Placeholder: the editor sets a `data-placeholder` attr + `.kun-editor__placeholder`
-   class on the empty block (a ProseMirror decoration, not real content). Render the
-   text via ::before so it never enters the doc / markdown or moves the caret. Synced
-   from the docs reference kun-editor.css.
-
-   The ::before is absolutely positioned, so it needs a positioned ancestor: with
-   none, its containing block is the viewport and a long placeholder is laid out
-   against THAT width, running past the editor and over the toolbar (which is
-   what moyu's multi-line comment placeholders do). Anchor it to the empty block
-   and let it wrap — editor 0.31.1's fix. */
 .kun-editor__placeholder {
   position: relative;
 }
@@ -78,37 +50,18 @@
   left: 0;
   width: 100%;
   overflow-wrap: break-word;
-  /* Raw token triplet: `--color-default-*` does NOT exist at runtime (see the
-     loading-skeleton note below), so the reference file's var() here resolves to
-     nothing and the placeholder paints as full-contrast body text. */
   color: oklch(var(--default-400));
   font-size: 0.875rem;
   font-style: italic;
   pointer-events: none;
 }
 
-/* In-document "uploading…" placeholder shown at the caret while an image upload
-   runs (paste / drop / toolbar), replaced by the image when it resolves. */
 .kun-editor__uploading {
   color: var(--color-primary);
   font-size: 0.875rem;
   user-select: none;
 }
 
-/* ── Loading placeholder (editor-vue 0.31.0) ───────────────────────────── */
-/* <KunEditor> mounts its body client-side only; the server render and the first
-   paint emit `.kun-editor__loading` > 3× `.kun-editor__skeleton` instead, which
-   then hydrates cleanly and is swapped out once Milkdown is ready. Without
-   rules here those are three zero-height divs — the area collapses exactly like
-   it did before 0.31.0, so this is required, not decorative.
-
-   Deliberately NOT a copy of upstream's reference styling: that animates a
-   `linear-gradient` sweep across `background-position`, and a background
-   gradient is forbidden here. A solid fill with an opacity pulse reads the
-   same. `oklch(var(--default-200))` is the raw token triplet — `--color-*` does
-   NOT exist at runtime (Tailwind v4 inlines @theme colors into the utilities it
-   generates and never emits the bare variable), which is why the rest of this
-   file's colors are silently dead; don't copy that pattern here. */
 .kun-editor__loading {
   padding: 0.75rem 0;
 }
@@ -145,8 +98,6 @@
   }
 }
 
-/* ── Selection bubble toolbar (floats over a text selection) ────────────── */
-/* Positioned by floating-ui (absolute left/top); visibility via data-show. */
 .kun-editor__bubble {
   position: absolute;
   display: flex;
@@ -176,7 +127,6 @@
   background: var(--color-default-100);
 }
 
-/* ── Formatting toolbar ─────────────────────────────────────────────────── */
 .kun-editor__format-toolbar {
   display: flex;
   flex-wrap: wrap;
@@ -213,14 +163,12 @@
   display: inline-flex;
 }
 
-/* ── Markdown source (CodeMirror) ───────────────────────────────────────── */
 .kun-editor__source .cm-editor {
   border: 1px solid var(--color-default-200);
   border-radius: 0.5rem;
   overflow: hidden;
 }
 
-/* ── @mention dropdown (a slash view; positioned by SlashProvider) ──────── */
 .kun-mention-dropdown {
   position: absolute;
   z-index: 30;
@@ -291,7 +239,6 @@
   font-size: 0.875rem;
 }
 
-/* ── Sticker / emoji picker (toolbar popover) ───────────────────────────── */
 .kun-editor__picker {
   position: relative;
   display: inline-flex;

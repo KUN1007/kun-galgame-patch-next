@@ -1,6 +1,3 @@
-// Package handler contains HTTP handlers for the chat module.
-//
-// D9 (2026-04-21): 9 REST endpoints, no WebSocket involved.
 package handler
 
 import (
@@ -32,8 +29,6 @@ func New(svc *service.ChatService, users *userclient.Client) *ChatHandler {
 	return &ChatHandler{svc: svc, users: users}
 }
 
-// attach helpers stamp the embedded user/sender field on rows after they
-// come back from the repository (Preload was removed in Phase 6e).
 func (h *ChatHandler) attachMessageSenders(ctx context.Context, msgs []chatModel.ChatMessage) {
 	uids := make([]int, 0, len(msgs))
 	for _, m := range msgs {
@@ -69,19 +64,11 @@ func (h *ChatHandler) attachOneSender(ctx context.Context, msg *chatModel.ChatMe
 	}
 }
 
-// enrichMessages fills ContentHTML (rendered markdown), Reaction[] (with the
-// reacting users' briefs) and QuoteMessage (the replied-to message preview)
-// for a page of messages, using batched queries so there is no N+1.
-//
-// Senders are assumed already attached by attachMessageSenders. DELETED
-// messages are left with empty ContentHTML (the frontend renders a tombstone
-// chip and never reaches the markdown branch).
 func (h *ChatHandler) enrichMessages(ctx context.Context, msgs []chatModel.ChatMessage) {
 	if len(msgs) == 0 {
 		return
 	}
 
-	// 1. Markdown → sanitized HTML. Content stays raw (edit modal needs it).
 	for i := range msgs {
 		if msgs[i].Status == "DELETED" {
 			continue
@@ -98,7 +85,6 @@ func (h *ChatHandler) enrichMessages(ctx context.Context, msgs []chatModel.ChatM
 		}
 	}
 
-	// 2. Reactions, grouped per message, each with the reacting user brief.
 	if reactions, err := h.svc.ReactionsByMessageIDs(ids); err == nil && len(reactions) > 0 {
 		ruids := make([]int, 0, len(reactions))
 		for _, r := range reactions {
@@ -120,15 +106,9 @@ func (h *ChatHandler) enrichMessages(ctx context.Context, msgs []chatModel.ChatM
 		}
 	}
 
-	// 3. Reply quotes: load the replied-to messages + their sender names.
 	if len(replyIDs) > 0 {
 		quoted, err := h.svc.MessagesByIDs(replyIDs)
 		if err == nil && len(quoted) > 0 {
-			// Defense-in-depth against cross-room quote leakage (F004): every
-			// message in `msgs` belongs to the same room (ListMessages is
-			// room-scoped), so drop any quoted message from a different room.
-			// CreateMessage already rejects cross-room reply targets at write
-			// time; this also neutralizes any legacy rows.
 			roomID := msgs[0].ChatRoomID
 			qSenderIDs := make([]int, 0, len(quoted))
 			for _, q := range quoted {
@@ -173,13 +153,6 @@ func getMessageIDParam(c fiber.Ctx) (int, error) {
 	return id, nil
 }
 
-// ─── Room ───────────────────────────────────────────
-
-// ListRooms GET /api/chat/room
-//
-// Enriches each room with: the last-message text preview, and — for PRIVATE
-// rooms — the peer's name/avatar (the room row itself has none; the link is
-// "{lowUid}-{highUid}"). Briefs and last messages are batch-fetched, no N+1.
 func (h *ChatHandler) ListRooms(c fiber.Ctx) error {
 	user := middleware.MustGetUser(c)
 	rooms, err := h.svc.ListRooms(user.ID)
@@ -206,9 +179,6 @@ func (h *ChatHandler) ListRooms(c fiber.Ctx) error {
 
 	lastMsgs, lmErr := h.svc.LatestMessagePerRoom(roomIDs)
 	if lmErr != nil {
-		// Best-effort enrichment: the room list still returns, just without
-		// last-message previews. Log so a persistent DB issue isn't invisible
-		// (audit F073).
 		slog.Warn("LatestMessagePerRoom failed; room list will omit previews", "error", lmErr)
 	}
 	peerBriefs := userclient.BriefMapByInt(c.Context(), h.users, peerUIDs)
@@ -242,7 +212,6 @@ func (h *ChatHandler) ListRooms(c fiber.Ctx) error {
 	return response.OK(c, out)
 }
 
-// parsePrivateLink splits a "{a}-{b}" private-room link into the two uids.
 func parsePrivateLink(link string) (a, b int, ok bool) {
 	parts := strings.SplitN(link, "-", 2)
 	if len(parts) != 2 {
@@ -256,7 +225,6 @@ func parsePrivateLink(link string) (a, b int, ok bool) {
 	return x, y, true
 }
 
-// previewMessage returns a one-line preview of a message for the room list.
 func previewMessage(m *chatModel.ChatMessage) string {
 	if m.Status == "DELETED" {
 		return "[消息已撤回]"
@@ -265,7 +233,6 @@ func previewMessage(m *chatModel.ChatMessage) string {
 	if s == "" && m.FileURL != "" {
 		return "[图片]"
 	}
-	// Sticker messages are stored as `![sticker](url)`.
 	if strings.HasPrefix(s, "![sticker](") {
 		return "[贴纸]"
 	}
@@ -276,7 +243,6 @@ func previewMessage(m *chatModel.ChatMessage) string {
 	return s
 }
 
-// CreateRoom POST /api/chat/room   (admin only)
 func (h *ChatHandler) CreateRoom(c fiber.Ctx) error {
 	user := middleware.MustGetUser(c)
 	if !middleware.IsAdmin(c) {
@@ -293,10 +259,6 @@ func (h *ChatHandler) CreateRoom(c fiber.Ctx) error {
 	return response.OK(c, room)
 }
 
-// GetRoomDetail GET /api/chat/room/:link
-//
-// Returns the room plus its full member list (with each user's profile).
-// Caller must be a member.
 func (h *ChatHandler) GetRoomDetail(c fiber.Ctx) error {
 	user := middleware.MustGetUser(c)
 	link := c.Params("link")
@@ -308,7 +270,6 @@ func (h *ChatHandler) GetRoomDetail(c fiber.Ctx) error {
 	return response.OK(c, detail)
 }
 
-// JoinRoom POST /api/chat/room/join
 func (h *ChatHandler) JoinRoom(c fiber.Ctx) error {
 	user := middleware.MustGetUser(c)
 	var req dto.JoinRoomRequest
@@ -322,11 +283,6 @@ func (h *ChatHandler) JoinRoom(c fiber.Ctx) error {
 	return response.OK(c, room)
 }
 
-// StartPrivate POST /api/chat/room/private
-//
-// Returns the (created or existing) private chat room between the caller
-// and req.PeerUID. Front-end clicks "发消息" on a user profile, posts here
-// with peer_uid, then navigates to /message/chat/<room.link>.
 func (h *ChatHandler) StartPrivate(c fiber.Ctx) error {
 	user := middleware.MustGetUser(c)
 	var req dto.StartPrivateChatRequest
@@ -343,9 +299,6 @@ func (h *ChatHandler) StartPrivate(c fiber.Ctx) error {
 	return response.OK(c, room)
 }
 
-// ─── Messages ───────────────────────────────────────
-
-// ListMessages GET /api/chat/room/:link/message?after=&limit=
 func (h *ChatHandler) ListMessages(c fiber.Ctx) error {
 	user := middleware.MustGetUser(c)
 	link := c.Params("link")
@@ -361,9 +314,6 @@ func (h *ChatHandler) ListMessages(c fiber.Ctx) error {
 	var msgs []chatModel.ChatMessage
 	var err error
 	if ids := parseCSVInts(q.IDs); len(ids) > 0 {
-		// In-place refresh of an exact set (post edit/delete/reaction). The
-		// frontend patches these into its existing list without re-paging or
-		// scrolling, so it never yanks the view to the bottom.
 		msgs, err = h.svc.GetMessagesByIDsInRoom(user.ID, link, ids)
 	} else {
 		msgs, err = h.svc.GetMessages(user.ID, link, q.After, q.Before, q.Limit)
@@ -376,8 +326,6 @@ func (h *ChatHandler) ListMessages(c fiber.Ctx) error {
 	return response.OK(c, msgs)
 }
 
-// parseCSVInts parses "1,2,3" → [1,2,3], skipping blanks/non-numeric, capped
-// at 200 to bound the query.
 func parseCSVInts(s string) []int {
 	if s == "" {
 		return nil
@@ -395,7 +343,6 @@ func parseCSVInts(s string) []int {
 	return out
 }
 
-// CreateMessage POST /api/chat/room/:link/message
 func (h *ChatHandler) CreateMessage(c fiber.Ctx) error {
 	user := middleware.MustGetUser(c)
 	link := c.Params("link")
@@ -415,7 +362,6 @@ func (h *ChatHandler) CreateMessage(c fiber.Ctx) error {
 	return response.OK(c, one[0])
 }
 
-// UpdateMessage PUT /api/chat/message/:id
 func (h *ChatHandler) UpdateMessage(c fiber.Ctx) error {
 	user := middleware.MustGetUser(c)
 	id, err := getMessageIDParam(c)
@@ -434,7 +380,6 @@ func (h *ChatHandler) UpdateMessage(c fiber.Ctx) error {
 	return response.OKMessage(c, "消息已编辑")
 }
 
-// DeleteMessage DELETE /api/chat/message/:id
 func (h *ChatHandler) DeleteMessage(c fiber.Ctx) error {
 	user := middleware.MustGetUser(c)
 	id, err := getMessageIDParam(c)
@@ -448,7 +393,6 @@ func (h *ChatHandler) DeleteMessage(c fiber.Ctx) error {
 	return response.OKMessage(c, "消息已删除")
 }
 
-// ToggleReaction POST /api/chat/message/:id/reaction
 func (h *ChatHandler) ToggleReaction(c fiber.Ctx) error {
 	user := middleware.MustGetUser(c)
 	id, err := getMessageIDParam(c)
@@ -468,7 +412,6 @@ func (h *ChatHandler) ToggleReaction(c fiber.Ctx) error {
 	return response.OK(c, map[string]bool{"added": added})
 }
 
-// MarkSeen PUT /api/chat/room/:link/seen
 func (h *ChatHandler) MarkSeen(c fiber.Ctx) error {
 	user := middleware.MustGetUser(c)
 	link := c.Params("link")

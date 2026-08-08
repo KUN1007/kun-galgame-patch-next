@@ -2,9 +2,6 @@ package middleware
 
 import "testing"
 
-// TestHikariOriginAllowed locks the external Hikari API's partner-domain
-// allowlist: legitimate partner origins (incl. wildcard subdomains) pass, and
-// look-alike / prefix / scheme-downgrade spoofs are rejected.
 func TestHikariOriginAllowed(t *testing.T) {
 	allow := []string{
 		"http://localhost:3000",
@@ -37,11 +34,11 @@ func TestHikariOriginAllowed(t *testing.T) {
 	deny := []string{
 		"",
 		"https://evil.com",
-		"https://hikarinagi.com.evil.com", // suffix spoof
-		"https://evilhikarinagi.com",      // prefix spoof
+		"https://hikarinagi.com.evil.com",
+		"https://evilhikarinagi.com",
 		"https://nothikarinagi.com",
 		"https://shionlib.com.attacker.net",
-		"http://hikarinagi.com", // http not allowed for partners (only localhost)
+		"http://hikarinagi.com",
 		"https://hikarinagi.dev",
 		"https://kungal.com.cn",
 	}

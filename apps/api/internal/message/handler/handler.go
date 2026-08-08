@@ -29,9 +29,6 @@ func New(svc *service.MessageService, users *userclient.Client, galgame *galgame
 	return &MessageHandler{service: svc, users: users, galgame: galgame}
 }
 
-// galgameNameTypes are the message types whose Content bakes a single-language
-// (zh-cn-first) game name; for these we attach the multilingual name so the
-// frontend can render it in the viewer's preferred title language.
 var galgameNameTypes = map[string]bool{
 	"favorite":         true,
 	"favoriteResource": true,
@@ -40,11 +37,6 @@ var galgameNameTypes = map[string]bool{
 
 var patchLinkRe = regexp.MustCompile(`^/patch/(\d+)`)
 
-// attachGalgameNames batch-resolves the multilingual game name (from each
-// game-scoped message's /patch/<id> link) and stamps msg.GalgameName, so the
-// frontend renders the name in the viewer's preferred title language instead of
-// the baked Content. Best-effort: unresolved messages keep GalgameName=nil and
-// the frontend falls back to Content.
 func (h *MessageHandler) attachGalgameNames(ctx context.Context, msgs []userModel.UserMessage) {
 	if h.galgame == nil || len(msgs) == 0 {
 		return
@@ -94,13 +86,6 @@ func (h *MessageHandler) attachGalgameNames(ctx context.Context, msgs []userMode
 	}
 }
 
-// attachSenders batch-resolves sender briefs from OAuth /users/batch and
-// stamps msg.Sender. Without this every message serialized with sender=nil,
-// and the frontend's message/Card.vue rendered "系统" for all of them.
-//
-// Best-effort: messages whose sender_id is NULL (true system messages) or
-// whose brief can't be resolved keep Sender=nil and correctly fall back to
-// the "系统" placeholder on the frontend.
 func (h *MessageHandler) attachSenders(ctx context.Context, msgs []userModel.UserMessage) {
 	if h.users == nil || len(msgs) == 0 {
 		return
@@ -132,7 +117,6 @@ func (h *MessageHandler) attachSenders(ctx context.Context, msgs []userModel.Use
 	}
 }
 
-// GetMessages GET /api/message
 func (h *MessageHandler) GetMessages(c fiber.Ctx) error {
 	var req dto.GetMessageRequest
 	if err := utils.ParseQueryAndValidate(c, &req); err != nil {
@@ -150,10 +134,6 @@ func (h *MessageHandler) GetMessages(c fiber.Ctx) error {
 	return response.Paginated(c, messages, total)
 }
 
-// GetAllMessages GET /api/message/all
-//
-// Same as GET /api/message but ignores the type filter. Kept as a separate
-// route for parity with the legacy frontend that has /message/all hard-coded.
 func (h *MessageHandler) GetAllMessages(c fiber.Ctx) error {
 	var req dto.GetMessageRequest
 	if err := utils.ParseQueryAndValidate(c, &req); err != nil {
@@ -171,7 +151,6 @@ func (h *MessageHandler) GetAllMessages(c fiber.Ctx) error {
 	return response.Paginated(c, messages, total)
 }
 
-// GetUnreadTypes GET /api/message/unread
 func (h *MessageHandler) GetUnreadTypes(c fiber.Ctx) error {
 	user := middleware.MustGetUser(c)
 	types, err := h.service.GetUnreadTypes(user.ID)
@@ -181,7 +160,6 @@ func (h *MessageHandler) GetUnreadTypes(c fiber.Ctx) error {
 	return response.OK(c, types)
 }
 
-// MarkAsRead PUT /api/message/read
 func (h *MessageHandler) MarkAsRead(c fiber.Ctx) error {
 	var req dto.ReadMessageRequest
 	if err := utils.ParseAndValidate(c, &req); err != nil {

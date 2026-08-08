@@ -1,12 +1,4 @@
 <script setup lang="ts">
-// A whole comment area: composer on top, one flat list of root comments (each
-// carrying its reply tier), paginator at the bottom. Used unchanged by every
-// comment surface on the site — the patch comment tab and a resource's comment
-// area — which is what keeps them looking identical.
-//
-// Presentational: the fetch, the optimistic handlers and the deep-link jump all
-// live in useCommentList, which the PAGE calls (the resource page needs the count
-// before it can label its tab). See that file.
 import type { CommentTarget } from '~/shared/utils/commentTarget'
 import { commentSurface } from '~/shared/utils/commentTarget'
 
@@ -18,10 +10,6 @@ const props = withDefaults(
     expandedRoots: Set<number>
     pending?: boolean
     canModerate?: boolean
-    // Pre-@mentioned in the root composer as a placeholder. The resource area
-    // passes the resource's publisher so a comment reaches them by default —
-    // nothing else notifies them, and @mentions are the one channel that does
-    // (CreateMentionMessages on the server reads the ids out of the body).
     mentionUser?: KunUser | null
   }>(),
   { pending: false, canModerate: false, mentionUser: null }
@@ -41,12 +29,6 @@ const page = defineModel<number>('page', { required: true })
 const userStore = useUserStore()
 const surface = commentSurface(props.target)
 
-// The composer's starting body. Markdown [@name](/user/id) is what the renderer
-// turns into a kun-mention link AND what the server's mention extractor reads,
-// so the placeholder is a real mention, not decorative text.
-//
-// Skipped when the viewer IS that user: nobody needs to @ themselves (the server
-// drops a self-mention anyway, so it would only be noise in the editor).
 const composerSeed = computed(() => {
   const u = props.mentionUser
   if (!u?.id || u.id === userStore.user.id) return ''
@@ -56,10 +38,6 @@ const composerSeed = computed(() => {
 
 <template>
   <div class="space-y-6">
-    <!-- Standing notice (resource area only). Solid palette colours, no
-         gradient. Shown to everyone including logged-out readers — the point is
-         that someone hitting a broken link knows where to say so BEFORE they
-         decide whether it's worth logging in. -->
     <div
       v-if="surface.notice"
       class="border-primary/30 bg-primary/10 flex gap-3 rounded-2xl border p-4"
@@ -78,8 +56,6 @@ const composerSeed = computed(() => {
       </div>
     </div>
 
-    <!-- Composer. Logged out → the login prompt in its place; the editor itself
-         is pointless without an identity to post as. -->
     <div
       v-if="userStore.user.id"
       class="border-default/20 bg-content1 shadow-kun-sm flex gap-3 rounded-2xl border p-4"
@@ -110,8 +86,6 @@ const composerSeed = computed(() => {
 
     <KunLoading v-if="pending" description="加载评论中..." />
 
-    <!-- space-y-8 between roots against space-y-4 inside a reply group: that
-         contrast is what separates the two tiers (see CommentRow). -->
     <div v-else-if="items.length" class="space-y-8">
       <CommentRow
         v-for="c in items"

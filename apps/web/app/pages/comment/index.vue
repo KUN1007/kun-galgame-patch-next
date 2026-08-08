@@ -1,17 +1,10 @@
 <script setup lang="ts">
-// keepalive: returning from a comment's target restores this list's page +
-// scroll instead of resetting to page 1. Safe — static route, page seeded from
-// the URL into a plain ref (no route-param computeds that misfire when cached).
-// Kept alive via the central include list in app.vue, keyed by this name.
 defineOptions({ name: 'comment-feed' })
 
 const route = useRoute()
 const router = useRouter()
 const api = useApi()
 
-// SFW-only listing for anonymous crawlers (comments whose owning patch is
-// NSFW are filtered out by enricher.FilterByGalgameContentLimit on the
-// /api/comment endpoint). Safe to give a descriptive SEO blurb.
 useKunSeoMeta({
   title: '最新评论',
   description:
@@ -19,10 +12,9 @@ useKunSeoMeta({
 })
 
 const page = ref(Number(route.query.page ?? 1))
-const pageHref = usePageHref() // crawlable pagination (<a href>)
+const pageHref = usePageHref()
 const limit = 20
 
-// commentListRequest requires sort_field / sort_order.
 interface ListResponse {
   items: PatchComment[]
   total: number

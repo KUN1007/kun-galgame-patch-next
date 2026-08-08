@@ -1,19 +1,3 @@
-// Package enricher enriches local patch rows into the shape the frontend consumes directly.
-//
-// D12 (2026-04-21): the patch table no longer stores galgame metadata. It is
-// fetched in bulk from galgame /galgame/batch by galgame_id and assembled into the
-// structure the frontend GalgameCard expects. All JSON keys are snake_case:
-//
-//	{
-//	  id, vndb_id, bid, banner, view, download,
-//	  name: { "en-us", "ja-jp", "zh-cn", "zh-tw" },
-//	  type, language, platform,
-//	  content_limit, status, created, resource_update_time,
-//	  count: { favorite_by, contribute_by, resource, comment },
-//	  galgame: { ...raw galgame fields, optionally used by the detail page }
-//	}
-//
-// When galgame fails, string fields are empty but `count` stays accurate so the frontend does not break.
 package enricher
 
 import (
@@ -27,7 +11,6 @@ import (
 	"kun-galgame-patch-api/pkg/userclient"
 )
 
-// KunLanguage mirrors the frontend KunLanguage (4 languages).
 type KunLanguage struct {
 	EnUs string `json:"en-us"`
 	JaJp string `json:"ja-jp"`
@@ -35,7 +18,6 @@ type KunLanguage struct {
 	ZhTw string `json:"zh-tw"`
 }
 
-// Counts mirrors the frontend `_count` nested object.
 type Counts struct {
 	FavoriteBy   int `json:"favorite_by"`
 	ContributeBy int `json:"contribute_by"`
@@ -43,72 +25,29 @@ type Counts struct {
 	Comment      int `json:"comment"`
 }
 
-// GalgameCard is the Go mirror of the frontend `interface GalgameCard`.
-// All JSON tags are snake_case to match the backend-wide convention.
 type GalgameCard struct {
-	ID           int                  `json:"id"`
-	Name         KunLanguage          `json:"name"`
-	VndbID       string               `json:"vndb_id"`
-	BID          *int                 `json:"bid"`
-	Banner       string               `json:"banner"`
-	View         int                  `json:"view"`
-	Download     int                  `json:"download"`
-	Type         patchModel.JSONArray `json:"type"`
-	Language     patchModel.JSONArray `json:"language"`
-	Platform     patchModel.JSONArray `json:"platform"`
-	ContentLimit string               `json:"content_limit"`
-	Status       int                  `json:"status"`
-	// IsOnForum is true when moyu holds a REAL local patch row for this galgame —
-	// created on a real publish/claim, NOT on mere view (moyu no longer
-	// materializes a stub on open). It is false on a synthetic card built from
-	// galgame data alone: the galgame exists on the galgame but is "本站尚未收录", and the
-	// FE renders a read-only galgame page whose only action is 发布补丁. baseCard
-	// (built from a real row) sets it true; CardFromBrief leaves it false.
-	IsOnForum          bool      `json:"is_on_forum"`
-	Created            time.Time `json:"created"`
-	ResourceUpdateTime time.Time `json:"resource_update_time"`
-	// ReleaseDate is the locally-mirrored galgame.release_date (date
-	// only; see migration 010 + backfill). Null when unknown. Surfaced so
-	// list cards can render the release month and the date filter result is
-	// legible. Day-precision time.Time → JSON RFC3339; the frontend formats
-	// to YYYY-MM / YYYY-MM-DD.
-	ReleaseDate *time.Time `json:"release_date,omitempty"`
-	Count       Counts     `json:"count"`
-	// User is the PATCH PUBLISHER (moyu's local patch.user_id — who registered
-	// this galgame on moyu / uploaded its patches). It is moyu-owned data and
-	// is what owner-gating (edit/delete) keys on. NOT the entry creator.
-	User *patchModel.PatchUser `json:"user,omitempty"`
-	// Creator is the GALGAME ENTRY CREATOR, read from moyu's own frozen snapshot
-	// column (patch.creator_id, migration 027) rather than from upstream: the
-	// canonical catalog face carries no product user model, and wiki-era
-	// authorship is frozen at the archive (refs/proj/106 R2/R12). Resolved from
-	// the same OAuth user directory as User but kept SEPARATE, so the "谁创建了
-	// 这个词条" position and the patch publisher never overwrite each other. Nil
-	// when the snapshot is unset (never backfilled, or an entry created after
-	// the wiki face retired) or the OAuth lookup misses.
-	Creator *patchModel.PatchUser       `json:"creator,omitempty"`
-	Galgame *galgameClient.GalgameBrief `json:"galgame,omitempty"`
+	ID                 int                         `json:"id"`
+	Name               KunLanguage                 `json:"name"`
+	VndbID             string                      `json:"vndb_id"`
+	BID                *int                        `json:"bid"`
+	Banner             string                      `json:"banner"`
+	View               int                         `json:"view"`
+	Download           int                         `json:"download"`
+	Type               patchModel.JSONArray        `json:"type"`
+	Language           patchModel.JSONArray        `json:"language"`
+	Platform           patchModel.JSONArray        `json:"platform"`
+	ContentLimit       string                      `json:"content_limit"`
+	Status             int                         `json:"status"`
+	IsOnForum          bool                        `json:"is_on_forum"`
+	Created            time.Time                   `json:"created"`
+	ResourceUpdateTime time.Time                   `json:"resource_update_time"`
+	ReleaseDate        *time.Time                  `json:"release_date,omitempty"`
+	Count              Counts                      `json:"count"`
+	User               *patchModel.PatchUser       `json:"user,omitempty"`
+	Creator            *patchModel.PatchUser       `json:"creator,omitempty"`
+	Galgame            *galgameClient.GalgameBrief `json:"galgame,omitempty"`
 }
 
-// EnrichPatches enriches a batch of local patches with galgame data into GalgameCards the frontend can render directly.
-//
-// A single /galgame/batch call covers all galgame_ids. If galgame fails, only local fields are available (name is empty strings).
-//
-// If users is non-nil, publisher briefs are also batch-fetched from OAuth
-// /users/batch and attached to each card's User field. Pass nil from callers
-// that have no userclient handy or do not need publisher info.
-//
-// contentLimit is the NSFW filter forwarded to galgame/batch per
-// docs/galgame_wiki/00-handbook-for-downstream.md §16 (sfw / nsfw / all).
-// Pass "" to keep the legacy "no filter, preserve every patch" behavior
-// (used by code paths that already hold a curated ID set — comment summaries,
-// favorites — where dropping rows would surprise the caller).
-// Pass "sfw" / "nsfw" / "all" for list/browse semantics: rows galgame filters out
-// are *removed* from the returned slice (length may be < len(patches)). On
-// galgame transient failure with a non-empty contentLimit we return nil rather
-// than the unfiltered fallback — SEO safety beats showing names, since the
-// fallback would surface NSFW patches that the caller explicitly tried to
-// exclude.
 func EnrichPatches(ctx context.Context, galgame *galgameClient.Client, users *userclient.Client, patches []patchModel.Patch, contentLimit string) []GalgameCard {
 	cards := make([]GalgameCard, len(patches))
 	for i := range patches {
@@ -122,8 +61,6 @@ func EnrichPatches(ctx context.Context, galgame *galgameClient.Client, users *us
 
 	if galgame == nil {
 		if contentLimit != "" {
-			// No galgame = can't verify content_limit on any row. Refuse rather
-			// than ship potentially NSFW names back to the caller.
 			return nil
 		}
 		return cards
@@ -148,10 +85,6 @@ func EnrichPatches(ctx context.Context, galgame *galgameClient.Client, users *us
 	}
 
 	if contentLimit != "" {
-		// Filter mode: a patch.id missing from briefs means galgame filtered it
-		// out (or it doesn't exist / isn't visible). Drop it from the result
-		// rather than emitting a cardless row — list pages should show fewer
-		// items, not stub rows pointing at filtered content.
 		filtered := make([]GalgameCard, 0, len(briefs))
 		for i := range cards {
 			if g, ok := byID[patches[i].ID]; ok {
@@ -170,9 +103,6 @@ func EnrichPatches(ctx context.Context, galgame *galgameClient.Client, users *us
 	return cards
 }
 
-// attachUsersToCards batch-fetches publisher briefs from OAuth and stamps the
-// User field on each card. Best-effort -- on error the User field stays nil
-// and the frontend renders the anonymous-fallback path.
 func attachUsersToCards(ctx context.Context, users *userclient.Client, patches []patchModel.Patch, cards []GalgameCard) {
 	if users == nil {
 		return
@@ -196,11 +126,6 @@ func attachUsersToCards(ctx context.Context, users *userclient.Client, patches [
 	}
 }
 
-// resolveUser turns a single OAuth user id into a PatchUser brief (name /
-// avatar / roles) via the short-TTL userclient cache. Returns nil for a nil
-// client, a non-positive id, or a lookup miss, so callers can treat "unknown
-// user" uniformly (the frontend renders its anonymous fallback). Shared by the
-// publisher (patch.user_id) and entry-creator (galgame.user_id) lookups.
 func resolveUser(ctx context.Context, users *userclient.Client, id int) *patchModel.PatchUser {
 	if users == nil || id <= 0 {
 		return nil
@@ -219,10 +144,6 @@ func resolveUser(ctx context.Context, users *userclient.Client, id int) *patchMo
 	}
 }
 
-// BuildPatchSummaryMap fetches galgame briefs for the given patch IDs and returns
-// a map keyed by patch_id (the local row id) of compact summaries. Patches
-// whose galgame_id is missing or whose galgame fetch fails are still included
-// with empty Name/Banner so callers can render at least a link.
 func BuildPatchSummaryMap(ctx context.Context, galgame *galgameClient.Client, db PatchSummaryDB, patchIDs []int) map[int]patchModel.PatchSummary {
 	out := map[int]patchModel.PatchSummary{}
 	if len(patchIDs) == 0 {
@@ -247,11 +168,6 @@ func BuildPatchSummaryMap(ctx context.Context, galgame *galgameClient.Client, db
 
 	briefByGID := map[int]*galgameClient.GalgameBrief{}
 	if galgame != nil && len(galgameIDs) > 0 {
-		// No content_limit filter — summaries are attached to objects the user
-		// is already viewing (their comments / favorited resources). The owning
-		// patch's NSFW gate is the originating page's responsibility, not this
-		// label-resolution helper. Matches galgame batch default per
-		// docs/galgame_wiki/00-handbook §16.
 		if briefs, err := galgame.GalgameBatch(ctx, galgameIDs, ""); err == nil {
 			for i := range briefs {
 				briefByGID[briefs[i].ID] = &briefs[i]
@@ -263,10 +179,6 @@ func BuildPatchSummaryMap(ctx context.Context, galgame *galgameClient.Client, db
 		s := patchModel.PatchSummary{ID: r.ID, VndbID: r.VndbID}
 		if g, ok := briefByGID[r.ID]; ok {
 			s.Banner = g.Banner
-			// The catalog /v1 contract expresses the banner as covers[sort_order=0]
-			// → effective_banner_hash; the legacy Banner URL above is now empty, so
-			// carry the hash the frontend actually resolves the cover from. Without
-			// this the user-profile resource cards fell back to the placeholder.
 			s.EffectiveBannerHash = g.EffectiveBannerHash
 			s.Name = patchModel.PatchSummaryName{
 				EnUs: g.NameEnUs,
@@ -280,8 +192,6 @@ func BuildPatchSummaryMap(ctx context.Context, galgame *galgameClient.Client, db
 	return out
 }
 
-// resolveUserPtr is resolveUser for an optional id — the shape the frozen
-// creator snapshot has (null = never backfilled / unknown).
 func resolveUserPtr(ctx context.Context, users *userclient.Client, id *int) *patchModel.PatchUser {
 	if id == nil {
 		return nil
@@ -289,31 +199,16 @@ func resolveUserPtr(ctx context.Context, users *userclient.Client, id *int) *pat
 	return resolveUser(ctx, users, *id)
 }
 
-// PatchSummaryDB is the minimal access surface BuildPatchSummaryMap needs.
-// Callers typically supply a thin wrapper around their *gorm.DB so this
-// package stays free of gorm imports.
 type PatchSummaryDB interface {
 	LookupPatchesByIDs(ids []int) ([]patchModel.Patch, error)
 }
 
-// EnrichPatch enriches a single patch (for the header card; no intro/tag/official).
-// If users is non-nil, the publisher brief is also fetched and attached.
-//
-// Returns nil when contentLimit filters this patch out (the row exists but
-// is the wrong content_limit) — the caller should translate that to a 404.
-// On galgame transient failure with a non-empty contentLimit we also return nil
-// rather than the unfiltered fallback (SEO safety beats fallback content).
-// contentLimit semantics match docs/galgame_wiki/00-handbook §16:
-//   - "" — no filter, galgame returns the row if it exists at all (legacy
-//     behaviour for cases where a missing galgame row should still render with
-//     local-only fields).
-//   - "sfw" / "nsfw" / "all" — explicit filter; on miss we hard-fail to nil.
 func EnrichPatch(ctx context.Context, galgame *galgameClient.Client, users *userclient.Client, p *patchModel.Patch, contentLimit string) *GalgameCard {
 	if p == nil {
 		return nil
 	}
 	card := baseCard(p)
-	card.User = resolveUser(ctx, users, p.UserID) // 补丁发布者 (moyu patch.user_id)
+	card.User = resolveUser(ctx, users, p.UserID)
 	if galgame == nil || p.ID <= 0 {
 		if contentLimit != "" {
 			return nil
@@ -329,20 +224,13 @@ func EnrichPatch(ctx context.Context, galgame *galgameClient.Client, users *user
 		return &card
 	}
 	if len(briefs) == 0 {
-		// Either filtered out or genuinely not visible to the caller.
 		return nil
 	}
 	applyGalgame(&card, &briefs[0])
-	// 词条创建者 = the FROZEN local snapshot (patch.creator_id), not a live read:
-	// the canonical catalog face carries no product user model, so wiki-era
-	// authorship is recorded once and kept (refs/proj/106 R12, migration 027).
-	// Resolved separately from the publisher so the two never overwrite.
 	card.Creator = resolveUserPtr(ctx, users, p.CreatorID)
 	return &card
 }
 
-// PatchDetailTag is the lightweight tag shape surfaced to the patch detail page.
-// galgame returns spoiler_level alongside the tag, so we flatten it onto the same row.
 type PatchDetailTag struct {
 	ID           int      `json:"id"`
 	Name         string   `json:"name"`
@@ -351,28 +239,15 @@ type PatchDetailTag struct {
 	SpoilerLevel int      `json:"spoiler_level"`
 }
 
-// PatchDetailOfficial is the lightweight company / publisher shape for the patch detail page.
 type PatchDetailOfficial struct {
 	ID       int      `json:"id"`
 	Name     string   `json:"name"`
 	Aliases  []string `json:"aliases,omitempty"`
 	Category string   `json:"category"`
 	Lang     string   `json:"lang"`
-	// LogoHash is the brand logo as an image_service content hash (""=none).
-	// Not omitempty: a consumer must be able to tell "this company has no logo"
-	// from "this response predates the field", and only an always-present key
-	// says the first.
-	LogoHash string `json:"logo_hash"`
+	LogoHash string   `json:"logo_hash"`
 }
 
-// PatchDetailCard is for the detail page: the base GalgameCard plus intro and the
-// resolved galgame tags / officials / engine IDs. We embed the full tag/official
-// objects (rather than just IDs) so the frontend can render names without a
-// second round-trip to the galgame service.
-//
-// Both the raw markdown (`introduction_markdown`) and the rendered HTML
-// (`introduction_html`) are returned: the frontend uses HTML for display and
-// can fall back to markdown for editing.
 type PatchDetailCard struct {
 	GalgameCard
 	IntroductionMarkdown KunLanguage           `json:"introduction_markdown"`
@@ -382,11 +257,6 @@ type PatchDetailCard struct {
 	Officials            []PatchDetailOfficial `json:"officials"`
 }
 
-// EnrichPatchDetail enriches the detail page: one extra /galgame/:gid call on top of EnrichPatch to get intro/associated IDs.
-//
-// Returns nil when contentLimit filters this patch out (galgame returns 404 for
-// the row at this content_limit) — caller should translate that to its own
-// 404. contentLimit semantics match EnrichPatch.
 func EnrichPatchDetail(ctx context.Context, galgame *galgameClient.Client, users *userclient.Client, p *patchModel.Patch, contentLimit string) *PatchDetailCard {
 	if p == nil {
 		return nil
@@ -394,14 +264,10 @@ func EnrichPatchDetail(ctx context.Context, galgame *galgameClient.Client, users
 	base := &PatchDetailCard{}
 	base.GalgameCard = baseCard(p)
 	base.Updated = p.Updated
-	// Initialize the galgame-derived slices to non-nil so an empty set serializes
-	// as [] (not JSON null). The FE types declare them as non-optional arrays
-	// (tags/officials); a null would break any .map/.length the detail page does
-	// without a guard. Applies to every return path below.
 	base.Tags = []PatchDetailTag{}
 	base.Officials = []PatchDetailOfficial{}
 
-	base.User = resolveUser(ctx, users, p.UserID) // 补丁发布者 (moyu patch.user_id)
+	base.User = resolveUser(ctx, users, p.UserID)
 
 	if galgame == nil || p.ID <= 0 {
 		if contentLimit != "" {
@@ -411,10 +277,6 @@ func EnrichPatchDetail(ctx context.Context, galgame *galgameClient.Client, users
 	}
 	env, err := galgame.GetGalgame(ctx, p.ID, contentLimit)
 	if err != nil {
-		// galgame returns 404 for both "no such id" and "filtered out by
-		// content_limit" (per docs/galgame_wiki/01-galgame.md GET /galgame/:gid).
-		// In filter mode we hard-fail to nil — the caller can't disambiguate
-		// transient from filter, and either way the safe move is "don't render".
 		slog.Warn("galgame 详情富化失败", "galgame_id", p.ID, "error", err)
 		if contentLimit != "" {
 			return nil
@@ -423,7 +285,6 @@ func EnrichPatchDetail(ctx context.Context, galgame *galgameClient.Client, users
 	}
 
 	g := &env.Galgame
-	// Fill in basic fields like name / banner / content_limit
 	base.Name = KunLanguage{
 		EnUs: g.NameEnUs,
 		JaJp: g.NameJaJp,
@@ -446,9 +307,6 @@ func EnrichPatchDetail(ctx context.Context, galgame *galgameClient.Client, users
 		ZhTw: markdown.MustRender(g.IntroZhTw),
 	}
 
-	// Stamp the raw galgame object so the edit form can pre-fill age_limit /
-	// original_language without an extra round-trip. Brief fields only --
-	// intro/tags/officials are surfaced via their own response fields.
 	base.Galgame = &galgameClient.GalgameBrief{
 		ID:                       g.ID,
 		VndbID:                   g.VndbID,
@@ -491,8 +349,6 @@ func EnrichPatchDetail(ctx context.Context, galgame *galgameClient.Client, users
 	return base
 }
 
-// ─── helpers ──────────────────────────────────────
-
 func collectGalgameIDs(patches []patchModel.Patch) []int {
 	seen := map[int]struct{}{}
 	ids := make([]int, 0, len(patches))
@@ -509,7 +365,6 @@ func collectGalgameIDs(patches []patchModel.Patch) []int {
 	return ids
 }
 
-// baseCard builds the local-field portion of the card from a patch (galgame-owned fields like Name/Banner start empty).
 func baseCard(p *patchModel.Patch) GalgameCard {
 	return GalgameCard{
 		ID:                 p.ID,
@@ -521,7 +376,7 @@ func baseCard(p *patchModel.Patch) GalgameCard {
 		Language:           p.Language,
 		Platform:           p.Platform,
 		Status:             p.Status,
-		IsOnForum:          true, // a real local patch row exists
+		IsOnForum:          true,
 		Created:            p.Created,
 		ResourceUpdateTime: p.ResourceUpdateTime,
 		ReleaseDate:        p.ReleaseDate,
@@ -531,13 +386,9 @@ func baseCard(p *patchModel.Patch) GalgameCard {
 			Resource:     p.ResourceCount,
 			Comment:      p.CommentCount,
 		},
-		// User is filled by EnrichPatches/EnrichPatch via attachUsersToCards
-		// (or stays nil when no userclient is provided). p.User is never
-		// populated by GORM after the OAuth migration.
 	}
 }
 
-// applyGalgame merges the galgame info into a card.
 func applyGalgame(card *GalgameCard, g *galgameClient.GalgameBrief) {
 	card.Name = KunLanguage{
 		EnUs: g.NameEnUs,
@@ -550,17 +401,10 @@ func applyGalgame(card *GalgameCard, g *galgameClient.GalgameBrief) {
 	card.Galgame = g
 }
 
-// CardFromBrief builds a GalgameCard from a galgame brief alone (no local patch
-// row). All moyu-side stats stay zero — used when enriching galgame responses
-// (tag/official detail) that include galgames moyu does not yet have a patch
-// row for. The frontend can render the same card chrome and just show 0s.
 func CardFromBrief(g *galgameClient.GalgameBrief) GalgameCard {
 	if g == nil {
 		return GalgameCard{}
 	}
-	// Init the JSONArray fields to non-nil so they serialize as [] not null —
-	// this degraded card (a galgame with no local patch row) has no local
-	// type/language/platform, and the FE type declares them as string[].
 	card := GalgameCard{
 		ID:       g.ID,
 		VndbID:   g.VndbID,
@@ -572,39 +416,13 @@ func CardFromBrief(g *galgameClient.GalgameBrief) GalgameCard {
 	return card
 }
 
-// CalendarCard is a release-calendar entry: a GalgameCard built straight from the
-// calendar brief — which carries release_date + release_precision + the key art
-// already, so the calendar path must NOT re-batch — plus HasPatch: whether moyu
-// holds a local patch row for this galgame. HasPatch drives the card's link.
 type CalendarCard struct {
 	GalgameCard
-	HasPatch bool `json:"has_patch"`
-	// IsFavorite is stamped per-viewer by the handler (optionalAuth) so the
-	// calendar card can render an inline 收藏 toggle with the right initial state.
-	// false for anonymous viewers.
-	IsFavorite bool `json:"is_favorite"`
-	// ClaimState is the catalog's claim visibility for this work, and it decides
-	// which of THREE cards the frontend renders (it replaced the wiki `status`
-	// int in wave A2-2):
-	//
-	//	live  — a published wiki entry; the normal card, linking to /patch/:id.
-	//	draft — an unpublished wiki entry; the 未发布 card, routing to the
-	//	        publish wizard to claim it. (This is the old status == 2.)
-	//	""    — NO wiki entry at all. New with the full-catalog population
-	//	        (refs/proj/126 P1): the calendar now covers every galgame the
-	//	        registry knows, not just the ones the wiki has an entry for, so
-	//	        this card says "not on the forum yet" and has no gid to link to.
-	//
-	// `hidden` never reaches here — the client drops withdrawn entries.
+	HasPatch   bool   `json:"has_patch"`
+	IsFavorite bool   `json:"is_favorite"`
 	ClaimState string `json:"claim_state"`
 }
 
-// EnrichCalendarBriefs turns calendar briefs into CalendarCards. There is no
-// re-fetch (the briefs are already complete, incl. release_date /
-// release_precision) and no patch-stats overlay (the calendar card is
-// release-centric, not stats-centric) — only HasPatch is stamped from the set of
-// galgame ids moyu holds a local patch row for. A brief with no gid (a work with
-// no wiki entry) can have no local patch by construction.
 func EnrichCalendarBriefs(briefs []galgameClient.GalgameBrief, hasPatch map[int]bool) []CalendarCard {
 	cards := make([]CalendarCard, 0, len(briefs))
 	for i := range briefs {
@@ -617,11 +435,6 @@ func EnrichCalendarBriefs(briefs []galgameClient.GalgameBrief, hasPatch map[int]
 	return cards
 }
 
-// GalgameOnlyCard builds a header card for a galgame moyu has NO local patch row
-// for, straight from galgame data (is_on_forum=false). Returns nil when the galgame
-// isn't publicly visible on galgame at this content_limit (→ the handler 404s, which
-// also preserves the NSFW gate). Used by GET /patch/:id so a "本站尚未收录" galgame
-// renders a read-only page instead of 404'ing.
 func GalgameOnlyCard(ctx context.Context, galgame *galgameClient.Client, users *userclient.Client, gid int, contentLimit string) *GalgameCard {
 	if galgame == nil || gid <= 0 {
 		return nil
@@ -640,19 +453,10 @@ func GalgameOnlyCard(ctx context.Context, galgame *galgameClient.Client, users *
 	if brief == nil {
 		return nil
 	}
-	card := CardFromBrief(brief) // IsOnForum stays false (galgame-only)
-	// No creator badge here BY CONSTRUCTION: the entry-creator snapshot lives on
-	// moyu's own patch row (migration 027) and this card exists precisely because
-	// there is no such row. Rather than a live wiki read for a badge, the card
-	// renders without one — the frontend already has an anonymous fallback.
+	card := CardFromBrief(brief)
 	return &card
 }
 
-// GalgameOnlyDetail builds the introduction-tab detail card for a galgame moyu
-// has NO local patch row for, from galgame GET /galgame/:gid (is_on_forum=false,
-// zero moyu stats). Returns nil when galgame has no publicly-visible row at this
-// content_limit (→ the handler 404s). Used by GET /patch/:id/detail. Mirrors
-// EnrichPatchDetail's galgame→card mapping, minus the local patch fields.
 func GalgameOnlyDetail(ctx context.Context, galgame *galgameClient.Client, users *userclient.Client, gid int, contentLimit string) *PatchDetailCard {
 	if galgame == nil || gid <= 0 {
 		return nil
@@ -669,13 +473,10 @@ func GalgameOnlyDetail(ctx context.Context, galgame *galgameClient.Client, users
 		Type:     patchModel.JSONArray{},
 		Language: patchModel.JSONArray{},
 		Platform: patchModel.JSONArray{},
-		// IsOnForum stays false — this galgame is galgame-only ("本站尚未收录").
 	}
 	base.Name = KunLanguage{EnUs: g.NameEnUs, JaJp: g.NameJaJp, ZhCn: g.NameZhCn, ZhTw: g.NameZhTw}
 	base.Banner = g.Banner
 	base.ContentLimit = g.ContentLimit
-	// Surface the galgame entry's own timestamps so the intro tab's 创建/更新 lines
-	// don't render a zero-time ("0001-01-01"). Best-effort RFC3339 parse.
 	if t, perr := time.Parse(time.RFC3339, g.Created); perr == nil {
 		base.Created = t
 	}

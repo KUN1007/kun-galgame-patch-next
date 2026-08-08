@@ -36,9 +36,6 @@ func TestJSONArray_Scan_InvalidType(t *testing.T) {
 	assert.Error(t, err)
 }
 
-// Regression: the pgx driver can return jsonb as a string (e.g. the INSERT ...
-// RETURNING scan in ensureLocalPatch). Scan must accept it, not error with
-// "failed to unmarshal JSONArray: []" and roll back the patch create.
 func TestJSONArray_Scan_StringInput(t *testing.T) {
 	var arr model.JSONArray
 	require.NoError(t, arr.Scan(`["a","b"]`))
@@ -70,7 +67,6 @@ func TestJSONArray_Value_NonEmpty(t *testing.T) {
 	arr := model.JSONArray{"x", "y"}
 	val, err := arr.Value()
 	require.NoError(t, err)
-	// Should be valid JSON
 	assert.Contains(t, string(val.([]byte)), "x")
 	assert.Contains(t, string(val.([]byte)), "y")
 }

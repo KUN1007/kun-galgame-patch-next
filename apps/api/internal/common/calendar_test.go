@@ -12,15 +12,6 @@ import (
 	"github.com/gofiber/fiber/v3"
 )
 
-// TestCalendarContentLimitsFanOut pins the calendar's fan-out on the EDITING
-// axis (doc 106 §38).
-//
-// The month view merges one response per content_limit, so the values this
-// returns are the gate every leg carries — and, because the merge SUMS
-// meta.count, they must partition the population rather than overlap it. sfw and
-// nsfw do (every entry carries exactly one editing verdict); the age axis this
-// lane used to speak did not, which is how a "全部" viewer could be shown a count
-// that counted works twice or not at all.
 func TestCalendarContentLimitsFanOut(t *testing.T) {
 	for _, tc := range []struct {
 		cl   string
@@ -39,20 +30,9 @@ func TestCalendarContentLimitsFanOut(t *testing.T) {
 	}
 }
 
-// TestCalendarUpstreamFailureMapping pins WHOSE FAULT the calendar reports.
-//
-// `?month=` rides through to the catalog untouched, so a caller who spells it
-// wrongly gets the catalog's own 400 back. moyu used to fold that — and every
-// other upstream failure — into 50000「调用 Galgame 资料库失败」, which is a lie
-// twice over: it tells the user a healthy service is down, and it throws away
-// the one sentence that says which parameter was wrong. A real outage keeps
-// that spelling, because then it is true.
 func TestCalendarUpstreamFailureMapping(t *testing.T) {
 	const (
-		// The catalog's own parameter rejection (public_calendar.go:
-		// response.BadRequestMsg(c, errors.ErrInvalidParam, "month must be YYYY-MM")).
-		badMonth = `{"code":9,"message":"month must be YYYY-MM"}`
-		// The registry actually failing.
+		badMonth   = `{"code":9,"message":"month must be YYYY-MM"}`
 		serverDown = `{"code":3,"message":"服务器内部错误"}`
 	)
 
@@ -74,8 +54,6 @@ func TestCalendarUpstreamFailureMapping(t *testing.T) {
 			wantStatus: http.StatusInternalServerError, wantBodyHas: `"code":50000`,
 		},
 		{
-			// Not an envelope at all — a proxy's error page. There is no upstream
-			// message to forward and no verdict to trust: an outage.
 			name:           "a non-envelope failure is an outage, not a bad request",
 			upstreamStatus: http.StatusBadGateway, upstreamBody: `<html>502</html>`,
 			wantStatus: http.StatusInternalServerError, wantBodyHas: `"code":50000`,
@@ -89,9 +67,6 @@ func TestCalendarUpstreamFailureMapping(t *testing.T) {
 			}))
 			t.Cleanup(upstream.Close)
 
-			// db / users / artifact / image are nil on purpose: every branch under
-			// test returns before the handler reaches any of them, and a nil that
-			// never panics is the proof that it does.
 			h := NewHandler(nil, galgameClient.NewWithKey(upstream.URL, "nm_test_key"), nil, nil, nil)
 			app := fiber.New()
 			app.Get("/galgame/calendar", h.GetGalgameCalendar)

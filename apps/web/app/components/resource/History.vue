@@ -1,19 +1,5 @@
 <script setup lang="ts">
-// The resource's change history — the body of the 更改历史 tab.
-//
-// Renders the same public endpoint the list rows open in a modal
-// (GET /patch/resource/:id/revisions): one entry per edit, each carrying the
-// per-field "before → after" diff computed server-side. It is safe to render to
-// anyone — service.diffResourceFields records the download link / 提取码 / 解压密码
-// only as "已更新", never their values.
-//
-// Presentational: the fetch lives in useResourceRevisions, which the PAGE calls,
-// because whether this tab exists at all depends on the count. See that file.
 
-// Imported explicitly rather than leaning on the shared/utils auto-import, which
-// is the same form Gallery.vue / Covers.vue use for resolveBannerUrl. The types
-// need it regardless (textDiff exports module types, not the ambient globals the
-// .d.ts files declare), and naming the module keeps the dependency visible.
 import {
   diffTextSegments,
   diffTextStats,
@@ -30,8 +16,6 @@ interface Props {
 
 defineProps<Props>()
 
-// Which page of revisions is shown — owned by the composable, so the fetch and
-// the pager cannot disagree.
 const page = defineModel<number>('page', { required: true })
 
 const ACTOR_ROLE_LABEL: Record<number, string> = {
@@ -41,24 +25,10 @@ const ACTOR_ROLE_LABEL: Record<number, string> = {
   3: '管理员'
 }
 
-// `action` is a column with room to grow: today UpdateResource is its only
-// writer and always stores "updated". Anything else falls back to the raw value
-// rather than being labelled 编辑 — a new action must not silently inherit the
-// old wording.
 const ACTION_LABEL: Record<string, string> = {
   updated: '编辑'
 }
 
-// ─── Diff rendering ───────────────────────────────────
-// One UNIFIED block per field with only the changed runs tinted, replacing the
-// before/after columns this started as. Those columns printed the whole field
-// twice, so the actual edit was invisible in them — a real revision here changed
-// `DL版版` to `DL版`, one character inside 381, and nothing about two tinted
-// walls of text pointed at it.
-//
-// Long untouched runs are elided the way a code review folds context: the reader
-// came for the change, not the 250 characters around it. Per-field toggle to see
-// everything.
 const ELIDE_OVER = 180
 const CONTEXT = 60
 
@@ -79,8 +49,6 @@ const piecesFor = (
       out.push({ kind: 'text', op: s.op, text: s.text })
       return
     }
-    // Keep the context on the side that faces a change: the run before the first
-    // change only needs its tail, the run after the last only its head.
     const isFirst = i === 0
     const isLast = i === segments.length - 1
     if (isFirst) {
@@ -98,8 +66,6 @@ const piecesFor = (
   return out
 }
 
-// Expanded state keyed per revision+field, so opening one long note does not
-// unfold every other change on the page.
 const expandedKeys = ref(new Set<string>())
 const keyOf = (revId: number, field: string) => `${revId}:${field}`
 const isExpanded = (revId: number, field: string) =>
@@ -112,8 +78,6 @@ const toggleExpanded = (revId: number, field: string) => {
   expandedKeys.value = next
 }
 
-// Diffing every field of every revision on the page is pure computation over
-// data already fetched, so do it once here rather than per re-render.
 interface RenderedChange {
   field: string
   label: string
@@ -139,9 +103,6 @@ const renderChanges = (rev: ResourceRevisionItem): RenderedChange[] =>
 </script>
 
 <template>
-  <!-- No card chrome / heading: the tab bar above already names this panel, and
-       the download panel is its sibling. Wrapping it in another titled box would
-       repeat the label the tab is already showing. -->
   <div class="space-y-4">
     <div class="text-default-500 space-y-1 text-sm">
       <p>
@@ -166,7 +127,6 @@ const renderChanges = (rev: ResourceRevisionItem): RenderedChange[] =>
         :key="rev.id"
         class="border-default/20 bg-default-50 space-y-3 rounded-xl border p-3"
       >
-        <!-- Meta: what kind of change, when, by which role, and why. -->
         <div class="flex flex-wrap items-center gap-2 text-xs">
           <KunChip color="primary" variant="flat" size="xs">
             <KunIcon name="lucide:pencil-line" class="size-3" />
@@ -188,7 +148,6 @@ const renderChanges = (rev: ResourceRevisionItem): RenderedChange[] =>
           </span>
         </div>
 
-        <!-- Field diff: one unified block, only the changed runs tinted. -->
         <div class="space-y-3">
           <div v-for="c in renderChanges(rev)" :key="c.field">
             <div class="mb-1 flex flex-wrap items-center gap-2">
@@ -217,9 +176,6 @@ const renderChanges = (rev: ResourceRevisionItem): RenderedChange[] =>
               </button>
             </div>
 
-            <!-- whitespace-pre-wrap keeps the note's own line structure: it is
-                 markdown source, and collapsing its newlines was half of why
-                 the old view was unreadable. -->
             <div
               class="border-default/30 bg-content1 rounded-lg border px-2 py-1.5 text-sm leading-relaxed break-words whitespace-pre-wrap"
             >

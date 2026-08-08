@@ -1,13 +1,4 @@
 <script setup lang="ts">
-// 封面打码（马赛克）编辑器 — ported from the legacy next-web KunImageMosaicModal.
-//
-// Paint over regions (e.g. NSFW areas) to pixelate them. Pure canvas, no deps:
-//   - precompute a fully-pixelated copy of the image (pixelate()),
-//   - per brush stroke, mask that copy to the stroke path via
-//     globalCompositeOperation='destination-in', then composite it onto the
-//     display canvas, which ACCUMULATES every stroke.
-// The display canvas is the natural image resolution (so the export is full-res)
-// and CSS-scaled to fit; pointer coords are scaled back to canvas space.
 const open = defineModel<boolean>('open', { required: true })
 const props = defineProps<{ src: string }>()
 const emit = defineEmits<{ complete: [blob: Blob] }>()
@@ -16,13 +7,12 @@ const canvasRef = ref<HTMLCanvasElement | null>(null)
 const blockSize = ref(24)
 
 let image: HTMLImageElement | null = null
-let originalData: ImageData | null = null // clean pixels (reset + re-pixelate source)
-let mosaicCanvas: HTMLCanvasElement | null = null // offscreen pixelated, masked per stroke
-let mosaicData: ImageData | null = null // pixelated copy at the current block size
+let originalData: ImageData | null = null
+let mosaicCanvas: HTMLCanvasElement | null = null
+let mosaicData: ImageData | null = null
 let drawing = false
 let strokeStart = true
 
-// Average each blockSize×blockSize block → a pixelated ImageData.
 const pixelate = (src: ImageData, size: number): ImageData => {
   const { width: w, height: h, data: s } = src
   const out = new ImageData(w, h)
@@ -37,8 +27,6 @@ const pixelate = (src: ImageData, size: number): ImageData => {
       for (let y = by; y < by + size && y < h; y++) {
         for (let x = bx; x < bx + size && x < w; x++) {
           const i = (y * w + x) * 4
-          // i is in-bounds by the loop guards; assert to satisfy
-          // noUncheckedIndexedAccess without a per-pixel `?? 0` branch.
           r += s[i]!
           g += s[i + 1]!
           b += s[i + 2]!
@@ -78,9 +66,6 @@ const setup = () => {
   if (!canvas || !props.src) return
   const img = new Image()
   img.onload = () => {
-    // The modal may have been closed (teardown) before this async decode
-    // resolved — bail so we don't draw to an unmounted canvas or revive
-    // torn-down state. mosaicSrc is a same-origin object URL, so no taint.
     if (image !== img || canvasRef.value !== canvas) return
     canvas.width = img.naturalWidth
     canvas.height = img.naturalHeight
@@ -93,7 +78,6 @@ const setup = () => {
     mosaicCanvas.height = canvas.height
     rebuildMosaicData()
   }
-  // Set `image` before `src` so the onload guard above can identify a stale load.
   image = img
   img.src = props.src
 }
@@ -140,8 +124,6 @@ const onPointerMove = (e: PointerEvent) => {
   const octx = canvasRef.value.getContext('2d')
   const mctx = mosaicCanvas.getContext('2d')
   if (!octx || !mctx) return
-  // Refill the mosaic canvas with the full pixelated copy, then keep only the
-  // brush path (destination-in), then composite that onto the display canvas.
   mctx.globalCompositeOperation = 'source-over'
   mctx.putImageData(mosaicData, 0, 0)
   mctx.globalCompositeOperation = 'destination-in'
@@ -194,9 +176,6 @@ const complete = async () => {
       <div
         class="border-default-200 bg-default-100 flex justify-center rounded-lg border p-2"
       >
-        <!-- Bound by BOTH width and height so the canvas fits the modal on any
-             screen (desktop + mobile) at the image's aspect — no overflow
-             scroll, no oversized canvas. -->
         <canvas
           ref="canvasRef"
           aria-label="封面打码画布：在需要遮挡的区域涂抹打码"

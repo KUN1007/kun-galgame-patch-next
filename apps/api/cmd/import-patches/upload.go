@@ -13,11 +13,6 @@ import (
 	"kun-galgame-patch-api/pkg/artifactclient"
 )
 
-// b2PutClient drives the browser-side half of the artifact flow that this
-// server-side importer must do itself: PUT the file bytes straight to the
-// presigned URL (Backblaze B2, HTTPS). No global timeout — each PUT sets its own
-// deadline via context, so a slow 1 GB part gets room while a stuck one still
-// fails.
 var b2PutClient = &http.Client{}
 
 const (
@@ -27,10 +22,6 @@ const (
 
 func ptr[T any](v T) *T { return &v }
 
-// uploadFileToArtifact runs the three-step artifact dance for one local file:
-// InitUpload (S2S) -> PUT bytes to B2 (single or multipart, from disk) ->
-// CompleteUpload (artifact HeadObject-verifies the size). Returns the artifact
-// uuid and the server-verified size.
 func uploadFileToArtifact(ctx context.Context, art *artifactclient.Client, path, uploadName string, size int64, uploaderSub int) (string, int64, error) {
 	f, err := os.Open(path)
 	if err != nil {
@@ -42,7 +33,7 @@ func uploadFileToArtifact(ctx context.Context, art *artifactclient.Client, path,
 		Name:        uploadName,
 		FileSize:    size,
 		MimeType:    ptr(mimeForExt(uploadName)),
-		Public:      ptr(true), // patch downloads are public (served via the CDN domain)
+		Public:      ptr(true),
 		UploaderSub: ptr(strconv.Itoa(uploaderSub)),
 	})
 	if err != nil {
@@ -72,7 +63,6 @@ func uploadFileToArtifact(ctx context.Context, art *artifactclient.Client, path,
 	return init.Uuid, art2.FileSize, nil
 }
 
-// putAllParts PUTs every multipart slice from disk and collects its ETag.
 func putAllParts(ctx context.Context, f *os.File, size int64, init *artifactclient.InitUploadResponse) ([]artifactclient.CompletedPart, error) {
 	if init.PartSize == nil || init.PartUrls == nil {
 		return nil, fmt.Errorf("init multipart response missing part_size/part_urls")
@@ -95,8 +85,6 @@ func putAllParts(ctx context.Context, f *os.File, size int64, init *artifactclie
 	return parts, nil
 }
 
-// putOne PUTs a [start, start+length) slice of f to a presigned URL and returns
-// the ETag. A fresh SectionReader per attempt makes retries re-read from disk.
 func putOne(ctx context.Context, url string, f *os.File, start, length int64) (string, error) {
 	var lastErr error
 	for attempt := 1; attempt <= maxPutRetries; attempt++ {

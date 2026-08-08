@@ -9,27 +9,14 @@ import (
 	"kun-galgame-patch-api/internal/infrastructure/markdown"
 )
 
-// PatchSummary is a compact projection of a patch for embedding inside other
-// rows (e.g. a global comment row that wants to show "评论在 <game name>" without
-// fetching the full patch). The Name field is filled by the enricher from
-// Wiki, leaving this package free of Wiki/HTTP concerns.
 type PatchSummary struct {
-	ID     int    `json:"id"`
-	VndbID string `json:"vndb_id"`
-	// Banner is the LEGACY absolute banner URL. Post wiki→catalog migration the
-	// /v1 contract no longer populates it (banner lives in covers[sort_order=0]),
-	// so it is effectively always "" now; kept only as a resolver fallback.
-	Banner string `json:"banner"`
-	// EffectiveBannerHash is the image_service hash of the pinned cover — the
-	// CURRENT way a banner is expressed. The frontend's resolveBannerUrl prefers
-	// it over the legacy Banner URL to build the CDN thumbnail. Without this the
-	// user-profile resource cards resolved to the placeholder (covers "missing").
+	ID                  int              `json:"id"`
+	VndbID              string           `json:"vndb_id"`
+	Banner              string           `json:"banner"`
 	EffectiveBannerHash string           `json:"effective_banner_hash"`
 	Name                PatchSummaryName `json:"name"`
 }
 
-// PatchSummaryName mirrors the four-language KunLanguage shape but is defined
-// here to avoid a model→enricher import.
 type PatchSummaryName struct {
 	EnUs string `json:"en-us"`
 	JaJp string `json:"ja-jp"`
@@ -37,9 +24,6 @@ type PatchSummaryName struct {
 	ZhTw string `json:"zh-tw"`
 }
 
-// renderNote is the single point where a resource's markdown note becomes HTML.
-// Pulled out so RenderResourceNotes (and its single-element callers) share
-// the same fallback behavior on render error.
 func renderNote(src string) string {
 	if src == "" {
 		return ""
@@ -47,7 +31,6 @@ func renderNote(src string) string {
 	return markdown.MustRender(src)
 }
 
-// JSONArray represents a PostgreSQL jsonb array field
 type JSONArray []string
 
 func (j *JSONArray) Scan(value any) error {
@@ -55,12 +38,6 @@ func (j *JSONArray) Scan(value any) error {
 		*j = JSONArray{}
 		return nil
 	}
-	// The pgx driver may hand a jsonb value back as either []byte or string
-	// depending on the code path (notably the INSERT ... RETURNING scan used by
-	// the lazy patch-create in ensureLocalPatch, which surfaced as repeated
-	// "failed to unmarshal JSONArray: []" errors → the whole Create rolled back
-	// → detail pages 404'd). Accept both, and treat an empty / null payload as
-	// an empty array rather than an error.
 	var bytes []byte
 	switch v := value.(type) {
 	case []byte:
@@ -84,30 +61,9 @@ func (j JSONArray) Value() (driver.Value, error) {
 	return json.Marshal(j)
 }
 
-// Patch is the core table of this project.
-//
-// D12 (2026-04-21): almost all galgame metadata (name / introduction / banner /
-// released / content_limit / engine / alias) has moved to the Galgame Wiki.
-//
-// D13 (2026-05-07): patch.id is now equal to Wiki's galgame.id. Every "patch"
-// in this system corresponds to exactly one galgame on the Wiki (1:1 via
-// vndb_id), so duplicating that id locally was redundant. The remap migration
-// (cmd/remap-patch-ids) backfills patch.id from the Wiki and drops the old
-// galgame_id column. Child tables that previously had a `patch_id` FK are
-// renamed to `galgame_id`.
-//
-// Patch now only keeps:
-//   - Wiki linkage: vndb_id (required); patch.id IS the galgame_id
-//   - Patch-specific data: translation type / supported languages / platforms / counts / user
-//
-// To display game name/banner/introduction, call Wiki /galgame/batch with patch.id directly.
 type Patch struct {
-	ID     int    `gorm:"primaryKey;autoIncrement" json:"id"`
-	VndbID string `gorm:"uniqueIndex;type:varchar(107);not null" json:"vndb_id"`
-	// Column is `bid` (baseline migration). Without the explicit column override
-	// GORM derives `b_id` from the field name (it treats "ID" as an initialism),
-	// which doesn't exist → every full-column write (e.g. the lazy patch Create
-	// in ensureLocalPatch) fails with SQLSTATE 42703. Pin it to the real column.
+	ID                 int       `gorm:"primaryKey;autoIncrement" json:"id"`
+	VndbID             string    `gorm:"uniqueIndex;type:varchar(107);not null" json:"vndb_id"`
 	BID                *int      `gorm:"column:bid;uniqueIndex" json:"bid"`
 	Status             int       `gorm:"default:0" json:"status"`
 	Download           int       `gorm:"default:0" json:"download"`
@@ -121,63 +77,21 @@ type Patch struct {
 	CommentCount       int       `gorm:"default:0" json:"comment_count"`
 	ResourceCount      int       `gorm:"default:0" json:"resource_count"`
 
-	// IsStub marks a row lazily materialized by an INTERACTION (favorite / comment
-	// / resource via ensureLocalPatch) with the wiki entry creator as a PLACEHOLDER
-	// owner — NOT a real publish. The first real registration (createPatchRow)
-	// ADOPTS such a stub: transfers user_id to the publisher, clears this flag,
-	// registers the contributor, grants +3. Without it the publisher would inherit
-	// the placeholder owner and get no reward. Gating-only — never sent to the FE.
 	IsStub bool `gorm:"default:false" json:"-"`
 
-	// CreatorID is the FROZEN snapshot of the wiki entry's creator (an OAuth
-	// user id), used only to render the 词条创建者 badge. Null = unknown.
-	//
-	// It is a snapshot rather than a live read because the canonical catalog
-	// face moyu reads since wave A2-2 does not carry another product's user
-	// model, and wiki-era authorship is frozen at the archive anyway
-	// (refs/proj/106 R2/R12). Filled by cmd/backfill-patch-creator for existing
-	// rows and by ensureLocalPatch for new ones; see migration 027.
 	CreatorID *int `gorm:"column:creator_id" json:"-"`
 
-	// Local mirror of Wiki galgame.release_date (PG `date`, day precision).
-	// Populated on patch creation + a one-time backfill (A-lite sync). Drives
-	// sort/filter by 发售日期 on GET /api/galgame — see migration 010 +
-	// docs/galgame_wiki/00-handbook §17. Nullable: many galgames have no
-	// known release date; a date-range filter auto-excludes NULL rows.
 	ReleaseDate *time.Time `gorm:"type:date;index" json:"release_date"`
 
-	// FK behavior (declared in migrations/000_baseline.up.sql, NOT enforced
-	// by GORM AutoMigrate which we don't run — the `constraint:OnDelete:X`
-	// tag here is documentation only):
-	//
-	//   patch.user_id → user(id)   ON DELETE RESTRICT
-	//
-	// Attempting to delete a user who still has patch rows will fail with
-	// SQLSTATE 23503 (foreign_key_violation). This is intentional: patches
-	// are user-authored content with downstream consequences (favorites,
-	// comments, resources, moemoepoint), so the user-delete path must
-	// explicitly handle (reassign / soft-delete / orphan-confirm) the
-	// patches first instead of silently nuking everything via CASCADE.
 	UserID  int       `gorm:"not null;constraint:OnDelete:RESTRICT" json:"user_id"`
 	Created time.Time `gorm:"autoCreateTime" json:"created"`
 	Updated time.Time `gorm:"autoUpdateTime" json:"updated"`
 
-	// User is the publisher's brief, attached by the handler/service layer
-	// from OAuth /users/batch (pkg/userclient). NOT a GORM relation -- after
-	// the OAuth migration display fields live on the OAuth server, not the
-	// local user table.
 	User *PatchUser `gorm:"-" json:"user,omitempty"`
 }
 
 func (Patch) TableName() string { return "patch" }
 
-// PatchUser is the wire shape of a user brief embedded in patch responses.
-// Filled at request time from OAuth /users/batch via pkg/userclient.
-//
-// avatar_image_hash mirrors OAuth's `users.avatar_image_hash` — preferred over
-// `avatar` by the frontend's resolveAvatarUrl once image_service is live.
-// roles surfaces the OAuth role set so the UI can render an admin / mod badge
-// next to a username (e.g. on comments) without an extra round-trip.
 type PatchUser struct {
 	ID              int      `json:"id"`
 	Name            string   `json:"name"`
@@ -187,26 +101,12 @@ type PatchUser struct {
 	SiteRoles       []string `json:"site_roles,omitempty"`
 }
 
-// RenderResourceNotes fills note_html for every resource in the slice.
-// Idempotent: re-rendering an already-rendered slice is a no-op rerender.
-// Defined here (alongside the model) so every consumer can call it without
-// importing the patch service package.
 func RenderResourceNotes(rs []PatchResource) {
 	for i := range rs {
 		rs[i].NoteHTML = renderNote(rs[i].Note)
 	}
 }
 
-// StripResourceSecrets blanks the download payload (Content / S3Key / Code /
-// Password) on a slice of resources. Used by the bulk LIST/feed endpoints
-// (home, global resource feed, /resource/:id recommendations, user-profile
-// resource tab) whose frontend cards never read these fields. Shipping them
-// there let a scraper page the public feeds to harvest every download URL +
-// extraction code + archive password, defeating the whole point of the
-// rate-limited `GET /patch/resource/:id/link` reveal endpoint. The dedicated
-// reveal surfaces — the single resource in `GET /resource/:id` and the
-// per-patch `GET /patch/:id/resource` list, which the FE reads inline — keep
-// these fields.
 func StripResourceSecrets(rs []PatchResource) {
 	for i := range rs {
 		rs[i].Content = ""
@@ -216,14 +116,6 @@ func StripResourceSecrets(rs []PatchResource) {
 	}
 }
 
-// PatchResource represents a patch resource.
-//
-// D10 change (2026-04-21):
-//   - The legacy Hash (BLAKE3) field is renamed to Blake3; kept only for existing
-//     data. New uploads always leave it "".
-//   - Added S3Key: the full S3 object key, e.g. "patch/42/xk9z.../game.zip".
-//     All Put/Head/Delete operations use it directly; the application no longer
-//     builds paths itself.
 type PatchResource struct {
 	ID                    int       `gorm:"primaryKey;autoIncrement" json:"id"`
 	Storage               string    `gorm:"not null" json:"storage"`
@@ -250,84 +142,46 @@ type PatchResource struct {
 	Created               time.Time `gorm:"autoCreateTime" json:"created"`
 	Updated               time.Time `gorm:"autoUpdateTime" json:"updated"`
 
-	// Filled by the handler/service layer from OAuth /users/batch.
 	User *PatchUser `gorm:"-" json:"user,omitempty"`
 
-	// NoteHTML is the rendered Note via the markdown package.
-	// Filled by the service layer before serialization; not a DB column.
 	NoteHTML string `gorm:"-" json:"note_html"`
 
-	// DownloadURL is the resolved download URL for artifact-backed resources,
-	// filled by GetResourceDownloadInfo via the artifact service. Not a DB
-	// column; empty for legacy rows (the FE builds those from Content).
 	DownloadURL string `gorm:"-" json:"download_url,omitempty"`
 
-	// Patch is a compact summary of the owning patch. Populated only on the
-	// global resource list (/api/resource) and a few admin views; left nil
-	// when the surrounding context already identifies the patch.
 	Patch *PatchSummary `gorm:"-" json:"patch,omitempty"`
 
-	// IsLiked is populated per-request from the current user's like relation
-	// (mirrors PatchComment.IsLiked). Not a DB column.
 	IsLiked bool `gorm:"-" json:"is_liked"`
 
-	// IsFavorite is populated per-request from the current user's resource
-	// subscription (UserPatchResourceFavoriteRelation). When true the user is
-	// notified on this resource's file/link updates. Not a DB column.
 	IsFavorite bool `gorm:"-" json:"is_favorite"`
 }
 
 func (PatchResource) TableName() string { return "patch_resource" }
 
-// PatchComment represents a patch comment
 type PatchComment struct {
-	ID        int    `gorm:"primaryKey;autoIncrement" json:"id"`
-	Content   string `gorm:"type:varchar(10007);default:''" json:"content"`
-	Edit      string `gorm:"default:''" json:"edit"`
-	LikeCount int    `gorm:"default:0" json:"like_count"`
-	// Status is the moderation state for the admin "评论需要审核" toggle:
-	// 0 = approved/visible (default), 1 = pending review (created while verify
-	// is on; hidden from public reads until an admin approves). See migration
-	// 011 + PatchService.CreateComment / ApproveComment.
-	Status   int  `gorm:"default:0" json:"status"`
-	ParentID *int `json:"parent_id"`
-	// ResourceID scopes the comment to ONE resource (nil = a patch comment, i.e.
-	// every row that pre-dates migration 028). It selects which surface the
-	// comment belongs to: nil → the /patch/:id/comment tab, set → /resource/:id.
-	// GalgameID is populated either way — it is what NSFW-gates the comment and
-	// what patch.comment_count aggregates on — so every read that means "the
-	// patch's own comments" must filter `resource_id IS NULL` explicitly, not
-	// just `galgame_id = ?`.
+	ID         int       `gorm:"primaryKey;autoIncrement" json:"id"`
+	Content    string    `gorm:"type:varchar(10007);default:''" json:"content"`
+	Edit       string    `gorm:"default:''" json:"edit"`
+	LikeCount  int       `gorm:"default:0" json:"like_count"`
+	Status     int       `gorm:"default:0" json:"status"`
+	ParentID   *int      `json:"parent_id"`
 	ResourceID *int      `json:"resource_id,omitempty"`
 	UserID     int       `gorm:"not null" json:"user_id"`
 	GalgameID  int       `gorm:"not null" json:"galgame_id"`
 	Created    time.Time `gorm:"autoCreateTime" json:"created"`
 	Updated    time.Time `gorm:"autoUpdateTime" json:"updated"`
 
-	// Filled by the handler/service layer from OAuth /users/batch.
 	User    *PatchUser     `gorm:"-" json:"user,omitempty"`
 	Replies []PatchComment `gorm:"foreignKey:ParentID" json:"reply"`
 
-	// IsLiked is populated per-request from the current user's like relation.
-	// Not a DB column.
 	IsLiked bool `gorm:"-" json:"is_liked"`
 
-	// ContentHTML is the rendered Content via the markdown package
-	// (with @mention support). Filled by the service layer before serialization.
 	ContentHTML string `gorm:"-" json:"content_html"`
 
-	// Patch is a compact summary of the owning patch. Populated only on the
-	// global comment list (/api/comment) where the frontend wants to show
-	// "评论在 <game name>"; left nil for the per-patch comment list since the
-	// page already has the patch context.
 	Patch *PatchSummary `gorm:"-" json:"patch,omitempty"`
 }
 
 func (PatchComment) TableName() string { return "patch_comment" }
 
-// NOTE: PatchAlias is deprecated per D12 (2026-04-21). Game aliases are managed by Wiki /galgame/:gid/aliases.
-
-// PatchLink represents an external link
 type PatchLink struct {
 	ID        int       `gorm:"primaryKey;autoIncrement" json:"id"`
 	GalgameID int       `gorm:"uniqueIndex:idx_patch_link;index;not null" json:"galgame_id"`
@@ -339,10 +193,6 @@ type PatchLink struct {
 
 func (PatchLink) TableName() string { return "patch_link" }
 
-// NOTE: PatchCover / PatchScreenshot are deprecated per decision D8.
-// They are owned by the Galgame Wiki Service and not persisted in this project.
-
-// Relation tables
 type UserPatchFavoriteRelation struct {
 	ID        int       `gorm:"primaryKey;autoIncrement" json:"id"`
 	UserID    int       `gorm:"uniqueIndex:idx_user_patch_fav;not null" json:"user_id"`
@@ -383,9 +233,6 @@ type UserPatchResourceLikeRelation struct {
 
 func (UserPatchResourceLikeRelation) TableName() string { return "user_patch_resource_like_relation" }
 
-// UserPatchResourceFavoriteRelation is a per-resource SUBSCRIPTION: the user is
-// notified (patchResourceUpdate) when this resource's file/link changes. Unlike
-// the like relation it carries no public count — it's a private subscription.
 type UserPatchResourceFavoriteRelation struct {
 	ID         int       `gorm:"primaryKey;autoIncrement" json:"id"`
 	UserID     int       `gorm:"uniqueIndex:idx_user_resource_favorite;not null" json:"user_id"`
@@ -398,39 +245,23 @@ func (UserPatchResourceFavoriteRelation) TableName() string {
 	return "user_patch_resource_favorite_relation"
 }
 
-// PatchResourceFileHistory is the append-only audit trail for resource file
-// replacements (MOYU-PR5 / M3). One row is written BEFORE each substantive
-// file change in PatchService.UpdateResource (Storage / S3Key / Content
-// differs from current). Pure metadata edits (note / code / type / ...) do
-// NOT write a row. CASCADE on delete: history goes with the resource — see
-// migrations/007_patch_resource_file_history.up.sql §rationale.
 type PatchResourceFileHistory struct {
-	ID         int64  `gorm:"primaryKey;autoIncrement" json:"id"`
-	ResourceID int    `gorm:"not null;index:idx_prfh_resource,priority:1" json:"resource_id"`
-	OldStorage string `gorm:"type:varchar(16);not null" json:"old_storage"`
-	OldS3Key   string `gorm:"type:varchar(2048);not null;default:''" json:"old_s3_key"`
-	// OldArtifactUUID is the previous artifact-service blob id (artifact-backed
-	// rows; parallels OldS3Key for the legacy direct-B2 rows).
+	ID              int64     `gorm:"primaryKey;autoIncrement" json:"id"`
+	ResourceID      int       `gorm:"not null;index:idx_prfh_resource,priority:1" json:"resource_id"`
+	OldStorage      string    `gorm:"type:varchar(16);not null" json:"old_storage"`
+	OldS3Key        string    `gorm:"type:varchar(2048);not null;default:''" json:"old_s3_key"`
 	OldArtifactUUID string    `gorm:"column:old_artifact_uuid;type:varchar(36);not null;default:''" json:"old_artifact_uuid"`
 	OldBlake3       string    `gorm:"type:varchar(128);not null;default:''" json:"old_blake3"`
 	OldSize         string    `gorm:"type:varchar(107);not null;default:''" json:"old_size"`
 	OldContent      string    `gorm:"type:text;not null;default:''" json:"old_content"`
 	Reason          string    `gorm:"type:varchar(500);not null;default:''" json:"reason"`
 	ActorID         int       `gorm:"not null" json:"actor_id"`
-	ActorRole       int       `gorm:"not null;default:0" json:"actor_role"` // 3=admin / 2=mod / 1=user / 0=unknown
+	ActorRole       int       `gorm:"not null;default:0" json:"actor_role"`
 	CreatedAt       time.Time `gorm:"autoCreateTime;index:idx_prfh_resource,priority:2,sort:desc" json:"created_at"`
 }
 
 func (PatchResourceFileHistory) TableName() string { return "patch_resource_file_history" }
 
-// NOTE: PatchTag / PatchTagRel are deprecated per D11 (2026-04-21).
-// Tag metadata is owned by the Galgame Wiki; fetch it via patch.vndb_id -> Wiki /galgame/batch.
-
-// ─── Resource edit revision (per-field diff history, migration 013) ──────────
-
-// ResourceFieldChange is one field's before/after in a resource edit. Public-
-// safe: secrets (download link / s3 key / extract code / unzip password) are
-// never stored as raw values — only marked "已更新" via a synthetic entry.
 type ResourceFieldChange struct {
 	Field  string `json:"field"`
 	Label  string `json:"label"`
@@ -438,7 +269,6 @@ type ResourceFieldChange struct {
 	After  string `json:"after"`
 }
 
-// ResourceChangeList is the jsonb column type for PatchResourceRevision.Changes.
 type ResourceChangeList []ResourceFieldChange
 
 func (c *ResourceChangeList) Scan(value any) error {
@@ -446,8 +276,6 @@ func (c *ResourceChangeList) Scan(value any) error {
 		*c = ResourceChangeList{}
 		return nil
 	}
-	// Accept both []byte and string (see JSONArray.Scan for why), and treat an
-	// empty / null payload as an empty list.
 	var bytes []byte
 	switch v := value.(type) {
 	case []byte:
@@ -471,9 +299,6 @@ func (c ResourceChangeList) Value() (driver.Value, error) {
 	return json.Marshal(c)
 }
 
-// PatchResourceRevision is one edit of a patch_resource, stored as a computed
-// field diff. Written by UpdateResource on every metadata/file change. Changes
-// carries no secret values (see service.diffResourceFields).
 type PatchResourceRevision struct {
 	ID         int64              `gorm:"primaryKey;autoIncrement" json:"id"`
 	ResourceID int                `gorm:"not null;index:idx_prr_resource,priority:1" json:"resource_id"`

@@ -1,11 +1,4 @@
 <script setup lang="ts">
-// The list of interrupted patch-resource uploads shown when the publish modal
-// opens. Purely presentational + intent-emitting: it owns the per-item file
-// re-pick (the browser can't read a file by path, so resuming needs the user to
-// choose the file again — matched by size+lastModified, NOT name, so a moved or
-// renamed file still resumes) and emits `continue` only on a match, or `delete`
-// to discard. The actual resume/abort work lives in Publish.vue, which owns the
-// flow.
 defineProps<{
   pending: PatchPendingUpload[]
 }>()
@@ -27,14 +20,9 @@ const onPicked = (e: Event) => {
   const input = e.target as HTMLInputElement
   const file = input.files?.[0]
   const record = pickingFor.value
-  // Reset so picking the same file again re-fires change.
   input.value = ''
   pickingFor.value = null
   if (!file || !record) return
-  // Match on size+lastModified (not name): a moved/renamed file still resumes,
-  // and any content edit changes size or mtime, so this still guarantees it's
-  // the same file version (avoids stitching a different file's bytes onto the
-  // already-uploaded parts).
   if (file.size !== record.size || file.lastModified !== record.lastModified) {
     useKunMessage('所选文件与未完成的上传不一致，请选择同一个文件', 'warn')
     return

@@ -3,7 +3,6 @@ import { GALGAME_AGE_LIMIT_MAP } from '~/constants/galgame'
 
 interface Props {
   item: CalendarItem
-  // JST "today" (YYYY-MM-DD) from the calendar response — drives the countdown.
   today?: string
 }
 
@@ -18,17 +17,6 @@ const bannerSrc = computed(
   () => resolveBannerUrl(props.item, 'mini') || '/kungalgame-trans.webp'
 )
 
-// Three cards, one field (wave A2-2 — see CalendarItem.claim_state):
-//
-//   live  → the normal card, linking to its patch page.
-//   draft → an unpublished wiki entry. It 404s at /patch/:id, so the card routes
-//           to the publish wizard pre-searched by name → 认领并发布, shows a
-//           未发布 badge and offers no 收藏 (nothing exists locally to favorite).
-//   ''    → no wiki entry at all. The calendar now covers the WHOLE catalog, so
-//           these are games nobody has brought to the forum yet. Same treatment
-//           as a draft — the wizard is exactly where such a game should start —
-//           but labelled 未上论坛, because "unpublished draft" and "we have
-//           never heard of it here" are different facts.
 const isDraft = computed(() => props.item.claim_state === 'draft')
 const isUnclaimed = computed(() => !props.item.claim_state)
 const needsPublish = computed(() => isDraft.value || isUnclaimed.value)
@@ -38,8 +26,6 @@ const cardHref = computed(() =>
     : `/patch/${props.item.id}/introduction`
 )
 
-// Countdown relative to `today`, honoring release precision. day → 还有 N 天 /
-// 今日发售 / 已发售 N 天; month/year → the fuzzy bucket label; tba/unknown → none.
 const ymd = (s: string) => {
   const [y, m, d] = s.split('-').map(Number)
   return y && m && d ? Date.UTC(y, m - 1, d) : NaN
@@ -72,10 +58,6 @@ const countdownClass = computed(() => {
   }
 })
 
-// Inline 收藏 — favoriting a 未收录 game lazily records it on the backend
-// (ensureLocalPatch) AND subscribes the user to its new-patch notifications, so
-// the calendar doubles as a one-tap "watch for patch" wishlist. Optimistic;
-// reverts on failure; @click.stop so it doesn't trigger the card's NuxtLink.
 const api = useApi()
 const { requireLogin } = useAuthModal()
 const favorited = ref(props.item.is_favorite)
@@ -131,8 +113,6 @@ const toggleFavorite = async () => {
         </KunChip>
       </div>
 
-      <!-- Needs publishing: a badge, and the card routes to the claim wizard.
-           Two different facts, so two different words (see claim_state above). -->
       <KunChip
         v-if="needsPublish"
         :color="isDraft ? 'warning' : 'default'"
@@ -143,7 +123,6 @@ const toggleFavorite = async () => {
         {{ isDraft ? '未发布' : '未上论坛' }}
       </KunChip>
 
-      <!-- Published: inline 收藏 (watch for patch). Own button, not the card link. -->
       <button
         v-else
         type="button"

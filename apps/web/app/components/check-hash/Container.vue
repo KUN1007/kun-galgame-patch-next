@@ -82,7 +82,6 @@ const handleDragLeave = (e: DragEvent) => {
 const handleFileSelect = (files: File[]) => {
   const file = files[0]
   if (file) verifyFile(file)
-  // Reset so re-picking the same file still triggers @change.
   pickedFile.value = null
 }
 </script>

@@ -1,7 +1,4 @@
 <script setup lang="ts">
-// Recursive tree item used by AboutSidebar. Directories collapse on click;
-// files navigate via NuxtLink. Active highlighting is keyed by `path`, which
-// matches the slug under apps/web/posts.
 interface Props {
   node: KunTreeNode
   level?: number
@@ -10,8 +7,6 @@ interface Props {
 
 const props = withDefaults(defineProps<Props>(), { level: 0, activeSlug: '' })
 
-// Default collapsed state: open the directory containing the active slug, or
-// open at the top level when no slug is selected.
 const isOpen = ref(
   props.node.type === 'directory' &&
     (props.level === 0 ||

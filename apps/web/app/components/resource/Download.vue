@@ -1,12 +1,4 @@
 <script setup lang="ts">
-// The resource's download payload — the body of the 资源下载 tab.
-//
-// Extracted from the detail page when the download and the change history became
-// two tab panels: nesting a 130-line block one level deeper would have pushed an
-// already 650-line page further past the size guideline for no gain.
-//
-// Owns only what the payload needs. The owning-patch chips, the SEO strings and
-// the favorite live on the page, which is where the rest of `detail` is.
 
 interface Props {
   resource: PatchResource
@@ -15,14 +7,9 @@ interface Props {
 const props = defineProps<Props>()
 
 const emit = defineEmits<{
-  // A link was actually clicked. The page owns the counter (it holds `detail`),
-  // so it does the bump — this component makes no API calls.
   downloaded: []
 }>()
 
-// status != 0 → download disabled (e.g. pulled after a virus report). The backend
-// withholds content / code / password for a disabled resource, so downloadLinks
-// is empty here; say so explicitly instead of a bare "暂无下载链接".
 const isResourceDisabled = computed(() => (props.resource.status ?? 0) !== 0)
 
 const downloadLinks = computed(() =>
@@ -33,16 +20,10 @@ const downloadLinks = computed(() =>
   )
 )
 
-// aria2 command for a download URL — 16 parallel connections + resume (-c). The
-// link is single-quoted so its &/= query params survive the shell. Any download
-// manager (or the Aria2 Explorer extension) works on the same URL since it
-// natively supports HTTP Range.
 const aria2CommandOf = (url: string) => `aria2c -x16 -s16 -c '${url}'`
 </script>
 
 <template>
-  <!-- No heading: the tab bar directly above already reads 资源下载, and repeating
-       it inside the panel just says the same thing twice. -->
   <div class="border-success/40 bg-success/10 space-y-4 rounded-2xl border p-5">
     <div
       v-if="isResourceDisabled"
@@ -82,9 +63,6 @@ const aria2CommandOf = (url: string) => `aria2c -x16 -s16 -c '${url}'`
             class="text-default-400 group-hover:text-success size-4 shrink-0"
           />
         </a>
-        <!-- Prominent copy actions on their own row: the plain URL (works with any
-             downloader / the Aria2 Explorer extension) and a ready-to-paste
-             aria2 command (16-way + resume). -->
         <div class="flex flex-wrap gap-2">
           <KunCopy
             :text="lnk"
