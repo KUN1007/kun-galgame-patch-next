@@ -7,6 +7,8 @@ const (
 	catalogClaimStatePending = "pending"
 )
 
+// Claim sites are product identities, not external_ref source keys. Both
+// spellings stay readable until the Wave 161 re-site has soaked.
 const catalogClaimSiteKungal = "kungal"
 
 const catalogClaimSiteLegacy = "galgame_wiki"

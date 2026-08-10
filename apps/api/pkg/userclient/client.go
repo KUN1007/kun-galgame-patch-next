@@ -17,6 +17,7 @@ import (
 	"golang.org/x/sync/singleflight"
 )
 
+// OAuth owns these profile fields; moyu stores user IDs, not profile truth.
 type Brief struct {
 	ID              uint     `json:"id"`
 	UUID            string   `json:"uuid"`

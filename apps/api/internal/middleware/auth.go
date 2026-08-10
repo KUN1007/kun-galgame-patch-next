@@ -25,6 +25,7 @@ import (
 	"github.com/redis/go-redis/v9"
 )
 
+// ID is the same integer in OAuth and this database; never translate or renumber it.
 type UserInfo struct {
 	ID  int    `json:"id"`
 	Sub string `json:"sub"`
@@ -38,6 +39,8 @@ type SessionData struct {
 }
 
 const (
+	// Cookie names and Redis prefixes must stay site-specific. Localhost cookies
+	// ignore ports; sharing them caused client_id_mismatch logouts.
 	SessionCookieName     = "moyu_session"
 	SessionTTL            = 90 * 24 * time.Hour
 	SessionPrefix         = "moyu:session:"

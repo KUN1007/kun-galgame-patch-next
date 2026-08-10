@@ -16,6 +16,8 @@ import (
 )
 
 const (
+	// Catalog and retired wiki feeds have unrelated ID spaces; reusing
+	// wiki_msg_sync skips or replays events silently.
 	claimSyncCronName = "catalog_claim_sync"
 	claimSyncSchedule = "*/10 * * * *"
 	claimSyncBatch    = 500
@@ -118,6 +120,7 @@ func effectOf(ev *catalogclient.ClaimEventFeedItem) claimEffect {
 	case catalogclient.ClaimStateLive:
 		switch {
 		case ev.FromState == nil:
+			// A claim born directly into live is an import, not an approval.
 			return claimEffectNone
 		case *ev.FromState == catalogclient.ClaimStatePending:
 			return claimEffectApproved
@@ -199,6 +202,8 @@ func applyClaimEvent(
 	switch effect {
 	case claimEffectApproved:
 		if mp != nil {
+			// Claim event IDs overlap retired wiki message IDs, so their award keys
+			// need a separate namespace.
 			awarded, aerr := mp.Adjust(ctx, recipient, moemoepoint.AdjustRequest{
 				Delta:          3,
 				Reason:         "content_approved",

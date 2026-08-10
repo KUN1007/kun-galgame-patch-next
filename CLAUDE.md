@@ -39,6 +39,10 @@ Two standing exceptions, where the comment is a record rather than a warning:
 - `apps/api/migrations/**` — a migration is history and cannot be re-read from the current schema. Say what it changes and why, including what was done about existing rows.
 - A constraint that is true but invisible from this file: a version floor, an upstream bug, a required ordering. `huma/v2 >= v2.39.0` is one; a reader who does not know it will "simplify" the dependency back and break SSE.
 
+Cross-service identity and ownership boundaries count as invisible constraints when their authority lives in infra. Keep the shortest comment at the exact seam where confusing the identities or sources would fail silently.
+
+This policy governs source code. Concise onboarding or incident notes in configuration files such as `.env.example`, `.air.toml`, and Compose files remain allowed.
+
 Write the conclusion, not the mechanism. `// splitCommand takes the subcommand off before flag.Parse` is a restatement; `flag.Parse stops at the first non-flag argument, so 'migrate down -steps 1' parsed no flags and rolled back nothing` is the trap. Quote real system output verbatim when reproducing a symptom.
 
 Never write: restatements of the code, section banners, `TODO` without an owner, or doc comments that only echo the identifier (`// New creates a new X`). Exported Go identifiers get a doc comment only when the name alone is ambiguous. If a comment explains what a name means, rename the thing and delete the comment.

@@ -32,6 +32,7 @@ func (a *Awarder) Award(ctx context.Context, userID, delta int, reason, ref, ide
 			"user_id", userID, "delta", delta, "reason", reason, "ref", ref, "error", err)
 		return
 	}
+	// OAuth owns the balance; this local column only mirrors the authoritative response.
 	if err := a.db.WithContext(ctx).
 		Exec(`UPDATE "user" SET moemoepoint = ? WHERE id = ?`, res.Balance, userID).Error; err != nil {
 		slog.Warn("moemoepoint cache sync failed",

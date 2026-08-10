@@ -19,6 +19,8 @@ const catalogCodeNotFound = 4
 
 const catalogCodeMoved = 12
 
+// Only the catalog's business-code 404 is absence; treating router or proxy
+// 404s as misses made a broken face look like an empty archive.
 func catalogAbsent(status int, err error) bool {
 	if status != http.StatusNotFound {
 		return false
@@ -29,6 +31,8 @@ func catalogAbsent(status int, err error) bool {
 
 const catalogLookupBatchMax = 100
 
+// These keys name one external_ref source across the Wave 161 rename; they are
+// not claim sites.
 var anchorSourceKeys = []string{"curated", "galgame_wiki"}
 
 func gidLookupStride() int {
@@ -206,6 +210,8 @@ func (c *Client) resolveGIDs(ctx context.Context, gids []int) (map[int]int64, er
 	return out, nil
 }
 
+// A legacy gid may equal an unrelated catalog id; accept adopted IDs only when
+// claimed_by.work_id points back.
 func (c *Client) resolveByIdentity(ctx context.Context, gids []int) (map[int]int64, error) {
 	out := make(map[int]int64, len(gids))
 	for start := 0; start < len(gids); start += CatalogWorksIDsMax {

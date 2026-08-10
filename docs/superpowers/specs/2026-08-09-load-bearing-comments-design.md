@@ -20,7 +20,7 @@ The restored comments cover:
 - OAuth's content-addressed image store and incomplete ThumbHash backfills.
 - Catalog claim sites remaining distinct from external-reference source keys.
 - Wave 161 dual reads for both site and source-key renames.
-- Catalog 404 envelopes, adopted-ID round-trip validation, feed cursor initialization, and event idempotency namespaces.
+- Catalog 404 envelopes, adopted-ID round-trip validation, live-import classification, and event cursor/idempotency namespaces.
 
 No identifier-echoing doc comments, section banners, code restatements, or broad explanatory blocks return.
 

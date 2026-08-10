@@ -47,7 +47,7 @@ watch(
       />
       <div
         v-if="showFade"
-        class="from-default-50 pointer-events-none absolute inset-x-0 bottom-0 h-8 bg-gradient-to-t to-transparent"
+        class="pointer-events-none absolute inset-x-0 bottom-0 h-8 bg-default-50/90"
       />
     </div>
 

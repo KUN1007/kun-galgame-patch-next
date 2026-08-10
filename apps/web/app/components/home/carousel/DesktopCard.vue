@@ -23,7 +23,7 @@ const post = computed(() => props.post)
       image-class-name="brightness-75"
     />
     <div
-      class="absolute inset-0 rounded-2xl bg-gradient-to-t from-black/30 via-black/10 to-transparent"
+      class="absolute inset-0 rounded-2xl bg-black/20"
     />
 
     <HomeCarouselNavigationMenu />

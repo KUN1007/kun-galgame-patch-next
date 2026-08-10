@@ -48,6 +48,8 @@ func (r *MetaResolver) Resolve(hashes []string) map[string]ImageMeta {
 	r.mu.Lock()
 	for h, m := range fetched {
 		out[h] = m
+		// Empty Thumbhash is an incomplete upstream backfill, not a stable miss;
+		// caching it forever prevents blur-up from appearing after the backfill.
 		if m.Thumbhash != "" {
 			r.cache[h] = m
 		}

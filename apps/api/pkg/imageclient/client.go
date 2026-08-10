@@ -30,6 +30,8 @@ type Config struct {
 	HTTPClient   *http.Client
 }
 
+// This client addresses OAuth's content-addressed image store; moyu has no
+// local object-key namespace.
 type Client struct {
 	baseURL    string
 	cdnBase    string
