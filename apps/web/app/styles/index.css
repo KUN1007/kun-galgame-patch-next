@@ -34,13 +34,11 @@
   border-radius: var(--radius-sm);
 }
 
-.z-kun-modal > div:first-child {
-  background-color: oklch(var(--default-800));
-}
-.kun-dark-mode .z-kun-modal > div:first-child {
-  background-color: oklch(var(--background));
-}
-
+/* KunModal's overlay element IS the scrim — it carries `z-kun-modal` together
+   with `bg-default-800/70`, and its first child div is the panel. A rule written
+   as `.z-kun-modal > div:first-child` to pin the scrim opaque therefore painted
+   the PANEL default-800: a black modal in light mode on production, because
+   (0,1,1) beats `.kun-modal-panel`'s (0,1,0). The scrim keeps KunUI's 70%. */
 .kun-modal-panel {
   background-color: oklch(var(--content1));
 }
@@ -58,18 +56,30 @@
   }
 }
 
+/* Raw token triplets, never `var(--color-*)`: Tailwind v4 inlines @theme colours
+   into the utilities it generates and emits no `--color-*` to :root, so every
+   hand-written one resolves to "" and the declaration is dropped — a background
+   silently disappears instead of changing colour. */
 cropper-canvas {
-  background: color-mix(in oklab, var(--color-default) 20%, transparent);
+  background: color-mix(
+    in oklab,
+    oklch(var(--default-accent)) 20%,
+    transparent
+  );
   width: 100%;
   height: clamp(220px, 52vh, 560px);
 }
 
 cropper-selection {
-  outline: 2px solid var(--color-primary);
+  outline: 2px solid oklch(var(--primary-accent));
 }
 
 cropper-handle[action='select'] {
-  background: color-mix(in oklab, var(--color-primary) 20%, transparent);
+  background: color-mix(
+    in oklab,
+    oklch(var(--primary-accent)) 20%,
+    transparent
+  );
 }
 
 .kun-os-scroll .os-scrollbar {
@@ -84,7 +94,11 @@ cropper-handle[action='select'] {
 @keyframes kun-comment-flash {
   0%,
   25% {
-    background-color: color-mix(in oklab, var(--color-primary) 16%, transparent);
+    background-color: color-mix(
+      in oklab,
+      oklch(var(--primary-accent)) 16%,
+      transparent
+    );
   }
   100% {
     background-color: transparent;

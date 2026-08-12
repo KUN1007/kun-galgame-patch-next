@@ -4,15 +4,6 @@
   @apply text-default-800 leading-7 whitespace-pre-line;
 }
 
-.kun-editor-scroll {
-  --os-size: 10px;
-  --os-padding-perpendicular: 2px;
-  --os-handle-border-radius: 5px;
-  --os-handle-bg: var(--color-default-300);
-  --os-handle-bg-hover: var(--color-default-400);
-  --os-handle-bg-active: var(--color-default-500);
-}
-
 .milkdown .ProseMirror[data-placeholder]::before {
   @apply text-default-400 dark:text-default-500 pointer-events-none absolute top-4 right-6 left-6 text-sm content-[attr(data-placeholder)];
 }

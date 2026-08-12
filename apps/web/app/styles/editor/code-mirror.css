@@ -10,14 +10,14 @@
 }
 
 .milkdown {
-  --crepe-color-surface: var(--color-primary-50);
-  --crepe-color-surface-low: var(--color-primary-50);
-  --crepe-color-on-surface: var(--color-foreground);
-  --crepe-color-on-surface-variant: var(--color-default-600);
-  --crepe-color-outline: var(--color-default-300);
-  --crepe-color-secondary: var(--color-primary-50);
-  --crepe-color-hover: var(--color-default-100);
-  --crepe-color-primary: var(--color-primary);
+  --crepe-color-surface: oklch(var(--primary-50));
+  --crepe-color-surface-low: oklch(var(--primary-50));
+  --crepe-color-on-surface: oklch(var(--foreground));
+  --crepe-color-on-surface-variant: oklch(var(--default-600));
+  --crepe-color-outline: oklch(var(--default-300));
+  --crepe-color-secondary: oklch(var(--primary-50));
+  --crepe-color-hover: oklch(var(--default-100));
+  --crepe-color-primary: oklch(var(--primary-accent));
   --crepe-font-default: inherit;
   --crepe-shadow-1:
     0 1px 3px hsla(0, 0%, 0%, 0.1), 0 1px 2px hsla(0, 0%, 0%, 0.06);

@@ -1,7 +1,7 @@
 @import 'katex/dist/katex.min.css';
 
 .milkdown {
-  --crepe-color-primary: var(--color-foreground);
+  --crepe-color-primary: oklch(var(--foreground));
 
   span[data-type='math_inline'] {
     padding: 0 4px;
