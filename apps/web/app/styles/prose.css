@@ -131,6 +131,10 @@
 
   & pre {
     @apply bg-default-100 text-default-800 my-4 overflow-x-auto rounded-xl p-4 font-mono text-sm leading-relaxed;
+    /* The UA default is 8. Inherited from the deleted code-theme.css, which set
+       it on `code[class*='language-']` — the one live declaration in an otherwise
+       dead prism palette. */
+    tab-size: 4;
 
     & code {
       @apply block w-fit rounded-none bg-transparent p-0 text-inherit;
