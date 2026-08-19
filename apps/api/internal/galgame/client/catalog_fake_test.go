@@ -155,7 +155,7 @@ func (f *catalogFake) workDetail(path string) string {
 		`"en":{"value":"Title","kind":"official"}},` +
 		`"refs":[{"source":"vndb","external_id":"v42"}],` +
 		`"claimed_by":` + claimJSON(gid, state) + `,` +
-		`"intro":[{"lang":"zh-Hans","intro":"介绍","source":"vndb","machine":false}],` +
+		`"intros":[{"lang":"zh-Hans","intro":"介绍","source":"vndb","machine":false}],` +
 		`"covers":[{"url":"https://cdn/aa/bb/hash1.webp","kind":"main","portrait_pinned":true,"sexual":0,"violence":0,"source":"vndb","width":600,"height":800,"thumbhash":"th"},` +
 		`{"url":"https://cdn/aa/bb/hash2.webp","kind":"main","portrait_pinned":false,"sexual":0,"violence":0,"source":"vndb","width":1280,"height":720,"thumbhash":"th2"}],` +
 		`"screenshots":[],` +

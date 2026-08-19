@@ -150,6 +150,11 @@ func TestCatalogTwoHopReads(t *testing.T) {
 		if env.Galgame.ID != 8 {
 			t.Errorf("detail id = %d, want the gid 8", env.Galgame.ID)
 		}
+		// Breaking introRows only reddened the narrow unmarshal test — this whole
+		// two-hop path stayed green with the intro dropped on the floor.
+		if got := env.Galgame.IntroZhCn; got != "介绍" {
+			t.Errorf("intro_zh_cn = %q, want 介绍", got)
+		}
 	})
 
 	t.Run("search hits the works product search", func(t *testing.T) {
