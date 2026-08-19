@@ -261,10 +261,9 @@ func (r *AdminRepository) PurgePreview(userID int, includeOwnedPatches bool) (*P
 	count(&c.PrivateMessages, r.db.Table("user_message").Where("sender_id = ? OR recipient_id = ?", userID, userID))
 	count(&c.OwnedPatches, r.db.Model(&patchModel.Patch{}).Where("user_id = ?", userID))
 
-	var readStates, fileHistory int64
-	count(&readStates, r.db.Table("wiki_message_read_state").Where("user_id = ?", userID))
+	var fileHistory int64
 	count(&fileHistory, r.db.Table("patch_resource_file_history").Where("actor_id = ?", userID))
-	c.MiscTraces = readStates + fileHistory
+	c.MiscTraces = fileHistory
 
 	if includeOwnedPatches {
 		count(&c.OwnedPatchResources, r.db.Model(&patchModel.PatchResource{}).Where("galgame_id IN (?)", r.ownedPatchIDsSubquery(userID)))
@@ -365,9 +364,6 @@ func (r *AdminRepository) PurgeUser(userID int, purgeOwnedPatches bool) error {
 			return err
 		}
 
-		if err := tx.Exec(`DELETE FROM wiki_message_read_state WHERE user_id = ?`, userID).Error; err != nil {
-			return err
-		}
 		if err := tx.Where("actor_id = ?", userID).
 			Delete(&patchModel.PatchResourceFileHistory{}).Error; err != nil {
 			return err
