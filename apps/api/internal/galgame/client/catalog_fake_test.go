@@ -149,7 +149,9 @@ func (f *catalogFake) workDetail(path string) string {
 	gid, state := gidForCatalogID(id)
 	return `{"id":` + strconv.FormatInt(id, 10) + `,"medium":"galgame","display_name":"W","olang":"ja",` +
 		`"content_rating":"` + ratingForCatalogID(id) + `","release_date":"2026-07-14","created":"2026-01-01T00:00:00Z","updated":"2026-07-01T00:00:00Z",` +
-		`"titles":[{"lang":"ja","title":"タイトル","kind":"official"}],` +
+		`"titles":[{"lang":"ja","title":"タイトル","kind":"official"},` +
+		`{"lang":"zh-Hans","title":"机翻标题","kind":"official","machine":true},` +
+		`{"lang":"zh-Hans","title":"标题","kind":"official"}],` +
 		`"refs":[{"source":"vndb","external_id":"v42"}],` +
 		`"claimed_by":` + claimJSON(gid, state) + `,` +
 		`"intro":[{"lang":"zh-Hans","intro":"介绍","source":"vndb","machine":false}],` +
@@ -186,7 +188,7 @@ func workItem(catalogID int64, gid int, state string) string {
 	return `{"id":` + strconv.FormatInt(catalogID, 10) + `,"medium":"galgame","display_name":"W",` +
 		`"content_rating":"` + ratingForCatalogID(catalogID) + `","olang":"ja","release_date":"2026-07-14",` +
 		`"claimed_by":` + claimJSON(gid, state) + `,"cover":"https://cdn/aa/bb/hash1.webp","updated":"2026-07-01T00:00:00Z",` +
-		`"names":{"ja-jp":"タイトル","zh-cn":"标题"},` +
+		`"names":{"ja-jp":{"value":"タイトル"},"zh-cn":{"value":"标题","machine":true}},` +
 		`"covers":{"portrait":{"url":"https://cdn/aa/bb/hash1.webp","width":600,"height":800,"thumbhash":"th","sexual":0,"violence":0,"source":"vndb"},` +
 		`"banner":{"url":"https://cdn/aa/bb/hash2.webp","width":1280,"height":720,"thumbhash":"th2","sexual":0,"violence":0,"source":"vndb"}},` +
 		`"refs":[{"source":"vndb","external_id":"v42"}]}`

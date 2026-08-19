@@ -89,7 +89,7 @@ func namesOf(n *catalogNames) (ja, zhCN, zhTW, en string) {
 	if n == nil {
 		return "", "", "", ""
 	}
-	return n.JaJP, n.ZhCN, n.ZhTW, n.EnUS
+	return n.JaJP.Value, n.ZhCN.Value, n.ZhTW.Value, n.EnUS.Value
 }
 
 func vndbIDOf(refs []catalogRef) string {
@@ -199,14 +199,23 @@ func introByProductKey(rows []catalogWorkIntro) map[string]string {
 	return out
 }
 
+// Source rows first: the names block elects source over machine before it
+// reaches us, but the detail face's titles[] is every row and carries no such
+// order, so first-row-wins there would show a machine title for a locale that
+// has a real one.
 func titleByProductKey(rows []catalogTitle) map[string]string {
 	out := make(map[string]string, 4)
-	for _, r := range rows {
-		k := productLangFromCatalog(r.Lang)
-		switch k {
-		case "ja-jp", "zh-cn", "zh-tw", "en-us":
-			if _, taken := out[k]; !taken {
-				out[k] = r.Title
+	for _, machine := range []bool{false, true} {
+		for _, r := range rows {
+			if r.Machine != machine {
+				continue
+			}
+			k := productLangFromCatalog(r.Lang)
+			switch k {
+			case "ja-jp", "zh-cn", "zh-tw", "en-us":
+				if _, taken := out[k]; !taken {
+					out[k] = r.Title
+				}
 			}
 		}
 	}

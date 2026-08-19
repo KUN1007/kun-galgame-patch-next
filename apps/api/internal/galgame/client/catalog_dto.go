@@ -44,11 +44,20 @@ type catalogRef struct {
 	ExternalID string `json:"external_id"`
 }
 
+// Catalog wave 210 turned each slot of the names block from a bare string into
+// a row. The slot keys did not change, so nothing about the shape looks wrong
+// until json.Unmarshal refuses it — and it refuses the whole response, which
+// took works / works/search / calendar down together.
+type catalogNameSlot struct {
+	Value   string `json:"value"`
+	Machine bool   `json:"machine"`
+}
+
 type catalogNames struct {
-	JaJP string `json:"ja-jp"`
-	ZhCN string `json:"zh-cn"`
-	ZhTW string `json:"zh-tw"`
-	EnUS string `json:"en-us"`
+	JaJP catalogNameSlot `json:"ja-jp"`
+	ZhCN catalogNameSlot `json:"zh-cn"`
+	ZhTW catalogNameSlot `json:"zh-tw"`
+	EnUS catalogNameSlot `json:"en-us"`
 }
 
 type catalogIntroSlot struct {
@@ -126,9 +135,10 @@ type catalogCalendarData struct {
 }
 
 type catalogTitle struct {
-	Lang  string `json:"lang"`
-	Title string `json:"title"`
-	Kind  string `json:"kind"`
+	Lang    string `json:"lang"`
+	Title   string `json:"title"`
+	Kind    string `json:"kind"`
+	Machine bool   `json:"machine"`
 }
 
 type catalogWorkIntro struct {
