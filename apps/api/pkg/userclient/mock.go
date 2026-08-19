@@ -42,15 +42,6 @@ func NewMock(t *testing.T, users map[uint]*Brief) *Client {
 	})
 }
 
-func (m *MockServer) Set(u *Brief) {
-	m.mu.Lock()
-	defer m.mu.Unlock()
-	if m.users == nil {
-		m.users = make(map[uint]*Brief)
-	}
-	m.users[u.ID] = u
-}
-
 func (m *MockServer) handleBatch(w http.ResponseWriter, r *http.Request) {
 	parts := strings.Split(r.URL.Query().Get("ids"), ",")
 	out := make([]*Brief, 0, len(parts))

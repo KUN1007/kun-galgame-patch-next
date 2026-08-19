@@ -24,10 +24,6 @@ func (r *UserRepository) FindByID(id int) (*authModel.User, error) {
 	return &user, err
 }
 
-func (r *UserRepository) UpdateFields(userID int, fields map[string]any) error {
-	return r.db.Model(&authModel.User{}).Where("id = ?", userID).Updates(fields).Error
-}
-
 func countOrLog(q *gorm.DB, what string, userID int) int64 {
 	var count int64
 	if err := q.Count(&count).Error; err != nil {

@@ -8,7 +8,6 @@ import (
 	"strings"
 	"time"
 
-	authModel "kun-galgame-patch-api/internal/auth/model"
 	galgameClient "kun-galgame-patch-api/internal/galgame/client"
 	"kun-galgame-patch-api/internal/galgame/enricher"
 	patchModel "kun-galgame-patch-api/internal/patch/model"
@@ -208,17 +207,6 @@ func (s *UserService) SearchUsers(ctx context.Context, query string, limit int) 
 	return out, nil
 }
 
-func (s *UserService) briefsToUserBasic(ctx context.Context, ids []int) []model.UserBasic {
-	briefs := userclient.BriefMapByInt(ctx, s.users, ids)
-	out := make([]model.UserBasic, 0, len(ids))
-	for _, id := range ids {
-		if b := briefs[id]; b != nil {
-			out = append(out, model.UserBasic{ID: int(b.ID), Name: b.Name, Avatar: b.Avatar, AvatarImageHash: b.AvatarImageHash})
-		}
-	}
-	return out
-}
-
 func (s *UserService) CheckIn(userID int) (int, error) {
 	affected, err := s.repo.CheckIn(userID)
 	if err != nil {
@@ -333,10 +321,6 @@ func (s *UserService) GetUserComments(ctx context.Context, userID, page, limit i
 
 func (s *UserService) GetUserContributions(userID, page, limit int, includeEmpty bool) ([]patchModel.Patch, int64, error) {
 	return s.repo.GetUserContributions(userID, (page-1)*limit, limit, includeEmpty)
-}
-
-func (s *UserService) GetUserByID(userID int) (*authModel.User, error) {
-	return s.repo.FindByID(userID)
 }
 
 func (s *UserService) attachResourceUsers(ctx context.Context, rs []patchModel.PatchResource) {

@@ -8,7 +8,6 @@ import (
 	"kun-galgame-patch-api/internal/chat/repository"
 
 	"github.com/rs/xid"
-	"gorm.io/gorm"
 )
 
 type ChatService struct {
@@ -179,5 +178,3 @@ func (s *ChatService) ReactionsByMessageIDs(ids []int) ([]model.ChatMessageReact
 func (s *ChatService) MessagesByIDs(ids []int) ([]model.ChatMessage, error) {
 	return s.repo.GetMessagesByIDs(ids)
 }
-
-func IsNotFound(err error) bool { return err == gorm.ErrRecordNotFound }

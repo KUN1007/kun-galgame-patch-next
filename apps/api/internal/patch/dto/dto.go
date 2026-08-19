@@ -1,7 +1,5 @@
 package dto
 
-import "time"
-
 type PatchCreateRequest struct {
 	GalgameID int `json:"galgame_id" validate:"required,min=1"`
 }
@@ -51,14 +49,4 @@ type PatchResourceUpdateRequest struct {
 type ResourceFileHistoryRequest struct {
 	Page  int `query:"page" validate:"required,min=1"`
 	Limit int `query:"limit" validate:"required,min=1,max=30"`
-}
-
-type PublicResourceFileHistoryItem struct {
-	ID         int64     `json:"id"`
-	OldStorage string    `json:"old_storage"`
-	OldBlake3  string    `json:"old_blake3"`
-	OldSize    string    `json:"old_size"`
-	Reason     string    `json:"reason"`
-	ActorRole  int       `json:"actor_role"`
-	CreatedAt  time.Time `json:"created_at"`
 }

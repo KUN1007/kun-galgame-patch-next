@@ -1,7 +1,6 @@
 package handler
 
 import (
-	"encoding/json"
 	stderrors "errors"
 	"log/slog"
 	"regexp"
@@ -709,16 +708,6 @@ func (h *PatchHandler) GetRandomPatch(c fiber.Ctx) error {
 	return response.OK(c, map[string]int{"id": id})
 }
 
-func writeGalgameResult(c fiber.Ctx, data json.RawMessage, err error) error {
-	if err != nil {
-		if werr, ok := err.(*galgameClient.GalgameError); ok {
-			return response.Error(c, errors.New(werr.Code, werr.Message, fiber.StatusBadRequest))
-		}
-		return response.Error(c, errors.ErrInternal("调用 Galgame 资料库失败"))
-	}
-	return c.JSON(response.Response{Code: 0, Message: "OK", Data: data})
-}
-
 func (h *PatchHandler) SubmitGalgame(c fiber.Ctx) error {
 	if appErr := h.ensureCanPublishGalgame(c); appErr != nil {
 		return response.Error(c, appErr)
@@ -915,22 +904,6 @@ func (h *PatchHandler) ownPendingSubmissions(c fiber.Ctx, q string) []wizardPend
 		out = append(out, hit)
 	}
 	return out
-}
-
-func (h *PatchHandler) GetResourceFileHistory(c fiber.Ctx) error {
-	resourceID, err := getIDParam(c, "resourceId")
-	if err != nil {
-		return response.Error(c, err.(*errors.AppError))
-	}
-	var req dto.ResourceFileHistoryRequest
-	if err := utils.ParseQueryAndValidate(c, &req); err != nil {
-		return response.Error(c, errors.ErrBadRequest(err.Error()))
-	}
-	items, total, gErr := h.service.GetResourceFileHistory(resourceID, req.Page, req.Limit)
-	if gErr != nil {
-		return response.Error(c, errors.ErrInternal(""))
-	}
-	return response.Paginated(c, items, total)
 }
 
 func (h *PatchHandler) GetResourceRevisions(c fiber.Ctx) error {

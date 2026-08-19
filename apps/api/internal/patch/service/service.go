@@ -12,7 +12,6 @@ import (
 	authModel "kun-galgame-patch-api/internal/auth/model"
 	galgameClient "kun-galgame-patch-api/internal/galgame/client"
 	"kun-galgame-patch-api/internal/infrastructure/markdown"
-	"kun-galgame-patch-api/internal/patch/dto"
 	"kun-galgame-patch-api/internal/patch/model"
 	"kun-galgame-patch-api/internal/patch/repository"
 	settingService "kun-galgame-patch-api/internal/setting/service"
@@ -1270,26 +1269,6 @@ func (s *PatchService) IsCommentVerifyEnabled() bool {
 
 func (s *PatchService) IsCreatorOnlyEnabled() bool {
 	return s.setting.GetBool(settingService.KeyCreatorOnly)
-}
-
-func (s *PatchService) GetResourceFileHistory(resourceID, page, limit int) ([]dto.PublicResourceFileHistoryItem, int64, error) {
-	rows, total, err := s.repo.GetResourceFileHistory(resourceID, (page-1)*limit, limit)
-	if err != nil {
-		return nil, 0, err
-	}
-	items := make([]dto.PublicResourceFileHistoryItem, 0, len(rows))
-	for _, h := range rows {
-		items = append(items, dto.PublicResourceFileHistoryItem{
-			ID:         h.ID,
-			OldStorage: h.OldStorage,
-			OldBlake3:  h.OldBlake3,
-			OldSize:    h.OldSize,
-			Reason:     h.Reason,
-			ActorRole:  h.ActorRole,
-			CreatedAt:  h.CreatedAt,
-		})
-	}
-	return items, total, nil
 }
 
 func diffResourceFields(before, after *model.PatchResource) model.ResourceChangeList {

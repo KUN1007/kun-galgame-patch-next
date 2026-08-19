@@ -53,10 +53,6 @@ func ErrInternal(msg string) *AppError {
 	return New(50000, msg, fiber.StatusInternalServerError)
 }
 
-func ErrBusiness(msg string) *AppError {
-	return New(40000, msg, fiber.StatusBadRequest)
-}
-
 func ErrGalgameNotFound(msg string) *AppError {
 	if msg == "" {
 		msg = "游戏资料库中不存在该游戏，请先提交新作"

@@ -445,20 +445,6 @@ func setToSlice(s map[string]bool) []string {
 	return result
 }
 
-func (r *PatchRepository) GetResourceFileHistory(resourceID, offset, limit int) ([]model.PatchResourceFileHistory, int64, error) {
-	var rows []model.PatchResourceFileHistory
-	var total int64
-	base := r.db.Model(&model.PatchResourceFileHistory{}).Where("resource_id = ?", resourceID)
-	if err := base.Session(&gorm.Session{}).Count(&total).Error; err != nil {
-		return nil, 0, err
-	}
-	err := base.Session(&gorm.Session{}).
-		Order("created_at DESC, id DESC").
-		Offset(offset).Limit(limit).
-		Find(&rows).Error
-	return rows, total, err
-}
-
 func (r *PatchRepository) GetResourceRevisions(resourceID, offset, limit int) ([]model.PatchResourceRevision, int64, error) {
 	var rows []model.PatchResourceRevision
 	var total int64

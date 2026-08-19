@@ -62,21 +62,17 @@ func upstreamError(resp *http.Response, code int, message string) *GalgameError 
 }
 
 type Client struct {
-	v1Base       string
-	internalBase string
-	legacyBase   string
-	apiKey       string
-	http         *http.Client
-	gids         *gidMap
+	v1Base string
+	apiKey string
+	http   *http.Client
+	gids   *gidMap
 }
 
 func NewWithKey(baseURL, apiKey string) *Client {
 	base := strings.TrimRight(baseURL, "/")
 	return &Client{
-		v1Base:       base + "/v1",
-		internalBase: base + "/internal",
-		legacyBase:   base + "/api",
-		apiKey:       apiKey,
+		v1Base: base + "/v1",
+		apiKey: apiKey,
 		http: &http.Client{
 			Timeout: 10 * time.Second,
 			CheckRedirect: func(*http.Request, []*http.Request) error {
@@ -85,44 +81,6 @@ func NewWithKey(baseURL, apiKey string) *Client {
 		},
 		gids: newGIDMap(),
 	}
-}
-
-func (c *Client) readTarget(path string) (base, apiKey string) {
-	if strings.HasPrefix(path, "/admin/") {
-		return c.legacyBase, ""
-	}
-	return c.internalBase, c.apiKey
-}
-
-func (c *Client) writeTarget(path string) (base, apiKey string) {
-	if isUserWritePath(path) {
-		return c.internalBase, c.apiKey
-	}
-	return c.legacyBase, ""
-}
-
-func isUserWritePath(path string) bool {
-	if i := strings.IndexByte(path, '?'); i >= 0 {
-		path = path[:i]
-	}
-	if path == "/galgame/submit" {
-		return true
-	}
-	rest, ok := strings.CutPrefix(path, "/galgame/")
-	if !ok {
-		return false
-	}
-	seg := strings.Split(rest, "/")
-	if _, err := strconv.Atoi(seg[0]); err != nil {
-		return false
-	}
-	switch len(seg) {
-	case 1:
-		return true
-	case 2:
-		return seg[1] == "claim"
-	}
-	return false
 }
 
 type galgameResponse[T any] struct {
@@ -228,48 +186,6 @@ type ScreenshotInput struct {
 	Width     int    `json:"width,omitempty"`
 	Height    int    `json:"height,omitempty"`
 	Thumbhash string `json:"thumbhash,omitempty"`
-}
-
-func (c *Client) get(ctx context.Context, path string, query url.Values, out any) error {
-	base, apiKey := c.readTarget(path)
-	u := base + path
-	if len(query) > 0 {
-		u += "?" + query.Encode()
-	}
-
-	req, err := http.NewRequestWithContext(ctx, "GET", u, nil)
-	if err != nil {
-		return fmt.Errorf("构造请求失败: %w", err)
-	}
-	if apiKey != "" {
-		req.Header.Set("X-API-Key", apiKey)
-	}
-
-	resp, err := c.http.Do(req)
-	if err != nil {
-		return fmt.Errorf("调用 galgame 失败: %w", err)
-	}
-	defer resp.Body.Close()
-
-	body, err := io.ReadAll(resp.Body)
-	if err != nil {
-		return fmt.Errorf("读取 galgame 响应失败: %w", err)
-	}
-
-	var wrapper galgameResponse[json.RawMessage]
-	if err := json.Unmarshal(body, &wrapper); err != nil {
-		return fmt.Errorf("解析 galgame 响应失败: %w (body=%s)", err, truncate(string(body), 200))
-	}
-	if wrapper.Code != 0 {
-		return fmt.Errorf("galgame 业务错误 code=%d: %s", wrapper.Code, wrapper.Message)
-	}
-	if out == nil {
-		return nil
-	}
-	if err := json.Unmarshal(wrapper.Data, out); err != nil {
-		return fmt.Errorf("解析 galgame data 失败: %w", err)
-	}
-	return nil
 }
 
 func (c *Client) getV1Raw(ctx context.Context, path string, query url.Values) (json.RawMessage, error) {

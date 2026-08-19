@@ -57,7 +57,3 @@ func formatValidationError(e validator.FieldError) string {
 		return fmt.Sprintf("%s validation failed (%s)", field, e.Tag())
 	}
 }
-
-func GetValidator() *validator.Validate {
-	return validate
-}

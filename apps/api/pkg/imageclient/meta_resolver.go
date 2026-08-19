@@ -58,15 +58,6 @@ func (r *MetaResolver) Resolve(hashes []string) map[string]ImageMeta {
 	return out
 }
 
-func (r *MetaResolver) Put(hash string, m ImageMeta) {
-	if hash == "" {
-		return
-	}
-	r.mu.Lock()
-	r.cache[hash] = m
-	r.mu.Unlock()
-}
-
 func dedupHashes(in []string) []string {
 	if len(in) < 2 {
 		return in

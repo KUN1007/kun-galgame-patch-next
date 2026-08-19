@@ -26,7 +26,3 @@ func (r *AuthRepository) FindUserByID(id int) (*model.User, error) {
 func (r *AuthRepository) CreateUser(user *model.User) error {
 	return r.db.Clauses(clause.OnConflict{DoNothing: true}).Create(user).Error
 }
-
-func (r *AuthRepository) UpdateLastLoginTime(userID int, t string) error {
-	return r.db.Model(&model.User{}).Where("id = ?", userID).Update("last_login_time", t).Error
-}
