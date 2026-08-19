@@ -137,7 +137,9 @@ func (f *catalogFake) tagRecord(path string) string {
 func (f *catalogFake) labelRecord(path string) string {
 	id, _ := strconv.ParseInt(strings.TrimPrefix(path, "/v1/catalog/labels/"), 10, 64)
 	return `{"id":` + strconv.FormatInt(id, 10) + `,"display_name":"Brand","kind":"developer","lang":"ja",` +
-		`"aliases":["ブランド"],"work_count":3,"logo_hash":"abcd1234",` +
+		`"aliases":[{"value":"ブランド","lang":"ja","kind":"spelling_variant"},` +
+		`{"value":"Brand","kind":"spelling_variant","machine":true}],` +
+		`"work_count":3,"logo_hash":"abcd1234",` +
 		`"intros":[{"lang":"zh-Hans","intro":"说明","source":"vndb"}],` +
 		`"links":[{"source":"web","url":"https://example.test"}]}`
 }

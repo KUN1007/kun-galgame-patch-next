@@ -101,16 +101,38 @@ type catalogLabelLink struct {
 	URL    string `json:"url"`
 }
 
+// Catalog wave 209 turned aliases[] from []string into these rows. Decoding
+// them into the old []string failed the whole request, so every label that had
+// an alias answered 50000 "调用 Galgame 资料库失败" — 35 of 60 sampled ids.
+// The fake in catalog_fake_test.go still served flat strings, so the suite
+// stayed green through it.
+type catalogAlias struct {
+	Value   string `json:"value"`
+	Lang    string `json:"lang"`
+	Kind    string `json:"kind"`
+	Machine bool   `json:"machine"`
+}
+
 type catalogLabelRecord struct {
 	ID          int64              `json:"id"`
 	DisplayName string             `json:"display_name"`
 	Kind        string             `json:"kind"`
 	Lang        string             `json:"lang"`
-	Aliases     []string           `json:"aliases"`
+	Aliases     []catalogAlias     `json:"aliases"`
 	WorkCount   int                `json:"work_count"`
 	Intros      []catalogIntroRow  `json:"intros"`
 	Links       []catalogLabelLink `json:"links"`
 	LogoHash    string             `json:"logo_hash"`
+}
+
+func aliasValues(rows []catalogAlias) []string {
+	out := make([]string, 0, len(rows))
+	for _, r := range rows {
+		if r.Value != "" {
+			out = append(out, r.Value)
+		}
+	}
+	return out
 }
 
 func preferredIntro(rows []catalogIntroRow) string {
@@ -192,15 +214,11 @@ func (c *Client) catalogLabelDetail(ctx context.Context, idStr string, q url.Val
 	if len(rec.Links) > 0 {
 		link = rec.Links[0].URL
 	}
-	aliases := rec.Aliases
-	if aliases == nil {
-		aliases = []string{}
-	}
 	return json.Marshal(map[string]any{
 		"official": catalogOfficialBrief{
 			ID:           rec.ID,
 			Name:         rec.DisplayName,
-			Aliases:      aliases,
+			Aliases:      aliasValues(rec.Aliases),
 			Category:     rec.Kind,
 			Lang:         productLangFromCatalog(rec.Lang),
 			Link:         link,

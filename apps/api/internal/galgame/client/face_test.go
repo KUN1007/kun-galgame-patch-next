@@ -6,6 +6,7 @@ import (
 	"net/http"
 	"net/http/httptest"
 	"net/url"
+	"slices"
 	"strings"
 	"sync"
 	"testing"
@@ -554,6 +555,27 @@ func TestTaxonomyBrowseMembersAreGated(t *testing.T) {
 				t.Errorf("%s.galgame_count = %d, want 4 — the header counts the list below it", tc.entity, count)
 			}
 		})
+	}
+}
+
+func TestLabelAliasRowsFlattenToValues(t *testing.T) {
+	srv := newCatalogFake(t)
+	c := NewWithKey(srv.URL, "nm_test_key")
+
+	raw, handled, err := c.TaxonomyBrowse(context.Background(), "/official/_?official_id=31")
+	if err != nil || !handled {
+		t.Fatalf("TaxonomyBrowse: handled=%v err=%v", handled, err)
+	}
+	var got struct {
+		Official struct {
+			Aliases []string `json:"aliases"`
+		} `json:"official"`
+	}
+	if e := json.Unmarshal(raw, &got); e != nil {
+		t.Fatalf("unmarshal: %v", e)
+	}
+	if want := []string{"ブランド", "Brand"}; !slices.Equal(got.Official.Aliases, want) {
+		t.Errorf("official.aliases = %v, want %v", got.Official.Aliases, want)
 	}
 }
 
