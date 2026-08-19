@@ -1,6 +1,7 @@
 package client
 
 import (
+	"sort"
 	"strconv"
 	"strings"
 )
@@ -85,11 +86,38 @@ func normalizeCatalogDate(date *string) (*string, string) {
 	return nil, ""
 }
 
-func namesOf(n *catalogNames) (ja, zhCN, zhTW, en string) {
-	if n == nil {
-		return "", "", "", ""
+// Several catalog tags fold onto one moyu column — zh-Hant and zh-TW both land
+// on zh-tw — so the fold has to elect a winner, and map iteration is random in
+// Go. Source before machine, then the lowest tag, so the same payload always
+// renders the same title.
+func localizedByProductKey(localized map[string]catalogLocalizedName) map[string]string {
+	tags := make([]string, 0, len(localized))
+	for tag := range localized {
+		tags = append(tags, tag)
 	}
-	return n.JaJP.Value, n.ZhCN.Value, n.ZhTW.Value, n.EnUS.Value
+	sort.Strings(tags)
+
+	out := make(map[string]string, 4)
+	for _, machine := range []bool{false, true} {
+		for _, tag := range tags {
+			row := localized[tag]
+			if row.Machine != machine || row.Value == "" {
+				continue
+			}
+			switch k := productLangFromCatalog(tag); k {
+			case "ja-jp", "zh-cn", "zh-tw", "en-us":
+				if _, taken := out[k]; !taken {
+					out[k] = row.Value
+				}
+			}
+		}
+	}
+	return out
+}
+
+func namesOf(localized map[string]catalogLocalizedName) (ja, zhCN, zhTW, en string) {
+	n := localizedByProductKey(localized)
+	return n["ja-jp"], n["zh-cn"], n["zh-tw"], n["en-us"]
 }
 
 func vndbIDOf(refs []catalogRef) string {
@@ -133,7 +161,7 @@ func claimStateOf(c *catalogClaimedBy) string {
 }
 
 func catalogItemToBrief(it *catalogWorkListItem) GalgameBrief {
-	ja, zhCN, zhTW, en := namesOf(it.Names)
+	ja, zhCN, zhTW, en := namesOf(it.Localized)
 	cl, age := contentAxisOf(it.ClaimedBy, it.ContentRating)
 	date, precision := normalizeCatalogDate(it.ReleaseDate)
 	hash, w, h, th := coverOf(it)
@@ -185,6 +213,13 @@ func catalogItemToHit(it *catalogWorkListItem) GalgameHit {
 	}
 }
 
+func introRows(w *catalogWork) []catalogWorkIntro {
+	if len(w.Intros) > 0 {
+		return w.Intros
+	}
+	return w.Intro
+}
+
 func introByProductKey(rows []catalogWorkIntro) map[string]string {
 	out := make(map[string]string, 4)
 	for _, r := range rows {
@@ -193,29 +228,6 @@ func introByProductKey(rows []catalogWorkIntro) map[string]string {
 		case "ja-jp", "zh-cn", "zh-tw", "en-us":
 			if _, taken := out[k]; !taken {
 				out[k] = r.Intro
-			}
-		}
-	}
-	return out
-}
-
-// Source rows first: the names block elects source over machine before it
-// reaches us, but the detail face's titles[] is every row and carries no such
-// order, so first-row-wins there would show a machine title for a locale that
-// has a real one.
-func titleByProductKey(rows []catalogTitle) map[string]string {
-	out := make(map[string]string, 4)
-	for _, machine := range []bool{false, true} {
-		for _, r := range rows {
-			if r.Machine != machine {
-				continue
-			}
-			k := productLangFromCatalog(r.Lang)
-			switch k {
-			case "ja-jp", "zh-cn", "zh-tw", "en-us":
-				if _, taken := out[k]; !taken {
-					out[k] = r.Title
-				}
 			}
 		}
 	}
@@ -290,18 +302,18 @@ func isLandscape(w, h int) bool {
 func catalogWorkToFull(w *catalogWork) GalgameFull {
 	cl, age := contentAxisOf(w.ClaimedBy, w.ContentRating)
 	date, _ := normalizeCatalogDate(w.ReleaseDate)
-	titles := titleByProductKey(w.Titles)
-	intros := introByProductKey(w.Intro)
+	names := localizedByProductKey(w.Localized)
+	intros := introByProductKey(introRows(w))
 
 	f := GalgameFull{
 		ID:               w.ClaimedBy.gid(),
 		CatalogWorkID:    w.ID,
 		VndbID:           vndbIDOf(w.Refs),
 		ClaimState:       claimStateOf(w.ClaimedBy),
-		NameJaJp:         titles["ja-jp"],
-		NameZhCn:         titles["zh-cn"],
-		NameZhTw:         titles["zh-tw"],
-		NameEnUs:         titles["en-us"],
+		NameJaJp:         names["ja-jp"],
+		NameZhCn:         names["zh-cn"],
+		NameZhTw:         names["zh-tw"],
+		NameEnUs:         names["en-us"],
 		IntroJaJp:        intros["ja-jp"],
 		IntroZhCn:        intros["zh-cn"],
 		IntroZhTw:        intros["zh-tw"],

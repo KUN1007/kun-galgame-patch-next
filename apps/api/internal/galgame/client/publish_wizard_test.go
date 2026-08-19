@@ -27,7 +27,7 @@ func (r *wizardRecorder) client(t *testing.T) *Client {
 			body = `{"code":0,"message":"ok","data":{"total":2,"items":[
 			  {"id":11,"display_name":"A","content_rating":"r18",
 			   "claimed_by":{"site":"galgame_wiki","work_id":292,"state":"live","content_limit":"nsfw"},
-			   "names":{"ja-jp":{"value":"白恋サクラ"}},"refs":[{"source":"vndb","external_id":"v22610"}]},
+			   "localized":{"ja":{"value":"白恋サクラ","kind":"official"}},"refs":[{"source":"vndb","external_id":"v22610"}]},
 			  {"id":12,"display_name":"B","content_rating":"r18",
 			   "claimed_by":{"site":"galgame_wiki","work_id":9978,"state":"draft","content_limit":"nsfw"}},
 			  {"id":13,"display_name":"withdrawn","content_rating":"r18",

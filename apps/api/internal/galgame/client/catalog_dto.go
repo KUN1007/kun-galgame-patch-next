@@ -44,33 +44,15 @@ type catalogRef struct {
 	ExternalID string `json:"external_id"`
 }
 
-// Catalog wave 210 turned each slot of the names block from a bare string into
-// a row. The slot keys did not change, so nothing about the shape looks wrong
-// until json.Unmarshal refuses it — and it refuses the whole response, which
-// took works / works/search / calendar down together.
-type catalogNameSlot struct {
+// The name primitive, keyed by catalog language tag (ja, zh-Hans, zh-Hant, en,
+// and others the four fixed slots could not carry). Catalog wave 212 put it on
+// works; the wave after it deletes the ja-jp/zh-cn/zh-tw/en-us block this client
+// used to read, so nothing here may reach for those keys again. Election happens
+// upstream — a source row already beat any machine translation for its tag.
+type catalogLocalizedName struct {
 	Value   string `json:"value"`
+	Kind    string `json:"kind"`
 	Machine bool   `json:"machine"`
-}
-
-type catalogNames struct {
-	JaJP catalogNameSlot `json:"ja-jp"`
-	ZhCN catalogNameSlot `json:"zh-cn"`
-	ZhTW catalogNameSlot `json:"zh-tw"`
-	EnUS catalogNameSlot `json:"en-us"`
-}
-
-type catalogIntroSlot struct {
-	Intro   string `json:"intro"`
-	Source  string `json:"source"`
-	Machine bool   `json:"machine"`
-}
-
-type catalogIntros struct {
-	JaJP *catalogIntroSlot `json:"ja-jp"`
-	ZhCN *catalogIntroSlot `json:"zh-cn"`
-	ZhTW *catalogIntroSlot `json:"zh-tw"`
-	EnUS *catalogIntroSlot `json:"en-us"`
 }
 
 type catalogCoverSlot struct {
@@ -99,10 +81,9 @@ type catalogWorkListItem struct {
 	Cover         string            `json:"cover"`
 	Updated       string            `json:"updated"`
 
-	Names  *catalogNames      `json:"names"`
-	Intros *catalogIntros     `json:"intros"`
-	Covers *catalogCoverSlots `json:"covers"`
-	Refs   []catalogRef       `json:"refs"`
+	Localized map[string]catalogLocalizedName `json:"localized"`
+	Covers    *catalogCoverSlots              `json:"covers"`
+	Refs      []catalogRef                    `json:"refs"`
 }
 
 type catalogWorksListData struct {
@@ -132,13 +113,6 @@ type catalogCalendarData struct {
 	Items      []catalogWorkListItem `json:"items"`
 	NextCursor *string               `json:"next_cursor"`
 	Meta       catalogCalendarMeta   `json:"meta"`
-}
-
-type catalogTitle struct {
-	Lang    string `json:"lang"`
-	Title   string `json:"title"`
-	Kind    string `json:"kind"`
-	Machine bool   `json:"machine"`
 }
 
 type catalogWorkIntro struct {
@@ -210,11 +184,16 @@ type catalogWork struct {
 	ReleaseDate   *string           `json:"release_date"`
 	Created       string            `json:"created"`
 	Updated       string            `json:"updated"`
-	Titles        []catalogTitle    `json:"titles"`
 	Refs          []catalogRef      `json:"refs"`
 	ClaimedBy     *catalogClaimedBy `json:"claimed_by"`
 
+	Localized map[string]catalogLocalizedName `json:"localized"`
+
+	// The detail face is mid-rename from `intro` to `intros` and the two sides
+	// do not deploy together, so both keys are decoded until catalog drops the
+	// singular one. Read them through introRows, never directly.
 	Intro       []catalogWorkIntro   `json:"intro"`
+	Intros      []catalogWorkIntro   `json:"intros"`
 	Covers      []catalogDetailCover `json:"covers"`
 	Screenshots []catalogScreenshot  `json:"screenshots"`
 	Tags        []catalogWorkTag     `json:"tags"`

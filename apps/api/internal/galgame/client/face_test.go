@@ -558,12 +558,12 @@ func TestTaxonomyBrowseMembersAreGated(t *testing.T) {
 	}
 }
 
-func TestNameSlotRowsReachBothFaces(t *testing.T) {
+func TestLocalizedNamesReachBothFaces(t *testing.T) {
 	srv := newCatalogFake(t)
 	c := NewWithKey(srv.URL, "nm_test_key")
 	ctx := context.Background()
 
-	t.Run("list brief reads the slot value", func(t *testing.T) {
+	t.Run("list brief folds the catalog tags onto the product columns", func(t *testing.T) {
 		raw, handled, err := c.TaxonomyBrowse(ctx, "/tag/_?tag_id=11")
 		if err != nil || !handled {
 			t.Fatalf("TaxonomyBrowse: handled=%v err=%v", handled, err)
@@ -572,6 +572,8 @@ func TestNameSlotRowsReachBothFaces(t *testing.T) {
 			Galgames []struct {
 				NameJaJp string `json:"name_ja_jp"`
 				NameZhCn string `json:"name_zh_cn"`
+				NameZhTw string `json:"name_zh_tw"`
+				NameEnUs string `json:"name_en_us"`
 			} `json:"galgames"`
 		}
 		if e := json.Unmarshal(raw, &got); e != nil {
@@ -580,18 +582,24 @@ func TestNameSlotRowsReachBothFaces(t *testing.T) {
 		if len(got.Galgames) == 0 {
 			t.Fatal("no galgames — the fixture has four")
 		}
-		if g := got.Galgames[0]; g.NameJaJp != "タイトル" || g.NameZhCn != "标题" {
-			t.Errorf("names = (%q, %q), want (タイトル, 标题)", g.NameJaJp, g.NameZhCn)
+		g := got.Galgames[0]
+		// zh-Hant lands on zh-tw, and ko has nowhere to go and must not break anything.
+		if g.NameJaJp != "タイトル" || g.NameZhCn != "标题" ||
+			g.NameZhTw != "標題" || g.NameEnUs != "Title" {
+			t.Errorf("names = (%q, %q, %q, %q), want (タイトル, 标题, 標題, Title)",
+				g.NameJaJp, g.NameZhCn, g.NameZhTw, g.NameEnUs)
 		}
 	})
 
-	t.Run("detail titles elect source over machine", func(t *testing.T) {
+	t.Run("a source tag beats a machine tag folding onto the same column", func(t *testing.T) {
 		full, err := c.GetGalgame(ctx, 7, "")
 		if err != nil {
 			t.Fatalf("GetGalgame: %v", err)
 		}
+		// `zh` and `zh-Hans` both fold to zh-cn; `zh` sorts first and is the
+		// machine row, so lowest-tag-wins alone would publish the translation.
 		if got := full.Galgame.NameZhCn; got != "标题" {
-			t.Errorf("name_zh_cn = %q, want 标题 — the fixture lists the machine row first", got)
+			t.Errorf("name_zh_cn = %q, want 标题 (the machine `zh` row must lose)", got)
 		}
 	})
 }
@@ -695,5 +703,21 @@ func TestRetiredTaxonomyListsAreUnhandled(t *testing.T) {
 		if rec.path != "" {
 			t.Errorf("TaxonomyBrowse(%q) dialed %q; a retired lane must not reach any face", p, rec.path)
 		}
+	}
+}
+
+func TestDetailIntroAcceptsBothKeysAcrossTheRename(t *testing.T) {
+	for _, key := range []string{"intro", "intros"} {
+		t.Run(key, func(t *testing.T) {
+			var w catalogWork
+			body := `{"id":1,"` + key + `":[{"lang":"zh-Hans","intro":"介绍","source":"vndb"}]}`
+			if err := json.Unmarshal([]byte(body), &w); err != nil {
+				t.Fatalf("unmarshal: %v", err)
+			}
+			if got := introByProductKey(introRows(&w))["zh-cn"]; got != "介绍" {
+				t.Errorf("intro_zh_cn = %q, want 介绍 — the detail face is mid-rename "+
+					"and the two services do not deploy together", got)
+			}
+		})
 	}
 }
