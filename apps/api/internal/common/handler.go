@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 	"math/rand"
+	"strconv"
 	"strings"
 	"time"
 
@@ -303,7 +304,14 @@ func (h *CommonHandler) GetGlobalResources(c fiber.Ctx) error {
 func (h *CommonHandler) GetResourceDetail(c fiber.Ctx) error {
 	cl := utils.ContentLimitForListBrowse(c)
 
-	resourceID := c.Params("id")
+	// GORM's inline condition only binds a primary key when the value is numeric;
+	// a non-numeric string is spliced into the WHERE clause as raw SQL. The page
+	// sends `/resource/${Number(route.params.id)}`, so a bad route reached Postgres
+	// as `column "nan" does not exist (SQLSTATE 42703)`.
+	resourceID, idErr := strconv.Atoi(c.Params("id"))
+	if idErr != nil || resourceID < 1 {
+		return response.Error(c, errors.ErrBadRequest("invalid resource id"))
+	}
 	var resource patchModel.PatchResource
 	if dbErr := h.db.First(&resource, resourceID).Error; dbErr != nil {
 		return response.Error(c, errors.ErrNotFound("resource not found"))
