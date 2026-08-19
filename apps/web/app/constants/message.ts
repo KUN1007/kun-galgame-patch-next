@@ -36,15 +36,6 @@ export const MESSAGE_TYPE_MAP: Record<string, string> = {
   system: '系统'
 }
 
-export const READABLE_MESSAGE_MAP: Record<string, string> = {
-  notice: 'all',
-  follow: 'follow',
-  'patch-resource-create': 'patchResourceCreate',
-  'patch-resource-update': 'patchResourceUpdate',
-  mention: 'mention',
-  system: 'system'
-}
-
 export const MESSAGE_TYPE_ICON: Record<string, string> = {
   system: 'lucide:monitor-cog',
   pm: 'lucide:mail',

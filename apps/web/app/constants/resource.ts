@@ -125,8 +125,6 @@ export const SUPPORTED_PLATFORM_MAP: Record<string, string> = {
   other: '其它'
 }
 
-export const SUPPORTED_RESOURCE_LINK = ['s3', 'user']
-
 export const storageTypes = [
   {
     value: 's3',
@@ -145,17 +143,4 @@ export const SUPPORTED_RESOURCE_LINK_MAP: Record<string, string> = {
   user: '自定义链接下载'
 }
 
-export const ALLOWED_MIME_TYPES = [
-  'application/zip',
-  'application/x-lz4',
-  'application/x-rar-compressed'
-]
-
 export const ALLOWED_EXTENSIONS = ['.zip', '.rar', '.7z']
-
-export const RESOURCE_UPLOAD_STATUS_MAP: Record<number, string> = {
-  1: '正在上传中...',
-  2: '合并文件中...',
-  3: '上传文件成功~',
-  4: '上传文件失败!'
-}

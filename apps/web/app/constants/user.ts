@@ -12,8 +12,8 @@
 // admin=超级管理员 — now aligned to the contract's canonical names.)
 //
 // The `roles` claim is a SET with NO "user" string (普通用户 = empty array), so
-// 普通用户 is the empty/fallback case. Use `pickRoleLabel(roles)` to render the
-// single badge for a user that may hold several roles.
+// 普通用户 is the empty/fallback case. Use `pickRoleBadge(roles, siteRoles)` to render
+// the single badge for a user that may hold several roles.
 export const USER_ROLE_MAP: Record<string, string> = {
   ren: '莲',
   admin: '管理员',
@@ -68,23 +68,4 @@ export const pickRoleBadge = (
   if (!best) return { label: USER_ROLE_MAP.user ?? '普通用户', site: false }
   const label = USER_ROLE_MAP[best.role] ?? best.role
   return { label: best.site ? `本站${label}` : label, site: best.site }
-}
-
-// pickRoleLabel returns just the badge text for a global role set (back-compat).
-export const pickRoleLabel = (roles: string[] | null | undefined): string =>
-  pickRoleBadge(roles).label
-
-export const USER_STATUS_MAP: Record<number, string> = {
-  0: '正常',
-  1: '限制（正在开发中）',
-  2: '封禁'
-}
-
-export const USER_STATUS_COLOR_MAP: Record<
-  number,
-  'success' | 'warning' | 'danger'
-> = {
-  0: 'success',
-  1: 'warning',
-  2: 'danger'
 }

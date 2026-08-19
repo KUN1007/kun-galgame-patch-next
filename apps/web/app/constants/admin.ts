@@ -1,20 +1,3 @@
-export const APPLICANT_STATUS_MAP: Record<number, string> = {
-  0: '待处理',
-  1: '已处理',
-  2: '已同意',
-  3: '已拒绝'
-}
-
-export const APPLICANT_STATUS_COLOR_MAP: Record<
-  number,
-  'default' | 'primary' | 'success' | 'danger'
-> = {
-  0: 'primary',
-  1: 'default',
-  2: 'success',
-  3: 'danger'
-}
-
 export const ADMIN_LOG_TYPE_MAP: Record<string, string> = {
   // Legacy types (historical rows written by the retired Next.js admin —
   // their content is full Chinese prose, so these still read fine).

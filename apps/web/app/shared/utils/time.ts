@@ -1,6 +1,5 @@
 import {
   differenceInSeconds,
-  differenceInHours,
   format,
   formatDistanceToNow as formatDistanceToNowCore
 } from 'date-fns'
@@ -42,17 +41,6 @@ export const formatTimeDifference = (pastTime: number | Date | string) => {
     const years = Math.floor(diffInSeconds / 31536000)
     return `${years} 年前`
   }
-}
-
-export const hourDiff = (upvoteTime: number | Date | string, hours: number) => {
-  if (upvoteTime === 0 || upvoteTime === undefined) {
-    return false
-  }
-
-  const currentTime = new Date()
-  const time = new Date(upvoteTime)
-
-  return differenceInHours(currentTime, time) <= hours
 }
 
 export const formatDate = (

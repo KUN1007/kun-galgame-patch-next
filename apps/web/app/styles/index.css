@@ -59,28 +59,6 @@
    into the utilities it generates and emits no `--color-*` to :root, so every
    hand-written one resolves to "" and the declaration is dropped — a background
    silently disappears instead of changing colour. */
-cropper-canvas {
-  background: color-mix(
-    in oklab,
-    oklch(var(--default-accent)) 20%,
-    transparent
-  );
-  width: 100%;
-  height: clamp(220px, 52vh, 560px);
-}
-
-cropper-selection {
-  outline: 2px solid oklch(var(--primary-accent));
-}
-
-cropper-handle[action='select'] {
-  background: color-mix(
-    in oklab,
-    oklch(var(--primary-accent)) 20%,
-    transparent
-  );
-}
-
 .kun-os-scroll .os-scrollbar {
   --os-size: 10px;
   --os-padding-perpendicular: 2px;
