@@ -4,15 +4,18 @@
 -- for the wiki notification centre's unread badge. The wiki message feed retired
 -- in wave 161 and the badge went with it; the last two references — a count in
 -- PurgePreview and a DELETE in PurgeUser — are removed in the same commit as
--- this migration. 0 rows in prod and in the dev snapshot, so nothing is lost.
+-- this migration. 0 rows in prod, so nothing is lost.
 --
--- `patch_resource_update_time_bak_20260606` is the one-off manual backup taken
--- before the 2026-06-06 resource update_time fix, and migration 018 names it as
--- such when it excludes it from the timestamptz conversion. 6,657 rows. Two and
--- a half months of normal operation have passed since the fix it guarded.
--- THE DATA IS NOT RECOVERABLE by the down migration — take a dump first if you
--- want to keep a copy:
---   pg_dump -t patch_resource_update_time_bak_20260606 kungalgame_patch > bak.sql
+-- `patch_resource_update_time_bak_20260606` is the manual backup taken before
+-- the 2026-06-06 resource_update_time correction; migration 018 names it as a
+-- one-off when it excludes it from the timestamptz conversion. 6,657 rows.
+-- Against the live column today, 4,946 of them match to sub-second (the backup
+-- is timestamp(3), the live column timestamptz, so the remainder is rounding),
+-- 1,612 have simply moved on, and 70 moved backward — patches with zero
+-- resources whose inflated timestamps the correction pulled back off the
+-- default sort, which is what it was for. The correction has held for two and a
+-- half months. THE DOWN MIGRATION CANNOT RESTORE THIS DATA; it lives on in the
+-- full pg_dump taken from prod on 2026-08-19 before this migration was written.
 --
 -- DELIBERATELY NOT DROPPED: `wiki_message_processed` and its `cron_state` row.
 -- Migration 029 keeps both so a rollback of the catalog claim-event cutover
