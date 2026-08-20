@@ -174,17 +174,17 @@ interface PatchDetailOfficial {
 
 // One credited person. `id` is catalog's NAME id, which is what kungal's
 // /galgame/staff/:id takes.
+// Entity names arrive on all four slots rather than pre-rendered, so the
+// reader's 标题语言 setting picks between them the same way it does for a game
+// title. Render with getPreferredLanguageText, never by reading one key.
 interface PatchDetailPerson {
   id: number
-  name: string
+  name: KunLanguage
 }
 
 interface PatchDetailCharacter {
   id: number
-  name: string
-  // The character's own name, present only when it differs from the rendered
-  // (Chinese) one.
-  name_original?: string
+  name: KunLanguage
   kind: string
   spoiler: number
   // image_service content hashes, not URLs. `image` is the head shot, `figure`
@@ -197,7 +197,60 @@ interface PatchDetailCharacter {
 interface PatchDetailStaffGroup {
   role_key: string
   role_name: string
-  people: (PatchDetailPerson & { characters?: string[] })[]
+  people: (PatchDetailPerson & { characters?: KunLanguage[] })[]
+}
+
+interface PatchEntityIntro {
+  lang: Language
+  intro: string
+  source?: string
+  machine?: boolean
+}
+
+interface PatchEntityLink {
+  name: string
+  url: string
+}
+
+interface PatchCharacterTrait {
+  id: number
+  name: string
+  group: string
+  spoiler: number
+  lie: boolean
+}
+
+interface PatchCharacterDetail {
+  id: number
+  name: KunLanguage
+  aliases: string[]
+  image_hash?: string
+  figure_hash?: string
+  intros: PatchEntityIntro[]
+  traits: PatchCharacterTrait[]
+  links: PatchEntityLink[]
+}
+
+interface PatchStaffCredit {
+  // 0 when no moyu galgame stands on that catalog work, which is most of them.
+  galgame_id: number
+  name: KunLanguage
+  roles: { role_key: string; role_name: string; character?: string }[]
+}
+
+interface PatchStaffDetail {
+  id: number
+  name: KunLanguage
+  aliases: string[]
+  photo_hash?: string
+  gender?: number
+  birth_y?: number
+  birth_m?: number
+  birth_d?: number
+  siblings: PatchDetailPerson[]
+  intros: PatchEntityIntro[]
+  links: PatchEntityLink[]
+  credits: PatchStaffCredit[]
 }
 
 interface PatchDetailRatingBucket {

@@ -1,0 +1,223 @@
+{
+ "id": 1550,
+ "display_name": "榎木実佳",
+ "lang": "ja",
+ "localized": {
+  "zh-Hans": {
+   "value": "榎木实佳",
+   "kind": "translation"
+  }
+ },
+ "person_id": 1834,
+ "siblings": [
+  {
+   "id": 15292,
+   "display_name": "鈴谷まや",
+   "lang": "ja",
+   "localized": {}
+  },
+  {
+   "id": 19281,
+   "display_name": "星空ユメ",
+   "lang": "ja",
+   "localized": {}
+  },
+  {
+   "id": 131941,
+   "display_name": "安西 サリ",
+   "lang": "ja",
+   "localized": {}
+  }
+ ],
+ "aliases": [
+  {
+   "value": "榎木实佳",
+   "lang": "zh-Hans",
+   "kind": "translation"
+  }
+ ],
+ "photo_hash": "155d6ebd0e7aaa99bce92cc012634f308e834727b87ff2ef46de446930fd0bb4",
+ "gender": 2,
+ "birth_m": 8,
+ "birth_d": 21,
+ "links": [
+  {
+   "source": "official_site",
+   "url": "https://ftrm.co.jp/voice/?enokimika"
+  },
+  {
+   "source": "twitter",
+   "url": "https://x.com/suzuyamaya"
+  },
+  {
+   "source": "twitter",
+   "url": "https://x.com/yume_hoshizora"
+  },
+  {
+   "source": "web",
+   "url": "https://anidb.net/cr44347"
+  },
+  {
+   "source": "web",
+   "url": "https://vgmdb.net/artist/32223"
+  },
+  {
+   "source": "web",
+   "url": "https://www.wikidata.org/wiki/Q11649458"
+  }
+ ],
+ "intros": [
+  {
+   "lang": "ja",
+   "intro": "鈴谷 まや（すずや まや、8月21日 - ）は日本の女性声優。フリー。以前はアトリエピーチに所属していた。石川県出身。主にアダルトゲームに声をあてている。",
+   "source": "bangumi"
+  },
+  {
+   "lang": "zh-Hans",
+   "intro": "鈴谷 まや（すずや まや、8月21日 - ）是日本的女性声优。自由身。以前曾隶属于アトリエピーチ。石川县出身。主要为成人游戏配音。",
+   "source": "bangumi",
+   "machine": true
+  }
+ ],
+ "refs": [
+  {
+   "source": "vndb",
+   "external_id": "26940"
+  },
+  {
+   "source": "bangumi",
+   "external_id": "10026"
+  },
+  {
+   "source": "dlsite",
+   "external_id": "78444"
+  },
+  {
+   "source": "erogamescape",
+   "external_id": "35605"
+  }
+ ],
+ "credits": [
+  {
+   "work": {
+    "id": 2,
+    "medium": "galgame",
+    "display_name": "しゅがてん！-sugarfull tempering-",
+    "content_rating": "r18",
+    "claimed_by": {
+     "site": "kungal",
+     "work_id": 2,
+     "state": "live",
+     "content_limit": "sfw"
+    },
+    "localized": {
+     "en": {
+      "value": "Shugaten! -sugarfull tempering-",
+      "kind": "official"
+     },
+     "ja": {
+      "value": "しゅがてん！-sugarfull tempering-",
+      "kind": "official"
+     },
+     "zh-Hans": {
+      "value": "甜糖热恋 | 糖调",
+      "kind": "official"
+     }
+    }
+   },
+   "roles": [
+    {
+     "role_key": "voice-actor",
+     "role_name": "声优",
+     "character_id": 7276,
+     "character": "村崎小町",
+     "identity": "credit:1:1550:7276"
+    }
+   ]
+  },
+  {
+   "work": {
+    "id": 3,
+    "medium": "galgame",
+    "display_name": "アストラエアの白き永遠",
+    "content_rating": "r18",
+    "claimed_by": {
+     "site": "kungal",
+     "work_id": 3,
+     "state": "live",
+     "content_limit": "sfw"
+    },
+    "localized": {
+     "en": {
+      "value": "AstralAir no Shiroki Towa",
+      "kind": "official"
+     },
+     "ja": {
+      "value": "アストラエアの白き永遠",
+      "kind": "official"
+     },
+     "zh-Hans": {
+      "value": "星辰恋曲的白色永恒",
+      "kind": "official"
+     }
+    }
+   },
+   "roles": [
+    {
+     "role_key": "voice-actor",
+     "role_name": "声优",
+     "character_id": 1699,
+     "character": "コロナ",
+     "identity": "credit:1:1550:1699"
+    },
+    {
+     "role_key": "inserted-song-performance",
+     "role_name": "插入歌演出",
+     "identity": "credit:190:1550:0"
+    }
+   ]
+  },
+  {
+   "work": {
+    "id": 21,
+    "medium": "galgame",
+    "display_name": "恋するココロと魔法のコトバ",
+    "content_rating": "r18",
+    "claimed_by": {
+     "site": "kungal",
+     "work_id": 21,
+     "state": "live",
+     "content_limit": "sfw"
+    },
+    "localized": {
+     "en": {
+      "value": "Koi Suru Kokoro to Mahou no Kotoba",
+      "kind": "official"
+     },
+     "ja": {
+      "value": "恋するココロと魔法のコトバ",
+      "kind": "official"
+     },
+     "zh-Hans": {
+      "value": "恋心与魔法誓言",
+      "kind": "official"
+     },
+     "zh-Hant": {
+      "value": "戀心與魔法誓言",
+      "kind": "official"
+     }
+    }
+   },
+   "roles": [
+    {
+     "role_key": "voice-actor",
+     "role_name": "声优",
+     "character_id": 7836,
+     "character": "春ハル",
+     "identity": "credit:1:1550:7836"
+    }
+   ]
+  }
+ ],
+ "next_offset": 24
+}

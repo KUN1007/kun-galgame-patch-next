@@ -1,6 +1,4 @@
 <script setup lang="ts">
-import { kunMoyuMoe } from '~/config/moyu-moe'
-
 const props = defineProps<{
   staff: PatchDetailStaffGroup[]
 }>()
@@ -15,8 +13,15 @@ const visible = computed(() =>
     : props.staff
 )
 
-const staffHref = (id: number) =>
-  `${kunMoyuMoe.domain.kungal}/galgame/staff/${id}`
+const playedText = (characters?: KunLanguage[]) =>
+  (characters ?? []).map((c) => getPreferredLanguageText(c)).join(' / ')
+
+const activePerson = ref<PatchDetailPerson | null>(null)
+const isPersonOpen = ref(false)
+const openPerson = (person: PatchDetailPerson) => {
+  activePerson.value = person
+  isPersonOpen.value = true
+}
 </script>
 
 <template>
@@ -38,16 +43,15 @@ const staffHref = (id: number) =>
         </dt>
         <dd class="flex flex-wrap items-baseline gap-x-4 gap-y-1.5">
           <span v-for="person in group.people" :key="person.id" class="text-sm">
-            <a
-              :href="staffHref(person.id)"
-              target="_blank"
-              rel="noopener noreferrer"
-              class="text-default-800 hover:text-primary"
+            <button
+              type="button"
+              class="text-default-800 hover:text-primary cursor-pointer"
+              @click="openPerson(person)"
             >
-              {{ person.name }}
-            </a>
+              {{ getPreferredLanguageText(person.name) }}
+            </button>
             <span v-if="person.characters?.length" class="text-default-400">
-              （{{ person.characters.join(' / ') }}）
+              （{{ playedText(person.characters) }}）
             </span>
           </span>
         </dd>
@@ -70,5 +74,7 @@ const staffHref = (id: number) =>
           : `展开其余 ${staff.length - COLLAPSED} 项职位`
       }}
     </KunButton>
+
+    <GalgameStaffModal v-model="isPersonOpen" :person="activePerson" />
   </section>
 </template>

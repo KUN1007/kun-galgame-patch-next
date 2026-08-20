@@ -23,22 +23,22 @@ func TestDetailCarriesTheCatalogEntityGraph(t *testing.T) {
 		}
 	})
 
-	t.Run("characters render under their Chinese name", func(t *testing.T) {
+	t.Run("characters carry every name catalog has", func(t *testing.T) {
 		if len(g.Characters) != 2 {
 			t.Fatalf("characters = %d, want 2", len(g.Characters))
 		}
 		first := g.Characters[0]
-		if first.Name != "科罗娜" || first.NameOriginal != "コロナ" {
-			t.Errorf("character = (%q, %q), want (科罗娜, コロナ)", first.Name, first.NameOriginal)
+		if first.Name.JaJp != "コロナ" || first.Name.ZhCn != "科罗娜" {
+			t.Errorf("character = %+v, want both slots — the reader's 标题语言 picks one", first.Name)
 		}
 		if first.ImageHash != "chara1" || first.FigureHash != "figure1" {
 			t.Errorf("art = (%q, %q), want the URL basenames", first.ImageHash, first.FigureHash)
 		}
-		if len(first.Voices) != 1 || first.Voices[0].Name != "榎木实佳" || first.Voices[0].ID != 1550 {
-			t.Errorf("voices = %+v, want the zh name under catalog's name id", first.Voices)
+		if len(first.Voices) != 1 || first.Voices[0].Name.ZhCn != "榎木实佳" || first.Voices[0].ID != 1550 {
+			t.Errorf("voices = %+v, want both names under catalog's name id", first.Voices)
 		}
-		if second := g.Characters[1]; second.Name != "雪々" || second.NameOriginal != "" {
-			t.Errorf("character[1] = (%q, %q), want (雪々, \"\") — no second line when it would repeat", second.Name, second.NameOriginal)
+		if second := g.Characters[1]; second.Name.JaJp != "雪々" || second.Name.ZhCn != "" {
+			t.Errorf("character[1] = %+v, want an untagged display name parked in ja-jp", second.Name)
 		}
 	})
 
@@ -59,17 +59,18 @@ func TestDetailCarriesTheCatalogEntityGraph(t *testing.T) {
 		if len(scenario.People) != 2 {
 			t.Fatalf("scenario people = %+v, want both vocabularies' credits in one group", scenario.People)
 		}
-		if scenario.People[1].Name != "丸户史明" {
-			t.Errorf("scenario[1] = %q, want the zh name", scenario.People[1].Name)
+		if scenario.People[1].Name.ZhCn != "丸户史明" {
+			t.Errorf("scenario[1] = %+v, want the zh name too", scenario.People[1].Name)
 		}
 
 		voice := g.Staff[2]
-		if len(voice.People) != 1 || !slices.Equal(voice.People[0].Characters, []string{"コロナ"}) {
-			t.Errorf("voice-actor = %+v, want the character annotation carried", voice.People)
+		played := []KunLanguage{{JaJp: "コロナ", ZhCn: "科罗娜"}}
+		if len(voice.People) != 1 || !slices.Equal(voice.People[0].Characters, played) {
+			t.Errorf("voice-actor = %+v, want the annotation resolved through the roster", voice.People)
 		}
 
 		other := g.Staff[3]
-		if len(other.People) != 1 || other.People[0].Name != "なかひろ" {
+		if len(other.People) != 1 || other.People[0].Name.JaJp != "なかひろ" {
 			t.Errorf("other-staff = %+v, want 保住圭 dropped — it already ran under 脚本", other.People)
 		}
 	})

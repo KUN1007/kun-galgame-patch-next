@@ -39,8 +39,8 @@ func TestProdWorkDetailDecodes(t *testing.T) {
 			t.Fatal("no characters — the roster is unconditional on the detail face")
 		}
 		first := full.Characters[0]
-		if first.Name != "科罗娜" {
-			t.Errorf("character[0] = %q, want the zh-Hans row", first.Name)
+		if first.Name.ZhCn != "科罗娜" || first.Name.JaJp == "" {
+			t.Errorf("character[0] = %+v, want the zh-Hans row beside the original", first.Name)
 		}
 		if first.ImageHash == "" || first.FigureHash == "" {
 			t.Errorf("character[0] art = (%q, %q), want both hashes", first.ImageHash, first.FigureHash)

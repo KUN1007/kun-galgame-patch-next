@@ -4,7 +4,6 @@ import {
   GALGAME_CHARACTER_KIND_MAP,
   GALGAME_CHARACTER_SPOILER_MAP
 } from '~/constants/galgameEntity'
-import { kunMoyuMoe } from '~/config/moyu-moe'
 import { imageServiceUrl } from '~/shared/utils/resolveBannerUrl'
 
 const props = defineProps<{
@@ -48,11 +47,27 @@ const thumbOf = (c: PatchDetailCharacter) => imageServiceUrl(artOf(c), 'mini')
 const fitOf = (c: PatchDetailCharacter) =>
   c.image_hash ? ('cover' as const) : ('contain' as const)
 
-const voicesOf = (c: PatchDetailCharacter) =>
-  c.voices.map((v) => v.name).join(' / ')
+const nameOf = (c: PatchDetailCharacter) => getPreferredLanguageText(c.name)
+const secondaryOf = (c: PatchDetailCharacter) =>
+  getSecondaryLanguageText(c.name, nameOf(c))
 
-const characterHref = (c: PatchDetailCharacter) =>
-  `${kunMoyuMoe.domain.kungal}/galgame/character/${c.id}`
+const voicesOf = (c: PatchDetailCharacter) =>
+  c.voices.map((v) => getPreferredLanguageText(v.name)).join(' / ')
+
+const activeCharacter = ref<PatchDetailCharacter | null>(null)
+const isCharacterOpen = ref(false)
+const openCharacter = (c: PatchDetailCharacter) => {
+  activeCharacter.value = c
+  isCharacterOpen.value = true
+}
+
+const activePerson = ref<PatchDetailPerson | null>(null)
+const isPersonOpen = ref(false)
+const openPerson = (person: PatchDetailPerson) => {
+  isCharacterOpen.value = false
+  activePerson.value = person
+  isPersonOpen.value = true
+}
 </script>
 
 <template>
@@ -83,20 +98,20 @@ const characterHref = (c: PatchDetailCharacter) =>
       v-if="visibleArt.length"
       class="grid grid-cols-3 gap-3 sm:grid-cols-[repeat(auto-fill,minmax(128px,1fr))]"
     >
-      <a
+      <button
         v-for="c in visibleArt"
         :key="c.id"
-        :href="characterHref(c)"
-        target="_blank"
-        rel="noopener noreferrer"
-        class="group space-y-1.5"
+        type="button"
+        class="group space-y-1.5 text-left"
+        :aria-label="`查看角色 ${nameOf(c)}`"
+        @click="openCharacter(c)"
       >
         <div
-          class="bg-default-100 group-hover:ring-primary relative overflow-hidden rounded-lg ring-1 ring-transparent transition-all"
+          class="bg-default-100 group-hover:ring-primary group-focus:ring-primary relative overflow-hidden rounded-lg ring-1 ring-transparent transition-all"
         >
           <KunImage
             :src="thumbOf(c)"
-            :alt="c.name"
+            :alt="nameOf(c)"
             loading="lazy"
             aspect-ratio="3/4"
             :object-fit="fitOf(c)"
@@ -115,14 +130,14 @@ const characterHref = (c: PatchDetailCharacter) =>
 
         <div class="space-y-0.5">
           <p class="text-default-800 truncate text-sm font-medium">
-            {{ c.name }}
+            {{ nameOf(c) }}
           </p>
           <p
-            v-if="c.name_original"
+            v-if="secondaryOf(c)"
             class="text-default-400 truncate text-xs"
-            :title="c.name_original"
+            :title="secondaryOf(c)"
           >
-            {{ c.name_original }}
+            {{ secondaryOf(c) }}
           </p>
           <p
             v-if="c.voices.length"
@@ -138,7 +153,7 @@ const characterHref = (c: PatchDetailCharacter) =>
             {{ GALGAME_CHARACTER_SPOILER_MAP[c.spoiler] }}
           </p>
         </div>
-      </a>
+      </button>
     </div>
 
     <KunButton
@@ -164,19 +179,25 @@ const characterHref = (c: PatchDetailCharacter) =>
       </p>
       <div class="flex flex-wrap items-baseline gap-x-4 gap-y-1.5">
         <span v-for="c in nameOnly" :key="c.id" class="text-sm">
-          <a
-            :href="characterHref(c)"
-            target="_blank"
-            rel="noopener noreferrer"
-            class="text-default-800 hover:text-primary"
+          <button
+            type="button"
+            class="text-default-800 hover:text-primary cursor-pointer"
+            @click="openCharacter(c)"
           >
-            {{ c.name }}
-          </a>
+            {{ nameOf(c) }}
+          </button>
           <span v-if="c.voices.length" class="text-default-400">
             （CV {{ voicesOf(c) }}）
           </span>
         </span>
       </div>
     </div>
+
+    <GalgameCharacterModal
+      v-model="isCharacterOpen"
+      :character="activeCharacter"
+      @open-staff="openPerson"
+    />
+    <GalgameStaffModal v-model="isPersonOpen" :person="activePerson" />
   </section>
 </template>

@@ -86,7 +86,7 @@ const imgSrc = (s: GalgameScreenshotRow) => imageServiceUrl(s.image_hash)
 
     <KunLightboxGallery v-if="sorted.length">
       <div
-        class="grid grid-cols-1 items-start gap-3 sm:grid-cols-2 lg:grid-cols-3"
+        class="grid grid-cols-1 items-start gap-3 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4"
       >
         <KunLightboxGalleryItem
           v-for="s in sorted"

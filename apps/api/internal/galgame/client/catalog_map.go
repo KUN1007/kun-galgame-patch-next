@@ -355,7 +355,7 @@ func catalogWorkToFull(w *catalogWork) GalgameFull {
 		Covers:           catalogCoversToInputs(w.Covers),
 		Screenshots:      catalogScreenshotsToInputs(w.Screenshots),
 		Characters:       catalogCharacters(w.Characters),
-		Staff:            catalogStaff(w.Credits),
+		Staff:            catalogStaff(w.Credits, w.Characters),
 		Ratings:          catalogRatings(w.Ratings),
 	}
 	if f.NameJaJp == "" && f.NameZhCn == "" && f.NameZhTw == "" && f.NameEnUs == "" {

@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import { useContentBlurUp } from '@kungal/ui-vue'
+import { GALGAME_OFFICIAL_CATEGORY_MAP } from '~/constants/galgameEntity'
 import { kunMoyuMoe } from '~/config/moyu-moe'
 import { imageServiceUrl } from '~/shared/utils/resolveBannerUrl'
 
@@ -115,6 +116,9 @@ const staffGroups = computed(() => {
 
 const officialLogoSrc = (o: PatchDetailOfficial) =>
   imageServiceUrl((o.logo_hash ?? '').trim(), 'mini')
+
+const officialCategory = (o: PatchDetailOfficial) =>
+  GALGAME_OFFICIAL_CATEGORY_MAP[o.category] ?? ''
 
 const kungalOrigin = kunMoyuMoe.domain.kungal
 </script>
@@ -284,8 +288,8 @@ const kungalOrigin = kunMoyuMoe.domain.kungal
               class-name="mr-1 size-4 shrink-0 rounded-sm"
             />
             {{ o.name }}
-            <span v-if="o.category" class="text-default-500 text-xs">
-              · {{ o.category }}
+            <span v-if="officialCategory(o)" class="text-default-500 text-xs">
+              · {{ officialCategory(o) }}
             </span>
           </KunChip>
         </NuxtLink>

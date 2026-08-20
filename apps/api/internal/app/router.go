@@ -81,6 +81,16 @@ func (a *App) RegisterRoutes() {
 	patchRoutes.Put("/:id/favorite", auth, a.PatchHandler.ToggleFavorite)
 
 	api.Get("/galgame/calendar", optionalAuth, a.CommonHandler.GetGalgameCalendar)
+	api.Get(
+		"/galgame/character/:id",
+		middleware.RateLimit(a.RDB, "galgame-entity", 120, time.Minute),
+		a.CommonHandler.GetGalgameCharacter,
+	)
+	api.Get(
+		"/galgame/staff/:id",
+		middleware.RateLimit(a.RDB, "galgame-entity", 120, time.Minute),
+		a.CommonHandler.GetGalgameStaff,
+	)
 	api.Get("/galgame/mine", auth, a.PatchHandler.ListMyGalgames)
 	api.Get("/galgame/search/publish", auth, a.PatchHandler.SearchGalgameForPublish)
 	api.Post("/galgame/submit", auth, a.PatchHandler.SubmitGalgame)

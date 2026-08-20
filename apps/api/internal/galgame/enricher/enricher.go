@@ -11,12 +11,7 @@ import (
 	"kun-galgame-patch-api/pkg/userclient"
 )
 
-type KunLanguage struct {
-	EnUs string `json:"en-us"`
-	JaJp string `json:"ja-jp"`
-	ZhCn string `json:"zh-cn"`
-	ZhTw string `json:"zh-tw"`
-}
+type KunLanguage = galgameClient.KunLanguage
 
 type Counts struct {
 	FavoriteBy   int `json:"favorite_by"`

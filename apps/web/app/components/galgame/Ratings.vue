@@ -1,7 +1,8 @@
 <script setup lang="ts">
 import {
   KUN_EXTERNAL_RATING_ORDER,
-  externalRatingMeta
+  externalRatingMeta,
+  ratingTierBadge
 } from '~/constants/galgameEntity'
 
 const props = defineProps<{
@@ -43,6 +44,7 @@ const cards = computed(() => {
         // this source only — never a number to compare across two cards.
         fill: `${Math.min(100, Math.round((row.score / meta.max) * 100))}%`,
         votes: row.vote_count.toLocaleString('en-US'),
+        tier: ratingTierBadge(meta, row.score, row.vote_count),
         rank: row.rank,
         href: meta.link?.(refOf(row.source)) ?? '',
         bars: counts.size
@@ -62,7 +64,7 @@ const cards = computed(() => {
   <section v-if="cards.length" class="space-y-4">
     <KunHeader
       name="外部评分"
-      description="各站点各自的刻度, 不跨站点换算, 资料来自 鲲 Galgame 目录"
+      description="各站点各自的刻度, 分级按各来源自己的标准独立计算, 不跨站点换算"
       scale="h2"
     />
 
@@ -73,11 +75,18 @@ const cards = computed(() => {
         class="bg-default-100 space-y-3 rounded-xl p-4"
       >
         <div class="flex items-center justify-between gap-2">
-          <KunTooltip :text="card.hint">
-            <span class="text-default-600 text-sm font-medium">
-              {{ card.label }}
-            </span>
-          </KunTooltip>
+          <div class="flex min-w-0 items-center gap-1.5">
+            <KunTooltip :text="card.hint">
+              <span class="text-default-600 text-sm font-medium">
+                {{ card.label }}
+              </span>
+            </KunTooltip>
+            <KunTooltip v-if="card.tier" :text="card.tier.description">
+              <KunChip :color="card.tier.color" variant="flat" size="xs">
+                {{ card.tier.label }}
+              </KunChip>
+            </KunTooltip>
+          </div>
           <a
             v-if="card.href"
             :href="card.href"

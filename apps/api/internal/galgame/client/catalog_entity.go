@@ -6,6 +6,27 @@ import (
 	"strings"
 )
 
+// KunLanguage is moyu's four name slots. Entity names travel whole rather than
+// flattened to one string because the reader's 标题语言 setting picks between
+// them in the browser, the same way it does for a work title.
+type KunLanguage struct {
+	EnUs string `json:"en-us"`
+	JaJp string `json:"ja-jp"`
+	ZhCn string `json:"zh-cn"`
+	ZhTw string `json:"zh-tw"`
+}
+
+// canonical is the one name that stands for the entity when a slot cannot be
+// chosen: deduplicating credits, and testing whether a name is empty at all.
+func (n KunLanguage) canonical() string {
+	for _, v := range []string{n.JaJp, n.ZhCn, n.EnUs, n.ZhTw} {
+		if v != "" {
+			return v
+		}
+	}
+	return ""
+}
+
 // catalogPersonRef is how the public face names a person inside another record:
 // a roster voice or a credit row. The id is catalog's NAME id, which is what
 // kungal's /galgame/staff/:id takes — not the person id behind it.
@@ -21,6 +42,7 @@ type catalogWorkCharacter struct {
 	ID          int64                           `json:"id"`
 	DisplayName string                          `json:"display_name"`
 	Localized   map[string]catalogLocalizedName `json:"localized"`
+	Lang        string                          `json:"lang"`
 	Latin       string                          `json:"latin"`
 	Kind        string                          `json:"kind"`
 	Spoiler     int                             `json:"spoiler"`
@@ -56,25 +78,24 @@ type catalogRating struct {
 
 // GalgamePersonRef is one credited person. ID deep-links kungal's staff page.
 type GalgamePersonRef struct {
-	ID   int    `json:"id"`
-	Name string `json:"name"`
+	ID   int         `json:"id"`
+	Name KunLanguage `json:"name"`
 }
 
 type GalgameCharacter struct {
-	ID           int                `json:"id"`
-	Name         string             `json:"name"`
-	NameOriginal string             `json:"name_original,omitempty"`
-	Kind         string             `json:"kind"`
-	Spoiler      int                `json:"spoiler"`
-	ImageHash    string             `json:"image_hash,omitempty"`
-	FigureHash   string             `json:"figure_hash,omitempty"`
-	Voices       []GalgamePersonRef `json:"voices"`
+	ID         int                `json:"id"`
+	Name       KunLanguage        `json:"name"`
+	Kind       string             `json:"kind"`
+	Spoiler    int                `json:"spoiler"`
+	ImageHash  string             `json:"image_hash,omitempty"`
+	FigureHash string             `json:"figure_hash,omitempty"`
+	Voices     []GalgamePersonRef `json:"voices"`
 }
 
 type GalgameStaffMember struct {
-	ID         int      `json:"id"`
-	Name       string   `json:"name"`
-	Characters []string `json:"characters,omitempty"`
+	ID         int           `json:"id"`
+	Name       KunLanguage   `json:"name"`
+	Characters []KunLanguage `json:"characters,omitempty"`
 }
 
 type GalgameStaffGroup struct {
@@ -102,43 +123,53 @@ type GalgameRating struct {
 	Distribution []GalgameRatingBucket `json:"distribution,omitempty"`
 }
 
-var catalogZhLocales = []string{"zh-Hans", "zh", "zh-Hant"}
-
-// catalogEntityName renders the Chinese name where catalog has one, otherwise
-// the entity's own. Unlike the work title this does not fold onto moyu's four
-// name columns: a person or a character is shown under one name, not four.
-func catalogEntityName(localized map[string]catalogLocalizedName, displayName, latin string) string {
-	for _, tag := range catalogZhLocales {
-		if row, ok := localized[tag]; ok && row.Value != "" {
-			return row.Value
+// catalogEntityNames folds one entity's names onto moyu's four slots.
+//
+// display_name owns its own language slot and localized[] only fills the rest:
+// character 1699 ships localized["ja"] = "Corona", a romanized spelling variant,
+// beside display_name "コロナ". Letting localized win renders the roster in
+// romaji for a reader who asked for Japanese. display_name carries its own tag;
+// when catalog sends none it lands in ja-jp, which is what an untagged catalog
+// display name almost always is.
+func catalogEntityNames(localized map[string]catalogLocalizedName, displayName, lang, latin string) KunLanguage {
+	slot := productLangFromCatalog(lang)
+	switch slot {
+	case "ja-jp", "zh-cn", "zh-tw", "en-us":
+	default:
+		slot = "ja-jp"
+	}
+	n := map[string]string{slot: displayName}
+	for key, value := range localizedByProductKey(localized) {
+		if n[key] == "" {
+			n[key] = value
 		}
 	}
-	if displayName != "" {
-		return displayName
+	if latin != "" && n["en-us"] == "" {
+		n["en-us"] = latin
 	}
-	return latin
+	return KunLanguage{EnUs: n["en-us"], JaJp: n["ja-jp"], ZhCn: n["zh-cn"], ZhTw: n["zh-tw"]}
 }
 
-func (p *catalogPersonRef) name() string {
-	return catalogEntityName(p.Localized, p.DisplayName, p.Latin)
+func (p *catalogPersonRef) names() KunLanguage {
+	return catalogEntityNames(p.Localized, p.DisplayName, p.Lang, p.Latin)
 }
 
 func catalogCharacters(rows []catalogWorkCharacter) []GalgameCharacter {
 	out := make([]GalgameCharacter, 0, len(rows))
 	for i := range rows {
 		c := &rows[i]
-		name := catalogEntityName(c.Localized, c.DisplayName, c.Latin)
-		if name == "" {
+		name := catalogEntityNames(c.Localized, c.DisplayName, c.Lang, c.Latin)
+		if name.canonical() == "" {
 			continue
 		}
 		voices := make([]GalgamePersonRef, 0, len(c.Voices))
 		for j := range c.Voices {
 			v := &c.Voices[j]
-			if n := v.name(); n != "" {
+			if n := v.names(); n.canonical() != "" {
 				voices = append(voices, GalgamePersonRef{ID: int(v.ID), Name: n})
 			}
 		}
-		ch := GalgameCharacter{
+		out = append(out, GalgameCharacter{
 			ID:         int(c.ID),
 			Name:       name,
 			Kind:       c.Kind,
@@ -146,11 +177,7 @@ func catalogCharacters(rows []catalogWorkCharacter) []GalgameCharacter {
 			ImageHash:  hashFromURL(c.Image),
 			FigureHash: hashFromURL(c.Figure),
 			Voices:     voices,
-		}
-		if c.DisplayName != "" && c.DisplayName != name {
-			ch.NameOriginal = c.DisplayName
-		}
-		out = append(out, ch)
+		})
 	}
 	return out
 }
@@ -196,12 +223,43 @@ var catalogRoleHidden = map[string]bool{"developer": true, "publisher": true}
 
 const catalogRoleLast = "other-staff"
 
-func catalogStaff(groups []catalogCreditGroup) []GalgameStaffGroup {
+var catalogRoleRank = func() map[string]int {
+	m := make(map[string]int, len(catalogRoleOrder))
+	for i, key := range catalogRoleOrder {
+		m[key] = i
+	}
+	return m
+}()
+
+func catalogRoleWeight(key string) int {
+	if key == catalogRoleLast {
+		return len(catalogRoleOrder) + 1
+	}
+	if r, ok := catalogRoleRank[key]; ok {
+		return r
+	}
+	return len(catalogRoleOrder)
+}
+
+// catalogFoldRole collapses one source's vocabulary onto the shared key and
+// answers the name moyu prints for it.
+func catalogFoldRole(key, name string) (string, string) {
+	if folded, ok := catalogRoleFold[key]; ok {
+		key = folded
+	}
+	if pinned, ok := catalogRoleName[key]; ok {
+		name = pinned
+	}
+	return key, name
+}
+
+func catalogStaff(groups []catalogCreditGroup, roster []catalogWorkCharacter) []GalgameStaffGroup {
 	type bucket struct {
 		name   string
 		people []GalgameStaffMember
 		at     map[string]int
 	}
+	rosterNames := rosterNameIndex(roster)
 	order := make([]string, 0, len(groups))
 	byKey := make(map[string]*bucket, len(groups))
 
@@ -210,25 +268,20 @@ func catalogStaff(groups []catalogCreditGroup) []GalgameStaffGroup {
 		if catalogRoleHidden[g.RoleKey] {
 			continue
 		}
-		key := g.RoleKey
-		if folded, ok := catalogRoleFold[key]; ok {
-			key = folded
-		}
+		key, roleName := catalogFoldRole(g.RoleKey, g.RoleName)
 		b := byKey[key]
 		if b == nil {
-			b = &bucket{name: g.RoleName, at: map[string]int{}}
+			b = &bucket{name: roleName, at: map[string]int{}}
 			byKey[key] = b
 			order = append(order, key)
 		}
-		if pinned, ok := catalogRoleName[key]; ok {
-			b.name = pinned
-		} else if b.name == "" {
-			b.name = g.RoleName
+		if b.name == "" {
+			b.name = roleName
 		}
 		for ci := range g.Credits {
 			c := &g.Credits[ci]
-			name := c.name()
-			norm := normalizeCreditName(name)
+			name := c.names()
+			norm := normalizeCreditName(name.canonical())
 			if norm == "" {
 				continue
 			}
@@ -237,11 +290,11 @@ func catalogStaff(groups []catalogCreditGroup) []GalgameStaffGroup {
 				b.at[norm] = len(b.people)
 				b.people = append(b.people, GalgameStaffMember{ID: int(c.ID), Name: name})
 				i = len(b.people) - 1
-			} else if len(name) < len(b.people[i].Name) {
-				b.people[i].Name = name
+			} else {
+				b.people[i].Name = mergeEntityNames(b.people[i].Name, name)
 			}
-			if c.Character != "" {
-				b.people[i].Characters = appendUniqueString(b.people[i].Characters, c.Character)
+			if played := creditCharacter(rosterNames, c); played.canonical() != "" {
+				b.people[i].Characters = appendUniqueName(b.people[i].Characters, played)
 			}
 		}
 	}
@@ -258,32 +311,19 @@ func catalogStaff(groups []catalogCreditGroup) []GalgameStaffGroup {
 		}
 		kept := other.people[:0]
 		for _, p := range other.people {
-			if !elsewhere[normalizeCreditName(p.Name)] {
+			if !elsewhere[normalizeCreditName(p.Name.canonical())] {
 				kept = append(kept, p)
 			}
 		}
 		other.people = kept
 	}
 
-	rank := make(map[string]int, len(catalogRoleOrder))
-	for i, key := range catalogRoleOrder {
-		rank[key] = i
-	}
 	arrival := make(map[string]int, len(order))
 	for i, key := range order {
 		arrival[key] = i
 	}
-	weight := func(key string) int {
-		if key == catalogRoleLast {
-			return len(catalogRoleOrder) + 1
-		}
-		if r, ok := rank[key]; ok {
-			return r
-		}
-		return len(catalogRoleOrder)
-	}
 	sort.SliceStable(order, func(i, j int) bool {
-		wi, wj := weight(order[i]), weight(order[j])
+		wi, wj := catalogRoleWeight(order[i]), catalogRoleWeight(order[j])
 		if wi != wj {
 			return wi < wj
 		}
@@ -301,6 +341,29 @@ func catalogStaff(groups []catalogCreditGroup) []GalgameStaffGroup {
 	return out
 }
 
+func rosterNameIndex(roster []catalogWorkCharacter) map[int64]KunLanguage {
+	out := make(map[int64]KunLanguage, len(roster))
+	for i := range roster {
+		c := &roster[i]
+		out[c.ID] = catalogEntityNames(c.Localized, c.DisplayName, c.Lang, c.Latin)
+	}
+	return out
+}
+
+// A credit annotates the character it played with one bare string, in whatever
+// language that credit's source wrote it. The roster above holds the same
+// character under every language catalog has, so prefer it and keep the credit's
+// own string only for a character the roster does not carry.
+func creditCharacter(roster map[int64]KunLanguage, c *catalogCreditItem) KunLanguage {
+	if name, ok := roster[c.CharacterID]; ok && name.canonical() != "" {
+		return name
+	}
+	if c.Character == "" {
+		return KunLanguage{}
+	}
+	return KunLanguage{JaJp: c.Character}
+}
+
 // The same person reaches moyu as "保住圭" from one source and "保住圭 (Hozumi
 // Kei)" from another; the parenthetical and the spacing are all that differ.
 func normalizeCreditName(name string) string {
@@ -315,8 +378,29 @@ func normalizeCreditName(name string) string {
 	}, name)
 }
 
-func appendUniqueString(slice []string, val string) []string {
-	if val == "" || slices.Contains(slice, val) {
+// Merging two credits for the same person keeps the shorter form of each slot,
+// which is the one without the "(Hozumi Kei)" tail, and fills slots either of
+// them left empty.
+func mergeEntityNames(a, b KunLanguage) KunLanguage {
+	pick := func(x, y string) string {
+		if y == "" {
+			return x
+		}
+		if x == "" || len(y) < len(x) {
+			return y
+		}
+		return x
+	}
+	return KunLanguage{
+		EnUs: pick(a.EnUs, b.EnUs),
+		JaJp: pick(a.JaJp, b.JaJp),
+		ZhCn: pick(a.ZhCn, b.ZhCn),
+		ZhTw: pick(a.ZhTw, b.ZhTw),
+	}
+}
+
+func appendUniqueName(slice []KunLanguage, val KunLanguage) []KunLanguage {
+	if slices.ContainsFunc(slice, func(n KunLanguage) bool { return n.canonical() == val.canonical() }) {
 		return slice
 	}
 	return append(slice, val)

@@ -1,0 +1,158 @@
+{
+ "id": 900,
+ "display_name": "保住圭",
+ "lang": "ja",
+ "localized": {},
+ "person_id": 2817,
+ "siblings": [],
+ "aliases": [],
+ "photo_hash": "7423db32e76d55d4562677e32d079caa57bdde088a20256863b9d3a01213638e",
+ "gender": 1,
+ "links": [
+  {
+   "source": "official_site",
+   "url": "https://hk52.info"
+  },
+  {
+   "source": "twitter",
+   "url": "https://x.com/hozumik"
+  },
+  {
+   "source": "twitter",
+   "url": "https://x.com/hozumikeroe"
+  },
+  {
+   "source": "pixiv",
+   "url": "https://www.pixiv.net/users/3870762"
+  },
+  {
+   "source": "web",
+   "url": "https://cmc.booth.pm/"
+  },
+  {
+   "source": "web",
+   "url": "https://hozumik.fanbox.cc/"
+  },
+  {
+   "source": "web",
+   "url": "https://hozumik.tumblr.com/"
+  }
+ ],
+ "intros": [
+  {
+   "lang": "ja",
+   "intro": "保住圭とは、主にアダルトゲームで活躍するフリーのシナリオライターである。男性。埼玉県出身で現在は千葉県在住。\nシナリオの構成については、正直なところ凡庸で、主にメリハリに欠けている。\nしかし氏の描く作品は晴れてカップルが成立してからが本番と言える。例えば日常的に熱情的なスキンシップを交わしたり時々周りの人間の存在を忘れ",
+   "source": "bangumi"
+  }
+ ],
+ "refs": [
+  {
+   "source": "vndb",
+   "external_id": "3783"
+  },
+  {
+   "source": "bangumi",
+   "external_id": "6191"
+  },
+  {
+   "source": "dlsite",
+   "external_id": "12978"
+  },
+  {
+   "source": "erogamescape",
+   "external_id": "2012"
+  }
+ ],
+ "credits": [
+  {
+   "work": {
+    "id": 3,
+    "medium": "galgame",
+    "display_name": "アストラエアの白き永遠",
+    "content_rating": "r18",
+    "claimed_by": {
+     "site": "kungal",
+     "work_id": 3,
+     "state": "live",
+     "content_limit": "sfw"
+    },
+    "localized": {
+     "en": {
+      "value": "AstralAir no Shiroki Towa",
+      "kind": "official"
+     },
+     "ja": {
+      "value": "アストラエアの白き永遠",
+      "kind": "official"
+     },
+     "zh-Hans": {
+      "value": "星辰恋曲的白色永恒",
+      "kind": "official"
+     }
+    }
+   },
+   "roles": [
+    {
+     "role_key": "other-staff",
+     "role_name": "其他",
+     "identity": "credit:2:900:0"
+    },
+    {
+     "role_key": "scenario",
+     "role_name": "脚本",
+     "identity": "credit:247:900:0"
+    },
+    {
+     "role_key": "剧本",
+     "role_name": "剧本",
+     "identity": "credit:301:900:0"
+    }
+   ]
+  },
+  {
+   "work": {
+    "id": 23,
+    "medium": "galgame",
+    "display_name": "天使☆騒々 RE-BOOT!",
+    "content_rating": "r18",
+    "claimed_by": {
+     "site": "kungal",
+     "work_id": 23,
+     "state": "live",
+     "content_limit": "sfw"
+    },
+    "localized": {
+     "en": {
+      "value": "Tenshi☆Souzou RE-BOOT!",
+      "kind": "official"
+     },
+     "ja": {
+      "value": "天使☆騒々 RE-BOOT!",
+      "kind": "official"
+     },
+     "zh-Hans": {
+      "value": "天使☆嚣嚣 RE-BOOT! | 天使纷扰",
+      "kind": "official"
+     },
+     "zh-Hant": {
+      "value": "天使☆囂囂 RE-BOOT! | 天使紛擾",
+      "kind": "official"
+     }
+    }
+   },
+   "roles": [
+    {
+     "role_key": "scenario",
+     "role_name": "脚本",
+     "identity": "credit:247:900:0"
+    },
+    {
+     "role_key": "剧本",
+     "role_name": "剧本",
+     "identity": "credit:301:900:0"
+    }
+   ]
+  }
+ ],
+ "next_offset": 24
+}

@@ -81,9 +81,10 @@ type catalogOfficialBrief struct {
 }
 
 type catalogIntroRow struct {
-	Lang   string `json:"lang"`
-	Intro  string `json:"intro"`
-	Source string `json:"source"`
+	Lang    string `json:"lang"`
+	Intro   string `json:"intro"`
+	Source  string `json:"source"`
+	Machine bool   `json:"machine"`
 }
 
 type catalogTagRecord struct {
@@ -96,7 +97,7 @@ type catalogTagRecord struct {
 	Intros    []catalogIntroRow `json:"intros"`
 }
 
-type catalogLabelLink struct {
+type catalogEntityLink struct {
 	Source string `json:"source"`
 	URL    string `json:"url"`
 }
@@ -114,15 +115,15 @@ type catalogAlias struct {
 }
 
 type catalogLabelRecord struct {
-	ID          int64              `json:"id"`
-	DisplayName string             `json:"display_name"`
-	Kind        string             `json:"kind"`
-	Lang        string             `json:"lang"`
-	Aliases     []catalogAlias     `json:"aliases"`
-	WorkCount   int                `json:"work_count"`
-	Intros      []catalogIntroRow  `json:"intros"`
-	Links       []catalogLabelLink `json:"links"`
-	LogoHash    string             `json:"logo_hash"`
+	ID          int64               `json:"id"`
+	DisplayName string              `json:"display_name"`
+	Kind        string              `json:"kind"`
+	Lang        string              `json:"lang"`
+	Aliases     []catalogAlias      `json:"aliases"`
+	WorkCount   int                 `json:"work_count"`
+	Intros      []catalogIntroRow   `json:"intros"`
+	Links       []catalogEntityLink `json:"links"`
+	LogoHash    string              `json:"logo_hash"`
 }
 
 func aliasValues(rows []catalogAlias) []string {

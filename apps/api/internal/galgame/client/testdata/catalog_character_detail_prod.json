@@ -1,0 +1,185 @@
+{
+ "id": 1699,
+ "display_name": "コロナ",
+ "lang": "ja",
+ "aliases": [
+  {
+   "value": "Corona",
+   "lang": "ja",
+   "kind": "spelling_variant"
+  },
+  {
+   "value": "科罗娜",
+   "lang": "zh-Hans",
+   "kind": "translation",
+   "machine": true
+  }
+ ],
+ "localized": {
+  "ja": {
+   "value": "Corona",
+   "kind": "spelling_variant"
+  },
+  "zh-Hans": {
+   "value": "科罗娜",
+   "kind": "translation",
+   "machine": true
+  }
+ },
+ "refs": [
+  {
+   "source": "vndb",
+   "external_id": "c17039"
+  },
+  {
+   "source": "bangumi",
+   "external_id": "21095"
+  },
+  {
+   "source": "erogamescape",
+   "external_id": "3200"
+  }
+ ],
+ "traits": [
+  {
+   "id": 2785,
+   "name": "Blond",
+   "group": "Hair",
+   "localized": {
+    "zh-Hans": {
+     "value": "金发",
+     "kind": "translation"
+    }
+   },
+   "group_localized": {
+    "zh-Hans": {
+     "value": "毛发",
+     "kind": "translation"
+    }
+   },
+   "spoiler": 0,
+   "sexual": false,
+   "lie": false
+  },
+  {
+   "id": 2,
+   "name": "Red",
+   "group": "Hair",
+   "localized": {
+    "zh-Hans": {
+     "value": "红色",
+     "kind": "translation"
+    }
+   },
+   "group_localized": {
+    "zh-Hans": {
+     "value": "毛发",
+     "kind": "translation"
+    }
+   },
+   "spoiler": 1,
+   "sexual": false,
+   "lie": false
+  },
+  {
+   "id": 1704,
+   "name": "Short",
+   "group": "Hair",
+   "localized": {
+    "zh-Hans": {
+     "value": "矮小/短",
+     "kind": "translation"
+    }
+   },
+   "group_localized": {
+    "zh-Hans": {
+     "value": "毛发",
+     "kind": "translation"
+    }
+   },
+   "spoiler": 0,
+   "sexual": false,
+   "lie": false
+  },
+  {
+   "id": 681,
+   "name": "Sidehair",
+   "group": "Hair",
+   "localized": {
+    "zh-Hans": {
+     "value": "侧发",
+     "kind": "translation"
+    }
+   },
+   "group_localized": {
+    "zh-Hans": {
+     "value": "毛发",
+     "kind": "translation"
+    }
+   },
+   "spoiler": 0,
+   "sexual": false,
+   "lie": false
+  },
+  {
+   "id": 2817,
+   "name": "Sitting Sex",
+   "group": "Subject of (Sexual)",
+   "localized": {
+    "zh-Hans": {
+     "value": "坐姿做爱",
+     "kind": "translation"
+    }
+   },
+   "group_localized": {
+    "zh-Hans": {
+     "value": "被动(性)",
+     "kind": "translation"
+    }
+   },
+   "spoiler": 0,
+   "sexual": true,
+   "lie": false
+  },
+  {
+   "id": 3295,
+   "name": "Standing Sex",
+   "group": "Subject of (Sexual)",
+   "localized": {
+    "zh-Hans": {
+     "value": "站立式体位",
+     "kind": "translation"
+    }
+   },
+   "group_localized": {
+    "zh-Hans": {
+     "value": "被动(性)",
+     "kind": "translation"
+    }
+   },
+   "spoiler": 0,
+   "sexual": true,
+   "lie": false
+  }
+ ],
+ "intros": [
+  {
+   "lang": "en",
+   "intro": "Likes: Humans\nDislikes: Causing trouble\n\nA robot produced by the Valhalla Institute with the hope of one day being sent into space to explore far-off planets. In order to become accustomed to human culture and becoming m",
+   "source": "vndb"
+  },
+  {
+   "lang": "ja",
+   "intro": "月ヶ咲学園の1年生。\n見た目も振る舞いも人間にしか思えないが、実は街の研究所によって造られた人型ロボット。\nそのせいか、愛称は “コロ助”。\n良い子で強い子、健気な性格と非の打ち所がないが、少し世間とズレている面もある。\n失敗を繰り返しては、早く人間のようになりたいと願っている。\n\n「これでわたしも、人間に一歩近づいたでしょうか」",
+   "source": "bangumi"
+  },
+  {
+   "lang": "zh-Hans",
+   "intro": "月ヶ咲学園的1年级学生。\n外表和举止都让人觉得只是个人类，但实际上是由街上的研究所制造的人型机器人。\n也许正因如此，爱称是“コロ助”。\n是个好孩子也是个坚强的孩子，性格坚强懂事无可挑剔，但也有稍微与社会脱节的一面。\n不断重复着失败，祈愿着能早日变得像人类一样。\n\n「这样一来我也向人类靠近了一步吗」",
+   "source": "bangumi",
+   "machine": true
+  }
+ ],
+ "image": "https://image.kungal.iloveren.link/90/cd/90cd0ce33bffe6719dffdd17d25b202ee44ce29cd1dfe7c4cd3123852c643a90.webp",
+ "figure": "https://image.kungal.iloveren.link/f6/b1/f6b187936860786495d8ef4fa1316e0d6d273d866c5b1d22196511942bc08d27.webp"
+}
