@@ -195,11 +195,18 @@ type catalogWork struct {
 	Intro       []catalogWorkIntro   `json:"intro"`
 	Intros      []catalogWorkIntro   `json:"intros"`
 	Covers      []catalogDetailCover `json:"covers"`
+	CoverSlots  *catalogCoverSlots   `json:"cover_slots"`
 	Screenshots []catalogScreenshot  `json:"screenshots"`
 	Tags        []catalogWorkTag     `json:"tags"`
 	Labels      []catalogWorkLabel   `json:"labels"`
 	Engines     []catalogWorkEngine  `json:"engines"`
 	Links       []catalogWorkLink    `json:"links"`
+
+	// credits arrives only when the request asks for include=credits; the other
+	// two are always on the detail face.
+	Credits    []catalogCreditGroup   `json:"credits"`
+	Characters []catalogWorkCharacter `json:"characters"`
+	Ratings    []catalogRating        `json:"ratings"`
 }
 
 type catalogLookupPair struct {

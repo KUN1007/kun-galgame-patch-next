@@ -250,11 +250,42 @@ type PatchDetailOfficial struct {
 
 type PatchDetailCard struct {
 	GalgameCard
-	IntroductionMarkdown KunLanguage           `json:"introduction_markdown"`
-	IntroductionHTML     KunLanguage           `json:"introduction_html"`
-	Updated              time.Time             `json:"updated"`
-	Tags                 []PatchDetailTag      `json:"tags"`
-	Officials            []PatchDetailOfficial `json:"officials"`
+	IntroductionMarkdown KunLanguage                       `json:"introduction_markdown"`
+	IntroductionHTML     KunLanguage                       `json:"introduction_html"`
+	Updated              time.Time                         `json:"updated"`
+	Tags                 []PatchDetailTag                  `json:"tags"`
+	Officials            []PatchDetailOfficial             `json:"officials"`
+	Characters           []galgameClient.GalgameCharacter  `json:"characters"`
+	Staff                []galgameClient.GalgameStaffGroup `json:"staff"`
+	Ratings              []galgameClient.GalgameRating     `json:"ratings"`
+}
+
+// applyCatalogEntities copies the catalog-owned entity graph onto the detail
+// card. Every field it writes is a read-only projection of the registry: moyu
+// stores none of it and never writes any of it back.
+func applyCatalogEntities(base *PatchDetailCard, g *galgameClient.GalgameFull) {
+	base.Characters = g.Characters
+	base.Staff = g.Staff
+	base.Ratings = g.Ratings
+	for _, t := range g.Tag {
+		base.Tags = append(base.Tags, PatchDetailTag{
+			ID:           t.Tag.ID,
+			Name:         t.Tag.Name,
+			Aliases:      t.Tag.Aliases,
+			Category:     t.Tag.Category,
+			SpoilerLevel: t.SpoilerLevel,
+		})
+	}
+	for _, o := range g.Official {
+		base.Officials = append(base.Officials, PatchDetailOfficial{
+			ID:       o.Official.ID,
+			Name:     o.Official.Name,
+			Aliases:  o.Official.Aliases,
+			Category: o.Official.Category,
+			Lang:     o.Official.Lang,
+			LogoHash: o.Official.LogoHash,
+		})
+	}
 }
 
 func EnrichPatchDetail(ctx context.Context, galgame *galgameClient.Client, users *userclient.Client, p *patchModel.Patch, contentLimit string) *PatchDetailCard {
@@ -266,6 +297,9 @@ func EnrichPatchDetail(ctx context.Context, galgame *galgameClient.Client, users
 	base.Updated = p.Updated
 	base.Tags = []PatchDetailTag{}
 	base.Officials = []PatchDetailOfficial{}
+	base.Characters = []galgameClient.GalgameCharacter{}
+	base.Staff = []galgameClient.GalgameStaffGroup{}
+	base.Ratings = []galgameClient.GalgameRating{}
 
 	base.User = resolveUser(ctx, users, p.UserID)
 
@@ -308,44 +342,30 @@ func EnrichPatchDetail(ctx context.Context, galgame *galgameClient.Client, users
 	}
 
 	base.Galgame = &galgameClient.GalgameBrief{
-		ID:                       g.ID,
-		VndbID:                   g.VndbID,
-		NameEnUs:                 g.NameEnUs,
-		NameZhCn:                 g.NameZhCn,
-		NameJaJp:                 g.NameJaJp,
-		NameZhTw:                 g.NameZhTw,
-		Banner:                   g.Banner,
-		ContentLimit:             g.ContentLimit,
-		AgeLimit:                 g.AgeLimit,
-		OriginalLanguage:         g.OriginalLanguage,
-		ReleaseDate:              g.ReleaseDate,
-		EffectiveBannerHash:      g.EffectiveBannerHash,
-		EffectiveBannerWidth:     g.EffectiveBannerWidth,
-		EffectiveBannerHeight:    g.EffectiveBannerHeight,
-		EffectiveBannerThumbhash: g.EffectiveBannerThumbhash,
-		Covers:                   g.Covers,
-		Screenshots:              g.Screenshots,
+		ID:                         g.ID,
+		VndbID:                     g.VndbID,
+		NameEnUs:                   g.NameEnUs,
+		NameZhCn:                   g.NameZhCn,
+		NameJaJp:                   g.NameJaJp,
+		NameZhTw:                   g.NameZhTw,
+		Banner:                     g.Banner,
+		ContentLimit:               g.ContentLimit,
+		AgeLimit:                   g.AgeLimit,
+		OriginalLanguage:           g.OriginalLanguage,
+		ReleaseDate:                g.ReleaseDate,
+		EffectiveBannerHash:        g.EffectiveBannerHash,
+		EffectiveBannerWidth:       g.EffectiveBannerWidth,
+		EffectiveBannerHeight:      g.EffectiveBannerHeight,
+		EffectiveBannerThumbhash:   g.EffectiveBannerThumbhash,
+		EffectivePortraitHash:      g.EffectivePortraitHash,
+		EffectivePortraitWidth:     g.EffectivePortraitWidth,
+		EffectivePortraitHeight:    g.EffectivePortraitHeight,
+		EffectivePortraitThumbhash: g.EffectivePortraitThumbhash,
+		Covers:                     g.Covers,
+		Screenshots:                g.Screenshots,
 	}
 
-	for _, t := range g.Tag {
-		base.Tags = append(base.Tags, PatchDetailTag{
-			ID:           t.Tag.ID,
-			Name:         t.Tag.Name,
-			Aliases:      t.Tag.Aliases,
-			Category:     t.Tag.Category,
-			SpoilerLevel: t.SpoilerLevel,
-		})
-	}
-	for _, o := range g.Official {
-		base.Officials = append(base.Officials, PatchDetailOfficial{
-			ID:       o.Official.ID,
-			Name:     o.Official.Name,
-			Aliases:  o.Official.Aliases,
-			Category: o.Official.Category,
-			Lang:     o.Official.Lang,
-			LogoHash: o.Official.LogoHash,
-		})
-	}
+	applyCatalogEntities(base, g)
 	return base
 }
 
@@ -485,6 +505,9 @@ func GalgameOnlyDetail(ctx context.Context, galgame *galgameClient.Client, users
 	}
 	base.Tags = []PatchDetailTag{}
 	base.Officials = []PatchDetailOfficial{}
+	base.Characters = []galgameClient.GalgameCharacter{}
+	base.Staff = []galgameClient.GalgameStaffGroup{}
+	base.Ratings = []galgameClient.GalgameRating{}
 	base.IntroductionMarkdown = KunLanguage{EnUs: g.IntroEnUs, JaJp: g.IntroJaJp, ZhCn: g.IntroZhCn, ZhTw: g.IntroZhTw}
 	base.IntroductionHTML = KunLanguage{
 		EnUs: markdown.MustRender(g.IntroEnUs),
@@ -493,42 +516,28 @@ func GalgameOnlyDetail(ctx context.Context, galgame *galgameClient.Client, users
 		ZhTw: markdown.MustRender(g.IntroZhTw),
 	}
 	base.Galgame = &galgameClient.GalgameBrief{
-		ID:                       g.ID,
-		VndbID:                   g.VndbID,
-		NameEnUs:                 g.NameEnUs,
-		NameZhCn:                 g.NameZhCn,
-		NameJaJp:                 g.NameJaJp,
-		NameZhTw:                 g.NameZhTw,
-		Banner:                   g.Banner,
-		ContentLimit:             g.ContentLimit,
-		AgeLimit:                 g.AgeLimit,
-		OriginalLanguage:         g.OriginalLanguage,
-		ReleaseDate:              g.ReleaseDate,
-		EffectiveBannerHash:      g.EffectiveBannerHash,
-		EffectiveBannerWidth:     g.EffectiveBannerWidth,
-		EffectiveBannerHeight:    g.EffectiveBannerHeight,
-		EffectiveBannerThumbhash: g.EffectiveBannerThumbhash,
-		Covers:                   g.Covers,
-		Screenshots:              g.Screenshots,
+		ID:                         g.ID,
+		VndbID:                     g.VndbID,
+		NameEnUs:                   g.NameEnUs,
+		NameZhCn:                   g.NameZhCn,
+		NameJaJp:                   g.NameJaJp,
+		NameZhTw:                   g.NameZhTw,
+		Banner:                     g.Banner,
+		ContentLimit:               g.ContentLimit,
+		AgeLimit:                   g.AgeLimit,
+		OriginalLanguage:           g.OriginalLanguage,
+		ReleaseDate:                g.ReleaseDate,
+		EffectiveBannerHash:        g.EffectiveBannerHash,
+		EffectiveBannerWidth:       g.EffectiveBannerWidth,
+		EffectiveBannerHeight:      g.EffectiveBannerHeight,
+		EffectiveBannerThumbhash:   g.EffectiveBannerThumbhash,
+		EffectivePortraitHash:      g.EffectivePortraitHash,
+		EffectivePortraitWidth:     g.EffectivePortraitWidth,
+		EffectivePortraitHeight:    g.EffectivePortraitHeight,
+		EffectivePortraitThumbhash: g.EffectivePortraitThumbhash,
+		Covers:                     g.Covers,
+		Screenshots:                g.Screenshots,
 	}
-	for _, t := range g.Tag {
-		base.Tags = append(base.Tags, PatchDetailTag{
-			ID:           t.Tag.ID,
-			Name:         t.Tag.Name,
-			Aliases:      t.Tag.Aliases,
-			Category:     t.Tag.Category,
-			SpoilerLevel: t.SpoilerLevel,
-		})
-	}
-	for _, o := range g.Official {
-		base.Officials = append(base.Officials, PatchDetailOfficial{
-			ID:       o.Official.ID,
-			Name:     o.Official.Name,
-			Aliases:  o.Official.Aliases,
-			Category: o.Official.Category,
-			Lang:     o.Official.Lang,
-			LogoHash: o.Official.LogoHash,
-		})
-	}
+	applyCatalogEntities(base, g)
 	return base
 }

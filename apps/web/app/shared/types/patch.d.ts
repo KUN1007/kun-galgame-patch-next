@@ -20,6 +20,8 @@ interface GalgameCard {
   // fallback for it, since the catalog leaves that legacy URL empty.
   effective_banner_hash?: string
   effective_banner_thumbhash?: string
+  effective_portrait_hash?: string
+  effective_portrait_thumbhash?: string
   view: number
   download: number
   type: string[]
@@ -76,6 +78,14 @@ interface GalgameCard {
     effective_banner_width?: number
     effective_banner_height?: number
     effective_banner_thumbhash?: string
+    // covers.portrait, catalog's tall slot. Catalog fills it from ANY cover when
+    // the work has no portrait-shaped one, so it is not reliably taller than it
+    // is wide — crop it into the box you want instead of laying out from its
+    // aspect ratio. Absent when the work has no cover at all.
+    effective_portrait_hash?: string
+    effective_portrait_width?: number
+    effective_portrait_height?: number
+    effective_portrait_thumbhash?: string
     covers: GalgameCoverRow[]
     screenshots: GalgameScreenshotRow[]
     content_limit: string
@@ -162,11 +172,58 @@ interface PatchDetailOfficial {
   logo_hash?: string
 }
 
+// One credited person. `id` is catalog's NAME id, which is what kungal's
+// /galgame/staff/:id takes.
+interface PatchDetailPerson {
+  id: number
+  name: string
+}
+
+interface PatchDetailCharacter {
+  id: number
+  name: string
+  // The character's own name, present only when it differs from the rendered
+  // (Chinese) one.
+  name_original?: string
+  kind: string
+  spoiler: number
+  // image_service content hashes, not URLs. `image` is the head shot, `figure`
+  // the standing art; either may be absent.
+  image_hash?: string
+  figure_hash?: string
+  voices: PatchDetailPerson[]
+}
+
+interface PatchDetailStaffGroup {
+  role_key: string
+  role_name: string
+  people: (PatchDetailPerson & { characters?: string[] })[]
+}
+
+interface PatchDetailRatingBucket {
+  score: number
+  count: number
+}
+
+// Each source keeps its own scale — vndb / bangumi 0-10, erogamescape 0-100,
+// dlsite 0-5 — and catalog never normalizes between them. Divide by the
+// per-source max in KUN_EXTERNAL_RATING_MAP before comparing two of them.
+interface PatchDetailRating {
+  source: string
+  score: number
+  vote_count: number
+  rank?: number
+  distribution?: PatchDetailRatingBucket[]
+}
+
 interface PatchDetail extends GalgameCard {
   introduction_markdown: KunLanguage
   introduction_html: KunLanguage
   updated: string
   tags: PatchDetailTag[]
   officials: PatchDetailOfficial[]
+  characters: PatchDetailCharacter[]
+  staff: PatchDetailStaffGroup[]
+  ratings: PatchDetailRating[]
   wiki_engine_ids: number[]
 }

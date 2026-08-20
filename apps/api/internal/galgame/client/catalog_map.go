@@ -153,6 +153,17 @@ func coverOf(it *catalogWorkListItem) (hash string, width, height int, thumbhash
 	return hashFromURL(it.Cover), 0, 0, ""
 }
 
+// covers.portrait is filled from any cover when the work has no portrait-shaped
+// one, so it is NOT guaranteed to be taller than wide. Crop it into the box you
+// want; do not lay out from its aspect ratio.
+func portraitOf(slots *catalogCoverSlots) (hash string, width, height int, thumbhash string) {
+	if slots == nil || slots.Portrait == nil {
+		return "", 0, 0, ""
+	}
+	c := slots.Portrait
+	return hashFromURL(c.URL), c.Width, c.Height, c.Thumbhash
+}
+
 func claimStateOf(c *catalogClaimedBy) string {
 	if c == nil || !isGIDClaimSite(c.Site) {
 		return ""
@@ -185,6 +196,8 @@ func catalogItemToBrief(it *catalogWorkListItem) GalgameBrief {
 		EffectiveBannerHeight:    h,
 		EffectiveBannerThumbhash: th,
 	}
+	b.EffectivePortraitHash, b.EffectivePortraitWidth,
+		b.EffectivePortraitHeight, b.EffectivePortraitThumbhash = portraitOf(it.Covers)
 	if ja == "" && zhCN == "" && zhTW == "" && en == "" {
 		b.NameJaJp = it.DisplayName
 	}
@@ -299,6 +312,21 @@ func isLandscape(w, h int) bool {
 	return w > 0 && h > 0 && int64(h)*20 <= int64(w)*21
 }
 
+func portraitCover(covers []catalogDetailCover) *catalogDetailCover {
+	for i := range covers {
+		if covers[i].PortraitPinned {
+			return &covers[i]
+		}
+	}
+	for i := range covers {
+		c := &covers[i]
+		if c.Width > 0 && c.Height > 0 && !isLandscape(c.Width, c.Height) {
+			return c
+		}
+	}
+	return nil
+}
+
 func catalogWorkToFull(w *catalogWork) GalgameFull {
 	cl, age := contentAxisOf(w.ClaimedBy, w.ContentRating)
 	date, _ := normalizeCatalogDate(w.ReleaseDate)
@@ -326,6 +354,9 @@ func catalogWorkToFull(w *catalogWork) GalgameFull {
 		Updated:          w.Updated,
 		Covers:           catalogCoversToInputs(w.Covers),
 		Screenshots:      catalogScreenshotsToInputs(w.Screenshots),
+		Characters:       catalogCharacters(w.Characters),
+		Staff:            catalogStaff(w.Credits),
+		Ratings:          catalogRatings(w.Ratings),
 	}
 	if f.NameJaJp == "" && f.NameZhCn == "" && f.NameZhTw == "" && f.NameEnUs == "" {
 		f.NameJaJp = w.DisplayName
@@ -335,6 +366,16 @@ func catalogWorkToFull(w *catalogWork) GalgameFull {
 		f.EffectiveBannerWidth = c.Width
 		f.EffectiveBannerHeight = c.Height
 		f.EffectiveBannerThumbhash = c.Thumbhash
+	}
+	f.EffectivePortraitHash, f.EffectivePortraitWidth,
+		f.EffectivePortraitHeight, f.EffectivePortraitThumbhash = portraitOf(w.CoverSlots)
+	if f.EffectivePortraitHash == "" {
+		if c := portraitCover(w.Covers); c != nil {
+			f.EffectivePortraitHash = hashFromURL(c.URL)
+			f.EffectivePortraitWidth = c.Width
+			f.EffectivePortraitHeight = c.Height
+			f.EffectivePortraitThumbhash = c.Thumbhash
+		}
 	}
 	for i := range w.Tags {
 		f.Tag = append(f.Tag, catalogTagToFullTag(f.ID, &w.Tags[i]))

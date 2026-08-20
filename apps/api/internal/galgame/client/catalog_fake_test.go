@@ -76,7 +76,7 @@ func (f *catalogFake) route(req *http.Request) string {
 	case strings.HasPrefix(p, "/v1/catalog/labels/"):
 		return f.labelRecord(p)
 	case strings.HasPrefix(p, "/v1/catalog/works/"):
-		return f.workDetail(p)
+		return f.workDetail(req)
 	}
 	return `{}`
 }
@@ -144,9 +144,16 @@ func (f *catalogFake) labelRecord(path string) string {
 		`"links":[{"source":"web","url":"https://example.test"}]}`
 }
 
-func (f *catalogFake) workDetail(path string) string {
-	id, _ := strconv.ParseInt(strings.TrimPrefix(path, "/v1/catalog/works/"), 10, 64)
+func (f *catalogFake) workDetail(req *http.Request) string {
+	id, _ := strconv.ParseInt(strings.TrimPrefix(req.URL.Path, "/v1/catalog/works/"), 10, 64)
 	gid, state := gidForCatalogID(id)
+	// credits ride the detail face ONLY behind include=credits; the roster and
+	// the ratings are unconditional. Serving credits either way would let the
+	// include token be dropped without a test going red.
+	credits := `[]`
+	if strings.Contains(req.URL.Query().Get("include"), "credits") {
+		credits = detailCreditsJSON
+	}
 	return `{"id":` + strconv.FormatInt(id, 10) + `,"medium":"galgame","display_name":"W","olang":"ja",` +
 		`"content_rating":"` + ratingForCatalogID(id) + `","release_date":"2026-07-14","created":"2026-01-01T00:00:00Z","updated":"2026-07-01T00:00:00Z",` +
 		`"localized":{"ja":{"value":"タイトル","kind":"official"},` +
@@ -162,8 +169,39 @@ func (f *catalogFake) workDetail(path string) string {
 		`"tags":[{"name":"純愛","source":"vndb","canonical_id":11,"tier":"core","kind":"content","spoiler":0,"sexual":false},` +
 		`{"name":"エロ","source":"vndb","canonical_id":12,"tier":"core","kind":"content","spoiler":1,"sexual":true}],` +
 		`"labels":[{"id":31,"display_name":"Brand","label_kind":"game_brand","kind":"developer","lang":"ja","logo_hash":"abcd1234"}],` +
-		`"engines":[{"id":41,"name":"KiriKiri"}],"links":[{"source":"web","url":"https://example.test"}]}`
+		`"engines":[{"id":41,"name":"KiriKiri"}],"links":[{"source":"web","url":"https://example.test"}],` +
+		`"cover_slots":{"portrait":{"url":"https://cdn/aa/bb/hash3.webp","width":850,"height":1080,"thumbhash":"th3","sexual":0,"violence":0,"source":"upscale"},` +
+		`"banner":{"url":"https://cdn/aa/bb/hash2.webp","width":1728,"height":1080,"thumbhash":"th2","sexual":0,"violence":0,"source":"curated"}},` +
+		`"characters":` + detailCharactersJSON + `,` +
+		`"ratings":` + detailRatingsJSON + `,` +
+		`"credits":` + credits + `}`
 }
+
+// The three blocks below are the prod wire shape of /v1/catalog/works/{id},
+// trimmed from a live read of work 3 on 2026-08-19.
+const detailCharactersJSON = `[` +
+	`{"id":1699,"display_name":"コロナ","localized":{"zh-Hans":{"value":"科罗娜","kind":"translation","machine":true}},` +
+	`"kind":"main","spoiler":0,"image":"https://cdn/aa/bb/chara1.webp","figure":"https://cdn/aa/bb/figure1.webp","identity":"roster:1699",` +
+	`"voices":[{"id":1550,"display_name":"榎木実佳","lang":"ja","localized":{"zh-Hans":{"value":"榎木实佳","kind":"translation"}}}]},` +
+	`{"id":1700,"display_name":"雪々","localized":{},"kind":"secondary","spoiler":1,"image":"","figure":"","identity":"roster:1700","voices":[]}]`
+
+const detailRatingsJSON = `[` +
+	`{"source":"vndb","score":8.1,"vote_count":500,"distribution":[{"score":9,"count":126},{"score":10,"count":38}],"stats":{"average":8.1}},` +
+	`{"source":"erogamescape","score":78.5,"vote_count":42,"rank":2917,"distribution":[{"score":70,"count":9},{"score":80,"count":21}]},` +
+	`{"source":"dlsite","score":4.6,"vote_count":0}]`
+
+// scenario/剧本 and illustration/原画 are the same role under two source
+// vocabularies, developer duplicates the 会社 chips, and 保住圭 rides both a real
+// role and other-staff.
+const detailCreditsJSON = `[` +
+	`{"role_key":"scenario","role_name":"剧本","credits":[{"id":900,"display_name":"保住圭","lang":"ja","localized":{},"source":"vndb","identity":"credit:1:900:0"}]},` +
+	`{"role_key":"剧本","role_name":"剧本","credits":[{"id":901,"display_name":"丸戸史明","lang":"ja","localized":{"zh-Hans":{"value":"丸户史明","kind":"translation"}},"source":"bangumi","identity":"credit:1:901:0"}]},` +
+	`{"role_key":"原画","role_name":"原画","credits":[{"id":902,"display_name":"深崎暮人","lang":"ja","localized":{},"source":"bangumi","identity":"credit:2:902:0"}]},` +
+	`{"role_key":"developer","role_name":"开发","credits":[{"id":903,"display_name":"Brand","lang":"ja","localized":{},"source":"vndb","identity":"credit:3:903:0"}]},` +
+	`{"role_key":"voice-actor","role_name":"声优","credits":[{"id":1550,"display_name":"榎木実佳","lang":"ja","localized":{"zh-Hans":{"value":"榎木实佳","kind":"translation"}},"character_id":1699,"character":"コロナ","source":"bangumi","identity":"credit:4:1550:1699"}]},` +
+	`{"role_key":"other-staff","role_name":"其他","credits":[` +
+	`{"id":900,"display_name":"保住圭 (Hozumi Kei)","lang":"ja","localized":{},"source":"vndb","identity":"credit:5:900:0"},` +
+	`{"id":904,"display_name":"なかひろ","lang":"ja","localized":{},"source":"vndb","identity":"credit:5:904:0"}]}]`
 
 func (f *catalogFake) search() string {
 	return `{"total":4,"page":1,"limit":20,"items":[` +

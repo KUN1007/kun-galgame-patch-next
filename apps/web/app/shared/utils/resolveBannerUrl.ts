@@ -34,6 +34,15 @@ type BannerSource = BannerMeta & {
   galgame?: BannerMeta | null
 }
 
+type PortraitMeta = {
+  effective_portrait_hash?: string | null
+  effective_portrait_thumbhash?: string | null
+}
+
+type PortraitSource = PortraitMeta & {
+  galgame?: PortraitMeta | null
+}
+
 const IMAGE_BED = kunMoyuMoe.domain.imageBed.replace(/\/$/, '')
 
 const isHexHash = (s: string): boolean => /^[0-9a-f]{4,}$/i.test(s)
@@ -114,5 +123,35 @@ export const resolveBannerThumbhash = (
   (
     source?.galgame?.effective_banner_thumbhash ??
     source?.effective_banner_thumbhash ??
+    ''
+  ).trim() || undefined
+
+// resolvePortraitUrl reads catalog's tall cover slot off the same dual-shape
+// source. It returns '' rather than falling back to the banner: a caller that
+// wants "portrait, else banner" should say so, since the two want different
+// crops.
+//
+// It takes no variant, unlike resolveBannerUrl: image_service picks the preset
+// from what the image IS, and a cover's `mini` is the 460x259 galgame_banner
+// crop — asking for it would hand back a landscape 460x259 for a portrait
+// 850x1080, with no error to notice. (Character art is a different preset and
+// its `mini` does stay portrait, 256x360.)
+export const resolvePortraitUrl = (
+  source: PortraitSource | null | undefined
+): string => {
+  const hash = (
+    source?.galgame?.effective_portrait_hash ??
+    source?.effective_portrait_hash ??
+    ''
+  ).trim()
+  return hash ? buildImageServiceURL(hash) : ''
+}
+
+export const resolvePortraitThumbhash = (
+  source: PortraitSource | null | undefined
+): string | undefined =>
+  (
+    source?.galgame?.effective_portrait_thumbhash ??
+    source?.effective_portrait_thumbhash ??
     ''
   ).trim() || undefined

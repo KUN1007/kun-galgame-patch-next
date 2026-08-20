@@ -60,6 +60,26 @@ const displayName = computed(() =>
   patch.value ? getPreferredLanguageText(patch.value.name) : ''
 )
 
+// The header box is 3/4 and crops, so it wants catalog's portrait slot. That
+// slot is filled from ANY cover when the work has no portrait-shaped one, so
+// falling back to the banner only matters for works with no cover at all.
+const heroSrc = computed(
+  () =>
+    resolvePortraitUrl(patch.value) ||
+    resolveBannerUrl(patch.value) ||
+    '/kungalgame-trans.webp'
+)
+
+const heroThumbhash = computed(() =>
+  resolvePortraitUrl(patch.value)
+    ? resolvePortraitThumbhash(patch.value)
+    : resolveBannerThumbhash(patch.value)
+)
+
+const releaseDate = computed(
+  () => patch.value?.release_date?.slice(0, 10) ?? ''
+)
+
 const isNoPatch = computed(() => patch.value?.is_on_forum === false)
 
 const publishHref = computed(
@@ -191,9 +211,21 @@ const currentTab = computed({
 
 const tabs = computed(() => {
   const all = [
-    { key: 'introduction', title: 'Galgame 信息', href: `/patch/${galgameId.value}/introduction` },
-    { key: 'resource', title: '补丁资源下载', href: `/patch/${galgameId.value}/resource` },
-    { key: 'comment', title: '游戏评论', href: `/patch/${galgameId.value}/comment` }
+    {
+      key: 'introduction',
+      title: 'Galgame 信息',
+      href: `/patch/${galgameId.value}/introduction`
+    },
+    {
+      key: 'resource',
+      title: '补丁资源下载',
+      href: `/patch/${galgameId.value}/resource`
+    },
+    {
+      key: 'comment',
+      title: '游戏评论',
+      href: `/patch/${galgameId.value}/comment`
+    }
   ]
   return isNoPatch.value
     ? all.filter((t) => ['introduction', 'comment'].includes(t.key))
@@ -203,104 +235,110 @@ const tabs = computed(() => {
 
 <template>
   <div v-if="patch" class="mx-auto w-full max-w-7xl space-y-6 px-3 py-4">
-    <div
-      class="bg-content1 shadow-kun-sm overflow-hidden rounded-3xl"
-    >
-      <div class="flex flex-col gap-5 p-6 sm:flex-row sm:p-8">
-        <div class="relative w-full shrink-0 sm:w-72 lg:w-80">
-          <KunLightboxGallery>
-            <KunLightboxGalleryItem
-              :src="resolveBannerUrl(patch) || '/kungalgame-trans.webp'"
-              :alt="displayName"
-              as="div"
-              class="border-default/20 bg-default-100 w-full overflow-hidden rounded-2xl border shadow-lg"
-            >
-              <KunImage
-                :src="resolveBannerUrl(patch) || '/kungalgame-trans.webp'"
-                :alt="displayName"
-                loading="eager"
-                fetchpriority="high"
-                :aspect-ratio="resolveBannerAspectRatio(patch)"
-                :thumbhash="resolveBannerThumbhash(patch)"
-                class-name="block w-full"
-                image-class-name="transition-transform duration-300 hover:scale-[1.03]"
-              />
-            </KunLightboxGalleryItem>
-          </KunLightboxGallery>
-          <button
-            type="button"
-            class="bg-background/80 hover:bg-background shadow-kun-sm absolute right-2 bottom-2 z-10 inline-flex items-center gap-1.5 rounded-lg px-2.5 py-1.5 text-xs font-medium backdrop-blur transition-colors"
-            @click="coversOpen = true"
+    <div class="flex flex-col gap-6 sm:flex-row">
+      <div class="mx-auto w-40 shrink-0 space-y-2 sm:mx-0 sm:w-44 lg:w-52">
+        <KunLightboxGallery>
+          <KunLightboxGalleryItem
+            :src="heroSrc"
+            :alt="displayName"
+            as="div"
+            class="border-default/20 bg-default-100 w-full overflow-hidden rounded-2xl border shadow-lg"
           >
-            <KunIcon name="lucide:images" class="size-4" />
-            查看所有封面
-          </button>
-          <GalgameCovers v-model="coversOpen" :galgame-id="galgameId" />
+            <KunImage
+              :src="heroSrc"
+              :alt="displayName"
+              loading="eager"
+              fetchpriority="high"
+              aspect-ratio="3/4"
+              object-fit="cover"
+              :thumbhash="heroThumbhash"
+              class-name="block w-full"
+              image-class-name="transition-transform duration-300 hover:scale-[1.03]"
+            />
+          </KunLightboxGalleryItem>
+        </KunLightboxGallery>
+
+        <KunButton
+          variant="light"
+          color="default"
+          size="sm"
+          class-name="w-full"
+          @click="coversOpen = true"
+        >
+          <KunIcon name="lucide:images" class="size-4" />
+          查看所有封面
+        </KunButton>
+        <GalgameCovers v-model="coversOpen" :galgame-id="galgameId" />
+      </div>
+
+      <div class="flex min-w-0 flex-1 flex-col gap-4">
+        <div class="space-y-2">
+          <div class="flex flex-wrap items-center gap-2">
+            <h1
+              class="text-2xl leading-tight font-bold break-words sm:text-3xl"
+            >
+              {{ displayName }}
+            </h1>
+            <KunTooltip
+              :text="GALGAME_AGE_LIMIT_DETAIL[patch.content_limit]"
+              position="right"
+            >
+              <KunChip
+                :color="patch.content_limit === 'sfw' ? 'success' : 'danger'"
+                variant="flat"
+              >
+                {{ GALGAME_AGE_LIMIT_MAP[patch.content_limit] }}
+              </KunChip>
+            </KunTooltip>
+          </div>
+
+          <div class="flex flex-wrap items-center gap-x-3 gap-y-1">
+            <template v-for="(value, key) in patch.name" :key="key">
+              <span
+                v-if="value && value !== displayName"
+                class="text-default-500 text-xs"
+              >
+                {{ value }}
+              </span>
+            </template>
+          </div>
+
+          <KunPatchAttribute
+            :types="patch.type"
+            :languages="patch.language"
+            :platforms="patch.platform"
+            size="sm"
+          />
+
+          <div
+            v-if="releaseDate"
+            class="text-default-500 flex items-center gap-1.5 text-sm"
+          >
+            <KunIcon name="lucide:calendar" class="size-4" />
+            <span>{{ releaseDate }} 发售</span>
+          </div>
         </div>
 
-        <div class="flex min-w-0 flex-1 flex-col justify-between gap-4">
-          <div class="space-y-2">
-            <div class="flex flex-wrap items-center gap-2">
-              <h1
-                class="text-2xl leading-tight font-bold break-words sm:text-3xl"
-              >
-                {{ displayName }}
-              </h1>
-              <KunTooltip
-                :text="GALGAME_AGE_LIMIT_DETAIL[patch.content_limit]"
-                position="right"
-              >
-                <KunChip
-                  :color="patch.content_limit === 'sfw' ? 'success' : 'danger'"
-                  variant="flat"
-                >
-                  {{ GALGAME_AGE_LIMIT_MAP[patch.content_limit] }}
-                </KunChip>
-              </KunTooltip>
-            </div>
-
-            <div class="flex flex-wrap items-center gap-x-3 gap-y-1">
-              <template v-for="(value, key) in patch.name" :key="key">
-                <span
-                  v-if="value && value !== displayName"
-                  class="text-default-500 text-xs"
-                >
-                  {{ value }}
-                </span>
-              </template>
-            </div>
-
-            <KunPatchAttribute
-              :types="patch.type"
-              :languages="patch.language"
-              :platforms="patch.platform"
-              size="sm"
+        <div class="space-y-4">
+          <div
+            class="border-default/20 flex flex-col items-start justify-between gap-4 border-t pt-4 sm:flex-row sm:items-center"
+          >
+            <KunUserChip
+              :user="patch.creator ?? patch.user"
+              :description="creatorDescription"
             />
+            <KunCardStats
+              v-if="!isNoPatch"
+              :patch="{ ...patch, created: patch.created }"
+              :disable-tooltip="false"
+              :is-mobile="false"
+            />
+            <KunChip v-else color="warning" variant="flat" size="sm">
+              本站尚未收录
+            </KunChip>
           </div>
 
-          <div class="space-y-4">
-            <div
-              class="border-default/20 flex flex-col items-start justify-between gap-4 border-t pt-4 sm:flex-row sm:items-center"
-            >
-              <div class="flex flex-col gap-1.5">
-                <KunUserChip
-                  :user="patch.creator ?? patch.user"
-                  :description="creatorDescription"
-                />
-              </div>
-              <KunCardStats
-                v-if="!isNoPatch"
-                :patch="{ ...patch, created: patch.created }"
-                :disable-tooltip="false"
-                :is-mobile="false"
-              />
-              <KunChip v-else color="warning" variant="flat" size="sm">
-                本站尚未收录
-              </KunChip>
-            </div>
-
-            <PatchHeaderActions :patch="patch" />
-          </div>
+          <PatchHeaderActions :patch="patch" />
         </div>
       </div>
     </div>
@@ -318,7 +356,8 @@ const tabs = computed(() => {
         <div>
           <p class="font-semibold">本站尚未收录此游戏</p>
           <p class="text-default-500 text-sm">
-            当前页面的资料均来自 Galgame 资料库，本站还没有它的补丁或本地数据。收藏 / 评论
+            当前页面的资料均来自 Galgame
+            资料库，本站还没有它的补丁或本地数据。收藏 / 评论
             都会让它被本站收录（但您不会成为该游戏的创建者，也不会获得萌萌点奖励）；发布补丁同样会让它被收录，并照常获得发布补丁的萌萌点奖励。
           </p>
         </div>
@@ -331,7 +370,9 @@ const tabs = computed(() => {
 
     <KunTab
       v-model="currentTab"
-      :items="tabs.map((t) => ({ value: t.key, textValue: t.title, href: t.href }))"
+      :items="
+        tabs.map((t) => ({ value: t.key, textValue: t.title, href: t.href }))
+      "
       variant="underlined"
       color="primary"
       size="md"

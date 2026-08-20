@@ -26,7 +26,8 @@ const pickInitialLang = () => {
   if (!detail.value?.introduction_html) return 'zh-cn' as Language
   const langs: Language[] = ['zh-cn', 'ja-jp', 'en-us']
   return (
-    langs.find((l) => detail.value!.introduction_html[l]) ?? ('zh-cn' as Language)
+    langs.find((l) => detail.value!.introduction_html[l]) ??
+    ('zh-cn' as Language)
   )
 }
 
@@ -98,6 +99,20 @@ const hiddenByFilterCount = computed(() => {
   return detail.value.tags.length - filteredTags.value.length
 })
 
+// 声优 repeats the CV line every character card above already prints, and with
+// 40 entries on a well-credited work it buries 剧本 / 原画 / 音乐 — the roles a
+// reader opens this section for. Drop it only when the roster actually showed
+// them; a work with credits but no roster still needs the list.
+const staffGroups = computed(() => {
+  const groups = detail.value?.staff ?? []
+  const rosterNamesVoices = (detail.value?.characters ?? []).some(
+    (c) => c.voices.length > 0
+  )
+  return rosterNamesVoices
+    ? groups.filter((g) => g.role_key !== 'voice-actor')
+    : groups
+})
+
 const officialLogoSrc = (o: PatchDetailOfficial) =>
   imageServiceUrl((o.logo_hash ?? '').trim(), 'mini')
 
@@ -105,32 +120,30 @@ const kungalOrigin = kunMoyuMoe.domain.kungal
 </script>
 
 <template>
-  <div v-if="detail" class="space-y-8">
-    <section>
-      <div class="mb-4 flex flex-wrap items-center gap-3">
-        <div class="bg-primary h-6 w-1 rounded" />
-        <h2 class="text-2xl font-bold">简介</h2>
-        <KunSelect
-          :model-value="lang"
-          :options="langOptions"
-          class-name="max-w-36"
-          @update:model-value="
-            (v: Language | Language[] | null) => (lang = v as Language)
-          "
-        />
-      </div>
+  <div v-if="detail" class="space-y-10">
+    <section class="space-y-4">
+      <KunHeader name="简介" scale="h2">
+        <template #headerEndContent>
+          <KunSelect
+            :model-value="lang"
+            :options="langOptions"
+            class-name="max-w-36"
+            @update:model-value="
+              (v: Language | Language[] | null) => (lang = v as Language)
+            "
+          />
+        </template>
+      </KunHeader>
+
       <div
         v-if="introHtml"
         ref="introEl"
         class="kun-prose max-w-none"
         v-html="introHtml"
       />
-      <KunNull
-        v-else
-        description="此 Galgame 暂无简介，可到 鲲 Galgame 补充"
-      />
+      <KunNull v-else description="此 Galgame 暂无简介，可到 鲲 Galgame 补充" />
 
-      <div class="text-default-500 mt-6 grid gap-4 sm:grid-cols-2">
+      <div class="text-default-500 grid gap-4 sm:grid-cols-2">
         <div class="flex items-center gap-2 text-sm">
           <KunIcon name="lucide:clock" class="size-4" />
           <span>
@@ -188,50 +201,49 @@ const kungalOrigin = kunMoyuMoe.domain.kungal
       </div>
     </section>
 
-    <section v-if="detail.tags?.length">
-      <div
-        class="mb-4 flex flex-col items-start gap-3 sm:flex-row sm:items-center sm:justify-between"
-      >
-        <div class="flex items-center gap-3">
-          <div class="bg-primary h-6 w-1 rounded" />
-          <h2 class="text-2xl font-bold">标签</h2>
-        </div>
-        <div class="flex flex-wrap items-center gap-x-6 gap-y-3 text-sm">
-          <div class="flex items-center gap-2">
-            <span class="text-default-500 shrink-0">剧透</span>
-            <KunRadioGroup
-              v-model="spoilerMode"
-              orientation="horizontal"
-              :options="spoilerOptions"
-            />
+    <GalgameRatings
+      :ratings="detail.ratings ?? []"
+      :vndb-id="detail.vndb_id"
+      :bid="detail.bid"
+    />
+
+    <section v-if="detail.tags?.length" class="space-y-4">
+      <KunHeader name="标签" scale="h2">
+        <template #headerEndContent>
+          <div class="flex flex-wrap items-center gap-x-6 gap-y-3 text-sm">
+            <div class="flex items-center gap-2">
+              <span class="text-default-500 shrink-0">剧透</span>
+              <KunRadioGroup
+                v-model="spoilerMode"
+                orientation="horizontal"
+                :options="spoilerOptions"
+              />
+            </div>
+            <div class="flex flex-wrap items-center gap-x-4 gap-y-2">
+              <span class="text-default-500 shrink-0">分类</span>
+              <KunCheckBox
+                v-for="c in availableCategories"
+                :key="c"
+                :model-value="visibleCategories.has(c)"
+                color="primary"
+                @change="toggleCategory(c)"
+              >
+                <span :class="TAG_CATEGORY_TEXT_CLASS[c]">
+                  {{ CATEGORY_LABEL[c] }}
+                </span>
+              </KunCheckBox>
+            </div>
           </div>
-          <div class="flex flex-wrap items-center gap-x-4 gap-y-2">
-            <span class="text-default-500 shrink-0">分类</span>
-            <KunCheckBox
-              v-for="c in availableCategories"
-              :key="c"
-              :model-value="visibleCategories.has(c)"
-              color="primary"
-              @change="toggleCategory(c)"
-            >
-              <span :class="TAG_CATEGORY_TEXT_CLASS[c]">
-                {{ CATEGORY_LABEL[c] }}
-              </span>
-            </KunCheckBox>
-          </div>
-        </div>
-      </div>
+        </template>
+      </KunHeader>
+
       <div class="flex flex-wrap gap-2">
         <NuxtLink
           v-for="t in filteredTags"
           :key="t.id"
           :to="`/galgame/tag/${t.id}`"
         >
-          <KunChip
-            :color="tagColor(t.category)"
-            variant="flat"
-            size="sm"
-          >
+          <KunChip :color="tagColor(t.category)" variant="flat" size="sm">
             <KunIcon
               v-if="t.spoiler_level > 0"
               name="lucide:eye-off"
@@ -255,11 +267,8 @@ const kungalOrigin = kunMoyuMoe.domain.kungal
       </div>
     </section>
 
-    <section v-if="detail.officials?.length">
-      <div class="mb-4 flex items-center gap-3">
-        <div class="bg-primary h-6 w-1 rounded" />
-        <h2 class="text-2xl font-bold">会社</h2>
-      </div>
+    <section v-if="detail.officials?.length" class="space-y-4">
+      <KunHeader name="会社" scale="h2" />
       <div class="flex flex-wrap gap-2">
         <NuxtLink
           v-for="o in detail.officials"
@@ -282,6 +291,10 @@ const kungalOrigin = kunMoyuMoe.domain.kungal
         </NuxtLink>
       </div>
     </section>
+
+    <GalgameCharacters :characters="detail.characters ?? []" />
+
+    <GalgameStaff :staff="staffGroups" />
 
     <section v-if="detail.galgame?.screenshots?.length">
       <GalgameGallery :screenshots="detail.galgame.screenshots" />

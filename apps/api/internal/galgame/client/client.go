@@ -95,26 +95,30 @@ type Paginated[T any] struct {
 }
 
 type GalgameBrief struct {
-	ID                       int               `json:"id"`
-	CatalogWorkID            int64             `json:"catalog_work_id,omitempty"`
-	VndbID                   string            `json:"vndb_id"`
-	ClaimState               string            `json:"claim_state"`
-	NameEnUs                 string            `json:"name_en_us"`
-	NameZhCn                 string            `json:"name_zh_cn"`
-	NameJaJp                 string            `json:"name_ja_jp"`
-	NameZhTw                 string            `json:"name_zh_tw"`
-	Banner                   string            `json:"banner"`
-	ContentLimit             string            `json:"content_limit"`
-	AgeLimit                 string            `json:"age_limit"`
-	OriginalLanguage         string            `json:"original_language"`
-	ReleaseDate              *string           `json:"release_date"`
-	ReleasePrecision         string            `json:"release_precision,omitempty"`
-	EffectiveBannerHash      string            `json:"effective_banner_hash"`
-	EffectiveBannerWidth     int               `json:"effective_banner_width,omitempty"`
-	EffectiveBannerHeight    int               `json:"effective_banner_height,omitempty"`
-	EffectiveBannerThumbhash string            `json:"effective_banner_thumbhash,omitempty"`
-	Covers                   []CoverInput      `json:"covers"`
-	Screenshots              []ScreenshotInput `json:"screenshots"`
+	ID                         int               `json:"id"`
+	CatalogWorkID              int64             `json:"catalog_work_id,omitempty"`
+	VndbID                     string            `json:"vndb_id"`
+	ClaimState                 string            `json:"claim_state"`
+	NameEnUs                   string            `json:"name_en_us"`
+	NameZhCn                   string            `json:"name_zh_cn"`
+	NameJaJp                   string            `json:"name_ja_jp"`
+	NameZhTw                   string            `json:"name_zh_tw"`
+	Banner                     string            `json:"banner"`
+	ContentLimit               string            `json:"content_limit"`
+	AgeLimit                   string            `json:"age_limit"`
+	OriginalLanguage           string            `json:"original_language"`
+	ReleaseDate                *string           `json:"release_date"`
+	ReleasePrecision           string            `json:"release_precision,omitempty"`
+	EffectiveBannerHash        string            `json:"effective_banner_hash"`
+	EffectiveBannerWidth       int               `json:"effective_banner_width,omitempty"`
+	EffectiveBannerHeight      int               `json:"effective_banner_height,omitempty"`
+	EffectiveBannerThumbhash   string            `json:"effective_banner_thumbhash,omitempty"`
+	EffectivePortraitHash      string            `json:"effective_portrait_hash,omitempty"`
+	EffectivePortraitWidth     int               `json:"effective_portrait_width,omitempty"`
+	EffectivePortraitHeight    int               `json:"effective_portrait_height,omitempty"`
+	EffectivePortraitThumbhash string            `json:"effective_portrait_thumbhash,omitempty"`
+	Covers                     []CoverInput      `json:"covers"`
+	Screenshots                []ScreenshotInput `json:"screenshots"`
 }
 
 type GalgameHit struct {
@@ -369,17 +373,24 @@ type GalgameFull struct {
 	OriginalLanguage string  `json:"original_language"`
 	ReleaseDate      *string `json:"release_date"`
 
-	Tag      []GalgameFullTag      `json:"tag"`
-	Official []GalgameFullOfficial `json:"official"`
+	Tag        []GalgameFullTag      `json:"tag"`
+	Official   []GalgameFullOfficial `json:"official"`
+	Characters []GalgameCharacter    `json:"characters"`
+	Staff      []GalgameStaffGroup   `json:"staff"`
+	Ratings    []GalgameRating       `json:"ratings"`
 
-	EffectiveBannerHash      string            `json:"effective_banner_hash"`
-	EffectiveBannerWidth     int               `json:"effective_banner_width,omitempty"`
-	EffectiveBannerHeight    int               `json:"effective_banner_height,omitempty"`
-	EffectiveBannerThumbhash string            `json:"effective_banner_thumbhash,omitempty"`
-	Covers                   []CoverInput      `json:"covers"`
-	Screenshots              []ScreenshotInput `json:"screenshots"`
-	Created                  string            `json:"created"`
-	Updated                  string            `json:"updated"`
+	EffectiveBannerHash        string            `json:"effective_banner_hash"`
+	EffectiveBannerWidth       int               `json:"effective_banner_width,omitempty"`
+	EffectiveBannerHeight      int               `json:"effective_banner_height,omitempty"`
+	EffectiveBannerThumbhash   string            `json:"effective_banner_thumbhash,omitempty"`
+	EffectivePortraitHash      string            `json:"effective_portrait_hash,omitempty"`
+	EffectivePortraitWidth     int               `json:"effective_portrait_width,omitempty"`
+	EffectivePortraitHeight    int               `json:"effective_portrait_height,omitempty"`
+	EffectivePortraitThumbhash string            `json:"effective_portrait_thumbhash,omitempty"`
+	Covers                     []CoverInput      `json:"covers"`
+	Screenshots                []ScreenshotInput `json:"screenshots"`
+	Created                    string            `json:"created"`
+	Updated                    string            `json:"updated"`
 }
 
 type GalgameDetailEnvelope struct {
@@ -399,6 +410,7 @@ func (c *Client) GetGalgame(ctx context.Context, gid int, contentLimit string) (
 	q := url.Values{}
 	applyNSFW(q)
 	q.Set("spoilers", "2")
+	q.Set("include", "credits")
 
 	var w catalogWork
 	if err := c.getV1(ctx, fmt.Sprintf("/catalog/works/%d", catalogID), q, &w); err != nil {

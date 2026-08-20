@@ -73,11 +73,8 @@ const imgSrc = (s: GalgameScreenshotRow) => imageServiceUrl(s.image_hash)
 
 <template>
   <div v-if="allShots.length" class="space-y-4">
-    <div class="flex flex-wrap items-center justify-between gap-3">
-      <div class="flex items-center gap-3">
-        <div class="bg-primary h-6 w-1 rounded" />
-        <h2 class="text-2xl font-bold">截图 / 画廊</h2>
-      </div>
+    <div class="flex flex-wrap items-end justify-between gap-3">
+      <KunHeader name="截图 / 画廊" scale="h2" />
       <GalgameGalleryFilter
         v-if="hasRated"
         :show-nsfw="showNsfw"
