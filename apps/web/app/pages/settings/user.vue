@@ -302,7 +302,11 @@ const currentAvatarUrl = computed(() => {
       </KunCard>
     </div>
 
-    <KunModal v-model="resetOpen" inner-class-name="max-w-md">
+    <KunModal
+      v-model="resetOpen"
+      inner-class-name="max-w-md"
+      aria-label="清除网站数据"
+    >
       <div class="space-y-4">
         <h3 class="text-lg font-semibold">您确定要清除网站所有数据吗？</h3>
         <p class="text-foreground/80 text-sm">

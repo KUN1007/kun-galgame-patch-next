@@ -259,7 +259,11 @@ onMounted(() => {
       </table>
     </div>
 
-    <KunModal v-model="modalOpen" inner-class-name="max-w-3xl">
+    <KunModal
+      v-model="modalOpen"
+      inner-class-name="max-w-3xl"
+      :aria-label="editingId === null ? '新建文档' : '编辑文档'"
+    >
       <div class="space-y-4">
         <h2 class="text-xl font-bold">
           {{ editingId === null ? '新建文档' : '编辑文档' }}
@@ -357,6 +361,7 @@ onMounted(() => {
     <KunModal
       :model-value="!!deleteTarget"
       inner-class-name="max-w-md"
+      aria-label="确认删除文档"
       @update:model-value="(v: boolean) => { if (!v) deleteTarget = null }"
     >
       <div class="space-y-4">

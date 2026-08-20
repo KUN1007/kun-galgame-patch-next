@@ -557,6 +557,7 @@ onBeforeUnmount(() => pause())
     <KunModal
       :model-value="deleteOpen"
       inner-class-name="max-w-md"
+      aria-label="删除消息"
       @update:model-value="(v) => (deleteOpen = v)"
     >
       <div class="space-y-4">

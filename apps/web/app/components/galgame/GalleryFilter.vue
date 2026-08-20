@@ -120,7 +120,11 @@ const confirmViolence = () => {
     </div>
   </KunPopover>
 
-  <KunModal v-model="warnOpen" inner-class-name="max-w-sm">
+  <KunModal
+    v-model="warnOpen"
+    inner-class-name="max-w-sm"
+    aria-label="显示暴力内容"
+  >
     <div class="space-y-4 text-center">
       <KunIcon
         name="lucide:triangle-alert"

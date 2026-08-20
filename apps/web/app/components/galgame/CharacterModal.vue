@@ -108,8 +108,17 @@ const kungalHref = computed(
 </script>
 
 <template>
-  <KunModal v-model="isOpen" inner-class-name="max-w-3xl w-[94vw]">
-    <div v-if="character" class="max-h-[82dvh] space-y-4 overflow-y-auto p-1">
+  <KunModal
+    v-model="isOpen"
+    inner-class-name="max-w-3xl w-[94vw]"
+    :aria-label="name || '角色资料'"
+  >
+    <!-- No max-height and no overflow here: KunModal's panel already caps and
+         scrolls itself. A body capped at 82dvh looked right until KunUI 2.19.1
+         dropped the phone sheet to 85dvh — the panel's own p-6 then pushed
+         82dvh + 48px past it, and the sheet grew a second scrollbar inside the
+         first. Desktop showed nothing. -->
+    <div v-if="character" class="space-y-4 p-1">
       <div class="flex flex-col gap-4 sm:flex-row">
         <KunLightboxGallery v-if="figureSrc || imageSrc">
           <div class="flex shrink-0 items-start gap-3 sm:flex-col">

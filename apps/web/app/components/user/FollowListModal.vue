@@ -100,7 +100,7 @@ const goToProfile = (id: number) => {
 </script>
 
 <template>
-  <KunModal v-model="open" inner-class-name="max-w-md">
+  <KunModal v-model="open" inner-class-name="max-w-md" :aria-label="title">
     <div class="space-y-4">
       <h3 class="text-lg font-semibold">{{ title }}</h3>
 

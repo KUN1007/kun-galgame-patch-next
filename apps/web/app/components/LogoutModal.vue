@@ -38,7 +38,7 @@ const chooseLocal = async () => {
 </script>
 
 <template>
-  <KunModal v-model="open" inner-class-name="max-w-lg">
+  <KunModal v-model="open" inner-class-name="max-w-lg" aria-label="退出登录">
     <div class="space-y-4">
       <div class="space-y-3">
         <h3 class="text-foreground text-lg font-semibold">退出登录</h3>

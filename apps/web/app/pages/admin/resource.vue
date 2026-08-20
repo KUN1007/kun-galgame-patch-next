@@ -198,7 +198,11 @@ const histTotalPages = computed(() =>
       />
     </div>
 
-    <KunModal v-model="deleteOpen" inner-class-name="max-w-md">
+    <KunModal
+      v-model="deleteOpen"
+      inner-class-name="max-w-md"
+      aria-label="删除补丁资源"
+    >
       <div class="space-y-4 py-2">
         <h3 class="text-lg font-bold">删除补丁资源？</h3>
         <p class="text-default-600 text-sm">
@@ -242,8 +246,13 @@ const histTotalPages = computed(() =>
       </div>
     </KunModal>
 
-    <KunModal v-model="histOpen" size="xl" :is-show-close-button="true">
-      <div class="max-h-[85vh] w-[92vw] max-w-2xl space-y-3 overflow-y-auto p-5">
+    <KunModal
+      v-model="histOpen"
+      size="xl"
+      :is-show-close-button="true"
+      aria-label="文件替换历史"
+    >
+      <div class="w-[92vw] max-w-2xl space-y-3 p-5">
         <h3 class="text-lg font-semibold">
           资源 #{{ histResourceId }} · 文件替换历史
         </h3>

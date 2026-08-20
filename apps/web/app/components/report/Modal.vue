@@ -45,7 +45,11 @@ const submit = async () => {
 </script>
 
 <template>
-  <KunModal v-model="isOpen" inner-class-name="max-w-md w-[92vw]">
+  <KunModal
+    v-model="isOpen"
+    inner-class-name="max-w-md w-[92vw]"
+    aria-label="举报内容"
+  >
     <div class="space-y-4">
       <div>
         <span class="text-xl">举报内容</span>

@@ -187,6 +187,7 @@ const onMenuSelect = (item: { key: string }) => {
     v-model="deleteOpen"
     inner-class-name="max-w-md"
     :is-dismissable="false"
+    aria-label="删除该游戏"
   >
     <div class="space-y-4 py-2">
       <h3 class="text-lg font-bold">删除该游戏？</h3>

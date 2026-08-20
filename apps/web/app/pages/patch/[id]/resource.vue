@@ -542,6 +542,7 @@ watch(histPage, loadHistory)
       v-model="publishOpen"
       inner-class-name="max-w-3xl"
       :is-dismissable="false"
+      aria-label="发布补丁资源"
     >
       <ResourcePublish
         v-if="publishOpen"
@@ -555,6 +556,7 @@ watch(histPage, loadHistory)
       v-model="editOpen"
       inner-class-name="max-w-3xl"
       :is-dismissable="false"
+      aria-label="编辑补丁资源"
     >
       <ResourcePublish
         v-if="editOpen && editingResource"
@@ -565,7 +567,11 @@ watch(histPage, loadHistory)
       />
     </KunModal>
 
-    <KunModal v-model="deleteOpen" inner-class-name="max-w-md">
+    <KunModal
+      v-model="deleteOpen"
+      inner-class-name="max-w-md"
+      aria-label="删除补丁资源"
+    >
       <div class="space-y-4 py-2">
         <h3 class="text-lg font-bold">删除补丁资源？</h3>
         <p class="text-default-600 text-sm">
@@ -609,7 +615,11 @@ watch(histPage, loadHistory)
       </div>
     </KunModal>
 
-    <KunModal v-model="histOpen" inner-class-name="max-w-xl">
+    <KunModal
+      v-model="histOpen"
+      inner-class-name="max-w-xl"
+      aria-label="资源更改历史"
+    >
       <div class="space-y-4 py-2">
         <div class="flex items-center gap-2">
           <KunIcon name="lucide:history" class="text-primary size-5" />

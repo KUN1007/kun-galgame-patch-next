@@ -116,7 +116,11 @@ const handleApply = async () => {
 </script>
 
 <template>
-  <KunModal v-model="open" inner-class-name="max-w-xl w-full border-default-200">
+  <KunModal
+    v-model="open"
+    inner-class-name="max-w-xl w-full border-default-200"
+    aria-label="成为创作者"
+  >
     <div class="space-y-5 p-1">
       <div class="flex items-start gap-3">
         <KunIcon

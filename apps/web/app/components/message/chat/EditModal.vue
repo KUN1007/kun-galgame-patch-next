@@ -30,6 +30,7 @@ const save = () => {
     :model-value="open"
     inner-class-name="max-w-lg"
     :is-dismissable="false"
+    aria-label="重新编辑消息"
     @update:model-value="(v) => emit('update:open', v)"
   >
     <div class="space-y-4">

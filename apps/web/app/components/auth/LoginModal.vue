@@ -3,7 +3,11 @@ const { isOpen } = useAuthModal()
 </script>
 
 <template>
-  <KunModal v-model="isOpen" inner-class-name="max-w-sm">
+  <KunModal
+    v-model="isOpen"
+    inner-class-name="max-w-sm"
+    aria-label="登录或注册"
+  >
     <div class="flex flex-col items-center gap-6 py-4">
       <h2 class="text-2xl font-bold">登录或注册</h2>
       <AuthEntry />

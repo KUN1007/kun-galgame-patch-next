@@ -349,7 +349,7 @@ const showMenu = computed(
       </KunButton>
     </div>
 
-    <KunModal v-model="deleteOpen" inner-class-name="max-w-md">
+    <KunModal v-model="deleteOpen" inner-class-name="max-w-md" aria-label="删除评论">
       <div class="space-y-4 py-2">
         <h3 class="text-lg font-bold">删除评论？</h3>
         <p class="text-default-600 text-sm">

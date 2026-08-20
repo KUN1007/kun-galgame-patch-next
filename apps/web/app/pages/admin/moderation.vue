@@ -187,12 +187,13 @@ const actionOptions = TRUST_ACTIONS.map((a) => ({
       :is-loading="pending"
     />
 
-    <KunModal v-model="isDetailOpen" inner-class-name="max-w-2xl w-[94vw]">
+    <KunModal
+      v-model="isDetailOpen"
+      inner-class-name="max-w-2xl w-[94vw]"
+      aria-label="审核详情"
+    >
       <KunLoading v-if="detailLoading" />
-      <div
-        v-else-if="detail"
-        class="max-h-[80dvh] space-y-4 overflow-y-auto p-1"
-      >
+      <div v-else-if="detail" class="space-y-4 p-1">
         <div class="flex flex-wrap items-center gap-2">
           <span class="text-lg font-bold">审核详情</span>
           <KunChip color="secondary">

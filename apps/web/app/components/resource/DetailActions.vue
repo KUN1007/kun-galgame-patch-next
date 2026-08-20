@@ -183,6 +183,7 @@ const onMenuSelect = (item: { key: string }) => {
       v-model="editOpen"
       inner-class-name="max-w-3xl"
       :is-dismissable="false"
+      aria-label="编辑补丁资源"
     >
       <ResourcePublish
         v-if="editOpen"
@@ -197,6 +198,7 @@ const onMenuSelect = (item: { key: string }) => {
       v-model="deleteOpen"
       inner-class-name="max-w-md"
       :is-dismissable="false"
+      aria-label="删除补丁资源"
     >
       <div class="space-y-4 py-2">
         <h3 class="text-lg font-bold">删除补丁资源？</h3>

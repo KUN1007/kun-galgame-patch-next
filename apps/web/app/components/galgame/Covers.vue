@@ -60,7 +60,11 @@ watch(open, (v) => {
 </script>
 
 <template>
-  <KunModal v-model="open" inner-class-name="max-w-3xl w-full">
+  <KunModal
+    v-model="open"
+    inner-class-name="max-w-3xl w-full"
+    aria-label="所有封面"
+  >
     <div class="space-y-4">
       <div class="flex items-center gap-3">
         <div class="bg-primary h-6 w-1 rounded" />

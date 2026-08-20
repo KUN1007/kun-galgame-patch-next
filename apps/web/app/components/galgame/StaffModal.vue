@@ -100,8 +100,12 @@ const roleText = (credit: PatchStaffCredit) =>
 </script>
 
 <template>
-  <KunModal v-model="isOpen" inner-class-name="max-w-3xl w-[94vw]">
-    <div v-if="person" class="max-h-[82dvh] space-y-4 overflow-y-auto p-1">
+  <KunModal
+    v-model="isOpen"
+    inner-class-name="max-w-3xl w-[94vw]"
+    :aria-label="name || '制作人员资料'"
+  >
+    <div v-if="person" class="space-y-4 p-1">
       <div class="flex items-start gap-4">
         <KunImage
           v-if="photoSrc"
