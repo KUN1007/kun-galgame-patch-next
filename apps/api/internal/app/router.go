@@ -80,6 +80,11 @@ func (a *App) RegisterRoutes() {
 	)
 	patchRoutes.Put("/:id/favorite", auth, a.PatchHandler.ToggleFavorite)
 
+	patchRoutes.Get("/:id/catalog-edit", auth, a.PatchHandler.CatalogEditBootstrap)
+	patchRoutes.Post("/:id/catalog-edit", auth, a.PatchHandler.CatalogEditSubmit)
+	patchRoutes.Get("/:id/catalog-edit/proposals", auth, a.PatchHandler.CatalogEditProposals)
+	api.Post("/catalog-proposal/:id/withdraw", auth, a.PatchHandler.CatalogProposalWithdraw)
+
 	api.Get("/galgame/calendar", optionalAuth, a.CommonHandler.GetGalgameCalendar)
 	api.Get(
 		"/galgame/character/:id",

@@ -52,7 +52,42 @@ const SKIP_DIRS = new Set(['node_modules', '.nuxt', '.output', 'dist', '.git'])
 
 // Icons referenced indirectly (e.g. through props passed at runtime) that the
 // regex below cannot find. Add manually if you spot a missing icon at runtime.
-const MANUAL_ICONS = []
+// Everything a LAYER/MODULE renders belongs here: those templates live in
+// node_modules, which SCAN_DIRS never reaches. The KunEditor toolbar proved it
+// — its icons were registered back when the editor was an in-repo port, and the
+// first regeneration after it moved to @kungal/editor-nuxt silently dropped
+// bold / italic / list / … back to the @nuxt/icon fetch fallback.
+const MANUAL_ICONS = [
+  // @nextmoe/edit-ui-vue (SchemaForm and friends). plus / trash-2 / x are only
+  // incidentally also used by app code, so they would vanish the day that
+  // usage is refactored away.
+  'lucide:grip-vertical',
+  'lucide:loader',
+  'lucide:lock',
+  'lucide:pin',
+  'lucide:plus',
+  'lucide:trash-2',
+  'lucide:undo-2',
+  'lucide:upload',
+  'lucide:x',
+  // @kungal/editor-{core,vue,nuxt}
+  'lucide:arrow-left-right',
+  'lucide:bold',
+  'lucide:chevron-down',
+  'lucide:code',
+  'lucide:eye-off',
+  'lucide:image',
+  'lucide:italic',
+  'lucide:link',
+  'lucide:list',
+  'lucide:list-ordered',
+  'lucide:minus',
+  'lucide:smile-plus',
+  'lucide:square-code',
+  'lucide:strikethrough',
+  'lucide:text-quote',
+  'lucide:unlink'
+]
 
 // Icon references are always quoted string literals — `name="lucide:x"`,
 // `:name="cond ? 'a:b' : 'c:d'"`, or map values like `icon: 'lucide:x'`.
