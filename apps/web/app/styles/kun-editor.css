@@ -125,6 +125,10 @@
 .kun-editor__bubble-btn:hover {
   background: oklch(var(--default-100));
 }
+.kun-editor__bubble-btn[data-active='true'] {
+  background: oklch(var(--primary-500) / 0.15);
+  color: oklch(var(--primary-800));
+}
 
 .kun-editor__format-toolbar {
   display: flex;
