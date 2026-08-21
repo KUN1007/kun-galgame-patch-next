@@ -204,11 +204,6 @@ onMounted(async () => {
 
 provide('patch', patch)
 
-const currentTab = computed({
-  get: () => route.path.split('/').filter(Boolean).pop() ?? 'introduction',
-  set: () => {}
-})
-
 const tabs = computed(() => {
   const all = [
     {
@@ -230,6 +225,14 @@ const tabs = computed(() => {
   return isNoPatch.value
     ? all.filter((t) => ['introduction', 'comment'].includes(t.key))
     : all
+})
+
+const currentTab = computed({
+  get: () => {
+    const segment = route.path.split('/').filter(Boolean).pop() ?? ''
+    return tabs.value.some((t) => t.key === segment) ? segment : 'introduction'
+  },
+  set: () => {}
 })
 </script>
 

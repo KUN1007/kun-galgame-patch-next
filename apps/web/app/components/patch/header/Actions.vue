@@ -48,7 +48,7 @@ const handleShare = () => {
   useKunCopy(link)
 }
 
-const editHref = computed(() => `${kungalOrigin}/galgame/${props.patch.id}`)
+const editPath = computed(() => `/patch/${props.patch.id}/edit`)
 
 const canDelete = computed(() => {
   if (isNoPatch.value) return false
@@ -102,7 +102,7 @@ const menuItems = computed<ActionMenuItem[]>(() => {
 })
 
 const onMenuSelect = (item: { key: string }) => {
-  if (item.key === 'edit') navigateTo(editHref.value, { external: true })
+  if (item.key === 'edit') navigateTo(editPath.value)
   else if (item.key === 'share') handleShare()
   else if (item.key === 'delete') askDelete()
 }

@@ -20,6 +20,7 @@ export default defineNuxtConfig({
   devtools: { enabled: false },
 
   modules: [
+    '@nextmoe/edit-ui-nuxt',
     '@nuxt/image',
     '@nuxt/eslint',
     '@nuxtjs/color-mode',

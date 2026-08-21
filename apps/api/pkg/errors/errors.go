@@ -74,6 +74,13 @@ func ErrCatalogReauthRequired(msg string) *AppError {
 	return New(40399, msg, fiber.StatusForbidden)
 }
 
+func ErrCatalogUnavailable(msg string) *AppError {
+	if msg == "" {
+		msg = "资料库服务暂不可用，请稍后再试"
+	}
+	return New(50320, msg, fiber.StatusServiceUnavailable)
+}
+
 func ErrConflict(msg string) *AppError {
 	return New(40900, msg, fiber.StatusConflict)
 }
