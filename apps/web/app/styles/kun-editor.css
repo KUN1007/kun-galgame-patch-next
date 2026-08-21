@@ -130,6 +130,45 @@
   color: oklch(var(--primary-800));
 }
 
+.kun-editor__link {
+  position: relative;
+  display: inline-flex;
+}
+
+.kun-editor__link-panel {
+  position: absolute;
+  top: calc(100% + 0.25rem);
+  left: 0;
+  z-index: 30;
+  display: flex;
+  align-items: center;
+  gap: 0.25rem;
+  padding: 0.375rem;
+  background: oklch(var(--background));
+  border: 1px solid oklch(var(--default-200));
+  border-radius: 0.5rem;
+  box-shadow:
+    0 4px 6px -1px rgb(0 0 0 / 0.1),
+    0 2px 4px -2px rgb(0 0 0 / 0.1);
+}
+
+.kun-editor__link-input {
+  width: 14rem;
+  min-width: 0;
+  padding: 0.25rem 0.5rem;
+  border: 1px solid oklch(var(--default-200));
+  border-radius: 0.375rem;
+  background: transparent;
+  color: oklch(var(--foreground));
+  font: inherit;
+  font-size: 0.875rem;
+  outline: none;
+}
+
+.kun-editor__link-input:focus {
+  border-color: oklch(var(--primary-accent));
+}
+
 .kun-editor__format-toolbar {
   display: flex;
   flex-wrap: wrap;
