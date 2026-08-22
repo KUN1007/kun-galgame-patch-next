@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import { onMounted, ref } from 'vue'
+import { normalizeLinkHref } from '@kungal/editor-core'
 import type { KunEditorToolbarApi } from '@kungal/editor-vue'
 
 const props = defineProps<{
@@ -43,7 +44,7 @@ const remember = (src: string) => {
 }
 
 const insertUrl = () => {
-  const src = url.value.trim()
+  const src = normalizeLinkHref(url.value)
   if (!src) return
   props.api.insertImage({ src })
   remember(src)
@@ -107,9 +108,11 @@ const insertFromHistory = (src: string) => {
     </template>
 
     <form class="flex items-center gap-1" @submit.prevent="insertUrl">
+      <!-- Not type="url": native validation rejects a schemeless src, and the
+           form's submit event then never fires, so Enter did nothing at all. -->
       <KunInput
         v-model="url"
-        type="url"
+        inputmode="url"
         size="sm"
         placeholder="粘贴图片链接…"
         class="flex-1"
