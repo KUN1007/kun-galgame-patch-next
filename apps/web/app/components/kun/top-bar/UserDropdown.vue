@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import type { KnownAccount } from '~/composables/useKnownAccounts'
+import { kunMoyuMoe } from '~/config/moyu-moe'
 
 const userStore = useUserStore()
 const api = useApi()
@@ -21,6 +22,8 @@ watch(
   () => route.fullPath,
   () => popover.value?.close()
 )
+
+const closeMenu = () => popover.value?.close()
 
 const openModal = (target: 'log' | 'logout' | 'creator') => {
   popover.value?.close()
@@ -82,7 +85,11 @@ const handleCheckIn = async () => {
 </script>
 
 <template>
-  <KunPopover ref="popover" position="bottom-end" inner-class="p-2 min-w-64">
+  <!-- Fixed width, not min-w: KunButton is inline-flex, so the auto-width panel's
+       shrink-to-fit takes the SUM of the button rows, not the widest row. Two
+       buttons summed under the 256px floor and hid it; the third pushed the menu
+       to 437px. -->
+  <KunPopover ref="popover" position="bottom-end" inner-class="w-64 p-2">
     <template #trigger>
       <button
         type="button"
@@ -95,7 +102,7 @@ const handleCheckIn = async () => {
 
     <div class="space-y-1">
       <div class="px-2 py-1">
-        <p class="font-semibold">{{ userStore.user.name }}</p>
+        <p class="truncate font-semibold">{{ userStore.user.name }}</p>
       </div>
       <button
         type="button"
@@ -231,6 +238,29 @@ const handleCheckIn = async () => {
           name="lucide:sparkles"
           class="text-secondary-500 size-5"
         />
+      </KunButton>
+
+      <KunButton
+        variant="light"
+        color="primary"
+        size="sm"
+        full-width
+        rounded="md"
+        class-name="justify-between"
+        :href="kunMoyuMoe.domain.kungal"
+        target="_blank"
+        @click="closeMenu"
+      >
+        <span class="flex items-center gap-2">
+          <KunImage
+            src="/favicon.webp"
+            alt=""
+            :skeleton="false"
+            class-name="size-4 rounded-full"
+          />
+          鲲 Galgame 论坛
+        </span>
+        <KunIcon name="lucide:external-link" class="size-4" />
       </KunButton>
     </div>
   </KunPopover>
