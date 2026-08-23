@@ -1,5 +1,4 @@
 <script setup lang="ts">
-import { useContentBlurUp } from '@kungal/ui-vue'
 
 interface ApiEnvelope<T> {
   code: number
@@ -18,8 +17,6 @@ const slugParam = computed(() => {
   return Array.isArray(raw) ? raw.join('/') : String(raw ?? '')
 })
 
-const contentEl = ref<HTMLElement | null>(null)
-useContentBlurUp(contentEl)
 
 const { data: detailResponse } = await useFetch<ApiEnvelope<KunPostDetail>>(
   `${baseUrl}/doc/post`,
@@ -85,11 +82,7 @@ const toc = computed<KunTOCItem[]>(() => detail.value?.toc ?? [])
 
     <article class="min-w-0">
       <AboutBlogHeader :frontmatter="detail.frontmatter" />
-      <div
-        ref="contentEl"
-        class="kun-prose kun-prose-normal mt-6"
-        v-html="html"
-      />
+      <KunContent :content="html" class-name="kun-prose-normal mt-6" />
       <AboutNavigation :prev="detail.prev" :next="detail.next" />
     </article>
 

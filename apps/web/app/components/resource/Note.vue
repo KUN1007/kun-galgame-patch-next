@@ -1,12 +1,10 @@
 <script setup lang="ts">
-import { useContentBlurUp } from '@kungal/ui-vue'
 const props = withDefaults(
   defineProps<{ html: string; maxHeight?: number }>(),
   { maxHeight: 100 }
 )
 
 const contentRef = ref<HTMLElement | null>(null)
-useContentBlurUp(contentRef)
 const measured = ref(false)
 const collapsible = ref(false)
 const collapsed = ref(true)
@@ -41,10 +39,11 @@ watch(
     <div class="relative">
       <div
         ref="contentRef"
-        class="kun-prose overflow-hidden transition-[max-height] duration-300"
+        class="overflow-hidden transition-[max-height] duration-300"
         :style="clampStyle"
-        v-html="props.html"
-      />
+      >
+        <KunContent :content="props.html" />
+      </div>
       <div
         v-if="showFade"
         class="pointer-events-none absolute inset-x-0 bottom-0 h-8 bg-default-50/90"

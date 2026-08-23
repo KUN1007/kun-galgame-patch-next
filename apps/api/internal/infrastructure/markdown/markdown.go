@@ -257,6 +257,7 @@ var md = goldmark.New(
 		extension.Strikethrough,
 		extension.Table,
 		extension.TaskList,
+		&spoilerExtension{},
 	),
 	goldmark.WithParserOptions(
 		parser.WithAutoHeadingID(),

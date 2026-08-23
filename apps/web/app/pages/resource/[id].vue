@@ -387,10 +387,10 @@ useResourceSeo(detail, { title: composedTitle, commentCount: commentTotal })
                 </p>
               </div>
 
-              <div
+              <KunContent
                 v-if="noteHtml"
-                class="kun-prose border-default/20 border-t pt-4 text-sm"
-                v-html="noteHtml"
+                :content="noteHtml"
+                class-name="border-default/20 border-t pt-4 text-sm"
               />
               <p
                 v-else-if="resource.note"

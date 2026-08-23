@@ -1,5 +1,4 @@
 <script setup lang="ts">
-import { useContentBlurUp } from '@kungal/ui-vue'
 import { GALGAME_OFFICIAL_CATEGORY_MAP } from '~/constants/galgameEntity'
 import { kunMoyuMoe } from '~/config/moyu-moe'
 import { imageServiceUrl } from '~/shared/utils/resolveBannerUrl'
@@ -19,9 +18,6 @@ const { data: detail } = await useAsyncData<PatchDetail | null>(
 )
 
 const lang = ref<Language>('zh-cn')
-
-const introEl = ref<HTMLElement | null>(null)
-useContentBlurUp(introEl)
 
 const pickInitialLang = () => {
   if (!detail.value?.introduction_html) return 'zh-cn' as Language
@@ -139,11 +135,10 @@ const kungalOrigin = kunMoyuMoe.domain.kungal
         </template>
       </KunHeader>
 
-      <div
+      <KunContent
         v-if="introHtml"
-        ref="introEl"
-        class="kun-prose max-w-none"
-        v-html="introHtml"
+        :content="introHtml"
+        class-name="max-w-none"
       />
       <KunNull v-else description="此 Galgame 暂无简介，可到 鲲 Galgame 补充" />
 

@@ -1,6 +1,5 @@
 <script setup lang="ts">
 import { useIntervalFn } from '@vueuse/core'
-import { useContentBlurUp } from '@kungal/ui-vue'
 
 useKunDisableSeo('聊天')
 
@@ -26,7 +25,6 @@ const input = ref('')
 const sending = ref(false)
 const loading = ref(false)
 const scrollArea = ref<HTMLElement | null>(null)
-useContentBlurUp(scrollArea)
 type KunTextareaExposed = {
   focus: () => void
   blur: () => void
@@ -412,17 +410,21 @@ onBeforeUnmount(() => pause())
                     <span class="text-secondary text-xs">
                       {{ m.quote_message.sender_name }}
                     </span>
-                    <div
-                      class="kun-prose text-xs opacity-80"
-                      :class="{ 'line-clamp-2': !expandedQuotes.has(m.id) }"
-                      v-html="m.quote_message.content"
+                    <KunContent
+                      :content="m.quote_message.content"
+                      :class-name="
+                        cn(
+                          'text-xs opacity-80',
+                          !expandedQuotes.has(m.id) && 'line-clamp-2'
+                        )
+                      "
                     />
                   </div>
 
                   <div class="flex flex-wrap items-end gap-2">
-                    <div
-                      class="kun-prose text-sm break-words"
-                      v-html="m.content_html"
+                    <KunContent
+                      :content="m.content_html"
+                      class-name="text-sm break-words"
                     />
                     <span
                       class="text-default-400 ml-auto translate-y-1 text-xs whitespace-nowrap"
