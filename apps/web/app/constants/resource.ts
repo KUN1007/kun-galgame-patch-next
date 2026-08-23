@@ -9,6 +9,7 @@ export const SUPPORTED_TYPE = [
   'mod',
   'r18',
   'decensor',
+  'image',
   'other'
 ]
 
@@ -24,6 +25,7 @@ export const SUPPORTED_TYPE_MAP: Record<string, string> = {
   mod: '魔改补丁',
   r18: 'R18 成人内容补丁',
   decensor: '去马赛克补丁',
+  image: '修图补丁',
   other: '其它'
 }
 
@@ -90,6 +92,12 @@ export const resourceTypes = [
       '去除游戏 CG 或演出画面中的马赛克遮挡, 还原无修正 (无码) 画面的补丁'
   },
   {
+    value: 'image',
+    label: '修图补丁',
+    description:
+      '替换或修改游戏图片资源的补丁, 例如修正官方 CG, 立绘, 背景的错误, 汉化 / 本地化界面与图片内的文字, 或提升分辨率, 改善图片显示效果等'
+  },
+  {
     value: 'other',
     label: '其它',
     description:
@@ -129,12 +137,14 @@ export const storageTypes = [
   {
     value: 's3',
     label: '平台托管',
-    description: '上传到鲲补丁站，稳定、永不失效过期，CDN 加速下载，支持断点续传'
+    description:
+      '上传到鲲补丁站，稳定、永不失效过期，CDN 加速下载，支持断点续传'
   },
   {
     value: 'user',
     label: '自定义链接',
-    description: '网盘 / 外链等，适合超出上传上限的超大文件，需自行提供并维护下载链接'
+    description:
+      '网盘 / 外链等，适合超出上传上限的超大文件，需自行提供并维护下载链接'
   }
 ]
 
