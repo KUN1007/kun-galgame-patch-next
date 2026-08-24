@@ -79,6 +79,8 @@ type Patch struct {
 
 	IsStub bool `gorm:"default:false" json:"-"`
 
+	Published bool `gorm:"default:false" json:"-"`
+
 	CreatorID *int `gorm:"column:creator_id" json:"-"`
 
 	ReleaseDate *time.Time `gorm:"type:date;index" json:"release_date"`

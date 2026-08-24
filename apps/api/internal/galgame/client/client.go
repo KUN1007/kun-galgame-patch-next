@@ -293,7 +293,6 @@ func (c *Client) SearchGalgame(ctx context.Context, p SearchGalgameParams) (*Pag
 		gate.contentRating = "r18"
 	}
 	gate.apply(q)
-	q.Set("claim_state", "live")
 
 	if lang := joinCatalogLangs(p.OriginalLang); lang != "" {
 		q.Set("olang", lang)
@@ -336,7 +335,11 @@ func (c *Client) SearchGalgame(ctx context.Context, p SearchGalgameParams) (*Pag
 	}
 	out := Paginated[GalgameHit]{Total: data.Total}
 	for i := range data.Items {
-		out.Items = append(out.Items, catalogItemToHit(&data.Items[i]))
+		it := &data.Items[i]
+		if !it.ClaimedBy.renderable() || it.publicGID() == 0 {
+			continue
+		}
+		out.Items = append(out.Items, catalogItemToHit(it))
 	}
 	return &out, nil
 }
@@ -416,7 +419,7 @@ func (c *Client) GetGalgame(ctx context.Context, gid int, contentLimit string) (
 	if err := c.getV1(ctx, fmt.Sprintf("/catalog/works/%d", catalogID), q, &w); err != nil {
 		return nil, err
 	}
-	if !w.ClaimedBy.live() {
+	if !w.ClaimedBy.renderable() {
 		return nil, &GalgameError{Code: galgameCodeNotFound, Message: "galgame not found"}
 	}
 	full := catalogWorkToFull(&w)
@@ -489,7 +492,7 @@ func (c *Client) GalgameBatch(ctx context.Context, ids []int, contentLimit strin
 	out := make([]GalgameBrief, 0, len(data.Items))
 	for i := range data.Items {
 		it := &data.Items[i]
-		if !it.ClaimedBy.live() {
+		if !it.ClaimedBy.renderable() || it.publicGID() == 0 {
 			continue
 		}
 		out = append(out, catalogItemToBrief(it))

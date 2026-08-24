@@ -9,6 +9,7 @@ export const GALGAME_AGE_LIMIT_DETAIL: Record<string, string> = {
 }
 
 export const GALGAME_SORT_FIELD_LABEL_MAP: Record<string, string> = {
+  popularity: '热度',
   resource_update_time: '补丁更新时间',
   // `created` is the patch ROW's creation timestamp (when the entry was added
   // to moyu), not when the game was made — hence "条目创建时间", not "游戏…".

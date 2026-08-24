@@ -238,7 +238,10 @@ func (c *Client) resolveByIdentity(ctx context.Context, gids []int) (map[int]int
 		}
 		for i := range data.Items {
 			it := &data.Items[i]
-			gid := it.ClaimedBy.gid()
+			if !it.ClaimedBy.renderable() {
+				continue
+			}
+			gid := it.publicGID()
 			if gid == 0 || int64(gid) != it.ID {
 				continue
 			}

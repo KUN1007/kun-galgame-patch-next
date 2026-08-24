@@ -23,8 +23,7 @@ interface CalendarItem extends GalgameCard {
   is_favorite: boolean
   // Which of THREE cards to render (replaced the wiki `status` int in A2-2):
   //   'live'  — a published wiki entry; links to /patch/:id
-  //   'draft' — unpublished; shows a 未发布 badge and routes to the publish
-  //             wizard to 认领 (the old status === 2)
+  //   'draft' — unpublished catalog claim; the page is still a 200 detail
   //   ''      — NO wiki entry at all; shows 未上论坛 and has no gid to link to
   // 'hidden' (withdrawn) never arrives — the backend drops those.
   claim_state: string

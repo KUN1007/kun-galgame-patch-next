@@ -178,7 +178,7 @@ func catalogItemToBrief(it *catalogWorkListItem) GalgameBrief {
 	hash, w, h, th := coverOf(it)
 
 	b := GalgameBrief{
-		ID:                       it.ClaimedBy.gid(),
+		ID:                       it.publicGID(),
 		CatalogWorkID:            it.ID,
 		VndbID:                   vndbIDOf(it.Refs),
 		ClaimState:               claimStateOf(it.ClaimedBy),
@@ -334,7 +334,7 @@ func catalogWorkToFull(w *catalogWork) GalgameFull {
 	intros := introByProductKey(introRows(w))
 
 	f := GalgameFull{
-		ID:               w.ClaimedBy.gid(),
+		ID:               w.publicGID(),
 		CatalogWorkID:    w.ID,
 		VndbID:           vndbIDOf(w.Refs),
 		ClaimState:       claimStateOf(w.ClaimedBy),

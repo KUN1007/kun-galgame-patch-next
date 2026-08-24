@@ -54,6 +54,7 @@ English, and short. When in doubt, delete it — a wrong comment costs more than
 - The `w161-p4` line moves publish/claim/withdraw and the cron inbox to catalog. Read the read-only source-workspace file at `${CODEX_SESSION_REPO%/*}/kun-galgame-infra/refs/proj/161-n5-grand-window.md`—not a `../` path from this worktree—and verify the branch, migration `029_claim_event_processed`, client binding, and deployment state before assuming the window ran.
 - `/galgame/messages/feed` is retired. The staged cron consumes `/api/v1/catalog/claim-events/feed` with a separate processed-event table and cursor namespace; do not revive the wiki feed or reuse its idempotency keys.
 - Catalog `site` and catalog source key are different identities. Preserve the Wave 161 dual-read/fallback rules for legacy anchors and registry-issued ids.
+- 方案③ (2026-08-21, letmoe + infra signed; kungal/moyu reuse): catalog is the existence layer. `/galgame` browse and site search do **not** send `claim_state`. Users do not claim games; the write that indexes a page is publishing a resource. `patch.published` is the sticky SEO flag (first resource, not cleared on delete; migration 031). Hidden/ban still unpublishes. Do not reintroduce a user-facing 认领 flow or a local full replica.
 
 ## Cross-Service Contracts (Inviolable — owned by kun-galgame-infra)
 

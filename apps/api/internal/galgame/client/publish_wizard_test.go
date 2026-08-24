@@ -63,13 +63,11 @@ func TestPublishWizard_ItemsComeFromTheCatalog(t *testing.T) {
 	rec := &wizardRecorder{}
 	out := rec.search(t)
 
-	if got := rec.catalogQ.Get("claim_state"); got != "live,draft,pending" {
-		t.Errorf("claim_state = %q, want live,draft,pending — `live` alone hides every "+
-			"claimable draft, and dropping `pending` would hide every entry already "+
-			"under review the moment the registry starts telling them apart", got)
+	if got := rec.catalogQ.Get("claim_state"); got != "" {
+		t.Errorf("claim_state = %q, want it absent — the wizard searches the whole catalog", got)
 	}
-	if got := rec.catalogQ.Get("claimed"); got != "true" {
-		t.Errorf("claimed = %q, want true — an unclaimed row has no gid to act on", got)
+	if got := rec.catalogQ.Get("claimed"); got != "" {
+		t.Errorf("claimed = %q, want it absent — unclaimed rows are actionable", got)
 	}
 	if got := rec.catalogQ.Get("q"); got != "sakura" {
 		t.Errorf("q = %q, want sakura", got)
@@ -95,15 +93,15 @@ func TestPublishWizard_ItemsAreGidKeyedAndDropWithdrawnRows(t *testing.T) {
 	rec := &wizardRecorder{}
 	out := rec.search(t)
 
-	if len(out.Items) != 2 {
-		t.Fatalf("items = %d, want 2 (a hidden claim and an unclaimed row are not actionable)", len(out.Items))
+	if len(out.Items) != 3 {
+		t.Fatalf("items = %d, want 3 (hidden claims drop; unclaimed rows are the library)", len(out.Items))
 	}
-	if out.Items[0].ID != 292 || out.Items[1].ID != 9978 {
-		t.Errorf("ids = %d,%d, want the gids 292,9978", out.Items[0].ID, out.Items[1].ID)
+	if out.Items[0].ID != 292 || out.Items[1].ID != 9978 || out.Items[2].ID != 14 {
+		t.Errorf("ids = %d,%d,%d, want 292,9978,14", out.Items[0].ID, out.Items[1].ID, out.Items[2].ID)
 	}
-	if out.Items[0].ClaimState != "live" || out.Items[1].ClaimState != "draft" {
-		t.Errorf("claim states = %q,%q, want live,draft",
-			out.Items[0].ClaimState, out.Items[1].ClaimState)
+	if out.Items[0].ClaimState != "live" || out.Items[1].ClaimState != "draft" || out.Items[2].ClaimState != "" {
+		t.Errorf("claim states = %q,%q,%q, want live,draft,empty",
+			out.Items[0].ClaimState, out.Items[1].ClaimState, out.Items[2].ClaimState)
 	}
 	if out.Items[0].VndbID != "v22610" {
 		t.Errorf("vndb_id = %q, want v22610", out.Items[0].VndbID)

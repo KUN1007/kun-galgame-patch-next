@@ -723,6 +723,9 @@ func (s *PatchService) CreateResource(ctx context.Context, resource *model.Patch
 
 	s.repo.UpdateCount(resource.GalgameID, "resource_count", 1)
 	s.repo.RecalculatePatchAggregates(resource.GalgameID)
+	if err := s.repo.MarkIndexed(resource.GalgameID); err != nil {
+		slog.Warn("CreateResource: 标记 SEO 索引失败", "gid", resource.GalgameID, "error", err)
+	}
 
 	s.db.Model(&model.Patch{}).Where("id = ?", resource.GalgameID).
 		Update("resource_update_time", time.Now())

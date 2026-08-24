@@ -27,6 +27,16 @@ func (r *PatchRepository) GetPatchByID(id int) (*model.Patch, error) {
 	return &patch, err
 }
 
+func (r *PatchRepository) MarkIndexed(gid int) error {
+	return r.db.Model(&model.Patch{}).Where("id = ?", gid).
+		Updates(map[string]any{"published": true, "is_stub": false}).Error
+}
+
+func (r *PatchRepository) Unpublish(gid int) error {
+	return r.db.Model(&model.Patch{}).Where("id = ?", gid).
+		Update("published", false).Error
+}
+
 func (r *PatchRepository) GetPatchesByIDs(ids []int) ([]model.Patch, error) {
 	if len(ids) == 0 {
 		return nil, nil

@@ -76,35 +76,54 @@ func (h *Handler) Search(c fiber.Ctx) error {
 		return response.Error(c, errors.ErrInternal("搜索服务暂不可用"))
 	}
 
+	ids := make([]int, 0, len(galgameResult.Items))
 	vndbIDs := make([]string, 0, len(galgameResult.Items))
 	for _, item := range galgameResult.Items {
+		if item.ID > 0 {
+			ids = append(ids, item.ID)
+		}
 		if item.VndbID != "" {
 			vndbIDs = append(vndbIDs, item.VndbID)
 		}
 	}
 
-	patchMap := map[string]*patchModel.Patch{}
-	if len(vndbIDs) > 0 {
+	patchByID := map[int]*patchModel.Patch{}
+	patchByVndb := map[string]*patchModel.Patch{}
+	if len(ids) > 0 || len(vndbIDs) > 0 {
 		var patches []patchModel.Patch
-		if err := h.db.WithContext(c.Context()).
-			Where("vndb_id IN ?", vndbIDs).
-			Find(&patches).Error; err != nil {
+		q := h.db.WithContext(c.Context())
+		switch {
+		case len(ids) > 0 && len(vndbIDs) > 0:
+			q = q.Where("id IN ? OR vndb_id IN ?", ids, vndbIDs)
+		case len(ids) > 0:
+			q = q.Where("id IN ?", ids)
+		default:
+			q = q.Where("vndb_id IN ?", vndbIDs)
+		}
+		if err := q.Find(&patches).Error; err != nil {
 			slog.Error("查询本地 patch 失败", "error", err)
 			return response.Error(c, errors.ErrInternal(""))
 		}
 		for i := range patches {
-			patchMap[patches[i].VndbID] = &patches[i]
+			p := &patches[i]
+			patchByID[p.ID] = p
+			if p.VndbID != "" {
+				patchByVndb[p.VndbID] = p
+			}
 		}
 	}
 
 	hits := make([]SearchHit, 0, len(galgameResult.Items))
 	for _, item := range galgameResult.Items {
-		h := SearchHit{GalgameHit: item}
-		if p, ok := patchMap[item.VndbID]; ok {
-			h.HasPatch = true
-			h.Patch = p
+		row := SearchHit{GalgameHit: item}
+		if p := patchByID[item.ID]; p != nil {
+			row.HasPatch = true
+			row.Patch = p
+		} else if p := patchByVndb[item.VndbID]; p != nil {
+			row.HasPatch = true
+			row.Patch = p
 		}
-		hits = append(hits, h)
+		hits = append(hits, row)
 	}
 
 	return response.Paginated(c, hits, galgameResult.Total)

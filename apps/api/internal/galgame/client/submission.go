@@ -6,9 +6,6 @@ import (
 	"strconv"
 )
 
-const publishWizardClaimStates = catalogClaimStateLive + "," +
-	catalogClaimStateDraft + "," + catalogClaimStatePending
-
 func (c *Client) SearchPublishItems(ctx context.Context, q string, limit int) ([]GalgameHit, int64, error) {
 	params := url.Values{}
 	if q != "" {
@@ -17,8 +14,6 @@ func (c *Client) SearchPublishItems(ctx context.Context, q string, limit int) ([
 	if limit > 0 {
 		params.Set("limit", strconv.Itoa(limit))
 	}
-	params.Set("claimed", "true")
-	params.Set("claim_state", publishWizardClaimStates)
 	params.Set("include", "names,covers,refs")
 	gateFor("").apply(params)
 
@@ -29,7 +24,7 @@ func (c *Client) SearchPublishItems(ctx context.Context, q string, limit int) ([
 	items := make([]GalgameHit, 0, len(data.Items))
 	for i := range data.Items {
 		row := &data.Items[i]
-		if !row.ClaimedBy.renderable() || row.ClaimedBy.gid() == 0 {
+		if !row.ClaimedBy.renderable() || row.publicGID() == 0 {
 			continue
 		}
 		items = append(items, catalogItemToHit(row))

@@ -39,6 +39,24 @@ func (c *catalogClaimedBy) live() bool {
 	return c != nil && isGIDClaimSite(c.Site) && c.State == catalogClaimStateLive
 }
 
+func publicGID(claimed *catalogClaimedBy, catalogID int64) int {
+	if gid := claimed.gid(); gid > 0 {
+		return gid
+	}
+	if catalogID > 0 {
+		return int(catalogID)
+	}
+	return 0
+}
+
+func (it *catalogWorkListItem) publicGID() int {
+	return publicGID(it.ClaimedBy, it.ID)
+}
+
+func (w *catalogWork) publicGID() int {
+	return publicGID(w.ClaimedBy, w.ID)
+}
+
 type catalogRef struct {
 	Source     string `json:"source"`
 	ExternalID string `json:"external_id"`

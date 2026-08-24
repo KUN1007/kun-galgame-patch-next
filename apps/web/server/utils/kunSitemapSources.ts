@@ -162,7 +162,7 @@ export const buildSitemapUrls = async (
       // Galgame browse → patch detail. /patch/:id 302-redirects to
       // /patch/:id/introduction, so emit the final URL directly.
       path: '/galgame',
-      query: 'selected_type=all&sort_field=created&sort_order=desc',
+      query: 'selected_type=all&sort_field=created&sort_order=desc&indexed=true',
       pageSize: 24,
       pick: (d) =>
         ((d as { galgames?: [] })?.galgames ?? []) as Record<string, unknown>[],

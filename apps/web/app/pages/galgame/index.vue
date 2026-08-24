@@ -12,13 +12,13 @@ const settingStore = useSettingStore()
 useKunSeoMeta({
   title: 'Galgame 列表',
   description:
-    '鲲 Galgame 补丁站收录的全部 Galgame 列表，按发布时间、资源更新时间、浏览量、下载量排序，支持按平台 / 语言 / 翻译类型筛选，免费下载 Windows / 安卓 / KRKR / Tyranor 等平台的 Galgame 中文汉化补丁。'
+    '浏览资料库中的全部 Galgame，打开任意作品即可发布补丁。按热度、资源更新时间、浏览量、下载量排序，支持按翻译类型筛选，免费下载 Windows / 安卓 / KRKR / Tyranor 等平台的 Galgame 中文汉化补丁。'
 })
 
 const page = ref(Number(route.query.page ?? 1))
 const pageHref = usePageHref()
 const selectedType = ref(String(route.query.type ?? 'all'))
-const sortField = ref(String(route.query.sort_field ?? 'resource_update_time'))
+const sortField = ref(String(route.query.sort_field ?? 'popularity'))
 const sortOrder = ref(String(route.query.sort_order ?? 'desc'))
 
 const releasedFrom = ref(String(route.query.released_from ?? ''))
@@ -106,7 +106,7 @@ const hasAdvancedFilter = computed(
 const hasActiveFilter = computed(
   () =>
     selectedType.value !== 'all' ||
-    sortField.value !== 'resource_update_time' ||
+    sortField.value !== 'popularity' ||
     sortOrder.value !== 'desc' ||
     hasAdvancedFilter.value
 )
@@ -189,7 +189,7 @@ const toggleMonth = (m: number) => {
 
 const resetFilters = () => {
   selectedType.value = 'all'
-  sortField.value = 'resource_update_time'
+  sortField.value = 'popularity'
   sortOrder.value = 'desc'
   releasedFrom.value = ''
   releasedTo.value = ''
@@ -218,7 +218,7 @@ const chipClass = (active: boolean) => [
   <div class="container mx-auto my-4 space-y-6">
     <KunHeader
       name="Galgame"
-      description="本页面默认仅显示了 SFW (内容安全) 的补丁, 您可以在网站右上角切换显示全部补丁 (包括 NSFW, 也就是显示可能带有涩涩的补丁)"
+      description="浏览资料库中的全部 Galgame，打开任意作品即可发布补丁。本页面默认仅显示 SFW（内容安全）条目，您可以在网站右上角切换显示全部（包括 NSFW）。"
     />
 
     <div class="space-y-1.5">

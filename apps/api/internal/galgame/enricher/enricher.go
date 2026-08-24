@@ -34,6 +34,7 @@ type GalgameCard struct {
 	ContentLimit       string                      `json:"content_limit"`
 	Status             int                         `json:"status"`
 	IsOnForum          bool                        `json:"is_on_forum"`
+	Indexed            bool                        `json:"indexed"`
 	Created            time.Time                   `json:"created"`
 	ResourceUpdateTime time.Time                   `json:"resource_update_time"`
 	ReleaseDate        *time.Time                  `json:"release_date,omitempty"`
@@ -392,6 +393,7 @@ func baseCard(p *patchModel.Patch) GalgameCard {
 		Platform:           p.Platform,
 		Status:             p.Status,
 		IsOnForum:          true,
+		Indexed:            p.Published,
 		Created:            p.Created,
 		ResourceUpdateTime: p.ResourceUpdateTime,
 		ReleaseDate:        p.ReleaseDate,
@@ -414,6 +416,11 @@ func applyGalgame(card *GalgameCard, g *galgameClient.GalgameBrief) {
 	card.Banner = g.Banner
 	card.ContentLimit = g.ContentLimit
 	card.Galgame = g
+	if g.ReleaseDate != nil && *g.ReleaseDate != "" {
+		if t, err := time.Parse("2006-01-02", (*g.ReleaseDate)[:min(10, len(*g.ReleaseDate))]); err == nil {
+			card.ReleaseDate = &t
+		}
+	}
 }
 
 func CardFromBrief(g *galgameClient.GalgameBrief) GalgameCard {

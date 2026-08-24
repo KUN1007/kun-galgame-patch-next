@@ -44,8 +44,9 @@ const displayName = (h: GalgameName): string =>
 const claimStateLabel = (state: string): string =>
   state === 'declined' ? '已拒绝（可重新提交）' : '审核中'
 
-const isClaimableDraft = (h: GalgameHit): boolean => h.claim_state === 'draft'
 const isPendingReview = (h: GalgameHit): boolean => h.claim_state === 'pending'
+
+const gameHref = (h: GalgameHit): string => `/patch/${h.id}/resource`
 
 const doSearch = async () => {
   const q = searchQuery.value.trim()
@@ -80,61 +81,6 @@ onMounted(() => {
   searchQuery.value = q
   if (userStore.isLoggedIn) doSearch()
 })
-
-const selectingFor = ref<number | null>(null)
-const selectPublished = async (hit: GalgameHit) => {
-  selectingFor.value = hit.id
-  try {
-    const res = await api.post<{ id: number }>('/patch', {
-      galgame_id: hit.id
-    })
-    if (res.code === 0 && res.data?.id) {
-      useKunMessage('已关联，正在跳转到游戏页面', 'success')
-      await navigateTo(`/patch/${res.data.id}/introduction`)
-      return
-    }
-    if (res.code === 44001) {
-      useKunMessage(
-        '资料库中未找到此游戏，请刷新后重试',
-        'warn'
-      )
-      return
-    }
-    useKunMessage(res.message || '关联失败', 'error')
-  } finally {
-    selectingFor.value = null
-  }
-}
-
-const claimingFor = ref<number | null>(null)
-const claimAndPublish = async (hit: GalgameHit) => {
-  claimingFor.value = hit.id
-  try {
-    const claimRes = await api.post<{ id: number }>(
-      `/galgame/${hit.id}/claim`,
-      {}
-    )
-    if (claimRes.code === 0 && claimRes.data?.id) {
-      useKunMessage('认领成功，+3 萌萌点已到账', 'success')
-      await navigateTo(`/patch/${claimRes.data.id}/introduction`)
-      return
-    }
-    if (claimRes.code === 20006 || claimRes.code === 20001) {
-      useKunMessage(
-        '该草稿已被他人认领、正在审核中或已不可用，正在为您刷新搜索结果',
-        'warn'
-      )
-      await doSearch()
-      return
-    }
-    useKunMessage(
-      `认领失败${claimRes.code ? `（${claimRes.code}）` : ''}：${claimRes.message || '未知错误'}`,
-      'error'
-    )
-  } finally {
-    claimingFor.value = null
-  }
-}
 
 const goToMine = async () => {
   await navigateTo('/me/submissions')
@@ -232,7 +178,7 @@ const handleSubmit = async () => {
     <div class="container mx-auto my-4">
     <KunHeader
       name="发布 Galgame"
-      description="先搜索资料库，看看是否已有条目；若没有再提交新的元数据"
+      description="先搜索您想发布资源的游戏。资料库里已有的作品直接打开详情页发布资源；确实没有的再新建申请。"
     />
     <div class="mx-auto max-w-3xl">
 
@@ -241,7 +187,7 @@ const handleSubmit = async () => {
         <div class="space-y-3 p-4">
           <h2 class="text-lg font-semibold">1. 搜索资料库</h2>
           <p class="text-default-500 text-sm">
-            支持名字（中/英/日）或 VNDB ID 搜索。
+            搜索覆盖资料库中的全部游戏。打开详情页即可发布资源；catalog 没有的原创 / 同人作品走下方新建申请。
           </p>
           <form class="flex gap-2" @submit.prevent="doSearch">
             <KunInput
@@ -309,41 +255,21 @@ const handleSubmit = async () => {
                 <p class="font-semibold">{{ displayName(hit) }}</p>
                 <p class="text-default-500 text-xs">
                   {{ hit.vndb_id || '无 VNDB ID' }}
-                  <span v-if="isPendingReview(hit)" class="text-warning ml-2">
-                    · 审核中（他人已提交，正在等待审核，暂时无法认领）
-                  </span>
-                  <span v-else-if="isClaimableDraft(hit)" class="text-warning ml-2">
-                    · 未发布草稿（认领后即发布，若为他人审核中的投稿则无法认领）
-                  </span>
                 </p>
               </div>
-              <KunButton
+              <span
                 v-if="isPendingReview(hit)"
-                variant="bordered"
-                size="sm"
-                :disabled="true"
+                class="text-default-400 shrink-0 text-sm"
               >
-                审核中
-              </KunButton>
-              <KunButton
-                v-else-if="isClaimableDraft(hit)"
-                color="warning"
-                size="sm"
-                :loading="claimingFor === hit.id"
-                :disabled="claimingFor !== null"
-                @click="claimAndPublish(hit)"
-              >
-                认领并发布
-              </KunButton>
+                他人投稿审核中
+              </span>
               <KunButton
                 v-else
                 color="primary"
                 size="sm"
-                :loading="selectingFor === hit.id"
-                :disabled="selectingFor !== null"
-                @click="selectPublished(hit)"
+                :href="gameHref(hit)"
               >
-                选择此条目
+                查看 / 发布资源
               </KunButton>
             </div>
           </div>
@@ -412,10 +338,10 @@ const handleSubmit = async () => {
           所以不需要填 VNDB ID。
           <br />
           已经在 VNDB 有条目的游戏，一般已被资料库自动同步，请优先回到上一步用
-          <strong>名字或 VNDB ID 搜索</strong>，搜到后点「认领并发布」即可。
+          <strong>名字或 VNDB ID 搜索</strong>，搜到后打开详情页发布资源即可。
           <br />
           如果你确定它在 VNDB 有条目却怎么都搜不到，多半是刚收录、资料库还没同步过来，
-          可以先核对一下 ID、过一两天再来认领；不必在这里把 VNDB ID 当作名字填进去。
+          可以先核对一下 ID、过一两天再来搜；不必在这里把 VNDB ID 当作名字填进去。
         </div>
 
         <section class="space-y-2">

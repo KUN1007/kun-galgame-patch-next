@@ -239,7 +239,6 @@ func (c *Client) taxonomyMembers(ctx context.Context, filterKey string, id int64
 
 	fq := url.Values{}
 	fq.Set(filterKey, strconv.FormatInt(id, 10))
-	fq.Set("claim_state", "live")
 	fq.Set("include", "names,covers,refs")
 	fq.Set("sort", taxonomyMemberSort)
 	fq.Set("page", strconv.Itoa(page))
@@ -252,7 +251,11 @@ func (c *Client) taxonomyMembers(ctx context.Context, filterKey string, id int64
 	}
 	out := make([]GalgameBrief, 0, len(data.Items))
 	for i := range data.Items {
-		out = append(out, catalogItemToBrief(&data.Items[i]))
+		it := &data.Items[i]
+		if !it.ClaimedBy.renderable() || it.publicGID() == 0 {
+			continue
+		}
+		out = append(out, catalogItemToBrief(it))
 	}
 	return out, data.Total, nil
 }

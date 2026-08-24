@@ -506,6 +506,7 @@ func (h *PatchHandler) CreateResource(c fiber.Ctx) error {
 		return response.Error(c, errors.ErrBadRequest(err.Error()))
 	}
 
+	h.claimOnFirstResource(c, patchID)
 	return response.OK(c, resource)
 }
 

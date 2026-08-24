@@ -7,6 +7,7 @@ import (
 
 	authModel "kun-galgame-patch-api/internal/auth/model"
 	galgameClient "kun-galgame-patch-api/internal/galgame/client"
+	patchModel "kun-galgame-patch-api/internal/patch/model"
 	userModel "kun-galgame-patch-api/internal/user/model"
 	"kun-galgame-patch-api/pkg/catalogclient"
 	"kun-galgame-patch-api/pkg/moemoepoint"
@@ -228,6 +229,10 @@ func applyClaimEvent(
 		}
 		return writeClaimNotification(tx, recipient, gid, text)
 	case claimEffectBanned:
+		if err := tx.Model(&patchModel.Patch{}).Where("id = ?", gid).
+			Update("published", false).Error; err != nil {
+			return fmt.Errorf("unpublish banned patch: %w", err)
+		}
 		text := fmt.Sprintf("您的作品《%s》已被封禁", name)
 		if reason != "" {
 			text += "：" + reason

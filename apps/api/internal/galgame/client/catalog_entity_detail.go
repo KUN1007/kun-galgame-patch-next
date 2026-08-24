@@ -104,9 +104,6 @@ type GalgameStaffRole struct {
 	Character string `json:"character,omitempty"`
 }
 
-// GalgameStaffCredit is one work this person is credited on. GalgameID is 0 for
-// a work no moyu galgame stands on, which is most of catalog — those rows name
-// the work without linking anywhere.
 type GalgameStaffCredit struct {
 	GalgameID int                `json:"galgame_id"`
 	Name      KunLanguage        `json:"name"`
@@ -224,7 +221,7 @@ func catalogNameToDetail(n *catalogNameDetail) GalgameStaffDetail {
 			name.JaJp = credit.Work.DisplayName
 		}
 		row := GalgameStaffCredit{
-			GalgameID: credit.Work.ClaimedBy.gid(),
+			GalgameID: credit.Work.publicGID(),
 			Name:      name,
 			Roles:     make([]GalgameStaffRole, 0, len(credit.Roles)),
 		}

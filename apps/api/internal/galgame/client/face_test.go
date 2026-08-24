@@ -407,14 +407,18 @@ func TestClaimStateGating(t *testing.T) {
 	c := NewWithKey(srv.URL, "nm_test_key")
 	ctx := context.Background()
 
-	t.Run("batch drops draft and hidden", func(t *testing.T) {
+	t.Run("batch drops hidden, keeps draft", func(t *testing.T) {
 		srv.reset()
 		briefs, err := c.GalgameBatch(ctx, []int{7, 20, 21}, "")
 		if err != nil {
 			t.Fatalf("GalgameBatch: %v", err)
 		}
-		if len(briefs) != 1 || briefs[0].ID != 7 {
-			t.Fatalf("briefs = %+v, want only the live gid 7", briefs)
+		got := make([]int, 0, len(briefs))
+		for _, b := range briefs {
+			got = append(got, b.ID)
+		}
+		if len(got) != 2 || !slices.Contains(got, 7) || !slices.Contains(got, 20) || slices.Contains(got, 21) {
+			t.Fatalf("briefs = %v, want live 7 and draft 20, no hidden 21", got)
 		}
 	})
 
@@ -422,6 +426,17 @@ func TestClaimStateGating(t *testing.T) {
 		srv.reset()
 		if _, err := c.GetGalgame(ctx, 21, ""); err == nil {
 			t.Fatal("GetGalgame on a hidden entry: want an error, got nil")
+		}
+	})
+
+	t.Run("detail 200s an unclaimed catalog id", func(t *testing.T) {
+		srv.reset()
+		env, err := c.GetGalgame(ctx, 930, "")
+		if err != nil {
+			t.Fatalf("GetGalgame on an unclaimed work: %v", err)
+		}
+		if env.Galgame.ID != 930 {
+			t.Errorf("id = %d, want the catalog id 930", env.Galgame.ID)
 		}
 	})
 
@@ -451,17 +466,24 @@ func TestClaimStateGating(t *testing.T) {
 		}
 	})
 
-	t.Run("search gates on the wire and re-filters nothing", func(t *testing.T) {
+	t.Run("search does not send claim_state and drops hidden rows", func(t *testing.T) {
 		srv.reset()
 		res, err := c.SearchGalgame(ctx, SearchGalgameParams{Q: "x"})
 		if err != nil {
 			t.Fatalf("SearchGalgame: %v", err)
 		}
-		if got := srv.last().query.Get("claim_state"); got != "live" {
-			t.Fatalf("claim_state = %q, want live — published-only is a REQUEST parameter now", got)
+		if got := srv.last().query.Get("claim_state"); got != "" {
+			t.Fatalf("claim_state = %q, want it absent — the public library is the catalog", got)
 		}
-		if len(res.Items) != 4 {
-			t.Errorf("items = %d, want all 4 rows the face returned (no client-side filter)", len(res.Items))
+		ids := make([]int, 0, len(res.Items))
+		for _, it := range res.Items {
+			ids = append(ids, it.ID)
+			if it.ClaimState == "hidden" {
+				t.Errorf("search returned a hidden row %d", it.ID)
+			}
+		}
+		if len(ids) != 3 {
+			t.Errorf("items = %v, want live + draft + unclaimed", ids)
 		}
 		if res.Total != 4 {
 			t.Errorf("total = %d, want the face's 4 verbatim", res.Total)
@@ -515,8 +537,8 @@ func TestTaxonomyBrowseMembersAreGated(t *testing.T) {
 			if got := q.Get(tc.filterKey); got != tc.filterVal {
 				t.Errorf("%s = %q, want %q", tc.filterKey, got, tc.filterVal)
 			}
-			if got := q.Get("claim_state"); got != "live" {
-				t.Errorf("claim_state = %q, want live — a public browse page serves the published population", got)
+			if got := q.Get("claim_state"); got != "" {
+				t.Errorf("claim_state = %q, want it absent — a public browse page is catalog membership", got)
 			}
 			if got, want := q.Get("page"), "2"; got != want {
 				t.Errorf("page = %q, want %q", got, want)
@@ -546,8 +568,8 @@ func TestTaxonomyBrowseMembersAreGated(t *testing.T) {
 			if e := json.Unmarshal(raw, &got); e != nil {
 				t.Fatalf("unmarshal: %v", e)
 			}
-			if len(got.Galgames) != 4 {
-				t.Errorf("galgames = %d, want the face's 4 rows verbatim", len(got.Galgames))
+			if len(got.Galgames) != 3 {
+				t.Errorf("galgames = %d, want 3 — hidden claims drop on the public page", len(got.Galgames))
 			}
 			if got.Total != 4 {
 				t.Errorf("total = %d, want 4 (the gated search's), not the record's 3", got.Total)

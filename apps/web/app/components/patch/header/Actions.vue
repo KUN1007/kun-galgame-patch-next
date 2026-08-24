@@ -8,7 +8,7 @@ interface Props {
 
 const props = defineProps<Props>()
 
-const isNoPatch = computed(() => props.patch.is_on_forum === false)
+const isOnSite = computed(() => props.patch.is_on_forum !== false)
 
 const kungalOrigin = kunMoyuMoe.domain.kungal
 
@@ -51,7 +51,7 @@ const handleShare = () => {
 const editPath = computed(() => `/patch/${props.patch.id}/edit`)
 
 const canDelete = computed(() => {
-  if (isNoPatch.value) return false
+  if (!isOnSite.value) return false
   if (!userStore.user.id) return false
   return userStore.isAdmin || props.patch.user?.id === userStore.user.id
 })
@@ -113,7 +113,7 @@ const onMenuSelect = (item: { key: string }) => {
     class="flex flex-col items-start gap-3 sm:flex-row sm:items-center sm:justify-between"
   >
     <div class="text-default-500 flex flex-col gap-1 text-xs">
-      <p v-if="!isNoPatch">
+      <p v-if="isOnSite">
         资源更新于 {{ formatDistanceToNow(props.patch.resource_update_time) }}
       </p>
       <p>

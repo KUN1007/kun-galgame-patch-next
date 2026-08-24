@@ -17,14 +17,7 @@ const bannerSrc = computed(
   () => resolveBannerUrl(props.item, 'mini') || '/kungalgame-trans.webp'
 )
 
-const isDraft = computed(() => props.item.claim_state === 'draft')
-const isUnclaimed = computed(() => !props.item.claim_state)
-const needsPublish = computed(() => isDraft.value || isUnclaimed.value)
-const cardHref = computed(() =>
-  needsPublish.value
-    ? `/edit/create?q=${encodeURIComponent(name.value)}`
-    : `/patch/${props.item.id}/introduction`
-)
+const cardHref = computed(() => `/patch/${props.item.id}/introduction`)
 
 const ymd = (s: string) => {
   const [y, m, d] = s.split('-').map(Number)
@@ -113,18 +106,7 @@ const toggleFavorite = async () => {
         </KunChip>
       </div>
 
-      <KunChip
-        v-if="needsPublish"
-        :color="isDraft ? 'warning' : 'default'"
-        variant="solid"
-        size="sm"
-        class="absolute top-1.5 right-1.5"
-      >
-        {{ isDraft ? '未发布' : '未上论坛' }}
-      </KunChip>
-
       <button
-        v-else
         type="button"
         class="bg-background/85 hover:bg-background absolute top-1.5 right-1.5 flex size-7 items-center justify-center rounded-full shadow-kun-sm backdrop-blur transition-colors"
         :aria-label="favorited ? '取消收藏' : '收藏（有补丁时通知你）'"

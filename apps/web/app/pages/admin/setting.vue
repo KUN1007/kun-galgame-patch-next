@@ -23,7 +23,7 @@ const definitions: SettingDefinition[] = [
     key: 'creator-only',
     name: '仅创作者 / 版主 / 管理员可发布 Galgame',
     description:
-      '开启后仅创作者 / 版主 / 管理员（及以上）可以发布、认领或提交新的 Galgame 条目，普通用户将被拒绝',
+      '开启后仅创作者 / 版主 / 管理员（及以上）可以发布补丁或提交新的 Galgame 条目，普通用户将被拒绝',
     isInverse: false
   }
 ]

@@ -80,18 +80,15 @@ const releaseDate = computed(
   () => patch.value?.release_date?.slice(0, 10) ?? ''
 )
 
-const isNoPatch = computed(() => patch.value?.is_on_forum === false)
-
-const publishHref = computed(
-  () => `/edit/create?q=${encodeURIComponent(displayName.value)}`
-)
+const isOnSite = computed(() => patch.value?.is_on_forum !== false)
+const hasResources = computed(() => (patch.value?.count?.resource ?? 0) > 0)
 
 const isR18Patch = patch.value?.type?.includes('r18') ?? false
 if (
   patch.value &&
   patch.value.content_limit === 'sfw' &&
   !isR18Patch &&
-  !isNoPatch.value
+  patch.value.indexed
 ) {
   const p = patch.value
   const base = displayName.value || `补丁 ${galgameId.value}`
@@ -198,7 +195,7 @@ if (
 }
 
 onMounted(async () => {
-  if (isNoPatch.value) return
+  if (!isOnSite.value) return
   await api.put(`/patch/${galgameId.value}/view`).catch(() => {})
 })
 
@@ -222,9 +219,7 @@ const tabs = computed(() => {
       href: `/patch/${galgameId.value}/comment`
     }
   ]
-  return isNoPatch.value
-    ? all.filter((t) => ['introduction', 'comment'].includes(t.key))
-    : all
+  return all
 })
 
 const currentTab = computed({
@@ -331,44 +326,19 @@ const currentTab = computed({
               :description="creatorDescription"
             />
             <KunCardStats
-              v-if="!isNoPatch"
+              v-if="hasResources"
               :patch="{ ...patch, created: patch.created }"
               :disable-tooltip="false"
               :is-mobile="false"
             />
-            <KunChip v-else color="warning" variant="flat" size="sm">
-              本站尚未收录
+            <KunChip v-else color="default" variant="flat" size="sm">
+              暂无补丁
             </KunChip>
           </div>
 
           <PatchHeaderActions :patch="patch" />
         </div>
       </div>
-    </div>
-
-    <div
-      v-if="isNoPatch"
-      class="border-warning/30 bg-warning/5 flex flex-col items-start gap-3 rounded-2xl border p-5 sm:flex-row sm:items-center sm:justify-between"
-    >
-      <div class="flex items-start gap-3">
-        <div
-          class="bg-warning/15 text-warning flex size-10 shrink-0 items-center justify-center rounded-full"
-        >
-          <KunIcon name="lucide:circle-alert" class="size-5" />
-        </div>
-        <div>
-          <p class="font-semibold">本站尚未收录此游戏</p>
-          <p class="text-default-500 text-sm">
-            当前页面的资料均来自 Galgame
-            资料库，本站还没有它的补丁或本地数据。收藏 / 评论
-            都会让它被本站收录（但您不会成为该游戏的创建者，也不会获得萌萌点奖励）；发布补丁同样会让它被收录，并照常获得发布补丁的萌萌点奖励。
-          </p>
-        </div>
-      </div>
-      <KunButton color="primary" :href="publishHref" class-name="shrink-0">
-        <KunIcon name="lucide:plus-circle" class="size-4" />
-        发布补丁
-      </KunButton>
     </div>
 
     <KunTab

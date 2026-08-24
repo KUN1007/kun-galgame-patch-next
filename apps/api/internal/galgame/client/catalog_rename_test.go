@@ -34,7 +34,28 @@ func TestClaimSiteAcceptedOnBothSpellings(t *testing.T) {
 		})
 	}
 	if (&catalogClaimedBy{}).gid() != 0 {
-		t.Error("an unclaimed row has no gid")
+		t.Error("an unclaimed row has no claimed_by gid")
+	}
+}
+
+func TestPublicGID_UnclaimedUsesCatalogID(t *testing.T) {
+	unclaimed := &catalogWorkListItem{ID: 930}
+	if got := unclaimed.publicGID(); got != 930 {
+		t.Errorf("unclaimed publicGID = %d, want the catalog id 930", got)
+	}
+	claimed := &catalogWorkListItem{
+		ID:        900,
+		ClaimedBy: &catalogClaimedBy{Site: catalogClaimSiteLegacy, WorkID: 7, State: catalogClaimStateLive},
+	}
+	if got := claimed.publicGID(); got != 7 {
+		t.Errorf("claimed publicGID = %d, want the wiki gid 7", got)
+	}
+	hidden := &catalogWorkListItem{
+		ID:        921,
+		ClaimedBy: &catalogClaimedBy{Site: catalogClaimSiteLegacy, WorkID: 21, State: catalogClaimStateHidden},
+	}
+	if hidden.ClaimedBy.renderable() {
+		t.Error("a hidden claim must not be renderable")
 	}
 }
 

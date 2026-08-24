@@ -122,66 +122,14 @@ func (h *CommonHandler) GetHome(c fiber.Ctx) error {
 
 type galgameListRequest struct {
 	SelectedType   string `query:"selected_type" validate:"required,min=1,max=107"`
-	SortField      string `query:"sort_field" validate:"required,oneof=resource_update_time created view download release_date"`
+	SortField      string `query:"sort_field" validate:"required,oneof=resource_update_time created view download release_date popularity"`
 	SortOrder      string `query:"sort_order" validate:"required,oneof=asc desc"`
 	Page           int    `query:"page" validate:"required,min=1"`
 	Limit          int    `query:"limit" validate:"required,min=1,max=24"`
 	ReleasedFrom   string `query:"released_from"`
 	ReleasedTo     string `query:"released_to"`
 	ReleasedMonths string `query:"released_months"`
-}
-
-func (h *CommonHandler) GetGalgameList(c fiber.Ctx) error {
-	var req galgameListRequest
-	if err := utils.ParseQueryAndValidate(c, &req); err != nil {
-		return response.Error(c, errors.ErrBadRequest(err.Error()))
-	}
-	cl := utils.ContentLimitForListBrowse(c)
-
-	lower, err := utils.ParseReleaseLowerBound(req.ReleasedFrom)
-	if err != nil {
-		return response.Error(c, errors.ErrBadRequest(err.Error()))
-	}
-	upper, err := utils.ParseReleaseUpperBound(req.ReleasedTo)
-	if err != nil {
-		return response.Error(c, errors.ErrBadRequest(err.Error()))
-	}
-	months, err := utils.ParseMonthSet(req.ReleasedMonths)
-	if err != nil {
-		return response.Error(c, errors.ErrBadRequest(err.Error()))
-	}
-
-	base := h.db.Model(&patchModel.Patch{})
-	if req.SelectedType != "all" {
-		base = base.Where("type @> ?", fmt.Sprintf(`["%s"]`, req.SelectedType))
-	}
-	if lower != nil {
-		base = base.Where("release_date >= ?", *lower)
-	}
-	if upper != nil {
-		base = base.Where("release_date <= ?", *upper)
-	}
-	if len(months) > 0 {
-		base = base.Where("EXTRACT(MONTH FROM release_date)::int IN ?", months)
-	}
-	if !utils.IncludeEmptyGalgames(c) {
-		base = base.Where("resource_count > 0")
-	}
-
-	var total int64
-	base.Session(&gorm.Session{}).Count(&total)
-
-	var patches []patchModel.Patch
-	if err := base.Session(&gorm.Session{}).Order(fmt.Sprintf("%s %s, id DESC", req.SortField, req.SortOrder)).
-		Offset((req.Page - 1) * req.Limit).Limit(req.Limit).
-		Find(&patches).Error; err != nil {
-		return response.Error(c, errors.ErrInternal(""))
-	}
-
-	return response.OK(c, map[string]any{
-		"galgames": enricher.EnrichPatches(c.Context(), h.galgame, h.users, patches, cl),
-		"total":    total,
-	})
+	Indexed        bool   `query:"indexed"`
 }
 
 type commentListRequest struct {

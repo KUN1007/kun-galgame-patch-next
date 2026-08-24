@@ -29,11 +29,13 @@ interface GalgameCard {
   platform: string[]
   content_limit: KunContentLimit
   status: number
-  // True when moyu holds a real local patch row (created on a real publish/claim,
-  // not on view). false on a wiki-only card for a "本站尚未收录" galgame — the
-  // detail page then renders read-only wiki metadata + a 发布补丁 CTA. Absent on
-  // card shapes built client-side (e.g. search); treat missing as "on forum".
+  // True when moyu holds a real local patch row (created on a real publish,
+  // favorite, or comment — not on view). Absent on card shapes built
+  // client-side (e.g. search); treat missing as on-site.
   is_on_forum?: boolean
+  // Sticky SEO flag: true after the first accepted resource, not cleared
+  // when resources are later deleted. Hidden/ban still unpublishes.
+  indexed?: boolean
   created: Date | string
   resource_update_time: Date | string
   // Locally-mirrored wiki galgame.release_date (RFC3339 from backend, or
