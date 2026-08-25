@@ -32,8 +32,8 @@ func TestCalendarContentLimitsFanOut(t *testing.T) {
 
 func TestCalendarUpstreamFailureMapping(t *testing.T) {
 	const (
-		badMonth   = `{"code":9,"message":"month must be YYYY-MM"}`
-		serverDown = `{"code":3,"message":"服务器内部错误"}`
+		badMonth   = `{"code":"INVALID_PARAMETER","status":400,"detail":"month must be YYYY-MM"}`
+		serverDown = `{"code":"INTERNAL","status":500,"detail":"服务器内部错误"}`
 	)
 
 	for _, tc := range []struct {

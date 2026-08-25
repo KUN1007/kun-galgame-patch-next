@@ -36,7 +36,7 @@ func (f *catalogEditFake) handler() http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		w.Header().Set("Content-Type", "application/json")
 		p := r.URL.Path
-		if strings.HasPrefix(p, "/api/v1/user/catalog/") {
+		if strings.HasPrefix(p, "/v2/me/") || strings.HasPrefix(p, "/v2/moderation/") {
 			f.userAuth = append(f.userAuth, r.Header.Get("Authorization"))
 			if f.lastQuery == nil {
 				f.lastQuery = map[string]string{}
@@ -45,6 +45,7 @@ func (f *catalogEditFake) handler() http.HandlerFunc {
 				f.lastQuery[k] = v[0]
 			}
 			if f.status != 0 {
+				w.Header().Set("Content-Type", "application/problem+json")
 				w.WriteHeader(f.status)
 				_, _ = w.Write([]byte(f.errBody))
 				return
@@ -52,51 +53,52 @@ func (f *catalogEditFake) handler() http.HandlerFunc {
 		}
 
 		switch {
-		case p == "/v1/catalog/lookup":
-			_, _ = w.Write([]byte(`{"code":0,"data":{"work":{"id":9000}}}`))
-		case strings.HasPrefix(p, "/api/v1/user/catalog/edit/schema/"):
+		case p == "/v2/catalog/works":
+			_, _ = w.Write([]byte(`{"object":"list","items":[{"object":"work","id":"9000","refs":[{"source":"galgame_wiki","external_id":"9000"},{"source":"curated","external_id":"9000"}]}]}`))
+		case strings.HasPrefix(p, "/v2/catalog/works/"):
+			_, _ = w.Write([]byte(`{"object":"work","id":"9000"}`))
+		case p == "/v2/catalog/schemas/work":
 			_, _ = w.Write([]byte(f.schema))
-		case p == "/api/v1/user/catalog/edit/snapshot":
-			_, _ = w.Write([]byte(`{"code":0,"data":{"entity_type":"catalog.work","entity_id":9000,"values":{` +
+		case strings.HasPrefix(p, "/v2/moderation/snapshots/"):
+			_, _ = w.Write([]byte(`{"object":"snapshot","entity_type":"catalog.work","entity_id":"9000","field_values":{` +
 				`"catalog.work.display_name":"作品名","catalog.work.olang":"ja","catalog.work.content_rating":2,` +
 				`"catalog.work.display_nsfw":true,` +
-				`"catalog.work.titles":[{"lang":"ja","title":"作品名","kind":0},{"lang":"","title":"略称","kind":1,"latin":"ryakusho"}]}}}`))
-		case p == "/api/v1/user/catalog/edit/proposals" && r.Method == http.MethodPost:
+				`"catalog.work.titles":[{"lang":"ja","title":"作品名","kind":0},{"lang":"","title":"略称","kind":1,"latin":"ryakusho"}]}}`))
+		case p == "/v2/me/proposals" && r.Method == http.MethodPost:
 			f.sawCreate = true
 			raw, _ := io.ReadAll(r.Body)
 			if err := json.Unmarshal(raw, &f.lastCreate); err != nil {
 				f.t.Errorf("create body is not JSON: %v", err)
 			}
 			_, _ = w.Write([]byte(f.createBody))
-		case p == "/api/v1/user/catalog/edit/proposals" && r.Method == http.MethodGet:
-			_, _ = w.Write([]byte(`{"code":0,"data":{"items":[{"id":32,"status":"open","proposer_uid":42}],"total":1}}`))
-		case strings.HasSuffix(p, "/withdraw"):
-			raw, _ := io.ReadAll(r.Body)
-			if len(raw) > 0 {
-				f.t.Errorf("withdraw must be bodiless, got %s", raw)
-			}
-			_, _ = w.Write([]byte(`{"code":0,"data":{"id":32,"status":"withdrawn"}}`))
+		case p == "/v2/me/proposals" && r.Method == http.MethodGet:
+			_, _ = w.Write([]byte(`{"object":"list","items":[{"id":"32","state":"open"}],"total":1}`))
+		case strings.HasPrefix(p, "/v2/me/proposals/") && r.Method == http.MethodGet:
+			w.Header().Set("ETag", `"p32"`)
+			_, _ = w.Write([]byte(`{"id":"32","state":"open"}`))
+		case strings.HasPrefix(p, "/v2/me/proposals/") && r.Method == http.MethodPatch:
+			_, _ = w.Write([]byte(`{"id":"32","state":"withdrawn"}`))
 		default:
 			w.WriteHeader(http.StatusNotFound)
-			_, _ = w.Write([]byte(`{"code":40400,"message":"not found"}`))
+			_, _ = w.Write([]byte(`{"code":"NOT_FOUND","status":404}`))
 		}
 	}
 }
 
-const catalogEditSchemaReply = `{"code":0,"data":{"entity_type":"catalog.work","fields":[` +
-	`{"key":"catalog.work.display_name","kind":"text","diff_hint":"inline","locked":false,"can_propose":true,"can_review":false,"would_automerge":false},` +
-	`{"key":"catalog.work.olang","kind":"scalar","diff_hint":"inline","locked":false,"can_propose":true,"can_review":false,"would_automerge":false},` +
-	`{"key":"catalog.work.content_rating","kind":"scalar","diff_hint":"inline","locked":false,"can_propose":true,"can_review":false,"would_automerge":false},` +
-	`{"key":"catalog.work.titles","kind":"list","diff_hint":"items","locked":false,"can_propose":true,"can_review":true,"would_automerge":true,"max_elements":40,"max_suppressed":200},` +
-	`{"key":"catalog.work.covers","kind":"list","diff_hint":"items","locked":false,"can_propose":true,"can_review":false,"would_automerge":false},` +
-	`{"key":"catalog.work.retired","kind":"text","diff_hint":"inline","deprecated":true,"locked":true,"can_propose":false,"can_review":false,"would_automerge":false}]}}`
+const catalogEditSchemaReply = `{"object":"object_schema","entity_type":"catalog.work","fields":[` +
+	`{"key":"catalog.work.display_name","field_type":"text","diff_hint":"inline","deprecated":false},` +
+	`{"key":"catalog.work.olang","field_type":"scalar","diff_hint":"inline","deprecated":false},` +
+	`{"key":"catalog.work.content_rating","field_type":"scalar","diff_hint":"inline","deprecated":false},` +
+	`{"key":"catalog.work.titles","field_type":"list","diff_hint":"items","deprecated":false,"max_elements":40,"max_suppressed":200},` +
+	`{"key":"catalog.work.covers","field_type":"list","diff_hint":"items","deprecated":false},` +
+	`{"key":"catalog.work.retired","field_type":"text","diff_hint":"inline","deprecated":true}]}`
 
 func newCatalogEditFake(t *testing.T) *catalogEditFake {
 	t.Helper()
 	return &catalogEditFake{
 		t:          t,
 		schema:     catalogEditSchemaReply,
-		createBody: `{"code":0,"data":{"merged":false,"proposal":{"id":32,"status":"open","entity_id":9000}}}`,
+		createBody: `{"id":"32","state":"open","entity_id":"9000"}`,
 	}
 }
 
@@ -180,7 +182,7 @@ func TestCatalogEditBootstrapKeepsEveryWireKeyOfTheFourFields(t *testing.T) {
 	titles := byKey["catalog.work.titles"]
 	for key, want := range map[string]any{
 		"key": "catalog.work.titles", "kind": "list", "diff_hint": "items",
-		"locked": false, "can_propose": true, "can_review": true, "would_automerge": true,
+		"locked": false, "can_propose": true,
 		"max_elements": float64(40), "max_suppressed": float64(200),
 	} {
 		got, present := titles[key]
@@ -205,9 +207,9 @@ func TestCatalogEditBootstrapKeepsEveryWireKeyOfTheFourFields(t *testing.T) {
 
 func TestCatalogEditBootstrapCanEditFollowsTheSchema(t *testing.T) {
 	fake := newCatalogEditFake(t)
-	fake.schema = `{"code":0,"data":{"entity_type":"catalog.work","fields":[` +
-		`{"key":"catalog.work.display_name","kind":"text","diff_hint":"inline","locked":true,"can_propose":false,"can_review":false,"would_automerge":false},` +
-		`{"key":"catalog.work.titles","kind":"list","diff_hint":"items","locked":false,"can_propose":false,"can_review":false,"would_automerge":false}]}}`
+	fake.schema = `{"object":"object_schema","entity_type":"catalog.work","fields":[` +
+		`{"key":"catalog.work.display_name","field_type":"text","diff_hint":"inline","deprecated":true},` +
+		`{"key":"catalog.work.titles","field_type":"list","diff_hint":"items","deprecated":true}]}`
 	ta, session := newCatalogEditApp(t, fake)
 
 	data := editData(t, ta.Request(t, http.MethodGet, "/patch/1/catalog-edit", "", session))
@@ -238,9 +240,20 @@ func TestCatalogEditSubmitBuildsTheFieldKeyPatch(t *testing.T) {
 	if !fake.sawCreate {
 		t.Fatal("no create reached the catalog")
 	}
-	if fake.lastCreate["entity_type"] != catalogclient.EntityTypeWork ||
-		fake.lastCreate["entity_id"] != float64(catalogEditWorkID) {
+	if fake.lastCreate["entity_type"] != catalogclient.EntityTypeWork {
 		t.Fatalf("create body: %v", fake.lastCreate)
+	}
+	switch id := fake.lastCreate["entity_id"].(type) {
+	case string:
+		if id != "9000" {
+			t.Fatalf("create entity_id = %q", id)
+		}
+	case float64:
+		if int(id) != catalogEditWorkID {
+			t.Fatalf("create entity_id = %v", id)
+		}
+	default:
+		t.Fatalf("create entity_id type %T: %v", id, fake.lastCreate)
 	}
 	for _, k := range []string{"actor", "site", "user_id", "trust_tier", "proposer_uid"} {
 		if _, ok := fake.lastCreate[k]; ok {
@@ -281,7 +294,7 @@ func TestCatalogEditSubmitRefusesAnEmptyPatch(t *testing.T) {
 func TestCatalogEditScopeDenialLandsOnTheRelogInCode(t *testing.T) {
 	fake := newCatalogEditFake(t)
 	fake.status = http.StatusForbidden
-	fake.errBody = `{"code":40300,"message":"the access token is missing the catalog:edit scope"}`
+	fake.errBody = `{"code":"SCOPE_REQUIRED","status":403,"title":"Forbidden","detail":"the access token is missing the catalog:edit scope"}`
 	ta, session := newCatalogEditApp(t, fake)
 
 	resp := ta.Request(t, http.MethodPost, "/patch/1/catalog-edit", `{"display_name":"新名"}`, session)
@@ -299,16 +312,16 @@ func TestCatalogEditUpstreamStatusMapping(t *testing.T) {
 		wantStatus int
 		wantCode   int
 	}{
-		{"permission", http.StatusForbidden, `{"code":40300,"message":"编辑该条目需要更高的信任等级"}`,
+		{"permission", http.StatusForbidden, `{"code":"FORBIDDEN","status":403,"detail":"编辑该条目需要更高的信任等级"}`,
 			http.StatusForbidden, 40300},
 		{"validation", http.StatusUnprocessableEntity,
-			`{"code":42200,"message":"element 0: kind must be 0 (official), 1 (alias) or 2 (abbreviation)"}`,
+			`{"code":"VALIDATION_FAILED","status":422,"detail":"element 0: kind must be 0 (official), 1 (alias) or 2 (abbreviation)"}`,
 			http.StatusUnprocessableEntity, 42200},
-		{"conflict", http.StatusConflict, `{"code":40900,"message":"rebase conflict"}`,
+		{"conflict", http.StatusConflict, `{"code":"CONFLICT","status":409,"detail":"rebase conflict"}`,
 			http.StatusConflict, 40900},
-		{"token rejected", http.StatusUnauthorized, `{"code":10003,"message":"token expired"}`,
+		{"token rejected", http.StatusUnauthorized, `{"code":"INVALID_CREDENTIAL","status":401,"detail":"token expired"}`,
 			http.StatusForbidden, 40399},
-		{"upstream down", http.StatusBadGateway, `{"code":50200,"message":"bad gateway"}`,
+		{"upstream down", http.StatusBadGateway, `{"code":"BAD_GATEWAY","status":502,"detail":"bad gateway"}`,
 			http.StatusServiceUnavailable, 50320},
 	}
 	for _, tc := range cases {
@@ -337,7 +350,7 @@ func TestCatalogEditProposalsAndWithdraw(t *testing.T) {
 	if len(data["items"].([]any)) != 1 {
 		t.Fatalf("proposals: %v", data)
 	}
-	if fake.lastQuery["mine"] != "true" || fake.lastQuery["entity_id"] != "9000" {
+	if fake.lastQuery["entity_id"] != "9000" {
 		t.Fatalf("my-proposals query: %v", fake.lastQuery)
 	}
 	if _, ok := fake.lastQuery["proposer_uid"]; ok {

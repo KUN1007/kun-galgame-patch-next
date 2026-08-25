@@ -5,8 +5,9 @@ import (
 	"net/url"
 	"slices"
 	"sort"
-	"strconv"
 	"strings"
+
+	"kun-galgame-patch-api/pkg/catalogv2"
 )
 
 const catalogStaffCreditsCap = 24
@@ -126,30 +127,96 @@ type GalgameStaffDetail struct {
 }
 
 func (c *Client) GetCharacter(ctx context.Context, id int, contentLimit string) (*GalgameCharacterDetail, error) {
-	q := url.Values{}
-	applyNSFW(q)
-	q.Set("spoilers", "2")
-
-	var ch catalogCharacterDetail
-	if err := c.getV1(ctx, "/catalog/characters/"+strconv.Itoa(id), q, &ch); err != nil {
-		return nil, err
+	ch, err := c.v2.GetCharacter(ctx, int64(id), true)
+	if err != nil {
+		return nil, catalogErr(err)
 	}
-	out := catalogCharacterToDetail(&ch, contentLimit != "nsfw" && contentLimit != "all")
+	cid, _ := ch.IntID()
+	latin := ""
+	if ch.Latin != nil {
+		latin = *ch.Latin
+	}
+	out := GalgameCharacterDetail{
+		ID:         int(cid),
+		Name:       catalogEntityNames(localizedFrom(ch.Localized), ch.DisplayName, "", latin),
+		ImageHash:  imageHash(ch.Image),
+		FigureHash: imageHash(ch.Figure),
+	}
 	return &out, nil
 }
 
 func (c *Client) GetStaff(ctx context.Context, id int) (*GalgameStaffDetail, error) {
-	q := url.Values{}
-	applyNSFW(q)
-	q.Set("include", "credits")
-	q.Set("limit", strconv.Itoa(catalogStaffCreditsCap))
-
-	var n catalogNameDetail
-	if err := c.getV1(ctx, "/catalog/names/"+strconv.Itoa(id), q, &n); err != nil {
-		return nil, err
+	n, err := c.v2.GetCreditName(ctx, int64(id), true)
+	if err != nil {
+		return nil, catalogErr(err)
 	}
-	out := catalogNameToDetail(&n)
+	nid, _ := n.IntID()
+	latin := ""
+	if n.Latin != nil {
+		latin = *n.Latin
+	}
+	out := GalgameStaffDetail{
+		ID:      int(nid),
+		Name:    catalogEntityNames(localizedFrom(n.Localized), n.DisplayName, "", latin),
+		Credits: []GalgameStaffCredit{},
+	}
+	if n.PersonID != nil {
+		if pid, ok := catalogv2.ParseID(*n.PersonID); ok {
+			if person, perr := c.v2.GetPerson(ctx, pid); perr == nil && person != nil {
+				out.PhotoHash = imageHash(person.Image)
+				out.Gender = genderInt(person.Gender)
+			}
+		}
+	}
+	page, err := c.v2.CreditNameCredits(ctx, int64(id), true, "", catalogStaffCreditsCap)
+	if err != nil {
+		return &out, nil
+	}
+	for i := range page.Items {
+		credit := &page.Items[i]
+		it := workToListItem(credit.Work)
+		if !it.ClaimedBy.renderable() {
+			continue
+		}
+		ja, zhCN, zhTW, en := namesOf(it.Localized)
+		name := KunLanguage{EnUs: en, JaJp: ja, ZhCn: zhCN, ZhTw: zhTW}
+		if name.canonical() == "" {
+			name.JaJp = it.DisplayName
+		}
+		row := GalgameStaffCredit{
+			GalgameID: it.publicGID(),
+			Name:      name,
+			Roles:     make([]GalgameStaffRole, 0, len(credit.Roles)),
+		}
+		seen := map[string]bool{}
+		for _, r := range credit.Roles {
+			key, roleName := catalogFoldRole(r.RoleKey, r.RoleName)
+			if seen[key] {
+				continue
+			}
+			seen[key] = true
+			row.Roles = append(row.Roles, GalgameStaffRole{RoleKey: key, RoleName: roleName})
+		}
+		sort.SliceStable(row.Roles, func(i, j int) bool {
+			return catalogRoleWeight(row.Roles[i].RoleKey) < catalogRoleWeight(row.Roles[j].RoleKey)
+		})
+		out.Credits = append(out.Credits, row)
+	}
 	return &out, nil
+}
+
+func genderInt(g *string) int {
+	if g == nil {
+		return 0
+	}
+	switch *g {
+	case "male":
+		return 1
+	case "female":
+		return 2
+	default:
+		return 0
+	}
 }
 
 func catalogCharacterToDetail(ch *catalogCharacterDetail, hideSexual bool) GalgameCharacterDetail {

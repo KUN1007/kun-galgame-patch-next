@@ -1,38 +1,26 @@
 package client
 
 import (
-	"bytes"
 	"context"
-	"encoding/json"
 	"errors"
-	"fmt"
-	"io"
-	"net/http"
-	"net/url"
 	"strconv"
 	"strings"
 	"sync"
 	"time"
+
+	"kun-galgame-patch-api/pkg/catalogv2"
 )
 
 const catalogCodeNotFound = 4
 
 const catalogCodeMoved = 12
 
-// Only the catalog's business-code 404 is absence; treating router or proxy
-// 404s as misses made a broken face look like an empty archive.
-func catalogAbsent(status int, err error) bool {
-	if status != http.StatusNotFound {
-		return false
-	}
-	var gerr *GalgameError
-	return errors.As(err, &gerr) && gerr.Code == catalogCodeNotFound
+func catalogAbsent(err error) bool {
+	return errors.Is(err, catalogv2.ErrNotFound) || IsAbsent(err)
 }
 
 const catalogLookupBatchMax = 100
 
-// These keys name one external_ref source across the Wave 161 rename; they are
-// not claim sites.
 var anchorSourceKeys = []string{"curated", "galgame_wiki"}
 
 func gidLookupStride() int {
@@ -92,55 +80,8 @@ func gateFor(contentLimit string) catalogGate {
 	}
 }
 
-func (g catalogGate) apply(q url.Values) {
-	applyNSFW(q)
-	if g.contentLimit != "" {
-		q.Set("content_limit", g.contentLimit)
-	}
-	if g.contentRating != "" {
-		q.Set("content_rating", g.contentRating)
-	}
-}
-
 func (g catalogGate) allows(displayLimit string) bool {
 	return g.contentLimit == "" || g.contentLimit == displayLimit
-}
-
-func applyNSFW(q url.Values) { q.Set("nsfw", "1") }
-
-func (c *Client) postV1(ctx context.Context, path string, body any) (json.RawMessage, error) {
-	payload, err := json.Marshal(body)
-	if err != nil {
-		return nil, fmt.Errorf("编码 catalog 请求体失败: %w", err)
-	}
-	req, err := http.NewRequestWithContext(ctx, http.MethodPost, c.v1Base+path, bytes.NewReader(payload))
-	if err != nil {
-		return nil, fmt.Errorf("构造请求失败: %w", err)
-	}
-	if c.apiKey != "" {
-		req.Header.Set("X-API-Key", c.apiKey)
-	}
-	req.Header.Set("Content-Type", "application/json")
-	req.Header.Set("Accept", "application/json")
-
-	resp, err := c.http.Do(req)
-	if err != nil {
-		return nil, fmt.Errorf("调用 catalog 失败: %w", err)
-	}
-	defer resp.Body.Close()
-
-	raw, err := io.ReadAll(resp.Body)
-	if err != nil {
-		return nil, fmt.Errorf("读取 catalog 响应失败: %w", err)
-	}
-	var env galgameResponse[json.RawMessage]
-	if err := json.Unmarshal(raw, &env); err != nil {
-		return nil, fmt.Errorf("解析 catalog 响应失败: %w (body=%s)", err, truncate(string(raw), 200))
-	}
-	if env.Code != 0 {
-		return nil, upstreamError(resp, env.Code, env.Message)
-	}
-	return env.Data, nil
 }
 
 func (c *Client) resolveGIDs(ctx context.Context, gids []int) (map[int]int64, error) {
@@ -160,36 +101,47 @@ func (c *Client) resolveGIDs(ctx context.Context, gids []int) (map[int]int64, er
 	for start := 0; start < len(missing); start += stride {
 		end := min(start+stride, len(missing))
 		chunk := missing[start:end]
-
-		body := catalogLookupBatchRequest{
-			Items: make([]catalogLookupPair, 0, len(chunk)*len(anchorSourceKeys)),
-		}
+		refs := make([]catalogv2.Ref, 0, len(chunk)*len(anchorSourceKeys))
 		for _, gid := range chunk {
 			for _, source := range anchorSourceKeys {
-				body.Items = append(body.Items, catalogLookupPair{
-					Source: source, ExternalID: strconv.Itoa(gid),
-				})
+				refs = append(refs, catalogv2.Ref{Source: source, ExternalID: strconv.Itoa(gid)})
 			}
 		}
-		raw, err := c.postV1(ctx, "/catalog/lookup/batch?nsfw=1", body)
+		page, err := c.v2.ListWorks(ctx, catalogv2.WorksQuery{
+			Refs: refs, NSFW: true, Include: []string{"refs"},
+		})
 		if err != nil {
-			return nil, err
+			return nil, catalogErr(err)
 		}
-		var data catalogLookupBatchData
-		if err := json.Unmarshal(raw, &data); err != nil {
-			return nil, fmt.Errorf("解析 catalog lookup batch data 失败: %w", err)
+		wanted := map[int]bool{}
+		for _, gid := range chunk {
+			wanted[gid] = true
 		}
-		for i := range data.Items {
-			it := &data.Items[i]
-			if it.Work == nil {
+		for i := range page.Items {
+			w := page.Items[i]
+			id, ok := w.IntID()
+			if !ok {
 				continue
 			}
-			gid, err := strconv.Atoi(it.ExternalID)
-			if err != nil {
-				continue
+			if w.Refs != nil {
+				for _, r := range *w.Refs {
+					gid, conv := strconv.Atoi(r.ExternalID)
+					if conv != nil || !wanted[gid] {
+						continue
+					}
+					if r.Source == "curated" || r.Source == "galgame_wiki" {
+						out[gid] = id
+						c.gids.put(gid, id)
+					}
+				}
 			}
-			out[gid] = it.Work.ID
-			c.gids.put(gid, it.Work.ID)
+			if claim := claimedFrom(w.Claim); claim != nil && isGIDClaimSite(claim.Site) {
+				gid := int(claim.WorkID)
+				if wanted[gid] {
+					out[gid] = id
+					c.gids.put(gid, id)
+				}
+			}
 		}
 	}
 	var unbridged []int
@@ -210,8 +162,6 @@ func (c *Client) resolveGIDs(ctx context.Context, gids []int) (map[int]int64, er
 	return out, nil
 }
 
-// A legacy gid may equal an unrelated catalog id; accept adopted IDs only when
-// claimed_by.work_id points back.
 func (c *Client) resolveByIdentity(ctx context.Context, gids []int) (map[int]int64, error) {
 	out := make(map[int]int64, len(gids))
 	for start := 0; start < len(gids); start += CatalogWorksIDsMax {
@@ -220,24 +170,17 @@ func (c *Client) resolveByIdentity(ctx context.Context, gids []int) (map[int]int
 		for _, gid := range gids[start:end] {
 			ids = append(ids, int64(gid))
 		}
-		q := url.Values{}
-		q.Set("ids", joinInt64s(ids))
-		q.Set("limit", strconv.Itoa(CatalogWorksIDsMax))
-		applyNSFW(q)
-
-		raw, status, err := c.getV1RawStatus(ctx, "/catalog/works", q)
+		page, err := c.v2.ListWorks(ctx, catalogv2.WorksQuery{
+			IDs: ids, NSFW: true, Limit: CatalogWorksIDsMax,
+		})
 		if err != nil {
-			if catalogAbsent(status, err) {
+			if catalogAbsent(err) {
 				continue
 			}
-			return nil, err
+			return nil, catalogErr(err)
 		}
-		var data catalogWorksListData
-		if err := json.Unmarshal(raw, &data); err != nil {
-			return nil, fmt.Errorf("解析 catalog works data 失败: %w", err)
-		}
-		for i := range data.Items {
-			it := &data.Items[i]
+		for i := range page.Items {
+			it := workToListItem(page.Items[i])
 			if !it.ClaimedBy.renderable() {
 				continue
 			}
@@ -254,42 +197,32 @@ func (c *Client) resolveByIdentity(ctx context.Context, gids []int) (map[int]int
 
 func (c *Client) ClaimStates(ctx context.Context, gids []int) (map[int]string, error) {
 	out := make(map[int]string, len(gids))
-	stride := gidLookupStride()
-	for start := 0; start < len(gids); start += stride {
-		end := min(start+stride, len(gids))
-		body := catalogLookupBatchRequest{
-			Items: make([]catalogLookupPair, 0, (end-start)*len(anchorSourceKeys)),
-		}
-		for _, gid := range gids[start:end] {
-			if gid <= 0 {
-				continue
-			}
-			for _, source := range anchorSourceKeys {
-				body.Items = append(body.Items, catalogLookupPair{
-					Source: source, ExternalID: strconv.Itoa(gid),
-				})
-			}
-		}
-		if len(body.Items) == 0 {
+	byGID, err := c.resolveGIDs(ctx, gids)
+	if err != nil {
+		return nil, err
+	}
+	ids := make([]int64, 0, len(byGID))
+	rev := map[int64]int{}
+	for gid, id := range byGID {
+		ids = append(ids, id)
+		rev[id] = gid
+	}
+	if len(ids) == 0 {
+		return out, nil
+	}
+	page, err := c.v2.ListWorks(ctx, catalogv2.WorksQuery{
+		IDs: ids, NSFW: true, Limit: CatalogWorksIDsMax,
+	})
+	if err != nil {
+		return nil, catalogErr(err)
+	}
+	for i := range page.Items {
+		it := workToListItem(page.Items[i])
+		gid, ok := rev[it.ID]
+		if !ok {
 			continue
 		}
-		raw, err := c.postV1(ctx, "/catalog/lookup/batch?nsfw=1", body)
-		if err != nil {
-			return nil, err
-		}
-		var data catalogLookupBatchData
-		if err := json.Unmarshal(raw, &data); err != nil {
-			return nil, fmt.Errorf("解析 catalog lookup batch data 失败: %w", err)
-		}
-		for i := range data.Items {
-			it := &data.Items[i]
-			gid, err := strconv.Atoi(it.ExternalID)
-			if err != nil || it.Work == nil {
-				continue
-			}
-			out[gid] = claimStateOf(it.ClaimedBy)
-			c.gids.put(gid, it.Work.ID)
-		}
+		out[gid] = claimStateOf(it.ClaimedBy)
 	}
 	return out, nil
 }
@@ -322,27 +255,19 @@ func (c *Client) ResolveWorkID(ctx context.Context, gid int) (int64, bool, error
 }
 
 func (c *Client) resolveGIDBySource(ctx context.Context, source string, gid int) (int64, bool, error) {
-	q := url.Values{}
-	q.Set("source", source)
-	q.Set("external_id", strconv.Itoa(gid))
-	q.Set("nsfw", "1")
-
-	raw, status, err := c.getV1RawStatus(ctx, "/catalog/lookup", q)
+	w, err := c.v2.WorkByRef(ctx, source, strconv.Itoa(gid), true)
 	if err != nil {
-		if catalogAbsent(status, err) {
+		if catalogAbsent(err) {
 			return 0, false, nil
 		}
-		return 0, false, err
+		return 0, false, catalogErr(err)
 	}
-	var data catalogLookupData
-	if err := json.Unmarshal(raw, &data); err != nil {
-		return 0, false, fmt.Errorf("解析 catalog lookup data 失败: %w", err)
-	}
-	if data.Work == nil {
+	id, ok := w.IntID()
+	if !ok {
 		return 0, false, nil
 	}
-	c.gids.put(gid, data.Work.ID)
-	return data.Work.ID, true, nil
+	c.gids.put(gid, id)
+	return id, true, nil
 }
 
 func (c *Client) ResolveWikiLabel(ctx context.Context, oid int) (int64, bool, error) {
@@ -350,46 +275,16 @@ func (c *Client) ResolveWikiLabel(ctx context.Context, oid int) (int64, bool, er
 		return 0, false, nil
 	}
 	for _, source := range anchorSourceKeys {
-		id, found, err := c.resolveWikiLabelBySource(ctx, source, oid)
-		if err != nil || found {
-			return id, found, err
+		id, err := c.v2.EntityByRef(ctx, "company", source, strconv.Itoa(oid), true)
+		if err != nil {
+			if catalogAbsent(err) {
+				continue
+			}
+			return 0, false, catalogErr(err)
+		}
+		if id > 0 {
+			return id, true, nil
 		}
 	}
 	return 0, false, nil
-}
-
-func (c *Client) resolveWikiLabelBySource(ctx context.Context, source string, oid int) (int64, bool, error) {
-	q := url.Values{}
-	q.Set("type", "label")
-	q.Set("source", source)
-	q.Set("external_id", strconv.Itoa(oid))
-	q.Set("nsfw", "1")
-
-	raw, status, err := c.getV1RawStatus(ctx, "/catalog/lookup", q)
-	if err != nil {
-		if catalogAbsent(status, err) {
-			return 0, false, nil
-		}
-		return 0, false, err
-	}
-	var data struct {
-		Label *struct {
-			ID int64 `json:"id"`
-		} `json:"label"`
-	}
-	if err := json.Unmarshal(raw, &data); err != nil {
-		return 0, false, fmt.Errorf("解析 catalog label lookup data 失败: %w", err)
-	}
-	if data.Label == nil {
-		return 0, false, nil
-	}
-	return data.Label.ID, true, nil
-}
-
-func joinInt64s(xs []int64) string {
-	parts := make([]string, 0, len(xs))
-	for _, x := range xs {
-		parts = append(parts, strconv.FormatInt(x, 10))
-	}
-	return strings.Join(parts, ",")
 }

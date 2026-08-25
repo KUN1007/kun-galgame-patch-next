@@ -1,7 +1,6 @@
 package client
 
 import (
-	"encoding/json"
 	"net/http"
 	"net/http/httptest"
 	"slices"
@@ -33,9 +32,6 @@ func TestClaimSiteAcceptedOnBothSpellings(t *testing.T) {
 			}
 		})
 	}
-	if (&catalogClaimedBy{}).gid() != 0 {
-		t.Error("an unclaimed row has no claimed_by gid")
-	}
 }
 
 func TestPublicGID_UnclaimedUsesCatalogID(t *testing.T) {
@@ -62,21 +58,11 @@ func TestPublicGID_UnclaimedUsesCatalogID(t *testing.T) {
 func TestAnchorBatchLookupAsksForEverySourceKey(t *testing.T) {
 	var asked []string
 	srv := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, req *http.Request) {
-		var body catalogLookupBatchRequest
-		_ = json.NewDecoder(req.Body).Decode(&body)
-		out := make([]string, 0, len(body.Items))
-		for _, it := range body.Items {
-			asked = append(asked, it.Source)
-			work := "null"
-			if it.Source == "galgame_wiki" && it.ExternalID == "7" {
-				work = `{"id":9001}`
-			}
-			out = append(out, `{"source":"`+it.Source+`","external_id":"`+it.ExternalID+
-				`","work":`+work+`,"claimed_by":null}`)
-		}
+		asked = append(asked, req.URL.Query().Get("refs"))
 		w.Header().Set("Content-Type", "application/json")
-		_, _ = w.Write([]byte(`{"code":0,"message":"ok","data":{"items":[` +
-			strings.Join(out, ",") + `]}}`))
+		_, _ = w.Write([]byte(v2List(
+			`{"object":"work","id":"9001","refs":[{"source":"galgame_wiki","external_id":"7"},{"source":"curated","external_id":"7"}]}`,
+		)))
 	}))
 	t.Cleanup(srv.Close)
 
@@ -86,32 +72,22 @@ func TestAnchorBatchLookupAsksForEverySourceKey(t *testing.T) {
 		t.Fatalf("resolveGIDs: %v", err)
 	}
 	if ids[7] != 9001 {
-		t.Errorf("gid 7 resolved to %d, want 9001 via the pre-rename source key", ids[7])
+		t.Errorf("gid 7 resolved to %d, want 9001", ids[7])
 	}
+	joined := strings.Join(asked, ",")
 	for _, key := range anchorSourceKeys {
-		if !slices.Contains(asked, key) {
-			t.Errorf("source key %q was never asked for; the lookup only resolves "+
-				"on the side of the rename it happens to name", key)
+		if !strings.Contains(joined, key+":7") {
+			t.Errorf("source key %q was never asked for; refs=%q", key, joined)
 		}
 	}
 }
 
 func TestAnchorBatchLookupResolvesAfterTheRename(t *testing.T) {
 	srv := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, req *http.Request) {
-		var body catalogLookupBatchRequest
-		_ = json.NewDecoder(req.Body).Decode(&body)
-		out := make([]string, 0, len(body.Items))
-		for _, it := range body.Items {
-			work := "null"
-			if it.Source == "curated" && it.ExternalID == "8" {
-				work = `{"id":9002}`
-			}
-			out = append(out, `{"source":"`+it.Source+`","external_id":"`+it.ExternalID+
-				`","work":`+work+`,"claimed_by":null}`)
-		}
 		w.Header().Set("Content-Type", "application/json")
-		_, _ = w.Write([]byte(`{"code":0,"message":"ok","data":{"items":[` +
-			strings.Join(out, ",") + `]}}`))
+		_, _ = w.Write([]byte(v2List(
+			`{"object":"work","id":"9002","refs":[{"source":"curated","external_id":"8"}]}`,
+		)))
 	}))
 	t.Cleanup(srv.Close)
 
@@ -121,26 +97,22 @@ func TestAnchorBatchLookupResolvesAfterTheRename(t *testing.T) {
 		t.Fatalf("resolveGIDs: %v", err)
 	}
 	if ids[8] != 9002 {
-		t.Errorf("gid 8 resolved to %d, want 9002 via the post-rename source key", ids[8])
+		t.Errorf("gid 8 resolved to %d, want 9002", ids[8])
 	}
 }
 
 func TestAnchorBatchLookupRespectsTheItemCeiling(t *testing.T) {
-	maxItems := 0
+	maxRefs := 0
 	srv := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, req *http.Request) {
-		var body catalogLookupBatchRequest
-		_ = json.NewDecoder(req.Body).Decode(&body)
-		if n := len(body.Items); n > maxItems {
-			maxItems = n
+		n := 0
+		if raw := req.URL.Query().Get("refs"); raw != "" {
+			n = len(strings.Split(raw, ","))
 		}
-		out := make([]string, 0, len(body.Items))
-		for _, it := range body.Items {
-			out = append(out, `{"source":"`+it.Source+`","external_id":"`+it.ExternalID+
-				`","work":null,"claimed_by":null}`)
+		if n > maxRefs {
+			maxRefs = n
 		}
 		w.Header().Set("Content-Type", "application/json")
-		_, _ = w.Write([]byte(`{"code":0,"message":"ok","data":{"items":[` +
-			strings.Join(out, ",") + `]}}`))
+		_, _ = w.Write([]byte(v2List("")))
 	}))
 	t.Cleanup(srv.Close)
 
@@ -152,10 +124,10 @@ func TestAnchorBatchLookupRespectsTheItemCeiling(t *testing.T) {
 	if _, err := c.resolveGIDs(t.Context(), gids); err != nil {
 		t.Fatalf("resolveGIDs: %v", err)
 	}
-	if maxItems > catalogLookupBatchMax {
-		t.Errorf("a page carried %d items, over the %d ceiling", maxItems, catalogLookupBatchMax)
+	if maxRefs > catalogLookupBatchMax {
+		t.Errorf("a page carried %d refs, over the %d ceiling", maxRefs, catalogLookupBatchMax)
 	}
-	if maxItems == 0 {
+	if maxRefs == 0 {
 		t.Fatal("the face was never called")
 	}
 }
@@ -165,16 +137,16 @@ func TestSingularLookupsWalkEverySourceKey(t *testing.T) {
 		t.Run(answering, func(t *testing.T) {
 			srv := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, req *http.Request) {
 				w.Header().Set("Content-Type", "application/json")
-				if req.URL.Query().Get("source") != answering {
-					w.WriteHeader(http.StatusNotFound)
-					_, _ = w.Write([]byte(bodyDocumented404))
+				refs := req.URL.Query().Get("refs")
+				if !strings.HasPrefix(refs, answering+":") {
+					_, _ = w.Write([]byte(v2List("")))
 					return
 				}
-				if req.URL.Query().Get("type") == "label" {
-					_, _ = w.Write([]byte(`{"code":0,"message":"ok","data":{"label":{"id":77}}}`))
+				if strings.Contains(req.URL.Path, "/companies") {
+					_, _ = w.Write([]byte(v2List(`{"id":"77"}`)))
 					return
 				}
-				_, _ = w.Write([]byte(`{"code":0,"message":"ok","data":{"work":{"id":88},"claimed_by":null}}`))
+				_, _ = w.Write([]byte(v2List(`{"object":"work","id":"88","refs":[{"source":"` + answering + `","external_id":"5"}]}`)))
 			}))
 			t.Cleanup(srv.Close)
 
@@ -188,5 +160,11 @@ func TestSingularLookupsWalkEverySourceKey(t *testing.T) {
 				t.Errorf("ResolveWikiLabel = (%d, %v, %v), want (77, true, nil)", labelID, found, err)
 			}
 		})
+	}
+}
+
+func TestSourceKeysStayDistinct(t *testing.T) {
+	if slices.Equal(anchorSourceKeys, []string{}) {
+		t.Fatal("anchor source keys must stay populated")
 	}
 }

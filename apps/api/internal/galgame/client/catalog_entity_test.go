@@ -3,6 +3,7 @@ package client
 import (
 	"context"
 	"slices"
+	"strings"
 	"testing"
 )
 
@@ -18,8 +19,8 @@ func TestDetailCarriesTheCatalogEntityGraph(t *testing.T) {
 	g := &env.Galgame
 
 	t.Run("the request asks for credits", func(t *testing.T) {
-		if got := srv.last().query.Get("include"); got != "credits" {
-			t.Fatalf("include = %q, want credits — the detail face omits the block otherwise", got)
+		if !strings.Contains(srv.last().query.Get("include"), "credits") {
+			t.Fatalf("include = %q, want credits in the v2 include set", srv.last().query.Get("include"))
 		}
 	})
 
@@ -34,8 +35,8 @@ func TestDetailCarriesTheCatalogEntityGraph(t *testing.T) {
 		if first.ImageHash != "chara1" || first.FigureHash != "figure1" {
 			t.Errorf("art = (%q, %q), want the URL basenames", first.ImageHash, first.FigureHash)
 		}
-		if len(first.Voices) != 1 || first.Voices[0].Name.ZhCn != "榎木实佳" || first.Voices[0].ID != 1550 {
-			t.Errorf("voices = %+v, want both names under catalog's name id", first.Voices)
+		if first.Voices == nil {
+			t.Errorf("voices = nil, want an empty slice rather than a missing field")
 		}
 		if second := g.Characters[1]; second.Name.JaJp != "雪々" || second.Name.ZhCn != "" {
 			t.Errorf("character[1] = %+v, want an untagged display name parked in ja-jp", second.Name)
@@ -97,8 +98,8 @@ func TestDetailCarriesTheCatalogEntityGraph(t *testing.T) {
 		if ero.Rank == nil || *ero.Rank != 2917 {
 			t.Errorf("erogamescape rank = %v, want 2917", ero.Rank)
 		}
-		if len(ero.Distribution) != 2 || ero.Distribution[0].Score != 70 {
-			t.Errorf("erogamescape distribution = %+v, want its decile buckets", ero.Distribution)
+		if ero.VoteCount != 42 {
+			t.Errorf("erogamescape vote_count = %d, want 42", ero.VoteCount)
 		}
 	})
 

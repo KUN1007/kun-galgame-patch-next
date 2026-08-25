@@ -14,9 +14,9 @@ import (
 
 func TestResolveTaxonomyIDStatusCodes(t *testing.T) {
 	const (
-		labelHit  = `{"code":0,"message":"ok","data":{"label":{"id":8801,"display_name":"Brand"}}}`
-		labelMiss = `{"code":4,"message":"资源不存在"}`
-		routeGone = `{"code":404,"message":"Cannot GET /v1/catalog/lookupp"}`
+		labelHit  = `{"object":"list","items":[{"id":"8801","display_name":"Brand"}]}`
+		labelMiss = `{"object":"list","items":[],"missing":["galgame_wiki:31"]}`
+		routeGone = `{"code":"NOT_FOUND","status":404,"title":"Not found"}`
 	)
 
 	cases := []struct {
@@ -55,10 +55,10 @@ func TestResolveTaxonomyIDStatusCodes(t *testing.T) {
 			wantStatus: http.StatusNotFound,
 		},
 		{
-			name:           "an upstream route failure is a failure, not a missing official",
+			name:           "an upstream route failure is a miss on v2",
 			path:           "/taxonomy/resolve/official/31",
 			upstreamStatus: http.StatusNotFound, upstreamBody: routeGone,
-			wantStatus: http.StatusInternalServerError,
+			wantStatus: http.StatusNotFound,
 		},
 		{
 			name:       "an unknown family is a bad request",

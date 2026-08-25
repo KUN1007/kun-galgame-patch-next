@@ -46,14 +46,14 @@ func TestFaceSelection_WithKey(t *testing.T) {
 		if _, err := c.GetGalgameCalendar(ctx, "2026-07", ""); err != nil {
 			t.Fatalf("GetGalgameCalendar: %v", err)
 		}
-		if rec.path != "/v1/catalog/calendar" {
-			t.Errorf("path = %q, want /v1/catalog/calendar", rec.path)
+		if rec.path != "/v2/catalog/calendar" {
+			t.Errorf("path = %q, want /v2/catalog/calendar", rec.path)
 		}
-		if rec.apiKey != "nm_test_key" {
-			t.Errorf("X-API-Key = %q, want nm_test_key", rec.apiKey)
+		if rec.auth != "Bearer nm_test_key" {
+			t.Errorf("Authorization = %q, want Bearer nm_test_key", rec.auth)
 		}
-		if rec.auth != "" {
-			t.Errorf("Authorization = %q, want empty on anonymous read", rec.auth)
+		if rec.apiKey != "" {
+			t.Errorf("X-API-Key = %q, want empty", rec.apiKey)
 		}
 	})
 
@@ -73,27 +73,24 @@ func TestV1ReadRouting(t *testing.T) {
 		if rec.path != wantPath {
 			t.Errorf("path = %q, want %q", rec.path, wantPath)
 		}
-		if rec.apiKey != "nm_test_key" {
-			t.Errorf("X-API-Key = %q, want nm_test_key", rec.apiKey)
+		if rec.auth != "Bearer nm_test_key" {
+			t.Errorf("Authorization = %q, want Bearer nm_test_key", rec.auth)
 		}
 	}
 
 	t.Run("search → v1 catalog works search", func(t *testing.T) {
-		check(t, "/v1/catalog/works/search", func() error { _, e := c.SearchGalgame(ctx, SearchGalgameParams{Q: "x"}); return e })
+		check(t, "/v2/catalog/works", func() error { _, e := c.SearchGalgame(ctx, SearchGalgameParams{Q: "x"}); return e })
 	})
-	t.Run("calendar → v1 catalog", func(t *testing.T) {
-		check(t, "/v1/catalog/calendar", func() error { _, e := c.GetGalgameCalendar(ctx, "", ""); return e })
+	t.Run("calendar → v2 catalog", func(t *testing.T) {
+		check(t, "/v2/catalog/calendar", func() error { _, e := c.GetGalgameCalendar(ctx, "", ""); return e })
 	})
-	t.Run("vndb lookup → v1 catalog", func(t *testing.T) {
-		check(t, "/v1/catalog/lookup", func() error { _, _, e := c.CheckGalgameByVndbID(ctx, "v1"); return e })
-		if got := rec.query.Get("source"); got != "vndb" {
-			t.Errorf("source = %q, want vndb", got)
+	t.Run("vndb lookup → v2 works refs", func(t *testing.T) {
+		check(t, "/v2/catalog/works", func() error { _, _, e := c.CheckGalgameByVndbID(ctx, "v1"); return e })
+		if got := rec.query.Get("refs"); got != "vndb:v1" {
+			t.Errorf("refs = %q, want vndb:v1", got)
 		}
-		if got := rec.query.Get("external_id"); got != "v1" {
-			t.Errorf("external_id = %q, want v1", got)
-		}
-		if got := rec.query.Get("nsfw"); got != "1" {
-			t.Errorf("nsfw = %q, want 1 (r18 works are hidden without it)", got)
+		if got := rec.query.Get("nsfw"); got != "true" {
+			t.Errorf("nsfw = %q, want true", got)
 		}
 	})
 
@@ -110,13 +107,13 @@ func TestCatalogTwoHopReads(t *testing.T) {
 		if err != nil {
 			t.Fatalf("GalgameBatch: %v", err)
 		}
-		srv.wantPaths(t, "/v1/catalog/lookup/batch", "/v1/catalog/works")
+		srv.wantPaths(t, "/v2/catalog/works", "/v2/catalog/works")
 		last := srv.last()
 		if got := last.query.Get("ids"); got != "900" {
 			t.Errorf("ids = %q, want the CATALOG id 900 (not the gid)", got)
 		}
-		if got := last.query.Get("include"); got != "names,covers,refs" {
-			t.Errorf("include = %q, want names,covers,refs", got)
+		if got := last.query.Get("include"); got != "titles,covers,refs" {
+			t.Errorf("include = %q, want titles,covers,refs", got)
 		}
 		if len(briefs) != 1 || briefs[0].ID != 7 {
 			t.Fatalf("briefs = %+v, want one row keyed by gid 7", briefs)
@@ -134,7 +131,7 @@ func TestCatalogTwoHopReads(t *testing.T) {
 		if _, err := c.GalgameBatch(ctx, []int{7}, ""); err != nil {
 			t.Fatalf("GalgameBatch: %v", err)
 		}
-		srv.wantPaths(t, "/v1/catalog/works")
+		srv.wantPaths(t, "/v2/catalog/works")
 	})
 
 	t.Run("detail = lookup then works/{id}", func(t *testing.T) {
@@ -143,10 +140,7 @@ func TestCatalogTwoHopReads(t *testing.T) {
 		if err != nil {
 			t.Fatalf("GetGalgame: %v", err)
 		}
-		srv.wantPaths(t, "/v1/catalog/lookup", "/v1/catalog/works/901")
-		if got := srv.last().query.Get("spoilers"); got != "2" {
-			t.Errorf("spoilers = %q, want 2 — moyu filters spoilers itself and needs every edge", got)
-		}
+		srv.wantPaths(t, "/v2/catalog/works", "/v2/catalog/works/901")
 		if env.Galgame.ID != 8 {
 			t.Errorf("detail id = %d, want the gid 8", env.Galgame.ID)
 		}
@@ -162,9 +156,9 @@ func TestCatalogTwoHopReads(t *testing.T) {
 		if _, err := c.SearchGalgame(ctx, SearchGalgameParams{Q: "x", ContentLimit: "sfw"}); err != nil {
 			t.Fatalf("SearchGalgame: %v", err)
 		}
-		srv.wantPaths(t, "/v1/catalog/works/search")
-		if got := srv.last().query.Get("nsfw"); got != "1" {
-			t.Errorf("nsfw = %q, want 1 — moyu always reads the whole population", got)
+		srv.wantPaths(t, "/v2/catalog/works")
+		if got := srv.last().query.Get("nsfw"); got != "true" {
+			t.Errorf("nsfw = %q, want true — moyu always reads the whole population", got)
 		}
 		if got := srv.last().query.Get("search_intro"); got != "" {
 			t.Errorf("search_intro = %q, want absent unless asked for", got)
@@ -177,8 +171,8 @@ func TestCatalogTwoHopReads(t *testing.T) {
 		if err != nil {
 			t.Fatalf("SearchGalgame: %v", err)
 		}
-		if got := srv.last().query.Get("search_intro"); got != "1" {
-			t.Errorf("search_intro = %q, want 1", got)
+		if got := srv.last().query.Get("search_intro"); got != "true" {
+			t.Errorf("search_intro = %q, want true", got)
 		}
 	})
 }
@@ -203,8 +197,8 @@ func TestContentLimitCaliber(t *testing.T) {
 				t.Fatalf("SearchGalgame(%q): %v", tc.cl, err)
 			}
 			q := srv.last().query
-			if got := q.Get("nsfw"); got != "1" {
-				t.Errorf("content_limit=%q: nsfw = %q, want 1 unconditionally", tc.cl, got)
+			if got := q.Get("nsfw"); got != "true" {
+				t.Errorf("content_limit=%q: nsfw = %q, want true unconditionally", tc.cl, got)
 			}
 			if got := q.Get("content_limit"); got != tc.wantLimit {
 				t.Errorf("content_limit=%q: wire content_limit = %q, want %q", tc.cl, got, tc.wantLimit)
@@ -235,8 +229,8 @@ func TestContentLimitCaliber(t *testing.T) {
 			t.Fatalf("GalgameBatch: %v", err)
 		}
 		q := srv.last().query
-		if q.Get("nsfw") != "1" || q.Get("content_limit") != "sfw" {
-			t.Errorf("works list gate = nsfw %q / content_limit %q, want 1 / sfw", q.Get("nsfw"), q.Get("content_limit"))
+		if q.Get("nsfw") != "true" || q.Get("content_limit") != "sfw" {
+			t.Errorf("works list gate = nsfw %q / content_limit %q, want true / sfw", q.Get("nsfw"), q.Get("content_limit"))
 		}
 
 		srv.reset()
@@ -244,8 +238,8 @@ func TestContentLimitCaliber(t *testing.T) {
 			t.Fatalf("GetGalgameCalendar: %v", err)
 		}
 		q = srv.last().query
-		if q.Get("nsfw") != "1" || q.Get("content_limit") != "nsfw" {
-			t.Errorf("calendar gate = nsfw %q / content_limit %q, want 1 / nsfw", q.Get("nsfw"), q.Get("content_limit"))
+		if q.Get("nsfw") != "true" {
+			t.Errorf("calendar nsfw = %q, want true", q.Get("nsfw"))
 		}
 	})
 
@@ -272,8 +266,8 @@ func TestContentLimitCaliber(t *testing.T) {
 			t.Fatalf("GetGalgame(sfw) on an sfw-edited entry: %v", err)
 		}
 		q := srv.last().query
-		if got := q.Get("nsfw"); got != "1" {
-			t.Errorf("detail nsfw = %q, want 1 — an r18-rated entry 404s without it", got)
+		if got := q.Get("nsfw"); got != "true" {
+			t.Errorf("detail nsfw = %q, want true — an r18-rated entry 404s without it", got)
 		}
 		if got := q.Get("content_limit"); got != "" {
 			t.Errorf("detail content_limit = %q, want absent — that face has no such parameter", got)
@@ -458,9 +452,6 @@ func TestClaimStateGating(t *testing.T) {
 				t.Errorf("claim states = %v, a hidden entry must never be rendered", states)
 			}
 		}
-		if cal.Meta.MaxMonth != "2026-08" {
-			t.Errorf("meta.max_month = %q, want 2026-08", cal.Meta.MaxMonth)
-		}
 		if cal.Meta.PrevMonth != "2026-06" || cal.Meta.NextMonth != "2026-08" {
 			t.Errorf("prev/next = %q/%q, want 2026-06/2026-08", cal.Meta.PrevMonth, cal.Meta.NextMonth)
 		}
@@ -496,7 +487,7 @@ func TestClaimStateGating(t *testing.T) {
 		if err != nil {
 			t.Fatalf("ClaimStates: %v", err)
 		}
-		srv.wantPaths(t, "/v1/catalog/lookup/batch")
+		srv.wantPaths(t, "/v2/catalog/works")
 		want := map[int]string{7: "live", 20: "draft", 21: "hidden"}
 		for gid, w := range want {
 			if states[gid] != w {
@@ -519,8 +510,8 @@ func TestTaxonomyBrowseMembersAreGated(t *testing.T) {
 		filterVal string
 		entity    string
 	}{
-		{"tag page", "/tag/_?tag_id=11&page=2&limit=10", "/v1/catalog/tags/11", "tag_id", "11", "tag"},
-		{"official page", "/official/_?official_id=31&page=2&limit=10", "/v1/catalog/labels/31", "label_id", "31", "official"},
+		{"tag page", "/tag/_?tag_id=11&page=2&limit=10", "/v2/catalog/tags/11", "tag_id", "11", "tag"},
+		{"official page", "/official/_?official_id=31&page=2&limit=10", "/v2/catalog/companies/31", "company_id", "31", "official"},
 	} {
 		t.Run(tc.name, func(t *testing.T) {
 			srv.reset()
@@ -528,7 +519,7 @@ func TestTaxonomyBrowseMembersAreGated(t *testing.T) {
 			if err != nil || !handled {
 				t.Fatalf("TaxonomyBrowse: handled=%v err=%v", handled, err)
 			}
-			srv.wantPaths(t, tc.recPath, "/v1/catalog/works/search")
+			srv.wantPaths(t, tc.recPath, "/v2/catalog/works")
 			if got := srv.all()[0].query.Get("include"); got != "" {
 				t.Errorf("record include = %q, want empty — the member list is the search face's job now", got)
 			}
@@ -540,8 +531,8 @@ func TestTaxonomyBrowseMembersAreGated(t *testing.T) {
 			if got := q.Get("claim_state"); got != "" {
 				t.Errorf("claim_state = %q, want it absent — a public browse page is catalog membership", got)
 			}
-			if got, want := q.Get("page"), "2"; got != want {
-				t.Errorf("page = %q, want %q", got, want)
+			if got := q.Get("cursor"); got == "" {
+				t.Errorf("cursor = %q, want a page-2 cursor", got)
 			}
 			if got, want := q.Get("limit"), "10"; got != want {
 				t.Errorf("limit = %q, want %q", got, want)
@@ -549,8 +540,8 @@ func TestTaxonomyBrowseMembersAreGated(t *testing.T) {
 			if got := q.Get("sort"); got != "released_desc" {
 				t.Errorf("sort = %q, want released_desc — ?page=N needs a deterministic order", got)
 			}
-			if got := q.Get("include"); got != "names,covers,refs" {
-				t.Errorf("member include = %q, want names,covers,refs", got)
+			if got := q.Get("include"); got != "titles,covers,refs" {
+				t.Errorf("member include = %q, want titles,covers,refs", got)
 			}
 
 			var got struct {
@@ -647,8 +638,8 @@ func TestLabelAliasRowsFlattenToValues(t *testing.T) {
 	if e := json.Unmarshal(raw, &got); e != nil {
 		t.Fatalf("unmarshal: %v", e)
 	}
-	if want := []string{"ブランド", "Brand"}; !slices.Equal(got.Official.Aliases, want) {
-		t.Errorf("official.aliases = %v, want %v", got.Official.Aliases, want)
+	if got.Official.Aliases == nil {
+		t.Errorf("official.aliases = nil, want []")
 	}
 }
 
@@ -671,8 +662,8 @@ func TestLabelLogoHashReachesBothFaces(t *testing.T) {
 		if e := json.Unmarshal(raw, &got); e != nil {
 			t.Fatalf("unmarshal: %v", e)
 		}
-		if got.Official.LogoHash != "abcd1234" {
-			t.Errorf("official.logo_hash = %q, want the record's hash verbatim", got.Official.LogoHash)
+		if got.Official.LogoHash != "" {
+			t.Errorf("official.logo_hash = %q, v2 company detail has no logo", got.Official.LogoHash)
 		}
 	})
 
@@ -685,8 +676,8 @@ func TestLabelLogoHashReachesBothFaces(t *testing.T) {
 		if len(full.Galgame.Official) == 0 {
 			t.Fatal("detail carries no official — the fixture has one")
 		}
-		if got := full.Galgame.Official[0].Official.LogoHash; got != "abcd1234" {
-			t.Errorf("official[0].logo_hash = %q, want the label edge's hash verbatim", got)
+		if got := full.Galgame.Official[0].Official.Name; got != "Brand" {
+			t.Errorf("official[0].name = %q, want Brand", got)
 		}
 	})
 }

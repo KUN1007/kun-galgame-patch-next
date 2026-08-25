@@ -58,7 +58,7 @@ func TestCatalogLibrary_DoesNotSendClaimState(t *testing.T) {
 		query = req.URL.Query()
 		mu.Unlock()
 		w.Header().Set("Content-Type", "application/json")
-		_, _ = w.Write([]byte(`{"code":0,"message":"ok","data":{"items":[],"total":0}}`))
+		_, _ = w.Write([]byte(`{"object":"list","items":[],"total":0}`))
 	}))
 	t.Cleanup(srv.Close)
 
@@ -91,8 +91,8 @@ func TestCatalogLibrary_DoesNotSendClaimState(t *testing.T) {
 	}
 	mu.Lock()
 	defer mu.Unlock()
-	if path != "/v1/catalog/works/search" {
-		t.Errorf("path = %q, want /v1/catalog/works/search", path)
+	if path != "/v2/catalog/works" {
+		t.Errorf("path = %q, want /v2/catalog/works", path)
 	}
 	if got := first(query["claim_state"]); got != "" {
 		t.Errorf("claim_state = %q, want it absent", got)

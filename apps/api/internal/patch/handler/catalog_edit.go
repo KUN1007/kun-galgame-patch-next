@@ -7,6 +7,7 @@ import (
 	"slices"
 
 	"kun-galgame-patch-api/pkg/catalogclient"
+	"kun-galgame-patch-api/pkg/catalogv2"
 	"kun-galgame-patch-api/pkg/errors"
 	"kun-galgame-patch-api/pkg/response"
 
@@ -51,20 +52,52 @@ type catalogEditRequest struct {
 
 func catalogEditErr(c fiber.Ctx, err error) error {
 	switch {
-	case stderrors.Is(err, catalogclient.ErrNotConfigured):
+	case stderrors.Is(err, catalogv2.ErrNotConfigured), stderrors.Is(err, catalogclient.ErrNotConfigured):
 		return response.Error(c, errors.ErrCatalogUnavailable(""))
 	case stderrors.Is(err, catalogclient.ErrInsufficientScope):
 		return response.Error(c, errors.ErrCatalogReauthRequired(""))
-	case stderrors.Is(err, catalogclient.ErrNoAccessToken):
+	case stderrors.Is(err, catalogv2.ErrForbidden):
+		return response.Error(c, errors.New(40300,
+			"你没有权限修改该条目（编辑资料需要相应的社区权限）", fiber.StatusForbidden))
+	case stderrors.Is(err, catalogv2.ErrNoAccessToken), stderrors.Is(err, catalogclient.ErrNoAccessToken):
 		return response.Error(c, errors.ErrUnauthorized())
+	case stderrors.Is(err, catalogv2.ErrUnauthorized):
+		return response.Error(c, errors.ErrCatalogReauthRequired(
+			"资料库拒绝了当前登录凭证，请退出登录后重新登录一次"))
+	case stderrors.Is(err, catalogv2.ErrNotFound):
+		return response.Error(c, errors.ErrNotFound("资料库中没有这个条目"))
+	}
+
+	var p *catalogv2.Problem
+	if stderrors.As(err, &p) {
+		switch p.Status {
+		case http.StatusUnauthorized:
+			return response.Error(c, errors.ErrCatalogReauthRequired(
+				"资料库拒绝了当前登录凭证，请退出登录后重新登录一次"))
+		case http.StatusForbidden:
+			if p.Code == "SCOPE_REQUIRED" {
+				return response.Error(c, errors.ErrCatalogReauthRequired(""))
+			}
+			return response.Error(c, errors.New(40300,
+				"你没有权限修改该条目（编辑资料需要相应的社区权限）", fiber.StatusForbidden))
+		case http.StatusNotFound:
+			return response.Error(c, errors.ErrNotFound("资料库中没有这个条目"))
+		case http.StatusUnprocessableEntity:
+			return response.Error(c, errors.ErrValidation(p.Error()))
+		case http.StatusConflict, http.StatusPreconditionFailed:
+			return response.Error(c, errors.ErrConflict(
+				"条目已被他人修改，或该提案已经关闭，请刷新后重试"))
+		case http.StatusTooManyRequests:
+			return response.Error(c, errors.ErrTooManyRequests(p.Error()))
+		}
+		slog.Error("catalog edit: upstream error", "status", p.Status, "code", p.Code, "detail", p.Detail)
+		return response.Error(c, errors.ErrCatalogUnavailable(""))
 	}
 
 	var apiErr *catalogclient.APIError
 	if stderrors.As(err, &apiErr) {
 		switch apiErr.Status {
 		case http.StatusUnauthorized:
-			slog.Warn("catalog edit: upstream rejected the user token",
-				"code", apiErr.Code, "message", apiErr.Message)
 			return response.Error(c, errors.ErrCatalogReauthRequired(
 				"资料库拒绝了当前登录凭证，请退出登录后重新登录一次"))
 		case http.StatusForbidden:
@@ -72,16 +105,7 @@ func catalogEditErr(c fiber.Ctx, err error) error {
 				"你没有权限修改该条目（编辑资料需要相应的社区权限）", fiber.StatusForbidden))
 		case http.StatusNotFound:
 			return response.Error(c, errors.ErrNotFound("资料库中没有这个条目"))
-		case http.StatusUnprocessableEntity:
-			return response.Error(c, errors.ErrValidation(apiErr.Message))
-		case http.StatusConflict:
-			return response.Error(c, errors.ErrConflict(
-				"条目已被他人修改，或该提案已经关闭，请刷新后重试"))
-		case http.StatusTooManyRequests:
-			return response.Error(c, errors.ErrTooManyRequests(apiErr.Message))
 		}
-		slog.Error("catalog edit: upstream error",
-			"status", apiErr.Status, "code", apiErr.Code, "message", apiErr.Message)
 		return response.Error(c, errors.ErrCatalogUnavailable(""))
 	}
 
@@ -89,8 +113,15 @@ func catalogEditErr(c fiber.Ctx, err error) error {
 	return response.Error(c, errors.ErrCatalogUnavailable(""))
 }
 
+func (h *PatchHandler) catalogV2() *catalogv2.Client {
+	if h.galgame == nil {
+		return nil
+	}
+	return h.galgame.V2()
+}
+
 func (h *PatchHandler) catalogEditContext(c fiber.Ctx) (int64, string, error) {
-	if h.catalog == nil || !h.catalog.Configured() {
+	if h.catalogV2() == nil || !h.catalogV2().Configured() {
 		return 0, "", response.Error(c, errors.ErrCatalogUnavailable(""))
 	}
 	id, idErr := getIDParam(c, "id")
@@ -143,11 +174,12 @@ func (h *PatchHandler) CatalogEditBootstrap(c fiber.Ctx) error {
 		return done
 	}
 
-	schema, err := h.catalog.GetEditSchemaUser(c.Context(), token, catalogclient.EntityTypeWork, workID)
+	v2 := h.catalogV2()
+	schema, err := v2.GetSchema(c.Context(), "work")
 	if err != nil {
 		return catalogEditErr(c, err)
 	}
-	snapshot, err := h.catalog.GetEditSnapshotUser(c.Context(), token, catalogclient.EntityTypeWork, workID)
+	snapshot, err := v2.Snapshot(c.Context(), token, "work", workID)
 	if err != nil {
 		return catalogEditErr(c, err)
 	}
@@ -158,8 +190,13 @@ func (h *PatchHandler) CatalogEditBootstrap(c fiber.Ctx) error {
 		if !slices.Contains(catalogEditFieldKeys, f.Key) {
 			continue
 		}
-		fields = append(fields, f)
-		if f.CanPropose && !f.Locked {
+		row := catalogclient.EditSchemaField{
+			Key: f.Key, Kind: f.FieldType, DiffHint: f.DiffHint,
+			Deprecated: f.Deprecated, MaxSuppressed: f.MaxSuppressed, MaxElements: f.MaxElements,
+			CanPropose: !f.Deprecated, Locked: f.Deprecated,
+		}
+		fields = append(fields, row)
+		if row.CanPropose && !row.Locked {
 			canEdit = true
 		}
 	}
@@ -167,7 +204,7 @@ func (h *PatchHandler) CatalogEditBootstrap(c fiber.Ctx) error {
 	return response.OK(c, fiber.Map{
 		"work_id":  workID,
 		"can_edit": canEdit,
-		"values":   catalogEditSnapshotValues(snapshot.Values),
+		"values":   catalogEditSnapshotValues(snapshot.FieldValues),
 		"fields":   fields,
 	})
 }
@@ -211,21 +248,14 @@ func (h *PatchHandler) CatalogEditSubmit(c fiber.Ctx) error {
 		return response.Error(c, errors.ErrValidation("没有需要保存的修改"))
 	}
 
-	result, err := h.catalog.CreateEditProposalUser(c.Context(), token, catalogclient.UserEditCreateRequest{
-		EntityType: catalogclient.EntityTypeWork,
-		EntityID:   workID,
-		Patch:      patch,
-		Note:       req.Note,
-	})
+	result, err := h.catalogV2().CreateProposal(c.Context(), token, catalogclient.EntityTypeWork, workID, patch, req.Note)
 	if err != nil {
 		return catalogEditErr(c, err)
 	}
-
-	out := fiber.Map{"merged": result.Merged, "proposal": result.Proposal}
-	if result.Revision != nil {
-		out["revision"] = result.Revision
-	}
-	return response.OK(c, out)
+	return response.OK(c, fiber.Map{
+		"merged":   result.State == "merged",
+		"proposal": proposalView(result),
+	})
 }
 
 func (h *PatchHandler) CatalogEditProposals(c fiber.Ctx) error {
@@ -233,19 +263,29 @@ func (h *PatchHandler) CatalogEditProposals(c fiber.Ctx) error {
 	if done != nil {
 		return done
 	}
-	items, err := h.catalog.MyEditProposals(c.Context(), token,
-		catalogclient.EntityTypeWork, workID, "", 20)
+	page, err := h.catalogV2().ListMyProposals(c.Context(), token, workID, 20)
 	if err != nil {
 		return catalogEditErr(c, err)
 	}
-	if items == nil {
-		items = []catalogclient.EditProposal{}
+	items := make([]fiber.Map, 0, len(page.Items))
+	for i := range page.Items {
+		items = append(items, proposalView(&page.Items[i]))
 	}
 	return response.OK(c, fiber.Map{"items": items})
 }
 
+func proposalView(p *catalogv2.ProposalRecord) fiber.Map {
+	id, _ := catalogv2.ParseID(p.ID)
+	entityID, _ := catalogv2.ParseID(p.EntityID)
+	return fiber.Map{
+		"id": id, "status": p.State, "state": p.State, "note": p.Note,
+		"entity_type": p.EntityType, "entity_id": entityID, "patch": p.Patch,
+		"created_at": p.CreatedAt,
+	}
+}
+
 func (h *PatchHandler) CatalogProposalWithdraw(c fiber.Ctx) error {
-	if h.catalog == nil || !h.catalog.Configured() {
+	if h.catalogV2() == nil || !h.catalogV2().Configured() {
 		return response.Error(c, errors.ErrCatalogUnavailable(""))
 	}
 	id, idErr := getIDParam(c, "id")
@@ -256,9 +296,9 @@ func (h *PatchHandler) CatalogProposalWithdraw(c fiber.Ctx) error {
 	if tErr != nil {
 		return response.Error(c, tErr)
 	}
-	prop, err := h.catalog.WithdrawEditProposalUser(c.Context(), token, int64(id))
+	prop, err := h.catalogV2().WithdrawProposal(c.Context(), token, int64(id))
 	if err != nil {
 		return catalogEditErr(c, err)
 	}
-	return response.OK(c, prop)
+	return response.OK(c, proposalView(prop))
 }

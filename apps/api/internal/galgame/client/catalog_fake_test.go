@@ -52,7 +52,7 @@ func newCatalogFake(t *testing.T) *catalogFake {
 
 		w.Header().Set("Content-Type", "application/json")
 		body := f.route(req)
-		_, _ = w.Write([]byte(`{"code":0,"message":"ok","data":` + body + `}`))
+		_, _ = w.Write([]byte(body))
 	}))
 	t.Cleanup(f.Server.Close)
 	return f
@@ -60,25 +60,43 @@ func newCatalogFake(t *testing.T) *catalogFake {
 
 func (f *catalogFake) route(req *http.Request) string {
 	p := req.URL.Path
+	q := req.URL.Query()
 	switch {
-	case p == "/v1/catalog/lookup/batch":
-		return f.lookupBatch(req)
-	case p == "/v1/catalog/lookup":
-		return f.lookupOne(req)
-	case p == "/v1/catalog/works":
+	case p == "/v2/catalog/works" && q.Get("refs") != "":
+		return f.worksByRefs(q.Get("refs"))
+	case p == "/v2/catalog/works" && q.Get("ids") != "":
 		return f.worksList(req)
-	case p == "/v1/catalog/works/search":
+	case p == "/v2/catalog/works":
 		return f.search()
-	case p == "/v1/catalog/calendar":
+	case p == "/v2/catalog/calendar":
 		return f.calendar()
-	case strings.HasPrefix(p, "/v1/catalog/tags/"):
+	case strings.HasPrefix(p, "/v2/catalog/tags/"):
 		return f.tagRecord(p)
-	case strings.HasPrefix(p, "/v1/catalog/labels/"):
+	case strings.HasPrefix(p, "/v2/catalog/companies/"):
 		return f.labelRecord(p)
-	case strings.HasPrefix(p, "/v1/catalog/works/"):
+	case strings.HasPrefix(p, "/v2/catalog/works/"):
 		return f.workDetail(req)
 	}
-	return `{}`
+	return `{"object":"list","items":[]}`
+}
+
+func (f *catalogFake) worksByRefs(raw string) string {
+	items := make([]string, 0, 4)
+	seen := map[int64]bool{}
+	for _, part := range strings.Split(raw, ",") {
+		_, ext, ok := strings.Cut(strings.TrimSpace(part), ":")
+		if !ok {
+			continue
+		}
+		gid, _ := strconv.Atoi(ext)
+		fx, hit := gidFixture[gid]
+		if !hit || seen[fx.catalogID] {
+			continue
+		}
+		seen[fx.catalogID] = true
+		items = append(items, workItem(fx.catalogID, gid, fx.state))
+	}
+	return `{"object":"list","items":[` + strings.Join(items, ",") + `]}`
 }
 
 func (f *catalogFake) lookupBatch(req *http.Request) string {
@@ -120,32 +138,26 @@ func (f *catalogFake) worksList(req *http.Request) string {
 		gid, state := gidForCatalogID(id)
 		items = append(items, workItem(id, gid, state))
 	}
-	return `{"items":[` + strings.Join(items, ",") + `],"next_cursor":null}`
+	return `{"object":"list","items":[` + strings.Join(items, ",") + `],"next_cursor":null}`
 }
 
 func (f *catalogFake) tagRecord(path string) string {
-	id, _ := strconv.ParseInt(strings.TrimPrefix(path, "/v1/catalog/tags/"), 10, 64)
+	id, _ := strconv.ParseInt(strings.TrimPrefix(path, "/v2/catalog/tags/"), 10, 64)
 	sexual := "false"
 	if id == 12 {
 		sexual = "true"
 	}
-	return `{"id":` + strconv.FormatInt(id, 10) + `,"name":"tag","tier":"core","kind":"content",` +
-		`"sexual":` + sexual + `,"work_count":3,` +
-		`"intros":[{"lang":"zh-Hans","intro":"说明","source":"vndb"}]}`
+	return `{"object":"tag","id":"` + strconv.FormatInt(id, 10) + `","display_name":"tag","tier":"core","tag_kind":"content",` +
+		`"is_sexual":` + sexual + `,"work_count":3}`
 }
 
 func (f *catalogFake) labelRecord(path string) string {
-	id, _ := strconv.ParseInt(strings.TrimPrefix(path, "/v1/catalog/labels/"), 10, 64)
-	return `{"id":` + strconv.FormatInt(id, 10) + `,"display_name":"Brand","kind":"developer","lang":"ja",` +
-		`"aliases":[{"value":"ブランド","lang":"ja","kind":"spelling_variant"},` +
-		`{"value":"Brand","kind":"spelling_variant","machine":true}],` +
-		`"work_count":3,"logo_hash":"abcd1234",` +
-		`"intros":[{"lang":"zh-Hans","intro":"说明","source":"vndb"}],` +
-		`"links":[{"source":"web","url":"https://example.test"}]}`
+	id, _ := strconv.ParseInt(strings.TrimPrefix(path, "/v2/catalog/companies/"), 10, 64)
+	return `{"object":"company","id":"` + strconv.FormatInt(id, 10) + `","display_name":"Brand","company_kind":"developer","work_count":3}`
 }
 
 func (f *catalogFake) workDetail(req *http.Request) string {
-	id, _ := strconv.ParseInt(strings.TrimPrefix(req.URL.Path, "/v1/catalog/works/"), 10, 64)
+	id, _ := strconv.ParseInt(strings.TrimPrefix(req.URL.Path, "/v2/catalog/works/"), 10, 64)
 	gid, state := gidForCatalogID(id)
 	// credits ride the detail face ONLY behind include=credits; the roster and
 	// the ratings are unconditional. Serving credits either way would let the
@@ -154,24 +166,23 @@ func (f *catalogFake) workDetail(req *http.Request) string {
 	if strings.Contains(req.URL.Query().Get("include"), "credits") {
 		credits = detailCreditsJSON
 	}
-	return `{"id":` + strconv.FormatInt(id, 10) + `,"medium":"galgame","display_name":"W","olang":"ja",` +
-		`"content_rating":"` + ratingForCatalogID(id) + `","release_date":"2026-07-14","created":"2026-01-01T00:00:00Z","updated":"2026-07-01T00:00:00Z",` +
-		`"localized":{"ja":{"value":"タイトル","kind":"official"},` +
-		`"zh":{"value":"机翻标题","kind":"official","machine":true},` +
-		`"zh-Hans":{"value":"标题","kind":"official"},` +
-		`"en":{"value":"Title","kind":"official"}},` +
-		`"refs":[{"source":"vndb","external_id":"v42"}],` +
-		`"claimed_by":` + claimJSON(gid, state) + `,` +
-		`"intros":[{"lang":"zh-Hans","intro":"介绍","source":"vndb","machine":false}],` +
-		`"covers":[{"url":"https://cdn/aa/bb/hash1.webp","kind":"main","portrait_pinned":true,"sexual":0,"violence":0,"source":"vndb","width":600,"height":800,"thumbhash":"th"},` +
-		`{"url":"https://cdn/aa/bb/hash2.webp","kind":"main","portrait_pinned":false,"sexual":0,"violence":0,"source":"vndb","width":1280,"height":720,"thumbhash":"th2"}],` +
+	return `{"object":"work","id":"` + strconv.FormatInt(id, 10) + `","medium":"galgame","display_name":"W","olang":"ja",` +
+		`"content_rating":"` + ratingForCatalogID(id) + `","release_date":"2026-07-14","created_at":"2026-01-01T00:00:00Z","updated_at":"2026-07-01T00:00:00Z",` +
+		`"localized":{"ja":{"value":"タイトル","is_machine":false},` +
+		`"zh":{"value":"机翻标题","is_machine":true},` +
+		`"zh-Hans":{"value":"标题","is_machine":false},` +
+		`"en":{"value":"Title","is_machine":false}},` +
+		`"refs":[{"source":"vndb","external_id":"v42"},{"source":"galgame_wiki","external_id":"` + strconv.Itoa(gid) + `"}],` +
+		`"claim":` + claimJSON(gid, state) + `,` +
+		`"intros":[{"lang":"zh-Hans","value":"介绍","source":"vndb","is_machine":false}],` +
+		`"covers":[{"url":"https://cdn/aa/bb/hash1.webp","hash":"hash1","portrait_pinned":true,"sexual":"safe","source":"vndb","width":600,"height":800,"thumbhash":"th"},` +
+		`{"url":"https://cdn/aa/bb/hash2.webp","hash":"hash2","portrait_pinned":false,"sexual":"safe","source":"vndb","width":1280,"height":720,"thumbhash":"th2"}],` +
 		`"screenshots":[],` +
-		`"tags":[{"name":"純愛","source":"vndb","canonical_id":11,"tier":"core","kind":"content","spoiler":0,"sexual":false},` +
-		`{"name":"エロ","source":"vndb","canonical_id":12,"tier":"core","kind":"content","spoiler":1,"sexual":true}],` +
-		`"labels":[{"id":31,"display_name":"Brand","label_kind":"game_brand","kind":"developer","lang":"ja","logo_hash":"abcd1234"}],` +
-		`"engines":[{"id":41,"name":"KiriKiri"}],"links":[{"source":"web","url":"https://example.test"}],` +
-		`"cover_slots":{"portrait":{"url":"https://cdn/aa/bb/hash3.webp","width":850,"height":1080,"thumbhash":"th3","sexual":0,"violence":0,"source":"upscale"},` +
-		`"banner":{"url":"https://cdn/aa/bb/hash2.webp","width":1728,"height":1080,"thumbhash":"th2","sexual":0,"violence":0,"source":"curated"}},` +
+		`"tags":[{"id":"11","display_name":"純愛","source":"vndb","tier":"core","tag_kind":"content","spoiler":"none","is_sexual":false},` +
+		`{"id":"12","display_name":"エロ","source":"vndb","tier":"core","tag_kind":"content","spoiler":"minor","is_sexual":true}],` +
+		`"companies":[{"id":"31","display_name":"Brand","company_kind":"game_brand","attribution_role":"developer"}],` +
+		`"banner":{"url":"https://cdn/aa/bb/hash2.webp","hash":"hash2","width":1728,"height":1080,"thumbhash":"th2","sexual":"safe","source":"curated"},` +
+		`"cover":{"url":"https://cdn/aa/bb/hash3.webp","hash":"hash3","width":850,"height":1080,"thumbhash":"th3","sexual":"safe","source":"upscale"},` +
 		`"characters":` + detailCharactersJSON + `,` +
 		`"ratings":` + detailRatingsJSON + `,` +
 		`"credits":` + credits + `}`
@@ -180,10 +191,10 @@ func (f *catalogFake) workDetail(req *http.Request) string {
 // The three blocks below are the prod wire shape of /v1/catalog/works/{id},
 // trimmed from a live read of work 3 on 2026-08-19.
 const detailCharactersJSON = `[` +
-	`{"id":1699,"display_name":"コロナ","localized":{"zh-Hans":{"value":"科罗娜","kind":"translation","machine":true}},` +
-	`"kind":"main","spoiler":0,"image":"https://cdn/aa/bb/chara1.webp","figure":"https://cdn/aa/bb/figure1.webp","identity":"roster:1699",` +
-	`"voices":[{"id":1550,"display_name":"榎木実佳","lang":"ja","localized":{"zh-Hans":{"value":"榎木实佳","kind":"translation"}}}]},` +
-	`{"id":1700,"display_name":"雪々","localized":{},"kind":"secondary","spoiler":1,"image":"","figure":"","identity":"roster:1700","voices":[]}]`
+	`{"id":"1699","display_name":"コロナ","localized":{"zh-Hans":{"value":"科罗娜","is_machine":true}},` +
+	`"roster_role":"main","spoiler":"none","image":{"url":"https://cdn/aa/bb/chara1.webp","hash":"chara1"},` +
+	`"figure":{"url":"https://cdn/aa/bb/figure1.webp","hash":"figure1"}},` +
+	`{"id":"1700","display_name":"雪々","localized":{},"roster_role":"secondary","spoiler":"minor"}]`
 
 const detailRatingsJSON = `[` +
 	`{"source":"vndb","score":8.1,"vote_count":500,"distribution":[{"score":9,"count":126},{"score":10,"count":38}],"stats":{"average":8.1}},` +
@@ -194,17 +205,18 @@ const detailRatingsJSON = `[` +
 // vocabularies, developer duplicates the 会社 chips, and 保住圭 rides both a real
 // role and other-staff.
 const detailCreditsJSON = `[` +
-	`{"role_key":"scenario","role_name":"剧本","credits":[{"id":900,"display_name":"保住圭","lang":"ja","localized":{},"source":"vndb","identity":"credit:1:900:0"}]},` +
-	`{"role_key":"剧本","role_name":"剧本","credits":[{"id":901,"display_name":"丸戸史明","lang":"ja","localized":{"zh-Hans":{"value":"丸户史明","kind":"translation"}},"source":"bangumi","identity":"credit:1:901:0"}]},` +
-	`{"role_key":"原画","role_name":"原画","credits":[{"id":902,"display_name":"深崎暮人","lang":"ja","localized":{},"source":"bangumi","identity":"credit:2:902:0"}]},` +
-	`{"role_key":"developer","role_name":"开发","credits":[{"id":903,"display_name":"Brand","lang":"ja","localized":{},"source":"vndb","identity":"credit:3:903:0"}]},` +
-	`{"role_key":"voice-actor","role_name":"声优","credits":[{"id":1550,"display_name":"榎木実佳","lang":"ja","localized":{"zh-Hans":{"value":"榎木实佳","kind":"translation"}},"character_id":1699,"character":"コロナ","source":"bangumi","identity":"credit:4:1550:1699"}]},` +
+	`{"role_key":"scenario","role_name":"剧本","credits":[{"id":"900","display_name":"保住圭","localized":{}}]},` +
+	`{"role_key":"剧本","role_name":"剧本","credits":[{"id":"901","display_name":"丸戸史明","localized":{"zh-Hans":{"value":"丸户史明","is_machine":false}}}]},` +
+	`{"role_key":"原画","role_name":"原画","credits":[{"id":"902","display_name":"深崎暮人","localized":{}}]},` +
+	`{"role_key":"developer","role_name":"开发","credits":[{"id":"903","display_name":"Brand","localized":{}}]},` +
+	`{"role_key":"voice-actor","role_name":"声优","credits":[{"id":"1550","display_name":"榎木実佳","localized":{"zh-Hans":{"value":"榎木实佳","is_machine":false}},"character_id":"1699"}]},` +
 	`{"role_key":"other-staff","role_name":"其他","credits":[` +
-	`{"id":900,"display_name":"保住圭 (Hozumi Kei)","lang":"ja","localized":{},"source":"vndb","identity":"credit:5:900:0"},` +
-	`{"id":904,"display_name":"なかひろ","lang":"ja","localized":{},"source":"vndb","identity":"credit:5:904:0"}]}]`
+	`{"id":"900","display_name":"保住圭 (Hozumi Kei)","localized":{}},` +
+	`{"id":"904","display_name":"なかひろ","localized":{}}]}]`
 
 func (f *catalogFake) search() string {
-	return `{"total":4,"page":1,"limit":20,"items":[` +
+	total := int64(4)
+	return `{"object":"list","total":` + strconv.FormatInt(total, 10) + `,"items":[` +
 		workItem(900, 7, catalogClaimStateLive) + `,` +
 		workItem(920, 20, catalogClaimStateDraft) + `,` +
 		workItem(921, 21, catalogClaimStateHidden) + `,` +
@@ -213,9 +225,7 @@ func (f *catalogFake) search() string {
 }
 
 func (f *catalogFake) calendar() string {
-	return `{"month":"2026-07","count":4,"next_cursor":null,` +
-		`"meta":{"today":"2026-07-29","min_month":"2020-01","max_month":"2026-08","has_prev":true,"has_next":true},` +
-		`"items":[` +
+	return `{"object":"list","total":4,"next_cursor":null,"items":[` +
 		workItem(900, 7, catalogClaimStateLive) + `,` +
 		workItem(920, 20, catalogClaimStateDraft) + `,` +
 		workItem(921, 21, catalogClaimStateHidden) + `,` +
@@ -224,24 +234,25 @@ func (f *catalogFake) calendar() string {
 }
 
 func workItem(catalogID int64, gid int, state string) string {
-	return `{"id":` + strconv.FormatInt(catalogID, 10) + `,"medium":"galgame","display_name":"W",` +
+	return `{"object":"work","id":"` + strconv.FormatInt(catalogID, 10) + `","medium":"galgame","display_name":"W",` +
 		`"content_rating":"` + ratingForCatalogID(catalogID) + `","olang":"ja","release_date":"2026-07-14",` +
-		`"claimed_by":` + claimJSON(gid, state) + `,"cover":"https://cdn/aa/bb/hash1.webp","updated":"2026-07-01T00:00:00Z",` +
-		`"localized":{"ja":{"value":"タイトル","kind":"official"},` +
-		`"zh-Hans":{"value":"标题","kind":"official"},` +
-		`"zh-Hant":{"value":"標題","kind":"official"},` +
-		`"en":{"value":"Title","kind":"official","machine":true},` +
-		`"ko":{"value":"타이틀","kind":"official"}},` +
-		`"covers":{"portrait":{"url":"https://cdn/aa/bb/hash1.webp","width":600,"height":800,"thumbhash":"th","sexual":0,"violence":0,"source":"vndb"},` +
-		`"banner":{"url":"https://cdn/aa/bb/hash2.webp","width":1280,"height":720,"thumbhash":"th2","sexual":0,"violence":0,"source":"vndb"}},` +
-		`"refs":[{"source":"vndb","external_id":"v42"}]}`
+		`"claim":` + claimJSON(gid, state) + `,` +
+		`"cover":{"url":"https://cdn/aa/bb/hash1.webp","hash":"hash1","width":600,"height":800,"thumbhash":"th","sexual":"safe","source":"vndb"},` +
+		`"banner":{"url":"https://cdn/aa/bb/hash2.webp","hash":"hash2","width":1280,"height":720,"thumbhash":"th2","sexual":"safe","source":"vndb"},` +
+		`"updated_at":"2026-07-01T00:00:00Z",` +
+		`"localized":{"ja":{"value":"タイトル","is_machine":false},` +
+		`"zh-Hans":{"value":"标题","is_machine":false},` +
+		`"zh-Hant":{"value":"標題","is_machine":false},` +
+		`"en":{"value":"Title","is_machine":true},` +
+		`"ko":{"value":"타이틀","is_machine":false}},` +
+		`"refs":[{"source":"vndb","external_id":"v42"},{"source":"galgame_wiki","external_id":"` + strconv.Itoa(gid) + `"},{"source":"curated","external_id":"` + strconv.Itoa(gid) + `"}]}`
 }
 
 func claimJSON(gid int, state string) string {
 	if gid == 0 || state == "" {
 		return "null"
 	}
-	return `{"site":"galgame_wiki","work_id":` + strconv.Itoa(gid) + `,"state":"` + state + `",` +
+	return `{"site":"galgame_wiki","site_work_id":"` + strconv.Itoa(gid) + `","state":"` + state + `",` +
 		`"content_limit":"` + gidFixture[gid].limit + `"}`
 }
 

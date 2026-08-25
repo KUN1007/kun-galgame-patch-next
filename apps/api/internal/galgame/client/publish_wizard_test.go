@@ -20,20 +20,20 @@ func (r *wizardRecorder) client(t *testing.T) *Client {
 	t.Helper()
 	srv := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, req *http.Request) {
 		r.mu.Lock()
-		body := `{"code":0,"message":"ok","data":{}}`
+		body := `{"object":"list","items":[]}`
 		switch {
-		case strings.HasSuffix(req.URL.Path, "/catalog/works/search"):
+		case req.URL.Path == "/v2/catalog/works":
 			r.catalogQ = req.URL.Query()
-			body = `{"code":0,"message":"ok","data":{"total":2,"items":[
-			  {"id":11,"display_name":"A","content_rating":"r18",
-			   "claimed_by":{"site":"galgame_wiki","work_id":292,"state":"live","content_limit":"nsfw"},
-			   "localized":{"ja":{"value":"白恋サクラ","kind":"official"}},"refs":[{"source":"vndb","external_id":"v22610"}]},
-			  {"id":12,"display_name":"B","content_rating":"r18",
-			   "claimed_by":{"site":"galgame_wiki","work_id":9978,"state":"draft","content_limit":"nsfw"}},
-			  {"id":13,"display_name":"withdrawn","content_rating":"r18",
-			   "claimed_by":{"site":"galgame_wiki","work_id":404,"state":"hidden","content_limit":"nsfw"}},
-			  {"id":14,"display_name":"unclaimed","content_rating":"r18","claimed_by":null}
-			]}}`
+			body = `{"object":"list","total":2,"items":[
+			  {"id":"11","display_name":"A","content_rating":"r18",
+			   "claim":{"site":"galgame_wiki","site_work_id":"292","state":"live","content_limit":"nsfw"},
+			   "localized":{"ja":{"value":"白恋サクラ","is_machine":false}},"refs":[{"source":"vndb","external_id":"v22610"}]},
+			  {"id":"12","display_name":"B","content_rating":"r18",
+			   "claim":{"site":"galgame_wiki","site_work_id":"9978","state":"draft","content_limit":"nsfw"}},
+			  {"id":"13","display_name":"withdrawn","content_rating":"r18",
+			   "claim":{"site":"galgame_wiki","site_work_id":"404","state":"hidden","content_limit":"nsfw"}},
+			  {"id":"14","display_name":"unclaimed","content_rating":"r18","claim":null}
+			]}`
 		case strings.HasSuffix(req.URL.Path, "/galgame/search"):
 			r.wikiHits++
 		}
@@ -75,8 +75,8 @@ func TestPublishWizard_ItemsComeFromTheCatalog(t *testing.T) {
 	if got := rec.catalogQ.Get("limit"); got != "12" {
 		t.Errorf("limit = %q, want 12", got)
 	}
-	if got := rec.catalogQ.Get("nsfw"); got != "1" {
-		t.Errorf("nsfw = %q, want 1", got)
+	if got := rec.catalogQ.Get("nsfw"); got != "true" {
+		t.Errorf("nsfw = %q, want true", got)
 	}
 	if got := rec.catalogQ.Get("content_limit"); got != "" {
 		t.Errorf("content_limit = %q, want it absent on the wizard lane", got)

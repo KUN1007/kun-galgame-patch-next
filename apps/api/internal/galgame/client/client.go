@@ -2,15 +2,14 @@ package client
 
 import (
 	"context"
-	"encoding/json"
 	"errors"
 	"fmt"
-	"io"
 	"net/http"
-	"net/url"
 	"strconv"
 	"strings"
 	"time"
+
+	"kun-galgame-patch-api/pkg/catalogv2"
 )
 
 const galgameCodeNotFound = 404
@@ -30,7 +29,7 @@ func (e *GalgameError) Absent() bool {
 	if e.HTTPStatus == 0 {
 		return e.Code == galgameCodeNotFound
 	}
-	return e.HTTPStatus == http.StatusNotFound && e.Code == catalogCodeNotFound
+	return e.HTTPStatus == http.StatusNotFound && (e.Code == catalogCodeNotFound || e.Code == galgameCodeNotFound)
 }
 
 func IsAbsent(err error) bool {
@@ -43,7 +42,10 @@ func MovedTarget(err error) (int64, bool) {
 	if !errors.As(err, &gerr) {
 		return 0, false
 	}
-	if gerr.HTTPStatus != http.StatusMovedPermanently || gerr.Code != catalogCodeMoved || gerr.Moved <= 0 {
+	if gerr.Code != catalogCodeMoved || gerr.Moved <= 0 {
+		return 0, false
+	}
+	if gerr.HTTPStatus != http.StatusMovedPermanently && gerr.HTTPStatus != http.StatusNotFound {
 		return 0, false
 	}
 	return gerr.Moved, true
@@ -62,32 +64,18 @@ func upstreamError(resp *http.Response, code int, message string) *GalgameError 
 }
 
 type Client struct {
-	v1Base string
-	apiKey string
-	http   *http.Client
-	gids   *gidMap
+	v2   *catalogv2.Client
+	gids *gidMap
 }
 
 func NewWithKey(baseURL, apiKey string) *Client {
-	base := strings.TrimRight(baseURL, "/")
 	return &Client{
-		v1Base: base + "/v1",
-		apiKey: apiKey,
-		http: &http.Client{
-			Timeout: 10 * time.Second,
-			CheckRedirect: func(*http.Request, []*http.Request) error {
-				return http.ErrUseLastResponse
-			},
-		},
+		v2:   catalogv2.New(baseURL, apiKey),
 		gids: newGIDMap(),
 	}
 }
 
-type galgameResponse[T any] struct {
-	Code    int    `json:"code"`
-	Message string `json:"message"`
-	Data    T      `json:"data"`
-}
+func (c *Client) V2() *catalogv2.Client { return c.v2 }
 
 type Paginated[T any] struct {
 	Items []T   `json:"items"`
@@ -192,67 +180,43 @@ type ScreenshotInput struct {
 	Thumbhash string `json:"thumbhash,omitempty"`
 }
 
-func (c *Client) getV1Raw(ctx context.Context, path string, query url.Values) (json.RawMessage, error) {
-	data, _, err := c.getV1RawStatus(ctx, path, query)
-	return data, err
-}
-
-func (c *Client) getV1RawStatus(ctx context.Context, path string, query url.Values) (json.RawMessage, int, error) {
-	u := c.v1Base + path
-	if len(query) > 0 {
-		u += "?" + query.Encode()
+func worksQueryFor(p SearchGalgameParams) catalogv2.WorksQuery {
+	q := catalogv2.WorksQuery{
+		Q:            p.Q,
+		Sort:         searchSortForCatalog(p.Sort),
+		Page:         p.Page,
+		Limit:        p.Limit,
+		OLang:        joinCatalogLangs(p.OriginalLang),
+		NSFW:         true,
+		Include:      []string{"titles", "covers", "refs"},
+		IncludeTotal: true,
+		Facets:       []string{"olang"},
+		SearchIntro:  p.SearchIntro,
 	}
-
-	req, err := http.NewRequestWithContext(ctx, "GET", u, nil)
-	if err != nil {
-		return nil, 0, fmt.Errorf("构造请求失败: %w", err)
+	gate := gateFor(p.ContentLimit)
+	q.ContentLimit = gate.contentLimit
+	if p.AgeLimit == "r18" {
+		q.ContentRating = "r18"
 	}
-	if c.apiKey != "" {
-		req.Header.Set("X-API-Key", c.apiKey)
+	if len(p.TagIDs) > 0 {
+		q.TagIDs = joinInts(p.TagIDs)
 	}
-
-	resp, err := c.http.Do(req)
-	if err != nil {
-		return nil, 0, fmt.Errorf("调用 galgame 失败: %w", err)
+	if len(p.OfficialIDs) > 0 {
+		q.CompanyID = int64(p.OfficialIDs[0])
 	}
-	defer resp.Body.Close()
-
-	body, err := io.ReadAll(resp.Body)
-	if err != nil {
-		return nil, resp.StatusCode, fmt.Errorf("读取 galgame 响应失败: %w", err)
+	if len(p.EngineIDs) > 0 {
+		q.EngineID = int64(p.EngineIDs[0])
 	}
-
-	var wrapper galgameResponse[json.RawMessage]
-	if err := json.Unmarshal(body, &wrapper); err != nil {
-		return nil, resp.StatusCode, fmt.Errorf("解析 galgame 响应失败: %w (body=%s)", err, truncate(string(body), 200))
+	if p.SeriesID > 0 {
+		q.SeriesID = int64(p.SeriesID)
 	}
-	if wrapper.Code != 0 {
-		gerr := upstreamError(resp, wrapper.Code, wrapper.Message)
-		if wrapper.Code == catalogCodeMoved {
-			var moved struct {
-				CurrentID int64 `json:"current_id"`
-			}
-			if json.Unmarshal(wrapper.Data, &moved) == nil {
-				gerr.Moved = moved.CurrentID
-			}
-		}
-		return nil, resp.StatusCode, gerr
+	if p.ReleasedFrom > 0 {
+		q.ReleasedAfter = yearLowerBound(p.ReleasedFrom)
 	}
-	return wrapper.Data, resp.StatusCode, nil
-}
-
-func (c *Client) getV1(ctx context.Context, path string, query url.Values, out any) error {
-	data, err := c.getV1Raw(ctx, path, query)
-	if err != nil {
-		return err
+	if p.ReleasedTo > 0 {
+		q.ReleasedBefore = yearUpperBound(p.ReleasedTo)
 	}
-	if out == nil {
-		return nil
-	}
-	if err := json.Unmarshal(data, out); err != nil {
-		return fmt.Errorf("解析 galgame data 失败: %w", err)
-	}
-	return nil
+	return q
 }
 
 type SearchGalgameParams struct {
@@ -284,62 +248,17 @@ func searchSortForCatalog(sort string) string {
 }
 
 func (c *Client) SearchGalgame(ctx context.Context, p SearchGalgameParams) (*Paginated[GalgameHit], error) {
-	q := url.Values{}
-	if p.Q != "" {
-		q.Set("q", p.Q)
+	page, err := c.v2.ListWorks(ctx, worksQueryFor(p))
+	if err != nil {
+		return nil, catalogErr(err)
 	}
-	gate := gateFor(p.ContentLimit)
-	if p.AgeLimit == "r18" {
-		gate.contentRating = "r18"
-	}
-	gate.apply(q)
-
-	if lang := joinCatalogLangs(p.OriginalLang); lang != "" {
-		q.Set("olang", lang)
-	}
-	if len(p.TagIDs) > 0 {
-		q.Set("tag_id", joinInts(p.TagIDs))
-	}
-	if len(p.OfficialIDs) > 0 {
-		q.Set("label_id", strconv.Itoa(p.OfficialIDs[0]))
-	}
-	if len(p.EngineIDs) > 0 {
-		q.Set("engine_id", strconv.Itoa(p.EngineIDs[0]))
-	}
-	if p.SeriesID > 0 {
-		q.Set("series_id", strconv.Itoa(p.SeriesID))
-	}
-	if p.ReleasedFrom > 0 {
-		q.Set("released_after", yearLowerBound(p.ReleasedFrom))
-	}
-	if p.ReleasedTo > 0 {
-		q.Set("released_before", yearUpperBound(p.ReleasedTo))
-	}
-	if p.SearchIntro {
-		q.Set("search_intro", "1")
-	}
-	if s := searchSortForCatalog(p.Sort); s != "" {
-		q.Set("sort", s)
-	}
-	if p.Page > 0 {
-		q.Set("page", strconv.Itoa(p.Page))
-	}
-	if p.Limit > 0 {
-		q.Set("limit", strconv.Itoa(p.Limit))
-	}
-	q.Set("include", "names,covers,refs")
-
-	var data catalogWorksSearchData
-	if err := c.getV1(ctx, "/catalog/works/search", q, &data); err != nil {
-		return nil, err
-	}
-	out := Paginated[GalgameHit]{Total: data.Total}
-	for i := range data.Items {
-		it := &data.Items[i]
+	out := Paginated[GalgameHit]{Total: page.Count()}
+	for i := range page.Items {
+		it := workToListItem(page.Items[i])
 		if !it.ClaimedBy.renderable() || it.publicGID() == 0 {
 			continue
 		}
-		out.Items = append(out.Items, catalogItemToHit(it))
+		out.Items = append(out.Items, catalogItemToHit(&it))
 	}
 	return &out, nil
 }
@@ -409,53 +328,34 @@ func (c *Client) GetGalgame(ctx context.Context, gid int, contentLimit string) (
 		return nil, &GalgameError{Code: galgameCodeNotFound, Message: "galgame not found"}
 	}
 
-	gate := gateFor(contentLimit)
-	q := url.Values{}
-	applyNSFW(q)
-	q.Set("spoilers", "2")
-	q.Set("include", "credits")
-
-	var w catalogWork
-	if err := c.getV1(ctx, fmt.Sprintf("/catalog/works/%d", catalogID), q, &w); err != nil {
-		return nil, err
+	w, err := c.v2.GetWork(ctx, catalogID, true)
+	if err != nil {
+		return nil, catalogErr(err)
 	}
-	if !w.ClaimedBy.renderable() {
+	detail := workToDetail(*w)
+	if !detail.ClaimedBy.renderable() {
 		return nil, &GalgameError{Code: galgameCodeNotFound, Message: "galgame not found"}
 	}
-	full := catalogWorkToFull(&w)
-	if !gate.allows(full.ContentLimit) {
+	full := catalogWorkToFull(&detail)
+	if !gateFor(contentLimit).allows(full.ContentLimit) {
 		return nil, &GalgameError{Code: galgameCodeNotFound, Message: "galgame not found"}
 	}
 	return &GalgameDetailEnvelope{Galgame: full}, nil
 }
 
 func (c *Client) CheckGalgameByVndbID(ctx context.Context, vndbID string) (exists bool, galgameID int, err error) {
-	q := url.Values{}
-	q.Set("source", "vndb")
-	q.Set("external_id", vndbID)
-	q.Set("nsfw", "1")
-
-	data, status, err := c.getV1RawStatus(ctx, "/catalog/lookup", q)
+	w, err := c.v2.WorkByRef(ctx, "vndb", vndbID, true)
 	if err != nil {
-		if catalogAbsent(status, err) {
+		if errors.Is(err, catalogv2.ErrNotFound) {
 			return false, 0, nil
 		}
-		return false, 0, err
+		return false, 0, catalogErr(err)
 	}
-
-	var out struct {
-		ClaimedBy *struct {
-			Site   string `json:"site"`
-			WorkID int64  `json:"work_id"`
-		} `json:"claimed_by"`
-	}
-	if err := json.Unmarshal(data, &out); err != nil {
-		return false, 0, fmt.Errorf("解析 catalog lookup data 失败: %w", err)
-	}
-	if out.ClaimedBy == nil || !isGIDClaimSite(out.ClaimedBy.Site) {
+	claim := claimedFrom(w.Claim)
+	if claim == nil || !isGIDClaimSite(claim.Site) {
 		return false, 0, nil
 	}
-	return true, int(out.ClaimedBy.WorkID), nil
+	return true, int(claim.WorkID), nil
 }
 
 const BatchMaxIDs = 100
@@ -479,23 +379,20 @@ func (c *Client) GalgameBatch(ctx context.Context, ids []int, contentLimit strin
 		catalogIDs = append(catalogIDs, id)
 	}
 
-	q := url.Values{}
-	q.Set("ids", joinInt64s(catalogIDs))
-	q.Set("include", "names,covers,refs")
-	q.Set("limit", strconv.Itoa(CatalogWorksIDsMax))
-	gateFor(contentLimit).apply(q)
-
-	var data catalogWorksListData
-	if err := c.getV1(ctx, "/catalog/works", q, &data); err != nil {
-		return nil, err
+	page, err := c.v2.ListWorks(ctx, catalogv2.WorksQuery{
+		IDs: catalogIDs, NSFW: true, Include: []string{"titles", "covers", "refs"},
+		ContentLimit: gateFor(contentLimit).contentLimit, Limit: CatalogWorksIDsMax,
+	})
+	if err != nil {
+		return nil, catalogErr(err)
 	}
-	out := make([]GalgameBrief, 0, len(data.Items))
-	for i := range data.Items {
-		it := &data.Items[i]
+	out := make([]GalgameBrief, 0, len(page.Items))
+	for i := range page.Items {
+		it := workToListItem(page.Items[i])
 		if !it.ClaimedBy.renderable() || it.publicGID() == 0 {
 			continue
 		}
-		out = append(out, catalogItemToBrief(it))
+		out = append(out, catalogItemToBrief(&it))
 	}
 	return out, nil
 }
@@ -522,53 +419,48 @@ const calendarPageLimit = 100
 const calendarMaxPages = 50
 
 func (c *Client) GetGalgameCalendar(ctx context.Context, month, contentLimit string) (*GalgameCalendar, error) {
-	out := &GalgameCalendar{}
+	if month == "" {
+		month = time.Now().UTC().Format("2006-01")
+	}
+	out := &GalgameCalendar{
+		Month: month,
+		Today: time.Now().UTC().Format("2006-01-02"),
+		Meta: GalgameCalendarMeta{
+			PrevMonth: shiftMonth(month, -1),
+			NextMonth: shiftMonth(month, +1),
+			HasPrev:   true,
+			HasNext:   true,
+		},
+	}
 	cursor := ""
 	for page := 0; page < calendarMaxPages; page++ {
-		q := url.Values{}
-		if month != "" {
-			q.Set("month", month)
-		}
-		q.Set("include", "names,covers,refs")
-		q.Set("limit", strconv.Itoa(calendarPageLimit))
-		if cursor != "" {
-			q.Set("cursor", cursor)
-		}
-		gateFor(contentLimit).apply(q)
-
-		var data catalogCalendarData
-		if err := c.getV1(ctx, "/catalog/calendar", q, &data); err != nil {
-			return nil, err
+		data, err := c.v2.Calendar(ctx, month, true, cursor, calendarPageLimit)
+		if err != nil {
+			return nil, catalogErr(err)
 		}
 		if page == 0 {
-			out.Month = data.Month
-			out.Today = data.Meta.Today
-			out.Meta = GalgameCalendarMeta{
-				PrevMonth: shiftMonth(data.Month, -1),
-				NextMonth: shiftMonth(data.Month, +1),
-				HasPrev:   derefBool(data.Meta.HasPrev),
-				HasNext:   derefBool(data.Meta.HasNext),
-				MinMonth:  data.Meta.MinMonth,
-				MaxMonth:  data.Meta.MaxMonth,
-				Count:     int(data.Count),
-			}
+			out.Meta.Count = int(data.Count())
 		}
 		for i := range data.Items {
-			it := &data.Items[i]
+			it := workToListItem(data.Items[i])
 			if !it.ClaimedBy.renderable() {
 				continue
 			}
-			out.Items = append(out.Items, catalogItemToBrief(it))
+			if contentLimit != "" {
+				cl, _ := contentAxisOf(it.ClaimedBy, it.ContentRating)
+				if !gateFor(contentLimit).allows(cl) {
+					continue
+				}
+			}
+			out.Items = append(out.Items, catalogItemToBrief(&it))
 		}
-		if data.NextCursor == nil || *data.NextCursor == "" {
+		if data.Next() == "" {
 			break
 		}
-		cursor = *data.NextCursor
+		cursor = data.Next()
 	}
 	return out, nil
 }
-
-func derefBool(p *bool) bool { return p != nil && *p }
 
 func shiftMonth(month string, n int) string {
 	t, err := time.Parse("2006-01", month)
@@ -584,11 +476,4 @@ func joinInts(xs []int) string {
 		parts = append(parts, strconv.Itoa(x))
 	}
 	return strings.Join(parts, ",")
-}
-
-func truncate(s string, n int) string {
-	if len(s) <= n {
-		return s
-	}
-	return s[:n] + "..."
 }

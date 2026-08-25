@@ -14,7 +14,12 @@ func TestMovedTargetClassification(t *testing.T) {
 		want int64
 	}{
 		{
-			name: "the catalog's own merge verdict",
+			name: "v2 merge verdict",
+			err:  &GalgameError{Code: catalogCodeMoved, HTTPStatus: http.StatusNotFound, Moved: 6935},
+			want: 6935,
+		},
+		{
+			name: "legacy 301 merge verdict",
 			err:  &GalgameError{Code: catalogCodeMoved, HTTPStatus: http.StatusMovedPermanently, Moved: 6935},
 			want: 6935,
 		},
@@ -23,12 +28,12 @@ func TestMovedTargetClassification(t *testing.T) {
 			err:  &GalgameError{Code: 233, HTTPStatus: http.StatusMovedPermanently, Moved: 6935},
 		},
 		{
-			name: "the merge code without the 301 is not a merge either",
+			name: "the merge code without a merge status is not a merge either",
 			err:  &GalgameError{Code: catalogCodeMoved, HTTPStatus: http.StatusOK, Moved: 6935},
 		},
 		{
 			name: "a merge verdict with no target is not actionable",
-			err:  &GalgameError{Code: catalogCodeMoved, HTTPStatus: http.StatusMovedPermanently},
+			err:  &GalgameError{Code: catalogCodeMoved, HTTPStatus: http.StatusNotFound},
 		},
 		{
 			name: "a plain miss is not a merge",
@@ -45,32 +50,28 @@ func TestMovedTargetClassification(t *testing.T) {
 	}
 }
 
-func TestGetV1DoesNotFollowTheMergeRedirect(t *testing.T) {
+func TestCompanyMergeDoesNotFollow(t *testing.T) {
 	var seen []string
 	upstream := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		seen = append(seen, r.URL.Path)
-		w.Header().Set("Content-Type", "application/json")
-		if r.URL.Path == "/v1/catalog/labels/13323" {
-			w.Header().Set("Location", "/v1/catalog/labels/6935")
-			w.WriteHeader(http.StatusMovedPermanently)
-			_, _ = w.Write([]byte(`{"code":12,"message":"merged","data":{"current_id":6935}}`))
+		w.Header().Set("Content-Type", "application/problem+json")
+		if r.URL.Path == "/v2/catalog/companies/13323" {
+			w.WriteHeader(http.StatusNotFound)
+			_, _ = w.Write([]byte(`{"code":"ENTITY_MERGED","status":404,"current_id":"6935"}`))
 			return
 		}
-		_, _ = w.Write([]byte(`{"code":0,"message":"成功","data":{"id":6935,"display_name":"生存ブランド"}}`))
+		w.WriteHeader(http.StatusOK)
+		_, _ = w.Write([]byte(`{"id":"6935","display_name":"生存ブランド"}`))
 	}))
 	t.Cleanup(upstream.Close)
 
-	c := NewWithKey(upstream.URL, "nm_test_key")
-	var rec catalogLabelRecord
-	err := c.getV1(context.Background(), "/catalog/labels/13323", nil, &rec)
-	to, ok := MovedTarget(err)
+	c := NewWithKey(upstream.URL, "nmk_test_key")
+	_, err := c.v2.GetCompany(context.Background(), 13323, true)
+	to, ok := MovedTarget(catalogErr(err))
 	if !ok || to != 6935 {
 		t.Fatalf("MovedTarget = (%d, %v), want (6935, true); err=%v", to, ok, err)
 	}
-	if rec.DisplayName != "" {
-		t.Fatalf("the survivor's record leaked under the dead id: %q", rec.DisplayName)
-	}
-	if len(seen) != 1 || seen[0] != "/v1/catalog/labels/13323" {
-		t.Fatalf("client followed the redirect: %v", seen)
+	if len(seen) != 1 || seen[0] != "/v2/catalog/companies/13323" {
+		t.Fatalf("client followed the merge: %v", seen)
 	}
 }
