@@ -104,3 +104,84 @@ func TestUnconfigured(t *testing.T) {
 		t.Fatalf("%v", err)
 	}
 }
+
+func TestCreateClaimPostsWorkID(t *testing.T) {
+	var gotPath, gotAuth, gotMatch string
+	var gotBody map[string]any
+	srv := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		gotPath, gotAuth, gotMatch = r.URL.Path, r.Header.Get("Authorization"), r.Header.Get("If-Match")
+		_ = json.NewDecoder(r.Body).Decode(&gotBody)
+		w.WriteHeader(http.StatusCreated)
+		_ = json.NewEncoder(w).Encode(map[string]any{
+			"object": "claim", "id": "7", "state": "draft", "display_name": "A",
+		})
+	}))
+	t.Cleanup(srv.Close)
+
+	out, err := catalogv2.New(srv.URL, "nmk_test_x").CreateClaim(context.Background(), "tok", 7, 7)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if gotPath != "/v2/me/claims" || gotAuth != "Bearer tok" {
+		t.Fatalf("%s %s", gotPath, gotAuth)
+	}
+	if gotMatch != "" {
+		t.Fatalf("create must not send If-Match, got %q", gotMatch)
+	}
+	if gotBody["work_id"] != "7" || gotBody["site_work_id"] != "7" {
+		t.Fatalf("%v", gotBody)
+	}
+	if out.WorkID() != 7 || out.State != "draft" {
+		t.Fatalf("%+v", out)
+	}
+}
+
+func TestPatchClaimSendsLiveAndIfMatchStar(t *testing.T) {
+	var gotPath, gotMatch string
+	var gotBody map[string]any
+	srv := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		gotPath, gotMatch = r.URL.Path, r.Header.Get("If-Match")
+		_ = json.NewDecoder(r.Body).Decode(&gotBody)
+		_ = json.NewEncoder(w).Encode(map[string]any{
+			"object": "claim", "id": "7", "state": "live",
+		})
+	}))
+	t.Cleanup(srv.Close)
+
+	out, err := catalogv2.New(srv.URL, "nmk_test_x").PatchClaim(context.Background(), "tok", 7, "live")
+	if err != nil {
+		t.Fatal(err)
+	}
+	if gotPath != "/v2/me/claims/7" || gotMatch != "*" || gotBody["state"] != "live" {
+		t.Fatalf("path=%s match=%s body=%v", gotPath, gotMatch, gotBody)
+	}
+	if out.State != "live" {
+		t.Fatalf("%+v", out)
+	}
+}
+
+func TestMergedProposalTotalUsesPublicV2(t *testing.T) {
+	var gotPath, gotAuth, gotQuery string
+	srv := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		gotPath, gotAuth, gotQuery = r.URL.Path, r.Header.Get("Authorization"), r.URL.RawQuery
+		_ = json.NewEncoder(w).Encode(map[string]any{
+			"object": "list", "items": []any{}, "total": 12,
+		})
+	}))
+	t.Cleanup(srv.Close)
+
+	n, err := catalogv2.New(srv.URL, "nmk_test_x").MergedProposalTotal(context.Background(), 2)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if gotAuth != "Bearer nmk_test_x" || gotPath != "/v2/catalog/proposals" {
+		t.Fatalf("%s %s", gotAuth, gotPath)
+	}
+	if !strings.Contains(gotQuery, "proposer_uid=2") || !strings.Contains(gotQuery, "state=merged") ||
+		!strings.Contains(gotQuery, "include_total=true") {
+		t.Fatalf("query %s", gotQuery)
+	}
+	if n != 12 {
+		t.Fatalf("total %d", n)
+	}
+}

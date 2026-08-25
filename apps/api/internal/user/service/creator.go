@@ -26,16 +26,29 @@ type CreatorEligibility struct {
 	NeedMoemoepoint int   `json:"need_moemoepoint"`
 }
 
-func (s *UserService) creatorEligibility(ctx context.Context, userID int) (*CreatorEligibility, *errors.AppError) {
-	var mergedProposals int64
+func (s *UserService) mergedProposalTotal(ctx context.Context, userID int) int64 {
+	if s.galgame != nil {
+		if v2 := s.galgame.V2(); v2 != nil && v2.Configured() {
+			n, err := v2.MergedProposalTotal(ctx, userID)
+			if err == nil {
+				return n
+			}
+			slog.Warn("读取合并提案数失败，回退 v1", "user_id", userID, "error", err)
+		}
+	}
 	if s.catalog != nil && s.catalog.Configured() {
 		n, err := s.catalog.MergedProposalTotal(ctx, userID)
 		if err != nil {
 			slog.Warn("读取合并提案数失败，按 0 计", "user_id", userID, "error", err)
-		} else {
-			mergedProposals = n
+			return 0
 		}
+		return n
 	}
+	return 0
+}
+
+func (s *UserService) creatorEligibility(ctx context.Context, userID int) (*CreatorEligibility, *errors.AppError) {
+	mergedProposals := s.mergedProposalTotal(ctx, userID)
 	resources := s.repo.CountPublishedPatchResources(userID)
 	moe, _ := s.mp.Balance(ctx, userID)
 	e := &CreatorEligibility{

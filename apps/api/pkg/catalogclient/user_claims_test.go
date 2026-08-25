@@ -138,7 +138,9 @@ func TestScopeDenialIsItsOwnSentinel(t *testing.T) {
 		writeEnvelope(t, w, http.StatusForbidden, 40300,
 			"the access token is missing the catalog:edit scope", nil)
 	})
-	_, err := c.ActOnClaimUser(context.Background(), "tok", 5, ClaimActionWithdraw, UserClaimActionRequest{})
+	_, err := c.SubmitWorkUser(context.Background(), "tok", UserWorkSubmitRequest{
+		Fields: map[string]any{"display_name": "x"},
+	})
 	if !errors.Is(err, ErrInsufficientScope) {
 		t.Fatalf("err = %v, want ErrInsufficientScope", err)
 	}
@@ -148,7 +150,9 @@ func TestOtherForbiddenKeepsUpstreamWording(t *testing.T) {
 	c := newTestClient(t, func(w http.ResponseWriter, r *http.Request) {
 		writeEnvelope(t, w, http.StatusForbidden, 40300, "this claim belongs to another user", nil)
 	})
-	_, err := c.ActOnClaimUser(context.Background(), "tok", 5, ClaimActionPublish, UserClaimActionRequest{})
+	_, err := c.SubmitWorkUser(context.Background(), "tok", UserWorkSubmitRequest{
+		Fields: map[string]any{"display_name": "x"},
+	})
 	if errors.Is(err, ErrInsufficientScope) {
 		t.Fatal("an ownership refusal must not read as a stale scope")
 	}
@@ -156,17 +160,6 @@ func TestOtherForbiddenKeepsUpstreamWording(t *testing.T) {
 	if !errors.As(err, &apiErr) || apiErr.Status != http.StatusForbidden ||
 		apiErr.Message != "this claim belongs to another user" {
 		t.Fatalf("err = %v, want the upstream wording preserved", err)
-	}
-}
-
-func TestConflictSurvivesAsAPIError(t *testing.T) {
-	c := newTestClient(t, func(w http.ResponseWriter, r *http.Request) {
-		writeEnvelope(t, w, http.StatusConflict, 40900, "claim is already live", nil)
-	})
-	_, err := c.ActOnClaimUser(context.Background(), "tok", 5, ClaimActionPublish, UserClaimActionRequest{})
-	var apiErr *APIError
-	if !errors.As(err, &apiErr) || apiErr.Status != http.StatusConflict {
-		t.Fatalf("err = %v, want a 409 APIError", err)
 	}
 }
 

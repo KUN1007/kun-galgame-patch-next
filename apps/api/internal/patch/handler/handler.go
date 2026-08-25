@@ -3,6 +3,7 @@ package handler
 import (
 	stderrors "errors"
 	"log/slog"
+	"net/http"
 	"regexp"
 	"strconv"
 	"strings"
@@ -14,6 +15,7 @@ import (
 	"kun-galgame-patch-api/internal/patch/model"
 	"kun-galgame-patch-api/internal/patch/service"
 	"kun-galgame-patch-api/pkg/catalogclient"
+	"kun-galgame-patch-api/pkg/catalogv2"
 	"kun-galgame-patch-api/pkg/errors"
 	"kun-galgame-patch-api/pkg/response"
 	"kun-galgame-patch-api/pkg/userclient"
@@ -50,11 +52,41 @@ func catalogUserToken(c fiber.Ctx) (string, *errors.AppError) {
 }
 
 func catalogErr(c fiber.Ctx, err error, fallback string) error {
+	if stderrors.Is(err, catalogv2.ErrNotConfigured) || stderrors.Is(err, catalogclient.ErrNotConfigured) {
+		return response.Error(c, errors.ErrInternal("资料库客户端未配置"))
+	}
 	if stderrors.Is(err, catalogclient.ErrInsufficientScope) {
 		return response.Error(c, errors.ErrCatalogReauthRequired(""))
 	}
-	if stderrors.Is(err, catalogclient.ErrNoAccessToken) {
+	if stderrors.Is(err, catalogv2.ErrNoAccessToken) || stderrors.Is(err, catalogclient.ErrNoAccessToken) {
 		return response.Error(c, errors.ErrUnauthorized())
+	}
+	if stderrors.Is(err, catalogv2.ErrUnauthorized) {
+		return response.Error(c, errors.ErrCatalogReauthRequired(
+			"资料库拒绝了当前登录凭证，请退出登录后重新登录一次"))
+	}
+	if stderrors.Is(err, catalogv2.ErrNotFound) {
+		return response.Error(c, errors.ErrNotFound("资料库中没有这个条目"))
+	}
+	if stderrors.Is(err, catalogv2.ErrForbidden) {
+		return response.Error(c, errors.New(40300,
+			"你没有权限修改该条目（编辑资料需要相应的社区权限）", fiber.StatusForbidden))
+	}
+	var p *catalogv2.Problem
+	if stderrors.As(err, &p) {
+		switch {
+		case p.Code == "SCOPE_REQUIRED" || p.Status == http.StatusUnauthorized:
+			return response.Error(c, errors.ErrCatalogReauthRequired(""))
+		case p.Status == http.StatusForbidden:
+			return response.Error(c, errors.New(40300, p.Error(), fiber.StatusForbidden))
+		case p.Status == http.StatusNotFound:
+			return response.Error(c, errors.ErrNotFound("资料库中没有这个条目"))
+		case p.Status == http.StatusUnprocessableEntity:
+			return response.Error(c, errors.ErrValidation(p.Error()))
+		case p.Status == http.StatusConflict, p.Status == http.StatusPreconditionFailed,
+			p.Status == http.StatusPreconditionRequired:
+			return response.Error(c, errors.ErrConflict(p.Error()))
+		}
 	}
 	var apiErr *catalogclient.APIError
 	if stderrors.As(err, &apiErr) && apiErr.Status >= 400 && apiErr.Status < 500 {
@@ -748,9 +780,6 @@ func (h *PatchHandler) ClaimGalgame(c fiber.Ctx) error {
 	if idErr != nil {
 		return response.Error(c, idErr.(*errors.AppError))
 	}
-	if h.catalog == nil || !h.catalog.Configured() {
-		return response.Error(c, errors.ErrInternal("资料库客户端未配置"))
-	}
 	workID, hErr := h.resolveWorkID(c, gid)
 	if hErr != nil {
 		return hErr
@@ -759,9 +788,7 @@ func (h *PatchHandler) ClaimGalgame(c fiber.Ctx) error {
 	if tErr != nil {
 		return response.Error(c, tErr)
 	}
-	if _, err := h.catalog.ActOnClaimUser(c.Context(), token, workID,
-		catalogclient.ClaimActionPublish,
-		catalogclient.UserClaimActionRequest{}); err != nil {
+	if err := h.patchClaim(c, token, workID, "live", catalogclient.ClaimActionPublish); err != nil {
 		return catalogErr(c, err, "调用资料库失败")
 	}
 
@@ -793,9 +820,6 @@ func (h *PatchHandler) WithdrawGalgameSubmission(c fiber.Ctx) error {
 	if idErr != nil {
 		return response.Error(c, idErr.(*errors.AppError))
 	}
-	if h.catalog == nil || !h.catalog.Configured() {
-		return response.Error(c, errors.ErrInternal("资料库客户端未配置"))
-	}
 	workID, hErr := h.resolveWorkID(c, gid)
 	if hErr != nil {
 		return hErr
@@ -804,9 +828,7 @@ func (h *PatchHandler) WithdrawGalgameSubmission(c fiber.Ctx) error {
 	if tErr != nil {
 		return response.Error(c, tErr)
 	}
-	if _, err := h.catalog.ActOnClaimUser(c.Context(), token, workID,
-		catalogclient.ClaimActionWithdraw,
-		catalogclient.UserClaimActionRequest{}); err != nil {
+	if err := h.patchClaim(c, token, workID, "withdrawn", catalogclient.ClaimActionWithdraw); err != nil {
 		return catalogErr(c, err, "调用资料库失败")
 	}
 	return response.OKMessage(c, "OK")
