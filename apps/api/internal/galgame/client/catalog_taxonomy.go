@@ -88,16 +88,6 @@ type catalogIntroRow struct {
 	Machine bool   `json:"machine"`
 }
 
-type catalogTagRecord struct {
-	ID        int64             `json:"id"`
-	Name      string            `json:"name"`
-	Tier      string            `json:"tier"`
-	Kind      string            `json:"kind"`
-	Sexual    bool              `json:"sexual"`
-	WorkCount int               `json:"work_count"`
-	Intros    []catalogIntroRow `json:"intros"`
-}
-
 type catalogEntityLink struct {
 	Source string `json:"source"`
 	URL    string `json:"url"`
@@ -113,18 +103,6 @@ type catalogAlias struct {
 	Lang    string `json:"lang"`
 	Kind    string `json:"kind"`
 	Machine bool   `json:"machine"`
-}
-
-type catalogLabelRecord struct {
-	ID          int64               `json:"id"`
-	DisplayName string              `json:"display_name"`
-	Kind        string              `json:"kind"`
-	Lang        string              `json:"lang"`
-	Aliases     []catalogAlias      `json:"aliases"`
-	WorkCount   int                 `json:"work_count"`
-	Intros      []catalogIntroRow   `json:"intros"`
-	Links       []catalogEntityLink `json:"links"`
-	LogoHash    string              `json:"logo_hash"`
 }
 
 func aliasValues(rows []catalogAlias) []string {
@@ -181,6 +159,7 @@ func (c *Client) catalogTagDetail(ctx context.Context, idStr string, q url.Value
 			Aliases:      []string{},
 			Category:     tagCategoryFor(rec.IsSexual),
 			Sexual:       rec.IsSexual,
+			Description:  preferredIntro(introRowsFrom(rec.Intros)),
 			GalgameCount: int(total),
 			Tier:         rec.Tier,
 			Kind:         rec.TagKind,
@@ -205,12 +184,20 @@ func (c *Client) catalogLabelDetail(ctx context.Context, idStr string, q url.Val
 		return nil, err
 	}
 	cid, _ := rec.IntID()
+	link := ""
+	if links := linkRowsFrom(rec.Links); len(links) > 0 {
+		link = links[0].URL
+	}
 	return json.Marshal(map[string]any{
 		"official": catalogOfficialBrief{
 			ID:           cid,
 			Name:         rec.DisplayName,
-			Aliases:      []string{},
+			Aliases:      aliasValues(aliasRowsFrom(rec.Aliases)),
 			Category:     rec.CompanyKind,
+			Lang:         productLangFromCatalog(strOrEmpty(rec.Lang)),
+			Link:         link,
+			Description:  preferredIntro(introRowsFrom(rec.Intros)),
+			LogoHash:     imageHash(rec.Logo),
 			GalgameCount: int(total),
 		},
 		"galgames": members,

@@ -1,1 +1,1291 @@
-{"id":3,"medium":"galgame","display_name":"アストラエアの白き永遠","localized":{"en":{"value":"AstralAir no Shiroki Towa","kind":"official"},"ja":{"value":"アストラエアの白き永遠","kind":"official"},"zh-Hans":{"value":"星辰恋曲的白色永恒","kind":"official"}},"olang":"ja","content_rating":"r18","release_date":"2014-05-12","created":"2026-07-06T10:45:35Z","updated":"2026-08-19T12:17:46Z","titles":[{"lang":"en","title":"AstralAir no Shiroki Towa","kind":"official"},{"lang":"ja","title":"アストラエアの白き永遠","kind":"official"},{"lang":"zh-Hans","title":"星辰恋曲的白色永恒","kind":"official"},{"lang":"","title":"星辰少女的白色永远","kind":"alias"}],"refs":[{"source":"bangumi","external_id":"78544"},{"source":"curated","external_id":"3"},{"source":"vndb","external_id":"v12984"},{"source":"vndb","external_id":"r129772"},{"source":"vndb","external_id":"r47664"},{"source":"vndb","external_id":"r42327"},{"source":"getchu","external_id":"779719"},{"source":"vndb","external_id":"r27855"},{"source":"vndb","external_id":"r152759"},{"source":"vndb","external_id":"r46330"},{"source":"dmm","external_id":"favorite_0008"},{"source":"vndb","external_id":"r57256"},{"source":"vndb","external_id":"r37669"},{"source":"vndb","external_id":"r34049"},{"source":"vndb","external_id":"r45963"},{"source":"vndb","external_id":"r161724"}],"claimed_by":{"site":"kungal","work_id":3,"state":"live","content_limit":"sfw"},"credits":[{"role_key":"voice-actor","role_name":"声优","credits":[{"id":411,"display_name":"門脇舞以","lang":"ja","localized":{"zh-Hans":{"value":"门胁舞以","kind":"translation"}},"character_id":2596,"character":"大神累","source":"bangumi","identity":"credit:1:411:2596"},{"id":544,"display_name":"森沢芙美","lang":"ja","localized":{"zh-Hans":{"value":"森泽芙美","kind":"translation"}},"character_id":153615,"character":"千川 希","source":"bangumi","identity":"credit:1:544:153615"}]},{"role_key":"other-staff","role_name":"其他","credits":[{"id":838,"display_name":"なかひろ","lang":"ja","localized":{},"source":"vndb","identity":"credit:2:838:0"},{"id":900,"display_name":"保住圭","lang":"ja","localized":{},"source":"vndb","identity":"credit:2:900:0"}]},{"role_key":"developer","role_name":"开发","credits":[{"id":1478,"display_name":"FAVORITE","lang":"ja","localized":{},"source":"bangumi","identity":"credit:170:1478:0"}]},{"role_key":"director","role_name":"导演","credits":[{"id":1749,"display_name":"水間ホシひと","lang":"ja","localized":{},"source":"vndb","identity":"credit:173:1749:0"}]},{"role_key":"director-direction","role_name":"导演","credits":[{"id":1749,"display_name":"水間ホシひと","lang":"ja","localized":{},"source":"bangumi","identity":"credit:174:1749:0"}]},{"role_key":"illustration","role_name":"插画","credits":[{"id":944,"display_name":"司田カズヒロ","lang":"ja","localized":{},"source":"vndb","identity":"credit:184:944:0"},{"id":2077,"display_name":"なつめえり","lang":"ja","localized":{},"source":"vndb","identity":"credit:184:2077:0"}]},{"role_key":"music","role_name":"音乐","credits":[{"id":1251,"display_name":"小高光太郎","lang":"ja","localized":{},"source":"vndb","identity":"credit:209:1251:0"},{"id":1619,"display_name":"山本美禰子","lang":"ja","localized":{"zh-Hans":{"value":"山本美祢子","kind":"translation"}},"source":"vndb","identity":"credit:209:1619:0"}]},{"role_key":"scenario","role_name":"脚本","credits":[{"id":838,"display_name":"なかひろ","lang":"ja","localized":{},"source":"vndb","identity":"credit:247:838:0"},{"id":900,"display_name":"保住圭","lang":"ja","localized":{},"source":"vndb","identity":"credit:247:900:0"}]},{"role_key":"剧本","role_name":"剧本","credits":[{"id":838,"display_name":"なかひろ","lang":"ja","localized":{},"source":"bangumi","identity":"credit:301:838:0"},{"id":900,"display_name":"保住圭","lang":"ja","localized":{},"source":"bangumi","identity":"credit:301:900:0"}]},{"role_key":"原画","role_name":"原画","credits":[{"id":944,"display_name":"司田カズヒロ","lang":"ja","localized":{},"source":"bangumi","identity":"credit:308:944:0"},{"id":1763,"display_name":"ヒラサト","lang":"ja","localized":{},"source":"bangumi","identity":"credit:308:1763:0"}]},{"role_key":"音乐","role_name":"音乐","credits":[{"id":1769,"display_name":"忍","lang":"ja","localized":{},"source":"bangumi","identity":"credit:325:1769:0"}]}],"releases":[{"id":160133,"kind":"default","date":"2024-11-29","title":"アストラエアの白き永遠 FHD Re:Eternity DL版","lang":"ja","platform":"win","platforms":["win"],"refs":[],"labels":[]}],"popularity":[{"source":"bangumi","metric":"bgm_wish","value":929},{"source":"bangumi","metric":"bgm_collect","value":1421},{"source":"bangumi","metric":"bgm_doing","value":141},{"source":"bangumi","metric":"bgm_on_hold","value":131},{"source":"bangumi","metric":"bgm_dropped","value":42}],"ratings":[{"source":"vndb","score":8.1,"vote_count":500,"distribution":[{"score":1,"count":1},{"score":2,"count":1},{"score":3,"count":1},{"score":4,"count":3},{"score":5,"count":7},{"score":6,"count":28},{"score":7,"count":96},{"score":8,"count":137},{"score":9,"count":126},{"score":10,"count":38}],"stats":{"average":8.1}},{"source":"bangumi","score":7.1,"vote_count":1142,"rank":2917,"distribution":[{"score":1,"count":9},{"score":2,"count":3},{"score":3,"count":3},{"score":4,"count":12},{"score":5,"count":30},{"score":6,"count":186},{"score":7,"count":500},{"score":8,"count":300},{"score":9,"count":67},{"score":10,"count":32}]}],"tags":[{"name":"FAVORITE","count":480,"source":"bangumi","spoiler":0,"sexual":false},{"name":"Galgame","count":407,"source":"bangumi","canonical_id":4,"tier":"hidden","kind":"meta","spoiler":0,"sexual":false,"work_count":5027},{"name":"司田カズヒロ","count":167,"source":"bangumi","spoiler":0,"sexual":false},{"name":"萝莉","count":157,"source":"bangumi","canonical_id":1444,"tier":"longtail","kind":"content","spoiler":0,"sexual":false,"work_count":512}],"playtimes":[{"source":"vndb","minutes":3600,"vote_count":43}],"series":[{"id":3402,"name":"アストラエアの白き永遠","source":"derived","member_count":2}],"platforms":[],"intros":[{"lang":"en","intro":"For two years, snow had been falling continuously in the town of Tsukigasaki with spring nowhere in sight. Aside from th","source":"curated"},{"lang":"ja","intro":"月ヶ咲には二年間、春が訪れていない。\n\n四季に関わらず、雪は降り続いていた。\n\nゆらゆらと舞い散る白い結晶。 だがその雪は、決して積もることがない。\n\nそれは優しい雪だろうか。 それとも悲しい雪だろうか。\n\n積もらない雪のほかにも、突発的な","source":"curated"},{"lang":"zh-Hans","intro":"月ヶ咲已经两年没有迎来春天了。\n\n不分四季，雪一直下个不停。\n\n摇曳飘落的白色结晶。但那雪，绝不会积存下来。\n\n那是温柔的雪吗。还是悲伤的雪呢。\n\n除了不会积存的雪之外，街上还持续发生突发性的龙卷风、落雷、河水上涨等异常气象。\n\n奉组织之命","source":"curated","machine":true}],"covers":[{"url":"https://image.kungal.iloveren.link/94/3c/943c53d802c95cc686fd63a151e519869d32902b7697b7c0d2bd00196b161ee7.webp","portrait_pinned":false,"sexual":0,"violence":0,"source":"curated","width":1728,"height":1080,"thumbhash":"7xcGDIIMm6eGkniZqZkNWpxgdQ=="},{"url":"https://image.kungal.iloveren.link/ba/6e/ba6eee58f6d0770296b999469a56493ea44f756919166c68dac263400b24b6ed.webp","kind":"main","portrait_pinned":false,"sexual":0,"violence":0,"source":"vndb","width":256,"height":160,"thumbhash":"a0gGDIZ1jfb/SHi9aTowSwHDNQ=="},{"url":"https://image.kungal.iloveren.link/47/60/47609af68f0cbc260ec3c82a45e096de3e6914412be0c18e69d81444b6c58ce7.webp","kind":"pkgfront","portrait_pinned":false,"sexual":0,"violence":0,"source":"vndb","width":500,"height":362,"thumbhash":"5icGDYQgerL/aoi+WPqEOUJNAMRG"}],"cover_slots":{"portrait":{"url":"https://image.kungal.iloveren.link/db/27/db27458c72c9fba106f603969a9bff70f542acf88c75ec8a3a2c30c9721f813c.webp","width":850,"height":1080,"thumbhash":"qBcSLQhHeWCXhpeImIeHeHiCoEcJ","sexual":0,"violence":0,"source":"upscale"},"banner":{"url":"https://image.kungal.iloveren.link/94/3c/943c53d802c95cc686fd63a151e519869d32902b7697b7c0d2bd00196b161ee7.webp","width":1728,"height":1080,"thumbhash":"7xcGDIIMm6eGkniZqZkNWpxgdQ==","sexual":0,"violence":0,"source":"curated"}},"screenshots":[{"url":"https://image.kungal.iloveren.link/06/ed/06ed4faecb09876baa43f4c207878a2237dff7c5c59f6feec88e3aa65dea65c8.webp","sexual":0,"violence":0,"source":"vndb","width":1024,"height":640,"thumbhash":"8hcGDIKIp6SPlHh6m2gcX5mQNg=="},{"url":"https://image.kungal.iloveren.link/73/d9/73d9bf6c259c2fb0ec54c35701f18e0a660918ff06b4670f9fcb1d0af4140530.webp","sexual":0,"violence":0,"source":"vndb","width":1024,"height":640,"thumbhash":"necNFIIHp4d5eXZqilUCNjX3og=="}],"characters":[{"id":1699,"display_name":"コロナ","localized":{"ja":{"value":"Corona","kind":"spelling_variant"},"zh-Hans":{"value":"科罗娜","kind":"translation","machine":true}},"kind":"main","spoiler":0,"image":"https://image.kungal.iloveren.link/90/cd/90cd0ce33bffe6719dffdd17d25b202ee44ce29cd1dfe7c4cd3123852c643a90.webp","figure":"https://image.kungal.iloveren.link/f6/b1/f6b187936860786495d8ef4fa1316e0d6d273d866c5b1d22196511942bc08d27.webp","identity":"roster:1699","voices":[{"id":1550,"display_name":"榎木実佳","lang":"ja","localized":{"zh-Hans":{"value":"榎木实佳","kind":"translation"}}},{"id":15292,"display_name":"鈴谷まや","lang":"ja","localized":{}}]},{"id":39194,"display_name":"夕凪 一夏","localized":{"ja":{"value":"Yuunagi Ichika","kind":"spelling_variant"},"zh-Hans":{"value":"夕凪 一夏","kind":"spelling_variant"}},"kind":"main","spoiler":0,"image":"https://image.kungal.iloveren.link/b2/63/b263d6a93089c2581699f062f26d9f7133f83fa13bbaf88609bc3bac33495e8f.webp","figure":"https://image.kungal.iloveren.link/47/2a/472a58870294defcf1cd0aea33b22a8973e3da8ae14d0b787b20d183e9adcd0f.webp","identity":"roster:39194","voices":[{"id":102121,"display_name":"桐谷 華","lang":"ja","localized":{}},{"id":1272,"display_name":"種﨑敦美","lang":"ja","localized":{"zh-Hans":{"value":"种崎敦美","kind":"translation"}}}]},{"id":172681,"display_name":"榛名 陸","localized":{"ja":{"value":"Haruna Riku","kind":"spelling_variant"},"zh-Hans":{"value":"榛名 陸","kind":"spelling_variant"}},"kind":"main","spoiler":0,"image":"https://image.kungal.iloveren.link/7d/02/7d02271d53e4460cf5093291a3ecd250d98584a98e09e5953e8dee8aa76bcbf7.webp","figure":"https://image.kungal.iloveren.link/b1/58/b1587d319579add2dfea8a63fce47c868203a980e830df3b43e3aae11a29492c.webp","identity":"roster:172681","voices":[]}],"labels":[{"id":14401,"display_name":"Dramatic Create","localized":{},"label_kind":"game_brand","kind":"publisher","kinds":["publisher"],"lang":"ja","work_count":20,"logo_hash":""},{"id":13475,"display_name":"FAVORITE","localized":{},"label_kind":"game_brand","kind":"developer","kinds":["developer","publisher"],"lang":"ja","work_count":13,"logo_hash":""}],"engines":[{"id":7,"name":"FVP","work_count":6},{"id":8,"name":"shin","work_count":8}],"links":[{"source":"official_site","url":"https://dramaticcreate.com/WhiteEternity"},{"source":"official_site","url":"https://www.favo-soft.jp/soft/product/WhiteEternity/download.html"},{"source":"official_site","url":"https://www.favo-soft.jp/soft/product/WhiteEternity/index.html"},{"source":"web","url":"https://www.kungal.com/zh-cn/galgame/75"},{"source":"web","url":"https://www.wikidata.org/wiki/Q17988388"}],"series_siblings":[]}
+{
+  "object": "work",
+  "id": "3",
+  "medium": "galgame",
+  "display_name": "アストラエアの白き永遠",
+  "latin": null,
+  "localized": {
+    "en": {
+      "value": "AstralAir no Shiroki Towa",
+      "is_machine": false
+    },
+    "ja": {
+      "value": "アストラエアの白き永遠",
+      "is_machine": false
+    },
+    "zh-Hans": {
+      "value": "星辰恋曲的白色永恒",
+      "is_machine": false
+    }
+  },
+  "olang": "ja",
+  "content_rating": "r18",
+  "release_date": "2014-05-12",
+  "release_date_precision": "day",
+  "release_status": "released",
+  "cover": {
+    "url": "https://image.kungal.iloveren.link/db/27/db27458c72c9fba106f603969a9bff70f542acf88c75ec8a3a2c30c9721f813c.webp",
+    "hash": "db27458c72c9fba106f603969a9bff70f542acf88c75ec8a3a2c30c9721f813c",
+    "width": 850,
+    "height": 1080,
+    "thumbhash": "qBcSLQhHeWCXhpeImIeHeHiCoEcJ",
+    "sexual": "safe",
+    "violence": null,
+    "source": "upscale"
+  },
+  "banner": {
+    "url": "https://image.kungal.iloveren.link/94/3c/943c53d802c95cc686fd63a151e519869d32902b7697b7c0d2bd00196b161ee7.webp",
+    "hash": "943c53d802c95cc686fd63a151e519869d32902b7697b7c0d2bd00196b161ee7",
+    "width": 1728,
+    "height": 1080,
+    "thumbhash": "7xcGDIIMm6eGkniZqZkNWpxgdQ==",
+    "sexual": "safe",
+    "violence": null,
+    "source": "curated"
+  },
+  "claim": {
+    "site": "kungal",
+    "site_work_id": "3",
+    "state": "live",
+    "content_limit": "sfw"
+  },
+  "created_at": "2026-07-06T10:45:35Z",
+  "updated_at": "2026-08-26T03:08:36Z",
+  "titles": [
+    {
+      "lang": "en",
+      "title": "AstralAir no Shiroki Towa",
+      "latin": null,
+      "title_kind": "official",
+      "is_machine": false
+    },
+    {
+      "lang": "ja",
+      "title": "アストラエアの白き永遠",
+      "latin": null,
+      "title_kind": "official",
+      "is_machine": false
+    },
+    {
+      "lang": "zh-Hans",
+      "title": "星辰恋曲的白色永恒",
+      "latin": null,
+      "title_kind": "official",
+      "is_machine": false
+    },
+    {
+      "lang": "",
+      "title": "星辰少女的白色永远",
+      "latin": null,
+      "title_kind": "alias",
+      "is_machine": false
+    }
+  ],
+  "refs": [
+    {
+      "source": "vndb",
+      "external_id": "v12984"
+    },
+    {
+      "source": "bangumi",
+      "external_id": "78544"
+    },
+    {
+      "source": "curated",
+      "external_id": "3"
+    }
+  ],
+  "relations": [
+    {
+      "relation_type": "collects",
+      "phrase": "被收录于",
+      "work": {
+        "object": "work",
+        "id": "221776",
+        "medium": "galgame",
+        "display_name": "アストラエアの白き永遠 FHD  Re:Eternity",
+        "latin": null,
+        "localized": {
+          "ja": {
+            "value": "アストラエアの白き永遠 FHD  Re:Eternity",
+            "is_machine": false
+          }
+        },
+        "olang": "",
+        "content_rating": "r18",
+        "release_date": null,
+        "release_date_precision": null,
+        "release_status": "unknown",
+        "cover": null,
+        "banner": null,
+        "claim": null,
+        "created_at": "",
+        "updated_at": ""
+      }
+    },
+    {
+      "relation_type": "fandisc_of",
+      "phrase": "有 Fandisc",
+      "work": {
+        "object": "work",
+        "id": "75",
+        "medium": "galgame",
+        "display_name": "アストラエアの白き永遠 Finale -白き星の夢-",
+        "latin": null,
+        "localized": {
+          "en": {
+            "value": "AstralAir no Shiroki Towa Finale -Shiroki Hoshi no Yume-",
+            "is_machine": false
+          },
+          "ja": {
+            "value": "アストラエアの白き永遠 Finale -白き星の夢-",
+            "is_machine": false
+          },
+          "zh-Hans": {
+            "value": "星辰恋曲的白色永恒 Finale",
+            "is_machine": false
+          }
+        },
+        "olang": "",
+        "content_rating": "r18",
+        "release_date": null,
+        "release_date_precision": null,
+        "release_status": "unknown",
+        "cover": null,
+        "banner": null,
+        "claim": {
+          "site": "kungal",
+          "site_work_id": "75",
+          "state": "live",
+          "content_limit": "sfw"
+        },
+        "created_at": "",
+        "updated_at": ""
+      }
+    }
+  ],
+  "credits": [
+    {
+      "role_key": "voice-actor",
+      "role_name": "声优",
+      "credits": [
+        {
+          "object": "credit_name",
+          "id": "411",
+          "display_name": "門脇舞以",
+          "latin": null,
+          "localized": {
+            "zh-Hans": {
+              "value": "门胁舞以",
+              "is_machine": false
+            }
+          },
+          "character_id": "2596"
+        },
+        {
+          "object": "credit_name",
+          "id": "544",
+          "display_name": "森沢芙美",
+          "latin": null,
+          "localized": {
+            "zh-Hans": {
+              "value": "森泽芙美",
+              "is_machine": false
+            }
+          },
+          "character_id": "153615"
+        },
+        {
+          "object": "credit_name",
+          "id": "649",
+          "display_name": "五十嵐裕美",
+          "latin": null,
+          "localized": {
+            "zh-Hans": {
+              "value": "五十岚裕美",
+              "is_machine": false
+            }
+          },
+          "character_id": "108457"
+        }
+      ]
+    },
+    {
+      "role_key": "other-staff",
+      "role_name": "其他",
+      "credits": [
+        {
+          "object": "credit_name",
+          "id": "838",
+          "display_name": "なかひろ",
+          "latin": null,
+          "localized": {},
+          "character_id": null
+        },
+        {
+          "object": "credit_name",
+          "id": "900",
+          "display_name": "保住圭",
+          "latin": null,
+          "localized": {},
+          "character_id": null
+        },
+        {
+          "object": "credit_name",
+          "id": "1619",
+          "display_name": "山本美禰子",
+          "latin": null,
+          "localized": {
+            "zh-Hans": {
+              "value": "山本美祢子",
+              "is_machine": false
+            }
+          },
+          "character_id": null
+        }
+      ]
+    },
+    {
+      "role_key": "translator",
+      "role_name": "翻译",
+      "credits": [
+        {
+          "object": "credit_name",
+          "id": "147892",
+          "display_name": "流光",
+          "latin": null,
+          "localized": {},
+          "character_id": null
+        },
+        {
+          "object": "credit_name",
+          "id": "147893",
+          "display_name": "lolihunter2",
+          "latin": null,
+          "localized": {},
+          "character_id": null
+        },
+        {
+          "object": "credit_name",
+          "id": "147894",
+          "display_name": "ヒロ",
+          "latin": null,
+          "localized": {},
+          "character_id": null
+        }
+      ]
+    },
+    {
+      "role_key": "text-editor",
+      "role_name": "编辑",
+      "credits": [
+        {
+          "object": "credit_name",
+          "id": "147891",
+          "display_name": "萌喵LOLI酱",
+          "latin": null,
+          "localized": {},
+          "character_id": null
+        },
+        {
+          "object": "credit_name",
+          "id": "147892",
+          "display_name": "流光",
+          "latin": null,
+          "localized": {},
+          "character_id": null
+        },
+        {
+          "object": "credit_name",
+          "id": "147895",
+          "display_name": "SUGA",
+          "latin": null,
+          "localized": {},
+          "character_id": null
+        }
+      ]
+    },
+    {
+      "role_key": "qa",
+      "role_name": "QA",
+      "credits": [
+        {
+          "object": "credit_name",
+          "id": "147891",
+          "display_name": "萌喵LOLI酱",
+          "latin": null,
+          "localized": {},
+          "character_id": null
+        },
+        {
+          "object": "credit_name",
+          "id": "147913",
+          "display_name": "星羽の夢",
+          "latin": null,
+          "localized": {},
+          "character_id": null
+        },
+        {
+          "object": "credit_name",
+          "id": "147915",
+          "display_name": "阿一叔",
+          "latin": null,
+          "localized": {},
+          "character_id": null
+        }
+      ]
+    },
+    {
+      "role_key": "animation-work",
+      "role_name": "动画制作",
+      "credits": [
+        {
+          "object": "credit_name",
+          "id": "88694",
+          "display_name": "KIZAWA studio",
+          "latin": null,
+          "localized": {},
+          "character_id": null
+        }
+      ]
+    },
+    {
+      "role_key": "character-design",
+      "role_name": "人物设定",
+      "credits": [
+        {
+          "object": "credit_name",
+          "id": "944",
+          "display_name": "司田カズヒロ",
+          "latin": null,
+          "localized": {},
+          "character_id": null
+        }
+      ]
+    },
+    {
+      "role_key": "developer",
+      "role_name": "开发",
+      "credits": [
+        {
+          "object": "credit_name",
+          "id": "1478",
+          "display_name": "FAVORITE",
+          "latin": null,
+          "localized": {},
+          "character_id": null
+        }
+      ]
+    },
+    {
+      "role_key": "director",
+      "role_name": "导演",
+      "credits": [
+        {
+          "object": "credit_name",
+          "id": "1749",
+          "display_name": "水間ホシひと",
+          "latin": null,
+          "localized": {},
+          "character_id": null
+        }
+      ]
+    },
+    {
+      "role_key": "director-direction",
+      "role_name": "导演",
+      "credits": [
+        {
+          "object": "credit_name",
+          "id": "1749",
+          "display_name": "水間ホシひと",
+          "latin": null,
+          "localized": {},
+          "character_id": null
+        }
+      ]
+    },
+    {
+      "role_key": "illustration",
+      "role_name": "插画",
+      "credits": [
+        {
+          "object": "credit_name",
+          "id": "944",
+          "display_name": "司田カズヒロ",
+          "latin": null,
+          "localized": {},
+          "character_id": null
+        },
+        {
+          "object": "credit_name",
+          "id": "2077",
+          "display_name": "なつめえり",
+          "latin": null,
+          "localized": {},
+          "character_id": null
+        },
+        {
+          "object": "credit_name",
+          "id": "2268",
+          "display_name": "ミズタマ",
+          "latin": null,
+          "localized": {},
+          "character_id": null
+        }
+      ]
+    },
+    {
+      "role_key": "inserted-song-performance",
+      "role_name": "插入歌演出",
+      "credits": [
+        {
+          "object": "credit_name",
+          "id": "893",
+          "display_name": "大橋歩夕",
+          "latin": null,
+          "localized": {
+            "zh-Hans": {
+              "value": "大桥步夕",
+              "is_machine": false
+            }
+          },
+          "character_id": null
+        },
+        {
+          "object": "credit_name",
+          "id": "1183",
+          "display_name": "高森奈津美",
+          "latin": null,
+          "localized": {
+            "zh-Hans": {
+              "value": "小鸟居夕花=大森春华",
+              "is_machine": false
+            }
+          },
+          "character_id": null
+        },
+        {
+          "object": "credit_name",
+          "id": "1272",
+          "display_name": "種﨑敦美",
+          "latin": null,
+          "localized": {
+            "zh-Hans": {
+              "value": "种崎敦美",
+              "is_machine": false
+            }
+          },
+          "character_id": null
+        }
+      ]
+    },
+    {
+      "role_key": "music",
+      "role_name": "音乐",
+      "credits": [
+        {
+          "object": "credit_name",
+          "id": "1251",
+          "display_name": "小高光太郎",
+          "latin": null,
+          "localized": {},
+          "character_id": null
+        },
+        {
+          "object": "credit_name",
+          "id": "1619",
+          "display_name": "山本美禰子",
+          "latin": null,
+          "localized": {
+            "zh-Hans": {
+              "value": "山本美祢子",
+              "is_machine": false
+            }
+          },
+          "character_id": null
+        },
+        {
+          "object": "credit_name",
+          "id": "1769",
+          "display_name": "忍",
+          "latin": null,
+          "localized": {},
+          "character_id": null
+        }
+      ]
+    },
+    {
+      "role_key": "scenario",
+      "role_name": "脚本",
+      "credits": [
+        {
+          "object": "credit_name",
+          "id": "838",
+          "display_name": "なかひろ",
+          "latin": null,
+          "localized": {},
+          "character_id": null
+        },
+        {
+          "object": "credit_name",
+          "id": "900",
+          "display_name": "保住圭",
+          "latin": null,
+          "localized": {},
+          "character_id": null
+        },
+        {
+          "object": "credit_name",
+          "id": "28529",
+          "display_name": "高山大河",
+          "latin": null,
+          "localized": {},
+          "character_id": null
+        }
+      ]
+    },
+    {
+      "role_key": "sd原画",
+      "role_name": "SD原画",
+      "credits": [
+        {
+          "object": "credit_name",
+          "id": "2268",
+          "display_name": "ミズタマ",
+          "latin": null,
+          "localized": {},
+          "character_id": null
+        }
+      ]
+    },
+    {
+      "role_key": "special-thanks",
+      "role_name": "特别鸣谢",
+      "credits": [
+        {
+          "object": "credit_name",
+          "id": "90",
+          "display_name": "八宝備仁",
+          "latin": null,
+          "localized": {},
+          "character_id": null
+        },
+        {
+          "object": "credit_name",
+          "id": "99490",
+          "display_name": "和人",
+          "latin": null,
+          "localized": {},
+          "character_id": null
+        }
+      ]
+    },
+    {
+      "role_key": "theme-song-performance",
+      "role_name": "主题歌演出",
+      "credits": [
+        {
+          "object": "credit_name",
+          "id": "720",
+          "display_name": "橋本みゆき",
+          "latin": null,
+          "localized": {},
+          "character_id": null
+        },
+        {
+          "object": "credit_name",
+          "id": "878",
+          "display_name": "Ceui",
+          "latin": null,
+          "localized": {},
+          "character_id": null
+        },
+        {
+          "object": "credit_name",
+          "id": "1135",
+          "display_name": "新田恵海",
+          "latin": null,
+          "localized": {},
+          "character_id": null
+        }
+      ]
+    },
+    {
+      "role_key": "vocal",
+      "role_name": "声乐",
+      "credits": [
+        {
+          "object": "credit_name",
+          "id": "720",
+          "display_name": "橋本みゆき",
+          "latin": null,
+          "localized": {},
+          "character_id": null
+        },
+        {
+          "object": "credit_name",
+          "id": "878",
+          "display_name": "Ceui",
+          "latin": null,
+          "localized": {},
+          "character_id": null
+        },
+        {
+          "object": "credit_name",
+          "id": "1135",
+          "display_name": "新田恵海",
+          "latin": null,
+          "localized": {},
+          "character_id": null
+        }
+      ]
+    },
+    {
+      "role_key": "企画",
+      "role_name": "企画",
+      "credits": [
+        {
+          "object": "credit_name",
+          "id": "838",
+          "display_name": "なかひろ",
+          "latin": null,
+          "localized": {},
+          "character_id": null
+        }
+      ]
+    },
+    {
+      "role_key": "剧本",
+      "role_name": "剧本",
+      "credits": [
+        {
+          "object": "credit_name",
+          "id": "838",
+          "display_name": "なかひろ",
+          "latin": null,
+          "localized": {},
+          "character_id": null
+        },
+        {
+          "object": "credit_name",
+          "id": "900",
+          "display_name": "保住圭",
+          "latin": null,
+          "localized": {},
+          "character_id": null
+        }
+      ]
+    },
+    {
+      "role_key": "协力",
+      "role_name": "协力",
+      "credits": [
+        {
+          "object": "credit_name",
+          "id": "28529",
+          "display_name": "高山大河",
+          "latin": null,
+          "localized": {},
+          "character_id": null
+        }
+      ]
+    },
+    {
+      "role_key": "原画",
+      "role_name": "原画",
+      "credits": [
+        {
+          "object": "credit_name",
+          "id": "944",
+          "display_name": "司田カズヒロ",
+          "latin": null,
+          "localized": {},
+          "character_id": null
+        },
+        {
+          "object": "credit_name",
+          "id": "1763",
+          "display_name": "ヒラサト",
+          "latin": null,
+          "localized": {},
+          "character_id": null
+        },
+        {
+          "object": "credit_name",
+          "id": "2077",
+          "display_name": "なつめえり",
+          "latin": null,
+          "localized": {},
+          "character_id": null
+        }
+      ]
+    },
+    {
+      "role_key": "美工",
+      "role_name": "美工",
+      "credits": [
+        {
+          "object": "credit_name",
+          "id": "147897",
+          "display_name": "はなちゃん",
+          "latin": null,
+          "localized": {},
+          "character_id": null
+        },
+        {
+          "object": "credit_name",
+          "id": "147912",
+          "display_name": "美坂雪糕",
+          "latin": null,
+          "localized": {},
+          "character_id": null
+        },
+        {
+          "object": "credit_name",
+          "id": "147914",
+          "display_name": "阿翟",
+          "latin": null,
+          "localized": {},
+          "character_id": null
+        }
+      ]
+    },
+    {
+      "role_key": "音乐",
+      "role_name": "音乐",
+      "credits": [
+        {
+          "object": "credit_name",
+          "id": "1769",
+          "display_name": "忍",
+          "latin": null,
+          "localized": {},
+          "character_id": null
+        }
+      ]
+    }
+  ],
+  "releases": [
+    {
+      "object": "release",
+      "id": "160133",
+      "work_id": null,
+      "release_kind": "default",
+      "date": "2024-11-29",
+      "title": "アストラエアの白き永遠 FHD Re:Eternity DL版",
+      "lang": "ja",
+      "platform": "win",
+      "platforms": [
+        "win"
+      ],
+      "refs": []
+    },
+    {
+      "object": "release",
+      "id": "165412",
+      "work_id": null,
+      "release_kind": "patch",
+      "date": "2024-12-01",
+      "title": "アストラエアの白き永遠 FHD Re:Eternity",
+      "lang": "zh-Hans",
+      "platform": "win",
+      "platforms": [
+        "win"
+      ],
+      "refs": [
+        {
+          "source": "vndb",
+          "external_id": "r129772"
+        }
+      ]
+    }
+  ],
+  "ratings": [
+    {
+      "source": "vndb",
+      "score": 8.1,
+      "vote_count": 502,
+      "rank": null,
+      "distribution": [
+        {
+          "score": 1,
+          "count": 1
+        },
+        {
+          "score": 2,
+          "count": 1
+        },
+        {
+          "score": 3,
+          "count": 1
+        },
+        {
+          "score": 4,
+          "count": 3
+        },
+        {
+          "score": 5,
+          "count": 7
+        },
+        {
+          "score": 6,
+          "count": 28
+        },
+        {
+          "score": 7,
+          "count": 97
+        },
+        {
+          "score": 8,
+          "count": 137
+        },
+        {
+          "score": 9,
+          "count": 127
+        },
+        {
+          "score": 10,
+          "count": 38
+        }
+      ],
+      "stats": {
+        "average": 8.1,
+        "stdev": null,
+        "min": null,
+        "max": null
+      }
+    },
+    {
+      "source": "bangumi",
+      "score": 7.1,
+      "vote_count": 1146,
+      "rank": 2923,
+      "distribution": [
+        {
+          "score": 1,
+          "count": 9
+        },
+        {
+          "score": 2,
+          "count": 3
+        },
+        {
+          "score": 3,
+          "count": 3
+        },
+        {
+          "score": 4,
+          "count": 12
+        },
+        {
+          "score": 5,
+          "count": 30
+        },
+        {
+          "score": 6,
+          "count": 188
+        },
+        {
+          "score": 7,
+          "count": 501
+        },
+        {
+          "score": 8,
+          "count": 301
+        },
+        {
+          "score": 9,
+          "count": 67
+        },
+        {
+          "score": 10,
+          "count": 32
+        }
+      ]
+    }
+  ],
+  "tags": [
+    {
+      "id": "6074",
+      "display_name": "主人公同父（母）异母（父）姐妹作为女主角",
+      "source": "vndb",
+      "tier": "longtail",
+      "tag_kind": "content",
+      "spoiler": "major",
+      "is_sexual": false,
+      "work_count": 65
+    },
+    {
+      "id": "784",
+      "display_name": "主人公的妹妹女主角",
+      "source": "vndb",
+      "tier": "core",
+      "tag_kind": "content",
+      "spoiler": "major",
+      "is_sexual": false,
+      "work_count": 741
+    },
+    {
+      "id": "4",
+      "display_name": "Galgame",
+      "source": "bangumi",
+      "tier": "hidden",
+      "tag_kind": "meta",
+      "spoiler": "none",
+      "is_sexual": false,
+      "work_count": 5068
+    },
+    {
+      "id": "1444",
+      "display_name": "萝莉",
+      "source": "bangumi",
+      "tier": "longtail",
+      "tag_kind": "content",
+      "spoiler": "none",
+      "is_sexual": false,
+      "work_count": 518
+    },
+    {
+      "id": "728",
+      "display_name": "PC",
+      "source": "bangumi",
+      "tier": "hidden",
+      "tag_kind": "meta",
+      "spoiler": "none",
+      "is_sexual": false,
+      "work_count": 5693
+    },
+    {
+      "id": null,
+      "display_name": "FAVORITE",
+      "source": "bangumi",
+      "tier": null,
+      "tag_kind": null,
+      "spoiler": "none",
+      "is_sexual": false,
+      "work_count": null
+    },
+    {
+      "id": null,
+      "display_name": "司田カズヒロ",
+      "source": "bangumi",
+      "tier": null,
+      "tag_kind": null,
+      "spoiler": "none",
+      "is_sexual": false,
+      "work_count": null
+    }
+  ],
+  "series": [
+    {
+      "object": "series",
+      "id": "3402",
+      "display_name": "アストラエアの白き永遠",
+      "source": "derived",
+      "member_count": 2
+    }
+  ],
+  "intros": [
+    {
+      "lang": "en",
+      "value": "For two years, snow had been falling continuously in the town of Tsukigasaki with spring nowhere in sight. Aside from the snow which never built up, the town was also struck by other abnormal incidents, such as tornadoes, thunderbolts and floods. Riku is an ‘elfin’ who possesses a mysterious ability known as ‘rune’, which he uses to save others. He returned to Tsukigasaki, where he grew up in an orphanage, along with fellow elfins Rinne and Hinata. Their duty was to protect two young sisters, Ochiba and Hazuki, from rune abilities which go out of control, while also keeping the existence of elfins a secret to the public.\n\nWhen he arrived at the town, a girl in a pure white dress was waiting for him. He used to play with the girl Yuuki when they were small, having snowball fights and making snowmen. To his surprise, she still looked exactly the same as before he left. While she’s sad that the city has since changed a lot, she told him that he still remained the same to her even if he grows up.",
+      "is_machine": false,
+      "source": "curated"
+    },
+    {
+      "lang": "ja",
+      "value": "月ヶ咲には二年間、春が訪れていない。\n\n四季に関わらず、雪は降り続いていた。\n\nゆらゆらと舞い散る白い結晶。 だがその雪は、決して積もることがない。\n\nそれは優しい雪だろうか。 それとも悲しい雪だろうか。\n\n積もらない雪のほかにも、突発的な竜巻、落雷、川の増水などの異常気象が街では続いている。\n\n組織の命で、謎の異常気象から 2人の少女を守ることになった主人公──榛名陸。\n\n彼は “エルフィン” と呼ばれる存在で、“ルーン” という不思議な力を操ることが出来るため、学生の身でありながら人命救助といった仕事を続けていた。\n\n訪れた街は、過去にも住んでいた月ヶ咲。\n\n雪のように真っ白な出で立ちの彼女と、雪合戦をしたり雪だるまを作ったりと遊んでいた。\n\nだが、懐かしいと思う間もなく事件は続く。\n\n陸は仲間たちと共に、そんな日々を駆け抜ける。\n\n月ヶ咲の雪空の下。 もう溶けて見えなくなった、雪道の足跡を探して。\n\nきっとこの先に、彼女が待つのだと信じて。\n\n今日もまた、春の訪れを予感しながら、冬の想い出を見上げている。\n",
+      "is_machine": false,
+      "source": "curated"
+    },
+    {
+      "lang": "zh-Hans",
+      "value": "月ヶ咲已经两年没有迎来春天了。\n\n不分四季，雪一直下个不停。\n\n飘舞散落的白色结晶。然而那雪，却绝不会积存。\n\n那是温柔的雪吗。还是悲伤的雪呢。\n\n除了不会积存的雪之外，突发的龙卷风、落雷、河水上涨等异常气象也在街上持续发生。\n\n奉组织之命，主人公——榛名陆，要保护两名少女免受神秘的异常气象侵害。\n\n他是被称为“艾尔芬”的存在，能够操纵名为“卢恩”的不可思议之力，因此尽管身为学生，却一直从事着人命救助之类的工作。\n\n他造访的街道，是过去也曾居住过的月ヶ咲。\n\n与一身打扮如雪般洁白的她，打雪仗、堆雪人，一起玩耍。\n\n然而，连感到怀念的时间都没有，事件便接连发生。\n\n陆与同伴们一起，奔走于这样的日子中。\n\n在月ヶ咲的雪空之下。寻找着已经融化消失不见的，雪道上的足迹。\n\n坚信在这前方，她一定在等待着。\n\n今天也一边预感着春天的到来，一边仰望着冬日的回忆。",
+      "is_machine": true,
+      "source": "curated"
+    }
+  ],
+  "covers": [
+    {
+      "id": "6688",
+      "vote_count": 0,
+      "portrait_pinned": false,
+      "cover_kind": "",
+      "url": "https://image.kungal.iloveren.link/94/3c/943c53d802c95cc686fd63a151e519869d32902b7697b7c0d2bd00196b161ee7.webp",
+      "hash": "943c53d802c95cc686fd63a151e519869d32902b7697b7c0d2bd00196b161ee7",
+      "width": 1728,
+      "height": 1080,
+      "thumbhash": "7xcGDIIMm6eGkniZqZkNWpxgdQ==",
+      "sexual": "safe",
+      "violence": null,
+      "source": "curated"
+    },
+    {
+      "id": "6689",
+      "vote_count": 0,
+      "portrait_pinned": false,
+      "cover_kind": "main",
+      "url": "https://image.kungal.iloveren.link/ba/6e/ba6eee58f6d0770296b999469a56493ea44f756919166c68dac263400b24b6ed.webp",
+      "hash": "ba6eee58f6d0770296b999469a56493ea44f756919166c68dac263400b24b6ed",
+      "width": 256,
+      "height": 160,
+      "thumbhash": "a0gGDIZ1jfb/SHi9aTowSwHDNQ==",
+      "sexual": "safe",
+      "violence": null,
+      "source": "vndb"
+    },
+    {
+      "id": "6690",
+      "vote_count": 0,
+      "portrait_pinned": false,
+      "cover_kind": "pkgfront",
+      "url": "https://image.kungal.iloveren.link/47/60/47609af68f0cbc260ec3c82a45e096de3e6914412be0c18e69d81444b6c58ce7.webp",
+      "hash": "47609af68f0cbc260ec3c82a45e096de3e6914412be0c18e69d81444b6c58ce7",
+      "width": 500,
+      "height": 362,
+      "thumbhash": "5icGDYQgerL/aoi+WPqEOUJNAMRG",
+      "sexual": "safe",
+      "violence": null,
+      "source": "vndb"
+    }
+  ],
+  "screenshots": [
+    {
+      "url": "https://image.kungal.iloveren.link/06/ed/06ed4faecb09876baa43f4c207878a2237dff7c5c59f6feec88e3aa65dea65c8.webp",
+      "hash": "06ed4faecb09876baa43f4c207878a2237dff7c5c59f6feec88e3aa65dea65c8",
+      "width": 1024,
+      "height": 640,
+      "thumbhash": "8hcGDIKIp6SPlHh6m2gcX5mQNg==",
+      "sexual": "safe",
+      "violence": null,
+      "source": "vndb",
+      "caption": ""
+    },
+    {
+      "url": "https://image.kungal.iloveren.link/73/d9/73d9bf6c259c2fb0ec54c35701f18e0a660918ff06b4670f9fcb1d0af4140530.webp",
+      "hash": "73d9bf6c259c2fb0ec54c35701f18e0a660918ff06b4670f9fcb1d0af4140530",
+      "width": 1024,
+      "height": 640,
+      "thumbhash": "necNFIIHp4d5eXZqilUCNjX3og==",
+      "sexual": "safe",
+      "violence": null,
+      "source": "vndb",
+      "caption": ""
+    }
+  ],
+  "characters": [
+    {
+      "object": "character",
+      "id": "1699",
+      "display_name": "コロナ",
+      "latin": null,
+      "localized": {
+        "ja": {
+          "value": "Corona",
+          "is_machine": false
+        },
+        "zh-Hans": {
+          "value": "科罗娜",
+          "is_machine": true
+        }
+      },
+      "roster_role": "main",
+      "spoiler": "none",
+      "identity": "roster:1699",
+      "voices": [
+        {
+          "object": "credit_name",
+          "id": "1550",
+          "display_name": "榎木実佳",
+          "latin": null,
+          "lang": "ja",
+          "localized": {
+            "zh-Hans": {
+              "value": "榎木实佳",
+              "is_machine": false
+            }
+          },
+          "person_id": null
+        },
+        {
+          "object": "credit_name",
+          "id": "15292",
+          "display_name": "鈴谷まや",
+          "latin": null,
+          "lang": "ja",
+          "localized": {},
+          "person_id": null
+        }
+      ],
+      "image": {
+        "url": "https://image.kungal.iloveren.link/90/cd/90cd0ce33bffe6719dffdd17d25b202ee44ce29cd1dfe7c4cd3123852c643a90.webp",
+        "hash": "90cd0ce33bffe6719dffdd17d25b202ee44ce29cd1dfe7c4cd3123852c643a90",
+        "width": 250,
+        "height": 300,
+        "thumbhash": "ZomGDAZGd/gol3h0dun3eHCIcHmId4eHBw==",
+        "sexual": "safe",
+        "violence": null,
+        "source": ""
+      },
+      "figure": {
+        "url": "https://image.kungal.iloveren.link/f6/b1/f6b187936860786495d8ef4fa1316e0d6d273d866c5b1d22196511942bc08d27.webp",
+        "hash": "f6b187936860786495d8ef4fa1316e0d6d273d866c5b1d22196511942bc08d27",
+        "width": 490,
+        "height": 492,
+        "thumbhash": "7FiGDQIoVbg/+oimO6pfTBiPIRtwh3eaWQ==",
+        "sexual": "safe",
+        "violence": null,
+        "source": ""
+      }
+    },
+    {
+      "object": "character",
+      "id": "39194",
+      "display_name": "夕凪 一夏",
+      "latin": null,
+      "localized": {
+        "ja": {
+          "value": "Yuunagi Ichika",
+          "is_machine": false
+        },
+        "zh-Hans": {
+          "value": "夕凪 一夏",
+          "is_machine": false
+        }
+      },
+      "roster_role": "main",
+      "spoiler": "none",
+      "identity": "roster:39194",
+      "voices": [
+        {
+          "object": "credit_name",
+          "id": "102121",
+          "display_name": "桐谷 華",
+          "latin": null,
+          "lang": "ja",
+          "localized": {},
+          "person_id": null
+        },
+        {
+          "object": "credit_name",
+          "id": "1272",
+          "display_name": "種﨑敦美",
+          "latin": null,
+          "lang": "ja",
+          "localized": {
+            "zh-Hans": {
+              "value": "种崎敦美",
+              "is_machine": false
+            }
+          },
+          "person_id": null
+        }
+      ],
+      "image": {
+        "url": "https://image.kungal.iloveren.link/b2/63/b263d6a93089c2581699f062f26d9f7133f83fa13bbaf88609bc3bac33495e8f.webp",
+        "hash": "b263d6a93089c2581699f062f26d9f7133f83fa13bbaf88609bc3bac33495e8f",
+        "width": 250,
+        "height": 300,
+        "thumbhash": "I7mGBAI5d/lJmGeFhOC6iICVgIh3SHh2Bw==",
+        "sexual": "safe",
+        "violence": null,
+        "source": ""
+      },
+      "figure": {
+        "url": "https://image.kungal.iloveren.link/47/2a/472a58870294defcf1cd0aea33b22a8973e3da8ae14d0b787b20d183e9adcd0f.webp",
+        "hash": "472a58870294defcf1cd0aea33b22a8973e3da8ae14d0b787b20d183e9adcd0f",
+        "width": 498,
+        "height": 487,
+        "thumbhash": "rViGBYIon3Fphmd4l3RcD9a3OwaIeYV4SA==",
+        "sexual": "safe",
+        "violence": null,
+        "source": ""
+      }
+    },
+    {
+      "object": "character",
+      "id": "172681",
+      "display_name": "榛名 陸",
+      "latin": null,
+      "localized": {
+        "ja": {
+          "value": "Haruna Riku",
+          "is_machine": false
+        },
+        "zh-Hans": {
+          "value": "榛名 陸",
+          "is_machine": false
+        }
+      },
+      "roster_role": "main",
+      "spoiler": "none",
+      "identity": "roster:172681",
+      "voices": [],
+      "image": {
+        "url": "https://image.kungal.iloveren.link/7d/02/7d02271d53e4460cf5093291a3ecd250d98584a98e09e5953e8dee8aa76bcbf7.webp",
+        "hash": "7d02271d53e4460cf5093291a3ecd250d98584a98e09e5953e8dee8aa76bcbf7",
+        "width": 250,
+        "height": 300,
+        "thumbhash": "H5mCDAhGV3mIB+eEiAmXmHCIcGiHiHeIBw==",
+        "sexual": "safe",
+        "violence": null,
+        "source": ""
+      },
+      "figure": {
+        "url": "https://image.kungal.iloveren.link/b1/58/b1587d319579add2dfea8a63fce47c868203a980e830df3b43e3aae11a29492c.webp",
+        "hash": "b1587d319579add2dfea8a63fce47c868203a980e830df3b43e3aae11a29492c",
+        "width": 106,
+        "height": 498,
+        "thumbhash": "mGiKCQYpd49kR3eXj4LKCAk5eXaDWIc=",
+        "sexual": "safe",
+        "violence": null,
+        "source": ""
+      }
+    }
+  ],
+  "companies": [
+    {
+      "object": "company",
+      "id": "14401",
+      "display_name": "Dramatic Create",
+      "localized": {},
+      "company_kind": "game_brand",
+      "attribution_role": "publisher",
+      "work_count": 20
+    },
+    {
+      "object": "company",
+      "id": "13475",
+      "display_name": "FAVORITE",
+      "localized": {},
+      "company_kind": "game_brand",
+      "attribution_role": "developer",
+      "work_count": 13
+    }
+  ],
+  "engines": [
+    {
+      "object": "engine",
+      "id": "7",
+      "display_name": "FVP",
+      "work_count": 6
+    },
+    {
+      "object": "engine",
+      "id": "8",
+      "display_name": "shin",
+      "work_count": 8
+    }
+  ],
+  "links": [
+    {
+      "source": "official_site",
+      "url": "https://dramaticcreate.com/WhiteEternity"
+    },
+    {
+      "source": "official_site",
+      "url": "https://www.favo-soft.jp/soft/product/WhiteEternity/download.html"
+    }
+  ]
+}

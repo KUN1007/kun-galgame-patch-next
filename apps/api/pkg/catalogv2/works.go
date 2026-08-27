@@ -14,6 +14,12 @@ var workDetailInclude = []string{
 	"screenshots", "characters", "companies",
 }
 
+// The spoiler ceiling of the tags block, defaulting to none upstream. moyu
+// renders the whole vocabulary and lets the reader raise the ceiling in the
+// browser, so it always asks for the top one; asking for none silently drops
+// eight of work 3's eighty-three tags and leaves the page's 剧透 control dead.
+const spoilerMajor = "major"
+
 type WorksQuery struct {
 	Q              string
 	Sort           string
@@ -130,6 +136,7 @@ func (c *Client) GetWork(ctx context.Context, id int64, nsfw bool) (*Work, error
 	v := url.Values{}
 	v.Set("view", "full")
 	v.Set("include", strings.Join(workDetailInclude, ","))
+	v.Set("spoiler", spoilerMajor)
 	if nsfw {
 		v.Set("nsfw", "true")
 	} else {

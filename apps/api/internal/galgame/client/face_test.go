@@ -144,10 +144,20 @@ func TestCatalogTwoHopReads(t *testing.T) {
 		if env.Galgame.ID != 8 {
 			t.Errorf("detail id = %d, want the gid 8", env.Galgame.ID)
 		}
-		// Breaking introRows only reddened the narrow unmarshal test — this whole
-		// two-hop path stayed green with the intro dropped on the floor.
 		if got := env.Galgame.IntroZhCn; got != "介绍" {
 			t.Errorf("intro_zh_cn = %q, want 介绍", got)
+		}
+		// v2 answers a bare id+name row for every block the request does not
+		// name, and its spoiler ceiling defaults to none. The page renders empty
+		// rather than erroring, so only the request itself can be asserted.
+		q := srv.last().query
+		for _, want := range []string{"intros", "tags", "companies", "characters", "credits", "ratings", "covers", "screenshots"} {
+			if !slices.Contains(strings.Split(q.Get("include"), ","), want) {
+				t.Errorf("detail include = %q, want %s among them", q.Get("include"), want)
+			}
+		}
+		if got := q.Get("spoiler"); got != "major" {
+			t.Errorf("spoiler = %q, want major — none hides every spoilered tag", got)
 		}
 	})
 
@@ -503,15 +513,16 @@ func TestTaxonomyBrowseMembersAreGated(t *testing.T) {
 	ctx := context.Background()
 
 	for _, tc := range []struct {
-		name      string
-		path      string
-		recPath   string
-		filterKey string
-		filterVal string
-		entity    string
+		name          string
+		path          string
+		recPath       string
+		filterKey     string
+		filterVal     string
+		entity        string
+		recordInclude []string
 	}{
-		{"tag page", "/tag/_?tag_id=11&page=2&limit=10", "/v2/catalog/tags/11", "tag_id", "11", "tag"},
-		{"official page", "/official/_?official_id=31&page=2&limit=10", "/v2/catalog/companies/31", "company_id", "31", "official"},
+		{"tag page", "/tag/_?tag_id=11&page=2&limit=10", "/v2/catalog/tags/11", "tag_id", "11", "tag", []string{"intros"}},
+		{"official page", "/official/_?official_id=31&page=2&limit=10", "/v2/catalog/companies/31", "company_id", "31", "official", []string{"aliases", "logo", "intros", "links"}},
 	} {
 		t.Run(tc.name, func(t *testing.T) {
 			srv.reset()
@@ -520,8 +531,14 @@ func TestTaxonomyBrowseMembersAreGated(t *testing.T) {
 				t.Fatalf("TaxonomyBrowse: handled=%v err=%v", handled, err)
 			}
 			srv.wantPaths(t, tc.recPath, "/v2/catalog/works")
-			if got := srv.all()[0].query.Get("include"); got != "" {
-				t.Errorf("record include = %q, want empty — the member list is the search face's job now", got)
+			// The record and the member list are two requests with two include
+			// vocabularies: the page's header renders from the record's blocks,
+			// which v2 answers without unless they are named.
+			for _, want := range tc.recordInclude {
+				if !slices.Contains(strings.Split(srv.all()[0].query.Get("include"), ","), want) {
+					t.Errorf("record include = %q, want %s among them",
+						srv.all()[0].query.Get("include"), want)
+				}
 			}
 
 			q := srv.last().query
@@ -721,21 +738,5 @@ func TestRetiredTaxonomyListsAreUnhandled(t *testing.T) {
 		if rec.path != "" {
 			t.Errorf("TaxonomyBrowse(%q) dialed %q; a retired lane must not reach any face", p, rec.path)
 		}
-	}
-}
-
-func TestDetailIntroAcceptsBothKeysAcrossTheRename(t *testing.T) {
-	for _, key := range []string{"intro", "intros"} {
-		t.Run(key, func(t *testing.T) {
-			var w catalogWork
-			body := `{"id":1,"` + key + `":[{"lang":"zh-Hans","intro":"介绍","source":"vndb"}]}`
-			if err := json.Unmarshal([]byte(body), &w); err != nil {
-				t.Fatalf("unmarshal: %v", err)
-			}
-			if got := introByProductKey(introRows(&w))["zh-cn"]; got != "介绍" {
-				t.Errorf("intro_zh_cn = %q, want 介绍 — the detail face is mid-rename "+
-					"and the two services do not deploy together", got)
-			}
-		})
 	}
 }

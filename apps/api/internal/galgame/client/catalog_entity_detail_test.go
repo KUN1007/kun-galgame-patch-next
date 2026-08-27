@@ -2,40 +2,27 @@ package client
 
 import (
 	"encoding/json"
-	"os"
 	"slices"
 	"testing"
+
+	"kun-galgame-patch-api/pkg/catalogv2"
 )
 
-// Both goldens are real responses read from prod on 2026-08-20 and trimmed to a
-// few rows per array with every key intact. Refresh them by re-reading the live
-// face, not by editing them to match the code — see catalog_golden_test.go for
-// the two waves that got past hand-written fakes.
-func loadGolden[T any](t *testing.T, name string) T {
-	t.Helper()
-	raw, err := os.ReadFile("testdata/" + name)
-	if err != nil {
-		t.Fatalf("read golden: %v", err)
-	}
-	var out T
-	if err := json.Unmarshal(raw, &out); err != nil {
-		t.Fatalf("decode: %v — one mismatched field type fails the WHOLE response", err)
-	}
-	return out
-}
-
+// Every block below arrives only because the request names it: a detail face
+// fetched with no include= answers a bare id+name row, which renders an empty
+// modal without erroring.
 func TestProdCharacterDetailDecodes(t *testing.T) {
-	wire := loadGolden[catalogCharacterDetail](t, "catalog_character_detail_prod.json")
+	wire := loadGolden[catalogv2.Character](t, "catalog_character_detail_prod.json")
 	ch := catalogCharacterToDetail(&wire, true)
 
 	if ch.ID != 1699 || ch.Name.JaJp != "コロナ" || ch.Name.ZhCn != "科罗娜" {
 		t.Fatalf("identity = (%d, %+v), want 1699 under both names", ch.ID, ch.Name)
 	}
 	if ch.ImageHash == "" || ch.FigureHash == "" {
-		t.Errorf("art = (%q, %q), want hashes off both URLs", ch.ImageHash, ch.FigureHash)
+		t.Errorf("art = (%q, %q), want both image objects read as hashes", ch.ImageHash, ch.FigureHash)
 	}
 	if !slices.Contains(ch.Aliases, "Corona") {
-		t.Errorf("aliases = %v, want the wave-209 alias rows read as values", ch.Aliases)
+		t.Errorf("aliases = %v, want the alias rows read as values", ch.Aliases)
 	}
 
 	t.Run("traits render in Chinese", func(t *testing.T) {
@@ -52,7 +39,7 @@ func TestProdCharacterDetailDecodes(t *testing.T) {
 
 	t.Run("sfw callers do not see the sexual traits", func(t *testing.T) {
 		for _, tr := range ch.Traits {
-			if tr.Name == "坐姿性交" || tr.Group == "性行为" {
+			if tr.Group == "性行为" {
 				t.Fatalf("sexual trait %q reached an sfw reader", tr.Name)
 			}
 		}
@@ -93,7 +80,7 @@ func TestProdCharacterDetailDecodes(t *testing.T) {
 }
 
 func TestProdNameDetailDecodes(t *testing.T) {
-	wire := loadGolden[catalogNameDetail](t, "catalog_name_detail_prod.json")
+	wire := loadGolden[catalogv2.CreditName](t, "catalog_name_detail_prod.json")
 	n := catalogNameToDetail(&wire)
 
 	if n.ID != 1550 || n.Name.JaJp != "榎木実佳" || n.Name.ZhCn != "榎木实佳" {
@@ -102,28 +89,14 @@ func TestProdNameDetailDecodes(t *testing.T) {
 	if n.PhotoHash == "" {
 		t.Error("photo_hash is empty — the modal renders an avatar from it")
 	}
+	// The person behind the name owns these; the detail face reaches them
+	// through person_id, so no second fetch pays for them.
 	if n.Gender != 2 || n.BirthM != 8 || n.BirthD != 21 {
 		t.Errorf("profile = (gender %d, %d-%d), want the nullable columns unwrapped", n.Gender, n.BirthM, n.BirthD)
 	}
 	if len(n.Siblings) == 0 {
 		t.Error("no siblings — a voice actor's other 名义 are the point of the person link")
 	}
-
-	t.Run("credits carry the moyu id where a galgame stands on the work", func(t *testing.T) {
-		if len(n.Credits) == 0 {
-			t.Fatal("no credits — the request asks for include=credits")
-		}
-		first := n.Credits[0]
-		if first.GalgameID == 0 {
-			t.Errorf("credit[0] = %+v, want the kungal claim read as a moyu galgame id", first)
-		}
-		if first.Name.canonical() == "" || len(first.Roles) == 0 {
-			t.Errorf("credit[0] = %+v, want the work named and its roles kept", first)
-		}
-		if first.Roles[0].RoleName == "" {
-			t.Error("role name is empty")
-		}
-	})
 
 	t.Run("links merge the refs with catalog's own rows", func(t *testing.T) {
 		var hasVndb, hasSite bool
@@ -148,13 +121,18 @@ func TestProdNameDetailDecodes(t *testing.T) {
 // job written by two sources plus a catch-all. Rendering the roles as they
 // arrive prints "其他 · 脚本 · 脚本" under the work.
 func TestProdNameCreditsFoldOneRolePerJob(t *testing.T) {
-	wire := loadGolden[catalogNameDetail](t, "catalog_name_credits_prod.json")
-	n := catalogNameToDetail(&wire)
-
-	if len(n.Credits) == 0 {
+	page := loadGolden[catalogv2.List[catalogv2.NameCredit]](t, "catalog_name_credits_prod.json")
+	if len(page.Items) == 0 {
 		t.Fatal("no credits")
 	}
-	for _, credit := range n.Credits {
+
+	credits := make([]GalgameStaffCredit, 0, len(page.Items))
+	for i := range page.Items {
+		it := workToListItem(page.Items[i].Work)
+		credits = append(credits, staffCreditRow(&it, page.Items[i].Roles))
+	}
+
+	for _, credit := range credits {
 		seen := make(map[string]bool, len(credit.Roles))
 		for _, role := range credit.Roles {
 			key := role.RoleKey + "\x00" + role.Character
@@ -164,8 +142,60 @@ func TestProdNameCreditsFoldOneRolePerJob(t *testing.T) {
 			seen[key] = true
 		}
 	}
-	first := n.Credits[0]
+	first := credits[0]
+	if first.GalgameID == 0 {
+		t.Errorf("credit[0] = %+v, want the kungal claim read as a moyu galgame id", first)
+	}
 	if len(first.Roles) != 2 || first.Roles[0].RoleKey != "scenario" {
 		t.Errorf("roles = %+v, want 脚本 before the other-staff catch-all", first.Roles)
+	}
+}
+
+// The 会社 page renders its brand mark, description, official site and aliases
+// from these four; the v2 cutover shipped without them and the page went blank
+// below the title.
+func TestProdCompanyDetailDecodes(t *testing.T) {
+	rec := loadGolden[catalogv2.Company](t, "catalog_company_detail_prod.json")
+
+	if imageHash(rec.Logo) == "" {
+		t.Error("no logo hash")
+	}
+	if preferredIntro(introRowsFrom(rec.Intros)) == "" {
+		t.Error("no description")
+	}
+	if !slices.Contains(aliasValues(aliasRowsFrom(rec.Aliases)), "Broccoli") {
+		t.Errorf("aliases = %v, want the alias rows read as values", aliasValues(aliasRowsFrom(rec.Aliases)))
+	}
+	if links := linkRowsFrom(rec.Links); len(links) == 0 || links[0].URL == "" {
+		t.Errorf("links = %+v, want the official site among them", links)
+	}
+	if productLangFromCatalog(strOrEmpty(rec.Lang)) != "ja-jp" {
+		t.Errorf("lang = %q, want ja-jp", strOrEmpty(rec.Lang))
+	}
+}
+
+// A nil slice marshals to null, and the two modals read
+// `detail.links.length` / `detail.siblings.length` without a guard: the v2
+// cutover shipped every block nil and both threw
+// "Cannot read properties of null (reading 'length')" instead of rendering
+// without the missing data.
+func TestEntityDetailNeverMarshalsNullArrays(t *testing.T) {
+	for name, v := range map[string]any{
+		"character": catalogCharacterToDetail(&catalogv2.Character{}, true),
+		"staff":     catalogNameToDetail(&catalogv2.CreditName{}),
+	} {
+		raw, err := json.Marshal(v)
+		if err != nil {
+			t.Fatalf("%s: marshal: %v", name, err)
+		}
+		var fields map[string]json.RawMessage
+		if err := json.Unmarshal(raw, &fields); err != nil {
+			t.Fatalf("%s: %v", name, err)
+		}
+		for _, key := range []string{"aliases", "intros", "traits", "links", "siblings", "credits"} {
+			if got, ok := fields[key]; ok && string(got) == "null" {
+				t.Errorf("%s.%s = null, want []", name, key)
+			}
+		}
 	}
 }

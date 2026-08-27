@@ -1,0 +1,414 @@
+{
+  "object": "work",
+  "id": "3477",
+  "medium": "galgame",
+  "display_name": "ギャラクシーエンジェル",
+  "latin": null,
+  "localized": {
+    "en": {
+      "value": "Galaxy Angel",
+      "is_machine": false
+    },
+    "ja": {
+      "value": "ギャラクシーエンジェル",
+      "is_machine": false
+    },
+    "zh-Hans": {
+      "value": "银河天使",
+      "is_machine": false
+    },
+    "zh-Hant": {
+      "value": "銀河天使",
+      "is_machine": false
+    }
+  },
+  "olang": "ja",
+  "content_rating": "all_ages",
+  "release_date": "2002-07-20",
+  "release_date_precision": "day",
+  "release_status": "released",
+  "cover": {
+    "url": "https://image.kungal.iloveren.link/99/02/9902a0e3dd9f2f857d9112e0f33adda85fce369f20bd02f9cd78aa10fe21eaee.webp",
+    "hash": "9902a0e3dd9f2f857d9112e0f33adda85fce369f20bd02f9cd78aa10fe21eaee",
+    "width": 757,
+    "height": 1080,
+    "thumbhash": "WAcOJQQ2aJCJN5iGiYV3hUCJBXB8",
+    "sexual": "safe",
+    "violence": null,
+    "source": "upscale"
+  },
+  "banner": {
+    "url": "https://image.kungal.iloveren.link/8e/cf/8ecf271ac45e664a9cdb61a09fd9d5088f4ee6f9ad442b9dd2280e3db903f627.webp",
+    "hash": "8ecf271ac45e664a9cdb61a09fd9d5088f4ee6f9ad442b9dd2280e3db903f627",
+    "width": 800,
+    "height": 450,
+    "thumbhash": "ltcJHIZRSmlwephjeJjQ2Aarrg==",
+    "sexual": "safe",
+    "violence": null,
+    "source": "curated"
+  },
+  "claim": {
+    "site": "kungal",
+    "site_work_id": "3491",
+    "state": "live",
+    "content_limit": "sfw"
+  },
+  "created_at": "2026-07-06T10:45:54Z",
+  "updated_at": "2026-08-26T03:08:36Z",
+  "titles": [
+    {
+      "lang": "en",
+      "title": "Galaxy Angel",
+      "latin": null,
+      "title_kind": "official",
+      "is_machine": false
+    },
+    {
+      "lang": "ja",
+      "title": "ギャラクシーエンジェル",
+      "latin": null,
+      "title_kind": "official",
+      "is_machine": false
+    }
+  ],
+  "refs": [
+    {
+      "source": "bangumi",
+      "external_id": "14916"
+    },
+    {
+      "source": "curated",
+      "external_id": "3491"
+    }
+  ],
+  "relations": [
+    {
+      "relation_type": "adaptation_of",
+      "phrase": "被改编为",
+      "work": {
+        "object": "work",
+        "id": "213004",
+        "medium": "anime",
+        "display_name": "ギャラクシーエンジェル",
+        "latin": null,
+        "localized": {
+          "ja": {
+            "value": "ギャラクシーエンジェル",
+            "is_machine": false
+          },
+          "zh": {
+            "value": "银河天使",
+            "is_machine": false
+          }
+        },
+        "olang": "",
+        "content_rating": "all_ages",
+        "release_date": null,
+        "release_date_precision": null,
+        "release_status": "unknown",
+        "cover": null,
+        "banner": null,
+        "claim": null,
+        "created_at": "",
+        "updated_at": ""
+      }
+    }
+  ],
+  "credits": [
+    {
+      "role_key": "voice-actor",
+      "role_name": "声优",
+      "credits": [
+        {
+          "object": "credit_name",
+          "id": "224",
+          "display_name": "小西克幸",
+          "latin": null,
+          "localized": {},
+          "character_id": "18973"
+        },
+        {
+          "object": "credit_name",
+          "id": "240",
+          "display_name": "大原さやか",
+          "latin": null,
+          "localized": {},
+          "character_id": "49403"
+        }
+      ]
+    },
+    {
+      "role_key": "other-staff",
+      "role_name": "其他",
+      "credits": [
+        {
+          "object": "credit_name",
+          "id": "89594",
+          "display_name": "CaféLoli@Sharin-Sub",
+          "latin": null,
+          "localized": {},
+          "character_id": null
+        }
+      ]
+    }
+  ],
+  "releases": [
+    {
+      "object": "release",
+      "id": "159660",
+      "work_id": null,
+      "release_kind": "default",
+      "date": "2006-02-23",
+      "title": "ギャラクシーエンジェル - Broccoli Best Quality",
+      "lang": "ja",
+      "platform": "ps2",
+      "platforms": [
+        "ps2"
+      ],
+      "refs": [
+        {
+          "source": "vndb",
+          "external_id": "r28162"
+        }
+      ]
+    }
+  ],
+  "ratings": [
+    {
+      "source": "vndb",
+      "score": 7.54,
+      "vote_count": 598,
+      "rank": null,
+      "distribution": [
+        {
+          "score": 2,
+          "count": 1
+        },
+        {
+          "score": 3,
+          "count": 1
+        },
+        {
+          "score": 4,
+          "count": 8
+        },
+        {
+          "score": 5,
+          "count": 22
+        },
+        {
+          "score": 6,
+          "count": 55
+        },
+        {
+          "score": 7,
+          "count": 162
+        },
+        {
+          "score": 8,
+          "count": 184
+        },
+        {
+          "score": 9,
+          "count": 62
+        },
+        {
+          "score": 10,
+          "count": 27
+        }
+      ],
+      "stats": {
+        "average": 7.54,
+        "stdev": null,
+        "min": null,
+        "max": null
+      }
+    },
+    {
+      "source": "bangumi",
+      "score": 7.4,
+      "vote_count": 29,
+      "rank": 2105,
+      "distribution": [
+        {
+          "score": 5,
+          "count": 1
+        },
+        {
+          "score": 6,
+          "count": 2
+        },
+        {
+          "score": 7,
+          "count": 12
+        },
+        {
+          "score": 8,
+          "count": 13
+        },
+        {
+          "score": 10,
+          "count": 1
+        }
+      ]
+    }
+  ],
+  "tags": [
+    {
+      "id": "4",
+      "display_name": "Galgame",
+      "source": "bangumi",
+      "tier": "hidden",
+      "tag_kind": "meta",
+      "spoiler": "none",
+      "is_sexual": false,
+      "work_count": 5068
+    },
+    {
+      "id": "117",
+      "display_name": "汉化",
+      "source": "bangumi",
+      "tier": "core",
+      "tag_kind": "meta",
+      "spoiler": "none",
+      "is_sexual": false,
+      "work_count": 721
+    }
+  ],
+  "series": [
+    {
+      "object": "series",
+      "id": "637",
+      "display_name": "银河天使",
+      "source": "curated",
+      "member_count": 6
+    }
+  ],
+  "intros": [
+    {
+      "lang": "en",
+      "value": "Galaxy Angels are from the \"Special Guardian Division\" and they work closely with the \"Imperial Special Guards\" and the \"Satellite Defense Teams\". They are the guardians of the White Moon, the sacred planet of the Transbaal Empire, and the personal protectors of the White Moon Goddess Shatoyan. The story begins with Prince Eonia attempting a take over of the Transbaal Empire with the aid of the mysterious Black Moon, counterpart to the White Moon. To counter Prince Eonia, the Angel-tai along with their flagship the Elsior are placed in the hands of the kind and ever-capable Commander Takuto Meyers.",
+      "is_machine": false,
+      "source": "curated"
+    }
+  ],
+  "covers": [
+    {
+      "id": "26743",
+      "vote_count": 0,
+      "portrait_pinned": false,
+      "cover_kind": "",
+      "url": "https://image.kungal.iloveren.link/8e/cf/8ecf271ac45e664a9cdb61a09fd9d5088f4ee6f9ad442b9dd2280e3db903f627.webp",
+      "hash": "8ecf271ac45e664a9cdb61a09fd9d5088f4ee6f9ad442b9dd2280e3db903f627",
+      "width": 800,
+      "height": 450,
+      "thumbhash": "ltcJHIZRSmlwephjeJjQ2Aarrg==",
+      "sexual": "safe",
+      "violence": null,
+      "source": "curated"
+    }
+  ],
+  "screenshots": [
+    {
+      "url": "https://image.kungal.iloveren.link/80/76/8076f10cb106e4c1a544d6d708db4a9b753a57f49abb363894cdf290910c452c.webp",
+      "hash": "8076f10cb106e4c1a544d6d708db4a9b753a57f49abb363894cdf290910c452c",
+      "width": 640,
+      "height": 480,
+      "thumbhash": "JecNHYSJiXd/hoh2d4iGd2t8wMUH",
+      "sexual": "safe",
+      "violence": null,
+      "source": "vndb",
+      "caption": ""
+    }
+  ],
+  "characters": [
+    {
+      "object": "character",
+      "id": "18972",
+      "display_name": "タクト・マイヤーズ",
+      "latin": null,
+      "localized": {
+        "ja": {
+          "value": "Tact Mayers",
+          "is_machine": false
+        },
+        "zh-Hans": {
+          "value": "塔克特·麦雅兹",
+          "is_machine": false
+        }
+      },
+      "roster_role": "main",
+      "spoiler": "none",
+      "identity": "roster:18972",
+      "voices": [
+        {
+          "object": "credit_name",
+          "id": "471",
+          "display_name": "うえだゆうじ",
+          "latin": null,
+          "lang": "ja",
+          "localized": {
+            "zh-Hans": {
+              "value": "上田祐司",
+              "is_machine": false
+            }
+          },
+          "person_id": null
+        },
+        {
+          "object": "credit_name",
+          "id": "129378",
+          "display_name": "上田 祐司",
+          "latin": null,
+          "lang": "ja",
+          "localized": {},
+          "person_id": null
+        }
+      ],
+      "image": {
+        "url": "https://image.kungal.iloveren.link/54/9a/549aa8915ad0643cb686de72a6ca2eff8439394b0552d75bab1b678e60169624.webp",
+        "hash": "549aa8915ad0643cb686de72a6ca2eff8439394b0552d75bab1b678e60169624",
+        "width": 250,
+        "height": 300,
+        "thumbhash": "W/cNHgIZhwiYmXeJaXeZiYqXCHhkQEg=",
+        "sexual": "safe",
+        "violence": null,
+        "source": ""
+      },
+      "figure": null
+    }
+  ],
+  "companies": [
+    {
+      "object": "company",
+      "id": "1",
+      "display_name": "ブロッコリー",
+      "localized": {
+        "ja": {
+          "value": "株式会社ブロッコリー",
+          "is_machine": false
+        }
+      },
+      "company_kind": "publisher",
+      "attribution_role": "developer",
+      "work_count": 9,
+      "logo": {
+        "url": "https://image.kungal.iloveren.link/96/e4/96e4558fb70483d014cf26978caa8e1bf5a88373e55f163e30461f99cea54b16.webp",
+        "hash": "96e4558fb70483d014cf26978caa8e1bf5a88373e55f163e30461f99cea54b16",
+        "width": null,
+        "height": null,
+        "thumbhash": null,
+        "sexual": null,
+        "violence": null,
+        "source": ""
+      }
+    }
+  ],
+  "engines": [],
+  "links": [
+    {
+      "source": "official_site",
+      "url": "https://www.broccoli.co.jp/ga/game/ga/index.html"
+    }
+  ]
+}

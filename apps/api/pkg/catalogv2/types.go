@@ -45,6 +45,18 @@ type Image struct {
 	Source    string  `json:"source"`
 }
 
+type EntityName struct {
+	Lang      string `json:"lang"`
+	Value     string `json:"value"`
+	AliasKind string `json:"alias_kind"`
+	IsMachine bool   `json:"is_machine"`
+}
+
+type Link struct {
+	Source string `json:"source"`
+	URL    string `json:"url"`
+}
+
 type Ref struct {
 	Source     string `json:"source"`
 	ExternalID string `json:"external_id"`

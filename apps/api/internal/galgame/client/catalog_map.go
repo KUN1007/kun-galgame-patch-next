@@ -226,13 +226,6 @@ func catalogItemToHit(it *catalogWorkListItem) GalgameHit {
 	}
 }
 
-func introRows(w *catalogWork) []catalogWorkIntro {
-	if len(w.Intros) > 0 {
-		return w.Intros
-	}
-	return w.Intro
-}
-
 func introByProductKey(rows []catalogWorkIntro) map[string]string {
 	out := make(map[string]string, 4)
 	for _, r := range rows {
@@ -331,7 +324,7 @@ func catalogWorkToFull(w *catalogWork) GalgameFull {
 	cl, age := contentAxisOf(w.ClaimedBy, w.ContentRating)
 	date, _ := normalizeCatalogDate(w.ReleaseDate)
 	names := localizedByProductKey(w.Localized)
-	intros := introByProductKey(introRows(w))
+	intros := introByProductKey(w.Intros)
 
 	f := GalgameFull{
 		ID:               w.publicGID(),

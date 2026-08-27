@@ -63,9 +63,11 @@ type catalogCreditGroup struct {
 	Credits  []catalogCreditItem `json:"credits"`
 }
 
+// Score is the bucket's value on the source's own scale, not an index:
+// erogamescape publishes deciles, so it is a number and not a count.
 type catalogRatingBucket struct {
-	Score int `json:"score"`
-	Count int `json:"count"`
+	Score float64 `json:"score"`
+	Count int     `json:"count"`
 }
 
 type catalogRating struct {
@@ -105,8 +107,8 @@ type GalgameStaffGroup struct {
 }
 
 type GalgameRatingBucket struct {
-	Score int `json:"score"`
-	Count int `json:"count"`
+	Score float64 `json:"score"`
+	Count int     `json:"count"`
 }
 
 // GalgameRating is one external source's aggregate. Score sits on that source's

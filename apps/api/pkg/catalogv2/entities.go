@@ -4,15 +4,21 @@ import (
 	"context"
 	"net/url"
 	"strconv"
+	"strings"
 )
 
 type Company struct {
 	ID          string                   `json:"id"`
 	DisplayName string                   `json:"display_name"`
 	Latin       *string                  `json:"latin"`
+	Lang        *string                  `json:"lang"`
 	Localized   map[string]LocalizedText `json:"localized"`
 	CompanyKind string                   `json:"company_kind"`
 	WorkCount   int                      `json:"work_count"`
+	Aliases     []EntityName             `json:"aliases"`
+	Logo        *Image                   `json:"logo"`
+	Intros      []Intro                  `json:"intros"`
+	Links       []Link                   `json:"links"`
 }
 
 func (c Company) IntID() (int64, bool) { return ParseID(c.ID) }
@@ -21,8 +27,22 @@ type CreditName struct {
 	ID          string                   `json:"id"`
 	DisplayName string                   `json:"display_name"`
 	Latin       *string                  `json:"latin"`
+	Lang        *string                  `json:"lang"`
 	Localized   map[string]LocalizedText `json:"localized"`
 	PersonID    *string                  `json:"person_id"`
+	// gender and the three birth parts are person-level facts the detail face
+	// reaches through person_id; they need no include token and no second fetch.
+	// The parts are independently fuzzy: a year can exist with no month or day.
+	Gender     *string      `json:"gender"`
+	BirthYear  *int         `json:"birth_year"`
+	BirthMonth *int         `json:"birth_month"`
+	BirthDay   *int         `json:"birth_day"`
+	Aliases    []EntityName `json:"aliases"`
+	Photo      *Image       `json:"photo"`
+	Siblings   []CreditName `json:"siblings"`
+	Intros     []Intro      `json:"intros"`
+	Links      []Link       `json:"links"`
+	Refs       []Ref        `json:"refs"`
 }
 
 func (n CreditName) IntID() (int64, bool) { return ParseID(n.ID) }
@@ -33,30 +53,40 @@ type NameCredit struct {
 }
 
 type NameCreditRole struct {
-	RoleKey     string  `json:"role_key"`
-	RoleName    string  `json:"role_name"`
-	CharacterID *string `json:"character_id"`
+	RoleKey       string  `json:"role_key"`
+	RoleName      string  `json:"role_name"`
+	CharacterID   *string `json:"character_id"`
+	CharacterName *string `json:"character_name"`
 }
 
 type Character struct {
 	ID          string                   `json:"id"`
 	DisplayName string                   `json:"display_name"`
 	Latin       *string                  `json:"latin"`
+	Lang        *string                  `json:"lang"`
 	Localized   map[string]LocalizedText `json:"localized"`
 	Gender      *string                  `json:"gender"`
+	Birthday    *string                  `json:"birthday"`
 	Image       *Image                   `json:"image"`
 	Figure      *Image                   `json:"figure"`
+	Traits      []CharacterTrait         `json:"traits"`
+	Aliases     []EntityName             `json:"aliases"`
+	Intros      []Intro                  `json:"intros"`
+	Refs        []Ref                    `json:"refs"`
+}
+
+type CharacterTrait struct {
+	ID             string                   `json:"id"`
+	DisplayName    string                   `json:"display_name"`
+	Group          *string                  `json:"group"`
+	Localized      map[string]LocalizedText `json:"localized"`
+	GroupLocalized map[string]LocalizedText `json:"group_localized"`
+	Spoiler        string                   `json:"spoiler"`
+	IsSexual       bool                     `json:"is_sexual"`
+	IsLie          bool                     `json:"is_lie"`
 }
 
 func (ch Character) IntID() (int64, bool) { return ParseID(ch.ID) }
-
-type Person struct {
-	ID                  string  `json:"id"`
-	DisplayName         string  `json:"display_name"`
-	PrimaryCreditNameID *string `json:"primary_credit_name_id"`
-	Gender              *string `json:"gender"`
-	Image               *Image  `json:"image"`
-}
 
 type Tag struct {
 	ID          string                   `json:"id"`
@@ -66,13 +96,41 @@ type Tag struct {
 	IsSexual    bool                     `json:"is_sexual"`
 	WorkCount   int                      `json:"work_count"`
 	Localized   map[string]LocalizedText `json:"localized"`
+	Intros      []Intro                  `json:"intros"`
 }
 
 func (t Tag) IntID() (int64, bool) { return ParseID(t.ID) }
 
+// A detail face answers a bare id+name row for every block the request does not
+// name, so an entity fetched with no include= renders an empty page without
+// erroring. The tokens are each face's own closed enum — an unknown one is a
+// 400 — so these lists track catalog's collect specs.
+var (
+	companyInclude    = []string{"aliases", "logo", "intros", "links"}
+	creditNameInclude = []string{"aliases", "photo", "siblings", "intros", "links", "refs"}
+	characterInclude  = []string{
+		"gender", "birthday", "image", "figure", "traits", "aliases", "intros", "refs",
+	}
+	tagInclude = []string{"intros"}
+)
+
+func entityPath(prefix string, id int64, include []string, spoiler string, nsfw bool) string {
+	v := url.Values{}
+	v.Set("include", strings.Join(include, ","))
+	if spoiler != "" {
+		v.Set("spoiler", spoiler)
+	}
+	if nsfw {
+		v.Set("nsfw", "true")
+	} else {
+		v.Set("nsfw", "false")
+	}
+	return prefix + FormatID(id) + "?" + v.Encode()
+}
+
 func (c *Client) GetCompany(ctx context.Context, id int64, nsfw bool) (*Company, error) {
 	var out Company
-	if err := c.get(ctx, "/v2/catalog/companies/"+FormatID(id)+nsfwQuery(nsfw), &out); err != nil {
+	if err := c.get(ctx, entityPath("/v2/catalog/companies/", id, companyInclude, "", nsfw), &out); err != nil {
 		return nil, err
 	}
 	return &out, nil
@@ -80,7 +138,7 @@ func (c *Client) GetCompany(ctx context.Context, id int64, nsfw bool) (*Company,
 
 func (c *Client) GetCreditName(ctx context.Context, id int64, nsfw bool) (*CreditName, error) {
 	var out CreditName
-	if err := c.get(ctx, "/v2/catalog/credit-names/"+FormatID(id)+nsfwQuery(nsfw), &out); err != nil {
+	if err := c.get(ctx, entityPath("/v2/catalog/credit-names/", id, creditNameInclude, "", nsfw), &out); err != nil {
 		return nil, err
 	}
 	return &out, nil
@@ -90,24 +148,9 @@ func (c *Client) CreditNameCredits(ctx context.Context, id int64, nsfw bool, cur
 	return getPaged[NameCredit](ctx, c, "/v2/catalog/credit-names/"+FormatID(id)+"/credits", nsfw, cursor, limit)
 }
 
-func (c *Client) GetPerson(ctx context.Context, id int64) (*Person, error) {
-	var out Person
-	if err := c.get(ctx, "/v2/catalog/persons/"+FormatID(id), &out); err != nil {
-		return nil, err
-	}
-	return &out, nil
-}
-
 func (c *Client) GetCharacter(ctx context.Context, id int64, nsfw bool) (*Character, error) {
-	v := url.Values{}
-	v.Set("view", "full")
-	if nsfw {
-		v.Set("nsfw", "true")
-	} else {
-		v.Set("nsfw", "false")
-	}
 	var out Character
-	if err := c.get(ctx, "/v2/catalog/characters/"+FormatID(id)+"?"+v.Encode(), &out); err != nil {
+	if err := c.get(ctx, entityPath("/v2/catalog/characters/", id, characterInclude, spoilerMajor, nsfw), &out); err != nil {
 		return nil, err
 	}
 	return &out, nil
@@ -115,7 +158,7 @@ func (c *Client) GetCharacter(ctx context.Context, id int64, nsfw bool) (*Charac
 
 func (c *Client) GetTag(ctx context.Context, id int64, nsfw bool) (*Tag, error) {
 	var out Tag
-	if err := c.get(ctx, "/v2/catalog/tags/"+FormatID(id)+nsfwQuery(nsfw), &out); err != nil {
+	if err := c.get(ctx, entityPath("/v2/catalog/tags/", id, tagInclude, "", nsfw), &out); err != nil {
 		return nil, err
 	}
 	return &out, nil
@@ -176,11 +219,4 @@ func getPaged[T any](ctx context.Context, c *Client, path string, nsfw bool, cur
 		out.Items = []T{}
 	}
 	return &out, nil
-}
-
-func nsfwQuery(nsfw bool) string {
-	if nsfw {
-		return "?nsfw=true"
-	}
-	return "?nsfw=false"
 }

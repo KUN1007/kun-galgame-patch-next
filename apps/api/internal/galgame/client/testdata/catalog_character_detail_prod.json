@@ -1,185 +1,244 @@
 {
- "id": 1699,
- "display_name": "コロナ",
- "lang": "ja",
- "aliases": [
-  {
-   "value": "Corona",
-   "lang": "ja",
-   "kind": "spelling_variant"
+  "object": "character",
+  "id": "1699",
+  "display_name": "コロナ",
+  "latin": null,
+  "lang": "ja",
+  "localized": {
+    "ja": {
+      "value": "Corona",
+      "is_machine": false
+    },
+    "zh-Hans": {
+      "value": "科罗娜",
+      "is_machine": true
+    }
   },
-  {
-   "value": "科罗娜",
-   "lang": "zh-Hans",
-   "kind": "translation",
-   "machine": true
-  }
- ],
- "localized": {
-  "ja": {
-   "value": "Corona",
-   "kind": "spelling_variant"
+  "gender": "female",
+  "birthday": "04-07",
+  "height_cm": 148,
+  "measurements": {
+    "bust_cm": 77,
+    "waist_cm": 53,
+    "hip_cm": 78,
+    "cup": null
   },
-  "zh-Hans": {
-   "value": "科罗娜",
-   "kind": "translation",
-   "machine": true
-  }
- },
- "refs": [
-  {
-   "source": "vndb",
-   "external_id": "c17039"
+  "blood_type": "o",
+  "image": {
+    "url": "https://image.kungal.iloveren.link/90/cd/90cd0ce33bffe6719dffdd17d25b202ee44ce29cd1dfe7c4cd3123852c643a90.webp",
+    "hash": "90cd0ce33bffe6719dffdd17d25b202ee44ce29cd1dfe7c4cd3123852c643a90",
+    "width": 250,
+    "height": 300,
+    "thumbhash": "ZomGDAZGd/gol3h0dun3eHCIcHmId4eHBw==",
+    "sexual": "safe",
+    "violence": null,
+    "source": ""
   },
-  {
-   "source": "bangumi",
-   "external_id": "21095"
+  "figure": {
+    "url": "https://image.kungal.iloveren.link/f6/b1/f6b187936860786495d8ef4fa1316e0d6d273d866c5b1d22196511942bc08d27.webp",
+    "hash": "f6b187936860786495d8ef4fa1316e0d6d273d866c5b1d22196511942bc08d27",
+    "width": 490,
+    "height": 492,
+    "thumbhash": "7FiGDQIoVbg/+oimO6pfTBiPIRtwh3eaWQ==",
+    "sexual": "safe",
+    "violence": null,
+    "source": ""
   },
-  {
-   "source": "erogamescape",
-   "external_id": "3200"
-  }
- ],
- "traits": [
-  {
-   "id": 2785,
-   "name": "Blond",
-   "group": "Hair",
-   "localized": {
-    "zh-Hans": {
-     "value": "金发",
-     "kind": "translation"
+  "traits": [
+    {
+      "object": "character_trait",
+      "id": "2785",
+      "display_name": "Blond",
+      "group": "Hair",
+      "localized": {
+        "zh-Hans": {
+          "value": "金发",
+          "is_machine": false
+        }
+      },
+      "group_localized": {
+        "zh-Hans": {
+          "value": "毛发",
+          "is_machine": false
+        }
+      },
+      "spoiler": "none",
+      "is_sexual": false,
+      "is_lie": false
+    },
+    {
+      "object": "character_trait",
+      "id": "2",
+      "display_name": "Red",
+      "group": "Hair",
+      "localized": {
+        "zh-Hans": {
+          "value": "红色",
+          "is_machine": false
+        }
+      },
+      "group_localized": {
+        "zh-Hans": {
+          "value": "毛发",
+          "is_machine": false
+        }
+      },
+      "spoiler": "minor",
+      "is_sexual": false,
+      "is_lie": false
+    },
+    {
+      "object": "character_trait",
+      "id": "1704",
+      "display_name": "Short",
+      "group": "Hair",
+      "localized": {
+        "zh-Hans": {
+          "value": "矮小/短",
+          "is_machine": false
+        }
+      },
+      "group_localized": {
+        "zh-Hans": {
+          "value": "毛发",
+          "is_machine": false
+        }
+      },
+      "spoiler": "none",
+      "is_sexual": false,
+      "is_lie": false
+    },
+    {
+      "object": "character_trait",
+      "id": "681",
+      "display_name": "Sidehair",
+      "group": "Hair",
+      "localized": {
+        "zh-Hans": {
+          "value": "侧发",
+          "is_machine": false
+        }
+      },
+      "group_localized": {
+        "zh-Hans": {
+          "value": "毛发",
+          "is_machine": false
+        }
+      },
+      "spoiler": "none",
+      "is_sexual": false,
+      "is_lie": false
+    },
+    {
+      "object": "character_trait",
+      "id": "1188",
+      "display_name": "Astronaut",
+      "group": "Role",
+      "localized": {
+        "zh-Hans": {
+          "value": "宇航员",
+          "is_machine": false
+        }
+      },
+      "group_localized": {
+        "zh-Hans": {
+          "value": "角色",
+          "is_machine": false
+        }
+      },
+      "spoiler": "major",
+      "is_sexual": false,
+      "is_lie": false
+    },
+    {
+      "object": "character_trait",
+      "id": "2817",
+      "display_name": "Sitting Sex",
+      "group": "Subject of (Sexual)",
+      "localized": {
+        "zh-Hans": {
+          "value": "坐姿做爱",
+          "is_machine": false
+        }
+      },
+      "group_localized": {
+        "zh-Hans": {
+          "value": "被动(性)",
+          "is_machine": false
+        }
+      },
+      "spoiler": "none",
+      "is_sexual": true,
+      "is_lie": false
+    },
+    {
+      "object": "character_trait",
+      "id": "3295",
+      "display_name": "Standing Sex",
+      "group": "Subject of (Sexual)",
+      "localized": {
+        "zh-Hans": {
+          "value": "站立式体位",
+          "is_machine": false
+        }
+      },
+      "group_localized": {
+        "zh-Hans": {
+          "value": "被动(性)",
+          "is_machine": false
+        }
+      },
+      "spoiler": "none",
+      "is_sexual": true,
+      "is_lie": false
     }
-   },
-   "group_localized": {
-    "zh-Hans": {
-     "value": "毛发",
-     "kind": "translation"
+  ],
+  "aliases": [
+    {
+      "lang": "ja",
+      "value": "Corona",
+      "alias_kind": "spelling_variant",
+      "is_machine": false
+    },
+    {
+      "lang": "zh-Hans",
+      "value": "科罗娜",
+      "alias_kind": "translation",
+      "is_machine": true
     }
-   },
-   "spoiler": 0,
-   "sexual": false,
-   "lie": false
-  },
-  {
-   "id": 2,
-   "name": "Red",
-   "group": "Hair",
-   "localized": {
-    "zh-Hans": {
-     "value": "红色",
-     "kind": "translation"
+  ],
+  "intros": [
+    {
+      "lang": "en",
+      "value": "Likes: Humans\nDislikes: Causing trouble\n\nA robot produced by the Valhalla Institute with the hope of one day being sent into space to explore far-off planets. In order to become accustomed to human culture and becoming more similar to them, she attends Tsukikou. She is very friendly and speaks overly polite to everyone. She’s very enthusiastic about making friends with everyone to the point where she wants to know the names and faces of everyone who goes to Tsukikou. However, she’s afraid her being a robot scares people away from her. She often helps her friend Rui out at the local shrine.",
+      "is_machine": false,
+      "source": "vndb"
+    },
+    {
+      "lang": "ja",
+      "value": "月ヶ咲学園の1年生。\n見た目も振る舞いも人間にしか思えないが、実は街の研究所によって造られた人型ロボット。\nそのせいか、愛称は “コロ助”。\n良い子で強い子、健気な性格と非の打ち所がないが、少し世間とズレている面もある。\n失敗を繰り返しては、早く人間のようになりたいと願っている。\n\n「これでわたしも、人間に一歩近づいたでしょうか」",
+      "is_machine": false,
+      "source": "bangumi"
+    },
+    {
+      "lang": "zh-Hans",
+      "value": "月ヶ咲学園的1年级学生。\n外表和举止都让人觉得只是个人类，但实际上是由街上的研究所制造的人型机器人。\n也许正因如此，爱称是“コロ助”。\n是个好孩子也是个坚强的孩子，性格坚强懂事无可挑剔，但也有稍微与社会脱节的一面。\n不断重复着失败，祈愿着能早日变得像人类一样。\n\n「这样一来我也向人类靠近了一步吗」",
+      "is_machine": true,
+      "source": "bangumi"
     }
-   },
-   "group_localized": {
-    "zh-Hans": {
-     "value": "毛发",
-     "kind": "translation"
+  ],
+  "refs": [
+    {
+      "source": "vndb",
+      "external_id": "c17039"
+    },
+    {
+      "source": "bangumi",
+      "external_id": "21095"
+    },
+    {
+      "source": "erogamescape",
+      "external_id": "3200"
     }
-   },
-   "spoiler": 1,
-   "sexual": false,
-   "lie": false
-  },
-  {
-   "id": 1704,
-   "name": "Short",
-   "group": "Hair",
-   "localized": {
-    "zh-Hans": {
-     "value": "矮小/短",
-     "kind": "translation"
-    }
-   },
-   "group_localized": {
-    "zh-Hans": {
-     "value": "毛发",
-     "kind": "translation"
-    }
-   },
-   "spoiler": 0,
-   "sexual": false,
-   "lie": false
-  },
-  {
-   "id": 681,
-   "name": "Sidehair",
-   "group": "Hair",
-   "localized": {
-    "zh-Hans": {
-     "value": "侧发",
-     "kind": "translation"
-    }
-   },
-   "group_localized": {
-    "zh-Hans": {
-     "value": "毛发",
-     "kind": "translation"
-    }
-   },
-   "spoiler": 0,
-   "sexual": false,
-   "lie": false
-  },
-  {
-   "id": 2817,
-   "name": "Sitting Sex",
-   "group": "Subject of (Sexual)",
-   "localized": {
-    "zh-Hans": {
-     "value": "坐姿做爱",
-     "kind": "translation"
-    }
-   },
-   "group_localized": {
-    "zh-Hans": {
-     "value": "被动(性)",
-     "kind": "translation"
-    }
-   },
-   "spoiler": 0,
-   "sexual": true,
-   "lie": false
-  },
-  {
-   "id": 3295,
-   "name": "Standing Sex",
-   "group": "Subject of (Sexual)",
-   "localized": {
-    "zh-Hans": {
-     "value": "站立式体位",
-     "kind": "translation"
-    }
-   },
-   "group_localized": {
-    "zh-Hans": {
-     "value": "被动(性)",
-     "kind": "translation"
-    }
-   },
-   "spoiler": 0,
-   "sexual": true,
-   "lie": false
-  }
- ],
- "intros": [
-  {
-   "lang": "en",
-   "intro": "Likes: Humans\nDislikes: Causing trouble\n\nA robot produced by the Valhalla Institute with the hope of one day being sent into space to explore far-off planets. In order to become accustomed to human culture and becoming m",
-   "source": "vndb"
-  },
-  {
-   "lang": "ja",
-   "intro": "月ヶ咲学園の1年生。\n見た目も振る舞いも人間にしか思えないが、実は街の研究所によって造られた人型ロボット。\nそのせいか、愛称は “コロ助”。\n良い子で強い子、健気な性格と非の打ち所がないが、少し世間とズレている面もある。\n失敗を繰り返しては、早く人間のようになりたいと願っている。\n\n「これでわたしも、人間に一歩近づいたでしょうか」",
-   "source": "bangumi"
-  },
-  {
-   "lang": "zh-Hans",
-   "intro": "月ヶ咲学園的1年级学生。\n外表和举止都让人觉得只是个人类，但实际上是由街上的研究所制造的人型机器人。\n也许正因如此，爱称是“コロ助”。\n是个好孩子也是个坚强的孩子，性格坚强懂事无可挑剔，但也有稍微与社会脱节的一面。\n不断重复着失败，祈愿着能早日变得像人类一样。\n\n「这样一来我也向人类靠近了一步吗」",
-   "source": "bangumi",
-   "machine": true
-  }
- ],
- "image": "https://image.kungal.iloveren.link/90/cd/90cd0ce33bffe6719dffdd17d25b202ee44ce29cd1dfe7c4cd3123852c643a90.webp",
- "figure": "https://image.kungal.iloveren.link/f6/b1/f6b187936860786495d8ef4fa1316e0d6d273d866c5b1d22196511942bc08d27.webp"
+  ]
 }

@@ -12,60 +12,6 @@ import (
 
 const catalogStaffCreditsCap = 24
 
-type catalogCharacterDetail struct {
-	ID          int64                           `json:"id"`
-	DisplayName string                          `json:"display_name"`
-	Lang        string                          `json:"lang"`
-	Latin       string                          `json:"latin"`
-	Localized   map[string]catalogLocalizedName `json:"localized"`
-	Aliases     []catalogAlias                  `json:"aliases"`
-	Image       string                          `json:"image"`
-	Figure      string                          `json:"figure"`
-	Intros      []catalogIntroRow               `json:"intros"`
-	Traits      []catalogCharacterTrait         `json:"traits"`
-	Refs        []catalogRef                    `json:"refs"`
-}
-
-type catalogCharacterTrait struct {
-	ID             int64                           `json:"id"`
-	Name           string                          `json:"name"`
-	Localized      map[string]catalogLocalizedName `json:"localized"`
-	Group          string                          `json:"group"`
-	GroupLocalized map[string]catalogLocalizedName `json:"group_localized"`
-	Spoiler        int                             `json:"spoiler"`
-	Sexual         bool                            `json:"sexual"`
-	Lie            bool                            `json:"lie"`
-}
-
-type catalogNameDetail struct {
-	ID          int64                           `json:"id"`
-	DisplayName string                          `json:"display_name"`
-	Lang        string                          `json:"lang"`
-	Latin       string                          `json:"latin"`
-	Localized   map[string]catalogLocalizedName `json:"localized"`
-	Aliases     []catalogAlias                  `json:"aliases"`
-	PhotoHash   string                          `json:"photo_hash"`
-	Gender      *int                            `json:"gender"`
-	BirthY      *int                            `json:"birth_y"`
-	BirthM      *int                            `json:"birth_m"`
-	BirthD      *int                            `json:"birth_d"`
-	Siblings    []catalogPersonRef              `json:"siblings"`
-	Intros      []catalogIntroRow               `json:"intros"`
-	Refs        []catalogRef                    `json:"refs"`
-	Links       []catalogEntityLink             `json:"links"`
-	Credits     []catalogNameCredit             `json:"credits"`
-}
-
-type catalogNameCredit struct {
-	Work  catalogWorkListItem `json:"work"`
-	Roles []struct {
-		RoleKey     string `json:"role_key"`
-		RoleName    string `json:"role_name"`
-		CharacterID int64  `json:"character_id"`
-		Character   string `json:"character"`
-	} `json:"roles"`
-}
-
 // Source is the site the text came from, already rendered for display — the
 // modal prints it as "资料来自 X".
 type GalgameEntityIntro struct {
@@ -131,17 +77,7 @@ func (c *Client) GetCharacter(ctx context.Context, id int, contentLimit string) 
 	if err != nil {
 		return nil, catalogErr(err)
 	}
-	cid, _ := ch.IntID()
-	latin := ""
-	if ch.Latin != nil {
-		latin = *ch.Latin
-	}
-	out := GalgameCharacterDetail{
-		ID:         int(cid),
-		Name:       catalogEntityNames(localizedFrom(ch.Localized), ch.DisplayName, "", latin),
-		ImageHash:  imageHash(ch.Image),
-		FigureHash: imageHash(ch.Figure),
-	}
+	out := catalogCharacterToDetail(ch, contentLimit != "nsfw" && contentLimit != "all")
 	return &out, nil
 }
 
@@ -150,24 +86,11 @@ func (c *Client) GetStaff(ctx context.Context, id int) (*GalgameStaffDetail, err
 	if err != nil {
 		return nil, catalogErr(err)
 	}
-	nid, _ := n.IntID()
-	latin := ""
-	if n.Latin != nil {
-		latin = *n.Latin
-	}
-	out := GalgameStaffDetail{
-		ID:      int(nid),
-		Name:    catalogEntityNames(localizedFrom(n.Localized), n.DisplayName, "", latin),
-		Credits: []GalgameStaffCredit{},
-	}
-	if n.PersonID != nil {
-		if pid, ok := catalogv2.ParseID(*n.PersonID); ok {
-			if person, perr := c.v2.GetPerson(ctx, pid); perr == nil && person != nil {
-				out.PhotoHash = imageHash(person.Image)
-				out.Gender = genderInt(person.Gender)
-			}
-		}
-	}
+	out := catalogNameToDetail(n)
+	// The works this name is credited on hang off their own cursor-paged
+	// sub-face, and that face applies the population gate itself rather than
+	// inheriting the parent's — asking without nsfw cuts every r18 credit off
+	// the roster.
 	page, err := c.v2.CreditNameCredits(ctx, int64(id), true, "", catalogStaffCreditsCap)
 	if err != nil {
 		return &out, nil
@@ -178,31 +101,38 @@ func (c *Client) GetStaff(ctx context.Context, id int) (*GalgameStaffDetail, err
 		if !it.ClaimedBy.renderable() {
 			continue
 		}
-		ja, zhCN, zhTW, en := namesOf(it.Localized)
-		name := KunLanguage{EnUs: en, JaJp: ja, ZhCn: zhCN, ZhTw: zhTW}
-		if name.canonical() == "" {
-			name.JaJp = it.DisplayName
-		}
-		row := GalgameStaffCredit{
-			GalgameID: it.publicGID(),
-			Name:      name,
-			Roles:     make([]GalgameStaffRole, 0, len(credit.Roles)),
-		}
-		seen := map[string]bool{}
-		for _, r := range credit.Roles {
-			key, roleName := catalogFoldRole(r.RoleKey, r.RoleName)
-			if seen[key] {
-				continue
-			}
-			seen[key] = true
-			row.Roles = append(row.Roles, GalgameStaffRole{RoleKey: key, RoleName: roleName})
-		}
-		sort.SliceStable(row.Roles, func(i, j int) bool {
-			return catalogRoleWeight(row.Roles[i].RoleKey) < catalogRoleWeight(row.Roles[j].RoleKey)
-		})
-		out.Credits = append(out.Credits, row)
+		out.Credits = append(out.Credits, staffCreditRow(&it, credit.Roles))
 	}
 	return &out, nil
+}
+
+func staffCreditRow(it *catalogWorkListItem, roles []catalogv2.NameCreditRole) GalgameStaffCredit {
+	ja, zhCN, zhTW, en := namesOf(it.Localized)
+	name := KunLanguage{EnUs: en, JaJp: ja, ZhCn: zhCN, ZhTw: zhTW}
+	if name.canonical() == "" {
+		name.JaJp = it.DisplayName
+	}
+	row := GalgameStaffCredit{
+		GalgameID: it.publicGID(),
+		Name:      name,
+		Roles:     make([]GalgameStaffRole, 0, len(roles)),
+	}
+	// A person credited for the same job by two sources arrives as two rows
+	// under two vocabulary keys, which the fold turns into "脚本 · 脚本".
+	seen := make(map[string]bool, len(roles))
+	for _, r := range roles {
+		key, roleName := catalogFoldRole(r.RoleKey, r.RoleName)
+		character := strOrEmpty(r.CharacterName)
+		if seen[key+"\x00"+character] {
+			continue
+		}
+		seen[key+"\x00"+character] = true
+		row.Roles = append(row.Roles, GalgameStaffRole{RoleKey: key, RoleName: roleName, Character: character})
+	}
+	sort.SliceStable(row.Roles, func(i, j int) bool {
+		return catalogRoleWeight(row.Roles[i].RoleKey) < catalogRoleWeight(row.Roles[j].RoleKey)
+	})
+	return row
 }
 
 func genderInt(g *string) int {
@@ -219,103 +149,71 @@ func genderInt(g *string) int {
 	}
 }
 
-func catalogCharacterToDetail(ch *catalogCharacterDetail, hideSexual bool) GalgameCharacterDetail {
+func catalogCharacterToDetail(ch *catalogv2.Character, hideSexual bool) GalgameCharacterDetail {
+	id, _ := ch.IntID()
 	out := GalgameCharacterDetail{
-		ID:         int(ch.ID),
-		Name:       catalogEntityNames(ch.Localized, ch.DisplayName, ch.Lang, ch.Latin),
-		Aliases:    catalogAliasValues(ch.Aliases),
-		ImageHash:  hashFromURL(ch.Image),
-		FigureHash: hashFromURL(ch.Figure),
-		Intros:     catalogIntros(ch.Intros),
+		ID: int(id),
+		Name: catalogEntityNames(
+			localizedFrom(ch.Localized), ch.DisplayName, strOrEmpty(ch.Lang), strOrEmpty(ch.Latin),
+		),
+		Aliases:    catalogAliasValues(aliasRowsFrom(ch.Aliases)),
+		ImageHash:  imageHash(ch.Image),
+		FigureHash: imageHash(ch.Figure),
+		Intros:     catalogIntros(introRowsFrom(ch.Intros)),
 		Traits:     make([]GalgameCharacterTrait, 0, len(ch.Traits)),
-		Links:      catalogRefLinks(ch.Refs, catalogCharacterPage),
+		Links:      catalogRefLinks(refRowsFrom(ch.Refs), catalogCharacterPage),
 	}
 	for i := range ch.Traits {
 		t := &ch.Traits[i]
-		if hideSexual && t.Sexual {
+		if hideSexual && t.IsSexual {
 			continue
 		}
-		name := catalogVocabularyName(t.Localized, t.Name)
+		name := catalogVocabularyName(localizedFrom(t.Localized), t.DisplayName)
 		if name == "" {
 			continue
 		}
+		tid, _ := catalogv2.ParseID(t.ID)
 		out.Traits = append(out.Traits, GalgameCharacterTrait{
-			ID:      int(t.ID),
+			ID:      int(tid),
 			Name:    name,
-			Group:   catalogVocabularyName(t.GroupLocalized, t.Group),
-			Spoiler: t.Spoiler,
-			Lie:     t.Lie,
+			Group:   catalogVocabularyName(localizedFrom(t.GroupLocalized), strOrEmpty(t.Group)),
+			Spoiler: spoilerInt(t.Spoiler),
+			Lie:     t.IsLie,
 		})
 	}
 	return out
 }
 
-func catalogNameToDetail(n *catalogNameDetail) GalgameStaffDetail {
+func catalogNameToDetail(n *catalogv2.CreditName) GalgameStaffDetail {
+	id, _ := n.IntID()
 	out := GalgameStaffDetail{
-		ID:        int(n.ID),
-		Name:      catalogEntityNames(n.Localized, n.DisplayName, n.Lang, n.Latin),
-		Aliases:   catalogAliasValues(n.Aliases),
-		PhotoHash: n.PhotoHash,
-		Gender:    derefInt(n.Gender),
-		BirthY:    derefInt(n.BirthY),
-		BirthM:    derefInt(n.BirthM),
-		BirthD:    derefInt(n.BirthD),
+		ID: int(id),
+		Name: catalogEntityNames(
+			localizedFrom(n.Localized), n.DisplayName, strOrEmpty(n.Lang), strOrEmpty(n.Latin),
+		),
+		Aliases:   catalogAliasValues(aliasRowsFrom(n.Aliases)),
+		PhotoHash: imageHash(n.Photo),
+		Gender:    genderInt(n.Gender),
+		BirthY:    intOrZero(n.BirthYear),
+		BirthM:    intOrZero(n.BirthMonth),
+		BirthD:    intOrZero(n.BirthDay),
 		Siblings:  make([]GalgamePersonRef, 0, len(n.Siblings)),
-		Intros:    catalogIntros(n.Intros),
-		Links:     catalogRefLinks(n.Refs, catalogStaffPage),
-		Credits:   make([]GalgameStaffCredit, 0, len(n.Credits)),
+		Intros:    catalogIntros(introRowsFrom(n.Intros)),
+		Links:     catalogRefLinks(refRowsFrom(n.Refs), catalogStaffPage),
+		Credits:   []GalgameStaffCredit{},
 	}
-	for i := range n.Siblings {
-		s := &n.Siblings[i]
+	for _, s := range personRefsFrom(n.Siblings) {
 		if name := s.names(); name.canonical() != "" {
 			out.Siblings = append(out.Siblings, GalgamePersonRef{ID: int(s.ID), Name: name})
 		}
 	}
-	for _, link := range n.Links {
+	for _, link := range linkRowsFrom(n.Links) {
 		if link.URL == "" {
 			continue
 		}
 		out.Links = append(out.Links, GalgameEntityLink{Name: linkDisplayName(link.Source, link.URL), URL: link.URL})
 	}
-	for i := range n.Credits {
-		credit := &n.Credits[i]
-		if !credit.Work.ClaimedBy.renderable() {
-			continue
-		}
-		ja, zhCN, zhTW, en := namesOf(credit.Work.Localized)
-		name := KunLanguage{EnUs: en, JaJp: ja, ZhCn: zhCN, ZhTw: zhTW}
-		if name.canonical() == "" {
-			name.JaJp = credit.Work.DisplayName
-		}
-		row := GalgameStaffCredit{
-			GalgameID: credit.Work.publicGID(),
-			Name:      name,
-			Roles:     make([]GalgameStaffRole, 0, len(credit.Roles)),
-		}
-		// A person credited for the same job by two sources arrives as two rows
-		// under two vocabulary keys, which the fold turns into "脚本 · 脚本".
-		seen := make(map[string]bool, len(credit.Roles))
-		for _, r := range credit.Roles {
-			key, roleName := catalogFoldRole(r.RoleKey, r.RoleName)
-			if seen[key+"\x00"+r.Character] {
-				continue
-			}
-			seen[key+"\x00"+r.Character] = true
-			row.Roles = append(row.Roles, GalgameStaffRole{RoleKey: key, RoleName: roleName, Character: r.Character})
-		}
-		sort.SliceStable(row.Roles, func(i, j int) bool {
-			return catalogRoleWeight(row.Roles[i].RoleKey) < catalogRoleWeight(row.Roles[j].RoleKey)
-		})
-		out.Credits = append(out.Credits, row)
-	}
 	return out
-}
-
-func derefInt(v *int) int {
-	if v == nil {
-		return 0
-	}
-	return *v
 }
 
 func catalogAliasValues(rows []catalogAlias) []string {

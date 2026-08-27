@@ -183,16 +183,6 @@ type catalogWorkLabel struct {
 	LogoHash    string `json:"logo_hash"`
 }
 
-type catalogWorkEngine struct {
-	ID   int64  `json:"id"`
-	Name string `json:"name"`
-}
-
-type catalogWorkLink struct {
-	Source string `json:"source"`
-	URL    string `json:"url"`
-}
-
 type catalogWork struct {
 	ID            int64             `json:"id"`
 	Medium        string            `json:"medium"`
@@ -207,21 +197,13 @@ type catalogWork struct {
 
 	Localized map[string]catalogLocalizedName `json:"localized"`
 
-	// The detail face is mid-rename from `intro` to `intros` and the two sides
-	// do not deploy together, so both keys are decoded until catalog drops the
-	// singular one. Read them through introRows, never directly.
-	Intro       []catalogWorkIntro   `json:"intro"`
 	Intros      []catalogWorkIntro   `json:"intros"`
 	Covers      []catalogDetailCover `json:"covers"`
 	CoverSlots  *catalogCoverSlots   `json:"cover_slots"`
 	Screenshots []catalogScreenshot  `json:"screenshots"`
 	Tags        []catalogWorkTag     `json:"tags"`
 	Labels      []catalogWorkLabel   `json:"labels"`
-	Engines     []catalogWorkEngine  `json:"engines"`
-	Links       []catalogWorkLink    `json:"links"`
 
-	// credits arrives only when the request asks for include=credits; the other
-	// two are always on the detail face.
 	Credits    []catalogCreditGroup   `json:"credits"`
 	Characters []catalogWorkCharacter `json:"characters"`
 	Ratings    []catalogRating        `json:"ratings"`

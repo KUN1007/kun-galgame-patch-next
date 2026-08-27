@@ -5,24 +5,33 @@ import (
 	"os"
 	"slices"
 	"testing"
+
+	"kun-galgame-patch-api/pkg/catalogv2"
 )
 
 // The hand-written fakes in this package have twice kept the suite green while a
 // catalog wave took production down (aliases[] in wave 209, the names block in
 // wave 210): a fake serving the retired shape can never disagree with the code
-// that reads it. This golden is a real /v1/catalog/works/3 response, read from
-// prod on 2026-08-19 and trimmed to a few rows per array with every key intact.
-// Refresh it by re-reading the live face, not by editing it to match the code.
-func TestProdWorkDetailDecodes(t *testing.T) {
-	raw, err := os.ReadFile("testdata/catalog_work_detail_prod.json")
+// that reads it. These goldens are real /v2 responses to the exact requests this
+// client makes, read on 2026-08-27 and trimmed to a few rows per array with
+// every key intact. Refresh them by re-reading the live face, not by editing
+// them to match the code.
+func loadGolden[T any](t *testing.T, name string) T {
+	t.Helper()
+	raw, err := os.ReadFile("testdata/" + name)
 	if err != nil {
 		t.Fatalf("read golden: %v", err)
 	}
-	var w catalogWork
-	if err := json.Unmarshal(raw, &w); err != nil {
+	var out T
+	if err := json.Unmarshal(raw, &out); err != nil {
 		t.Fatalf("decode: %v — one mismatched field type fails the WHOLE response", err)
 	}
-	full := catalogWorkToFull(&w)
+	return out
+}
+
+func TestProdWorkDetailDecodes(t *testing.T) {
+	w := loadGolden[catalogv2.Work](t, "catalog_work_detail_prod.json")
+	full := catalogWorkToFull(ptr(workToDetail(w)))
 
 	if full.ID != 3 || full.VndbID != "v12984" {
 		t.Fatalf("identity = (%d, %q), want (3, v12984)", full.ID, full.VndbID)
@@ -36,7 +45,7 @@ func TestProdWorkDetailDecodes(t *testing.T) {
 
 	t.Run("roster", func(t *testing.T) {
 		if len(full.Characters) == 0 {
-			t.Fatal("no characters — the roster is unconditional on the detail face")
+			t.Fatal("no characters — include=characters names the block")
 		}
 		first := full.Characters[0]
 		if first.Name.ZhCn != "科罗娜" || first.Name.JaJp == "" {
@@ -78,6 +87,15 @@ func TestProdWorkDetailDecodes(t *testing.T) {
 		}
 	})
 
+	// spoiler defaults to none upstream, so a request that does not raise the
+	// ceiling loses these rows and leaves the page's 剧透 control with nothing
+	// to reveal.
+	t.Run("spoilered tags survive the ceiling", func(t *testing.T) {
+		if !slices.ContainsFunc(full.Tag, func(tg GalgameFullTag) bool { return tg.SpoilerLevel > 0 }) {
+			t.Errorf("no spoilered tag in %d rows", len(full.Tag))
+		}
+	})
+
 	t.Run("cover slots", func(t *testing.T) {
 		if full.EffectivePortraitHash == "" {
 			t.Error("no portrait hash — the patch header renders a 3/4 box from it")
@@ -88,3 +106,21 @@ func TestProdWorkDetailDecodes(t *testing.T) {
 		}
 	})
 }
+
+func TestProdWorkCompanyLogoDecodes(t *testing.T) {
+	w := loadGolden[catalogv2.Work](t, "catalog_work_company_logo_prod.json")
+	full := catalogWorkToFull(ptr(workToDetail(w)))
+
+	if len(full.Official) == 0 {
+		t.Fatal("no companies — include=companies names the block")
+	}
+	o := full.Official[0].Official
+	if o.Name != "ブロッコリー" || o.Category != "publisher" {
+		t.Errorf("company = %+v, want the registry class, not the attribution role", o)
+	}
+	if o.LogoHash == "" {
+		t.Error("no logo hash — the 会社 chip renders its brand mark from it")
+	}
+}
+
+func ptr[T any](v T) *T { return &v }

@@ -30,6 +30,51 @@ func localizedFrom(m map[string]catalogv2.LocalizedText) map[string]catalogLocal
 	return out
 }
 
+func personRefsFrom(rows []catalogv2.CreditName) []catalogPersonRef {
+	out := make([]catalogPersonRef, 0, len(rows))
+	for i := range rows {
+		n := &rows[i]
+		id, _ := n.IntID()
+		out = append(out, catalogPersonRef{
+			ID: id, DisplayName: n.DisplayName, Lang: strOrEmpty(n.Lang),
+			Latin: strOrEmpty(n.Latin), Localized: localizedFrom(n.Localized),
+		})
+	}
+	return out
+}
+
+func aliasRowsFrom(rows []catalogv2.EntityName) []catalogAlias {
+	out := make([]catalogAlias, 0, len(rows))
+	for _, r := range rows {
+		out = append(out, catalogAlias{
+			Value: r.Value, Lang: r.Lang, Kind: r.AliasKind, Machine: r.IsMachine,
+		})
+	}
+	return out
+}
+
+func introRowsFrom(rows []catalogv2.Intro) []catalogIntroRow {
+	out := make([]catalogIntroRow, 0, len(rows))
+	for _, r := range rows {
+		out = append(out, catalogIntroRow{
+			Lang: r.Lang, Intro: r.Value, Source: r.Source, Machine: r.IsMachine,
+		})
+	}
+	return out
+}
+
+func linkRowsFrom(rows []catalogv2.Link) []catalogEntityLink {
+	out := make([]catalogEntityLink, 0, len(rows))
+	for _, r := range rows {
+		out = append(out, catalogEntityLink{Source: r.Source, URL: r.URL})
+	}
+	return out
+}
+
+func refRowsFrom(rows []catalogv2.Ref) []catalogRef {
+	return refsFrom(&rows)
+}
+
 func refsFrom(refs *[]catalogv2.Ref) []catalogRef {
 	if refs == nil {
 		return nil
@@ -222,13 +267,14 @@ func workToDetail(w catalogv2.Work) catalogWork {
 				kind = *t.TagKind
 			}
 			out.Tags = append(out.Tags, catalogWorkTag{
-				Name: t.DisplayName, Source: t.Source, CanonicalID: id,
+				Name: t.DisplayName, Source: t.Source, CanonicalID: id, Count: intOrZero(t.WorkCount),
 				Tier: tier, Kind: kind, Spoiler: spoilerInt(t.Spoiler), Sexual: t.IsSexual,
 			})
 		}
 	}
 	if w.Companies != nil {
-		for _, co := range *w.Companies {
+		for i := range *w.Companies {
+			co := &(*w.Companies)[i]
 			id, _ := co.IntID()
 			kind := co.CompanyKind
 			if co.AttributionRole != "" {
@@ -236,17 +282,20 @@ func workToDetail(w catalogv2.Work) catalogWork {
 			}
 			out.Labels = append(out.Labels, catalogWorkLabel{
 				ID: id, DisplayName: co.DisplayName, LabelKind: co.CompanyKind, Kind: kind,
+				LogoHash: imageHash(co.Logo),
 			})
 		}
 	}
 	if w.Characters != nil {
-		for _, ch := range *w.Characters {
+		for i := range *w.Characters {
+			ch := &(*w.Characters)[i]
 			id, _ := ch.IntID()
-			latin := strOrEmpty(ch.Latin)
 			out.Characters = append(out.Characters, catalogWorkCharacter{
 				ID: id, DisplayName: ch.DisplayName, Localized: localizedFrom(ch.Localized),
-				Latin: latin, Kind: ch.RosterRole, Spoiler: spoilerInt(ch.Spoiler),
+				Lang: strOrEmpty(ch.Lang), Latin: strOrEmpty(ch.Latin),
+				Kind: ch.RosterRole, Spoiler: spoilerInt(ch.Spoiler),
 				Image: imageHash(ch.Image), Figure: imageHash(ch.Figure),
+				Voices: personRefsFrom(ch.Voices),
 			})
 		}
 	}
@@ -259,20 +308,29 @@ func workToDetail(w catalogv2.Work) catalogWork {
 				latin := strOrEmpty(e.Latin)
 				group.Credits = append(group.Credits, catalogCreditItem{
 					catalogPersonRef: catalogPersonRef{
-						ID: id, DisplayName: e.DisplayName, Latin: latin,
-						Localized: localizedFrom(e.Localized),
+						ID: id, DisplayName: e.DisplayName, Lang: strOrEmpty(e.Lang),
+						Latin: latin, Localized: localizedFrom(e.Localized),
 					},
 					CharacterID: cid,
+					Character:   strOrEmpty(e.CharacterName),
 				})
 			}
 			out.Credits = append(out.Credits, group)
 		}
 	}
 	if w.Ratings != nil {
-		for _, r := range *w.Ratings {
-			out.Ratings = append(out.Ratings, catalogRating{
+		for i := range *w.Ratings {
+			r := &(*w.Ratings)[i]
+			row := catalogRating{
 				Source: r.Source, Score: r.Score, VoteCount: r.VoteCount, Rank: r.Rank,
-			})
+			}
+			if r.Distribution != nil {
+				for _, b := range *r.Distribution {
+					row.Distribution = append(row.Distribution,
+						catalogRatingBucket{Score: b.Score, Count: b.Count})
+				}
+			}
+			out.Ratings = append(out.Ratings, row)
 		}
 	}
 	return out

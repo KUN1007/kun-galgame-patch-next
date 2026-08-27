@@ -47,11 +47,13 @@ type CreditGroup struct {
 }
 
 type CreditEntry struct {
-	ID          string                   `json:"id"`
-	DisplayName string                   `json:"display_name"`
-	Latin       *string                  `json:"latin"`
-	Localized   map[string]LocalizedText `json:"localized"`
-	CharacterID *string                  `json:"character_id"`
+	ID            string                   `json:"id"`
+	DisplayName   string                   `json:"display_name"`
+	Latin         *string                  `json:"latin"`
+	Lang          *string                  `json:"lang"`
+	Localized     map[string]LocalizedText `json:"localized"`
+	CharacterID   *string                  `json:"character_id"`
+	CharacterName *string                  `json:"character_name"`
 }
 
 type Rating struct {
@@ -59,6 +61,15 @@ type Rating struct {
 	Score     float64 `json:"score"`
 	VoteCount int     `json:"vote_count"`
 	Rank      *int    `json:"rank"`
+	// Bucket values are the source's own scale, and erogamescape's are deciles,
+	// so score is a number rather than a count index. Present on the work detail
+	// face only, never on a list face.
+	Distribution *[]RatingBucket `json:"distribution"`
+}
+
+type RatingBucket struct {
+	Score float64 `json:"score"`
+	Count int     `json:"count"`
 }
 
 type WorkTag struct {
@@ -69,6 +80,7 @@ type WorkTag struct {
 	TagKind     *string `json:"tag_kind"`
 	Spoiler     string  `json:"spoiler"`
 	IsSexual    bool    `json:"is_sexual"`
+	WorkCount   *int    `json:"work_count"`
 }
 
 type Intro struct {
@@ -108,16 +120,21 @@ type WorkCharacter struct {
 	ID          string                   `json:"id"`
 	DisplayName string                   `json:"display_name"`
 	Latin       *string                  `json:"latin"`
+	Lang        *string                  `json:"lang"`
 	Localized   map[string]LocalizedText `json:"localized"`
 	RosterRole  string                   `json:"roster_role"`
 	Spoiler     string                   `json:"spoiler"`
 	Image       *Image                   `json:"image"`
 	Figure      *Image                   `json:"figure"`
+	Voices      []CreditName             `json:"voices"`
 }
 
 type WorkCompany struct {
-	ID              string `json:"id"`
-	DisplayName     string `json:"display_name"`
-	CompanyKind     string `json:"company_kind"`
-	AttributionRole string `json:"attribution_role"`
+	ID              string                   `json:"id"`
+	DisplayName     string                   `json:"display_name"`
+	Localized       map[string]LocalizedText `json:"localized"`
+	CompanyKind     string                   `json:"company_kind"`
+	AttributionRole string                   `json:"attribution_role"`
+	WorkCount       int                      `json:"work_count"`
+	Logo            *Image                   `json:"logo"`
 }
