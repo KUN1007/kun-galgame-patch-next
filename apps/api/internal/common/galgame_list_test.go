@@ -13,36 +13,21 @@ import (
 	"github.com/gofiber/fiber/v3"
 )
 
-func TestCatalogLibraryRequest_DefaultBrowseUsesTheCatalog(t *testing.T) {
-	if !catalogLibraryRequest(galgameListRequest{
-		SelectedType: "all", SortField: "popularity", Page: 1, Limit: 24,
+func TestCatalogLibraryRequest_OnlyTheLibraryFlagLeavesTheLocalList(t *testing.T) {
+	if catalogLibraryRequest(galgameListRequest{
+		SelectedType: "all", SortField: "resource_update_time", Page: 1, Limit: 24,
 	}) {
-		t.Fatal("default /galgame must be the catalog library")
+		t.Fatal("bare /galgame is the patch resource list")
+	}
+	if !catalogLibraryRequest(galgameListRequest{
+		SelectedType: "all", SortField: "popularity", Page: 1, Limit: 24, Library: true,
+	}) {
+		t.Fatal("library=true is the catalog information library")
 	}
 	if catalogLibraryRequest(galgameListRequest{
-		SelectedType: "all", SortField: "popularity", Indexed: true,
+		SelectedType: "all", SortField: "created", Library: true, Indexed: true,
 	}) {
 		t.Fatal("indexed=1 is the sitemap, not the library")
-	}
-	if catalogLibraryRequest(galgameListRequest{
-		SelectedType: "game", SortField: "popularity",
-	}) {
-		t.Fatal("a resource-type filter is the local resource list")
-	}
-	if catalogLibraryRequest(galgameListRequest{
-		SelectedType: "all", SortField: "view",
-	}) {
-		t.Fatal("view sort is local")
-	}
-	if catalogLibraryRequest(galgameListRequest{
-		SelectedType: "all", SortField: "download",
-	}) {
-		t.Fatal("download sort is local")
-	}
-	if !catalogLibraryRequest(galgameListRequest{
-		SelectedType: "all", SortField: "resource_update_time",
-	}) {
-		t.Fatal("resource_update_time is a catalog library sort")
 	}
 }
 
@@ -67,7 +52,7 @@ func TestCatalogLibrary_DoesNotSendClaimState(t *testing.T) {
 	app.Get("/galgame", h.GetGalgameList)
 
 	req := httptest.NewRequest(http.MethodGet,
-		"/galgame?selected_type=all&sort_field=popularity&sort_order=desc&page=1&limit=24", nil)
+		"/galgame?selected_type=all&sort_field=popularity&sort_order=desc&page=1&limit=24&library=true", nil)
 	resp, err := app.Test(req)
 	if err != nil {
 		t.Fatalf("app.Test: %v", err)

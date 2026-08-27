@@ -41,6 +41,7 @@ const setNsfw = (key: KunNsfwPreference) => {
 
 const ICON_BY_HREF: Record<string, string> = {
   '/galgame': 'lucide:gamepad-2',
+  '/gallib': 'lucide:library-big',
   '/calendar': 'lucide:calendar-days',
   '/edit/create': 'lucide:plus-circle',
   '/ranking/user': 'lucide:chart-column-big',

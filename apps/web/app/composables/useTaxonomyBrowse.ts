@@ -47,6 +47,11 @@ export interface BrowseOfficial {
   link: string
   description: string
   galgame_count: number
+  // galgame_count split in two: works attributed to this company directly, and
+  // works it only reaches through an imprint or subsidiary. A publisher such as
+  // VISUAL ARTS is almost entirely the second kind.
+  own_galgame_count: number
+  imprint_galgame_count: number
   // The 会社 brand logo as an image_service content HASH (wave 170 P3) — moyu's
   // convention for every catalog-derived image, so the URL is built here with
   // imageServiceUrl and the CDN domain stays in one place. '' / absent = no

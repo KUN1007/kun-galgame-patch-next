@@ -78,7 +78,11 @@ type catalogOfficialBrief struct {
 	Link         string   `json:"link"`
 	Description  string   `json:"description"`
 	GalgameCount int      `json:"galgame_count"`
-	LogoHash     string   `json:"logo_hash"`
+	// Split of galgame_count: works attributed to this company directly, and
+	// works it only reaches through an imprint or subsidiary.
+	OwnCount     int    `json:"own_galgame_count"`
+	ImprintCount int    `json:"imprint_galgame_count"`
+	LogoHash     string `json:"logo_hash"`
 }
 
 type catalogIntroRow struct {
@@ -179,7 +183,7 @@ func (c *Client) catalogLabelDetail(ctx context.Context, idStr string, q url.Val
 	if err != nil {
 		return nil, catalogErr(err)
 	}
-	members, total, err := c.taxonomyMembers(ctx, "company_id", id, q, gate)
+	roster, err := c.companyMembers(ctx, id, q, gate)
 	if err != nil {
 		return nil, err
 	}
@@ -198,10 +202,12 @@ func (c *Client) catalogLabelDetail(ctx context.Context, idStr string, q url.Val
 			Link:         link,
 			Description:  preferredIntro(introRowsFrom(rec.Intros)),
 			LogoHash:     imageHash(rec.Logo),
-			GalgameCount: int(total),
+			GalgameCount: int(roster.total),
+			OwnCount:     int(roster.own),
+			ImprintCount: int(roster.imprint),
 		},
-		"galgames": members,
-		"total":    total,
+		"galgames": roster.members,
+		"total":    roster.total,
 	})
 }
 

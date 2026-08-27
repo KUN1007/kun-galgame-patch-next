@@ -66,6 +66,8 @@ func (f *catalogFake) route(req *http.Request) string {
 		return f.worksByRefs(q.Get("refs"))
 	case p == "/v2/catalog/works" && q.Get("ids") != "":
 		return f.worksList(req)
+	case p == "/v2/catalog/works" && q.Get("company_rollup") == "true":
+		return f.companyRollup()
 	case p == "/v2/catalog/works":
 		return f.search()
 	case p == "/v2/catalog/calendar":
@@ -221,6 +223,19 @@ func (f *catalogFake) search() string {
 		workItem(920, 20, catalogClaimStateDraft) + `,` +
 		workItem(921, 21, catalogClaimStateHidden) + `,` +
 		workItem(930, 0, "") +
+		`]}`
+}
+
+// One of the four is reached through an imprint, which is the only difference
+// between the rollup lane and the plain company filter.
+func (f *catalogFake) companyRollup() string {
+	via := strings.TrimSuffix(workItem(930, 0, ""), "}") +
+		`,"via_company":{"object":"company","id":"77","display_name":"Imprint","localized":{}}}`
+	return `{"object":"list","total":4,"next_cursor":null,"items":[` +
+		workItem(900, 7, catalogClaimStateLive) + `,` +
+		workItem(920, 20, catalogClaimStateDraft) + `,` +
+		workItem(921, 21, catalogClaimStateHidden) + `,` +
+		via +
 		`]}`
 }
 

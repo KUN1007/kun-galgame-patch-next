@@ -522,7 +522,6 @@ func TestTaxonomyBrowseMembersAreGated(t *testing.T) {
 		recordInclude []string
 	}{
 		{"tag page", "/tag/_?tag_id=11&page=2&limit=10", "/v2/catalog/tags/11", "tag_id", "11", "tag", []string{"intros"}},
-		{"official page", "/official/_?official_id=31&page=2&limit=10", "/v2/catalog/companies/31", "company_id", "31", "official", []string{"aliases", "logo", "intros", "links"}},
 	} {
 		t.Run(tc.name, func(t *testing.T) {
 			srv.reset()
@@ -569,9 +568,6 @@ func TestTaxonomyBrowseMembersAreGated(t *testing.T) {
 				Tag struct {
 					GalgameCount int `json:"galgame_count"`
 				} `json:"tag"`
-				Official struct {
-					GalgameCount int `json:"galgame_count"`
-				} `json:"official"`
 			}
 			if e := json.Unmarshal(raw, &got); e != nil {
 				t.Fatalf("unmarshal: %v", e)
@@ -582,14 +578,62 @@ func TestTaxonomyBrowseMembersAreGated(t *testing.T) {
 			if got.Total != 4 {
 				t.Errorf("total = %d, want 4 (the gated search's), not the record's 3", got.Total)
 			}
-			count := got.Tag.GalgameCount
-			if tc.entity == "official" {
-				count = got.Official.GalgameCount
-			}
-			if count != 4 {
-				t.Errorf("%s.galgame_count = %d, want 4 — the header counts the list below it", tc.entity, count)
+			if got.Tag.GalgameCount != 4 {
+				t.Errorf("%s.galgame_count = %d, want 4 — the header counts the list below it",
+					tc.entity, got.Tag.GalgameCount)
 			}
 		})
+	}
+}
+
+// The company page is the one taxonomy face that must not use the search lane:
+// catalog only honours company_rollup on the keyset lane, and sending a sort or
+// a facet silently drops it — VISUAL ARTS answered 19 of its 540 works.
+func TestCompanyMembersWalkTheRollup(t *testing.T) {
+	srv := newCatalogFake(t)
+	c := NewWithKey(srv.URL, "nm_test_key")
+
+	raw, handled, err := c.TaxonomyBrowse(context.Background(), "/official/_?official_id=31&page=1&limit=10")
+	if err != nil || !handled {
+		t.Fatalf("TaxonomyBrowse: handled=%v err=%v", handled, err)
+	}
+	srv.wantPaths(t, "/v2/catalog/companies/31", "/v2/catalog/works")
+
+	q := srv.last().query
+	if q.Get("company_id") != "31" || q.Get("company_rollup") != "true" {
+		t.Errorf("company_id=%q company_rollup=%q, want 31/true", q.Get("company_id"), q.Get("company_rollup"))
+	}
+	if got := q.Get("sort"); got != "" {
+		t.Errorf("sort = %q, want it absent — any sort flips catalog to the search lane", got)
+	}
+	if got := q.Get("facets"); got != "" {
+		t.Errorf("facets = %q, want it absent — a facet flips catalog to the search lane", got)
+	}
+	if got := q.Get("include"); got != "titles,covers,refs" {
+		t.Errorf("member include = %q, want titles,covers,refs", got)
+	}
+
+	var got struct {
+		Total    int64 `json:"total"`
+		Galgames []struct {
+			ID int `json:"id"`
+		} `json:"galgames"`
+		Official struct {
+			GalgameCount int `json:"galgame_count"`
+			Own          int `json:"own_galgame_count"`
+			Imprint      int `json:"imprint_galgame_count"`
+		} `json:"official"`
+	}
+	if e := json.Unmarshal(raw, &got); e != nil {
+		t.Fatalf("unmarshal: %v", e)
+	}
+	if len(got.Galgames) != 3 || got.Total != 3 {
+		t.Errorf("galgames=%d total=%d, want 3/3 — hidden claims drop, the rest are one page",
+			len(got.Galgames), got.Total)
+	}
+	if got.Official.GalgameCount != 3 || got.Official.Own != 2 || got.Official.Imprint != 1 {
+		t.Errorf("counts = %d (own %d, imprint %d), want 3 (2, 1)",
+			got.Official.GalgameCount, got.Official.Own, got.Official.Imprint)
 	}
 }
 

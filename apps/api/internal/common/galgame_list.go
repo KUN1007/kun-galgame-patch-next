@@ -14,22 +14,12 @@ import (
 	"gorm.io/gorm"
 )
 
+// /galgame is the patch resource list and /galgame?library=true is the catalog
+// information library — the same split kungal draws between /galgame and
+// /gallib. indexed=true is the sitemap's own lane and stays local whatever else
+// the query says.
 func catalogLibraryRequest(req galgameListRequest) bool {
-	if req.Indexed {
-		return false
-	}
-	if req.SelectedType != "" && req.SelectedType != "all" {
-		return false
-	}
-	if req.ReleasedMonths != "" {
-		return false
-	}
-	switch req.SortField {
-	case "", "resource_update_time", "created", "release_date", "popularity":
-		return true
-	default:
-		return false
-	}
+	return req.Library && !req.Indexed
 }
 
 func catalogLibrarySort(field, order string) string {
@@ -41,7 +31,7 @@ func catalogLibrarySort(field, order string) string {
 		return "released_desc"
 	case "created":
 		return "id"
-	case "resource_update_time":
+	case "updated", "resource_update_time":
 		return "updated"
 	default:
 		return "popularity"
@@ -71,7 +61,8 @@ func (h *CommonHandler) GetGalgameList(c fiber.Ctx) error {
 	if catalogLibraryRequest(req) {
 		return h.catalogLibrary(c, req, cl)
 	}
-	if req.SortField == "popularity" {
+	switch req.SortField {
+	case "popularity", "updated":
 		req.SortField = "resource_update_time"
 	}
 

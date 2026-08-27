@@ -105,6 +105,15 @@ if (official.value) {
           <KunChip color="default" size="sm">
             {{ official.galgame_count ?? 0 }} 个 Galgame
           </KunChip>
+          <KunChip
+            v-if="official.imprint_galgame_count"
+            color="secondary"
+            variant="flat"
+            size="sm"
+          >
+            自有 {{ official.own_galgame_count }} · 经旗下
+            {{ official.imprint_galgame_count }}
+          </KunChip>
           <a
             v-if="official.link"
             :href="official.link"

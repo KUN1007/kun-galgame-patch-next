@@ -31,6 +31,7 @@ type WorksQuery struct {
 	ReleasedAfter  string
 	ReleasedBefore string
 	CompanyID      int64
+	CompanyRollup  bool
 	SeriesID       int64
 	EngineID       int64
 	Facets         []string
@@ -78,6 +79,9 @@ func (c *Client) ListWorks(ctx context.Context, q WorksQuery) (*List[Work], erro
 	}
 	if q.CompanyID > 0 {
 		v.Set("company_id", FormatID(q.CompanyID))
+		if q.CompanyRollup {
+			v.Set("company_rollup", "true")
+		}
 	}
 	if q.SeriesID > 0 {
 		v.Set("series_id", FormatID(q.SeriesID))

@@ -122,7 +122,7 @@ func (h *CommonHandler) GetHome(c fiber.Ctx) error {
 
 type galgameListRequest struct {
 	SelectedType   string `query:"selected_type" validate:"required,min=1,max=107"`
-	SortField      string `query:"sort_field" validate:"required,oneof=resource_update_time created view download release_date popularity"`
+	SortField      string `query:"sort_field" validate:"required,oneof=resource_update_time created view download release_date popularity updated"`
 	SortOrder      string `query:"sort_order" validate:"required,oneof=asc desc"`
 	Page           int    `query:"page" validate:"required,min=1"`
 	Limit          int    `query:"limit" validate:"required,min=1,max=24"`
@@ -130,6 +130,7 @@ type galgameListRequest struct {
 	ReleasedTo     string `query:"released_to"`
 	ReleasedMonths string `query:"released_months"`
 	Indexed        bool   `query:"indexed"`
+	Library        bool   `query:"library"`
 }
 
 type commentListRequest struct {
