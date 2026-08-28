@@ -1,4 +1,6 @@
 <script setup lang="ts">
+import { KUN_RANKING_LIMIT, KUN_RANKING_TABS } from '~/constants/ranking'
+
 const route = useRoute()
 const router = useRouter()
 const api = useApi()
@@ -43,30 +45,21 @@ const onChangeSort = async (v: string | string[] | null) => {
   <div class="container mx-auto my-6 space-y-6">
     <KunHeader
       name="排行榜单"
-      description="查看全部时间的数据累计"
+      :description="`按萌萌点、发布的 Galgame 数、补丁资源数与评论数排出的全站前 ${KUN_RANKING_LIMIT} 名，统计自建站以来的累计数据，每次打开都是实时计算的结果`"
     />
 
-    <div class="flex flex-wrap items-center gap-3">
-      <div class="flex gap-2">
-        <NuxtLink
-          to="/ranking/user"
-          class="bg-primary text-primary-foreground flex items-center gap-1 rounded-md px-3 py-1.5 text-sm"
-        >
-          <KunIcon name="lucide:user" class="size-4" />
-          用户排名
-        </NuxtLink>
-        <NuxtLink
-          to="/ranking/patch"
-          class="hover:bg-default-100 text-foreground flex items-center gap-1 rounded-md px-3 py-1.5 text-sm"
-        >
-          <KunIcon name="lucide:puzzle" class="size-4" />
-          补丁排名
-        </NuxtLink>
-      </div>
+    <div class="flex flex-wrap items-center justify-between gap-3">
+      <KunTab
+        model-value="user"
+        :items="KUN_RANKING_TABS"
+        variant="pills"
+        color="primary"
+        size="sm"
+      />
       <KunSelect
         :model-value="sortBy"
         :options="sortOptions"
-        class-name="min-w-40"
+        class-name="w-full sm:w-56"
         @update:model-value="onChangeSort"
       />
     </div>
@@ -79,9 +72,7 @@ const onChangeSort = async (v: string | string[] | null) => {
         :to="`/user/${user.id}/resource`"
         class="border-default/20 hover:bg-default-100 flex items-center gap-3 rounded-lg border p-3 transition-colors"
       >
-        <span
-          class="text-default-500 w-8 text-right font-mono font-semibold"
-        >
+        <span class="text-default-500 w-8 text-right font-mono font-semibold">
           {{ index + 1 }}
         </span>
         <KunAvatar :user="user" :is-navigation="false" size="md" />

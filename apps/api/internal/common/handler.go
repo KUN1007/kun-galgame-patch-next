@@ -611,12 +611,19 @@ func (h *CommonHandler) GetPatchRanking(c fiber.Ctx) error {
 	cl := utils.ContentLimitForListBrowse(c)
 	sortBy := c.Query("sort_by", c.Query("sortBy", "view"))
 
+	// The sort select offers comment and resource too. Without a case here they
+	// fell through to the default and the page served the view ranking under the
+	// other label, which reads as "the rankings are all the same".
 	column := "view"
 	switch sortBy {
 	case "download":
 		column = "download"
 	case "favorite", "favorite_by", "favorite_count":
 		column = "favorite_count"
+	case "comment", "comment_count":
+		column = "comment_count"
+	case "resource", "resource_count":
+		column = "resource_count"
 	}
 
 	var patches []patchModel.Patch
