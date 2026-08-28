@@ -31,6 +31,23 @@ export const SUPPORTED_TYPE_MAP: Record<string, string> = {
 
 export const ALL_SUPPORTED_TYPE = ['all', ...SUPPORTED_TYPE]
 
+// The galgame card's poster corner is ~40% of a 150px-wide cover, so it labels
+// the patch types with these instead of SUPPORTED_TYPE_MAP's full names.
+export const SUPPORTED_TYPE_SHORT_MAP: Record<string, string> = {
+  manual: '汉化',
+  ai: 'AI',
+  machine_polishing: '润色',
+  machine: '机翻',
+  save: '存档',
+  crack: '破解',
+  fix: '修正',
+  mod: '魔改',
+  r18: 'R18',
+  decensor: '去码',
+  image: '修图',
+  other: '其它'
+}
+
 export const resourceTypes = [
   {
     value: 'manual',

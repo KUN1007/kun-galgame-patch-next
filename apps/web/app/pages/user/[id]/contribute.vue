@@ -15,7 +15,7 @@ const page = computed({
   get: () => Number(route.query.page) || 1,
   set: (v) => router.replace({ query: { ...route.query, page: String(v) } })
 })
-const limit = 20
+const limit = 24
 const { data, pending } = await useAsyncData<ListResponse>(
   () => `user-${userId.value}-contribute`,
   async () => {
@@ -43,7 +43,7 @@ const onChangePage = (v: number) => {
         :to="`/patch/${c.id}/introduction`"
         class="border-default/20 bg-content1 shadow-kun-sm hover:bg-default-100 flex items-center justify-between rounded-lg border p-3 transition-colors"
       >
-        <span class="font-medium line-clamp-1">
+        <span class="line-clamp-1 font-medium">
           {{ getPreferredLanguageText(c.name) }}
         </span>
         <span class="text-default-500 text-xs">

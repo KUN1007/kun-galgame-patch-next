@@ -147,6 +147,19 @@ export const resolvePortraitUrl = (
   return hash ? buildImageServiceURL(hash) : ''
 }
 
+// resolveMaker reads the credited company off the same dual-shape source the
+// cover resolvers take: the enriched rows nest it under `galgame`, the flat
+// search hit carries it at the top level.
+type MakerSource = {
+  maker?: GalgameMaker | null
+  galgame?: { maker?: GalgameMaker | null } | null
+}
+
+export const resolveMaker = (
+  source: MakerSource | null | undefined
+): GalgameMaker | undefined =>
+  source?.galgame?.maker ?? source?.maker ?? undefined
+
 export const resolvePortraitThumbhash = (
   source: PortraitSource | null | undefined
 ): string | undefined =>

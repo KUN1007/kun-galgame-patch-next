@@ -22,6 +22,7 @@ interface GalgameCard {
   effective_banner_thumbhash?: string
   effective_portrait_hash?: string
   effective_portrait_thumbhash?: string
+  maker?: GalgameMaker
   view: number
   download: number
   type: string[]
@@ -88,6 +89,7 @@ interface GalgameCard {
     effective_portrait_width?: number
     effective_portrait_height?: number
     effective_portrait_thumbhash?: string
+    maker?: GalgameMaker
     covers: GalgameCoverRow[]
     screenshots: GalgameScreenshotRow[]
     content_limit: string
@@ -111,6 +113,14 @@ interface GalgameCard {
     // record. moyu keys on the wiki gid (`id`) everywhere else.
     catalog_work_id?: number
   }
+}
+
+// The company a card credits. Which of a work's companies that is depends on
+// what it DID (developer > circle > brand > publisher), decided by the backend;
+// the name arrives whole so the 标题语言 setting picks the slot here.
+interface GalgameMaker {
+  id: number
+  name: KunLanguage
 }
 
 interface GalgameCoverRow {

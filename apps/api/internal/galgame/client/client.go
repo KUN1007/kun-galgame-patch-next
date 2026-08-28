@@ -105,33 +105,47 @@ type GalgameBrief struct {
 	EffectivePortraitWidth     int               `json:"effective_portrait_width,omitempty"`
 	EffectivePortraitHeight    int               `json:"effective_portrait_height,omitempty"`
 	EffectivePortraitThumbhash string            `json:"effective_portrait_thumbhash,omitempty"`
+	Maker                      *GalgameMaker     `json:"maker,omitempty"`
 	Covers                     []CoverInput      `json:"covers"`
 	Screenshots                []ScreenshotInput `json:"screenshots"`
 }
 
+// The company a card credits. The name travels as four slots rather than one
+// string because the reader's 标题语言 setting picks between them in the
+// browser, the same way it does for a work title.
+type GalgameMaker struct {
+	ID   int         `json:"id"`
+	Name KunLanguage `json:"name"`
+}
+
 type GalgameHit struct {
-	ID                       int               `json:"id"`
-	CatalogWorkID            int64             `json:"catalog_work_id,omitempty"`
-	VndbID                   string            `json:"vndb_id"`
-	ClaimState               string            `json:"claim_state"`
-	NameEnUs                 string            `json:"name_en_us"`
-	NameZhCn                 string            `json:"name_zh_cn"`
-	NameJaJp                 string            `json:"name_ja_jp"`
-	NameZhTw                 string            `json:"name_zh_tw"`
-	Banner                   string            `json:"banner"`
-	ContentLimit             string            `json:"content_limit"`
-	AgeLimit                 string            `json:"age_limit"`
-	OriginalLanguage         string            `json:"original_language"`
-	ReleaseDate              *string           `json:"release_date"`
-	EffectiveBannerHash      string            `json:"effective_banner_hash"`
-	EffectiveBannerWidth     int               `json:"effective_banner_width,omitempty"`
-	EffectiveBannerHeight    int               `json:"effective_banner_height,omitempty"`
-	EffectiveBannerThumbhash string            `json:"effective_banner_thumbhash,omitempty"`
-	Covers                   []CoverInput      `json:"covers"`
-	Screenshots              []ScreenshotInput `json:"screenshots"`
-	TagIDs                   []int             `json:"tag_ids"`
-	OfficialIDs              []int             `json:"official_ids"`
-	EngineIDs                []int             `json:"engine_ids"`
+	ID                         int               `json:"id"`
+	CatalogWorkID              int64             `json:"catalog_work_id,omitempty"`
+	VndbID                     string            `json:"vndb_id"`
+	ClaimState                 string            `json:"claim_state"`
+	NameEnUs                   string            `json:"name_en_us"`
+	NameZhCn                   string            `json:"name_zh_cn"`
+	NameJaJp                   string            `json:"name_ja_jp"`
+	NameZhTw                   string            `json:"name_zh_tw"`
+	Banner                     string            `json:"banner"`
+	ContentLimit               string            `json:"content_limit"`
+	AgeLimit                   string            `json:"age_limit"`
+	OriginalLanguage           string            `json:"original_language"`
+	ReleaseDate                *string           `json:"release_date"`
+	EffectiveBannerHash        string            `json:"effective_banner_hash"`
+	EffectiveBannerWidth       int               `json:"effective_banner_width,omitempty"`
+	EffectiveBannerHeight      int               `json:"effective_banner_height,omitempty"`
+	EffectiveBannerThumbhash   string            `json:"effective_banner_thumbhash,omitempty"`
+	EffectivePortraitHash      string            `json:"effective_portrait_hash,omitempty"`
+	EffectivePortraitWidth     int               `json:"effective_portrait_width,omitempty"`
+	EffectivePortraitHeight    int               `json:"effective_portrait_height,omitempty"`
+	EffectivePortraitThumbhash string            `json:"effective_portrait_thumbhash,omitempty"`
+	Maker                      *GalgameMaker     `json:"maker,omitempty"`
+	Covers                     []CoverInput      `json:"covers"`
+	Screenshots                []ScreenshotInput `json:"screenshots"`
+	TagIDs                     []int             `json:"tag_ids"`
+	OfficialIDs                []int             `json:"official_ids"`
+	EngineIDs                  []int             `json:"engine_ids"`
 }
 
 type Tag struct {
@@ -180,6 +194,11 @@ type ScreenshotInput struct {
 	Thumbhash string `json:"thumbhash,omitempty"`
 }
 
+// Every v2 read that builds a galgame card asks for the same blocks: a request
+// that does not name one gets a bare id+name row for it, which renders as an
+// empty slot rather than an error.
+var cardInclude = []string{"titles", "covers", "refs", "companies"}
+
 func worksQueryFor(p SearchGalgameParams) catalogv2.WorksQuery {
 	q := catalogv2.WorksQuery{
 		Q:            p.Q,
@@ -188,7 +207,7 @@ func worksQueryFor(p SearchGalgameParams) catalogv2.WorksQuery {
 		Limit:        p.Limit,
 		OLang:        joinCatalogLangs(p.OriginalLang),
 		NSFW:         true,
-		Include:      []string{"titles", "covers", "refs"},
+		Include:      cardInclude,
 		IncludeTotal: true,
 		Facets:       []string{"olang"},
 		SearchIntro:  p.SearchIntro,
@@ -309,6 +328,7 @@ type GalgameFull struct {
 	EffectivePortraitWidth     int               `json:"effective_portrait_width,omitempty"`
 	EffectivePortraitHeight    int               `json:"effective_portrait_height,omitempty"`
 	EffectivePortraitThumbhash string            `json:"effective_portrait_thumbhash,omitempty"`
+	Maker                      *GalgameMaker     `json:"maker,omitempty"`
 	Covers                     []CoverInput      `json:"covers"`
 	Screenshots                []ScreenshotInput `json:"screenshots"`
 	Created                    string            `json:"created"`
@@ -380,7 +400,7 @@ func (c *Client) GalgameBatch(ctx context.Context, ids []int, contentLimit strin
 	}
 
 	page, err := c.v2.ListWorks(ctx, catalogv2.WorksQuery{
-		IDs: catalogIDs, NSFW: true, Include: []string{"titles", "covers", "refs"},
+		IDs: catalogIDs, NSFW: true, Include: cardInclude,
 		ContentLimit: gateFor(contentLimit).contentLimit, Limit: CatalogWorksIDsMax,
 	})
 	if err != nil {

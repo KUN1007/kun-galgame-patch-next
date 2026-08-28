@@ -357,6 +357,7 @@ func EnrichPatchDetail(ctx context.Context, galgame *galgameClient.Client, users
 		EffectivePortraitWidth:     g.EffectivePortraitWidth,
 		EffectivePortraitHeight:    g.EffectivePortraitHeight,
 		EffectivePortraitThumbhash: g.EffectivePortraitThumbhash,
+		Maker:                      g.Maker,
 		Covers:                     g.Covers,
 		Screenshots:                g.Screenshots,
 	}
@@ -537,6 +538,7 @@ func GalgameOnlyDetail(ctx context.Context, galgame *galgameClient.Client, users
 		EffectivePortraitWidth:     g.EffectivePortraitWidth,
 		EffectivePortraitHeight:    g.EffectivePortraitHeight,
 		EffectivePortraitThumbhash: g.EffectivePortraitThumbhash,
+		Maker:                      g.Maker,
 		Covers:                     g.Covers,
 		Screenshots:                g.Screenshots,
 	}

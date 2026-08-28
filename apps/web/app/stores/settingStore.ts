@@ -69,7 +69,7 @@ const initialState: KunSettingData = {
   titleLanguage: 'ja-jp',
   showJapaneseSubtitle: false,
   showReleaseDate: false,
-  showNsfwBadge: true,
+  showNsfwBadge: false,
   showGalgamesWithoutResource: false,
   gallerySexualLevels: [],
   galleryViolenceLevels: []

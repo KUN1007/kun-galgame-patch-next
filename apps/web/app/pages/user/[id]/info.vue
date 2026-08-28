@@ -24,13 +24,20 @@ const { data, pending } = await useAsyncData(
   () => `user-${userId.value}-activity`,
   async () => {
     const [galgames, resources, comments] = await Promise.all([
-      api.get<GalgameList>(`/user/${userId.value}/patch?page=1&limit=${PREVIEW}`),
-      api.get<ResourceList>(`/user/${userId.value}/resource?page=1&limit=${PREVIEW}`),
-      api.get<CommentList>(`/user/${userId.value}/comment?page=1&limit=${PREVIEW}`)
+      api.get<GalgameList>(
+        `/user/${userId.value}/patch?page=1&limit=${PREVIEW}`
+      ),
+      api.get<ResourceList>(
+        `/user/${userId.value}/resource?page=1&limit=${PREVIEW}`
+      ),
+      api.get<CommentList>(
+        `/user/${userId.value}/comment?page=1&limit=${PREVIEW}`
+      )
     ])
     return {
       galgames: galgames.code === 0 ? galgames.data : { items: [], total: 0 },
-      resources: resources.code === 0 ? resources.data : { items: [], total: 0 },
+      resources:
+        resources.code === 0 ? resources.data : { items: [], total: 0 },
       comments: comments.code === 0 ? comments.data : { items: [], total: 0 }
     }
   },
@@ -44,9 +51,13 @@ const { data, pending } = await useAsyncData(
 )
 
 const resourcePatchName = (r: UserResourceItem) =>
-  r.patch?.name ? getPreferredLanguageText(r.patch.name) : `补丁 #${r.galgame_id}`
+  r.patch?.name
+    ? getPreferredLanguageText(r.patch.name)
+    : `补丁 #${r.galgame_id}`
 const commentPatchName = (c: UserComment) =>
-  c.patch?.name ? getPreferredLanguageText(c.patch.name) : `补丁 #${c.galgame_id}`
+  c.patch?.name
+    ? getPreferredLanguageText(c.patch.name)
+    : `补丁 #${c.galgame_id}`
 
 const isEmpty = computed(
   () =>
@@ -75,13 +86,13 @@ const isEmpty = computed(
             <KunIcon name="lucide:chevron-right" class="size-4" />
           </NuxtLink>
         </div>
-        <div class="grid grid-cols-1 gap-3 sm:grid-cols-2 xl:grid-cols-3">
+        <GalgameCardGrid>
           <GalgameCard
             v-for="patch in data.galgames.items"
             :key="patch.id"
             :patch="patch"
           />
-        </div>
+        </GalgameCardGrid>
       </section>
 
       <section v-if="data?.resources.items.length" class="space-y-3">
@@ -113,10 +124,7 @@ const isEmpty = computed(
                 {{ formatDistanceToNow(r.created) }}
               </span>
             </div>
-            <p
-              v-if="r.name"
-              class="text-default-600 mt-1 truncate text-sm"
-            >
+            <p v-if="r.name" class="text-default-600 mt-1 truncate text-sm">
               {{ r.name }}
             </p>
           </NuxtLink>
@@ -149,8 +157,12 @@ const isEmpty = computed(
               <span class="text-primary">{{ commentPatchName(c) }}</span>
               <template v-if="c.resource_id">的补丁资源</template>
             </div>
-            <p class="line-clamp-2 text-sm whitespace-pre-wrap">{{ c.content }}</p>
-            <div class="text-default-400 mt-1.5 flex items-center gap-4 text-xs">
+            <p class="line-clamp-2 text-sm whitespace-pre-wrap">
+              {{ c.content }}
+            </p>
+            <div
+              class="text-default-400 mt-1.5 flex items-center gap-4 text-xs"
+            >
               <span class="flex items-center gap-1">
                 <KunIcon name="lucide:thumbs-up" class="size-3.5" />
                 {{ c.like_count }}

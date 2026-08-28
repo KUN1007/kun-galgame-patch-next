@@ -176,7 +176,29 @@ func workToListItem(w catalogv2.Work) catalogWorkListItem {
 	if slots.Banner != nil || slots.Portrait != nil {
 		item.Covers = &slots
 	}
+	item.Labels = labelsFrom(w.Companies)
 	return item
+}
+
+func labelsFrom(companies *[]catalogv2.WorkCompany) []catalogWorkLabel {
+	if companies == nil {
+		return nil
+	}
+	out := make([]catalogWorkLabel, 0, len(*companies))
+	for i := range *companies {
+		co := &(*companies)[i]
+		id, _ := co.IntID()
+		kind := co.CompanyKind
+		if co.AttributionRole != "" {
+			kind = co.AttributionRole
+		}
+		out = append(out, catalogWorkLabel{
+			ID: id, DisplayName: co.DisplayName, Localized: localizedFrom(co.Localized),
+			LabelKind: co.CompanyKind, Kind: kind, Role: co.AttributionRole,
+			LogoHash: imageHash(co.Logo),
+		})
+	}
+	return out
 }
 
 func imageToSlot(img *catalogv2.Image) catalogCoverSlot {
@@ -218,6 +240,7 @@ func workToDetail(w catalogv2.Work) catalogWork {
 		ClaimedBy:     item.ClaimedBy,
 		Localized:     item.Localized,
 		CoverSlots:    item.Covers,
+		Labels:        item.Labels,
 	}
 	if w.Intros != nil {
 		for _, row := range *w.Intros {
@@ -269,20 +292,6 @@ func workToDetail(w catalogv2.Work) catalogWork {
 			out.Tags = append(out.Tags, catalogWorkTag{
 				Name: t.DisplayName, Source: t.Source, CanonicalID: id, Count: intOrZero(t.WorkCount),
 				Tier: tier, Kind: kind, Spoiler: spoilerInt(t.Spoiler), Sexual: t.IsSexual,
-			})
-		}
-	}
-	if w.Companies != nil {
-		for i := range *w.Companies {
-			co := &(*w.Companies)[i]
-			id, _ := co.IntID()
-			kind := co.CompanyKind
-			if co.AttributionRole != "" {
-				kind = co.AttributionRole
-			}
-			out.Labels = append(out.Labels, catalogWorkLabel{
-				ID: id, DisplayName: co.DisplayName, LabelKind: co.CompanyKind, Kind: kind,
-				LogoHash: imageHash(co.Logo),
 			})
 		}
 	}

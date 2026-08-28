@@ -1,8 +1,10 @@
 package dto
 
+// The profile tabs page at 24, the same as every other galgame card grid; a 20
+// ceiling answered "Limit length must not be greater than 20" instead.
 type GetUserProfileRequest struct {
 	Page  int `query:"page" validate:"min=1"`
-	Limit int `query:"limit" validate:"min=1,max=20"`
+	Limit int `query:"limit" validate:"min=1,max=24"`
 }
 
 type SearchUserRequest struct {

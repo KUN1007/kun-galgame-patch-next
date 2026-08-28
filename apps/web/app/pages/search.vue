@@ -10,9 +10,7 @@ const router = useRouter()
 const api = useApi()
 
 type SearchMode = 'galgame' | 'model'
-const mode = ref<SearchMode>(
-  route.query.mode === 'model' ? 'model' : 'galgame'
-)
+const mode = ref<SearchMode>(route.query.mode === 'model' ? 'model' : 'galgame')
 
 const query = ref(String(route.query.q ?? ''))
 const page = ref(Number(route.query.page ?? 1))
@@ -36,6 +34,9 @@ interface SearchHit {
   banner: string
   effective_banner_hash?: string
   effective_banner_thumbhash?: string
+  effective_portrait_hash?: string
+  effective_portrait_thumbhash?: string
+  maker?: GalgameMaker
   content_limit: string
   release_date?: string | null
   has_patch: boolean
@@ -69,6 +70,9 @@ const mapHit = (h: SearchHit): GalgameCard =>
     banner: h.banner ?? '',
     effective_banner_hash: h.effective_banner_hash ?? '',
     effective_banner_thumbhash: h.effective_banner_thumbhash ?? '',
+    effective_portrait_hash: h.effective_portrait_hash ?? '',
+    effective_portrait_thumbhash: h.effective_portrait_thumbhash ?? '',
+    maker: h.maker,
     view: h.patch?.view ?? 0,
     download: h.patch?.download ?? 0,
     type: h.patch?.type ?? [],
@@ -231,12 +235,9 @@ const onChangePage = (v: number) => {
 
     <KunLoading v-if="loading" description="正在搜索..." />
 
-    <div
-      v-else-if="mode === 'galgame' && results.length"
-      class="grid grid-cols-2 gap-2 sm:gap-6 lg:grid-cols-3 xl:grid-cols-4"
-    >
+    <GalgameCardGrid v-else-if="mode === 'galgame' && results.length">
       <GalgameCard v-for="p in results" :key="p.id" :patch="p" />
-    </div>
+    </GalgameCardGrid>
 
     <div
       v-else-if="mode === 'model' && resourceResults.length"

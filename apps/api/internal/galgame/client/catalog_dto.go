@@ -102,6 +102,7 @@ type catalogWorkListItem struct {
 	Localized map[string]catalogLocalizedName `json:"localized"`
 	Covers    *catalogCoverSlots              `json:"covers"`
 	Refs      []catalogRef                    `json:"refs"`
+	Labels    []catalogWorkLabel              `json:"labels"`
 }
 
 type catalogWorksListData struct {
@@ -175,12 +176,17 @@ type catalogWorkTag struct {
 }
 
 type catalogWorkLabel struct {
-	ID          int64  `json:"id"`
-	DisplayName string `json:"display_name"`
-	LabelKind   string `json:"label_kind"`
-	Kind        string `json:"kind"`
-	Lang        string `json:"lang"`
-	LogoHash    string `json:"logo_hash"`
+	ID          int64                           `json:"id"`
+	DisplayName string                          `json:"display_name"`
+	Localized   map[string]catalogLocalizedName `json:"localized"`
+	LabelKind   string                          `json:"label_kind"`
+	Kind        string                          `json:"kind"`
+	// What the company DID on this work, kept apart from what it IS: catalog
+	// sends attribution_role and company_kind separately and the two look
+	// alike, "publisher" being a value of each. Kind above collapses them.
+	Role     string `json:"role"`
+	Lang     string `json:"lang"`
+	LogoHash string `json:"logo_hash"`
 }
 
 type catalogWork struct {

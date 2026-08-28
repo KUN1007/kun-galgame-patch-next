@@ -164,6 +164,46 @@ func portraitOf(slots *catalogCoverSlots) (hash string, width, height int, thumb
 	return hashFromURL(c.URL), c.Width, c.Height, c.Thumbhash
 }
 
+// A doujin work's maker is its circle and a commercial one's is its developer,
+// so the card cannot just take the first company: catalog lists the publisher
+// first as often as not. Ranked on attribution_role, whose vocabulary is
+// exactly these four; a row with none of them sorts last rather than winning
+// on position.
+var makerRoleRank = map[string]int{
+	"developer": 0,
+	"circle":    1,
+	"brand":     2,
+	"publisher": 3,
+}
+
+func labelNames(l *catalogWorkLabel) KunLanguage {
+	return catalogEntityNames(l.Localized, l.DisplayName, l.Lang, "")
+}
+
+func makerOf(labels []catalogWorkLabel) *GalgameMaker {
+	var best *catalogWorkLabel
+	var bestName KunLanguage
+	bestRank := len(makerRoleRank) + 1
+	for i := range labels {
+		rank, ok := makerRoleRank[labels[i].Role]
+		if !ok {
+			rank = len(makerRoleRank)
+		}
+		if best != nil && rank >= bestRank {
+			continue
+		}
+		names := labelNames(&labels[i])
+		if names.canonical() == "" {
+			continue
+		}
+		best, bestName, bestRank = &labels[i], names, rank
+	}
+	if best == nil {
+		return nil
+	}
+	return &GalgameMaker{ID: int(best.ID), Name: bestName}
+}
+
 func claimStateOf(c *catalogClaimedBy) string {
 	if c == nil || !isGIDClaimSite(c.Site) {
 		return ""
@@ -198,6 +238,7 @@ func catalogItemToBrief(it *catalogWorkListItem) GalgameBrief {
 	}
 	b.EffectivePortraitHash, b.EffectivePortraitWidth,
 		b.EffectivePortraitHeight, b.EffectivePortraitThumbhash = portraitOf(it.Covers)
+	b.Maker = makerOf(it.Labels)
 	if ja == "" && zhCN == "" && zhTW == "" && en == "" {
 		b.NameJaJp = it.DisplayName
 	}
@@ -223,6 +264,15 @@ func catalogItemToHit(it *catalogWorkListItem) GalgameHit {
 		EffectiveBannerWidth:     b.EffectiveBannerWidth,
 		EffectiveBannerHeight:    b.EffectiveBannerHeight,
 		EffectiveBannerThumbhash: b.EffectiveBannerThumbhash,
+		// The card is a portrait poster, and /search and /gallib build theirs
+		// from a hit. Dropping the slot here rendered every one of them as the
+		// "no cover" placeholder while the same work showed its poster on
+		// /galgame, which reads the brief.
+		EffectivePortraitHash:      b.EffectivePortraitHash,
+		EffectivePortraitWidth:     b.EffectivePortraitWidth,
+		EffectivePortraitHeight:    b.EffectivePortraitHeight,
+		EffectivePortraitThumbhash: b.EffectivePortraitThumbhash,
+		Maker:                      b.Maker,
 	}
 }
 
@@ -370,6 +420,7 @@ func catalogWorkToFull(w *catalogWork) GalgameFull {
 			f.EffectivePortraitThumbhash = c.Thumbhash
 		}
 	}
+	f.Maker = makerOf(w.Labels)
 	for i := range w.Tags {
 		f.Tag = append(f.Tag, catalogTagToFullTag(f.ID, &w.Tags[i]))
 	}

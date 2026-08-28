@@ -44,7 +44,7 @@ const showReleaseDate = computed({
   set: (v: boolean) => settingStore.setData({ showReleaseDate: v })
 })
 const showNsfwBadge = computed({
-  get: () => settingStore.data.showNsfwBadge ?? true,
+  get: () => settingStore.data.showNsfwBadge ?? false,
   set: (v: boolean) => settingStore.setData({ showNsfwBadge: v })
 })
 const showGalgamesWithoutResource = computed({
@@ -161,7 +161,9 @@ onMounted(() => {
             <div class="flex items-center justify-between gap-4">
               <div>
                 <p class="text-sm font-medium">显示发售时间</p>
-                <p class="text-default-500 text-xs">在卡片上显示游戏的发售日期</p>
+                <p class="text-default-500 text-xs">
+                  在卡片上显示游戏的发售日期
+                </p>
               </div>
               <KunSwitch v-model="showReleaseDate" />
             </div>

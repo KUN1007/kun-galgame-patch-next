@@ -112,8 +112,8 @@ func TestCatalogTwoHopReads(t *testing.T) {
 		if got := last.query.Get("ids"); got != "900" {
 			t.Errorf("ids = %q, want the CATALOG id 900 (not the gid)", got)
 		}
-		if got := last.query.Get("include"); got != "titles,covers,refs" {
-			t.Errorf("include = %q, want titles,covers,refs", got)
+		if got, want := last.query.Get("include"), strings.Join(cardInclude, ","); got != want {
+			t.Errorf("include = %q, want %q", got, want)
 		}
 		if len(briefs) != 1 || briefs[0].ID != 7 {
 			t.Fatalf("briefs = %+v, want one row keyed by gid 7", briefs)
@@ -556,8 +556,8 @@ func TestTaxonomyBrowseMembersAreGated(t *testing.T) {
 			if got := q.Get("sort"); got != "released_desc" {
 				t.Errorf("sort = %q, want released_desc — ?page=N needs a deterministic order", got)
 			}
-			if got := q.Get("include"); got != "titles,covers,refs" {
-				t.Errorf("member include = %q, want titles,covers,refs", got)
+			if got, want := q.Get("include"), strings.Join(cardInclude, ","); got != want {
+				t.Errorf("member include = %q, want %q", got, want)
 			}
 
 			var got struct {
@@ -609,8 +609,8 @@ func TestCompanyMembersWalkTheRollup(t *testing.T) {
 	if got := q.Get("facets"); got != "" {
 		t.Errorf("facets = %q, want it absent — a facet flips catalog to the search lane", got)
 	}
-	if got := q.Get("include"); got != "titles,covers,refs" {
-		t.Errorf("member include = %q, want titles,covers,refs", got)
+	if got, want := q.Get("include"), strings.Join(cardInclude, ","); got != want {
+		t.Errorf("member include = %q, want %q", got, want)
 	}
 
 	var got struct {

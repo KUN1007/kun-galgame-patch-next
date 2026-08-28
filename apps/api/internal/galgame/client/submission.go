@@ -9,7 +9,7 @@ import (
 func (c *Client) SearchPublishItems(ctx context.Context, q string, limit int) ([]GalgameHit, int64, error) {
 	page, err := c.v2.ListWorks(ctx, catalogv2.WorksQuery{
 		Q: q, Limit: limit, NSFW: true,
-		Include: []string{"titles", "covers", "refs"}, IncludeTotal: true,
+		Include: cardInclude, IncludeTotal: true,
 		Facets: []string{"olang"},
 	})
 	if err != nil {

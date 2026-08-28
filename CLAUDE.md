@@ -2,7 +2,7 @@
 
 ## 铁律 (Iron Rules — non-negotiable; these override every other guideline in this file)
 
-1. **No background gradients in any UI, ever.** Never use gradient backgrounds in UI design (`bg-gradient-*`, `from-*/via-*/to-*`, `linear-gradient()`, `radial-gradient()`, `conic-gradient()`, etc.); use solid colors from the project's palette.
+1. **No background gradients in any UI, ever.** Never use gradient backgrounds in UI design (`bg-gradient-*`, `from-*/via-*/to-*`, `linear-gradient()`, `radial-gradient()`, `conic-gradient()`, etc.); use solid colors from the project's palette. **One sanctioned exception**, granted 2026-08-28 and carried by an inline comment at the site: the galgame card's bottom scrim (`components/galgame/Card.vue`), a black bottom-to-top fade that keeps the view/download counts legible over an arbitrary cover — the same one the forum card uses. Do not remove it in a no-gradient sweep, and do not read it as licence for a second one.
 2. **Prefer KunUI components; do not modify KunUI itself.** When adding or changing frontend UI, reach for a KunUI component (`@kungal/ui-*`) first — do not hand-roll a native/custom component unless there is genuinely no KunUI equivalent for what you need. If KunUI appears to have a bug or is missing a feature, **do not edit KunUI's code** (it is a shared upstream library) — report it to the user directly instead, and let them decide how to proceed.
 
 

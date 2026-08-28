@@ -1,5 +1,4 @@
 <script setup lang="ts">
-
 import type { KunUIColor } from '@kungal/ui-core'
 
 defineOptions({ name: 'tag-detail' })
@@ -119,12 +118,9 @@ if (tag.value && !tag.value.sexual) {
 
         <KunNull v-if="!galgames.length" description="暂无关联作品" />
 
-        <div
-          v-else
-          class="grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-4"
-        >
+        <GalgameCardGrid v-else>
           <GalgameCard v-for="g in galgames" :key="g.id" :patch="g" />
-        </div>
+        </GalgameCardGrid>
 
         <KunPagination
           v-if="totalPage > 1"

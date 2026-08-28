@@ -217,7 +217,7 @@ func (c *Client) taxonomyMembers(ctx context.Context, filterKey string, id int64
 	page, limit := taxonomyPageWindow(q)
 	query := catalogv2.WorksQuery{
 		Sort: taxonomyMemberSort, Page: page, Limit: limit, NSFW: true,
-		Include: []string{"titles", "covers", "refs"}, IncludeTotal: true,
+		Include: cardInclude, IncludeTotal: true,
 		Facets: []string{"olang"}, ContentLimit: gate.contentLimit,
 	}
 	switch filterKey {

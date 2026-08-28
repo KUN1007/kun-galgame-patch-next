@@ -83,7 +83,7 @@ func (c *Client) companyRollupWorks(ctx context.Context, id int64, gate catalogG
 		data, err := c.v2.ListWorks(ctx, catalogv2.WorksQuery{
 			CompanyID: id, CompanyRollup: true, Cursor: cursor,
 			Limit: catalogRollupPageSize, NSFW: true, IncludeTotal: cursor == "",
-			Include: []string{"titles", "covers", "refs"}, ContentLimit: gate.contentLimit,
+			Include: cardInclude, ContentLimit: gate.contentLimit,
 		})
 		if err != nil {
 			return nil, false, catalogErr(err)

@@ -134,3 +134,59 @@ func TestListBriefCarriesThePortraitSlot(t *testing.T) {
 		t.Errorf("banner hash = %q, want covers.banner", got)
 	}
 }
+
+func TestMakerPicksTheRoleNotTheOrder(t *testing.T) {
+	label := func(id int64, name, role string, localized map[string]catalogLocalizedName) catalogWorkLabel {
+		return catalogWorkLabel{ID: id, DisplayName: name, Role: role, Localized: localized}
+	}
+
+	t.Run("the publisher listed first does not win", func(t *testing.T) {
+		m := makerOf([]catalogWorkLabel{
+			label(39, "VISUAL ARTS", "publisher", nil),
+			label(2, "Key", "developer", nil),
+		})
+		if m == nil || m.ID != 2 {
+			t.Fatalf("maker = %+v, want the developer (id 2), not the row catalog sent first", m)
+		}
+	})
+
+	t.Run("a doujin work credits its circle", func(t *testing.T) {
+		m := makerOf([]catalogWorkLabel{
+			label(7, "とある出版", "publisher", nil),
+			label(8, "サークル", "circle", nil),
+		})
+		if m == nil || m.ID != 8 {
+			t.Fatalf("maker = %+v, want the circle (id 8)", m)
+		}
+	})
+
+	t.Run("localized names travel whole", func(t *testing.T) {
+		m := makerOf([]catalogWorkLabel{
+			label(5147, "ゆずソフト", "developer", map[string]catalogLocalizedName{
+				"zh-Hans": {Value: "柚子软件"},
+			}),
+		})
+		if m == nil {
+			t.Fatal("maker = nil")
+		}
+		if m.Name.JaJp != "ゆずソフト" || m.Name.ZhCn != "柚子软件" {
+			t.Errorf("name = %+v, want both slots — the 标题语言 setting picks in the browser", m.Name)
+		}
+	})
+
+	t.Run("an unranked role loses to a ranked one whatever the order", func(t *testing.T) {
+		m := makerOf([]catalogWorkLabel{
+			label(1, "无角色", "", nil),
+			label(2, "发行", "publisher", nil),
+		})
+		if m == nil || m.ID != 2 {
+			t.Fatalf("maker = %+v, want the publisher (id 2)", m)
+		}
+	})
+
+	t.Run("no companies means no maker", func(t *testing.T) {
+		if m := makerOf(nil); m != nil {
+			t.Errorf("maker = %+v, want nil", m)
+		}
+	})
+}

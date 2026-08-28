@@ -386,16 +386,13 @@ const chipClass = (active: boolean) => [
     </div>
 
     <KunLoading v-if="pending" description="正在获取 Galgame 数据..." />
-    <div
-      v-else
-      class="mx-auto mb-8 grid grid-cols-2 gap-2 sm:gap-6 lg:grid-cols-3 xl:grid-cols-4"
-    >
+    <GalgameCardGrid v-else class="mb-8">
       <GalgameCard
         v-for="patch in data?.galgames"
         :key="patch.id"
         :patch="patch"
       />
-    </div>
+    </GalgameCardGrid>
 
     <KunNull
       v-if="!pending && !data?.galgames?.length"

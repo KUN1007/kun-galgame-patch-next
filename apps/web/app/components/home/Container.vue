@@ -20,15 +20,13 @@ const props = defineProps<Props>()
           <KunIcon name="lucide:chevron-right" class="size-4" />
         </KunButton>
       </div>
-      <div
-        class="mx-auto mb-8 grid grid-cols-2 gap-2 sm:grid-cols-2 sm:gap-6 lg:grid-cols-3 xl:grid-cols-4"
-      >
+      <GalgameCardGrid class="mb-8">
         <GalgameCard
           v-for="galgame in props.galgames"
           :key="galgame.id"
           :patch="galgame"
         />
-      </div>
+      </GalgameCardGrid>
     </section>
 
     <section class="space-y-3 sm:space-y-6">
