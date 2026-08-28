@@ -3,7 +3,8 @@ import { kunMoyuMoe } from '~/config/moyu-moe'
 import {
   kunMobileAdminItem,
   kunMobileNavItem,
-  KUN_CONTENT_LIMIT_MAP
+  KUN_CONTENT_LIMIT_MAP,
+  KUN_CONTENT_LIMIT_OPTIONS
 } from '~/constants/top-bar'
 import type { KunNsfwPreference } from '~/stores/settingStore'
 import { useBodyScrollLock } from '@kungal/ui-vue'
@@ -29,11 +30,6 @@ const setTheme = (key: 'light' | 'dark' | 'system') => {
 }
 
 const settingStore = useSettingStore()
-const nsfwOptions = [
-  { key: 'sfw', icon: 'lucide:shield-check' },
-  { key: 'all', icon: 'lucide:circle-slash' },
-  { key: 'nsfw', icon: 'lucide:ban' }
-] as const satisfies ReadonlyArray<{ key: KunNsfwPreference; icon: string }>
 const setNsfw = (key: KunNsfwPreference) => {
   settingStore.setNsfwPreference(key)
   if (import.meta.client) location.reload()
@@ -299,7 +295,7 @@ onUnmounted(() => {
               外观
             </p>
             <div
-              class="border-default/20 bg-default-50/40 grid grid-cols-3 gap-1 rounded-xl border p-1"
+              class="border-default/20 bg-default-50/40 grid grid-cols-2 gap-1 rounded-xl border p-1"
             >
               <KunButton
                 v-for="t in themes"
@@ -326,10 +322,10 @@ onUnmounted(() => {
               内容显示
             </p>
             <div
-              class="border-default/20 bg-default-50/40 grid grid-cols-3 gap-1 rounded-xl border p-1"
+              class="border-default/20 bg-default-50/40 grid grid-cols-2 gap-1 rounded-xl border p-1"
             >
               <KunButton
-                v-for="opt in nsfwOptions"
+                v-for="opt in KUN_CONTENT_LIMIT_OPTIONS"
                 :key="opt.key"
                 :variant="
                   settingStore.data.kunNsfwEnable === opt.key ? 'flat' : 'light'

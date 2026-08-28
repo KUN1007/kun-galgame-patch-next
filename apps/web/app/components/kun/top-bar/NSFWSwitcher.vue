@@ -1,17 +1,12 @@
 <script setup lang="ts">
 import {
   KUN_CONTENT_LIMIT_LABEL,
-  KUN_CONTENT_LIMIT_MAP
+  KUN_CONTENT_LIMIT_MAP,
+  KUN_CONTENT_LIMIT_OPTIONS
 } from '~/constants/top-bar'
 import type { KunNsfwPreference } from '~/stores/settingStore'
 
 const settingStore = useSettingStore()
-
-const options = [
-  { key: 'sfw', icon: 'lucide:shield-check' },
-  { key: 'nsfw', icon: 'lucide:ban' },
-  { key: 'all', icon: 'lucide:circle-slash' }
-] as const satisfies ReadonlyArray<{ key: KunNsfwPreference; icon: string }>
 
 const isDanger = computed(() => {
   const v = settingStore.data.kunNsfwEnable
@@ -41,7 +36,7 @@ const onSelect = (key: KunNsfwPreference) => {
 
     <div class="flex flex-col">
       <KunButton
-        v-for="opt in options"
+        v-for="opt in KUN_CONTENT_LIMIT_OPTIONS"
         :key="opt.key"
         :variant="settingStore.data.kunNsfwEnable === opt.key ? 'flat' : 'light'"
         :color="settingStore.data.kunNsfwEnable === opt.key ? 'primary' : 'default'"

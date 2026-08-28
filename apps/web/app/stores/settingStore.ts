@@ -1,15 +1,11 @@
 import { defineStore } from 'pinia'
 
-// NSFW preference. Maps 1:1 to the wiki content_limit query parameter per
-// docs/galgame_wiki/00-handbook §16 — useApi forwards it verbatim:
-//   'sfw'  — only SFW games (the safe-by-default; also what we send on
-//             SSR fallback / signed-out / cookie missing)
-//   'nsfw' — only NSFW games (curiosity mode)
-//   'all'  — both
-//
-// Stored as a plain string (not boolean) so the front-end NSFW toggle UI
-// can offer all three modes if needed without rewriting the protocol.
-export type KunNsfwPreference = 'sfw' | 'nsfw' | 'all'
+// NSFW preference. Forwarded verbatim by useApi as the content_limit query
+// parameter every moyu list endpoint reads:
+//   'sfw' — only SFW games (the safe-by-default; also what we send on
+//            SSR fallback / signed-out / cookie missing)
+//   'all' — both
+export type KunNsfwPreference = 'sfw' | 'all'
 
 export interface KunSettingData {
   kunNsfwEnable: KunNsfwPreference
@@ -43,7 +39,7 @@ export interface KunSettingData {
   showJapaneseSubtitle: boolean
   // Show the game's release date on the card. Default off.
   showReleaseDate: boolean
-  // Show the game's NSFW / age-rating badge on the card. Default on.
+  // Show the game's NSFW / age-rating badge on the card. Default off.
   showNsfwBadge: boolean
   // Include galgames that have no patch resources (resource_count = 0). Default
   // off → lists only show games with patches. Unlike the other four (pure card
@@ -124,6 +120,19 @@ export const useSettingStore = defineStore('setting', {
   // own opt-in survives a hard refresh".
   persist: {
     key: 'kun-patch-setting-store',
-    storage: piniaPluginPersistedstate.cookies()
+    storage: piniaPluginPersistedstate.cookies(),
+    // 'nsfw' (NSFW-only) was a third mode until it was removed. Narrowing the
+    // type above does nothing to a cookie already holding that string, and
+    // useApi forwards kunNsfwEnable verbatim whenever it is not 'sfw' — such a
+    // reader would stay locked in a mode no button can leave, behind a top-bar
+    // label that resolves to undefined and renders blank. 'all' rather than
+    // 'sfw': they did opt in to NSFW, and 'all' is its superset.
+    afterHydrate: ({ store }) => {
+      const data = (store as unknown as { data: KunSettingData }).data
+      if ((data.kunNsfwEnable as string) === 'nsfw') {
+        data.kunNsfwEnable = 'all'
+        store.$persist()
+      }
+    }
   }
 })

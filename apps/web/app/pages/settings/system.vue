@@ -1,5 +1,8 @@
 <script setup lang="ts">
-import { KUN_CONTENT_LIMIT_MAP } from '~/constants/top-bar'
+import {
+  KUN_CONTENT_LIMIT_MAP,
+  KUN_CONTENT_LIMIT_OPTIONS
+} from '~/constants/top-bar'
 import type { KunNsfwPreference } from '~/stores/settingStore'
 
 useKunDisableSeo('系统设置')
@@ -17,11 +20,6 @@ const setTheme = (key: 'light' | 'dark' | 'system') => {
   colorMode.preference = key
 }
 
-const nsfwOptions = [
-  { key: 'sfw', icon: 'lucide:shield-check' },
-  { key: 'all', icon: 'lucide:circle-slash' },
-  { key: 'nsfw', icon: 'lucide:ban' }
-] as const satisfies ReadonlyArray<{ key: KunNsfwPreference; icon: string }>
 const setNsfw = (key: KunNsfwPreference) => {
   settingStore.setNsfwPreference(key)
   if (import.meta.client) location.reload()
@@ -73,7 +71,7 @@ onMounted(() => {
         <div class="space-y-2">
           <p class="text-default-500 text-xs">选择网站的明暗主题</p>
           <div
-            class="border-default/20 bg-default-50/40 grid grid-cols-3 gap-1 rounded-xl border p-1"
+            class="border-default/20 bg-default-50/40 grid grid-cols-2 gap-1 rounded-xl border p-1"
           >
             <KunButton
               v-for="t in themes"
@@ -103,10 +101,10 @@ onMounted(() => {
             控制是否显示 R18 等成人内容（切换后会刷新页面以立即生效）
           </p>
           <div
-            class="border-default/20 bg-default-50/40 grid grid-cols-3 gap-1 rounded-xl border p-1"
+            class="border-default/20 bg-default-50/40 grid grid-cols-2 gap-1 rounded-xl border p-1"
           >
             <KunButton
-              v-for="opt in nsfwOptions"
+              v-for="opt in KUN_CONTENT_LIMIT_OPTIONS"
               :key="opt.key"
               :variant="
                 settingStore.data.kunNsfwEnable === opt.key ? 'flat' : 'light'
