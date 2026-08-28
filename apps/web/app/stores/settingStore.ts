@@ -2,14 +2,10 @@ import { defineStore } from 'pinia'
 
 // NSFW preference. Maps 1:1 to the wiki content_limit query parameter per
 // docs/galgame_wiki/00-handbook §16 — useApi forwards it verbatim:
-//   'sfw'  — only SFW games (the safe-by-default; also what we send on
-//             SSR fallback / signed-out / cookie missing)
-//   'nsfw' — only NSFW games (curiosity mode)
-//   'all'  — both
-//
-// Stored as a plain string (not boolean) so the front-end NSFW toggle UI
-// can offer all three modes if needed without rewriting the protocol.
-export type KunNsfwPreference = 'sfw' | 'nsfw' | 'all'
+//   'sfw' — only SFW games (the safe-by-default; also what we send on
+//            SSR fallback / signed-out / cookie missing)
+//   'all' — both SFW and NSFW
+export type KunNsfwPreference = 'sfw' | 'all'
 
 export interface KunSettingData {
   kunNsfwEnable: KunNsfwPreference

@@ -31,8 +31,7 @@ const setTheme = (key: 'light' | 'dark' | 'system') => {
 const settingStore = useSettingStore()
 const nsfwOptions = [
   { key: 'sfw', icon: 'lucide:shield-check' },
-  { key: 'all', icon: 'lucide:circle-slash' },
-  { key: 'nsfw', icon: 'lucide:ban' }
+  { key: 'all', icon: 'lucide:circle-slash' }
 ] as const satisfies ReadonlyArray<{ key: KunNsfwPreference; icon: string }>
 const setNsfw = (key: KunNsfwPreference) => {
   settingStore.setNsfwPreference(key)
@@ -326,7 +325,7 @@ onUnmounted(() => {
               内容显示
             </p>
             <div
-              class="border-default/20 bg-default-50/40 grid grid-cols-3 gap-1 rounded-xl border p-1"
+              class="border-default/20 bg-default-50/40 grid grid-cols-2 gap-1 rounded-xl border p-1"
             >
               <KunButton
                 v-for="opt in nsfwOptions"

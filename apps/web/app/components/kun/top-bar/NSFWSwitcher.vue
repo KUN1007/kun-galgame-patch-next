@@ -9,7 +9,6 @@ const settingStore = useSettingStore()
 
 const options = [
   { key: 'sfw', icon: 'lucide:shield-check' },
-  { key: 'nsfw', icon: 'lucide:ban' },
   { key: 'all', icon: 'lucide:circle-slash' }
 ] as const satisfies ReadonlyArray<{ key: KunNsfwPreference; icon: string }>
 

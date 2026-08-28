@@ -38,14 +38,12 @@ export const kunMobileAdminItem: KunNavItem[] = [
 
 export const KUN_CONTENT_LIMIT_MAP: Record<string, string> = {
   sfw: '仅显示 SFW (内容安全) 的内容',
-  nsfw: '仅显示 NSFW (可能含有 R18) 的内容',
   all: '同时显示 SFW 和 NSFW 的内容'
 }
 
 export const KUN_CONTENT_LIMIT_LABEL: Record<string, string> = {
   '': '全年龄',
   sfw: '全年龄',
-  nsfw: '涩涩模式',
   all: 'R18模式'
 }
 

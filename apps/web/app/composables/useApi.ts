@@ -56,8 +56,8 @@ export const useApi = () => {
   // unknown params, and the moyu backend only reads it where applicable.
   //
   // Resolution priority (first match wins):
-  //   1. Explicit cookie preference != 'sfw' — user picked nsfw / all in
-  //      the top-bar switcher, honour it verbatim. This is the ONLY way
+  //   1. Explicit cookie preference != 'sfw' — user picked 'all' in the
+  //      top-bar switcher, honour it verbatim. This is the ONLY way
   //      listing pages (home / galgame / resource / ranking / user-tabs /
   //      taxonomy) ever return NSFW content; just being logged-in does
   //      NOT flip lists to all — per product rule, "页面上的各种游戏列表
