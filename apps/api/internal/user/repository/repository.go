@@ -6,6 +6,7 @@ import (
 	authModel "kun-galgame-patch-api/internal/auth/model"
 	patchModel "kun-galgame-patch-api/internal/patch/model"
 	"kun-galgame-patch-api/internal/user/model"
+	"kun-galgame-patch-api/pkg/utils"
 
 	"gorm.io/gorm"
 )
@@ -48,13 +49,14 @@ func (r *UserRepository) CountUserFavorites(userID int) int64 {
 	return countOrLog(r.db.Model(&patchModel.UserPatchFavoriteRelation{}).Where("user_id = ?", userID), "favorites", userID)
 }
 
-func (r *UserRepository) GetUserPatches(userID, offset, limit int, includeEmpty bool) ([]patchModel.Patch, int64, error) {
+func (r *UserRepository) GetUserPatches(userID, offset, limit int, includeEmpty bool, contentLimit string) ([]patchModel.Patch, int64, error) {
 	var patches []patchModel.Patch
 	var total int64
 	base := r.db.Model(&patchModel.Patch{}).Where("user_id = ?", userID)
 	if !includeEmpty {
 		base = base.Where("resource_count > 0")
 	}
+	base = utils.ScopePatchContentLimit(base, contentLimit)
 	if err := base.Session(&gorm.Session{}).Count(&total).Error; err != nil {
 		return nil, 0, err
 	}
@@ -73,7 +75,7 @@ func (r *UserRepository) GetUserResources(userID, offset, limit int) ([]patchMod
 	return resources, total, err
 }
 
-func (r *UserRepository) GetUserFavorites(userID, offset, limit int, includeEmpty bool) ([]patchModel.Patch, int64, error) {
+func (r *UserRepository) GetUserFavorites(userID, offset, limit int, includeEmpty bool, contentLimit string) ([]patchModel.Patch, int64, error) {
 	var patches []patchModel.Patch
 	var total int64
 	subQuery := r.db.Table("user_patch_favorite_relation").Where("user_id = ?", userID).Select("galgame_id")
@@ -81,6 +83,7 @@ func (r *UserRepository) GetUserFavorites(userID, offset, limit int, includeEmpt
 	if !includeEmpty {
 		base = base.Where("resource_count > 0")
 	}
+	base = utils.ScopePatchContentLimit(base, contentLimit)
 	if err := base.Session(&gorm.Session{}).Count(&total).Error; err != nil {
 		return nil, 0, err
 	}
@@ -99,7 +102,7 @@ func (r *UserRepository) GetUserComments(userID, offset, limit int) ([]patchMode
 	return comments, total, err
 }
 
-func (r *UserRepository) GetUserContributions(userID, offset, limit int, includeEmpty bool) ([]patchModel.Patch, int64, error) {
+func (r *UserRepository) GetUserContributions(userID, offset, limit int, includeEmpty bool, contentLimit string) ([]patchModel.Patch, int64, error) {
 	var patches []patchModel.Patch
 	var total int64
 	subQuery := r.db.Table("user_patch_contribute_relation").Where("user_id = ?", userID).Select("galgame_id")
@@ -107,6 +110,7 @@ func (r *UserRepository) GetUserContributions(userID, offset, limit int, include
 	if !includeEmpty {
 		base = base.Where("resource_count > 0")
 	}
+	base = utils.ScopePatchContentLimit(base, contentLimit)
 	if err := base.Session(&gorm.Session{}).Count(&total).Error; err != nil {
 		return nil, 0, err
 	}

@@ -287,8 +287,8 @@ func parseRef(ref string) (kind string, id int) {
 	return k, id
 }
 
-func (s *UserService) GetUserPatches(userID, page, limit int, includeEmpty bool) ([]patchModel.Patch, int64, error) {
-	return s.repo.GetUserPatches(userID, (page-1)*limit, limit, includeEmpty)
+func (s *UserService) GetUserPatches(userID, page, limit int, includeEmpty bool, contentLimit string) ([]patchModel.Patch, int64, error) {
+	return s.repo.GetUserPatches(userID, (page-1)*limit, limit, includeEmpty, contentLimit)
 }
 
 func (s *UserService) GetUserResources(ctx context.Context, userID, page, limit int) ([]patchModel.PatchResource, int64, error) {
@@ -302,8 +302,8 @@ func (s *UserService) GetUserResources(ctx context.Context, userID, page, limit 
 	return rs, total, nil
 }
 
-func (s *UserService) GetUserFavorites(userID, page, limit int, includeEmpty bool) ([]patchModel.Patch, int64, error) {
-	return s.repo.GetUserFavorites(userID, (page-1)*limit, limit, includeEmpty)
+func (s *UserService) GetUserFavorites(userID, page, limit int, includeEmpty bool, contentLimit string) ([]patchModel.Patch, int64, error) {
+	return s.repo.GetUserFavorites(userID, (page-1)*limit, limit, includeEmpty, contentLimit)
 }
 
 func (s *UserService) GetUserComments(ctx context.Context, userID, page, limit int) ([]patchModel.PatchComment, int64, error) {
@@ -316,8 +316,8 @@ func (s *UserService) GetUserComments(ctx context.Context, userID, page, limit i
 	return cs, total, nil
 }
 
-func (s *UserService) GetUserContributions(userID, page, limit int, includeEmpty bool) ([]patchModel.Patch, int64, error) {
-	return s.repo.GetUserContributions(userID, (page-1)*limit, limit, includeEmpty)
+func (s *UserService) GetUserContributions(userID, page, limit int, includeEmpty bool, contentLimit string) ([]patchModel.Patch, int64, error) {
+	return s.repo.GetUserContributions(userID, (page-1)*limit, limit, includeEmpty, contentLimit)
 }
 
 func (s *UserService) attachResourceUsers(ctx context.Context, rs []patchModel.PatchResource) {

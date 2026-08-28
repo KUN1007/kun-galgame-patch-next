@@ -86,6 +86,17 @@ type homeResponse struct {
 	Comments  []patchModel.PatchComment  `json:"comments"`
 }
 
+const homeGalgameCount = 12
+
+// EnrichPatches drops the rows the catalog answers as outside the reader's
+// content limit, and it runs after the SQL LIMIT — so asking for 12 rendered 6
+// under the default SFW gate. ScopePatchContentLimit now filters the axis in
+// SQL, but a row catalog has not been mirrored for yet still passes it and can
+// still be dropped, so the strip keeps reading wider and cutting. The extra
+// rows cost nothing: enrichment batches up to 100 ids in one catalog call
+// either way.
+const homeGalgameOverfetch = 4
+
 func (h *CommonHandler) GetHome(c fiber.Ctx) error {
 	cl := utils.ContentLimitForListBrowse(c)
 
@@ -93,10 +104,12 @@ func (h *CommonHandler) GetHome(c fiber.Ctx) error {
 	var resources []patchModel.PatchResource
 	var comments []patchModel.PatchComment
 
-	patchQuery := h.db.Model(&patchModel.Patch{}).Order("created DESC, id DESC").Limit(12)
+	patchQuery := h.db.Model(&patchModel.Patch{}).Order("created DESC, id DESC").
+		Limit(homeGalgameCount * homeGalgameOverfetch)
 	if !utils.IncludeEmptyGalgames(c) {
 		patchQuery = patchQuery.Where("resource_count > 0")
 	}
+	patchQuery = utils.ScopePatchContentLimit(patchQuery, cl)
 	patchQuery.Find(&patches)
 	h.db.Model(&patchModel.PatchResource{}).Where("status = 0").Order("created DESC, id DESC").Limit(6).Find(&resources)
 	h.db.Model(&patchModel.PatchComment{}).Where("status = 0").Order("created DESC, id DESC").Limit(6).Find(&comments)
@@ -113,8 +126,13 @@ func (h *CommonHandler) GetHome(c fiber.Ctx) error {
 	h.attachPatchSummaries(c, comments, resources)
 	patchModel.StripResourceSecrets(resources)
 
+	galgames := enricher.EnrichPatches(c.Context(), h.galgame, h.users, patches, cl)
+	if len(galgames) > homeGalgameCount {
+		galgames = galgames[:homeGalgameCount]
+	}
+
 	return response.OK(c, homeResponse{
-		Galgames:  enricher.EnrichPatches(c.Context(), h.galgame, h.users, patches, cl),
+		Galgames:  galgames,
 		Resources: resources,
 		Comments:  comments,
 	})
@@ -606,6 +624,7 @@ func (h *CommonHandler) GetPatchRanking(c fiber.Ctx) error {
 	if !utils.IncludeEmptyGalgames(c) {
 		q = q.Where("resource_count > 0")
 	}
+	q = utils.ScopePatchContentLimit(q, cl)
 	err := q.
 		Order(fmt.Sprintf("%s DESC, id DESC", column)).
 		Limit(60).

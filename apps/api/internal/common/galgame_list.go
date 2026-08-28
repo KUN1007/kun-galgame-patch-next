@@ -85,6 +85,7 @@ func (h *CommonHandler) GetGalgameList(c fiber.Ctx) error {
 	if !req.Indexed && !utils.IncludeEmptyGalgames(c) {
 		base = base.Where("resource_count > 0")
 	}
+	base = utils.ScopePatchContentLimit(base, cl)
 
 	var total int64
 	base.Session(&gorm.Session{}).Count(&total)

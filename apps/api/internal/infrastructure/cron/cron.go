@@ -62,6 +62,21 @@ func Start(
 		}); err != nil {
 			slog.Error("注册 catalog claim 同步任务失败", "error", err)
 		}
+
+		if _, err := c.AddFunc(mirrorSyncSchedule, func() {
+			ctx, cancel := context.WithTimeout(context.Background(), 10*time.Minute)
+			defer cancel()
+			updated, caughtUp, err := RunCatalogMirrorSync(ctx, db, catalog, galgame)
+			if err != nil {
+				slog.Error("catalog 展示轴同步失败", "error", err, "updated", updated)
+				return
+			}
+			if updated > 0 || !caughtUp {
+				slog.Info("catalog 展示轴同步完成", "updated", updated, "caught_up", caughtUp)
+			}
+		}); err != nil {
+			slog.Error("注册 catalog 展示轴同步任务失败", "error", err)
+		}
 	}
 
 	if img != nil && img.Configured() {

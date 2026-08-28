@@ -81,11 +81,12 @@ func (h *UserHandler) GetUserPatches(c fiber.Ctx) error {
 		req.Limit = 10
 	}
 
-	patches, total, err := h.service.GetUserPatches(userID, req.Page, req.Limit, utils.IncludeEmptyGalgames(c))
+	cl := utils.ContentLimitForListBrowse(c)
+	patches, total, err := h.service.GetUserPatches(userID, req.Page, req.Limit, utils.IncludeEmptyGalgames(c), cl)
 	if err != nil {
 		return response.Error(c, errors.ErrInternal(""))
 	}
-	return response.Paginated(c, enricher.EnrichPatches(c.Context(), h.galgame, h.users, patches, utils.ContentLimitForListBrowse(c)), total)
+	return response.Paginated(c, enricher.EnrichPatches(c.Context(), h.galgame, h.users, patches, cl), total)
 }
 
 func (h *UserHandler) GetUserResources(c fiber.Ctx) error {
@@ -131,11 +132,12 @@ func (h *UserHandler) GetUserFavorites(c fiber.Ctx) error {
 		req.Limit = 10
 	}
 
-	patches, total, err := h.service.GetUserFavorites(userID, req.Page, req.Limit, true)
+	cl := utils.ContentLimitForListBrowse(c)
+	patches, total, err := h.service.GetUserFavorites(userID, req.Page, req.Limit, true, cl)
 	if err != nil {
 		return response.Error(c, errors.ErrInternal(""))
 	}
-	return response.Paginated(c, enricher.EnrichPatches(c.Context(), h.galgame, h.users, patches, utils.ContentLimitForListBrowse(c)), total)
+	return response.Paginated(c, enricher.EnrichPatches(c.Context(), h.galgame, h.users, patches, cl), total)
 }
 
 func (h *UserHandler) GetUserComments(c fiber.Ctx) error {
@@ -180,11 +182,12 @@ func (h *UserHandler) GetUserContributions(c fiber.Ctx) error {
 		req.Limit = 10
 	}
 
-	patches, total, err := h.service.GetUserContributions(userID, req.Page, req.Limit, utils.IncludeEmptyGalgames(c))
+	cl := utils.ContentLimitForListBrowse(c)
+	patches, total, err := h.service.GetUserContributions(userID, req.Page, req.Limit, utils.IncludeEmptyGalgames(c), cl)
 	if err != nil {
 		return response.Error(c, errors.ErrInternal(""))
 	}
-	return response.Paginated(c, enricher.EnrichPatches(c.Context(), h.galgame, h.users, patches, utils.ContentLimitForListBrowse(c)), total)
+	return response.Paginated(c, enricher.EnrichPatches(c.Context(), h.galgame, h.users, patches, cl), total)
 }
 
 func (h *UserHandler) Follow(c fiber.Ctx) error {
