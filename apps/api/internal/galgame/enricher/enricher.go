@@ -448,12 +448,23 @@ type CalendarCard struct {
 	ClaimState string `json:"claim_state"`
 }
 
-func EnrichCalendarBriefs(briefs []galgameClient.GalgameBrief, hasPatch map[int]bool) []CalendarCard {
+// The calendar draws the same card the rest of the site does, and that card
+// reads count.resource / view / download / type off the moyu patch row. A brief
+// alone leaves them zero, which renders every dated release as 暂无补丁 — most
+// of these works have no local row, but the ones that do must not read as if
+// they had none.
+func EnrichCalendarBriefs(briefs []galgameClient.GalgameBrief, patches map[int]patchModel.Patch) []CalendarCard {
 	cards := make([]CalendarCard, 0, len(briefs))
 	for i := range briefs {
+		p, onSite := patches[briefs[i].ID]
+		card := CardFromBrief(&briefs[i])
+		if onSite {
+			card = baseCard(&p)
+			applyGalgame(&card, &briefs[i])
+		}
 		cards = append(cards, CalendarCard{
-			GalgameCard: CardFromBrief(&briefs[i]),
-			HasPatch:    hasPatch[briefs[i].ID],
+			GalgameCard: card,
+			HasPatch:    p.ResourceCount > 0,
 			ClaimState:  briefs[i].ClaimState,
 		})
 	}

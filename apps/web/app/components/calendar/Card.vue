@@ -1,64 +1,23 @@
 <script setup lang="ts">
-import { GALGAME_AGE_LIMIT_MAP } from '~/constants/galgame'
-
-interface Props {
+const props = defineProps<{
   item: CalendarItem
-  today?: string
-}
-
-const props = defineProps<Props>()
-
-const settingStore = useSettingStore()
-const titleLanguage = computed(() => settingStore.data.titleLanguage ?? 'ja-jp')
-const name = computed(() =>
-  getPreferredLanguageText(props.item.name, titleLanguage.value)
-)
-const bannerSrc = computed(
-  () => resolveBannerUrl(props.item, 'mini') || '/kungalgame-trans.webp'
-)
-
-const cardHref = computed(() => `/patch/${props.item.id}/introduction`)
-
-const ymd = (s: string) => {
-  const [y, m, d] = s.split('-').map(Number)
-  return y && m && d ? Date.UTC(y, m - 1, d) : NaN
-}
-const countdown = computed<{
-  label: string
-  tone: 'today' | 'upcoming' | 'released'
-} | null>(() => {
-  const g = props.item.galgame
-  const precision = g?.release_precision
-  const rd = g?.release_date ?? ''
-  if (!rd || precision === 'tba' || precision === 'unknown') return null
-  if (precision === 'month') return { label: '本月内', tone: 'upcoming' }
-  if (precision === 'year') return { label: '年内', tone: 'upcoming' }
-  if (!props.today) return null
-  const days = Math.round((ymd(rd.slice(0, 10)) - ymd(props.today)) / 86400000)
-  if (Number.isNaN(days)) return null
-  if (days > 0) return { label: `还有 ${days} 天`, tone: 'upcoming' }
-  if (days === 0) return { label: '今日发售', tone: 'today' }
-  return { label: '已发售', tone: 'released' }
-})
-const countdownClass = computed(() => {
-  switch (countdown.value?.tone) {
-    case 'today':
-      return 'bg-primary text-white'
-    case 'released':
-      return 'bg-background/80 text-default-400'
-    default:
-      return 'bg-background/90 text-default-700'
-  }
-})
+}>()
 
 const api = useApi()
+const settingStore = useSettingStore()
 const { requireLogin } = useAuthModal()
+
+// GalgameCard paints the age-rating triangle into this same corner once the
+// reader turns that badge on, so the star steps below it rather than over it.
+const showNsfwBadge = computed(() => settingStore.data.showNsfwBadge ?? false)
+
 const favorited = ref(props.item.is_favorite)
 const favPending = ref(false)
 watch(
   () => props.item.is_favorite,
   (v) => (favorited.value = v)
 )
+
 const toggleFavorite = async () => {
   if (!requireLogin()) return
   if (favPending.value) return
@@ -83,64 +42,32 @@ const toggleFavorite = async () => {
 </script>
 
 <template>
-  <NuxtLink
-    :to="cardHref"
-    class="group border-default/20 bg-content1 shadow-kun-sm hover:bg-default-100 block overflow-hidden rounded-lg border transition-colors"
-  >
-    <div class="relative">
-      <KunImage
-        :src="bannerSrc"
-        :alt="name"
-        aspect-ratio="16 / 9"
-        :thumbhash="resolveBannerThumbhash(item)"
-        class-name="w-full"
+  <div class="relative">
+    <GalgameCard :patch="props.item" class="h-full" />
+    <KunButton
+      is-icon-only
+      variant="flat"
+      color="default"
+      size="sm"
+      rounded="full"
+      :aria-label="favorited ? '取消收藏' : '收藏, 有补丁时通知你'"
+      :class-name="
+        cn(
+          'bg-background/85 hover:bg-background absolute right-1.5 backdrop-blur',
+          showNsfwBadge ? 'top-7' : 'top-1.5'
+        )
+      "
+      @click="toggleFavorite"
+    >
+      <KunIcon
+        name="lucide:star"
+        :class="
+          cn(
+            'size-4',
+            favorited ? 'text-warning fill-current' : 'text-default-500'
+          )
+        "
       />
-
-      <div class="absolute top-1.5 left-1.5">
-        <KunChip
-          :color="item.content_limit === 'sfw' ? 'success' : 'danger'"
-          variant="solid"
-          size="sm"
-        >
-          {{ GALGAME_AGE_LIMIT_MAP[item.content_limit] }}
-        </KunChip>
-      </div>
-
-      <button
-        type="button"
-        class="bg-background/85 hover:bg-background absolute top-1.5 right-1.5 flex size-7 items-center justify-center rounded-full shadow-kun-sm backdrop-blur transition-colors"
-        :aria-label="favorited ? '取消收藏' : '收藏（有补丁时通知你）'"
-        @click.stop.prevent="toggleFavorite"
-      >
-        <KunIcon
-          name="lucide:star"
-          class="size-4 transition-colors"
-          :class="favorited ? 'fill-current text-warning' : 'text-default-500'"
-        />
-      </button>
-
-      <div
-        v-if="countdown"
-        class="absolute bottom-1.5 left-1.5 rounded-full px-2 py-0.5 text-xs font-medium shadow-kun-sm backdrop-blur"
-        :class="countdownClass"
-      >
-        {{ countdown.label }}
-      </div>
-    </div>
-
-    <div class="space-y-1 p-2.5">
-      <h3
-        class="group-hover:text-primary-500 text-sm font-medium transition-colors line-clamp-2"
-      >
-        {{ name }}
-      </h3>
-      <p
-        v-if="item.has_patch"
-        class="text-primary flex items-center gap-1 text-xs"
-      >
-        <KunIcon name="lucide:circle-check" class="size-3 shrink-0" />
-        本站有补丁
-      </p>
-    </div>
-  </NuxtLink>
+    </KunButton>
+  </div>
 </template>

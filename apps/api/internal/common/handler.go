@@ -664,19 +664,17 @@ func calendarContentLimits(cl string) []string {
 	}
 }
 
-func (h *CommonHandler) calendarHasPatchSet(ids []int) map[int]bool {
-	set := make(map[int]bool, len(ids))
+func (h *CommonHandler) calendarPatchRows(ids []int) map[int]patchModel.Patch {
+	rows := make(map[int]patchModel.Patch, len(ids))
 	if len(ids) == 0 {
-		return set
+		return rows
 	}
-	var existing []int
-	h.db.Model(&patchModel.Patch{}).
-		Where("id IN ? AND resource_count > 0", ids).
-		Pluck("id", &existing)
-	for _, id := range existing {
-		set[id] = true
+	var patches []patchModel.Patch
+	h.db.Where("id IN ?", ids).Find(&patches)
+	for _, p := range patches {
+		rows[p.ID] = p
 	}
-	return set
+	return rows
 }
 
 func (h *CommonHandler) enrichCalendarItems(c fiber.Ctx, briefs []galgameClient.GalgameBrief) []enricher.CalendarCard {
@@ -686,7 +684,7 @@ func (h *CommonHandler) enrichCalendarItems(c fiber.Ctx, briefs []galgameClient.
 			ids = append(ids, briefs[i].ID)
 		}
 	}
-	cards := enricher.EnrichCalendarBriefs(briefs, h.calendarHasPatchSet(ids))
+	cards := enricher.EnrichCalendarBriefs(briefs, h.calendarPatchRows(ids))
 
 	if uid := middleware.GetUserID(c); uid > 0 {
 		fav := h.calendarFavoriteSet(uid, ids)

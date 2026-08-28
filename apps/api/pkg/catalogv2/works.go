@@ -173,7 +173,7 @@ func (c *Client) Calendar(ctx context.Context, month string, nsfw bool, cursor s
 	if month != "" {
 		v.Set("month", month)
 	}
-	v.Set("include", "titles,covers,refs")
+	v.Set("include", "titles,covers,refs,companies")
 	if limit <= 0 {
 		limit = 100
 	}

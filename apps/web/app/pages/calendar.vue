@@ -158,6 +158,20 @@ const scrollToDay = (key: string) => {
   }
 }
 
+const ymd = (s: string) => {
+  const [y, m, d] = s.split('-').map(Number)
+  return y && m && d ? Date.UTC(y, m - 1, d) : NaN
+}
+
+// Every card in a group shares the group's date, so the countdown belongs to the
+// day header — on the card it was the same sentence repeated once per poster.
+const dayCountdown = (g: DayGroup) => {
+  if (g.isTbd || g.isToday || !today.value) return ''
+  const days = Math.round((ymd(g.key) - ymd(today.value)) / 86400000)
+  if (Number.isNaN(days)) return ''
+  return days > 0 ? `还有 ${days} 天` : '已发售'
+}
+
 const tileClass = (g: DayGroup) => {
   if (g.isToday) return 'bg-primary text-white'
   if (g.isTbd) return 'bg-default-100 text-default-400'
@@ -302,17 +316,18 @@ const goToday = () => {
                 >
                   今日
                 </KunChip>
+                <span
+                  v-else-if="dayCountdown(g)"
+                  class="text-default-400 text-xs whitespace-nowrap"
+                >
+                  {{ dayCountdown(g) }}
+                </span>
               </div>
             </div>
 
-            <div class="grid flex-1 grid-cols-2 gap-3 sm:grid-cols-3">
-              <CalendarCard
-                v-for="it in g.items"
-                :key="it.id"
-                :item="it"
-                :today="today"
-              />
-            </div>
+            <GalgameCardGrid class="flex-1">
+              <CalendarCard v-for="it in g.items" :key="it.id" :item="it" />
+            </GalgameCardGrid>
           </section>
         </template>
       </div>
