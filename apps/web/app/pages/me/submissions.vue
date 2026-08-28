@@ -47,7 +47,7 @@ const withdrawing = ref<number | null>(null)
 const handleWithdraw = async (m: MineItem) => {
   const ok = await useKunAlert({
     title: '撤回提交',
-    message: `确定要撤回《${displayName(m)}》的提交吗？撤回后其他人可以重新提交该作品。`
+    message: `确定要撤回《${displayName(m)}》的提交吗？该条目会一并删除，无法恢复，之后任何人都可以重新提交该作品。`
   })
   if (!ok) return
   withdrawing.value = patchID(m)

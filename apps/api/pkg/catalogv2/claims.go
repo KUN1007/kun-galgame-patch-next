@@ -97,14 +97,37 @@ func (c *Client) MintClaim(ctx context.Context, accessToken string, fieldValues 
 	return &out, nil
 }
 
-func (c *Client) PatchClaim(ctx context.Context, accessToken string, workID int64, state string) (*ClaimRecord, error) {
+// ifMatch is required. "*" takes whatever state the claim is in; pass the ETag
+// from GetMyClaim when the decision that follows depends on which state that
+// was. The answer carries no last_event — the claim read behind PATCH does not
+// join the event table — so a caller that needs the prior state must have read
+// it beforehand.
+func (c *Client) PatchClaim(ctx context.Context, accessToken string, workID int64, state, ifMatch string) (*ClaimRecord, error) {
 	if accessToken == "" {
 		return nil, ErrNoAccessToken
 	}
 	var out ClaimRecord
-	if _, err := c.do(ctx, http.MethodPatch, "/v2/me/claims/"+FormatID(workID), accessToken, `*`,
+	if _, err := c.do(ctx, http.MethodPatch, "/v2/me/claims/"+FormatID(workID), accessToken, ifMatch,
 		map[string]any{"state": state}, &out); err != nil {
 		return nil, err
 	}
 	return &out, nil
+}
+
+// Owner-fenced: catalog answers only claims the bearer both acted on and owns,
+// so a 404 here is also the authorization refusal.
+func (c *Client) GetMyClaim(ctx context.Context, accessToken string, workID int64) (*ClaimRecord, string, error) {
+	var out ClaimRecord
+	etag, err := c.userDo(ctx, http.MethodGet, "/v2/me/claims/"+FormatID(workID), accessToken, nil, &out)
+	if err != nil {
+		return nil, "", err
+	}
+	return &out, etag, nil
+}
+
+// Soft-deletes the catalog work behind the claim, not just the claim. Catalog
+// allows it only on a draft the bearer owns, and writes no claim event.
+func (c *Client) DeleteClaim(ctx context.Context, accessToken string, workID int64) error {
+	_, err := c.userDo(ctx, http.MethodDelete, "/v2/me/claims/"+FormatID(workID), accessToken, nil, nil)
+	return err
 }

@@ -136,7 +136,7 @@ func TestCreateClaimPostsWorkID(t *testing.T) {
 	}
 }
 
-func TestPatchClaimSendsLiveAndIfMatchStar(t *testing.T) {
+func TestPatchClaimSendsTheStateAndTheCallersIfMatch(t *testing.T) {
 	var gotPath, gotMatch string
 	var gotBody map[string]any
 	srv := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
@@ -148,11 +148,11 @@ func TestPatchClaimSendsLiveAndIfMatchStar(t *testing.T) {
 	}))
 	t.Cleanup(srv.Close)
 
-	out, err := catalogv2.New(srv.URL, "nmk_test_x").PatchClaim(context.Background(), "tok", 7, "live")
+	out, err := catalogv2.New(srv.URL, "nmk_test_x").PatchClaim(context.Background(), "tok", 7, "live", `"c7.draft"`)
 	if err != nil {
 		t.Fatal(err)
 	}
-	if gotPath != "/v2/me/claims/7" || gotMatch != "*" || gotBody["state"] != "live" {
+	if gotPath != "/v2/me/claims/7" || gotMatch != `"c7.draft"` || gotBody["state"] != "live" {
 		t.Fatalf("path=%s match=%s body=%v", gotPath, gotMatch, gotBody)
 	}
 	if out.State != "live" {

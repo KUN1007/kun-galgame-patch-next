@@ -817,7 +817,7 @@ func (h *PatchHandler) WithdrawGalgameSubmission(c fiber.Ctx) error {
 	if tErr != nil {
 		return response.Error(c, tErr)
 	}
-	if err := h.patchClaim(c, token, workID, catalogv2.ClaimTargetWithdrawn); err != nil {
+	if err := h.withdrawClaim(c, token, workID); err != nil {
 		return catalogErr(c, err, "调用资料库失败")
 	}
 	return response.OKMessage(c, "OK")
