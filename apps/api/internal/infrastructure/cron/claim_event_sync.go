@@ -9,7 +9,7 @@ import (
 	galgameClient "kun-galgame-patch-api/internal/galgame/client"
 	patchModel "kun-galgame-patch-api/internal/patch/model"
 	userModel "kun-galgame-patch-api/internal/user/model"
-	"kun-galgame-patch-api/pkg/catalogclient"
+	"kun-galgame-patch-api/pkg/catalogv2"
 	"kun-galgame-patch-api/pkg/moemoepoint"
 
 	"gorm.io/gorm"
@@ -21,14 +21,19 @@ const (
 	// wiki_msg_sync skips or replays events silently.
 	claimSyncCronName = "catalog_claim_sync"
 	claimSyncSchedule = "*/10 * * * *"
-	claimSyncBatch    = 500
+	claimSyncBatch    = 100
 	claimSyncMaxPages = 50
+	// Every event here is applied to the moyu patch its product_work_id names.
+	// Read without site= the feed answers every tenant, and their product ids
+	// are somebody else's rows; the request pins the tenant and applyClaimEvent
+	// refuses anything that still arrives from another one.
+	claimSyncSite = catalogv2.SiteKungal
 )
 
 func RunClaimEventSync(
 	ctx context.Context,
 	db *gorm.DB,
-	catalog *catalogclient.Client,
+	catalog *catalogv2.Client,
 	galgame *galgameClient.Client,
 	mp *moemoepoint.Client,
 ) (int, int64, error) {
@@ -41,7 +46,7 @@ func RunClaimEventSync(
 		return 0, 0, err
 	}
 	if !seeded {
-		head, herr := claimFeedHead(ctx, catalog)
+		head, herr := catalog.ClaimEventHead(ctx, claimSyncSite)
 		if herr != nil {
 			return 0, 0, fmt.Errorf("seek claim feed head: %w", herr)
 		}
@@ -54,15 +59,15 @@ func RunClaimEventSync(
 
 	applied := 0
 	for page := 1; page <= claimSyncMaxPages; page++ {
-		feed, ferr := catalog.ClaimEventsSince(ctx, cursor, claimSyncBatch, "")
+		feed, ferr := catalog.ClaimEvents(ctx, cursor, claimSyncBatch, claimSyncSite)
 		if ferr != nil {
 			return applied, cursor, fmt.Errorf("fetch claim feed: %w", ferr)
 		}
-		if len(feed.Items) == 0 {
+		if len(feed) == 0 {
 			break
 		}
-		for i := range feed.Items {
-			ev := &feed.Items[i]
+		for i := range feed {
+			ev := &feed[i]
 			next := ev.ID
 			txErr := db.Transaction(func(tx *gorm.DB) error {
 				if err := applyClaimEvent(ctx, tx, galgame, mp, ev); err != nil {
@@ -76,29 +81,11 @@ func RunClaimEventSync(
 			cursor = next
 			applied++
 		}
-		if len(feed.Items) < claimSyncBatch {
+		if len(feed) < claimSyncBatch {
 			break
 		}
 	}
 	return applied, cursor, nil
-}
-
-func claimFeedHead(ctx context.Context, catalog *catalogclient.Client) (int64, error) {
-	var head int64
-	for page := 1; page <= claimSyncMaxPages; page++ {
-		feed, err := catalog.ClaimEventsSince(ctx, head, claimSyncBatch, "")
-		if err != nil {
-			return 0, err
-		}
-		if len(feed.Items) == 0 {
-			break
-		}
-		head = feed.Items[len(feed.Items)-1].ID
-		if len(feed.Items) < claimSyncBatch {
-			break
-		}
-	}
-	return head, nil
 }
 
 type claimEffect int
@@ -113,30 +100,30 @@ const (
 	claimEffectUnknownState
 )
 
-func effectOf(ev *catalogclient.ClaimEventFeedItem) claimEffect {
+func effectOf(ev *catalogv2.ClaimEvent) claimEffect {
 	if ev.ProductWorkID == nil || *ev.ProductWorkID <= 0 {
 		return claimEffectNone
 	}
 	switch ev.ToState {
-	case catalogclient.ClaimStateLive:
+	case catalogv2.ClaimStateLive:
 		switch {
 		case ev.FromState == nil:
 			// A claim born directly into live is an import, not an approval.
 			return claimEffectNone
-		case *ev.FromState == catalogclient.ClaimStatePending:
+		case *ev.FromState == catalogv2.ClaimStatePending:
 			return claimEffectApproved
-		case *ev.FromState == catalogclient.ClaimStateHidden:
+		case *ev.FromState == catalogv2.ClaimStateHidden:
 			return claimEffectUnbanned
 		default:
 			return claimEffectNone
 		}
-	case catalogclient.ClaimStateDeclined:
+	case catalogv2.ClaimStateDeclined:
 		return claimEffectDeclined
-	case catalogclient.ClaimStateHidden:
+	case catalogv2.ClaimStateHidden:
 		return claimEffectBanned
-	case catalogclient.ClaimStatePending:
+	case catalogv2.ClaimStatePending:
 		return claimEffectRememberSubmitter
-	case catalogclient.ClaimStateDraft, catalogclient.ClaimStateNone:
+	case catalogv2.ClaimStateDraft, catalogv2.ClaimStateNone:
 		return claimEffectNone
 	default:
 		return claimEffectUnknownState
@@ -148,10 +135,10 @@ func applyClaimEvent(
 	tx *gorm.DB,
 	galgame *galgameClient.Client,
 	mp *moemoepoint.Client,
-	ev *catalogclient.ClaimEventFeedItem,
+	ev *catalogv2.ClaimEvent,
 ) error {
 	effect := effectOf(ev)
-	if !catalogclient.IsGIDClaimSite(ev.Site) {
+	if ev.Site != claimSyncSite {
 		return nil
 	}
 	if effect == claimEffectUnknownState {
@@ -251,7 +238,7 @@ func submitterOf(tx *gorm.DB, workID int64) (int, error) {
 		SELECT actor_uid FROM claim_event_processed
 		WHERE work_id = ? AND to_state = ?
 		ORDER BY event_id DESC LIMIT 1
-	`, workID, catalogclient.ClaimStatePending).Scan(&uid).Error
+	`, workID, catalogv2.ClaimStatePending).Scan(&uid).Error
 	return uid, err
 }
 

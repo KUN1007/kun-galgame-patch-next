@@ -14,7 +14,6 @@ import (
 	"kun-galgame-patch-api/internal/patch/dto"
 	"kun-galgame-patch-api/internal/patch/model"
 	"kun-galgame-patch-api/internal/patch/service"
-	"kun-galgame-patch-api/pkg/catalogclient"
 	"kun-galgame-patch-api/pkg/catalogv2"
 	"kun-galgame-patch-api/pkg/errors"
 	"kun-galgame-patch-api/pkg/response"
@@ -30,17 +29,15 @@ var vndbIDRegex = regexp.MustCompile(`^v\d+$`)
 type PatchHandler struct {
 	service *service.PatchService
 	galgame *galgameClient.Client
-	catalog *catalogclient.Client
 	users   *userclient.Client
 }
 
 func New(
 	svc *service.PatchService,
 	galgame *galgameClient.Client,
-	catalog *catalogclient.Client,
 	users *userclient.Client,
 ) *PatchHandler {
-	return &PatchHandler{service: svc, galgame: galgame, catalog: catalog, users: users}
+	return &PatchHandler{service: svc, galgame: galgame, users: users}
 }
 
 func catalogUserToken(c fiber.Ctx) (string, *errors.AppError) {
@@ -52,13 +49,10 @@ func catalogUserToken(c fiber.Ctx) (string, *errors.AppError) {
 }
 
 func catalogErr(c fiber.Ctx, err error, fallback string) error {
-	if stderrors.Is(err, catalogv2.ErrNotConfigured) || stderrors.Is(err, catalogclient.ErrNotConfigured) {
+	if stderrors.Is(err, catalogv2.ErrNotConfigured) {
 		return response.Error(c, errors.ErrInternal("资料库客户端未配置"))
 	}
-	if stderrors.Is(err, catalogclient.ErrInsufficientScope) {
-		return response.Error(c, errors.ErrCatalogReauthRequired(""))
-	}
-	if stderrors.Is(err, catalogv2.ErrNoAccessToken) || stderrors.Is(err, catalogclient.ErrNoAccessToken) {
+	if stderrors.Is(err, catalogv2.ErrNoAccessToken) {
 		return response.Error(c, errors.ErrUnauthorized())
 	}
 	if stderrors.Is(err, catalogv2.ErrUnauthorized) {
@@ -87,10 +81,6 @@ func catalogErr(c fiber.Ctx, err error, fallback string) error {
 			p.Status == http.StatusPreconditionRequired:
 			return response.Error(c, errors.ErrConflict(p.Error()))
 		}
-	}
-	var apiErr *catalogclient.APIError
-	if stderrors.As(err, &apiErr) && apiErr.Status >= 400 && apiErr.Status < 500 {
-		return response.Error(c, errors.New(apiErr.Code, apiErr.Message, apiErr.Status))
 	}
 	return response.Error(c, errors.ErrInternal(fallback))
 }
@@ -745,7 +735,8 @@ func (h *PatchHandler) SubmitGalgame(c fiber.Ctx) error {
 	if appErr := h.ensureCanPublishGalgame(c); appErr != nil {
 		return response.Error(c, appErr)
 	}
-	if h.catalog == nil || !h.catalog.Configured() {
+	v2 := h.catalogV2()
+	if v2 == nil || !v2.Configured() {
 		return response.Error(c, errors.ErrInternal("资料库客户端未配置"))
 	}
 	var form SubmissionForm
@@ -760,15 +751,13 @@ func (h *PatchHandler) SubmitGalgame(c fiber.Ctx) error {
 	if tErr != nil {
 		return response.Error(c, tErr)
 	}
-	out, err := h.catalog.SubmitWorkUser(c.Context(), token, catalogclient.UserWorkSubmitRequest{
-		Fields: fields,
-	})
+	out, err := v2.MintClaim(c.Context(), token, fields)
 	if err != nil {
 		return catalogErr(c, err, "提交到资料库失败")
 	}
 	return c.JSON(response.Response{
 		Code: 0, Message: "OK",
-		Data: fiber.Map{"id": out.WorkID, "claim_state": out.ClaimState},
+		Data: fiber.Map{"id": out.WorkID(), "claim_state": out.State},
 	})
 }
 
@@ -788,7 +777,7 @@ func (h *PatchHandler) ClaimGalgame(c fiber.Ctx) error {
 	if tErr != nil {
 		return response.Error(c, tErr)
 	}
-	if err := h.patchClaim(c, token, workID, "live", catalogclient.ClaimActionPublish); err != nil {
+	if err := h.patchClaim(c, token, workID, catalogv2.ClaimStateLive); err != nil {
 		return catalogErr(c, err, "调用资料库失败")
 	}
 
@@ -828,21 +817,21 @@ func (h *PatchHandler) WithdrawGalgameSubmission(c fiber.Ctx) error {
 	if tErr != nil {
 		return response.Error(c, tErr)
 	}
-	if err := h.patchClaim(c, token, workID, "withdrawn", catalogclient.ClaimActionWithdraw); err != nil {
+	if err := h.patchClaim(c, token, workID, catalogv2.ClaimTargetWithdrawn); err != nil {
 		return catalogErr(c, err, "调用资料库失败")
 	}
 	return response.OKMessage(c, "OK")
 }
 
 func (h *PatchHandler) ListMyGalgames(c fiber.Ctx) error {
-	if h.catalog == nil || !h.catalog.Configured() {
+	v2 := h.catalogV2()
+	if v2 == nil || !v2.Configured() {
 		return response.Error(c, errors.ErrInternal("资料库客户端未配置"))
 	}
 	limit, _ := strconv.Atoi(c.Query("limit", "20"))
 	if limit < 1 || limit > 50 {
 		limit = 20
 	}
-	before, _ := strconv.ParseInt(c.Query("before", "0"), 10, 64)
 
 	states := mySubmissionStates
 	if raw := strings.TrimSpace(c.Query("claim_state", "")); raw != "" {
@@ -857,17 +846,45 @@ func (h *PatchHandler) ListMyGalgames(c fiber.Ctx) error {
 	if tErr != nil {
 		return response.Error(c, tErr)
 	}
-	out, err := h.catalog.MyClaims(c.Context(), token,
-		catalogclient.UserClaimFilter{ClaimStates: states, Before: before, Limit: limit})
+	page, err := v2.MyClaims(c.Context(), token, catalogv2.MyClaimsQuery{
+		ClaimStates: states, Site: catalogv2.SiteKungal,
+		Cursor: c.Query("cursor", ""), Limit: limit,
+	})
 	if err != nil {
 		return catalogErr(c, err, "调用资料库失败")
 	}
-	return response.OK(c, out)
+	items := make([]mySubmission, 0, len(page.Items))
+	for i := range page.Items {
+		items = append(items, submissionRow(&page.Items[i]))
+	}
+	return response.OK(c, fiber.Map{
+		"items": items, "next_cursor": page.Next(), "total": page.Count(),
+	})
 }
 
 var mySubmissionStates = []string{
-	catalogclient.ClaimStatePending,
-	catalogclient.ClaimStateDeclined,
+	catalogv2.ClaimStatePending,
+	catalogv2.ClaimStateDeclined,
+}
+
+type mySubmission struct {
+	WorkID        int64   `json:"work_id"`
+	DisplayName   string  `json:"display_name"`
+	ClaimState    string  `json:"claim_state"`
+	ProductWorkID *int64  `json:"product_work_id"`
+	LastReason    *string `json:"last_reason"`
+	FirstActedAt  string  `json:"first_acted_at"`
+}
+
+func submissionRow(r *catalogv2.ClaimRecord) mySubmission {
+	row := mySubmission{
+		WorkID: r.WorkID(), DisplayName: r.DisplayName, ClaimState: r.State,
+		ProductWorkID: r.ProductID(), LastReason: r.LastReason(),
+	}
+	if r.FirstActedAt != nil {
+		row.FirstActedAt = *r.FirstActedAt
+	}
+	return row
 }
 
 type wizardPendingHit struct {
@@ -891,7 +908,7 @@ func (h *PatchHandler) SearchGalgameForPublish(c fiber.Ctx) error {
 		return response.Error(c, errors.ErrInternal("调用 Galgame 资料库失败"))
 	}
 	pending := make([]wizardPendingHit, 0)
-	if h.catalog != nil && h.catalog.Configured() {
+	if v2 := h.catalogV2(); v2 != nil && v2.Configured() {
 		pending = append(pending, h.ownPendingSubmissions(c, q)...)
 	}
 	return response.OK(c, fiber.Map{"items": items, "pending": pending, "total": total})
@@ -902,8 +919,9 @@ func (h *PatchHandler) ownPendingSubmissions(c fiber.Ctx, q string) []wizardPend
 	if token == "" {
 		return nil
 	}
-	page, err := h.catalog.MyClaims(c.Context(), token,
-		catalogclient.UserClaimFilter{ClaimStates: mySubmissionStates, Limit: 50})
+	page, err := h.catalogV2().MyClaims(c.Context(), token, catalogv2.MyClaimsQuery{
+		ClaimStates: mySubmissionStates, Site: catalogv2.SiteKungal, Limit: 50,
+	})
 	if err != nil {
 		slog.Warn("读取本人投稿列表失败，向导仅显示公开结果", "error", err)
 		return nil
@@ -911,7 +929,7 @@ func (h *PatchHandler) ownPendingSubmissions(c fiber.Ctx, q string) []wizardPend
 	needle := strings.ToLower(strings.TrimSpace(q))
 	out := make([]wizardPendingHit, 0, len(page.Items))
 	for i := range page.Items {
-		it := &page.Items[i]
+		it := submissionRow(&page.Items[i])
 		if needle != "" && !strings.Contains(strings.ToLower(it.DisplayName), needle) {
 			continue
 		}

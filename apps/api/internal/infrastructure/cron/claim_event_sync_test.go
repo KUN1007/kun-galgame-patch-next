@@ -1,9 +1,13 @@
 package cron
 
 import (
+	"context"
+	"net/http"
+	"net/http/httptest"
+	"net/url"
 	"testing"
 
-	"kun-galgame-patch-api/pkg/catalogclient"
+	"kun-galgame-patch-api/pkg/catalogv2"
 )
 
 func ptr[T any](v T) *T { return &v }
@@ -12,83 +16,83 @@ func TestEffectOfMapsEveryTransition(t *testing.T) {
 	gid := int64(4242)
 	cases := []struct {
 		name string
-		ev   catalogclient.ClaimEventFeedItem
+		ev   catalogv2.ClaimEvent
 		want claimEffect
 	}{
 		{
 			name: "pending → live is an approval",
-			ev: catalogclient.ClaimEventFeedItem{
-				FromState: ptr(catalogclient.ClaimStatePending),
-				ToState:   catalogclient.ClaimStateLive, ProductWorkID: &gid,
+			ev: catalogv2.ClaimEvent{
+				FromState: ptr(catalogv2.ClaimStatePending),
+				ToState:   catalogv2.ClaimStateLive, ProductWorkID: &gid,
 			},
 			want: claimEffectApproved,
 		},
 		{
 			name: "draft → live is the owner publishing, already rewarded in-request",
-			ev: catalogclient.ClaimEventFeedItem{
-				FromState: ptr(catalogclient.ClaimStateDraft),
-				ToState:   catalogclient.ClaimStateLive, ProductWorkID: &gid,
+			ev: catalogv2.ClaimEvent{
+				FromState: ptr(catalogv2.ClaimStateDraft),
+				ToState:   catalogv2.ClaimStateLive, ProductWorkID: &gid,
 			},
 			want: claimEffectNone,
 		},
 		{
 			name: "hidden → live is an unban",
-			ev: catalogclient.ClaimEventFeedItem{
-				FromState: ptr(catalogclient.ClaimStateHidden),
-				ToState:   catalogclient.ClaimStateLive, ProductWorkID: &gid,
+			ev: catalogv2.ClaimEvent{
+				FromState: ptr(catalogv2.ClaimStateHidden),
+				ToState:   catalogv2.ClaimStateLive, ProductWorkID: &gid,
 			},
 			want: claimEffectUnbanned,
 		},
 		{
 			name: "birth into live is an import, not a verdict",
-			ev: catalogclient.ClaimEventFeedItem{
-				ToState: catalogclient.ClaimStateLive, ProductWorkID: &gid,
+			ev: catalogv2.ClaimEvent{
+				ToState: catalogv2.ClaimStateLive, ProductWorkID: &gid,
 			},
 			want: claimEffectNone,
 		},
 		{
 			name: "declined",
-			ev: catalogclient.ClaimEventFeedItem{
-				FromState: ptr(catalogclient.ClaimStatePending),
-				ToState:   catalogclient.ClaimStateDeclined, ProductWorkID: &gid,
+			ev: catalogv2.ClaimEvent{
+				FromState: ptr(catalogv2.ClaimStatePending),
+				ToState:   catalogv2.ClaimStateDeclined, ProductWorkID: &gid,
 			},
 			want: claimEffectDeclined,
 		},
 		{
 			name: "hidden is a ban",
-			ev: catalogclient.ClaimEventFeedItem{
-				FromState: ptr(catalogclient.ClaimStateLive),
-				ToState:   catalogclient.ClaimStateHidden, ProductWorkID: &gid,
+			ev: catalogv2.ClaimEvent{
+				FromState: ptr(catalogv2.ClaimStateLive),
+				ToState:   catalogv2.ClaimStateHidden, ProductWorkID: &gid,
 			},
 			want: claimEffectBanned,
 		},
 		{
 			name: "pending records the submitter",
-			ev: catalogclient.ClaimEventFeedItem{
-				FromState: ptr(catalogclient.ClaimStateDraft),
-				ToState:   catalogclient.ClaimStatePending, ProductWorkID: &gid,
+			ev: catalogv2.ClaimEvent{
+				FromState: ptr(catalogv2.ClaimStateDraft),
+				ToState:   catalogv2.ClaimStatePending, ProductWorkID: &gid,
 			},
 			want: claimEffectRememberSubmitter,
 		},
 		{
 			name: "live → draft is a withdrawal, nothing to announce",
-			ev: catalogclient.ClaimEventFeedItem{
-				FromState: ptr(catalogclient.ClaimStateLive),
-				ToState:   catalogclient.ClaimStateDraft, ProductWorkID: &gid,
+			ev: catalogv2.ClaimEvent{
+				FromState: ptr(catalogv2.ClaimStateLive),
+				ToState:   catalogv2.ClaimStateDraft, ProductWorkID: &gid,
 			},
 			want: claimEffectNone,
 		},
 		{
 			name: "no product anchor means nothing local to say",
-			ev: catalogclient.ClaimEventFeedItem{
-				FromState: ptr(catalogclient.ClaimStatePending),
-				ToState:   catalogclient.ClaimStateLive,
+			ev: catalogv2.ClaimEvent{
+				FromState: ptr(catalogv2.ClaimStatePending),
+				ToState:   catalogv2.ClaimStateLive,
 			},
 			want: claimEffectNone,
 		},
 		{
 			name: "an unrecognised destination is reported",
-			ev: catalogclient.ClaimEventFeedItem{
+			ev: catalogv2.ClaimEvent{
 				ToState: "quarantined", ProductWorkID: &gid,
 			},
 			want: claimEffectUnknownState,
@@ -103,16 +107,40 @@ func TestEffectOfMapsEveryTransition(t *testing.T) {
 	}
 }
 
-func TestGIDClaimSiteAcceptsBothSpellings(t *testing.T) {
-	for _, site := range []string{"kungal", "galgame_wiki"} {
-		if !catalogclient.IsGIDClaimSite(site) {
-			t.Errorf("site %q must be recognised; on the wrong side of the rename "+
-				"the cron would consume every transition and apply none", site)
+func TestClaimFeedRequestPinsTheTenant(t *testing.T) {
+	var queries []url.Values
+	srv := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		queries = append(queries, r.URL.Query())
+		_, _ = w.Write([]byte(`{"object":"list","items":[]}`))
+	}))
+	t.Cleanup(srv.Close)
+	cli := catalogv2.New(srv.URL, "nmk_test_x")
+
+	if _, err := cli.ClaimEventHead(context.Background(), claimSyncSite); err != nil {
+		t.Fatal(err)
+	}
+	if _, err := cli.ClaimEvents(context.Background(), 40, claimSyncBatch, claimSyncSite); err != nil {
+		t.Fatal(err)
+	}
+	if len(queries) != 2 {
+		t.Fatalf("calls %d", len(queries))
+	}
+	for _, q := range queries {
+		if q.Get("site") != "kungal" {
+			t.Errorf("every claim read must pin the tenant, else product_work_id "+
+				"names another site's rows: %v", q)
 		}
 	}
-	for _, site := range []string{"moyu", "letmoe-staging", ""} {
-		if catalogclient.IsGIDClaimSite(site) {
-			t.Errorf("site %q is not the gid key space and must not be acted on", site)
-		}
+	if got := queries[0].Get("sort"); got != "recorded_desc" {
+		t.Errorf("seeding reads the head, sort=%q", got)
+	}
+	if got := queries[1].Get("sort"); got != "recorded_asc" {
+		t.Errorf("the watermark walk is ascending, sort=%q", got)
+	}
+	if got := queries[1].Get("cursor"); got != catalogv2.EncodeCursor("40") {
+		t.Errorf("cursor=%q must carry the stored watermark", got)
+	}
+	if claimSyncBatch > 100 {
+		t.Fatalf("limit %d is 400 LIMIT_TOO_LARGE, not clamped", claimSyncBatch)
 	}
 }

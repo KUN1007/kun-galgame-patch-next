@@ -6,7 +6,6 @@ import (
 	"net/http"
 	"slices"
 
-	"kun-galgame-patch-api/pkg/catalogclient"
 	"kun-galgame-patch-api/pkg/catalogv2"
 	"kun-galgame-patch-api/pkg/errors"
 	"kun-galgame-patch-api/pkg/response"
@@ -27,6 +26,21 @@ var catalogEditFieldKeys = []string{
 }
 
 const catalogEditNoteMax = 2000
+
+// The shape the edit page reads; catalog's schema_field is the source it is
+// projected from.
+type editSchemaField struct {
+	Key            string `json:"key"`
+	Kind           string `json:"kind"`
+	DiffHint       string `json:"diff_hint"`
+	Deprecated     bool   `json:"deprecated,omitempty"`
+	Locked         bool   `json:"locked"`
+	CanPropose     bool   `json:"can_propose"`
+	CanReview      bool   `json:"can_review"`
+	WouldAutomerge bool   `json:"would_automerge"`
+	MaxSuppressed  int    `json:"max_suppressed,omitempty"`
+	MaxElements    int    `json:"max_elements,omitempty"`
+}
 
 type catalogEditTitle struct {
 	Lang  string `json:"lang"`
@@ -52,14 +66,12 @@ type catalogEditRequest struct {
 
 func catalogEditErr(c fiber.Ctx, err error) error {
 	switch {
-	case stderrors.Is(err, catalogv2.ErrNotConfigured), stderrors.Is(err, catalogclient.ErrNotConfigured):
+	case stderrors.Is(err, catalogv2.ErrNotConfigured):
 		return response.Error(c, errors.ErrCatalogUnavailable(""))
-	case stderrors.Is(err, catalogclient.ErrInsufficientScope):
-		return response.Error(c, errors.ErrCatalogReauthRequired(""))
 	case stderrors.Is(err, catalogv2.ErrForbidden):
 		return response.Error(c, errors.New(40300,
 			"你没有权限修改该条目（编辑资料需要相应的社区权限）", fiber.StatusForbidden))
-	case stderrors.Is(err, catalogv2.ErrNoAccessToken), stderrors.Is(err, catalogclient.ErrNoAccessToken):
+	case stderrors.Is(err, catalogv2.ErrNoAccessToken):
 		return response.Error(c, errors.ErrUnauthorized())
 	case stderrors.Is(err, catalogv2.ErrUnauthorized):
 		return response.Error(c, errors.ErrCatalogReauthRequired(
@@ -91,21 +103,6 @@ func catalogEditErr(c fiber.Ctx, err error) error {
 			return response.Error(c, errors.ErrTooManyRequests(p.Error()))
 		}
 		slog.Error("catalog edit: upstream error", "status", p.Status, "code", p.Code, "detail", p.Detail)
-		return response.Error(c, errors.ErrCatalogUnavailable(""))
-	}
-
-	var apiErr *catalogclient.APIError
-	if stderrors.As(err, &apiErr) {
-		switch apiErr.Status {
-		case http.StatusUnauthorized:
-			return response.Error(c, errors.ErrCatalogReauthRequired(
-				"资料库拒绝了当前登录凭证，请退出登录后重新登录一次"))
-		case http.StatusForbidden:
-			return response.Error(c, errors.New(40300,
-				"你没有权限修改该条目（编辑资料需要相应的社区权限）", fiber.StatusForbidden))
-		case http.StatusNotFound:
-			return response.Error(c, errors.ErrNotFound("资料库中没有这个条目"))
-		}
 		return response.Error(c, errors.ErrCatalogUnavailable(""))
 	}
 
@@ -184,13 +181,13 @@ func (h *PatchHandler) CatalogEditBootstrap(c fiber.Ctx) error {
 		return catalogEditErr(c, err)
 	}
 
-	fields := make([]catalogclient.EditSchemaField, 0, len(catalogEditFieldKeys))
+	fields := make([]editSchemaField, 0, len(catalogEditFieldKeys))
 	canEdit := false
 	for _, f := range schema.Fields {
 		if !slices.Contains(catalogEditFieldKeys, f.Key) {
 			continue
 		}
-		row := catalogclient.EditSchemaField{
+		row := editSchemaField{
 			Key: f.Key, Kind: f.FieldType, DiffHint: f.DiffHint,
 			Deprecated: f.Deprecated, MaxSuppressed: f.MaxSuppressed, MaxElements: f.MaxElements,
 			CanPropose: !f.Deprecated, Locked: f.Deprecated,
@@ -248,7 +245,7 @@ func (h *PatchHandler) CatalogEditSubmit(c fiber.Ctx) error {
 		return response.Error(c, errors.ErrValidation("没有需要保存的修改"))
 	}
 
-	result, err := h.catalogV2().CreateProposal(c.Context(), token, catalogclient.EntityTypeWork, workID, patch, req.Note)
+	result, err := h.catalogV2().CreateProposal(c.Context(), token, catalogv2.EntityTypeWork, workID, patch, req.Note)
 	if err != nil {
 		return catalogEditErr(c, err)
 	}

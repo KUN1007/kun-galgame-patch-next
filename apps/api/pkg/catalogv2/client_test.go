@@ -170,7 +170,7 @@ func TestMergedProposalTotalUsesPublicV2(t *testing.T) {
 	}))
 	t.Cleanup(srv.Close)
 
-	n, err := catalogv2.New(srv.URL, "nmk_test_x").MergedProposalTotal(context.Background(), 2)
+	n, err := catalogv2.New(srv.URL, "nmk_test_x").MergedProposalTotal(context.Background(), 2, "kungal")
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -181,7 +181,75 @@ func TestMergedProposalTotalUsesPublicV2(t *testing.T) {
 		!strings.Contains(gotQuery, "include_total=true") {
 		t.Fatalf("query %s", gotQuery)
 	}
+	if !strings.Contains(gotQuery, "site=kungal") {
+		t.Fatalf("without site= the tally counts every tenant: %s", gotQuery)
+	}
 	if n != 12 {
 		t.Fatalf("total %d", n)
+	}
+}
+
+func TestMintClaimSendsTheWizardMapAsFieldValues(t *testing.T) {
+	var gotPath, gotMethod string
+	var gotBody map[string]any
+	srv := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		gotPath, gotMethod = r.URL.Path, r.Method
+		_ = json.NewDecoder(r.Body).Decode(&gotBody)
+		w.WriteHeader(http.StatusCreated)
+		_ = json.NewEncoder(w).Encode(map[string]any{
+			"object": "claim", "id": "51", "state": "pending",
+		})
+	}))
+	t.Cleanup(srv.Close)
+
+	fields := map[string]any{
+		"catalog.work.display_name": "夏日口袋",
+		"catalog.work.olang":        "ja",
+		"catalog.work.titles":       []any{map[string]any{"lang": "zh-Hans", "title": "夏日口袋", "kind": 0}},
+	}
+	out, err := catalogv2.New(srv.URL, "nmk_test_x").MintClaim(context.Background(), "tok", fields)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if gotMethod != http.MethodPost || gotPath != "/v2/me/claims" {
+		t.Fatalf("%s %s", gotMethod, gotPath)
+	}
+	if _, sent := gotBody["work_id"]; sent {
+		t.Fatalf("work_id beside field_values is 422 VALIDATION_FAILED: %v", gotBody)
+	}
+	if _, sent := gotBody["display_name"]; sent {
+		t.Fatalf("a top-level display_name pins the seed the olang title would rewrite: %v", gotBody)
+	}
+	values, ok := gotBody["field_values"].(map[string]any)
+	if !ok || len(values) != len(fields) || values["catalog.work.olang"] != "ja" {
+		t.Fatalf("field_values must carry the wizard map verbatim: %v", gotBody)
+	}
+	if out.WorkID() != 51 || out.State != "pending" {
+		t.Fatalf("%+v", out)
+	}
+}
+
+func TestMyClaimsDecodesTheRichClaimRow(t *testing.T) {
+	srv := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		if got := r.URL.Query().Get("claim_state"); got != "pending,declined" {
+			t.Errorf("claim_state = %q", got)
+		}
+		_, _ = io.WriteString(w, `{"object":"list","items":[{"object":"claim","id":"7",`+
+			`"state":"declined","product_work_id":"4242","last_event":{"reason":"资料不足"}}]}`)
+	}))
+	t.Cleanup(srv.Close)
+
+	page, err := catalogv2.New(srv.URL, "nmk_test_x").MyClaims(context.Background(), "tok",
+		catalogv2.MyClaimsQuery{ClaimStates: []string{"pending", "declined"}, Site: "kungal"})
+	if err != nil {
+		t.Fatal(err)
+	}
+	row := page.Items[0]
+	gid := row.ProductID()
+	if gid == nil || *gid != 4242 {
+		t.Fatalf("product_work_id is the patch id the page links to: %+v", row)
+	}
+	if reason := row.LastReason(); reason == nil || *reason != "资料不足" {
+		t.Fatalf("the decline reason lives on last_event: %+v", row)
 	}
 }

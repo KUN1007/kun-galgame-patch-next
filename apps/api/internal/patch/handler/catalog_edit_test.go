@@ -12,7 +12,7 @@ import (
 	galgameClient "kun-galgame-patch-api/internal/galgame/client"
 	"kun-galgame-patch-api/internal/middleware"
 	"kun-galgame-patch-api/internal/testutil"
-	"kun-galgame-patch-api/pkg/catalogclient"
+	"kun-galgame-patch-api/pkg/catalogv2"
 	"kun-galgame-patch-api/pkg/config"
 
 	"github.com/gofiber/fiber/v3"
@@ -107,10 +107,7 @@ func newCatalogEditApp(t *testing.T, fake *catalogEditFake) (*testutil.TestApp, 
 	srv := httptest.NewServer(fake.handler())
 	t.Cleanup(srv.Close)
 
-	h := New(nil,
-		galgameClient.NewWithKey(srv.URL, "nm_test_key"),
-		catalogclient.New(catalogclient.Config{BaseURL: srv.URL, ClientID: "moyu", ClientSecret: "s3cret"}),
-		nil)
+	h := New(nil, galgameClient.NewWithKey(srv.URL, "nm_test_key"), nil)
 
 	ta := testutil.NewTestApp(t)
 	auth := middleware.Auth(ta.RDB, config.OAuthConfig{})
@@ -240,7 +237,7 @@ func TestCatalogEditSubmitBuildsTheFieldKeyPatch(t *testing.T) {
 	if !fake.sawCreate {
 		t.Fatal("no create reached the catalog")
 	}
-	if fake.lastCreate["entity_type"] != catalogclient.EntityTypeWork {
+	if fake.lastCreate["entity_type"] != catalogv2.EntityTypeWork {
 		t.Fatalf("create body: %v", fake.lastCreate)
 	}
 	switch id := fake.lastCreate["entity_id"].(type) {
@@ -386,7 +383,7 @@ func TestCatalogEditNeedsASession(t *testing.T) {
 
 func TestCatalogEditWithoutACatalogClient(t *testing.T) {
 	ta := testutil.NewTestApp(t)
-	h := New(nil, nil, catalogclient.New(catalogclient.Config{}), nil)
+	h := New(nil, nil, nil)
 	auth := middleware.Auth(ta.RDB, config.OAuthConfig{})
 	ta.App.Get("/patch/:id/catalog-edit", auth, h.CatalogEditBootstrap)
 	session := ta.CreateTestSession(t, 42)

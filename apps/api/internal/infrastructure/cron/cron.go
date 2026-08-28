@@ -6,7 +6,7 @@ import (
 	"time"
 
 	galgameClient "kun-galgame-patch-api/internal/galgame/client"
-	"kun-galgame-patch-api/pkg/catalogclient"
+	"kun-galgame-patch-api/pkg/catalogv2"
 	"kun-galgame-patch-api/pkg/imageclient"
 	"kun-galgame-patch-api/pkg/moemoepoint"
 
@@ -17,7 +17,6 @@ import (
 func Start(
 	db *gorm.DB,
 	galgame *galgameClient.Client,
-	catalog *catalogclient.Client,
 	mp *moemoepoint.Client,
 	img *imageclient.Client,
 ) func() {
@@ -44,6 +43,10 @@ func Start(
 		slog.Error("注册每日重置任务失败", "error", err)
 	}
 
+	var catalog *catalogv2.Client
+	if galgame != nil {
+		catalog = galgame.V2()
+	}
 	if catalog != nil && catalog.Configured() {
 		if _, err := c.AddFunc(claimSyncSchedule, func() {
 			ctx, cancel := context.WithTimeout(context.Background(), 2*time.Minute)

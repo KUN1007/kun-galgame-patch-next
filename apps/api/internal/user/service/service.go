@@ -14,7 +14,6 @@ import (
 	"kun-galgame-patch-api/internal/user/dto"
 	"kun-galgame-patch-api/internal/user/model"
 	"kun-galgame-patch-api/internal/user/repository"
-	"kun-galgame-patch-api/pkg/catalogclient"
 	"kun-galgame-patch-api/pkg/moemoepoint"
 	"kun-galgame-patch-api/pkg/userclient"
 
@@ -25,7 +24,6 @@ type UserService struct {
 	repo    *repository.UserRepository
 	users   *userclient.Client
 	galgame *galgameClient.Client
-	catalog *catalogclient.Client
 	db      *gorm.DB
 	mp      *moemoepoint.Awarder
 }
@@ -34,11 +32,10 @@ func New(
 	repo *repository.UserRepository,
 	users *userclient.Client,
 	galgame *galgameClient.Client,
-	catalog *catalogclient.Client,
 	db *gorm.DB,
 	mp *moemoepoint.Awarder,
 ) *UserService {
-	return &UserService{repo: repo, users: users, galgame: galgame, catalog: catalog, db: db, mp: mp}
+	return &UserService{repo: repo, users: users, galgame: galgame, db: db, mp: mp}
 }
 
 type patchSummaryFinder struct{ db *gorm.DB }

@@ -40,7 +40,6 @@ import (
 	userRepo "kun-galgame-patch-api/internal/user/repository"
 	userService "kun-galgame-patch-api/internal/user/service"
 	"kun-galgame-patch-api/pkg/artifactclient"
-	"kun-galgame-patch-api/pkg/catalogclient"
 	"kun-galgame-patch-api/pkg/config"
 	"kun-galgame-patch-api/pkg/errors"
 	"kun-galgame-patch-api/pkg/imageclient"
@@ -126,23 +125,18 @@ func New(cfg *config.Config) *App {
 		ClientSecret: artCfg.ClientSecret,
 	})
 
-	catalogCli := catalogclient.New(catalogclient.Config{
-		BaseURL:      cfg.NextMoeAPI.BaseURL,
-		ClientID:     cfg.OAuth.ClientID,
-		ClientSecret: cfg.OAuth.ClientSecret,
-	})
-	if catalogCli.Configured() {
-		slog.Info("catalog s2s client configured", "base_url", cfg.NextMoeAPI.BaseURL)
+	if galgame.V2().Configured() {
+		slog.Info("catalog v2 client configured", "base_url", cfg.NextMoeAPI.BaseURL)
 	} else {
-		slog.Warn("catalog s2s client NOT configured; the claim lifecycle and its cron will not run — set KUN_NEXTMOE_API_BASE + OAuth creds")
+		slog.Warn("catalog v2 client NOT configured; the claim lifecycle and its cron will not run — set KUN_NEXTMOE_API_BASE + KUN_NEXTMOE_API_KEY")
 	}
 
 	patchRepository := patchRepo.New(db)
 	patchSvc := patchService.New(patchRepository, settingSvc, db, artCli, galgame, usrCli, mpAwarder, adminRepository)
-	patchHdl := patchHandler.New(patchSvc, galgame, catalogCli, usrCli)
+	patchHdl := patchHandler.New(patchSvc, galgame, usrCli)
 
 	userRepository := userRepo.New(db)
-	userSvc := userService.New(userRepository, usrCli, galgame, catalogCli, db, mpAwarder)
+	userSvc := userService.New(userRepository, usrCli, galgame, db, mpAwarder)
 	userHdl := userHandler.New(userSvc, galgame, usrCli)
 
 	messageRepository := messageRepo.New(db)
@@ -255,7 +249,7 @@ func New(cfg *config.Config) *App {
 	app.Use(recover.New())
 	app.Use(middleware.CORS(cfg.CORS))
 
-	cronStop := cronJobs.Start(db, galgame, catalogCli, mpClient, imgCli)
+	cronStop := cronJobs.Start(db, galgame, mpClient, imgCli)
 
 	slog.Info("Application initialized")
 

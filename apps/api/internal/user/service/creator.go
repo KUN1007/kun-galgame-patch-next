@@ -5,6 +5,7 @@ import (
 	"encoding/json"
 	"log/slog"
 
+	"kun-galgame-patch-api/pkg/catalogv2"
 	"kun-galgame-patch-api/pkg/errors"
 	"kun-galgame-patch-api/pkg/userclient"
 )
@@ -27,24 +28,19 @@ type CreatorEligibility struct {
 }
 
 func (s *UserService) mergedProposalTotal(ctx context.Context, userID int) int64 {
-	if s.galgame != nil {
-		if v2 := s.galgame.V2(); v2 != nil && v2.Configured() {
-			n, err := v2.MergedProposalTotal(ctx, userID)
-			if err == nil {
-				return n
-			}
-			slog.Warn("读取合并提案数失败，回退 v1", "user_id", userID, "error", err)
-		}
+	if s.galgame == nil {
+		return 0
 	}
-	if s.catalog != nil && s.catalog.Configured() {
-		n, err := s.catalog.MergedProposalTotal(ctx, userID)
-		if err != nil {
-			slog.Warn("读取合并提案数失败，按 0 计", "user_id", userID, "error", err)
-			return 0
-		}
-		return n
+	v2 := s.galgame.V2()
+	if v2 == nil || !v2.Configured() {
+		return 0
 	}
-	return 0
+	n, err := v2.MergedProposalTotal(ctx, userID, catalogv2.SiteKungal)
+	if err != nil {
+		slog.Warn("读取合并提案数失败，按 0 计", "user_id", userID, "error", err)
+		return 0
+	}
+	return n
 }
 
 func (s *UserService) creatorEligibility(ctx context.Context, userID int) (*CreatorEligibility, *errors.AppError) {
