@@ -36,9 +36,7 @@ const onChangePage = (v: number) => {
 <template>
   <div>
     <KunLoading v-if="pending" description="加载中..." />
-    <GalgameCardGrid v-else-if="data?.items?.length">
-      <GalgameCard v-for="patch in data.items" :key="patch.id" :patch="patch" />
-    </GalgameCardGrid>
+    <GalgameList v-else-if="data?.items?.length" :items="data.items" />
     <KunNull v-else description="该用户暂未发布任何 Galgame" />
 
     <div v-if="totalPages > 1" class="mt-6 flex justify-center">

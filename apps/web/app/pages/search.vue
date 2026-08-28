@@ -235,9 +235,10 @@ const onChangePage = (v: number) => {
 
     <KunLoading v-if="loading" description="正在搜索..." />
 
-    <GalgameCardGrid v-else-if="mode === 'galgame' && results.length">
-      <GalgameCard v-for="p in results" :key="p.id" :patch="p" />
-    </GalgameCardGrid>
+    <GalgameList
+      v-else-if="mode === 'galgame' && results.length"
+      :items="results"
+    />
 
     <div
       v-else-if="mode === 'model' && resourceResults.length"

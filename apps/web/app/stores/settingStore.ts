@@ -33,6 +33,9 @@ export interface KunSettingData {
   // chosen language on first paint (no hydration flash). Read with a `?? default`
   // guard at the use site — an older cookie won't carry these keys.
   //
+  // Shape every galgame list draws: 'poster' (default) is the grid of covers,
+  // 'row' is the wide two-column row that also carries the credits and tags.
+  galgameListLayout: 'poster' | 'row'
   // Preferred language for game titles site-wide: 'ja-jp' (default) or 'zh-cn'.
   titleLanguage: 'zh-cn' | 'ja-jp'
   // Show the Japanese title as a subtitle under the title. Default off.
@@ -62,6 +65,7 @@ export interface KunSettingData {
 const initialState: KunSettingData = {
   kunNsfwEnable: 'sfw',
   nsfwAckedIds: [],
+  galgameListLayout: 'poster',
   titleLanguage: 'ja-jp',
   showJapaneseSubtitle: false,
   showReleaseDate: false,

@@ -86,13 +86,7 @@ const isEmpty = computed(
             <KunIcon name="lucide:chevron-right" class="size-4" />
           </NuxtLink>
         </div>
-        <GalgameCardGrid>
-          <GalgameCard
-            v-for="patch in data.galgames.items"
-            :key="patch.id"
-            :patch="patch"
-          />
-        </GalgameCardGrid>
+        <GalgameList :items="data.galgames.items" />
       </section>
 
       <section v-if="data?.resources.items.length" class="space-y-3">

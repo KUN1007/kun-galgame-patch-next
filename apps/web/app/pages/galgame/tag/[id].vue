@@ -118,9 +118,7 @@ if (tag.value && !tag.value.sexual) {
 
         <KunNull v-if="!galgames.length" description="暂无关联作品" />
 
-        <GalgameCardGrid v-else>
-          <GalgameCard v-for="g in galgames" :key="g.id" :patch="g" />
-        </GalgameCardGrid>
+        <GalgameList v-else :items="galgames" />
 
         <KunPagination
           v-if="totalPage > 1"

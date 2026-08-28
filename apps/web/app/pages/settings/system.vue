@@ -25,6 +25,15 @@ const setNsfw = (key: KunNsfwPreference) => {
   if (import.meta.client) location.reload()
 }
 
+const galgameListLayout = computed({
+  get: () => settingStore.data.galgameListLayout ?? 'poster',
+  set: (v: 'poster' | 'row') => settingStore.setData({ galgameListLayout: v })
+})
+const layoutOptions = [
+  { value: 'poster' as const, label: '封面网格' },
+  { value: 'row' as const, label: '详细列表' }
+]
+
 const titleLanguage = computed({
   get: () => settingStore.data.titleLanguage ?? 'ja-jp',
   set: (v: 'zh-cn' | 'ja-jp') => settingStore.setData({ titleLanguage: v })
@@ -134,6 +143,37 @@ onMounted(() => {
             <h2 class="px-1 pt-1 text-xl font-medium">Galgame 卡片显示设置</h2>
           </template>
           <div class="space-y-5">
+            <div class="space-y-2">
+              <p class="text-sm font-medium">列表布局</p>
+              <p class="text-default-500 text-xs">
+                站内 Galgame
+                列表的排布方式。封面网格一屏能看到更多作品；详细列表在封面右侧列出会社、发售日期、剧本、原画与标签
+                (剧本 / 原画 / 标签 目前只在 Galgame
+                补丁资源库与信息资料库两个页面提供)
+              </p>
+              <div
+                class="border-default/20 bg-default-50/40 grid grid-cols-2 gap-1 rounded-xl border p-1"
+              >
+                <KunButton
+                  v-for="opt in layoutOptions"
+                  :key="opt.value"
+                  :variant="galgameListLayout === opt.value ? 'flat' : 'light'"
+                  :color="
+                    galgameListLayout === opt.value ? 'primary' : 'default'
+                  "
+                  size="sm"
+                  full-width
+                  rounded="lg"
+                  class-name="h-auto flex-col items-stretch gap-2 p-2"
+                  :aria-label="`切换到${opt.label}`"
+                  @click="galgameListLayout = opt.value"
+                >
+                  <GalgameLayoutPreview :layout="opt.value" />
+                  <span class="text-xs">{{ opt.label }}</span>
+                </KunButton>
+              </div>
+            </div>
+
             <div class="space-y-2">
               <p class="text-sm font-medium">游戏标题优先语言</p>
               <p class="text-default-500 text-xs">
