@@ -36,6 +36,19 @@ const sorted = computed(() =>
 
 const hiddenCount = computed(() => allShots.value.length - sorted.value.length)
 
+// Same fold the character grid and the staff list on this page already use, so
+// a long gallery does not push the rest of the introduction off the screen.
+// Every visible tile stays a whole screenshot: covering the last one with the
+// count would cost a click target the lightbox needs.
+const COLLAPSED = 12
+const isExpanded = ref(false)
+const isCollapsible = computed(() => sorted.value.length > COLLAPSED)
+const visible = computed(() =>
+  isCollapsible.value && !isExpanded.value
+    ? sorted.value.slice(0, COLLAPSED)
+    : sorted.value
+)
+
 const hasRated = computed(() =>
   allShots.value.some((s) => s.sexual >= 1 || s.violence >= 1)
 )
@@ -89,7 +102,7 @@ const imgSrc = (s: GalgameScreenshotRow) => imageServiceUrl(s.image_hash)
         class="grid grid-cols-1 items-start gap-3 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4"
       >
         <KunLightboxGalleryItem
-          v-for="s in sorted"
+          v-for="s in visible"
           :key="s.image_hash"
           :src="imgSrc(s)"
           :alt="s.caption || s.image_hash.slice(0, 8)"
@@ -125,5 +138,20 @@ const imgSrc = (s: GalgameScreenshotRow) => imageServiceUrl(s.image_hash)
       v-else
       :description="`${hiddenCount} 张图片已按分级隐藏，点击「分级筛选」调整`"
     />
+
+    <KunButton
+      v-if="isCollapsible"
+      variant="flat"
+      color="primary"
+      size="sm"
+      @click="isExpanded = !isExpanded"
+    >
+      <KunIcon
+        :name="isExpanded ? 'lucide:chevron-up' : 'lucide:chevron-down'"
+      />
+      {{
+        isExpanded ? '收起截图' : `展开其余 ${sorted.length - COLLAPSED} 张截图`
+      }}
+    </KunButton>
   </div>
 </template>

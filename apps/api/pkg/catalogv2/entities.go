@@ -101,6 +101,21 @@ type Tag struct {
 
 func (t Tag) IntID() (int64, bool) { return ParseID(t.ID) }
 
+type Series struct {
+	Object      string `json:"object"`
+	ID          string `json:"id"`
+	DisplayName string `json:"display_name"`
+	WorkCount   int    `json:"work_count"`
+	// Counted over every live-claimed member, NOT narrowed by the nsfw= this
+	// request sends — so it stays true for a series whose members an SFW reader
+	// sees none of, which is the only way that page can explain its own
+	// emptiness.
+	HasNSFW bool    `json:"has_nsfw"`
+	Intros  []Intro `json:"intros"`
+}
+
+func (s Series) IntID() (int64, bool) { return ParseID(s.ID) }
+
 // A detail face answers a bare id+name row for every block the request does not
 // name, so an entity fetched with no include= renders an empty page without
 // erroring. The tokens are each face's own closed enum — an unknown one is a
@@ -111,7 +126,8 @@ var (
 	characterInclude  = []string{
 		"gender", "birthday", "image", "figure", "traits", "aliases", "intros", "refs",
 	}
-	tagInclude = []string{"intros"}
+	tagInclude    = []string{"intros"}
+	seriesInclude = []string{"intros"}
 )
 
 func entityPath(prefix string, id int64, include []string, spoiler string, nsfw bool) string {
@@ -151,6 +167,14 @@ func (c *Client) CreditNameCredits(ctx context.Context, id int64, nsfw bool, cur
 func (c *Client) GetCharacter(ctx context.Context, id int64, nsfw bool) (*Character, error) {
 	var out Character
 	if err := c.get(ctx, entityPath("/v2/catalog/characters/", id, characterInclude, spoilerMajor, nsfw), &out); err != nil {
+		return nil, err
+	}
+	return &out, nil
+}
+
+func (c *Client) GetSeries(ctx context.Context, id int64, nsfw bool) (*Series, error) {
+	var out Series
+	if err := c.get(ctx, entityPath("/v2/catalog/series/", id, seriesInclude, "", nsfw), &out); err != nil {
 		return nil, err
 	}
 	return &out, nil

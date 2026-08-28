@@ -26,6 +26,9 @@ func (c *Client) TaxonomyBrowse(ctx context.Context, pathAndQuery string) (data 
 		case "official":
 			d, e := c.catalogLabelDetail(ctx, q.Get("official_id"), q)
 			return d, true, e
+		case "series":
+			d, e := c.catalogSeriesDetail(ctx, q.Get("series_id"), q)
+			return d, true, e
 		}
 	}
 	return nil, false, nil
@@ -67,6 +70,17 @@ type catalogTagBrief struct {
 	GalgameCount int      `json:"galgame_count"`
 	Tier         string   `json:"tier"`
 	Kind         string   `json:"kind"`
+}
+
+type catalogSeriesBrief struct {
+	ID           int    `json:"id"`
+	Name         string `json:"name"`
+	Description  string `json:"description"`
+	GalgameCount int    `json:"galgame_count"`
+	// True whenever any member sits behind the r18 gate, counted before the
+	// reader's own gate narrows the list — so the page can say why an SFW
+	// reader is looking at fewer works than the series has.
+	HasNSFW bool `json:"has_nsfw"`
 }
 
 type catalogOfficialBrief struct {
@@ -173,6 +187,34 @@ func (c *Client) catalogTagDetail(ctx context.Context, idStr string, q url.Value
 	})
 }
 
+func (c *Client) catalogSeriesDetail(ctx context.Context, idStr string, q url.Values) (json.RawMessage, error) {
+	id, err := strconv.ParseInt(strings.TrimSpace(idStr), 10, 64)
+	if err != nil || id <= 0 {
+		return nil, &GalgameError{Code: galgameCodeNotFound, Message: "series not found"}
+	}
+	gate := gateFor(q.Get("content_limit"))
+	rec, err := c.v2.GetSeries(ctx, id, true)
+	if err != nil {
+		return nil, catalogErr(err)
+	}
+	members, total, err := c.taxonomyMembers(ctx, "series_id", id, q, gate)
+	if err != nil {
+		return nil, err
+	}
+	sid, _ := rec.IntID()
+	return json.Marshal(map[string]any{
+		"series": catalogSeriesBrief{
+			ID:           int(sid),
+			Name:         rec.DisplayName,
+			Description:  preferredIntro(introRowsFrom(rec.Intros)),
+			GalgameCount: int(total),
+			HasNSFW:      rec.HasNSFW,
+		},
+		"galgames": members,
+		"total":    total,
+	})
+}
+
 func (c *Client) catalogLabelDetail(ctx context.Context, idStr string, q url.Values) (json.RawMessage, error) {
 	id, err := strconv.ParseInt(strings.TrimSpace(idStr), 10, 64)
 	if err != nil || id <= 0 {
@@ -225,6 +267,8 @@ func (c *Client) taxonomyMembers(ctx context.Context, filterKey string, id int64
 		query.TagIDs = strconv.FormatInt(id, 10)
 	case "company_id":
 		query.CompanyID = id
+	case "series_id":
+		query.SeriesID = id
 	}
 	data, err := c.v2.ListWorks(ctx, query)
 	if err != nil {

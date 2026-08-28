@@ -60,6 +60,17 @@ export interface BrowseOfficial {
   logo_hash?: string
 }
 
+export interface BrowseSeries {
+  id: number
+  name: string
+  description: string
+  galgame_count: number
+  // True when any member sits behind the r18 gate, counted before the reader's
+  // own gate narrows the list — an all-r18 series answers a page of zero works
+  // to an SFW reader, and this is the only field that can say so.
+  has_nsfw: boolean
+}
+
 type Q = Record<string, string | number | boolean | undefined>
 
 const qs = (q?: Q): string => {
@@ -114,8 +125,16 @@ export const useTaxonomyBrowse = () => {
       moved_to?: number
     }>(`/official/_${qs({ official_id: id, ...(opts as Q) })}`)
 
+  const seriesDetail = (id: number, opts?: TaxonomyListOpts) =>
+    api.get<{
+      series?: BrowseSeries
+      galgames?: GalgameCard[]
+      total?: number
+    }>(`/series/_${qs({ series_id: id, ...(opts as Q) })}`)
+
   return {
     tagDetail,
-    officialDetail
+    officialDetail,
+    seriesDetail
   }
 }

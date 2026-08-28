@@ -327,6 +327,17 @@ func workToDetail(w catalogv2.Work) catalogWork {
 			out.Credits = append(out.Credits, group)
 		}
 	}
+	if w.Series != nil {
+		for _, sr := range *w.Series {
+			id, _ := catalogv2.ParseID(sr.ID)
+			if id == 0 {
+				continue
+			}
+			out.Series = append(out.Series, catalogWorkSeries{
+				ID: id, Name: sr.DisplayName, MemberCount: sr.MemberCount,
+			})
+		}
+	}
 	if w.Ratings != nil {
 		for i := range *w.Ratings {
 			r := &(*w.Ratings)[i]

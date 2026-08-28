@@ -291,6 +291,24 @@ const kungalOrigin = kunMoyuMoe.domain.kungal
       </div>
     </section>
 
+    <section v-if="detail.series?.length" class="space-y-4">
+      <KunHeader name="系列" scale="h2" />
+      <div class="flex flex-wrap gap-2">
+        <NuxtLink
+          v-for="s in detail.series"
+          :key="s.id"
+          :to="`/galgame/series/${s.id}`"
+        >
+          <KunChip color="primary" variant="flat" size="sm">
+            {{ s.name }}
+            <span v-if="s.galgame_count" class="text-default-500 text-xs">
+              · {{ s.galgame_count }} 部
+            </span>
+          </KunChip>
+        </NuxtLink>
+      </div>
+    </section>
+
     <GalgameCharacters :characters="detail.characters ?? []" />
 
     <GalgameStaff :staff="staffGroups" />

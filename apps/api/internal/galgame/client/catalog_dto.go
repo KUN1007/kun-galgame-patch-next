@@ -189,6 +189,12 @@ type catalogWorkLabel struct {
 	LogoHash string `json:"logo_hash"`
 }
 
+type catalogWorkSeries struct {
+	ID          int64  `json:"id"`
+	Name        string `json:"name"`
+	MemberCount int    `json:"member_count"`
+}
+
 type catalogWork struct {
 	ID            int64             `json:"id"`
 	Medium        string            `json:"medium"`
@@ -213,6 +219,7 @@ type catalogWork struct {
 	Credits    []catalogCreditGroup   `json:"credits"`
 	Characters []catalogWorkCharacter `json:"characters"`
 	Ratings    []catalogRating        `json:"ratings"`
+	Series     []catalogWorkSeries    `json:"series"`
 }
 
 type catalogLookupPair struct {

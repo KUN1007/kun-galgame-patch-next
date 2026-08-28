@@ -76,6 +76,8 @@ func (f *catalogFake) route(req *http.Request) string {
 		return f.tagRecord(p)
 	case strings.HasPrefix(p, "/v2/catalog/companies/"):
 		return f.labelRecord(p)
+	case strings.HasPrefix(p, "/v2/catalog/series/"):
+		return f.seriesRecord(p)
 	case strings.HasPrefix(p, "/v2/catalog/works/"):
 		return f.workDetail(req)
 	}
@@ -151,6 +153,12 @@ func (f *catalogFake) tagRecord(path string) string {
 	}
 	return `{"object":"tag","id":"` + strconv.FormatInt(id, 10) + `","display_name":"tag","tier":"core","tag_kind":"content",` +
 		`"is_sexual":` + sexual + `,"work_count":3}`
+}
+
+func (f *catalogFake) seriesRecord(path string) string {
+	id, _ := strconv.ParseInt(strings.TrimPrefix(path, "/v2/catalog/series/"), 10, 64)
+	return `{"object":"series","id":"` + strconv.FormatInt(id, 10) + `","display_name":"Saga",` +
+		`"work_count":2,"has_nsfw":true,"intros":[{"lang":"zh-cn","value":"系列简介"}]}`
 }
 
 func (f *catalogFake) labelRecord(path string) string {

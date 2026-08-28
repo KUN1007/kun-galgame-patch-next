@@ -151,7 +151,7 @@ func TestCatalogTwoHopReads(t *testing.T) {
 		// name, and its spoiler ceiling defaults to none. The page renders empty
 		// rather than erroring, so only the request itself can be asserted.
 		q := srv.last().query
-		for _, want := range []string{"intros", "tags", "companies", "characters", "credits", "ratings", "covers", "screenshots"} {
+		for _, want := range []string{"intros", "tags", "companies", "characters", "credits", "ratings", "covers", "screenshots", "series"} {
 			if !slices.Contains(strings.Split(q.Get("include"), ","), want) {
 				t.Errorf("detail include = %q, want %s among them", q.Get("include"), want)
 			}
@@ -522,6 +522,7 @@ func TestTaxonomyBrowseMembersAreGated(t *testing.T) {
 		recordInclude []string
 	}{
 		{"tag page", "/tag/_?tag_id=11&page=2&limit=10", "/v2/catalog/tags/11", "tag_id", "11", "tag", []string{"intros"}},
+		{"series page", "/series/_?series_id=11&page=2&limit=10", "/v2/catalog/series/11", "series_id", "11", "series", []string{"intros"}},
 	} {
 		t.Run(tc.name, func(t *testing.T) {
 			srv.reset()
@@ -565,12 +566,19 @@ func TestTaxonomyBrowseMembersAreGated(t *testing.T) {
 				Galgames []struct {
 					ID int `json:"id"`
 				} `json:"galgames"`
-				Tag struct {
-					GalgameCount int `json:"galgame_count"`
-				} `json:"tag"`
 			}
 			if e := json.Unmarshal(raw, &got); e != nil {
 				t.Fatalf("unmarshal: %v", e)
+			}
+			var envelope map[string]json.RawMessage
+			if e := json.Unmarshal(raw, &envelope); e != nil {
+				t.Fatalf("unmarshal envelope: %v", e)
+			}
+			var record struct {
+				GalgameCount int `json:"galgame_count"`
+			}
+			if e := json.Unmarshal(envelope[tc.entity], &record); e != nil {
+				t.Fatalf("unmarshal %s: %v", tc.entity, e)
 			}
 			if len(got.Galgames) != 3 {
 				t.Errorf("galgames = %d, want 3 — hidden claims drop on the public page", len(got.Galgames))
@@ -578,9 +586,9 @@ func TestTaxonomyBrowseMembersAreGated(t *testing.T) {
 			if got.Total != 4 {
 				t.Errorf("total = %d, want 4 (the gated search's), not the record's 3", got.Total)
 			}
-			if got.Tag.GalgameCount != 4 {
+			if record.GalgameCount != 4 {
 				t.Errorf("%s.galgame_count = %d, want 4 — the header counts the list below it",
-					tc.entity, got.Tag.GalgameCount)
+					tc.entity, record.GalgameCount)
 			}
 		})
 	}

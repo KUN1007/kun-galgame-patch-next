@@ -281,6 +281,12 @@ interface PatchDetailRating {
   distribution?: PatchDetailRatingBucket[]
 }
 
+interface PatchDetailSeries {
+  id: number
+  name: string
+  galgame_count: number
+}
+
 interface PatchDetail extends GalgameCard {
   introduction_markdown: KunLanguage
   introduction_html: KunLanguage
@@ -290,5 +296,6 @@ interface PatchDetail extends GalgameCard {
   characters: PatchDetailCharacter[]
   staff: PatchDetailStaffGroup[]
   ratings: PatchDetailRating[]
+  series: PatchDetailSeries[]
   wiki_engine_ids: number[]
 }

@@ -25,6 +25,7 @@ type Work struct {
 	Screenshots   *[]Screenshot            `json:"screenshots"`
 	Characters    *[]WorkCharacter         `json:"characters"`
 	Companies     *[]WorkCompany           `json:"companies"`
+	Series        *[]WorkSeriesRef         `json:"series"`
 	ViaCompany    *ViaCompany              `json:"via_company"`
 }
 
@@ -34,6 +35,13 @@ type ViaCompany struct {
 	ID          string                   `json:"id"`
 	DisplayName string                   `json:"display_name"`
 	Localized   map[string]LocalizedText `json:"localized"`
+}
+
+type WorkSeriesRef struct {
+	ID          string `json:"id"`
+	DisplayName string `json:"display_name"`
+	Source      string `json:"source"`
+	MemberCount int    `json:"member_count"`
 }
 
 func (w Work) IntID() (int64, bool) { return ParseID(w.ID) }

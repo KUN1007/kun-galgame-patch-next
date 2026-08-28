@@ -171,6 +171,7 @@ func (a *App) RegisterRoutes() {
 
 	api.Get("/tag/:name", a.PatchHandler.GalgameTaxonomyDetailProxy)
 	api.Get("/official/:name", a.PatchHandler.GalgameTaxonomyDetailProxy)
+	api.Get("/series/:name", a.PatchHandler.GalgameTaxonomyDetailProxy)
 
 	api.Get("/taxonomy/resolve/:kind/:id", a.PatchHandler.ResolveTaxonomyID)
 
