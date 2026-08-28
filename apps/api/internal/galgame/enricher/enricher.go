@@ -42,6 +42,15 @@ type GalgameCard struct {
 	User               *patchModel.PatchUser       `json:"user,omitempty"`
 	Creator            *patchModel.PatchUser       `json:"creator,omitempty"`
 	Galgame            *galgameClient.GalgameBrief `json:"galgame,omitempty"`
+	Facet              *galgameClient.GalgameFacet `json:"facet,omitempty"`
+}
+
+func ApplyFacets(cards []GalgameCard, facets map[int]galgameClient.GalgameFacet) {
+	for i := range cards {
+		if f, ok := facets[cards[i].ID]; ok {
+			cards[i].Facet = &f
+		}
+	}
 }
 
 func EnrichPatches(ctx context.Context, galgame *galgameClient.Client, users *userclient.Client, patches []patchModel.Patch, contentLimit string) []GalgameCard {

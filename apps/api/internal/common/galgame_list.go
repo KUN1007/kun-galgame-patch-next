@@ -1,6 +1,7 @@
 package common
 
 import (
+	"context"
 	"fmt"
 
 	galgameClient "kun-galgame-patch-api/internal/galgame/client"
@@ -97,10 +98,30 @@ func (h *CommonHandler) GetGalgameList(c fiber.Ctx) error {
 		return response.Error(c, errors.ErrInternal(""))
 	}
 
+	cards := enricher.EnrichPatches(c.Context(), h.galgame, h.users, patches, cl)
+	h.attachCardFacets(c.Context(), cards, cl)
+
 	return response.OK(c, map[string]any{
-		"galgames": enricher.EnrichPatches(c.Context(), h.galgame, h.users, patches, cl),
+		"galgames": cards,
 		"total":    total,
 	})
+}
+
+// The card facet costs one catalog read per work: the works list face hydrates
+// only its list-capable include subset, so tags and credits are unreachable in
+// the page fetch that already ran. Reads are cached in-process and a work that
+// does not answer just renders without the extra lines.
+func (h *CommonHandler) attachCardFacets(ctx context.Context, cards []enricher.GalgameCard, cl string) {
+	if h.galgame == nil || len(cards) == 0 {
+		return
+	}
+	ids := make([]int, 0, len(cards))
+	for i := range cards {
+		if cards[i].ID > 0 {
+			ids = append(ids, cards[i].ID)
+		}
+	}
+	enricher.ApplyFacets(cards, h.galgame.GalgameFacets(ctx, ids, cl))
 }
 
 func (h *CommonHandler) catalogLibrary(c fiber.Ctx, req galgameListRequest, cl string) error {
@@ -139,6 +160,7 @@ func (h *CommonHandler) catalogLibrary(c fiber.Ctx, req galgameListRequest, cl s
 	}
 	local := h.localPatchMap(ids)
 	cards := overlayCatalogHits(res.Items, local, cl)
+	h.attachCardFacets(c.Context(), cards, cl)
 	return response.OK(c, map[string]any{
 		"galgames": cards,
 		"total":    res.Total,
