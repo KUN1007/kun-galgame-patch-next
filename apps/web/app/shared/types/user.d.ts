@@ -36,25 +36,6 @@ interface PatchSummary {
   name: KunLanguage
 }
 
-// User's own resource row: a PatchResource plus the owning patch's Wiki
-// summary (so the user-profile resource list can render the game name +
-// banner without an extra request per row).
-interface UserResourceItem {
-  id: number
-  galgame_id: number
-  // The resource's own display name; the user-profile resource tab renders it
-  // (info.vue). Backend includes it on every row.
-  name?: string
-  size: string
-  type: string[]
-  language: string[]
-  platform: string[]
-  created: string
-  // Filled by user/service.attachPatchSummaries from Wiki; may be missing if
-  // the underlying galgame is no longer in Wiki.
-  patch?: PatchSummary
-}
-
 interface UserComment {
   id: number
   content: string

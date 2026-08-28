@@ -12,7 +12,7 @@ interface CommentList {
   total: number
 }
 interface ResourceList {
-  items: UserResourceItem[]
+  items: PatchResource[]
   total: number
 }
 interface GalgameList {
@@ -50,7 +50,7 @@ const { data, pending } = await useAsyncData(
   }
 )
 
-const resourcePatchName = (r: UserResourceItem) =>
+const resourcePatchName = (r: PatchResource) =>
   r.patch?.name
     ? getPreferredLanguageText(r.patch.name)
     : `补丁 #${r.galgame_id}`
