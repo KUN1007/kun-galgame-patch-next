@@ -33,8 +33,14 @@ const coverSrc = computed(() => resolvePortraitUrl(props.patch))
 
 const releaseDate = computed(() => props.patch.release_date?.slice(0, 10) ?? '')
 
+const patchHref = computed(() => `/patch/${props.patch.id}/introduction`)
+
+const maker = computed(() => resolveMaker(props.patch))
 const makerName = computed(() =>
-  getPreferredLanguageText(resolveMaker(props.patch)?.name, titleLanguage.value)
+  getPreferredLanguageText(maker.value?.name, titleLanguage.value)
+)
+const makerHref = computed(() =>
+  maker.value ? `/galgame/official/${maker.value.id}` : ''
 )
 
 // resource_update_time is what /galgame sorts by, so the card shows the same
@@ -65,18 +71,23 @@ const typeBadges = computed(() => {
 </script>
 
 <template>
-  <KunCard
-    :href="`/patch/${props.patch.id}/introduction`"
-    class-name="w-full p-0"
-    content-class="gap-0 p-0"
-  >
-    <div class="relative overflow-hidden rounded-t-lg">
+  <div class="flex h-full flex-col">
+    <NuxtLink
+      :to="patchHref"
+      :aria-label="galgameName"
+      tabindex="-1"
+      class="relative block overflow-hidden rounded-lg"
+    >
+      <!-- The zoom rides the wrapper: on image-class-name tailwind-merge
+           replaces KunUI's own transition-opacity on the <img> and the
+           thumbhash blur-up stops fading in. -->
       <KunImage
         v-if="coverSrc"
         :src="coverSrc"
         :alt="galgameName"
         aspect-ratio="5 / 7"
         :thumbhash="resolvePortraitThumbhash(props.patch)"
+        class-name="transition-transform duration-300 hover:scale-105"
       />
       <div
         v-else
@@ -144,13 +155,16 @@ const typeBadges = computed(() => {
           {{ formatNumber(props.patch.count.resource) }}
         </span>
       </div>
-    </div>
+    </NuxtLink>
 
-    <div class="flex flex-auto flex-col p-2">
-      <h2
-        class="hover:text-primary-500 line-clamp-2 text-sm font-medium transition-colors"
-      >
-        {{ galgameName }}
+    <div class="flex flex-auto flex-col pt-1.5">
+      <h2 class="line-clamp-2 text-sm font-medium">
+        <NuxtLink
+          :to="patchHref"
+          class="hover:text-primary-500 transition-colors"
+        >
+          {{ galgameName }}
+        </NuxtLink>
       </h2>
 
       <p
@@ -173,13 +187,18 @@ const typeBadges = computed(() => {
         v-if="makerName || !isNoPatch"
         class="text-default-500 mt-auto flex min-w-0 items-center gap-1.5 pt-1.5 text-xs"
       >
-        <span v-if="makerName" class="truncate" :title="makerName">
+        <NuxtLink
+          v-if="makerName"
+          :to="makerHref"
+          class="hover:text-primary-500 truncate transition-colors"
+          :title="makerName"
+        >
           {{ makerName }}
-        </span>
+        </NuxtLink>
         <span v-if="!isNoPatch && updatedAt" class="ml-auto shrink-0">
           {{ formatDistanceToNow(updatedAt) }}
         </span>
       </div>
     </div>
-  </KunCard>
+  </div>
 </template>

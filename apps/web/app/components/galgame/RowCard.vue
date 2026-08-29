@@ -30,8 +30,14 @@ const japaneseName = computed(() => {
 
 const coverSrc = computed(() => resolvePortraitUrl(props.patch))
 
+const patchHref = computed(() => `/patch/${props.patch.id}/introduction`)
+
+const maker = computed(() => resolveMaker(props.patch))
 const makerName = computed(() =>
-  getPreferredLanguageText(resolveMaker(props.patch)?.name, titleLanguage.value)
+  getPreferredLanguageText(maker.value?.name, titleLanguage.value)
+)
+const makerHref = computed(() =>
+  maker.value ? `/galgame/official/${maker.value.id}` : ''
 )
 
 const releaseDate = computed(() => props.patch.release_date?.slice(0, 10) ?? '')
@@ -85,19 +91,24 @@ const NARROW_TAG_LIMIT = 3
 </script>
 
 <template>
-  <div
-    class="hover:bg-default-100 @container/row relative flex h-full gap-3 rounded-lg p-2 transition-colors"
-  >
-    <div
-      class="relative w-24 shrink-0 self-start overflow-hidden rounded-md sm:w-28"
+  <div class="@container/row flex h-full gap-3">
+    <NuxtLink
+      :to="patchHref"
+      :aria-label="galgameName"
+      tabindex="-1"
+      class="relative block w-24 shrink-0 self-start overflow-hidden rounded-md sm:w-28"
       :class="!coverSrc && 'bg-default-100'"
     >
+      <!-- The zoom rides the wrapper: on image-class-name tailwind-merge
+           replaces KunUI's own transition-opacity on the <img> and the
+           thumbhash blur-up stops fading in. -->
       <KunImage
         v-if="coverSrc"
         :src="coverSrc"
         :alt="galgameName"
         aspect-ratio="5 / 7"
         :thumbhash="resolvePortraitThumbhash(props.patch)"
+        class-name="transition-transform duration-300 hover:scale-105"
       />
       <div
         v-else
@@ -115,14 +126,14 @@ const NARROW_TAG_LIMIT = 3
         "
         :title="props.patch.content_limit.toLocaleUpperCase()"
       />
-    </div>
+    </NuxtLink>
 
     <div class="flex min-w-0 flex-1 flex-col gap-1.5">
       <div class="min-w-0">
         <h2 class="line-clamp-2 leading-snug font-medium">
           <NuxtLink
-            :to="`/patch/${props.patch.id}/introduction`"
-            class="hover:text-primary-500 transition-colors after:absolute after:inset-0"
+            :to="patchHref"
+            class="hover:text-primary-500 transition-colors"
           >
             {{ galgameName }}
           </NuxtLink>
@@ -166,14 +177,15 @@ const NARROW_TAG_LIMIT = 3
         v-if="makerName || releaseDate"
         class="text-default-500 flex min-w-0 flex-wrap items-center gap-x-3 gap-y-1 text-xs"
       >
-        <span
+        <NuxtLink
           v-if="makerName"
-          class="flex min-w-0 items-center gap-1"
+          :to="makerHref"
+          class="hover:text-primary-500 flex min-w-0 items-center gap-1 transition-colors"
           :title="makerName"
         >
           <KunIcon name="lucide:building-2" class="size-3.5 shrink-0" />
           <span class="truncate">{{ makerName }}</span>
-        </span>
+        </NuxtLink>
         <span v-if="releaseDate" class="flex shrink-0 items-center gap-1">
           <KunIcon name="lucide:calendar" class="size-3.5" />
           {{ releaseDate }}
@@ -198,7 +210,7 @@ const NARROW_TAG_LIMIT = 3
           :to="`/galgame/tag/${tag.id}`"
           :class="
             cn(
-              'bg-default-100 text-default-600 hover:bg-primary/15 hover:text-primary relative z-10 rounded px-1.5 py-0.5 text-xs transition-colors',
+              'bg-default-100 text-default-600 hover:bg-primary/15 hover:text-primary rounded px-1.5 py-0.5 text-xs transition-colors',
               index >= NARROW_TAG_LIMIT && 'hidden @md/row:block'
             )
           "
