@@ -174,6 +174,14 @@ type GalgameImageUploadPreset = 'topic'
 // Patch header (/patch/:id) -- GalgameCard + is_favorite.
 interface PatchHeader extends GalgameCard {
   is_favorite: boolean
+  // The DLsite purchase entry, assembled server-side. Absent whenever the work
+  // has no buyable DLsite id or the feature is unconfigured, which is what the
+  // button keys off. dlsite_campaign_name is present only while infra reports a
+  // running campaign; without it the coupon link is the standing landing page
+  // and keeps its own description.
+  dlsite_purchase_url?: string
+  dlsite_coupon_url?: string
+  dlsite_campaign_name?: string
 }
 
 // Patch detail (/patch/:id/detail) -- GalgameCard plus Wiki's full galgame info.

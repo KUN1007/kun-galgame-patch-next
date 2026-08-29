@@ -107,7 +107,7 @@ func newCatalogEditApp(t *testing.T, fake *catalogEditFake) (*testutil.TestApp, 
 	srv := httptest.NewServer(fake.handler())
 	t.Cleanup(srv.Close)
 
-	h := New(nil, galgameClient.NewWithKey(srv.URL, "nm_test_key"), nil)
+	h := New(nil, galgameClient.NewWithKey(srv.URL, "nm_test_key"), nil, nil)
 
 	ta := testutil.NewTestApp(t)
 	auth := middleware.Auth(ta.RDB, config.OAuthConfig{})
@@ -383,7 +383,7 @@ func TestCatalogEditNeedsASession(t *testing.T) {
 
 func TestCatalogEditWithoutACatalogClient(t *testing.T) {
 	ta := testutil.NewTestApp(t)
-	h := New(nil, nil, nil)
+	h := New(nil, nil, nil, nil)
 	auth := middleware.Auth(ta.RDB, config.OAuthConfig{})
 	ta.App.Get("/patch/:id/catalog-edit", auth, h.CatalogEditBootstrap)
 	session := ta.CreateTestSession(t, 42)

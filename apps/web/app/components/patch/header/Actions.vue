@@ -1,5 +1,4 @@
 <script setup lang="ts">
-
 import { kunMoyuMoe } from '~/config/moyu-moe'
 
 interface Props {
@@ -132,6 +131,13 @@ const onMenuSelect = (item: { key: string }) => {
 
     <div class="flex flex-col items-start gap-2 sm:items-end">
       <div class="flex items-center gap-2">
+        <PatchDlsitePurchase
+          v-if="props.patch.dlsite_purchase_url"
+          :purchase-url="props.patch.dlsite_purchase_url"
+          :coupon-url="props.patch.dlsite_coupon_url"
+          :campaign-name="props.patch.dlsite_campaign_name"
+        />
+
         <KunReaction
           v-model="favorite"
           icon="lucide:star"

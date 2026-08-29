@@ -4,6 +4,8 @@ import (
 	"sort"
 	"strconv"
 	"strings"
+
+	"kun-galgame-patch-api/pkg/storeclient"
 )
 
 func hashFromURL(u string) string {
@@ -129,6 +131,21 @@ func vndbIDOf(refs []catalogRef) string {
 	return ""
 }
 
+// A work carries several dlsite refs — editions, chapter releases, and RE ids
+// for DLsite's English store, which the affiliate path does not serve — so the
+// buyable one is picked by shape, not by position. Reading refs[0] the way the
+// forum does costs 4 of the 300 most-viewed patches their purchase link, each to
+// a leading RE id.
+func dlsiteWorknoOf(refs []catalogRef) string {
+	ids := make([]string, 0, 4)
+	for _, r := range refs {
+		if r.Source == "dlsite" {
+			ids = append(ids, r.ExternalID)
+		}
+	}
+	return storeclient.PickProductID(ids)
+}
+
 func isVndbWorkID(s string) bool {
 	if len(s) < 2 || s[0] != 'v' {
 		return false
@@ -221,6 +238,7 @@ func catalogItemToBrief(it *catalogWorkListItem) GalgameBrief {
 		ID:                       it.publicGID(),
 		CatalogWorkID:            it.ID,
 		VndbID:                   vndbIDOf(it.Refs),
+		DlsiteWorkno:             dlsiteWorknoOf(it.Refs),
 		ClaimState:               claimStateOf(it.ClaimedBy),
 		NameJaJp:                 ja,
 		NameZhCn:                 zhCN,

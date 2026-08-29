@@ -10,6 +10,7 @@ import (
 
 	galgameClient "kun-galgame-patch-api/internal/galgame/client"
 	"kun-galgame-patch-api/internal/galgame/enricher"
+	"kun-galgame-patch-api/internal/infrastructure/storelink"
 	"kun-galgame-patch-api/internal/middleware"
 	"kun-galgame-patch-api/internal/patch/dto"
 	"kun-galgame-patch-api/internal/patch/model"
@@ -27,17 +28,19 @@ import (
 var vndbIDRegex = regexp.MustCompile(`^v\d+$`)
 
 type PatchHandler struct {
-	service *service.PatchService
-	galgame *galgameClient.Client
-	users   *userclient.Client
+	service    *service.PatchService
+	galgame    *galgameClient.Client
+	users      *userclient.Client
+	storeLinks *storelink.Resolver
 }
 
 func New(
 	svc *service.PatchService,
 	galgame *galgameClient.Client,
 	users *userclient.Client,
+	storeLinks *storelink.Resolver,
 ) *PatchHandler {
-	return &PatchHandler{service: svc, galgame: galgame, users: users}
+	return &PatchHandler{service: svc, galgame: galgame, users: users, storeLinks: storeLinks}
 }
 
 func catalogUserToken(c fiber.Ctx) (string, *errors.AppError) {
@@ -150,6 +153,22 @@ func (h *PatchHandler) CreatePatch(c fiber.Ctx) error {
 type headerCard struct {
 	enricher.GalgameCard
 	IsFavorite bool `json:"is_favorite"`
+	// The DLsite purchase entry. Absent whenever the work has no buyable workno
+	// or the feature is unconfigured, and the button is not rendered at all.
+	DlsitePurchaseURL  string `json:"dlsite_purchase_url,omitempty"`
+	DlsiteCouponURL    string `json:"dlsite_coupon_url,omitempty"`
+	DlsiteCampaignName string `json:"dlsite_campaign_name,omitempty"`
+}
+
+func (h *PatchHandler) withPurchaseLinks(card headerCard) headerCard {
+	if card.Galgame == nil {
+		return card
+	}
+	links := h.storeLinks.Resolve(card.Galgame.DlsiteWorkno)
+	card.DlsitePurchaseURL = links.PurchaseURL
+	card.DlsiteCouponURL = links.CouponURL
+	card.DlsiteCampaignName = links.CampaignName
+	return card
 }
 
 func (h *PatchHandler) GetPatch(c fiber.Ctx) error {
@@ -163,7 +182,7 @@ func (h *PatchHandler) GetPatch(c fiber.Ctx) error {
 	if err != nil {
 		if stderrors.Is(err, gorm.ErrRecordNotFound) {
 			if card := enricher.GalgameOnlyCard(c.Context(), h.galgame, h.users, id, cl); card != nil {
-				return response.OK(c, headerCard{GalgameCard: *card})
+				return response.OK(c, h.withPurchaseLinks(headerCard{GalgameCard: *card}))
 			}
 		}
 		return response.Error(c, errors.ErrNotFound("patch not found"))
@@ -174,7 +193,7 @@ func (h *PatchHandler) GetPatch(c fiber.Ctx) error {
 		return response.Error(c, errors.ErrNotFound("patch not found"))
 	}
 
-	card := headerCard{GalgameCard: *enriched}
+	card := h.withPurchaseLinks(headerCard{GalgameCard: *enriched})
 	if user := middleware.GetUser(c); user != nil {
 		card.IsFavorite = h.service.IsFavorited(user.ID, id)
 	}

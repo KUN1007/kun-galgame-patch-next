@@ -83,7 +83,7 @@ func TestResolveTaxonomyIDStatusCodes(t *testing.T) {
 			}))
 			t.Cleanup(upstream.Close)
 
-			h := New(nil, galgameClient.NewWithKey(upstream.URL, "nm_test_key"), nil)
+			h := New(nil, galgameClient.NewWithKey(upstream.URL, "nm_test_key"), nil, nil)
 			app := fiber.New()
 			app.Get("/taxonomy/resolve/:kind/:id", h.ResolveTaxonomyID)
 

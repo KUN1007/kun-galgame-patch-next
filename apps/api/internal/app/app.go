@@ -25,6 +25,7 @@ import (
 	cronJobs "kun-galgame-patch-api/internal/infrastructure/cron"
 	"kun-galgame-patch-api/internal/infrastructure/database"
 	"kun-galgame-patch-api/internal/infrastructure/markdown"
+	"kun-galgame-patch-api/internal/infrastructure/storelink"
 	messageHandler "kun-galgame-patch-api/internal/message/handler"
 	messageRepo "kun-galgame-patch-api/internal/message/repository"
 	messageService "kun-galgame-patch-api/internal/message/service"
@@ -45,6 +46,7 @@ import (
 	"kun-galgame-patch-api/pkg/imageclient"
 	"kun-galgame-patch-api/pkg/moemoepoint"
 	"kun-galgame-patch-api/pkg/response"
+	"kun-galgame-patch-api/pkg/storeclient"
 	"kun-galgame-patch-api/pkg/trustclient"
 	"kun-galgame-patch-api/pkg/userclient"
 
@@ -131,9 +133,32 @@ func New(cfg *config.Config) *App {
 		slog.Warn("catalog v2 client NOT configured; the claim lifecycle and its cron will not run — set KUN_NEXTMOE_API_BASE + KUN_NEXTMOE_API_KEY")
 	}
 
+	var storeCli *storeclient.Client
+	if cfg.Dlsite.StoreConfigured() {
+		storeCli = storeclient.New(storeclient.Config{
+			BaseURL: cfg.Dlsite.StoreAPIBase,
+			APIKey:  cfg.Dlsite.StoreAPIKey,
+		})
+	}
+	storeLinks := storelink.New(storelink.Options{
+		DB:           db,
+		Client:       storeCli,
+		LinkTemplate: cfg.Dlsite.LinkTemplate,
+		StaticCoupon: cfg.Dlsite.CouponURL,
+	})
+	if cfg.Dlsite.Configured() || storeLinks.Configured() {
+		slog.Info("dlsite 正版购买入口已启用",
+			"short_links", storeLinks.Configured(),
+			"template_fallback", cfg.Dlsite.Configured(),
+			"static_coupon", cfg.Dlsite.CouponURL != "")
+	} else {
+		slog.Info("dlsite 正版购买入口未启用 (KUN_DLSITE_LINK_TEMPLATE 与 KUN_STORE_API_KEY 均为空); 游戏页不渲染购买按钮")
+	}
+	storeStop := storeLinks.Start()
+
 	patchRepository := patchRepo.New(db)
 	patchSvc := patchService.New(patchRepository, settingSvc, db, artCli, galgame, usrCli, mpAwarder, adminRepository)
-	patchHdl := patchHandler.New(patchSvc, galgame, usrCli)
+	patchHdl := patchHandler.New(patchSvc, galgame, usrCli, storeLinks)
 
 	userRepository := userRepo.New(db)
 	userSvc := userService.New(userRepository, usrCli, galgame, db, mpAwarder)
@@ -250,6 +275,10 @@ func New(cfg *config.Config) *App {
 	app.Use(middleware.CORS(cfg.CORS))
 
 	cronStop := cronJobs.Start(db, galgame, mpClient, imgCli)
+	stopBackground := func() {
+		cronStop()
+		storeStop()
+	}
 
 	slog.Info("Application initialized")
 
@@ -270,7 +299,7 @@ func New(cfg *config.Config) *App {
 		SearchHandler:  searchHdl,
 		DocHandler:     docHdl,
 		TrustHandler:   trustHdl,
-		CronStop:       cronStop,
+		CronStop:       stopBackground,
 	}
 }
 

@@ -50,6 +50,19 @@ x-moyu-api-env: &moyu-api-env
   # /root/phase2-internal-keys.env line moyu-patch-internal-s2s).
   KUN_NEXTMOE_API_BASE: http://catalog:9281
   KUN_NEXTMOE_API_KEY: ${KUN_NEXTMOE_API_KEY:-}
+  # DLsite 正版购买入口。两个都留空 = 游戏页不渲染购买按钮 (当前默认)。
+  # 打开需要两个决定:
+  #   1) 联盟模板。kungal 用的是
+  #      https://dlaf.jp/soft/dlaf/=/t/s/link/work/aid/kungal/locale/zh_CN/id/{workno}.html/?locale=zh_CN
+  #      其中 aid/kungal 是联盟账号 ID。moyu 是否可以直接复用这个 aid, 取决于
+  #      DLsite 联盟条款是否按站点/域名登记 —— 先确认再填。
+  #   2) KUN_STORE_API_KEY: 第二把 developer key, scope 只需 store:read
+  #      (开发者门户自助申请)。有它才会铸造带点击归因的短链; 没有也能卖, 只是
+  #      infra 看不到是 moyu 带来的单。KUN_STORE_API_BASE 默认取
+  #      KUN_NEXTMOE_API_BASE (同一个 catalog 进程)。
+  KUN_DLSITE_LINK_TEMPLATE: ${KUN_DLSITE_LINK_TEMPLATE:-}
+  KUN_DLSITE_COUPON_URL: ${KUN_DLSITE_COUPON_URL:-}
+  KUN_STORE_API_KEY: ${KUN_STORE_API_KEY:-}
   # image_service (prod 必填) — CDN 域 == infra KUN_IMAGE_PUBLIC_BASE_URL
   KUN_IMAGE_SERVICE_BASE_URL: http://image:9278
   KUN_IMAGE_CDN_BASE: https://image.kungal.iloveren.link

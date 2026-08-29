@@ -56,7 +56,7 @@ func withdraw(t *testing.T, state string) *withdrawFake {
 	srv := httptest.NewServer(fake.handler())
 	t.Cleanup(srv.Close)
 
-	h := New(nil, galgameClient.NewWithKey(srv.URL, "nm_test_key"), nil)
+	h := New(nil, galgameClient.NewWithKey(srv.URL, "nm_test_key"), nil, nil)
 	ta := testutil.NewTestApp(t)
 	ta.App.Delete("/galgame/:gid", middleware.Auth(ta.RDB, config.OAuthConfig{}), h.WithdrawGalgameSubmission)
 	session := ta.CreateTestSession(t, 42)
