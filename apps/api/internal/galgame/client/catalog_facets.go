@@ -46,28 +46,26 @@ type facetEntry struct {
 	tags         []facetTag
 }
 
-// GalgameFacets answers the card facet for each gid it can reach. A facet is
-// decoration: a work catalog refuses or fails to answer for is simply absent
-// from the map, and the list it was built for still renders. Both gates stay
-// open — the caller already decided which works it may show, and this read only
-// distills their tags and credits.
-func (c *Client) GalgameFacets(ctx context.Context, gids []int, contentLimit string) map[int]GalgameFacet {
-	out := make(map[int]GalgameFacet, len(gids))
-	if c == nil || len(gids) == 0 {
-		return out
+// facetOf distills the shelf a list card prints from one works-list item. It
+// answers nil unless the read asked for tags and credits: an item hydrated
+// through cardInclude alone carries neither block, and an empty shelf must not
+// render as an empty row.
+func facetOf(w catalogv2.Work, sexualOK bool) *GalgameFacet {
+	f := facetFrom(catalogWork{Tags: workTags(w), Credits: workCredits(w)}).facet(sexualOK)
+	if f.empty() {
+		return nil
 	}
-	byGID, err := c.resolveGIDs(ctx, gids)
-	if err != nil || len(byGID) == 0 {
-		return out
-	}
+	return &f
+}
 
-	ids := make([]int64, 0, len(byGID))
-	seen := make(map[int64]bool, len(byGID))
-	for _, id := range byGID {
-		if !seen[id] {
-			seen[id] = true
-			ids = append(ids, id)
-		}
+// facetsByWorkID reads the shelf for works already in hand. Only the company
+// page needs it: that roster walks catalog's whole rollup to sort and slice it
+// here, and asking the walk for credits would carry them for every work the
+// company ever shipped to print 24.
+func (c *Client) facetsByWorkID(ctx context.Context, ids []int64, gate catalogGate) map[int64]*GalgameFacet {
+	out := make(map[int64]*GalgameFacet, len(ids))
+	if c == nil || len(ids) == 0 {
+		return out
 	}
 	page, err := c.v2.ListWorks(ctx, catalogv2.WorksQuery{
 		IDs: ids, NSFW: true, Include: facetInclude, Limit: CatalogWorksIDsMax,
@@ -75,24 +73,13 @@ func (c *Client) GalgameFacets(ctx context.Context, gids []int, contentLimit str
 	if err != nil {
 		return out
 	}
-
-	entries := make(map[int64]facetEntry, len(page.Items))
+	sexualOK := gate.contentLimit != "sfw"
 	for i := range page.Items {
 		id, ok := page.Items[i].IntID()
 		if !ok {
 			continue
 		}
-		entries[id] = facetFrom(catalogWork{
-			Tags:    workTags(page.Items[i]),
-			Credits: workCredits(page.Items[i]),
-		})
-	}
-
-	sexualOK := gateFor(contentLimit).contentLimit != "sfw"
-	for gid, id := range byGID {
-		if f := entries[id].facet(sexualOK); !f.empty() {
-			out[gid] = f
-		}
+		out[id] = facetOf(page.Items[i], sexualOK)
 	}
 	return out
 }

@@ -113,6 +113,13 @@ type GalgameBrief struct {
 	// only: the browser is handed the finished purchase URL, never the id it was
 	// built from.
 	DlsiteWorkno string `json:"-"`
+
+	// Set only by the reads that ask for tags and credits, and serialized
+	// because the taxonomy proxy re-parses these briefs out of this client's own
+	// JSON: a `json:"-"` shelf arrived nil there and every tag / 会社 / 系列 page
+	// rendered bare rows. applyGalgame lifts it onto the card, which is where
+	// the browser reads it.
+	Facet *GalgameFacet `json:"facet,omitempty"`
 }
 
 // The company a card credits. The name travels as four slots rather than one
@@ -151,6 +158,7 @@ type GalgameHit struct {
 	TagIDs                     []int             `json:"tag_ids"`
 	OfficialIDs                []int             `json:"official_ids"`
 	EngineIDs                  []int             `json:"engine_ids"`
+	Facet                      *GalgameFacet     `json:"facet,omitempty"`
 }
 
 type Tag struct {
@@ -204,6 +212,12 @@ type ScreenshotInput struct {
 // empty slot rather than an error.
 var cardInclude = []string{"titles", "covers", "refs", "companies"}
 
+// A list card also prints a tag shelf and two credits. It is a separate set
+// because credits is the heaviest block the works face answers — it carries
+// every 声优 — and the reads that only need the axis or the header (the NSFW
+// gate, the detail hydrate, the cron) throw all of it away.
+var listCardInclude = []string{"titles", "covers", "refs", "companies", "tags", "credits"}
+
 func worksQueryFor(p SearchGalgameParams) catalogv2.WorksQuery {
 	q := catalogv2.WorksQuery{
 		Q:            p.Q,
@@ -212,7 +226,7 @@ func worksQueryFor(p SearchGalgameParams) catalogv2.WorksQuery {
 		Limit:        p.Limit,
 		OLang:        joinCatalogLangs(p.OriginalLang),
 		NSFW:         true,
-		Include:      cardInclude,
+		Include:      listCardInclude,
 		IncludeTotal: true,
 		Facets:       []string{"olang"},
 		SearchIntro:  p.SearchIntro,
@@ -276,13 +290,16 @@ func (c *Client) SearchGalgame(ctx context.Context, p SearchGalgameParams) (*Pag
 	if err != nil {
 		return nil, catalogErr(err)
 	}
+	sexualOK := gateFor(p.ContentLimit).contentLimit != "sfw"
 	out := Paginated[GalgameHit]{Total: page.Count()}
 	for i := range page.Items {
 		it := workToListItem(page.Items[i])
 		if !it.ClaimedBy.renderable() || it.publicGID() == 0 {
 			continue
 		}
-		out.Items = append(out.Items, catalogItemToHit(&it))
+		hit := catalogItemToHit(&it)
+		hit.Facet = facetOf(page.Items[i], sexualOK)
+		out.Items = append(out.Items, hit)
 	}
 	return &out, nil
 }
@@ -393,6 +410,17 @@ func (c *Client) CheckGalgameByVndbID(ctx context.Context, vndbID string) (exist
 const BatchMaxIDs = 100
 
 func (c *Client) GalgameBatch(ctx context.Context, ids []int, contentLimit string) ([]GalgameBrief, error) {
+	return c.galgameBatch(ctx, ids, contentLimit, cardInclude)
+}
+
+// GalgameCardBatch hydrates the same rows for a list card, which prints a tag
+// shelf and two credits beside the poster. Every list on the site draws that
+// card, so the shelf rides the hydrate rather than a second read per page.
+func (c *Client) GalgameCardBatch(ctx context.Context, ids []int, contentLimit string) ([]GalgameBrief, error) {
+	return c.galgameBatch(ctx, ids, contentLimit, listCardInclude)
+}
+
+func (c *Client) galgameBatch(ctx context.Context, ids []int, contentLimit string, include []string) ([]GalgameBrief, error) {
 	if len(ids) == 0 {
 		return nil, nil
 	}
@@ -411,9 +439,10 @@ func (c *Client) GalgameBatch(ctx context.Context, ids []int, contentLimit strin
 		catalogIDs = append(catalogIDs, id)
 	}
 
+	gate := gateFor(contentLimit)
 	page, err := c.v2.ListWorks(ctx, catalogv2.WorksQuery{
-		IDs: catalogIDs, NSFW: true, Include: cardInclude,
-		ContentLimit: gateFor(contentLimit).contentLimit, Limit: CatalogWorksIDsMax,
+		IDs: catalogIDs, NSFW: true, Include: include,
+		ContentLimit: gate.contentLimit, Limit: CatalogWorksIDsMax,
 	})
 	if err != nil {
 		return nil, catalogErr(err)
@@ -424,7 +453,9 @@ func (c *Client) GalgameBatch(ctx context.Context, ids []int, contentLimit strin
 		if !it.ClaimedBy.renderable() || it.publicGID() == 0 {
 			continue
 		}
-		out = append(out, catalogItemToBrief(&it))
+		b := catalogItemToBrief(&it)
+		b.Facet = facetOf(page.Items[i], gate.contentLimit != "sfw")
+		out = append(out, b)
 	}
 	return out, nil
 }

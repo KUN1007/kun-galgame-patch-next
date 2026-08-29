@@ -126,7 +126,7 @@ func (h *CommonHandler) GetHome(c fiber.Ctx) error {
 	h.attachPatchSummaries(c, comments, resources)
 	patchModel.StripResourceSecrets(resources)
 
-	galgames := enricher.EnrichPatches(c.Context(), h.galgame, h.users, patches, cl)
+	galgames := enricher.EnrichPatchCards(c.Context(), h.galgame, h.users, patches, cl)
 	if len(galgames) > homeGalgameCount {
 		galgames = galgames[:homeGalgameCount]
 	}

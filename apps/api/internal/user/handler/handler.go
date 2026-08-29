@@ -86,7 +86,7 @@ func (h *UserHandler) GetUserPatches(c fiber.Ctx) error {
 	if err != nil {
 		return response.Error(c, errors.ErrInternal(""))
 	}
-	return response.Paginated(c, enricher.EnrichPatches(c.Context(), h.galgame, h.users, patches, cl), total)
+	return response.Paginated(c, enricher.EnrichPatchCards(c.Context(), h.galgame, h.users, patches, cl), total)
 }
 
 func (h *UserHandler) GetUserResources(c fiber.Ctx) error {
@@ -137,7 +137,7 @@ func (h *UserHandler) GetUserFavorites(c fiber.Ctx) error {
 	if err != nil {
 		return response.Error(c, errors.ErrInternal(""))
 	}
-	return response.Paginated(c, enricher.EnrichPatches(c.Context(), h.galgame, h.users, patches, cl), total)
+	return response.Paginated(c, enricher.EnrichPatchCards(c.Context(), h.galgame, h.users, patches, cl), total)
 }
 
 func (h *UserHandler) GetUserComments(c fiber.Ctx) error {
@@ -187,7 +187,7 @@ func (h *UserHandler) GetUserContributions(c fiber.Ctx) error {
 	if err != nil {
 		return response.Error(c, errors.ErrInternal(""))
 	}
-	return response.Paginated(c, enricher.EnrichPatches(c.Context(), h.galgame, h.users, patches, cl), total)
+	return response.Paginated(c, enricher.EnrichPatchCards(c.Context(), h.galgame, h.users, patches, cl), total)
 }
 
 func (h *UserHandler) Follow(c fiber.Ctx) error {

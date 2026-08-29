@@ -121,7 +121,7 @@ func (c *Client) entityWorkCards(ctx context.Context, works []catalogv2.Work, ga
 		return out
 	}
 	page, err := c.v2.ListWorks(ctx, catalogv2.WorksQuery{
-		IDs: ids, NSFW: true, Include: cardInclude,
+		IDs: ids, NSFW: true, Include: listCardInclude,
 		ContentLimit: gate.contentLimit, Limit: CatalogWorksIDsMax,
 	})
 	if err != nil {
@@ -132,7 +132,9 @@ func (c *Client) entityWorkCards(ctx context.Context, works []catalogv2.Work, ga
 		if !it.ClaimedBy.renderable() || it.publicGID() == 0 {
 			continue
 		}
-		out[it.ID] = catalogItemToBrief(&it)
+		b := catalogItemToBrief(&it)
+		b.Facet = facetOf(page.Items[i], gate.contentLimit != "sfw")
+		out[it.ID] = b
 	}
 	return out
 }

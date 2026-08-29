@@ -259,7 +259,7 @@ func (c *Client) taxonomyMembers(ctx context.Context, filterKey string, id int64
 	page, limit := taxonomyPageWindow(q)
 	query := catalogv2.WorksQuery{
 		Sort: taxonomyMemberSort, Page: page, Limit: limit, NSFW: true,
-		Include: cardInclude, IncludeTotal: true,
+		Include: listCardInclude, IncludeTotal: true,
 		Facets: []string{"olang"}, ContentLimit: gate.contentLimit,
 	}
 	switch filterKey {
@@ -280,7 +280,9 @@ func (c *Client) taxonomyMembers(ctx context.Context, filterKey string, id int64
 		if !it.ClaimedBy.renderable() || it.publicGID() == 0 {
 			continue
 		}
-		out = append(out, catalogItemToBrief(&it))
+		b := catalogItemToBrief(&it)
+		b.Facet = facetOf(data.Items[i], gate.contentLimit != "sfw")
+		out = append(out, b)
 	}
 	return out, data.Count(), nil
 }

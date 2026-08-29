@@ -557,7 +557,7 @@ func TestTaxonomyBrowseMembersAreGated(t *testing.T) {
 			if got := q.Get("sort"); got != "released_desc" {
 				t.Errorf("sort = %q, want released_desc — ?page=N needs a deterministic order", got)
 			}
-			if got, want := q.Get("include"), strings.Join(cardInclude, ","); got != want {
+			if got, want := q.Get("include"), strings.Join(listCardInclude, ","); got != want {
 				t.Errorf("member include = %q, want %q", got, want)
 			}
 
@@ -605,9 +605,9 @@ func TestCompanyMembersWalkTheRollup(t *testing.T) {
 	if err != nil || !handled {
 		t.Fatalf("TaxonomyBrowse: handled=%v err=%v", handled, err)
 	}
-	srv.wantPaths(t, "/v2/catalog/companies/31", "/v2/catalog/works")
+	srv.wantPaths(t, "/v2/catalog/companies/31", "/v2/catalog/works", "/v2/catalog/works")
 
-	q := srv.last().query
+	q := srv.all()[1].query
 	if q.Get("company_id") != "31" || q.Get("company_rollup") != "true" {
 		t.Errorf("company_id=%q company_rollup=%q, want 31/true", q.Get("company_id"), q.Get("company_rollup"))
 	}
@@ -617,8 +617,17 @@ func TestCompanyMembersWalkTheRollup(t *testing.T) {
 	if got := q.Get("facets"); got != "" {
 		t.Errorf("facets = %q, want it absent — a facet flips catalog to the search lane", got)
 	}
+	// The walk stays lean and the shelf is read once for the page it slices:
+	// this roster carries every work the company ever shipped, and VISUAL ARTS
+	// would have paid for 540 works' credits to print 10.
 	if got, want := q.Get("include"), strings.Join(cardInclude, ","); got != want {
-		t.Errorf("member include = %q, want %q", got, want)
+		t.Errorf("rollup include = %q, want %q", got, want)
+	}
+	if got, want := srv.last().query.Get("include"), strings.Join(facetInclude, ","); got != want {
+		t.Errorf("shelf include = %q, want %q", got, want)
+	}
+	if got := srv.last().query.Get("ids"); strings.Count(got, ",") != 2 {
+		t.Errorf("shelf ids = %q, want only the three works this page renders", got)
 	}
 
 	var got struct {

@@ -6,9 +6,9 @@
 // All JSON keys are snake_case to match the backend wire format exactly.
 // The backend enricher merges patch + Wiki galgame into the shape below.
 
-// The extra a list card draws beside the poster. Filled only by the endpoints
-// that ask for it: catalog keeps tags and credits off its works LIST face, so
-// the facet costs one read per work and the browse lanes are the only callers.
+// The extra a list card draws beside the poster: the two credits a reader picks
+// a game by, and a short shelf of tags. Every lane that answers a card fills it
+// off the same catalog read that built the card.
 interface GalgameCardTag {
   id: number
   name: string

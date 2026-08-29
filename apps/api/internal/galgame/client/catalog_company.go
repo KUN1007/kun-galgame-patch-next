@@ -68,9 +68,15 @@ func (c *Client) companyMembers(ctx context.Context, id int64, q url.Values, gat
 	total := int64(len(order))
 	start := (page - 1) * limit
 	members := make([]GalgameBrief, 0, limit)
+	shown := make([]int64, 0, limit)
 	for i := start; i < len(order) && i < start+limit; i++ {
 		it := rows[order[i]]
 		members = append(members, catalogItemToBrief(&it))
+		shown = append(shown, it.ID)
+	}
+	facets := c.facetsByWorkID(ctx, shown, gate)
+	for i := range members {
+		members[i].Facet = facets[shown[i]]
 	}
 	return &companyRoster{members: members, total: total, own: total - imprint, imprint: imprint}, nil
 }

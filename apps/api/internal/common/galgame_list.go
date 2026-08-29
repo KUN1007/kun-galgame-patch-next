@@ -1,7 +1,6 @@
 package common
 
 import (
-	"context"
 	"fmt"
 
 	galgameClient "kun-galgame-patch-api/internal/galgame/client"
@@ -98,28 +97,12 @@ func (h *CommonHandler) GetGalgameList(c fiber.Ctx) error {
 		return response.Error(c, errors.ErrInternal(""))
 	}
 
-	cards := enricher.EnrichPatches(c.Context(), h.galgame, h.users, patches, cl)
-	h.attachCardFacets(c.Context(), cards, cl)
+	cards := enricher.EnrichPatchCards(c.Context(), h.galgame, h.users, patches, cl)
 
 	return response.OK(c, map[string]any{
 		"galgames": cards,
 		"total":    total,
 	})
-}
-
-// One extra catalog read per page, on top of the fetch that built the cards —
-// only the lanes whose card actually prints the shelf should call it.
-func (h *CommonHandler) attachCardFacets(ctx context.Context, cards []enricher.GalgameCard, cl string) {
-	if h.galgame == nil || len(cards) == 0 {
-		return
-	}
-	ids := make([]int, 0, len(cards))
-	for i := range cards {
-		if cards[i].ID > 0 {
-			ids = append(ids, cards[i].ID)
-		}
-	}
-	enricher.ApplyFacets(cards, h.galgame.GalgameFacets(ctx, ids, cl))
 }
 
 func (h *CommonHandler) catalogLibrary(c fiber.Ctx, req galgameListRequest, cl string) error {
@@ -158,7 +141,6 @@ func (h *CommonHandler) catalogLibrary(c fiber.Ctx, req galgameListRequest, cl s
 	}
 	local := h.localPatchMap(ids)
 	cards := overlayCatalogHits(res.Items, local, cl)
-	h.attachCardFacets(c.Context(), cards, cl)
 	return response.OK(c, map[string]any{
 		"galgames": cards,
 		"total":    res.Total,
@@ -234,5 +216,6 @@ func hitToBrief(h *galgameClient.GalgameHit) galgameClient.GalgameBrief {
 		EffectivePortraitHeight:    h.EffectivePortraitHeight,
 		EffectivePortraitThumbhash: h.EffectivePortraitThumbhash,
 		Maker:                      h.Maker,
+		Facet:                      h.Facet,
 	}
 }

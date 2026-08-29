@@ -2,11 +2,7 @@ package client
 
 import (
 	"context"
-	"net/http"
-	"net/http/httptest"
-	"net/url"
 	"strings"
-	"sync"
 	"testing"
 )
 
@@ -71,69 +67,50 @@ func TestFacetFromReadsOnlyTheTwoCreditedRoles(t *testing.T) {
 	}
 }
 
-// The shelf used to cost one detail read per work; catalog's list face answers
-// tags and credits since 2026-08, so a page must resolve in the gid lookup plus
-// exactly one works read no matter how many cards it holds.
-func TestGalgameFacetsDrawsThePageInOneWorksRead(t *testing.T) {
-	var mu sync.Mutex
-	var works []url.Values
+// The shelf used to cost a second works read per page, keyed back to the cards
+// by gid. It rides the hydrate now: a page must resolve in the gid lookup plus
+// exactly one works read, and that read has to name tags and credits or every
+// card in every list renders bare.
+func TestGalgameCardBatchDrawsTheShelfInTheHydrateRead(t *testing.T) {
+	srv := newCatalogFake(t)
+	briefs, err := NewWithKey(srv.URL, "nm_test_key").
+		GalgameCardBatch(context.Background(), []int{7}, "sfw")
+	if err != nil {
+		t.Fatalf("GalgameCardBatch: %v", err)
+	}
+	srv.wantPaths(t, "/v2/catalog/works", "/v2/catalog/works")
 
-	srv := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, req *http.Request) {
-		q := req.URL.Query()
-		w.Header().Set("Content-Type", "application/json")
-		if req.URL.Path != "/v2/catalog/works" {
-			t.Errorf("unexpected path %q — the facet must not fall back to a detail read", req.URL.Path)
-			w.WriteHeader(http.StatusNotFound)
-			return
-		}
-		if q.Get("refs") != "" {
-			_, _ = w.Write([]byte(`{"items":[
-				{"id":"901","refs":[{"source":"curated","external_id":"11"}]},
-				{"id":"902","refs":[{"source":"curated","external_id":"22"}]}
-			]}`))
-			return
-		}
-		mu.Lock()
-		works = append(works, q)
-		mu.Unlock()
-		_, _ = w.Write([]byte(`{"items":[
-			{"id":"901",
-			 "tags":[{"id":"20","display_name":"北欧神话","tier":"core","tag_kind":"content","spoiler":"none","work_count":32}],
-			 "credits":[{"role_key":"scenario","credits":[{"id":"7","display_name":"なかひろ"}]}]},
-			{"id":"902","tags":[],"credits":[]}
-		]}`))
-	}))
-	t.Cleanup(srv.Close)
-
-	got := NewWithKey(srv.URL, "nm_test_key").GalgameFacets(context.Background(), []int{11, 22}, "sfw")
-
-	if len(works) != 1 {
-		t.Fatalf("issued %d works reads, want exactly 1", len(works))
+	if got, want := srv.last().query.Get("include"), strings.Join(listCardInclude, ","); got != want {
+		t.Errorf("include = %q, want %q", got, want)
 	}
-	if inc := works[0].Get("include"); inc != "tags,credits" {
-		t.Errorf("include = %q, want tags,credits", inc)
+	if len(briefs) != 1 {
+		t.Fatalf("briefs = %+v, want the one hydrated card", briefs)
 	}
-	if nsfw := works[0].Get("nsfw"); nsfw != "true" {
-		t.Errorf("nsfw = %q — the gate must stay open so sexual tags can be filtered here", nsfw)
-	}
-	if cl := works[0].Get("content_limit"); cl != "" {
-		t.Errorf("content_limit = %q, want unset: the caller already picked the works", cl)
-	}
-	if ids := works[0].Get("ids"); !strings.Contains(ids, "901") || !strings.Contains(ids, "902") {
-		t.Errorf("ids = %q, want both resolved works", ids)
-	}
-
-	if len(got) != 1 {
-		t.Fatalf("facets = %+v, want only the work that had something to show", got)
-	}
-	f, ok := got[11]
-	if !ok {
-		t.Fatalf("gid 11 missing from %+v", got)
+	f := briefs[0].Facet
+	if f == nil {
+		t.Fatal("facet = nil, want the shelf the read paid for")
 	}
 	if len(f.Tags) != 1 || f.Tags[0].Name != "北欧神话" || f.Tags[0].ID != 20 {
 		t.Errorf("tags = %+v, want the core content shelf", f.Tags)
 	}
 	if len(f.Scenario) != 1 || f.Scenario[0].JaJp != "なかひろ" {
 		t.Errorf("scenario = %+v, want the credited writer", f.Scenario)
+	}
+}
+
+// credits is the heaviest block the works face answers — it carries every 声优
+// — and the NSFW gate, the detail header and the cron all discard it.
+func TestGalgameBatchStaysLean(t *testing.T) {
+	srv := newCatalogFake(t)
+	briefs, err := NewWithKey(srv.URL, "nm_test_key").
+		GalgameBatch(context.Background(), []int{7}, "sfw")
+	if err != nil {
+		t.Fatalf("GalgameBatch: %v", err)
+	}
+	if got, want := srv.last().query.Get("include"), strings.Join(cardInclude, ","); got != want {
+		t.Errorf("include = %q, want %q", got, want)
+	}
+	if len(briefs) != 1 || briefs[0].Facet != nil {
+		t.Errorf("facet = %+v, want none on the lean read", briefs[0].Facet)
 	}
 }

@@ -45,15 +45,21 @@ type GalgameCard struct {
 	Facet              *galgameClient.GalgameFacet `json:"facet,omitempty"`
 }
 
-func ApplyFacets(cards []GalgameCard, facets map[int]galgameClient.GalgameFacet) {
-	for i := range cards {
-		if f, ok := facets[cards[i].ID]; ok {
-			cards[i].Facet = &f
-		}
-	}
+// EnrichPatches hydrates patch rows through the lean catalog read. Lists that
+// draw the galgame card want EnrichPatchCards: the shelf of tags and credits it
+// prints is the heaviest thing the works face answers, and the ranking table,
+// the admin list and the taxonomy proxy all render their rows without it.
+func EnrichPatches(ctx context.Context, galgame *galgameClient.Client, users *userclient.Client, patches []patchModel.Patch, contentLimit string) []GalgameCard {
+	return enrichPatches(ctx, galgame, users, patches, contentLimit, false)
 }
 
-func EnrichPatches(ctx context.Context, galgame *galgameClient.Client, users *userclient.Client, patches []patchModel.Patch, contentLimit string) []GalgameCard {
+// EnrichPatchCards hydrates the same rows for a list that draws the card whole,
+// shelf included.
+func EnrichPatchCards(ctx context.Context, galgame *galgameClient.Client, users *userclient.Client, patches []patchModel.Patch, contentLimit string) []GalgameCard {
+	return enrichPatches(ctx, galgame, users, patches, contentLimit, true)
+}
+
+func enrichPatches(ctx context.Context, galgame *galgameClient.Client, users *userclient.Client, patches []patchModel.Patch, contentLimit string, shelf bool) []GalgameCard {
 	cards := make([]GalgameCard, len(patches))
 	for i := range patches {
 		cards[i] = baseCard(&patches[i])
@@ -75,7 +81,11 @@ func EnrichPatches(ctx context.Context, galgame *galgameClient.Client, users *us
 		return cards
 	}
 
-	briefs, err := galgame.GalgameBatch(ctx, ids, contentLimit)
+	batch := galgame.GalgameBatch
+	if shelf {
+		batch = galgame.GalgameCardBatch
+	}
+	briefs, err := batch(ctx, ids, contentLimit)
 	if err != nil {
 		if contentLimit != "" {
 			slog.Warn("galgame 富化失败 + 处于过滤模式：返回空列表以防 NSFW 泄漏", "error", err, "count", len(patches), "content_limit", contentLimit)
@@ -428,6 +438,9 @@ func applyGalgame(card *GalgameCard, g *galgameClient.GalgameBrief) {
 	card.Banner = g.Banner
 	card.ContentLimit = g.ContentLimit
 	card.Galgame = g
+	// Lifted, not copied: the card prints the shelf at top level and the brief
+	// travels nested inside that same card.
+	card.Facet, g.Facet = g.Facet, nil
 	if g.ReleaseDate != nil && *g.ReleaseDate != "" {
 		if t, err := time.Parse("2006-01-02", (*g.ReleaseDate)[:min(10, len(*g.ReleaseDate))]); err == nil {
 			card.ReleaseDate = &t

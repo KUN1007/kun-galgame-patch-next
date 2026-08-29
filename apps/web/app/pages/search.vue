@@ -37,6 +37,7 @@ interface SearchHit {
   effective_portrait_hash?: string
   effective_portrait_thumbhash?: string
   maker?: GalgameMaker
+  facet?: GalgameCardFacet
   content_limit: string
   release_date?: string | null
   has_patch: boolean
@@ -73,6 +74,7 @@ const mapHit = (h: SearchHit): GalgameCard =>
     effective_portrait_hash: h.effective_portrait_hash ?? '',
     effective_portrait_thumbhash: h.effective_portrait_thumbhash ?? '',
     maker: h.maker,
+    facet: h.facet,
     view: h.patch?.view ?? 0,
     download: h.patch?.download ?? 0,
     type: h.patch?.type ?? [],

@@ -69,7 +69,7 @@ func (f *catalogFake) route(req *http.Request) string {
 	case p == "/v2/catalog/works" && q.Get("company_rollup") == "true":
 		return f.companyRollup()
 	case p == "/v2/catalog/works":
-		return f.search()
+		return f.search(q.Get("include"))
 	case p == "/v2/catalog/calendar":
 		return f.calendar()
 	case strings.HasPrefix(p, "/v2/catalog/tags/"):
@@ -134,13 +134,14 @@ func (f *catalogFake) lookupOne(req *http.Request) string {
 func (f *catalogFake) worksList(req *http.Request) string {
 	raw := req.URL.Query().Get("ids")
 	items := make([]string, 0, 4)
+	include := req.URL.Query().Get("include")
 	for _, s := range strings.Split(raw, ",") {
 		id, err := strconv.ParseInt(strings.TrimSpace(s), 10, 64)
 		if err != nil {
 			continue
 		}
 		gid, state := gidForCatalogID(id)
-		items = append(items, workItem(id, gid, state))
+		items = append(items, facetBlocks(workItem(id, gid, state), include))
 	}
 	return `{"object":"list","items":[` + strings.Join(items, ",") + `],"next_cursor":null}`
 }
@@ -224,14 +225,31 @@ const detailCreditsJSON = `[` +
 	`{"id":"900","display_name":"保住圭 (Hozumi Kei)","localized":{}},` +
 	`{"id":"904","display_name":"なかひろ","localized":{}}]}]`
 
-func (f *catalogFake) search() string {
+func (f *catalogFake) search(include string) string {
 	total := int64(4)
 	return `{"object":"list","total":` + strconv.FormatInt(total, 10) + `,"items":[` +
-		workItem(900, 7, catalogClaimStateLive) + `,` +
-		workItem(920, 20, catalogClaimStateDraft) + `,` +
-		workItem(921, 21, catalogClaimStateHidden) + `,` +
-		workItem(930, 0, "") +
+		facetBlocks(workItem(900, 7, catalogClaimStateLive), include) + `,` +
+		facetBlocks(workItem(920, 20, catalogClaimStateDraft), include) + `,` +
+		facetBlocks(workItem(921, 21, catalogClaimStateHidden), include) + `,` +
+		facetBlocks(workItem(930, 0, ""), include) +
 		`]}`
+}
+
+// The works face answers only the blocks a request names, so the fake answers
+// only those too: a lane that forgets include=tags,credits has to render the
+// bare card here, the way it does in production.
+func facetBlocks(item, include string) string {
+	blocks := ""
+	if strings.Contains(include, "tags") {
+		blocks += `,"tags":[{"id":"20","display_name":"北欧神话","tier":"core","tag_kind":"content","spoiler":"none","work_count":32}]`
+	}
+	if strings.Contains(include, "credits") {
+		blocks += `,"credits":[{"role_key":"scenario","role_name":"剧本","credits":[{"id":"7","display_name":"なかひろ","localized":{}}]}]`
+	}
+	if blocks == "" {
+		return item
+	}
+	return strings.TrimSuffix(item, "}") + blocks + "}"
 }
 
 // One of the four is reached through an imprint, which is the only difference

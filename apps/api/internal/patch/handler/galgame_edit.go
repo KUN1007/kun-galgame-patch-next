@@ -82,6 +82,11 @@ func (h *PatchHandler) GalgameTaxonomyDetailProxy(c fiber.Ctx) error {
 	finalCards := make([]enricher.GalgameCard, 0, len(briefs))
 	for i := range briefs {
 		if card, ok := enrichedByID[briefs[i].ID]; ok {
+			// The shelf comes from the taxonomy read, not the re-hydrate: this
+			// enrichment runs with no content limit (the catalog read above
+			// already picked the rows), and a shelf built that way printed 拔作
+			// to a reader browsing 全年龄.
+			card.Facet = briefs[i].Facet
 			finalCards = append(finalCards, card)
 			continue
 		}
