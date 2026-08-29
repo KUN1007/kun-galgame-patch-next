@@ -26,7 +26,10 @@ const baseUrl = (
 
 const { data } = await useFetch<ApiEnvelope<PinnedDoc[]>>(
   `${baseUrl}/doc/pinned`,
-  { key: 'home-carousel-pinned', default: () => ({ code: 0, message: '', data: [] }) }
+  {
+    key: 'home-carousel-pinned',
+    default: () => ({ code: 0, message: '', data: [] })
+  }
 )
 
 const posts = computed<HomeCarouselMetadata[]>(() =>
@@ -47,7 +50,7 @@ const posts = computed<HomeCarouselMetadata[]>(() =>
   <div class="grid grid-cols-1 gap-6 md:grid-cols-2">
     <div class="pointer-events-none hidden select-none md:block">
       <KunImage
-        src="/kungalgame-trans.webp"
+        src="/hero.webp"
         :alt="kunMoyuMoe.titleShort"
         loading="eager"
         aspect-ratio="16 / 9"
