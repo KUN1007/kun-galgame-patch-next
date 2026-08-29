@@ -107,10 +107,8 @@ func (h *CommonHandler) GetGalgameList(c fiber.Ctx) error {
 	})
 }
 
-// The card facet costs one catalog read per work: the works list face hydrates
-// only its list-capable include subset, so tags and credits are unreachable in
-// the page fetch that already ran. Reads are cached in-process and a work that
-// does not answer just renders without the extra lines.
+// One extra catalog read per page, on top of the fetch that built the cards —
+// only the lanes whose card actually prints the shelf should call it.
 func (h *CommonHandler) attachCardFacets(ctx context.Context, cards []enricher.GalgameCard, cl string) {
 	if h.galgame == nil || len(cards) == 0 {
 		return

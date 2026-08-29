@@ -20,8 +20,6 @@ var workDetailInclude = []string{
 // eight of work 3's eighty-three tags and leaves the page's 剧透 control dead.
 const spoilerMajor = "major"
 
-const spoilerNone = "none"
-
 type WorksQuery struct {
 	Q              string
 	Sort           string
@@ -195,24 +193,6 @@ func (c *Client) Calendar(ctx context.Context, month string, nsfw bool, cursor s
 	}
 	if out.Items == nil {
 		out.Items = []Work{}
-	}
-	return &out, nil
-}
-
-// The works LIST face hydrates only the list-capable include subset — titles,
-// intros, companies, ratings, covers, refs — so tags and credits are reachable
-// on the work itself and nowhere else. A card that wants them pays one read per
-// work; naming them on the list face is accepted and answers nothing.
-var workFacetInclude = []string{"tags", "credits"}
-
-func (c *Client) WorkFacets(ctx context.Context, id int64) (*Work, error) {
-	v := url.Values{}
-	v.Set("include", strings.Join(workFacetInclude, ","))
-	v.Set("spoiler", spoilerNone)
-	v.Set("nsfw", "true")
-	var out Work
-	if err := c.get(ctx, "/v2/catalog/works/"+FormatID(id)+"?"+v.Encode(), &out); err != nil {
-		return nil, err
 	}
 	return &out, nil
 }

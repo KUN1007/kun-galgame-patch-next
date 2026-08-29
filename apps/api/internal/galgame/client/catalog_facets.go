@@ -3,8 +3,8 @@ package client
 import (
 	"context"
 	"sort"
-	"sync"
-	"time"
+
+	"kun-galgame-patch-api/pkg/catalogv2"
 )
 
 // GalgameCardTag is one tag a list card prints. The id deep-links the tag page.
@@ -26,12 +26,13 @@ func (f GalgameFacet) empty() bool {
 }
 
 const (
-	facetTTL         = 6 * time.Hour
-	facetMaxEntries  = 20000
-	facetConcurrency = 8
-	facetStaffMax    = 2
-	facetTagMax      = 6
+	facetStaffMax = 2
+	facetTagMax   = 6
 )
+
+// Both blocks ride the works list face; asking for tags there answers the
+// spoiler=none ceiling, which is the one the shelf wants.
+var facetInclude = []string{"tags", "credits"}
 
 type facetTag struct {
 	id     int
@@ -43,39 +44,13 @@ type facetEntry struct {
 	scenario     []KunLanguage
 	illustration []KunLanguage
 	tags         []facetTag
-	at           time.Time
-}
-
-type facetCache struct {
-	mu sync.RWMutex
-	m  map[int64]facetEntry
-}
-
-func newFacetCache() *facetCache { return &facetCache{m: map[int64]facetEntry{}} }
-
-func (c *facetCache) get(id int64) (facetEntry, bool) {
-	c.mu.RLock()
-	e, ok := c.m[id]
-	c.mu.RUnlock()
-	if !ok || time.Since(e.at) > facetTTL {
-		return facetEntry{}, false
-	}
-	return e, true
-}
-
-func (c *facetCache) put(id int64, e facetEntry) {
-	e.at = time.Now()
-	c.mu.Lock()
-	defer c.mu.Unlock()
-	if len(c.m) >= facetMaxEntries {
-		c.m = make(map[int64]facetEntry, facetMaxEntries/4)
-	}
-	c.m[id] = e
 }
 
 // GalgameFacets answers the card facet for each gid it can reach. A facet is
 // decoration: a work catalog refuses or fails to answer for is simply absent
-// from the map, and the list it was built for still renders.
+// from the map, and the list it was built for still renders. Both gates stay
+// open — the caller already decided which works it may show, and this read only
+// distills their tags and credits.
 func (c *Client) GalgameFacets(ctx context.Context, gids []int, contentLimit string) map[int]GalgameFacet {
 	out := make(map[int]GalgameFacet, len(gids))
 	if c == nil || len(gids) == 0 {
@@ -86,25 +61,31 @@ func (c *Client) GalgameFacets(ctx context.Context, gids []int, contentLimit str
 		return out
 	}
 
-	entries := make(map[int64]facetEntry, len(byGID))
-	var missing []int64
+	ids := make([]int64, 0, len(byGID))
+	seen := make(map[int64]bool, len(byGID))
 	for _, id := range byGID {
-		if _, done := entries[id]; done {
-			continue
+		if !seen[id] {
+			seen[id] = true
+			ids = append(ids, id)
 		}
-		if e, ok := c.facets.get(id); ok {
-			entries[id] = e
-			continue
-		}
-		entries[id] = facetEntry{}
-		missing = append(missing, id)
+	}
+	page, err := c.v2.ListWorks(ctx, catalogv2.WorksQuery{
+		IDs: ids, NSFW: true, Include: facetInclude, Limit: CatalogWorksIDsMax,
+	})
+	if err != nil {
+		return out
 	}
 
-	if len(missing) > 0 {
-		fetched := c.fetchFacets(ctx, missing)
-		for id, e := range fetched {
-			entries[id] = e
+	entries := make(map[int64]facetEntry, len(page.Items))
+	for i := range page.Items {
+		id, ok := page.Items[i].IntID()
+		if !ok {
+			continue
 		}
+		entries[id] = facetFrom(catalogWork{
+			Tags:    workTags(page.Items[i]),
+			Credits: workCredits(page.Items[i]),
+		})
 	}
 
 	sexualOK := gateFor(contentLimit).contentLimit != "sfw"
@@ -113,32 +94,6 @@ func (c *Client) GalgameFacets(ctx context.Context, gids []int, contentLimit str
 			out[gid] = f
 		}
 	}
-	return out
-}
-
-func (c *Client) fetchFacets(ctx context.Context, ids []int64) map[int64]facetEntry {
-	out := make(map[int64]facetEntry, len(ids))
-	var mu sync.Mutex
-	var wg sync.WaitGroup
-	sem := make(chan struct{}, facetConcurrency)
-	for _, id := range ids {
-		wg.Add(1)
-		go func(id int64) {
-			defer wg.Done()
-			sem <- struct{}{}
-			defer func() { <-sem }()
-			w, err := c.v2.WorkFacets(ctx, id)
-			if err != nil {
-				return
-			}
-			e := facetFrom(workToDetail(*w))
-			c.facets.put(id, e)
-			mu.Lock()
-			out[id] = e
-			mu.Unlock()
-		}(id)
-	}
-	wg.Wait()
 	return out
 }
 

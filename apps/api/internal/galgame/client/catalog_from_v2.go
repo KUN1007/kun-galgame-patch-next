@@ -225,6 +225,52 @@ func coverToSlot(c *catalogv2.Cover) catalogCoverSlot {
 	}
 }
 
+func workTags(w catalogv2.Work) []catalogWorkTag {
+	if w.Tags == nil {
+		return nil
+	}
+	var out []catalogWorkTag
+	for _, t := range *w.Tags {
+		id, _ := catalogv2.ParseID(strOrEmpty(t.ID))
+		tier, kind := "", ""
+		if t.Tier != nil {
+			tier = *t.Tier
+		}
+		if t.TagKind != nil {
+			kind = *t.TagKind
+		}
+		out = append(out, catalogWorkTag{
+			Name: t.DisplayName, Source: t.Source, CanonicalID: id, Count: intOrZero(t.WorkCount),
+			Tier: tier, Kind: kind, Spoiler: spoilerInt(t.Spoiler), Sexual: t.IsSexual,
+		})
+	}
+	return out
+}
+
+func workCredits(w catalogv2.Work) []catalogCreditGroup {
+	if w.Credits == nil {
+		return nil
+	}
+	var out []catalogCreditGroup
+	for _, g := range *w.Credits {
+		group := catalogCreditGroup{RoleKey: g.RoleKey, RoleName: g.RoleName}
+		for _, e := range g.Credits {
+			id, _ := catalogv2.ParseID(e.ID)
+			cid, _ := catalogv2.ParseID(strOrEmpty(e.CharacterID))
+			group.Credits = append(group.Credits, catalogCreditItem{
+				catalogPersonRef: catalogPersonRef{
+					ID: id, DisplayName: e.DisplayName, Lang: strOrEmpty(e.Lang),
+					Latin: strOrEmpty(e.Latin), Localized: localizedFrom(e.Localized),
+				},
+				CharacterID: cid,
+				Character:   strOrEmpty(e.CharacterName),
+			})
+		}
+		out = append(out, group)
+	}
+	return out
+}
+
 func workToDetail(w catalogv2.Work) catalogWork {
 	item := workToListItem(w)
 	out := catalogWork{
@@ -279,22 +325,7 @@ func workToDetail(w catalogv2.Work) catalogWork {
 			})
 		}
 	}
-	if w.Tags != nil {
-		for _, t := range *w.Tags {
-			id, _ := catalogv2.ParseID(strOrEmpty(t.ID))
-			tier, kind := "", ""
-			if t.Tier != nil {
-				tier = *t.Tier
-			}
-			if t.TagKind != nil {
-				kind = *t.TagKind
-			}
-			out.Tags = append(out.Tags, catalogWorkTag{
-				Name: t.DisplayName, Source: t.Source, CanonicalID: id, Count: intOrZero(t.WorkCount),
-				Tier: tier, Kind: kind, Spoiler: spoilerInt(t.Spoiler), Sexual: t.IsSexual,
-			})
-		}
-	}
+	out.Tags = workTags(w)
 	if w.Characters != nil {
 		for i := range *w.Characters {
 			ch := &(*w.Characters)[i]
@@ -308,25 +339,7 @@ func workToDetail(w catalogv2.Work) catalogWork {
 			})
 		}
 	}
-	if w.Credits != nil {
-		for _, g := range *w.Credits {
-			group := catalogCreditGroup{RoleKey: g.RoleKey, RoleName: g.RoleName}
-			for _, e := range g.Credits {
-				id, _ := catalogv2.ParseID(e.ID)
-				cid, _ := catalogv2.ParseID(strOrEmpty(e.CharacterID))
-				latin := strOrEmpty(e.Latin)
-				group.Credits = append(group.Credits, catalogCreditItem{
-					catalogPersonRef: catalogPersonRef{
-						ID: id, DisplayName: e.DisplayName, Lang: strOrEmpty(e.Lang),
-						Latin: latin, Localized: localizedFrom(e.Localized),
-					},
-					CharacterID: cid,
-					Character:   strOrEmpty(e.CharacterName),
-				})
-			}
-			out.Credits = append(out.Credits, group)
-		}
-	}
+	out.Credits = workCredits(w)
 	if w.Series != nil {
 		for _, sr := range *w.Series {
 			id, _ := catalogv2.ParseID(sr.ID)

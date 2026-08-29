@@ -64,16 +64,14 @@ func upstreamError(resp *http.Response, code int, message string) *GalgameError 
 }
 
 type Client struct {
-	v2     *catalogv2.Client
-	gids   *gidMap
-	facets *facetCache
+	v2   *catalogv2.Client
+	gids *gidMap
 }
 
 func NewWithKey(baseURL, apiKey string) *Client {
 	return &Client{
-		v2:     catalogv2.New(baseURL, apiKey),
-		gids:   newGIDMap(),
-		facets: newFacetCache(),
+		v2:   catalogv2.New(baseURL, apiKey),
+		gids: newGIDMap(),
 	}
 }
 
