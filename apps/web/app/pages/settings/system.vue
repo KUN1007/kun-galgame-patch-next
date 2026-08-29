@@ -1,29 +1,15 @@
 <script setup lang="ts">
 import {
-  KUN_CONTENT_LIMIT_MAP,
-  KUN_CONTENT_LIMIT_OPTIONS
+  KUN_CONTENT_LIMIT_RADIO_OPTIONS,
+  KUN_THEME_OPTIONS
 } from '~/constants/top-bar'
-import type { KunNsfwPreference } from '~/stores/settingStore'
 
 useKunDisableSeo('系统设置')
 
 const route = useRoute()
 const settingStore = useSettingStore()
 
-const colorMode = useColorMode()
-const themes = [
-  { key: 'light', label: '浅色主题', icon: 'lucide:sun' },
-  { key: 'dark', label: '深色主题', icon: 'lucide:moon' },
-  { key: 'system', label: '跟随系统', icon: 'lucide:sun-moon' }
-] as const
-const setTheme = (key: 'light' | 'dark' | 'system') => {
-  colorMode.preference = key
-}
-
-const setNsfw = (key: KunNsfwPreference) => {
-  settingStore.setNsfwPreference(key)
-  if (import.meta.client) location.reload()
-}
+const { theme, contentLimit } = useKunDisplayPreference()
 
 const galgameListLayout = computed({
   get: () => settingStore.data.galgameListLayout ?? 'poster',
@@ -75,64 +61,41 @@ onMounted(() => {
     <div class="max-w-3xl space-y-6">
       <KunCard :bordered="true">
         <template #header>
-          <h2 class="px-1 pt-1 text-xl font-medium">主题</h2>
+          <h2 class="px-1 pt-1 text-xl font-medium">外观与内容</h2>
         </template>
-        <div class="space-y-2">
-          <p class="text-default-500 text-xs">选择网站的明暗主题</p>
-          <div
-            class="border-default/20 bg-default-50/40 grid grid-cols-2 gap-1 rounded-xl border p-1"
-          >
-            <KunButton
-              v-for="t in themes"
-              :key="t.key"
-              :variant="colorMode.preference === t.key ? 'flat' : 'light'"
-              :color="colorMode.preference === t.key ? 'primary' : 'default'"
+        <div class="space-y-5">
+          <div class="flex flex-wrap items-center justify-between gap-3">
+            <div class="min-w-0">
+              <p class="text-sm font-medium">主题</p>
+              <p class="text-default-500 text-xs">网站的明暗配色</p>
+            </div>
+            <KunRadioGroup
+              v-model="theme"
+              :options="KUN_THEME_OPTIONS"
+              variant="pill"
+              orientation="horizontal"
               size="sm"
-              full-width
-              rounded="lg"
-              class-name="flex-col gap-1 py-3"
-              :aria-label="`切换到${t.label}`"
-              @click="setTheme(t.key)"
-            >
-              <KunIcon :name="t.icon" class="size-5" />
-              <span class="text-xs">{{ t.label }}</span>
-            </KunButton>
+              aria-label="主题"
+              class-name="w-auto shrink-0"
+            />
           </div>
-        </div>
-      </KunCard>
 
-      <KunCard :bordered="true">
-        <template #header>
-          <h2 class="px-1 pt-1 text-xl font-medium">内容显示</h2>
-        </template>
-        <div class="space-y-2">
-          <p class="text-default-500 text-xs">
-            控制是否显示 R18 等成人内容（切换后会刷新页面以立即生效）
-          </p>
-          <div
-            class="border-default/20 bg-default-50/40 grid grid-cols-2 gap-1 rounded-xl border p-1"
-          >
-            <KunButton
-              v-for="opt in KUN_CONTENT_LIMIT_OPTIONS"
-              :key="opt.key"
-              :variant="
-                settingStore.data.kunNsfwEnable === opt.key ? 'flat' : 'light'
-              "
-              :color="
-                settingStore.data.kunNsfwEnable === opt.key
-                  ? 'primary'
-                  : 'default'
-              "
+          <div class="flex flex-wrap items-center justify-between gap-3">
+            <div class="min-w-0">
+              <p class="text-sm font-medium">内容显示</p>
+              <p class="text-default-500 text-xs">
+                是否显示 R18 等成人内容（切换后会刷新页面以立即生效）
+              </p>
+            </div>
+            <KunRadioGroup
+              v-model="contentLimit"
+              :options="KUN_CONTENT_LIMIT_RADIO_OPTIONS"
+              variant="pill"
+              orientation="horizontal"
               size="sm"
-              full-width
-              rounded="lg"
-              class-name="flex-col gap-1 py-3"
-              :aria-label="`切换内容模式: ${KUN_CONTENT_LIMIT_MAP[opt.key]}`"
-              @click="setNsfw(opt.key)"
-            >
-              <KunIcon :name="opt.icon" class="size-5" />
-              <span class="text-xs">{{ KUN_CONTENT_LIMIT_MAP[opt.key] }}</span>
-            </KunButton>
+              aria-label="内容显示"
+              class-name="w-auto shrink-0"
+            />
           </div>
         </div>
       </KunCard>

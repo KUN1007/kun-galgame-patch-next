@@ -57,6 +57,30 @@ export const KUN_CONTENT_LIMIT_OPTIONS = [
   { key: 'all', icon: 'lucide:circle-slash' }
 ] as const satisfies ReadonlyArray<{ key: KunNsfwPreference; icon: string }>
 
+// Radio-shaped view of the switch above, for the surfaces that render it as a
+// pill group (mobile menu, 系统设置) rather than a button list.
+export const KUN_CONTENT_LIMIT_RADIO_OPTIONS = KUN_CONTENT_LIMIT_OPTIONS.map(
+  (opt) => ({
+    value: opt.key,
+    label: KUN_CONTENT_LIMIT_LABEL[opt.key] ?? opt.key,
+    icon: opt.icon
+  })
+)
+
+export type KunThemePreference = 'light' | 'dark' | 'system'
+
+// Same reason as the content-limit list: the mobile menu and 系统设置 each had
+// their own copy, and the labels had already drifted (浅色 vs 浅色主题).
+export const KUN_THEME_OPTIONS = [
+  { value: 'light', label: '浅色', icon: 'lucide:sun' },
+  { value: 'dark', label: '深色', icon: 'lucide:moon' },
+  { value: 'system', label: '跟随系统', icon: 'lucide:sun-moon' }
+] as const satisfies ReadonlyArray<{
+  value: KunThemePreference
+  label: string
+  icon: string
+}>
+
 export interface KunTopBarCategoryItem {
   href: string
   label: string
