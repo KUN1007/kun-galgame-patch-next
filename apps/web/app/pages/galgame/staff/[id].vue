@@ -1,7 +1,6 @@
 <script setup lang="ts">
 import { GALGAME_STAFF_GENDER_MAP } from '~/constants/galgameEntity'
 import { imageServiceUrl } from '~/shared/utils/resolveBannerUrl'
-import { kunMoyuMoe } from '~/config/moyu-moe'
 
 defineOptions({ name: 'staff-detail' })
 
@@ -32,6 +31,11 @@ watch(data, (v) => {
 })
 
 const staff = computed(() => data.value?.detail ?? null)
+
+const works = useEntityWorks(
+  () => `/galgame/staff/${staffID.value}/works`,
+  staff
+)
 
 const name = computed(() => getPreferredLanguageText(staff.value?.name))
 const secondaryName = computed(() =>
@@ -68,16 +72,12 @@ const facts = computed(() => {
   return rows
 })
 
-const roleText = (credit: PatchStaffCredit) =>
-  credit.roles
+const roleText = (work: PatchEntityWork) =>
+  (work.roles ?? [])
     .map((r) =>
       r.character ? `${r.role_name}（${r.character}）` : r.role_name
     )
     .join(' · ')
-
-const kungalHref = computed(
-  () => `${kunMoyuMoe.domain.kungal}/galgame/staff/${staffID.value}`
-)
 
 if (staff.value) {
   useKunSeoMeta({
@@ -145,29 +145,6 @@ if (staff.value) {
         </div>
       </section>
 
-      <section v-if="staff.credits.length" class="mt-6 space-y-3">
-        <KunHeader name="参与作品" scale="h2" />
-        <ul class="space-y-1.5">
-          <li
-            v-for="(credit, index) in staff.credits"
-            :key="`${credit.galgame_id}-${index}`"
-            class="flex flex-wrap items-baseline gap-x-2 text-sm"
-          >
-            <NuxtLink
-              v-if="credit.galgame_id"
-              :to="`/patch/${credit.galgame_id}`"
-              class="text-default-800 hover:text-primary"
-            >
-              {{ getPreferredLanguageText(credit.name) }}
-            </NuxtLink>
-            <span v-else class="text-default-600">
-              {{ getPreferredLanguageText(credit.name) }}
-            </span>
-            <span class="text-default-400 text-xs">{{ roleText(credit) }}</span>
-          </li>
-        </ul>
-      </section>
-
       <section
         v-if="staff.links.length"
         class="mt-6 flex flex-wrap items-center gap-x-4 gap-y-2"
@@ -185,19 +162,41 @@ if (staff.value) {
         </a>
       </section>
 
-      <div class="mt-6">
-        <KunButton
-          :href="kungalHref"
-          target="_blank"
-          rel="noopener noreferrer"
-          variant="flat"
-          color="primary"
-          size="sm"
-        >
-          在鲲 Galgame 查看完整资料
-          <KunIcon name="lucide:arrow-right" />
-        </KunButton>
-      </div>
+      <section class="mt-8 space-y-4">
+        <KunHeader
+          name="参与作品"
+          description="该制作人员参与的 Galgame, 资料来自 鲲 Galgame 目录"
+          scale="h2"
+        />
+
+        <KunNull
+          v-if="!works.items.value.length"
+          description="暂无该制作人员参与的 Galgame"
+        />
+
+        <GalgameList v-else :items="works.items.value">
+          <template #meta="{ item }">
+            <p
+              v-if="item.roles?.length"
+              class="text-default-500 mt-1 line-clamp-2 text-xs"
+              :title="roleText(item)"
+            >
+              {{ roleText(item) }}
+            </p>
+          </template>
+        </GalgameList>
+
+        <div v-if="works.hasMore.value" class="flex justify-center">
+          <KunButton
+            variant="flat"
+            color="primary"
+            :is-loading="works.isLoading.value"
+            @click="works.loadMore"
+          >
+            加载更多作品
+          </KunButton>
+        </div>
+      </section>
     </template>
   </div>
 </template>

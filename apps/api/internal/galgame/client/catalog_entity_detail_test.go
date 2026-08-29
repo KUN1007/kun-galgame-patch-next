@@ -126,28 +126,26 @@ func TestProdNameCreditsFoldOneRolePerJob(t *testing.T) {
 		t.Fatal("no credits")
 	}
 
-	credits := make([]GalgameStaffCredit, 0, len(page.Items))
+	credits := make([][]GalgameStaffRole, 0, len(page.Items))
 	for i := range page.Items {
-		it := workToListItem(page.Items[i].Work)
-		credits = append(credits, staffCreditRow(&it, page.Items[i].Roles))
+		credits = append(credits, staffRoles(page.Items[i].Roles))
 	}
 
-	for _, credit := range credits {
-		seen := make(map[string]bool, len(credit.Roles))
-		for _, role := range credit.Roles {
+	for i, roles := range credits {
+		seen := make(map[string]bool, len(roles))
+		for _, role := range roles {
 			key := role.RoleKey + "\x00" + role.Character
 			if seen[key] {
-				t.Errorf("%s repeats %q: %+v", credit.Name.canonical(), role.RoleName, credit.Roles)
+				t.Errorf("credit[%d] repeats %q: %+v", i, role.RoleName, roles)
 			}
 			seen[key] = true
 		}
 	}
-	first := credits[0]
-	if first.GalgameID == 0 {
-		t.Errorf("credit[0] = %+v, want the kungal claim read as a moyu galgame id", first)
+	if it := workToListItem(page.Items[0].Work); it.publicGID() == 0 {
+		t.Errorf("credit[0] = %+v, want the kungal claim read as a moyu galgame id", it)
 	}
-	if len(first.Roles) != 2 || first.Roles[0].RoleKey != "scenario" {
-		t.Errorf("roles = %+v, want 脚本 before the other-staff catch-all", first.Roles)
+	if first := credits[0]; len(first) != 2 || first[0].RoleKey != "scenario" {
+		t.Errorf("roles = %+v, want 脚本 before the other-staff catch-all", first)
 	}
 }
 

@@ -167,6 +167,8 @@ const typeBadges = computed(() => {
         {{ releaseDate }} 发售
       </p>
 
+      <slot name="meta" />
+
       <div
         v-if="makerName || !isNoPatch"
         class="text-default-500 mt-auto flex min-w-0 items-center gap-1.5 pt-1.5 text-xs"

@@ -450,6 +450,19 @@ func CardFromBrief(g *galgameClient.GalgameBrief) GalgameCard {
 	return card
 }
 
+// CardFromBriefAndPatch draws one catalog work as the card the site draws.
+// That card reads count.resource / view / download / type off the moyu patch
+// row, so a work with a local row must be given it: from the brief alone every
+// such work renders as 暂无补丁.
+func CardFromBriefAndPatch(g *galgameClient.GalgameBrief, p *patchModel.Patch) GalgameCard {
+	if p == nil {
+		return CardFromBrief(g)
+	}
+	card := baseCard(p)
+	applyGalgame(&card, g)
+	return card
+}
+
 type CalendarCard struct {
 	GalgameCard
 	HasPatch   bool   `json:"has_patch"`
@@ -466,11 +479,11 @@ func EnrichCalendarBriefs(briefs []galgameClient.GalgameBrief, patches map[int]p
 	cards := make([]CalendarCard, 0, len(briefs))
 	for i := range briefs {
 		p, onSite := patches[briefs[i].ID]
-		card := CardFromBrief(&briefs[i])
+		var local *patchModel.Patch
 		if onSite {
-			card = baseCard(&p)
-			applyGalgame(&card, &briefs[i])
+			local = &p
 		}
+		card := CardFromBriefAndPatch(&briefs[i], local)
 		cards = append(cards, CalendarCard{
 			GalgameCard: card,
 			HasPatch:    p.ResourceCount > 0,

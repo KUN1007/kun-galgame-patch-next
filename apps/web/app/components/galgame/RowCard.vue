@@ -180,6 +180,8 @@ const NARROW_TAG_LIMIT = 3
         </span>
       </div>
 
+      <slot name="meta" />
+
       <div v-if="staffLines.length" class="space-y-0.5 text-xs">
         <p v-for="line in staffLines" :key="line.label" class="flex gap-1.5">
           <span class="text-default-400 shrink-0">{{ line.label }}</span>

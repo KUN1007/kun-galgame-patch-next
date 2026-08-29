@@ -5,12 +5,11 @@ import (
 	"net/url"
 	"slices"
 	"sort"
+	"strconv"
 	"strings"
 
 	"kun-galgame-patch-api/pkg/catalogv2"
 )
-
-const catalogStaffCreditsCap = 24
 
 // Source is the site the text came from, already rendered for display — the
 // modal prints it as "资料来自 X".
@@ -35,26 +34,26 @@ type GalgameCharacterTrait struct {
 }
 
 type GalgameCharacterDetail struct {
-	ID         int                     `json:"id"`
-	Name       KunLanguage             `json:"name"`
-	Aliases    []string                `json:"aliases"`
-	ImageHash  string                  `json:"image_hash,omitempty"`
-	FigureHash string                  `json:"figure_hash,omitempty"`
-	Intros     []GalgameEntityIntro    `json:"intros"`
-	Traits     []GalgameCharacterTrait `json:"traits"`
-	Links      []GalgameEntityLink     `json:"links"`
+	ID         int         `json:"id"`
+	Name       KunLanguage `json:"name"`
+	Aliases    []string    `json:"aliases"`
+	ImageHash  string      `json:"image_hash,omitempty"`
+	FigureHash string      `json:"figure_hash,omitempty"`
+	Gender     int         `json:"gender,omitempty"`
+	// A character birthday carries no year — catalog publishes MM-DD — so the
+	// two parts travel apart rather than as a date the frontend would have to
+	// invent a year for.
+	BirthM int                     `json:"birth_m,omitempty"`
+	BirthD int                     `json:"birth_d,omitempty"`
+	Intros []GalgameEntityIntro    `json:"intros"`
+	Traits []GalgameCharacterTrait `json:"traits"`
+	Links  []GalgameEntityLink     `json:"links"`
 }
 
 type GalgameStaffRole struct {
 	RoleKey   string `json:"role_key"`
 	RoleName  string `json:"role_name"`
 	Character string `json:"character,omitempty"`
-}
-
-type GalgameStaffCredit struct {
-	GalgameID int                `json:"galgame_id"`
-	Name      KunLanguage        `json:"name"`
-	Roles     []GalgameStaffRole `json:"roles"`
 }
 
 type GalgameStaffDetail struct {
@@ -69,7 +68,6 @@ type GalgameStaffDetail struct {
 	Siblings  []GalgamePersonRef   `json:"siblings"`
 	Intros    []GalgameEntityIntro `json:"intros"`
 	Links     []GalgameEntityLink  `json:"links"`
-	Credits   []GalgameStaffCredit `json:"credits"`
 }
 
 func (c *Client) GetCharacter(ctx context.Context, id int, contentLimit string) (*GalgameCharacterDetail, error) {
@@ -87,36 +85,11 @@ func (c *Client) GetStaff(ctx context.Context, id int) (*GalgameStaffDetail, err
 		return nil, catalogErr(err)
 	}
 	out := catalogNameToDetail(n)
-	// The works this name is credited on hang off their own cursor-paged
-	// sub-face, and that face applies the population gate itself rather than
-	// inheriting the parent's — asking without nsfw cuts every r18 credit off
-	// the roster.
-	page, err := c.v2.CreditNameCredits(ctx, int64(id), true, "", catalogStaffCreditsCap)
-	if err != nil {
-		return &out, nil
-	}
-	for i := range page.Items {
-		credit := &page.Items[i]
-		it := workToListItem(credit.Work)
-		if !it.ClaimedBy.renderable() {
-			continue
-		}
-		out.Credits = append(out.Credits, staffCreditRow(&it, credit.Roles))
-	}
 	return &out, nil
 }
 
-func staffCreditRow(it *catalogWorkListItem, roles []catalogv2.NameCreditRole) GalgameStaffCredit {
-	ja, zhCN, zhTW, en := namesOf(it.Localized)
-	name := KunLanguage{EnUs: en, JaJp: ja, ZhCn: zhCN, ZhTw: zhTW}
-	if name.canonical() == "" {
-		name.JaJp = it.DisplayName
-	}
-	row := GalgameStaffCredit{
-		GalgameID: it.publicGID(),
-		Name:      name,
-		Roles:     make([]GalgameStaffRole, 0, len(roles)),
-	}
+func staffRoles(roles []catalogv2.NameCreditRole) []GalgameStaffRole {
+	out := make([]GalgameStaffRole, 0, len(roles))
 	// A person credited for the same job by two sources arrives as two rows
 	// under two vocabulary keys, which the fold turns into "脚本 · 脚本".
 	seen := make(map[string]bool, len(roles))
@@ -127,12 +100,12 @@ func staffCreditRow(it *catalogWorkListItem, roles []catalogv2.NameCreditRole) G
 			continue
 		}
 		seen[key+"\x00"+character] = true
-		row.Roles = append(row.Roles, GalgameStaffRole{RoleKey: key, RoleName: roleName, Character: character})
+		out = append(out, GalgameStaffRole{RoleKey: key, RoleName: roleName, Character: character})
 	}
-	sort.SliceStable(row.Roles, func(i, j int) bool {
-		return catalogRoleWeight(row.Roles[i].RoleKey) < catalogRoleWeight(row.Roles[j].RoleKey)
+	sort.SliceStable(out, func(i, j int) bool {
+		return catalogRoleWeight(out[i].RoleKey) < catalogRoleWeight(out[j].RoleKey)
 	})
-	return row
+	return out
 }
 
 func genderInt(g *string) int {
@@ -159,10 +132,12 @@ func catalogCharacterToDetail(ch *catalogv2.Character, hideSexual bool) GalgameC
 		Aliases:    catalogAliasValues(aliasRowsFrom(ch.Aliases)),
 		ImageHash:  imageHash(ch.Image),
 		FigureHash: imageHash(ch.Figure),
+		Gender:     genderInt(ch.Gender),
 		Intros:     catalogIntros(introRowsFrom(ch.Intros)),
 		Traits:     make([]GalgameCharacterTrait, 0, len(ch.Traits)),
 		Links:      catalogRefLinks(refRowsFrom(ch.Refs), catalogCharacterPage),
 	}
+	out.BirthM, out.BirthD = monthDay(strOrEmpty(ch.Birthday))
 	for i := range ch.Traits {
 		t := &ch.Traits[i]
 		if hideSexual && t.IsSexual {
@@ -200,7 +175,6 @@ func catalogNameToDetail(n *catalogv2.CreditName) GalgameStaffDetail {
 		Siblings:  make([]GalgamePersonRef, 0, len(n.Siblings)),
 		Intros:    catalogIntros(introRowsFrom(n.Intros)),
 		Links:     catalogRefLinks(refRowsFrom(n.Refs), catalogStaffPage),
-		Credits:   []GalgameStaffCredit{},
 	}
 	for _, s := range personRefsFrom(n.Siblings) {
 		if name := s.names(); name.canonical() != "" {
@@ -313,4 +287,18 @@ func linkHost(rawURL string) string {
 		return ""
 	}
 	return strings.TrimPrefix(u.Hostname(), "www.")
+}
+
+// A character birthday is "MM-DD" with no year at all, so this parses two parts
+// and not a date.
+func monthDay(s string) (int, int) {
+	if len(s) != 5 || s[2] != '-' {
+		return 0, 0
+	}
+	m, merr := strconv.Atoi(s[:2])
+	d, derr := strconv.Atoi(s[3:])
+	if merr != nil || derr != nil {
+		return 0, 0
+	}
+	return m, d
 }

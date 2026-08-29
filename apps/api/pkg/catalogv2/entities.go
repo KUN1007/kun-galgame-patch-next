@@ -59,6 +59,16 @@ type NameCreditRole struct {
 	CharacterName *string `json:"character_name"`
 }
 
+// An Appearance reaches a work through a roster row OR through a voice credit.
+// Reached the second way there is no roster row to read, so roster_role is
+// "unknown" and spoiler "none" — absence of a strength, not a weak one.
+type Appearance struct {
+	Work       Work         `json:"work"`
+	RosterRole string       `json:"roster_role"`
+	Spoiler    string       `json:"spoiler"`
+	Voices     []CreditName `json:"voices"`
+}
+
 type Character struct {
 	ID          string                   `json:"id"`
 	DisplayName string                   `json:"display_name"`
@@ -170,6 +180,10 @@ func (c *Client) GetCharacter(ctx context.Context, id int64, nsfw bool) (*Charac
 		return nil, err
 	}
 	return &out, nil
+}
+
+func (c *Client) CharacterAppearances(ctx context.Context, id int64, nsfw bool, cursor string, limit int) (*List[Appearance], error) {
+	return getPaged[Appearance](ctx, c, "/v2/catalog/characters/"+FormatID(id)+"/appearances", nsfw, cursor, limit)
 }
 
 func (c *Client) GetSeries(ctx context.Context, id int64, nsfw bool) (*Series, error) {

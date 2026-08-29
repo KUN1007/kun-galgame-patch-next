@@ -1,6 +1,10 @@
 <script setup lang="ts">
+import {
+  GALGAME_CHARACTER_KIND_MAP,
+  GALGAME_CHARACTER_SPOILER_MAP,
+  GALGAME_STAFF_GENDER_MAP
+} from '~/constants/galgameEntity'
 import { imageServiceUrl } from '~/shared/utils/resolveBannerUrl'
-import { kunMoyuMoe } from '~/config/moyu-moe'
 
 defineOptions({ name: 'character-detail' })
 
@@ -31,6 +35,11 @@ watch(data, (v) => {
 })
 
 const character = computed(() => data.value?.detail ?? null)
+
+const works = useEntityWorks(
+  () => `/galgame/character/${characterID.value}/works`,
+  character
+)
 
 const name = computed(() => getPreferredLanguageText(character.value?.name))
 const secondaryName = computed(() =>
@@ -78,9 +87,20 @@ const traitGroups = computed(() => {
   return groups
 })
 
-const kungalHref = computed(
-  () => `${kunMoyuMoe.domain.kungal}/galgame/character/${characterID.value}`
-)
+const facts = computed(() => {
+  const c = character.value
+  if (!c) return []
+  const rows: string[] = []
+  const gender = c.gender
+  if (gender && GALGAME_STAFF_GENDER_MAP[gender]) {
+    rows.push(GALGAME_STAFF_GENDER_MAP[gender])
+  }
+  if (c.birth_m && c.birth_d) rows.push(`生日 ${c.birth_m} 月 ${c.birth_d} 日`)
+  return rows
+})
+
+const voicesOf = (work: PatchEntityWork) =>
+  (work.voices ?? []).map((v) => getPreferredLanguageText(v.name)).join(' / ')
 
 if (character.value) {
   useKunSeoMeta({
@@ -159,6 +179,9 @@ if (character.value) {
             <p v-if="secondaryName" class="text-default-400 text-sm">
               {{ secondaryName }}
             </p>
+            <p v-if="facts.length" class="text-default-500 text-sm">
+              {{ facts.join(' · ') }}
+            </p>
             <p v-if="aliases.length" class="text-default-500 text-sm">
               别名 {{ aliases.join(' / ') }}
             </p>
@@ -221,22 +244,54 @@ if (character.value) {
               <KunIcon name="lucide:external-link" class="inline size-3" />
             </a>
           </div>
-
-          <div>
-            <KunButton
-              :href="kungalHref"
-              target="_blank"
-              rel="noopener noreferrer"
-              variant="flat"
-              color="primary"
-              size="sm"
-            >
-              在鲲 Galgame 查看完整资料
-              <KunIcon name="lucide:arrow-right" />
-            </KunButton>
-          </div>
         </div>
       </div>
+
+      <section class="mt-8 space-y-4">
+        <KunHeader
+          name="登场作品"
+          description="该角色登场的 Galgame, 资料来自 鲲 Galgame 目录"
+          scale="h2"
+        />
+
+        <KunNull
+          v-if="!works.items.value.length"
+          description="暂无该角色登场的 Galgame"
+        />
+
+        <GalgameList v-else :items="works.items.value">
+          <template #meta="{ item }">
+            <div class="mt-1 space-y-0.5 text-xs">
+              <p v-if="item.voices?.length" class="text-default-500 truncate">
+                CV {{ voicesOf(item) }}
+              </p>
+              <p v-if="item.spoiler" class="text-warning">
+                {{ GALGAME_CHARACTER_SPOILER_MAP[item.spoiler] }}
+              </p>
+              <p
+                v-else-if="
+                  item.roster_role &&
+                  GALGAME_CHARACTER_KIND_MAP[item.roster_role]
+                "
+                class="text-default-400"
+              >
+                {{ GALGAME_CHARACTER_KIND_MAP[item.roster_role] }}
+              </p>
+            </div>
+          </template>
+        </GalgameList>
+
+        <div v-if="works.hasMore.value" class="flex justify-center">
+          <KunButton
+            variant="flat"
+            color="primary"
+            :is-loading="works.isLoading.value"
+            @click="works.loadMore"
+          >
+            加载更多作品
+          </KunButton>
+        </div>
+      </section>
     </template>
   </div>
 </template>

@@ -92,9 +92,19 @@ func (a *App) RegisterRoutes() {
 		a.CommonHandler.GetGalgameCharacter,
 	)
 	api.Get(
+		"/galgame/character/:id/works",
+		middleware.RateLimit(a.RDB, "galgame-entity", 120, time.Minute),
+		a.CommonHandler.GetGalgameCharacterWorks,
+	)
+	api.Get(
 		"/galgame/staff/:id",
 		middleware.RateLimit(a.RDB, "galgame-entity", 120, time.Minute),
 		a.CommonHandler.GetGalgameStaff,
+	)
+	api.Get(
+		"/galgame/staff/:id/works",
+		middleware.RateLimit(a.RDB, "galgame-entity", 120, time.Minute),
+		a.CommonHandler.GetGalgameStaffWorks,
 	)
 	api.Get("/galgame/mine", auth, a.PatchHandler.ListMyGalgames)
 	api.Get("/galgame/search/publish", auth, a.PatchHandler.SearchGalgameForPublish)

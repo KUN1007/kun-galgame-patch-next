@@ -247,25 +247,45 @@ interface PatchCharacterTrait {
   lie: boolean
 }
 
-interface PatchCharacterDetail {
+interface PatchStaffRole {
+  role_key: string
+  role_name: string
+  character?: string
+}
+
+// One work an entity is attached to. It IS a galgame card — the same one every
+// list on the site draws — carrying the facts of the attachment beside it:
+// roster_role / spoiler / voices for a character, roles for a credit name.
+interface PatchEntityWork extends GalgameCard {
+  roster_role?: string
+  spoiler?: number
+  voices?: PatchDetailPerson[]
+  roles?: PatchStaffRole[]
+}
+
+// next_cursor is catalog's own opaque cursor, absent on the last page. It is
+// never built here — only echoed back to /works.
+interface PatchEntityWorkPage {
+  works: PatchEntityWork[]
+  next_cursor?: string
+}
+
+interface PatchCharacterDetail extends PatchEntityWorkPage {
   id: number
   name: KunLanguage
   aliases: string[]
   image_hash?: string
   figure_hash?: string
+  gender?: number
+  // A character birthday has no year: catalog publishes MM-DD.
+  birth_m?: number
+  birth_d?: number
   intros: PatchEntityIntro[]
   traits: PatchCharacterTrait[]
   links: PatchEntityLink[]
 }
 
-interface PatchStaffCredit {
-  // 0 when no moyu galgame stands on that catalog work, which is most of them.
-  galgame_id: number
-  name: KunLanguage
-  roles: { role_key: string; role_name: string; character?: string }[]
-}
-
-interface PatchStaffDetail {
+interface PatchStaffDetail extends PatchEntityWorkPage {
   id: number
   name: KunLanguage
   aliases: string[]
@@ -277,7 +297,6 @@ interface PatchStaffDetail {
   siblings: PatchDetailPerson[]
   intros: PatchEntityIntro[]
   links: PatchEntityLink[]
-  credits: PatchStaffCredit[]
 }
 
 interface PatchDetailRatingBucket {
