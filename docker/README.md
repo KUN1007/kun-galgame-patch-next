@@ -2,7 +2,7 @@
 
 moyu is a **downstream** patch site. Its containers (`api`, `web`) are
 stateless; the backing services (Postgres / Redis) and upstreams (oauth /
-galgame-wiki / image_service / MinIO) are **owned by the kun-galgame-infra stack**.
+galgame-wiki / image_service / MinIO) are **owned by the nextmoe-infra stack**.
 This setup mirrors infra's `docker/` conventions one-for-one.
 
 ## Layout
@@ -22,7 +22,7 @@ moyu does not own infra, so bring **infra** up first (it creates the shared
 network `kun-galgame-infra_default` + Postgres/Redis/oauth/galgame/image):
 
 ```bash
-# 1) in kun-galgame-infra: start shared infra + upstreams (see its docker/README)
+# 1) in nextmoe-infra: start shared infra + upstreams (see its docker/README)
 #    docker compose up -d postgres redis minio meili oauth image galgame
 # 2) here:
 cp docker/api.env.example docker/api.env && $EDITOR docker/api.env   # fill secrets

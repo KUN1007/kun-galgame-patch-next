@@ -2,7 +2,7 @@
 #
 # Stateless api + web only. The backing services (Postgres / Redis) and the
 # upstreams (oauth / galgame-wiki / image_service / MinIO) are OWNED BY the
-# kun-galgame-infra stack. moyu connects to them by service name on infra's
+# nextmoe-infra stack. moyu connects to them by service name on infra's
 # network. See docker/README.md.
 #
 # Run one of:

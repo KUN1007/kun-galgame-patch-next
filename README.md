@@ -48,7 +48,7 @@
 
 ### 依赖的外部服务（不在本仓库内）
 
-本项目是 [`kun-galgame-infra`](https://nav.kungal.org) 基础设施（infra）的**下游应用**，自身不拥有任何有状态服务，运行时按服务名连接 infra 提供的上游：
+本项目是 [`nextmoe-infra`](https://nav.kungal.org) 基础设施（infra）的**下游应用**，自身不拥有任何有状态服务，运行时按服务名连接 infra 提供的上游：
 
 | 服务 | 默认端口 | 职责 |
 | --- | --- | --- |
@@ -67,15 +67,15 @@
 
 > **一条命令起本地平台。** 整套 nextmoe 平台（OAuth / image / galgame-wiki /
 > catalog / community / trust + MinIO / Mailpit / Meili / Redis）由
-> `kun-galgame-infra` 一键拉起,所以上手只需三步:
+> `nextmoe-infra` 一键拉起,所以上手只需三步:
 >
-> 1. `cd ../kun-galgame-infra && docker compose -f docker-compose.dev.yml up -d`
+> 1. `cd ../nextmoe-infra && docker compose -f docker-compose.dev.yml up -d`
 > 2. (可选) `./scripts/refresh-dev-db.sh` —— 真实形状的脱敏数据
 > 3. 回到本仓: `cp apps/api/.env.example apps/api/.env`(以及 web 那份),`pnpm dev`
 >
 > 仓库内的 `.env.example` 已对齐该 dev 栈(127.0.0.1 + 生产同款端口 + 公开 dev
 > OAuth 凭据)。详见
-> [`kun-galgame-infra/docs/dev-environment.md`](../kun-galgame-infra/docs/dev-environment.md)。
+> [`nextmoe-infra/docs/dev-environment.md`](../nextmoe-infra/docs/dev-environment.md)。
 
 ### 安装与启动
 
