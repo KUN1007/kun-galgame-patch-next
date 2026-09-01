@@ -40,7 +40,7 @@ export const kunMoyuMoe: KunSiteConfig = {
   },
   domain: {
     main: 'https://www.moyu.moe',
-    // The shared image_service CDN (kun-galgame-infra's KUN_IMAGE_PUBLIC_BASE_URL).
+    // The shared image_service CDN (nextmoe-infra's KUN_IMAGE_PUBLIC_BASE_URL).
     // MUST equal the backend's KUN_IMAGE_CDN_BASE so both sides build identical
     // {imageBed}/aa/bb/<hash>[_variant].webp URLs (image_service object-key layout).
     imageBed: 'https://image.kungal.iloveren.link',

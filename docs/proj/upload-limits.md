@@ -175,7 +175,7 @@ Fiber 全局 `BodyLimit = 10 MB`（`internal/app/app.go:185`）约束的是**请
 - **图片** = multipart 表单 POST 到 API，API 再转发 image_service → 受 10 MB 约束（也正好对齐 image_service 的预期）。
 - **补丁资源文件** = 客户端拿 presigned URL **直接 PUT 到对象存储**，字节流**根本不经过 API**，所以与 `BodyLimit` 无关；API 只在前后用小 JSON 请求处理 init/complete（声明大小、s3_key、ETag 列表等，都是 KB 级）。
 
-> 仓库内**没有**自定义 nginx / 反向代理体积限制；生产体积约束继承自 kun-galgame-infra 栈。若未来在 infra 前置代理加 `client_max_body_size`，需保证 ≥ 10 MB 否则图片上传会在代理层被截。
+> 仓库内**没有**自定义 nginx / 反向代理体积限制；生产体积约束继承自 nextmoe-infra 栈。若未来在 infra 前置代理加 `client_max_body_size`，需保证 ≥ 10 MB 否则图片上传会在代理层被截。
 
 ---
 
