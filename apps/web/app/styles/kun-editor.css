@@ -38,6 +38,29 @@
   word-wrap: break-word;
 }
 
+/* editor.css:85's `.milkdown img` (my-6 + border) and Tailwind's preflight
+ * (`img { display: block }`) both land on the 0x0 separator img ProseMirror
+ * appends after an inline atom, so it became a block box: deleting an `@name`
+ * or `#3` chip dropped the trailing <br> and the caret onto a new line (24px ->
+ * 48px paragraph, then back), and on Android the same frame closed and reopened
+ * the keyboard. Structural rule required of any host that writes its own
+ * stylesheet instead of importing @kungal/editor-nuxt/editor.css. */
+.kun-editor__wysiwyg img.ProseMirror-separator {
+  display: inline !important;
+  width: 0 !important;
+  height: 0 !important;
+  margin: 0 !important;
+  padding: 0 !important;
+  border: none !important;
+}
+
+/* editor-core paints the being-edited `||spoiler||` chip from currentColor so it
+ * reads as hidden with no design tokens at all; this points it at the muted
+ * surface the rest of the chrome uses. Raw triplet, not `var(--color-*)`. */
+.kun-editor__wysiwyg .kun-spoiler {
+  --kun-spoiler-bg: oklch(var(--default-200));
+}
+
 .kun-editor__placeholder {
   position: relative;
 }
