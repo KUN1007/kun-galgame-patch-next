@@ -124,19 +124,26 @@ const totalPage = computed(() =>
     <SearchSkeleton v-if="pending && !groups.length" shape="entity" />
 
     <template v-else>
-      <KunLoading :loading="pending">
-        <div class="space-y-5">
-          <SearchEntityGroup
-            v-for="group in groups"
-            :key="group.family"
-            :group="group"
-            :keywords="keywords"
-            :show-header="isAll"
-            :show-cap="isAll"
-            @open="setFamily"
-          />
-        </div>
-      </KunLoading>
+      <!--
+        KunLoading's wrapper is display:contents, which generates no box — so
+        the space-y margin lands on nothing and the last group sits flush
+        against the paginator.
+      -->
+      <div>
+        <KunLoading :loading="pending">
+          <div class="space-y-5">
+            <SearchEntityGroup
+              v-for="group in groups"
+              :key="group.family"
+              :group="group"
+              :keywords="keywords"
+              :show-header="isAll"
+              :show-cap="isAll"
+              @open="setFamily"
+            />
+          </div>
+        </KunLoading>
+      </div>
 
       <KunNull v-if="failed" description="资料库搜索没能完成, 请稍后重试" />
       <KunNull v-else-if="isEmpty" description="资料库里没有找到匹配的条目" />

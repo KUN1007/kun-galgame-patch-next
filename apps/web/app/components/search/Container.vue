@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { isSearchType } from './items'
+import { SEARCH_FILTER_QUERY_KEYS, isSearchType } from './items'
 
 const route = useRoute()
 const router = useRouter()
@@ -35,15 +35,18 @@ const setKeywords = (value: string) => {
   router.replace({ query })
 }
 
+// A lane's filters are that lane's own: 资料库's family, 补丁资源's match scope
+// and Galgame's 高级筛选 all mean nothing to the tab being opened.
 const setType = (value: SearchType) => {
   if (value === currentType.value) {
     return
   }
-  const query = { ...route.query }
+  const query = Object.fromEntries(
+    Object.entries(route.query).filter(
+      ([key]) => !SEARCH_FILTER_QUERY_KEYS.includes(key)
+    )
+  )
   query.type = value
-  if (value !== 'entity') {
-    delete query.family
-  }
   router.replace({ query })
 }
 
@@ -102,7 +105,8 @@ watch(
       <template #endContent>
         <div class="text-default-500 text-sm">
           搜索结果一并包含 NSFW 的 Galgame; 未开启 NSFW 时, 资料库中的成人标签,
-          以及 R18 游戏的补丁资源会被隐藏。按标签 / 会社 / 发售年份精确筛选请前往
+          以及 R18 游戏的补丁资源会被隐藏。Galgame 可按会社 / 标签 / 发售年份进一步筛选,
+          补丁资源可以只按 AI 模型名匹配。不带关键词浏览请前往
           <KunLink to="/gallib">Galgame 资料库</KunLink>。
         </div>
       </template>

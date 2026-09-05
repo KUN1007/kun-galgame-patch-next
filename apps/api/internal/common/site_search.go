@@ -36,6 +36,10 @@ const (
 
 	// The ceiling on how many games one keyword can pull resources in by.
 	searchResourceGalgameIDs = 60
+
+	// The 补丁资源 lane's narrow match: the AI model the uploader recorded, and
+	// nothing else.
+	searchScopeModel = "model"
 )
 
 type searchUserItem struct {
@@ -112,7 +116,7 @@ func (h *CommonHandler) runSearchLanes(
 	}
 
 	run("galgame", func() {
-		cards, total, appErr := h.searchGalgameLane(ctx, raw, 1, lim.galgame)
+		cards, total, appErr := h.searchGalgameLane(ctx, raw, 1, lim.galgame, galgameSearchFilter{})
 		if appErr != nil {
 			slog.Warn("站内搜索 galgame lane 失败", "error", appErr.Message)
 			return
@@ -133,7 +137,7 @@ func (h *CommonHandler) runSearchLanes(
 		})
 	}
 	run("resource", func() {
-		rows, total, appErr := h.searchResourceLane(ctx, raw, 1, lim.resource, cl)
+		rows, total, appErr := h.searchResourceLane(ctx, raw, 1, lim.resource, cl, "")
 		if appErr != nil {
 			slog.Warn("站内搜索 resource lane 失败", "error", appErr.Message)
 			return
@@ -153,11 +157,24 @@ func (h *CommonHandler) runSearchLanes(
 	return out
 }
 
+// galgameSearchFilter is what the 高级筛选 panel adds to a keyword. Catalog keeps
+// company_id / tag_id / released_* live on the search index, so a filtered
+// search is the same single request an unfiltered one is. There is no rating
+// here because the index carries no rating attribute: filtering or sorting by
+// 评分 is an infra change, not a parameter this side can add.
+type galgameSearchFilter struct {
+	TagIDs       []int
+	CompanyID    int
+	ReleasedFrom int
+	ReleasedTo   int
+	Sort         string
+}
+
 // searchGalgameLane names every game the catalog holds, NSFW included: what a
 // reader's gate hides is the download, not the title, and /patch/:id runs its
 // own gate when a card is opened. kungal's search page draws the same line.
 func (h *CommonHandler) searchGalgameLane(
-	ctx context.Context, raw string, page, limit int,
+	ctx context.Context, raw string, page, limit int, f galgameSearchFilter,
 ) ([]enricher.GalgameCard, int64, *errors.AppError) {
 	if h.galgame == nil {
 		return nil, 0, errors.ErrInternal("Galgame 目录未启用")
@@ -167,6 +184,11 @@ func (h *CommonHandler) searchGalgameLane(
 		ContentLimit: utils.ContentLimitAll,
 		Page:         page,
 		Limit:        limit,
+		Sort:         f.Sort,
+		TagIDs:       f.TagIDs,
+		OfficialIDs:  companyIDs(f.CompanyID),
+		ReleasedFrom: f.ReleasedFrom,
+		ReleasedTo:   f.ReleasedTo,
 	})
 	if err != nil {
 		if gerr, ok := galgameClient.AsBadRequest(err); ok {
@@ -184,20 +206,33 @@ func (h *CommonHandler) searchGalgameLane(
 	return overlayCatalogHits(res.Items, h.localPatchMap(ids), ""), res.Total, nil
 }
 
+func companyIDs(id int) []int {
+	if id <= 0 {
+		return nil
+	}
+	return []int{id}
+}
+
 // searchResourceLane matches a resource through what its uploader typed and
 // through the game it hangs off. The second half arrives as galgame ids because
 // moyu keeps no local copy of a title, and it is what makes this lane useful at
 // all: on a patch site "搜索资源" almost always means "找某个游戏的补丁".
+//
+// searchScopeModel narrows all of that to the AI model the uploader recorded.
+// The wide lane already matches model_name, but it also matches the game and
+// the note, so "claude" answers every 汉化 whose note mentions it; the narrow
+// lane is what "按模型搜索资源" meant before the search page was rewritten.
 func (h *CommonHandler) searchResourceLane(
-	ctx context.Context, raw string, page, limit int, cl string,
+	ctx context.Context, raw string, page, limit int, cl, scope string,
 ) ([]patchModel.PatchResource, int64, *errors.AppError) {
 	keywords := searchKeywords(raw)
 	if len(keywords) == 0 {
 		return nil, 0, errors.ErrBadRequest("搜索关键词不能为空")
 	}
+	modelOnly := scope == searchScopeModel
 
 	var gids []int
-	if h.galgame != nil {
+	if h.galgame != nil && !modelOnly {
 		matched, err := h.galgame.SearchGalgameIDs(ctx, raw, cl, searchResourceGalgameIDs)
 		if err != nil {
 			slog.Warn("资源搜索的游戏名匹配失败，降级为仅匹配上传者填写的内容", "error", err)
@@ -213,6 +248,10 @@ func (h *CommonHandler) searchResourceLane(
 		Where("patch_resource.status = 0")
 	for _, kw := range keywords {
 		like := "%" + kw + "%"
+		if modelOnly {
+			base = base.Where("patch_resource.model_name ILIKE ?", like)
+			continue
+		}
 		if len(gids) > 0 {
 			base = base.Where(`(patch_resource.name ILIKE ? OR patch_resource.note ILIKE ?
 				OR patch_resource.model_name ILIKE ? OR patch_resource.localization_group_name ILIKE ?

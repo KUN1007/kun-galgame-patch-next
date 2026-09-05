@@ -14,6 +14,23 @@ type SearchEntityFamily =
   | 'tag'
   | 'series'
 
+// The 补丁资源 lane's match width. 'model' narrows it to the AI model the
+// uploader recorded — the wide lane matches that field too, but alongside the
+// game, the note and the group, so "claude" answers far more than 补丁 made
+// with Claude.
+type SearchResourceScope = 'all' | 'model'
+
+// What the Galgame lane's 高级筛选 panel adds to the keyword. Years are strings
+// because '' is the 不限 chip, not year zero. No rating: catalog's search index
+// carries no rating attribute, so 按评分筛选 is an infra change.
+interface SearchGalgameFilter {
+  sort: string
+  tag_ids: number[]
+  company_id: number
+  released_from: string
+  released_to: string
+}
+
 interface SearchUser extends KunUser {
   bio: string
   moemoepoint: number

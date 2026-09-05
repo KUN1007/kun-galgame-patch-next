@@ -19,6 +19,7 @@ func newSearchTestApp() *fiber.App {
 	app.Get("/search/overview", h.SiteSearchOverview)
 	app.Get("/search/quick", h.SiteSearchQuick)
 	app.Get("/search/entity", h.SiteSearchEntity)
+	app.Get("/search/entity/resolve", h.SiteSearchEntityResolve)
 	return app
 }
 
@@ -69,6 +70,28 @@ func TestSiteSearchRejectsAnUnknownType(t *testing.T) {
 func TestSiteSearchEntityRejectsAFamilyWithNoPage(t *testing.T) {
 	assertSearchBadRequest(t, newSearchTestApp(),
 		"/search/entity?keywords=kun&family=engine&page=1&limit=8", "Family")
+}
+
+// Both are closed vocabularies catalog would answer 400 for anyway; refusing
+// them here keeps the reason readable and the upstream request unsent.
+func TestSiteSearchRejectsUnknownLaneFilters(t *testing.T) {
+	app := newSearchTestApp()
+	for _, tc := range []struct{ url, want string }{
+		{"/search?keywords=kun&type=galgame&page=1&limit=12&sort=rating", "Sort"},
+		{"/search?keywords=kun&type=resource&page=1&limit=12&scope=note", "Scope"},
+		{"/search/entity/resolve?family=character&ids=1", "Family"},
+	} {
+		t.Run(tc.url, func(t *testing.T) {
+			assertSearchBadRequest(t, app, tc.url, tc.want)
+		})
+	}
+}
+
+func TestParseSearchIDsDropsWhatCatalogCannotUse(t *testing.T) {
+	got := parseSearchIDs(" 78 ,78, 0, -3, abc,1093,")
+	if len(got) != 2 || got[0] != 78 || got[1] != 1093 {
+		t.Fatalf("parseSearchIDs = %v, want [78 1093]", got)
+	}
 }
 
 func TestSearchKeywordsSplitsOnTheSpaceChineseKeyboardsType(t *testing.T) {

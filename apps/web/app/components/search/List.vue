@@ -1,11 +1,18 @@
 <script setup lang="ts">
-import { SEARCH_CATEGORY_MAP, SEARCH_PAGE_SIZE } from './items'
+import {
+  SEARCH_CATEGORY_MAP,
+  SEARCH_PAGE_SIZE,
+  isSearchResourceScope,
+  readSearchGalgameFilter,
+  searchGalgameFilterQuery
+} from './items'
 
 const props = defineProps<{
   keywords: string
   type: SearchPagedType
 }>()
 
+const route = useRoute()
 const api = useApi()
 
 const results = ref<SearchResultItem[]>([])
@@ -18,6 +25,18 @@ const top = useTemplateRef<HTMLElement>('top')
 const meta = computed(() => SEARCH_CATEGORY_MAP[props.type])
 const limit = computed(() => SEARCH_PAGE_SIZE[props.type])
 const totalPage = computed(() => Math.ceil(total.value / limit.value))
+
+// Each lane reads its own filters off the URL, the same place the keyword and
+// the category come from, so a filtered search is one shareable link.
+const laneParams = computed<Record<string, string>>(() => {
+  if (props.type === 'galgame') {
+    return searchGalgameFilterQuery(readSearchGalgameFilter(route.query))
+  }
+  if (props.type === 'resource' && isSearchResourceScope(route.query.scope)) {
+    return { scope: 'model' }
+  }
+  return {}
+})
 
 let latest = 0
 
@@ -34,7 +53,8 @@ const load = async () => {
     keywords: props.keywords,
     type: props.type,
     page: String(page.value),
-    limit: String(limit.value)
+    limit: String(limit.value),
+    ...laneParams.value
   })
   const res = await api.get<{ items: SearchResultItem[]; total: number }>(
     `/search?${query.toString()}`
@@ -58,7 +78,7 @@ watch(page, async () => {
 })
 
 watch(
-  () => props.keywords,
+  [() => props.keywords, laneParams],
   () => {
     page.value = 1
     results.value = []
@@ -70,6 +90,12 @@ watch(
 
 <template>
   <div ref="top" class="scroll-mt-40 space-y-6">
+    <SearchGalgameFilter v-if="type === 'galgame'" />
+    <SearchResourceScope
+      v-else-if="type === 'resource'"
+      :keywords="keywords"
+    />
+
     <p class="text-default-500 text-sm">
       <template v-if="pending && !results.length">正在搜索…</template>
       <template v-else-if="total">
@@ -83,9 +109,16 @@ watch(
       :shape="type === 'galgame' ? 'card' : 'row'"
     />
 
-    <KunLoading v-else-if="results.length" :loading="pending">
-      <SearchResult :results="results" :type="type" :keywords="keywords" />
-    </KunLoading>
+    <!--
+      KunLoading's wrapper is display:contents, which generates no box — so the
+      space-y margin lands on nothing and the results sit flush against the
+      paginator. The div gives that margin something to be applied to.
+    -->
+    <div v-else-if="results.length">
+      <KunLoading :loading="pending">
+        <SearchResult :results="results" :type="type" :keywords="keywords" />
+      </KunLoading>
+    </div>
 
     <KunNull v-else-if="failed" description="搜索没能完成, 请稍后重试" />
 

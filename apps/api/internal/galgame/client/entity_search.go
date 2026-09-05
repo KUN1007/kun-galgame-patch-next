@@ -196,3 +196,54 @@ func (c *Client) attachEntityFacts(
 	}
 	return out
 }
+
+// ResolveEntities answers the names behind ids the caller already holds. The
+// 高级筛选 panel keeps its 会社 and 标签 in the URL so a filtered search can be
+// shared, and a link opened cold arrives with ids and nothing to label its
+// chips with.
+//
+// Unlike the search lane this does not drop a sexual tag for an SFW reader:
+// what that gate protects is browsing the vocabulary, and an id the request
+// already names is not a discovery.
+func (c *Client) ResolveEntities(ctx context.Context, family string, ids []int) ([]EntitySearchItem, error) {
+	wide := make([]int64, 0, len(ids))
+	for _, id := range ids {
+		if id > 0 {
+			wide = append(wide, int64(id))
+		}
+	}
+	if len(wide) == 0 {
+		return []EntitySearchItem{}, nil
+	}
+
+	items := make([]EntitySearchItem, 0, len(wide))
+	switch family {
+	case EntityFamilyCompany:
+		rows, err := c.v2.CompaniesByIDs(ctx, wide, true)
+		if err != nil {
+			return nil, catalogErr(err)
+		}
+		for _, r := range rows {
+			id, _ := r.IntID()
+			items = append(items, EntitySearchItem{
+				ID: int(id), Family: family, WorkCount: r.WorkCount, ImageHash: imageHash(r.Logo),
+				Name: catalogEntityNames(localizedFrom(r.Localized), r.DisplayName, "ja", strOrEmpty(r.Latin)),
+			})
+		}
+	case EntityFamilyTag:
+		rows, err := c.v2.TagsByIDs(ctx, wide, true)
+		if err != nil {
+			return nil, catalogErr(err)
+		}
+		for _, r := range rows {
+			id, _ := r.IntID()
+			items = append(items, EntitySearchItem{
+				ID: int(id), Family: family, WorkCount: r.WorkCount,
+				Name: catalogEntityNames(localizedFrom(r.Localized), r.DisplayName, "zh-Hans", ""),
+			})
+		}
+	default:
+		return nil, &GalgameError{Code: 400, Message: "该资料库类型不支持按 id 解析", HTTPStatus: 400}
+	}
+	return items, nil
+}
