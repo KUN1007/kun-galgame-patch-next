@@ -10,6 +10,10 @@ const emit = defineEmits<{
   open: [value: SearchType]
 }>()
 
+const entityGroups = computed(
+  () => props.overview?.entities.filter((group) => group.items.length) ?? []
+)
+
 const isEmpty = computed(() => {
   const totals = props.overview?.totals
   return (
@@ -42,20 +46,36 @@ const isEmpty = computed(() => {
     </SearchSection>
 
     <SearchSection
+      v-if="entityGroups.length"
+      type="entity"
+      :total="overview.totals.entity"
+      :shown="entityGroups.reduce((sum, group) => sum + group.items.length, 0)"
+      @open="emit('open', $event)"
+    >
+      <div class="space-y-5">
+        <SearchEntityGroup
+          v-for="group in entityGroups"
+          :key="group.family"
+          :group="group"
+          :keywords="keywords"
+          :show-header="true"
+        />
+      </div>
+    </SearchSection>
+
+    <SearchSection
       v-if="overview.resources.length"
       type="resource"
       :total="overview.totals.resource"
       :shown="overview.resources.length"
       @open="emit('open', $event)"
     >
-      <div class="space-y-2">
-        <KunCard
+      <div class="grid grid-cols-1 gap-3 sm:gap-6 md:grid-cols-2">
+        <ResourceCard
           v-for="resource in overview.resources"
           :key="resource.id"
-          padding="sm"
-        >
-          <SearchResourceCard :resource="resource" :keywords="keywords" />
-        </KunCard>
+          :resource="resource"
+        />
       </div>
     </SearchSection>
 

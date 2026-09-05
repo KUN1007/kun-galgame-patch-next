@@ -24,6 +24,7 @@ const (
 	searchOverviewGalgameLimit  = 12
 	searchOverviewResourceLimit = 6
 	searchOverviewUserLimit     = 8
+	searchOverviewEntityLimit   = 6
 
 	// Per lane in the command palette, which is a preview of the search page
 	// rather than a second one.
@@ -53,19 +54,24 @@ type searchUserItem struct {
 
 type searchTotals struct {
 	Galgame  int64 `json:"galgame"`
+	Entity   int64 `json:"entity"`
 	Resource int64 `json:"resource"`
 	User     int64 `json:"user"`
 }
 
 type searchLanes struct {
 	Galgames  []enricher.GalgameCard     `json:"galgames"`
+	Entities  []searchEntityGroup        `json:"entities"`
 	Resources []patchModel.PatchResource `json:"resources"`
 	Users     []searchUserItem           `json:"users"`
 	Totals    searchTotals               `json:"totals"`
 }
 
+// A zero entity limit skips the 资料库 lane: it is five upstream requests, which
+// the command palette cannot afford on a debounced keystroke.
 type searchLaneLimits struct {
 	galgame  int
+	entity   int
 	resource int
 	user     int
 }
@@ -83,6 +89,7 @@ func (h *CommonHandler) runSearchLanes(
 ) searchLanes {
 	out := searchLanes{
 		Galgames:  []enricher.GalgameCard{},
+		Entities:  []searchEntityGroup{},
 		Resources: []patchModel.PatchResource{},
 		Users:     []searchUserItem{},
 	}
@@ -112,6 +119,19 @@ func (h *CommonHandler) runSearchLanes(
 		}
 		out.Galgames, out.Totals.Galgame = cards, total
 	})
+	if lim.entity > 0 {
+		run("entity", func() {
+			groups, appErr := h.searchEntityLane(ctx, raw, "", 1, lim.entity, cl)
+			if appErr != nil {
+				slog.Warn("站内搜索 entity lane 失败", "error", appErr.Message)
+				return
+			}
+			out.Entities = groups
+			for _, group := range groups {
+				out.Totals.Entity += group.Total
+			}
+		})
+	}
 	run("resource", func() {
 		rows, total, appErr := h.searchResourceLane(ctx, raw, 1, lim.resource, cl)
 		if appErr != nil {

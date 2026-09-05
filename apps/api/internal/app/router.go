@@ -221,6 +221,7 @@ func (a *App) RegisterRoutes() {
 
 	api.Get("/search", a.CommonHandler.SiteSearch)
 	api.Get("/search/overview", a.CommonHandler.SiteSearchOverview)
+	api.Get("/search/entity", a.CommonHandler.SiteSearchEntity)
 	api.Get("/search/quick", a.CommonHandler.SiteSearchQuick)
 
 	api.Use("/hikari", middleware.HikariCORS())

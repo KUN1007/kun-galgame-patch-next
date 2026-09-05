@@ -1,7 +1,7 @@
 <script setup lang="ts">
 withDefaults(
   defineProps<{
-    shape?: 'row' | 'card'
+    shape?: 'row' | 'card' | 'entity'
     count?: number
   }>(),
   { shape: 'row', count: 4 }
@@ -10,7 +10,15 @@ withDefaults(
 
 <template>
   <div
-    v-if="shape === 'card'"
+    v-if="shape === 'entity'"
+    class="grid gap-2 sm:grid-cols-2 xl:grid-cols-3"
+    aria-hidden="true"
+  >
+    <KunSkeleton v-for="i in 6" :key="i" height="4.5rem" rounded="lg" />
+  </div>
+
+  <div
+    v-else-if="shape === 'card'"
     class="grid grid-cols-2 gap-4 lg:grid-cols-3"
     aria-hidden="true"
   >

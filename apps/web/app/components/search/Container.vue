@@ -29,6 +29,9 @@ const setKeywords = (value: string) => {
   } else {
     delete query.q
   }
+  // A 资料库 family chosen for the previous keyword is not a filter the reader
+  // asked to keep — it would silently narrow the new search to 标签 only.
+  delete query.family
   router.replace({ query })
 }
 
@@ -36,7 +39,12 @@ const setType = (value: SearchType) => {
   if (value === currentType.value) {
     return
   }
-  router.replace({ query: { ...route.query, type: value } })
+  const query = { ...route.query }
+  query.type = value
+  if (value !== 'entity') {
+    delete query.family
+  }
+  router.replace({ query })
 }
 
 const overview = ref<SearchLanes | null>(null)
@@ -89,12 +97,12 @@ watch(
   <div class="container mx-auto my-4 min-h-[calc(100dvh-16rem)] space-y-6">
     <KunHeader
       name="搜索"
-      description="一次搜索整站: Galgame, 补丁资源, 以及发布它们的用户。"
+      description="一次搜索整站: Galgame, 资料库中的角色 / 会社 / Staff / 标签 / 系列, 补丁资源, 以及发布它们的用户。"
     >
       <template #endContent>
         <div class="text-default-500 text-sm">
-          搜索结果一并包含 NSFW 的 Galgame; 未开启 NSFW 时, R18
-          游戏的补丁资源会被隐藏。按标签 / 会社 / 发售年份精确筛选请前往
+          搜索结果一并包含 NSFW 的 Galgame; 未开启 NSFW 时, 资料库中的成人标签,
+          以及 R18 游戏的补丁资源会被隐藏。按标签 / 会社 / 发售年份精确筛选请前往
           <KunLink to="/gallib">Galgame 资料库</KunLink>。
         </div>
       </template>
@@ -139,6 +147,11 @@ watch(
           :pending="overviewPending"
           :failed="overviewFailed"
           @open="setType"
+        />
+
+        <SearchEntities
+          v-else-if="currentType === 'entity'"
+          :keywords="keywords"
         />
 
         <SearchList

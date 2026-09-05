@@ -18,6 +18,7 @@ func newSearchTestApp() *fiber.App {
 	app.Get("/search", h.SiteSearch)
 	app.Get("/search/overview", h.SiteSearchOverview)
 	app.Get("/search/quick", h.SiteSearchQuick)
+	app.Get("/search/entity", h.SiteSearchEntity)
 	return app
 }
 
@@ -50,6 +51,7 @@ func TestSiteSearchRejectsWhitespaceOnlyKeywords(t *testing.T) {
 		"/search?keywords=%20%20&type=user&page=1&limit=12",
 		"/search/overview?keywords=%20%20",
 		"/search/quick?keywords=%20%20",
+		"/search/entity?keywords=%20%20&page=1&limit=8",
 	} {
 		t.Run(url, func(t *testing.T) {
 			assertSearchBadRequest(t, app, url, "搜索关键词不能为空")
@@ -60,6 +62,13 @@ func TestSiteSearchRejectsWhitespaceOnlyKeywords(t *testing.T) {
 func TestSiteSearchRejectsAnUnknownType(t *testing.T) {
 	assertSearchBadRequest(t, newSearchTestApp(),
 		"/search?keywords=kun&type=topic&page=1&limit=12", "Type")
+}
+
+// engine is a catalog family moyu has no page for, so it must not reach the
+// lane — a card that cannot be clicked is worse than one that is missing.
+func TestSiteSearchEntityRejectsAFamilyWithNoPage(t *testing.T) {
+	assertSearchBadRequest(t, newSearchTestApp(),
+		"/search/entity?keywords=kun&family=engine&page=1&limit=8", "Family")
 }
 
 func TestSearchKeywordsSplitsOnTheSpaceChineseKeyboardsType(t *testing.T) {

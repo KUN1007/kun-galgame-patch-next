@@ -17,10 +17,15 @@ const isUserResults = (results: unknown[]): results is SearchUser[] =>
   <div>
     <GalgameList v-if="isGalgameResults(results)" :items="results" />
 
-    <div v-if="isResourceResults(results)" class="space-y-2">
-      <KunCard v-for="resource in results" :key="resource.id" padding="sm">
-        <SearchResourceCard :resource="resource" :keywords="keywords" />
-      </KunCard>
+    <div
+      v-if="isResourceResults(results)"
+      class="grid grid-cols-1 gap-3 sm:gap-6 md:grid-cols-2"
+    >
+      <ResourceCard
+        v-for="resource in results"
+        :key="resource.id"
+        :resource="resource"
+      />
     </div>
 
     <div v-if="isUserResults(results)" class="grid gap-2 sm:grid-cols-2">
