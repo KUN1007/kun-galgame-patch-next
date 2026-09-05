@@ -219,7 +219,9 @@ func (a *App) RegisterRoutes() {
 	uploadRoutes.Post("/abort", a.UploadHandler.Abort)
 	uploadRoutes.Post("/image-service", a.UploadHandler.UploadImageService)
 
-	api.Post("/search", a.SearchHandler.Search)
+	api.Get("/search", a.CommonHandler.SiteSearch)
+	api.Get("/search/overview", a.CommonHandler.SiteSearchOverview)
+	api.Get("/search/quick", a.CommonHandler.SiteSearchQuick)
 
 	api.Use("/hikari", middleware.HikariCORS())
 	api.Get("/hikari", middleware.RateLimit(a.RDB, "hikari", 10000, time.Minute), a.CommonHandler.GetHikari)

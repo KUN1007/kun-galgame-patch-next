@@ -35,7 +35,7 @@ onMounted(async () => {
 
     <KunTopBarNSFWSwitcher />
 
-    <KunTopBarSearch />
+    <SearchPalette />
 
     <div class="hidden sm:flex">
       <KunTopBarRandomGalgameButton is-icon-only variant="light" size="sm" />

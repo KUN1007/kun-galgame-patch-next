@@ -121,12 +121,12 @@ export const useApi = () => {
   // Search is EXEMPT — it must always surface ALL galgames regardless of the
   // toggle. Most critically the publish-time picker (/galgame/search/publish):
   // when you add the FIRST patch to a game it has resource_count = 0, so a
-  // resource-presence filter there would make it unfindable. The /search page
-  // (Meilisearch) and the edit-flow /tag|/official/search proxies are
-  // likewise keyword-discovery, not browse lists. (These are all Wiki/Meili
-  // backed and ignore the param anyway — we drop it here so the contract is
-  // explicit and future moyu-side search can't accidentally honor it.) The
-  // regex matches a `/search` path segment: `/search`, `/x/search`, `/search/y`.
+  // resource-presence filter there would make it unfindable. The site search
+  // (/search, /search/overview, /search/quick) and the edit-flow
+  // /tag|/official/search proxies are likewise keyword-discovery, not browse
+  // lists. (None of them read the param today — we drop it here so the contract
+  // is explicit and a future lane can't accidentally honor it.) The regex
+  // matches a `/search` path segment: `/search`, `/x/search`, `/search/y`.
   const appendIncludeEmpty = (endpoint: string): string => {
     if (!setting.data.showGalgamesWithoutResource) return endpoint
     if (/\/search(\/|\?|$)/.test(endpoint)) return endpoint

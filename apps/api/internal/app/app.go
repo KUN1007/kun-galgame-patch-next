@@ -15,7 +15,6 @@ import (
 	chatRepo "kun-galgame-patch-api/internal/chat/repository"
 	chatService "kun-galgame-patch-api/internal/chat/service"
 	"kun-galgame-patch-api/internal/common"
-	searchPkg "kun-galgame-patch-api/internal/common/search"
 	uploadPkg "kun-galgame-patch-api/internal/common/upload"
 	docHandler "kun-galgame-patch-api/internal/doc/handler"
 	docRepository "kun-galgame-patch-api/internal/doc/repository"
@@ -71,7 +70,6 @@ type App struct {
 	CommonHandler  *common.CommonHandler
 	UploadHandler  *uploadPkg.Handler
 	ChatHandler    *chatHandler.ChatHandler
-	SearchHandler  *searchPkg.Handler
 	DocHandler     *docHandler.DocHandler
 	TrustHandler   *trustHandler.TrustHandler
 
@@ -257,8 +255,6 @@ func New(cfg *config.Config) *App {
 	chatSvc := chatService.New(chatRepository)
 	chatHdl := chatHandler.New(chatSvc, usrCli)
 
-	searchHdl := searchPkg.New(db, galgame)
-
 	docRepo := docRepository.New(db)
 	docSvc := docService.New(docRepo, imgCli, usrCli)
 	docHdl := docHandler.New(docSvc)
@@ -296,7 +292,6 @@ func New(cfg *config.Config) *App {
 		CommonHandler:  commonHdl,
 		UploadHandler:  uploadHdl,
 		ChatHandler:    chatHdl,
-		SearchHandler:  searchHdl,
 		DocHandler:     docHdl,
 		TrustHandler:   trustHdl,
 		CronStop:       stopBackground,

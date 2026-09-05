@@ -123,7 +123,7 @@ func (h *CommonHandler) GetHome(c fiber.Ctx) error {
 	}
 	h.attachResourceUsers(c.Context(), resources)
 	h.attachCommentUsers(c.Context(), comments)
-	h.attachPatchSummaries(c, comments, resources)
+	h.attachPatchSummaries(c.Context(), comments, resources)
 	patchModel.StripResourceSecrets(resources)
 
 	galgames := enricher.EnrichPatchCards(c.Context(), h.galgame, h.users, patches, cl)
@@ -185,11 +185,11 @@ func (h *CommonHandler) GetGlobalComments(c fiber.Ctx) error {
 		comments[i].ContentHTML = markdown.MustRender(comments[i].Content)
 	}
 	h.attachCommentUsers(c.Context(), comments)
-	h.attachPatchSummaries(c, comments, nil)
+	h.attachPatchSummaries(c.Context(), comments, nil)
 	return response.Paginated(c, comments, total)
 }
 
-func (h *CommonHandler) attachPatchSummaries(c fiber.Ctx, comments []patchModel.PatchComment, resources []patchModel.PatchResource) {
+func (h *CommonHandler) attachPatchSummaries(ctx context.Context, comments []patchModel.PatchComment, resources []patchModel.PatchResource) {
 	if len(comments) == 0 && len(resources) == 0 {
 		return
 	}
@@ -209,7 +209,7 @@ func (h *CommonHandler) attachPatchSummaries(c fiber.Ctx, comments []patchModel.
 		ids = append(ids, id)
 	}
 
-	summaries := enricher.BuildPatchSummaryMap(c.Context(), h.galgame, patchSummaryFinder{db: h.db}, ids)
+	summaries := enricher.BuildPatchSummaryMap(ctx, h.galgame, patchSummaryFinder{db: h.db}, ids)
 	for i := range comments {
 		if s, ok := summaries[comments[i].GalgameID]; ok {
 			summary := s
@@ -263,7 +263,7 @@ func (h *CommonHandler) GetGlobalResources(c fiber.Ctx) error {
 	resources = enricher.FilterByGalgameContentLimit(c.Context(), h.galgame, resources, func(r patchModel.PatchResource) int { return r.GalgameID }, cl)
 	patchModel.RenderResourceNotes(resources)
 	h.attachResourceUsers(c.Context(), resources)
-	h.attachPatchSummaries(c, nil, resources)
+	h.attachPatchSummaries(c.Context(), nil, resources)
 	patchModel.StripResourceSecrets(resources)
 	return response.Paginated(c, resources, total)
 }
