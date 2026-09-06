@@ -149,6 +149,10 @@ type galgameListRequest struct {
 	ReleasedMonths string `query:"released_months"`
 	Indexed        bool   `query:"indexed"`
 	Library        bool   `query:"library"`
+	Language       string `query:"language" validate:"omitempty,max=107"`
+	Platform       string `query:"platform" validate:"omitempty,max=107"`
+	CompanyID      int    `query:"company_id" validate:"omitempty,min=1"`
+	TagIDs         string `query:"tag_ids" validate:"omitempty,max=107"`
 }
 
 type commentListRequest struct {

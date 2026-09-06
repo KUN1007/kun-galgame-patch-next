@@ -2,6 +2,8 @@ package common
 
 import (
 	"fmt"
+	"slices"
+	"strings"
 
 	galgameClient "kun-galgame-patch-api/internal/galgame/client"
 	"kun-galgame-patch-api/internal/galgame/enricher"
@@ -36,6 +38,41 @@ func catalogLibrarySort(field, order string) string {
 	default:
 		return "popularity"
 	}
+}
+
+// patch.language and patch.platform are jsonb arrays aggregated from the row's
+// resources, and both land inside a jsonb literal — so an unknown value is
+// dropped rather than escaped: `language @> '["a\""]'` is not a filter, it is a
+// Postgres error the reader sees as a 500.
+var (
+	patchLanguages = []string{"zh-Hans", "zh-Hant", "ja", "en", "other"}
+	patchPlatforms = []string{"windows", "android", "macos", "ios", "linux", "other"}
+)
+
+func allowedValues(raw string, allowed []string) []string {
+	out := make([]string, 0, len(allowed))
+	for _, value := range strings.Split(raw, ",") {
+		value = strings.TrimSpace(value)
+		if slices.Contains(allowed, value) && !slices.Contains(out, value) {
+			out = append(out, value)
+		}
+	}
+	return out
+}
+
+// Ticking two languages is an OR: a reader who wants 简体中文 or 繁體中文 wants
+// either, not a game whose patches cover both.
+func scopeJSONArrayAny(db *gorm.DB, column string, values []string) *gorm.DB {
+	if len(values) == 0 {
+		return db
+	}
+	clauses := make([]string, 0, len(values))
+	args := make([]any, 0, len(values))
+	for _, value := range values {
+		clauses = append(clauses, column+" @> ?")
+		args = append(args, fmt.Sprintf(`["%s"]`, value))
+	}
+	return db.Where(strings.Join(clauses, " OR "), args...)
 }
 
 func (h *CommonHandler) GetGalgameList(c fiber.Ctx) error {
@@ -73,6 +110,8 @@ func (h *CommonHandler) GetGalgameList(c fiber.Ctx) error {
 	if req.SelectedType != "all" {
 		base = base.Where("type @> ?", fmt.Sprintf(`["%s"]`, req.SelectedType))
 	}
+	base = scopeJSONArrayAny(base, "language", allowedValues(req.Language, patchLanguages))
+	base = scopeJSONArrayAny(base, "platform", allowedValues(req.Platform, patchPlatforms))
 	if lower != nil {
 		base = base.Where("release_date >= ?", *lower)
 	}
@@ -125,6 +164,14 @@ func (h *CommonHandler) catalogLibrary(c fiber.Ctx, req galgameListRequest, cl s
 			params.ReleasedTo = y.Year()
 		}
 	}
+	// worksQueryFor always names a facet, which is what puts /v2/catalog/works on
+	// the search index — so the library lane takes company_id and tag_id with no
+	// keyword at all, the same as the search page's.
+	if req.CompanyID > 0 {
+		params.OfficialIDs = []int{req.CompanyID}
+	}
+	params.TagIDs = parseSearchIDs(req.TagIDs)
+
 	res, err := h.galgame.SearchGalgame(c.Context(), params)
 	if err != nil {
 		if gerr, ok := galgameClient.AsBadRequest(err); ok {
