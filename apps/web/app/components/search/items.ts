@@ -120,8 +120,8 @@ export const isSearchEntityFamily = (
 export const SEARCH_GALGAME_SORTS = [
   { value: 'relevance', label: '相关度' },
   { value: 'popularity', label: '热门' },
-  { value: 'released_desc', label: '发售新→旧' },
-  { value: 'released_asc', label: '发售旧→新' },
+  { value: 'released_desc', label: '最新发售' },
+  { value: 'released_asc', label: '最早发售' },
   { value: 'updated', label: '最近更新' }
 ]
 
@@ -146,14 +146,6 @@ export const SEARCH_GALGAME_YEAR_MIN = 1980
 
 // Catalog answers 400 past ten tag ids.
 export const SEARCH_GALGAME_TAG_MAX = 10
-
-export const emptySearchGalgameFilter = (): SearchGalgameFilter => ({
-  sort: 'relevance',
-  tag_ids: [],
-  company_id: 0,
-  released_from: '',
-  released_to: ''
-})
 
 const first = (value: unknown): string => {
   const raw = Array.isArray(value) ? value[0] : value
@@ -209,12 +201,6 @@ export const searchGalgameFilterQuery = (
   }
   return query
 }
-
-export const searchGalgameFilterCount = (filter: SearchGalgameFilter): number =>
-  filter.tag_ids.length +
-  (filter.company_id ? 1 : 0) +
-  (filter.released_from ? 1 : 0) +
-  (filter.released_to ? 1 : 0)
 
 export const isSearchResourceScope = (
   value: unknown

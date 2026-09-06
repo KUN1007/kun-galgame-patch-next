@@ -90,13 +90,19 @@ watch(
 
 <template>
   <div ref="top" class="scroll-mt-40 space-y-6">
-    <SearchGalgameFilter v-if="type === 'galgame'" />
+    <SearchGalgameFilter
+      v-if="type === 'galgame'"
+      :total="total"
+      :pending="pending"
+    />
     <SearchResourceScope
       v-else-if="type === 'resource'"
       :keywords="keywords"
+      :total="total"
+      :pending="pending"
     />
 
-    <p class="text-default-500 text-sm">
+    <p v-else class="text-default-500 text-sm">
       <template v-if="pending && !results.length">正在搜索…</template>
       <template v-else-if="total">
         共 <span class="text-default-700 tabular-nums">{{ total }}</span>
