@@ -37,9 +37,10 @@ const props = defineProps<Props>()
     </div>
 
     <div
-      class="border-default-200 bg-default-50 text-default-600 border-t px-5 py-3 text-sm"
+      class="border-default-200 bg-default-50 text-default-600 flex items-center gap-1 border-t px-5 py-3 text-sm"
     >
-      点击阅读更多 →
+      <span>点击阅读更多</span>
+      <KunIcon name="lucide:arrow-right" class="size-4" />
     </div>
   </NuxtLink>
 </template>

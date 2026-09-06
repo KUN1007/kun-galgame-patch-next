@@ -300,7 +300,8 @@ const handleSubmit = async () => {
         <div class="flex items-center justify-between">
           <h2 class="text-lg font-semibold">2. 提交新作到资料库</h2>
           <KunButton variant="light" size="sm" @click="mode = 'search'">
-            ← 回到搜索
+            <KunIcon name="lucide:arrow-left" class="size-4" />
+            回到搜索
           </KunButton>
         </div>
 
