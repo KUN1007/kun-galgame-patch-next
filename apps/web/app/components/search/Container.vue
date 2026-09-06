@@ -1,5 +1,9 @@
 <script setup lang="ts">
-import { SEARCH_FILTER_QUERY_KEYS, isSearchType } from './items'
+import {
+  SEARCH_FILTER_QUERY_KEYS,
+  isSearchType,
+  searchQueryWithout
+} from './items'
 
 const route = useRoute()
 const router = useRouter()
@@ -23,15 +27,14 @@ const setKeywords = (value: string) => {
   if (value === keywords.value) {
     return
   }
-  const query = { ...route.query }
+  // A 资料库 family chosen for the previous keyword is not a filter the reader
+  // asked to keep — it would silently narrow the new search to 标签 only.
+  const query = searchQueryWithout(route.query, 'family')
   if (value) {
     query.q = value
   } else {
     delete query.q
   }
-  // A 资料库 family chosen for the previous keyword is not a filter the reader
-  // asked to keep — it would silently narrow the new search to 标签 only.
-  delete query.family
   router.replace({ query })
 }
 
@@ -41,11 +44,7 @@ const setType = (value: SearchType) => {
   if (value === currentType.value) {
     return
   }
-  const query = Object.fromEntries(
-    Object.entries(route.query).filter(
-      ([key]) => !SEARCH_FILTER_QUERY_KEYS.includes(key)
-    )
-  )
+  const query = searchQueryWithout(route.query, ...SEARCH_FILTER_QUERY_KEYS)
   query.type = value
   router.replace({ query })
 }

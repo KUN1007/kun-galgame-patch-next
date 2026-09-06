@@ -1,5 +1,9 @@
 <script setup lang="ts">
-import { SEARCH_AI_MODEL_FAMILIES, isSearchResourceScope } from './items'
+import {
+  SEARCH_AI_MODEL_FAMILIES,
+  isSearchResourceScope,
+  searchQueryWithout
+} from './items'
 
 const props = defineProps<{
   keywords: string
@@ -33,11 +37,9 @@ const activeFamily = computed(
 )
 
 const setScope = (value: string) => {
-  const query = { ...route.query }
+  const query = searchQueryWithout(route.query, 'scope')
   if (value === 'model') {
     query.scope = 'model'
-  } else {
-    delete query.scope
   }
   router.replace({ query })
 }
@@ -45,7 +47,9 @@ const setScope = (value: string) => {
 // Picking a family is a search, not a filter: it writes the model name into the
 // box the reader is already looking at, so what is being matched stays visible.
 const pickFamily = (family: string) =>
-  router.replace({ query: { ...route.query, scope: 'model', q: family } })
+  router.replace({
+    query: { ...searchQueryWithout(route.query), scope: 'model', q: family }
+  })
 </script>
 
 <template>

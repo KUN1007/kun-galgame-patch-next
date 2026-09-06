@@ -13,14 +13,23 @@ const props = defineProps<{
 }>()
 
 const route = useRoute()
+const router = useRouter()
 const api = useApi()
 
 const results = ref<SearchResultItem[]>([])
 const total = ref(0)
 const pending = ref(!!props.keywords)
 const failed = ref(false)
-const page = ref(1)
 const top = useTemplateRef<HTMLElement>('top')
+
+// The reader's page belongs in the URL beside the keyword and the filters: while
+// it lived in a local ref, opening a result from page 5 and coming back landed
+// on page 1, and a shared link never carried the page it was shared from.
+const page = computed({
+  get: () => Number(route.query.page) || 1,
+  set: (value) =>
+    router.replace({ query: { ...route.query, page: String(value) } })
+})
 
 const meta = computed(() => SEARCH_CATEGORY_MAP[props.type])
 const limit = computed(() => SEARCH_PAGE_SIZE[props.type])
@@ -38,6 +47,19 @@ const laneParams = computed<Record<string, string>>(() => {
   return {}
 })
 
+// Watching the request's own query string rather than the values behind it:
+// every one of them is read off route.query, which hands back a fresh object on
+// any navigation, so watching those would refetch when nothing asked had changed.
+const query = computed(() =>
+  new URLSearchParams({
+    keywords: props.keywords,
+    type: props.type,
+    page: String(page.value),
+    limit: String(limit.value),
+    ...laneParams.value
+  }).toString()
+)
+
 let latest = 0
 
 const load = async () => {
@@ -49,15 +71,8 @@ const load = async () => {
     return
   }
   pending.value = true
-  const query = new URLSearchParams({
-    keywords: props.keywords,
-    type: props.type,
-    page: String(page.value),
-    limit: String(limit.value),
-    ...laneParams.value
-  })
   const res = await api.get<{ items: SearchResultItem[]; total: number }>(
-    `/search?${query.toString()}`
+    `/search?${query.value}`
   )
   if (current !== latest) {
     return
@@ -70,19 +85,22 @@ const load = async () => {
   pending.value = false
 }
 
-watch(page, async () => {
-  await load()
-  // The paginator sits below a full page of results, so a page opened from it
-  // would otherwise start scrolled past its own first row.
-  top.value?.scrollIntoView({ behavior: 'smooth', block: 'start' })
-})
-
 watch(
-  [() => props.keywords, laneParams],
-  () => {
-    page.value = 1
-    results.value = []
-    load()
+  [query, page],
+  async ([, nextPage], previous) => {
+    // Paging keeps the rows it is paging through, dimmed under the loading
+    // overlay; a new keyword or filter replaces them, and leaving the previous
+    // lane's rows up reads as results for the query just typed.
+    const paged = previous !== undefined && nextPage !== previous[1]
+    if (!paged) {
+      results.value = []
+    }
+    await load()
+    // The paginator sits below a full page of results, so a page opened from it
+    // would otherwise start scrolled past its own first row.
+    if (paged) {
+      top.value?.scrollIntoView({ behavior: 'smooth', block: 'start' })
+    }
   },
   { immediate: true }
 )

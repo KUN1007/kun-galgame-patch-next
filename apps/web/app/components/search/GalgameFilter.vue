@@ -5,7 +5,8 @@ import {
   SEARCH_GALGAME_TAG_MAX,
   SEARCH_GALGAME_YEAR_MIN,
   readSearchGalgameFilter,
-  searchGalgameFilterQuery
+  searchGalgameFilterQuery,
+  searchQueryWithout
 } from './items'
 
 defineProps<{ total: number; pending: boolean }>()
@@ -18,11 +19,7 @@ const filter = computed(() => readSearchGalgameFilter(route.query))
 
 const apply = (next: Partial<SearchGalgameFilter>) => {
   const merged = { ...filter.value, ...next }
-  const kept = Object.fromEntries(
-    Object.entries(route.query).filter(
-      ([key]) => !SEARCH_GALGAME_FILTER_KEYS.includes(key)
-    )
-  )
+  const kept = searchQueryWithout(route.query, ...SEARCH_GALGAME_FILTER_KEYS)
   router.replace({ query: { ...kept, ...searchGalgameFilterQuery(merged) } })
 }
 

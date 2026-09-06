@@ -1,3 +1,5 @@
+import type { LocationQuery } from 'vue-router'
+
 export interface SearchCategory {
   value: SearchType
   textValue: string
@@ -179,7 +181,6 @@ export const readSearchGalgameFilter = (
   }
 }
 
-
 export const searchGalgameFilterQuery = (
   filter: SearchGalgameFilter
 ): Record<string, string> => {
@@ -222,3 +223,17 @@ export const SEARCH_FILTER_QUERY_KEYS = [
   'scope',
   ...SEARCH_GALGAME_FILTER_KEYS
 ]
+
+// The one thing every query this page writes has to drop, on top of whatever
+// keys it is replacing: `page` is where the reader's position lives now, and a
+// page number carried into a different keyword, lane or filter asks for page 7
+// of a result set that has three.
+export const searchQueryWithout = (
+  query: LocationQuery,
+  ...drop: string[]
+): LocationQuery =>
+  Object.fromEntries(
+    Object.entries(query).filter(
+      ([key]) => key !== 'page' && !drop.includes(key)
+    )
+  )

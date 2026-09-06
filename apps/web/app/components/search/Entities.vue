@@ -2,7 +2,8 @@
 import {
   SEARCH_ENTITY_FAMILIES,
   SEARCH_ENTITY_LIMIT,
-  isSearchEntityFamily
+  isSearchEntityFamily,
+  searchQueryWithout
 } from './items'
 
 const props = defineProps<{
@@ -23,10 +24,8 @@ const setFamily = (value: SearchEntityFamily | 'all') => {
   if (value === family.value) {
     return
   }
-  const query = { ...route.query }
-  if (value === 'all') {
-    delete query.family
-  } else {
+  const query = searchQueryWithout(route.query, 'family')
+  if (value !== 'all') {
     query.family = value
   }
   router.replace({ query })
@@ -40,13 +39,36 @@ const familyItems = computed(() => [
 const groups = ref<SearchEntityGroup[]>([])
 const pending = ref(!!props.keywords)
 const failed = ref(false)
-const page = ref(1)
 const top = useTemplateRef<HTMLElement>('top')
+
+// The reader's page belongs in the URL beside the keyword and the family: while
+// it lived in a local ref, opening an entry from page 5 and coming back landed
+// on page 1, and a shared link never carried the page it was shared from.
+const page = computed({
+  get: () => Number(route.query.page) || 1,
+  set: (value) =>
+    router.replace({ query: { ...route.query, page: String(value) } })
+})
 
 const isAll = computed(() => family.value === 'all')
 const limit = computed(() =>
   isAll.value ? SEARCH_ENTITY_LIMIT.all : SEARCH_ENTITY_LIMIT.one
 )
+
+// Watching the request's own query string rather than the values behind it:
+// every one of them is read off route.query, which hands back a fresh object on
+// any navigation, so watching those would refetch when nothing asked had changed.
+const query = computed(() => {
+  const params = new URLSearchParams({
+    keywords: props.keywords,
+    page: String(page.value),
+    limit: String(limit.value)
+  })
+  if (!isAll.value) {
+    params.set('family', family.value)
+  }
+  return params.toString()
+})
 
 let latest = 0
 
@@ -58,17 +80,7 @@ const load = async () => {
     return
   }
   pending.value = true
-  const query = new URLSearchParams({
-    keywords: props.keywords,
-    page: String(page.value),
-    limit: String(limit.value)
-  })
-  if (!isAll.value) {
-    query.set('family', family.value)
-  }
-  const res = await api.get<SearchEntityResult>(
-    `/search/entity?${query.toString()}`
-  )
+  const res = await api.get<SearchEntityResult>(`/search/entity?${query.value}`)
   if (current !== latest) {
     return
   }
@@ -77,17 +89,20 @@ const load = async () => {
   pending.value = false
 }
 
-watch(page, async () => {
-  await load()
-  top.value?.scrollIntoView({ behavior: 'smooth', block: 'start' })
-})
-
 watch(
-  [() => props.keywords, family],
-  () => {
-    page.value = 1
-    groups.value = []
-    load()
+  [query, page],
+  async ([, nextPage], previous) => {
+    // Paging keeps the rows it is paging through, dimmed under the loading
+    // overlay; a new keyword or family replaces them, and leaving the previous
+    // family's entries up reads as results for the query just typed.
+    const paged = previous !== undefined && nextPage !== previous[1]
+    if (!paged) {
+      groups.value = []
+    }
+    await load()
+    if (paged) {
+      top.value?.scrollIntoView({ behavior: 'smooth', block: 'start' })
+    }
   },
   { immediate: true }
 )
