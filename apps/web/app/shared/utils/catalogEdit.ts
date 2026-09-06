@@ -1,4 +1,5 @@
-import type { EditFieldConfigMap, EditSelectOption } from '@nextmoe/edit-ui-vue'
+import { catalogConfig } from '@nextmoe/edit-ui-catalog'
+import type { EditFieldConfig, EditFieldConfigMap } from '@nextmoe/edit-ui-vue'
 
 export interface CatalogEditTitle {
   lang: string
@@ -24,66 +25,56 @@ export const CATALOG_EDIT_FIELD = {
   titles: 'catalog.work.titles'
 } as const
 
-const OLANG_OPTIONS: EditSelectOption[] = [
-  { value: 'ja', label: '日语 ja' },
-  { value: 'zh', label: '中文 zh' },
-  { value: 'zh-Hans', label: '简体中文 zh-Hans' },
-  { value: 'zh-Hant', label: '繁體中文 zh-Hant' },
-  { value: 'en', label: '英语 en' },
-  { value: 'ko', label: '韩语 ko' }
-]
+// The one cast: EditFieldConfig is generic in its `component` slot so core can
+// stay framework-free, @nextmoe/edit-ui-vue pins that slot to Vue's Component,
+// and catalogConfig returns the unpinned `unknown` one — the single member the
+// two shapes differ in, and one nothing here ever sets.
+const workPreset = catalogConfig('catalog.work') as EditFieldConfigMap
 
-const RATING_OPTIONS: EditSelectOption[] = [
-  { value: 0, label: '全年龄' },
-  { value: 1, label: '含敏感内容' },
-  { value: 2, label: 'R18' }
-]
+// The preset pairs titles with a `.suppressed` companion, and a configured
+// identityKey is the signal SchemaForm reads to draw a per-row 隐藏 toggle. That
+// toggle writes `catalog.work.titles.suppressed`, which moyu's write face — the
+// four named fields beside catalogEditFieldKeys in the Go handler, and nothing
+// else — drops without a word. Widening the surface is a product decision; until
+// it is made the toggle would be a control that does nothing.
+const withoutSuppression = (config: EditFieldConfig): EditFieldConfig => {
+  const next = { ...config }
+  delete next.identityKey
+  return next
+}
 
-// The engine accepts kind 0/1/2 only (editspec/work_titles.go: "kind must be 0
-// (official), 1 (alias) or 2 (abbreviation)"). Search hints are kind 3 and are
-// maintained by the importers — offering them here would 422 on save.
-const TITLE_KIND_OPTIONS: EditSelectOption[] = [
-  { value: 0, label: '正式名' },
-  { value: 1, label: '别名' },
-  { value: 2, label: '简称' }
-]
-
-const titleKindLabel = (kind: unknown) =>
-  TITLE_KIND_OPTIONS.find((o) => o.value === Number(kind))?.label ?? ''
+// The preset's own description says only an alias may omit its language, and its
+// vocabulary offers 不限定语言 as a real option — but the column is required, and
+// buildEditRow tests blankness before it matches an option, so an explicitly
+// chosen empty language reads as a missing one. Editing any cell recomputes every
+// row, so one such alias lights up 必填 the moment the user touches the field.
+// Only the message is wrong: a blank is dropped from the payload either way, and
+// moyu's named request sends lang: "" back regardless.
+const withOptionalTitleLang = (config: EditFieldConfig): EditFieldConfig => ({
+  ...config,
+  columns: config.columns?.map((column) =>
+    column.key === 'lang' ? { ...column, required: false } : column
+  )
+})
 
 export const CATALOG_EDIT_CONFIG: EditFieldConfigMap = {
+  ...workPreset,
   [CATALOG_EDIT_FIELD.titles]: {
-    label: '标题（正式名 / 别名）',
-    control: 'object-list',
-    columns: [
-      { key: 'title', label: '标题', width: 'flex-[2]' },
-      { key: 'lang', label: '语言', control: 'select', options: OLANG_OPTIONS },
-      {
-        key: 'kind',
-        label: '类型',
-        control: 'select',
-        options: TITLE_KIND_OPTIONS
-      },
-      { key: 'latin', label: '罗马字（可选）' }
-    ],
-    newRow: () => ({ lang: 'ja', title: '', latin: '', kind: 1 }),
-    formatItem: (item) => {
-      const row = item as Record<string, unknown>
-      const kind = titleKindLabel(row.kind)
-      return `${String(row.title ?? '')}${row.lang ? ` (${String(row.lang)})` : ''}${kind ? ` · ${kind}` : ''}`
-    },
-    description: '至少需要一个「正式名」；游戏的展示名会自动取原语言的正式名。'
+    ...withOptionalTitleLang(
+      withoutSuppression(workPreset[CATALOG_EDIT_FIELD.titles]!)
+    ),
+    // Seeds nothing but the enum: blankEditRow leaves kind empty, an empty enum
+    // is not a row the engine accepts, and a row added to a work that already
+    // has its official title is an alias.
+    newRow: () => ({ kind: 1 })
   },
   [CATALOG_EDIT_FIELD.displayName]: {
-    label: '展示名（保存标题时会自动派生）'
-  },
-  [CATALOG_EDIT_FIELD.olang]: {
-    label: '原语言',
-    options: OLANG_OPTIONS
-  },
-  [CATALOG_EDIT_FIELD.contentRating]: {
-    label: '内容分级',
-    options: RATING_OPTIONS
+    ...workPreset[CATALOG_EDIT_FIELD.displayName]!,
+    // applyTitles ends with Update("display_name", deriveDisplayName(titles,
+    // work.OLang)) — so editing 标题 overwrites this field, and someone who
+    // changed both in one patch would watch their display name revert with
+    // nothing on the page having said it would.
+    description: `${workPreset[CATALOG_EDIT_FIELD.displayName]!.description ?? ''}保存标题时会被重写为原语言的官方标题。`
   }
 }
 
@@ -118,3 +109,6 @@ export const toCatalogEditRequest = (
   }
   return req
 }
+
+export const catalogEditFieldLabel = (key: string) =>
+  CATALOG_EDIT_CONFIG[key]?.label ?? key
