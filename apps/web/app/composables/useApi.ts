@@ -24,6 +24,7 @@ interface ApiResponse<T> {
 interface ApiError {
   code: number
   message: string
+  data?: unknown
 }
 
 export const useApi = () => {
@@ -233,7 +234,11 @@ export const useApi = () => {
       return {
         code,
         message: fetchError.data?.message ?? 'Request failed',
-        data: null as T
+        // The envelope's own Data, not null: a rejection may carry a body worth
+        // reading — the catalog edit face answers a 422 with the field-level
+        // errors the form pins under each field. Every other error path still
+        // sends null, so this only ever widens what a caller may find.
+        data: (fetchError.data?.data ?? null) as T
       }
     }
   }

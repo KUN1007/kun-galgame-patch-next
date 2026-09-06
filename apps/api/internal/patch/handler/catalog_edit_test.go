@@ -28,8 +28,10 @@ type catalogEditFake struct {
 	sawCreate  bool
 	schema     string
 	createBody string
-	status     int
-	errBody    string
+	// Every include= the detail face was asked for, in order.
+	proposalIncludes []string
+	status           int
+	errBody          string
 }
 
 func (f *catalogEditFake) handler() http.HandlerFunc {
@@ -71,11 +73,17 @@ func (f *catalogEditFake) handler() http.HandlerFunc {
 				f.t.Errorf("create body is not JSON: %v", err)
 			}
 			_, _ = w.Write([]byte(f.createBody))
+		// The list lane's spec advertises no include at all and its rows are
+		// built without a patch; only the detail face carries one. Answering a
+		// patch here would hide the hydration this handler now does.
 		case p == "/v2/me/proposals" && r.Method == http.MethodGet:
-			_, _ = w.Write([]byte(`{"object":"list","items":[{"id":"32","state":"open"}],"total":1}`))
+			_, _ = w.Write([]byte(`{"object":"list","items":[{"id":"32","state":"open","base_revision_seq":7,` +
+				`"proposer_uid":"41","site":"kungal","created_at":"2026-09-01T00:00:00Z"}],"total":1}`))
 		case strings.HasPrefix(p, "/v2/me/proposals/") && r.Method == http.MethodGet:
 			w.Header().Set("ETag", `"p32"`)
-			_, _ = w.Write([]byte(`{"id":"32","state":"open"}`))
+			f.proposalIncludes = append(f.proposalIncludes, r.URL.Query().Get("include"))
+			_, _ = w.Write([]byte(`{"id":"32","state":"open","base_revision_seq":7,"proposer_uid":"41","site":"kungal",` +
+				`"patch":{"catalog.work.olang":"ja"}}`))
 		case strings.HasPrefix(p, "/v2/me/proposals/") && r.Method == http.MethodPatch:
 			_, _ = w.Write([]byte(`{"id":"32","state":"withdrawn"}`))
 		default:
@@ -87,8 +95,8 @@ func (f *catalogEditFake) handler() http.HandlerFunc {
 
 const catalogEditSchemaReply = `{"object":"object_schema","entity_type":"catalog.work","fields":[` +
 	`{"key":"catalog.work.display_name","field_type":"text","diff_hint":"inline","deprecated":false},` +
-	`{"key":"catalog.work.olang","field_type":"scalar","diff_hint":"inline","deprecated":false},` +
-	`{"key":"catalog.work.content_rating","field_type":"scalar","diff_hint":"inline","deprecated":false},` +
+	`{"key":"catalog.work.olang","field_type":"enum","diff_hint":"inline","deprecated":false},` +
+	`{"key":"catalog.work.content_rating","field_type":"enum","diff_hint":"inline","deprecated":false},` +
 	`{"key":"catalog.work.titles","field_type":"list","diff_hint":"items","deprecated":false,"max_elements":40,"max_suppressed":200},` +
 	`{"key":"catalog.work.covers","field_type":"list","diff_hint":"items","deprecated":false},` +
 	`{"key":"catalog.work.retired","field_type":"text","diff_hint":"inline","deprecated":true}]}`
@@ -339,16 +347,51 @@ func TestCatalogEditUpstreamStatusMapping(t *testing.T) {
 	}
 }
 
+func TestCatalogEditRelaysTheFieldLevelRejection(t *testing.T) {
+	fake := newCatalogEditFake(t)
+	fake.status = http.StatusUnprocessableEntity
+	fake.errBody = `{"code":"VALIDATION_FAILED","status":422,"detail":"editing: patch rejected","errors":[` +
+		`{"pointer":"/catalog.work.titles","reason":"UNKNOWN_VALUE","detail":"element 0: kind must be 0 (official), 1 (alias) or 2 (abbreviation)"},` +
+		`{"pointer":"/patch/catalog.work.olang","reason":"IMMUTABLE","detail":"field is locked"}]}`
+	ta, session := newCatalogEditApp(t, fake)
+
+	resp := ta.Request(t, http.MethodPost, "/patch/1/catalog-edit", `{"display_name":"新名"}`, session)
+	data := editData(t, resp)
+	rows, _ := data["errors"].([]any)
+	if len(rows) != 2 {
+		t.Fatalf("the field-level errors did not survive the envelope: %v", data)
+	}
+	first, _ := rows[0].(map[string]any)
+	if first["pointer"] != "/catalog.work.titles" || first["reason"] != "UNKNOWN_VALUE" {
+		t.Fatalf("field error lost its pointer or reason: %v", first)
+	}
+	if data["detail"] != "editing: patch rejected" {
+		t.Fatalf("the top-level detail is the fallback for a refusal that names no field: %v", data)
+	}
+}
+
 func TestCatalogEditProposalsAndWithdraw(t *testing.T) {
 	fake := newCatalogEditFake(t)
 	ta, session := newCatalogEditApp(t, fake)
 
 	data := editData(t, ta.Request(t, http.MethodGet, "/patch/1/catalog-edit/proposals", "", session))
-	if len(data["items"].([]any)) != 1 {
+	items, _ := data["items"].([]any)
+	if len(items) != 1 {
 		t.Fatalf("proposals: %v", data)
 	}
 	if fake.lastQuery["entity_id"] != "9000" {
 		t.Fatalf("my-proposals query: %v", fake.lastQuery)
+	}
+	row, _ := items[0].(map[string]any)
+	patch, _ := row["patch"].(map[string]any)
+	if _, ok := patch["catalog.work.olang"]; !ok {
+		t.Fatalf("the listed proposal was not hydrated from the detail face: %v", row)
+	}
+	if row["base_revision_seq"] != float64(7) || row["proposer_uid"] != float64(41) {
+		t.Fatalf("proposal view dropped the fields the card reads: %v", row)
+	}
+	if len(fake.proposalIncludes) == 0 || fake.proposalIncludes[0] != "patch" {
+		t.Fatalf("the detail face was not asked for the patch: %v", fake.proposalIncludes)
 	}
 	if _, ok := fake.lastQuery["proposer_uid"]; ok {
 		t.Fatalf("the user plane names no uid: %v", fake.lastQuery)

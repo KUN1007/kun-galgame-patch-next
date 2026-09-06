@@ -25,7 +25,10 @@ var catalogEditFieldKeys = []string{
 	fieldWorkTitles,
 }
 
-const catalogEditNoteMax = 2000
+const (
+	catalogEditNoteMax       = 2000
+	catalogEditProposalLimit = 20
+)
 
 // The shape the edit page reads; catalog's schema_field is the source it is
 // projected from.
@@ -64,6 +67,17 @@ type catalogEditRequest struct {
 	Note          string              `json:"note"`
 }
 
+// The shape @nextmoe/edit-ui-core's parseEditProblem reads. The envelope's
+// Message is one string, so a rejection that names its fields has to travel in
+// Data or the page can only toast the engine's prose and leave the reader to
+// work out which field — which title row — it is about.
+func problemFields(p *catalogv2.Problem) fiber.Map {
+	if len(p.Errors) == 0 && p.Detail == "" {
+		return nil
+	}
+	return fiber.Map{"errors": p.Errors, "detail": p.Detail}
+}
+
 func catalogEditErr(c fiber.Ctx, err error) error {
 	switch {
 	case stderrors.Is(err, catalogv2.ErrNotConfigured):
@@ -90,15 +104,16 @@ func catalogEditErr(c fiber.Ctx, err error) error {
 			if p.Code == "SCOPE_REQUIRED" {
 				return response.Error(c, errors.ErrCatalogReauthRequired(""))
 			}
-			return response.Error(c, errors.New(40300,
-				"你没有权限修改该条目（编辑资料需要相应的社区权限）", fiber.StatusForbidden))
+			return response.ErrorData(c, errors.New(40300,
+				"你没有权限修改该条目（编辑资料需要相应的社区权限）", fiber.StatusForbidden),
+				problemFields(p))
 		case http.StatusNotFound:
 			return response.Error(c, errors.ErrNotFound("资料库中没有这个条目"))
 		case http.StatusUnprocessableEntity:
-			return response.Error(c, errors.ErrValidation(p.Error()))
+			return response.ErrorData(c, errors.ErrValidation(p.Error()), problemFields(p))
 		case http.StatusConflict, http.StatusPreconditionFailed:
-			return response.Error(c, errors.ErrConflict(
-				"条目已被他人修改，或该提案已经关闭，请刷新后重试"))
+			return response.ErrorData(c, errors.ErrConflict(
+				"条目已被他人修改，或该提案已经关闭，请刷新后重试"), problemFields(p))
 		case http.StatusTooManyRequests:
 			return response.Error(c, errors.ErrTooManyRequests(p.Error()))
 		}
@@ -260,25 +275,54 @@ func (h *PatchHandler) CatalogEditProposals(c fiber.Ctx) error {
 	if done != nil {
 		return done
 	}
-	page, err := h.catalogV2().ListMyProposals(c.Context(), token, workID, 20)
+	page, err := h.catalogV2().ListMyProposals(c.Context(), token, workID, catalogEditProposalLimit)
 	if err != nil {
 		return catalogEditErr(c, err)
 	}
 	items := make([]fiber.Map, 0, len(page.Items))
 	for i := range page.Items {
-		items = append(items, proposalView(&page.Items[i]))
+		items = append(items, proposalView(h.hydrateProposalPatch(c, token, &page.Items[i])))
 	}
 	return response.OK(c, fiber.Map{"items": items})
+}
+
+// The list face carries no patch — its spec advertises no include at all — so
+// "你改了哪些字段" needs the detail face, one call per row. Bounded by the page
+// limit, and the list is already narrowed to a single work, so this is a handful
+// of proposals at most. A row whose detail read fails keeps its listed shape
+// rather than sinking the whole list.
+func (h *PatchHandler) hydrateProposalPatch(c fiber.Ctx, token string, p *catalogv2.ProposalRecord) *catalogv2.ProposalRecord {
+	id, ok := catalogv2.ParseID(p.ID)
+	if !ok || len(p.Patch) > 0 {
+		return p
+	}
+	full, _, err := h.catalogV2().GetProposal(c.Context(), token, id)
+	if err != nil {
+		slog.Warn("catalog edit: proposal patch not hydrated", "id", p.ID, "error", err)
+		return p
+	}
+	return full
 }
 
 func proposalView(p *catalogv2.ProposalRecord) fiber.Map {
 	id, _ := catalogv2.ParseID(p.ID)
 	entityID, _ := catalogv2.ParseID(p.EntityID)
-	return fiber.Map{
+	proposerUID, _ := catalogv2.ParseID(p.ProposerUID)
+	view := fiber.Map{
 		"id": id, "status": p.State, "state": p.State, "note": p.Note,
 		"entity_type": p.EntityType, "entity_id": entityID, "patch": p.Patch,
-		"created_at": p.CreatedAt,
+		"effective_patch": p.EffectivePatch, "proposer_uid": proposerUID,
+		"site": p.Site, "base_revision_seq": p.BaseRevisionSeq,
+		"created_at": p.CreatedAt, "updated_at": p.UpdatedAt,
 	}
+	if p.DecidedByUID != nil {
+		decidedBy, _ := catalogv2.ParseID(*p.DecidedByUID)
+		view["decided_by_uid"] = decidedBy
+	}
+	if p.DecidedAt != nil {
+		view["decided_at"] = *p.DecidedAt
+	}
+	return view
 }
 
 func (h *PatchHandler) CatalogProposalWithdraw(c fiber.Ctx) error {

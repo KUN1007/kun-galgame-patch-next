@@ -21,13 +21,26 @@ var (
 )
 
 type Problem struct {
-	Type      string `json:"type"`
-	Title     string `json:"title"`
-	Status    int    `json:"status"`
+	Type      string         `json:"type"`
+	Title     string         `json:"title"`
+	Status    int            `json:"status"`
+	Detail    string         `json:"detail"`
+	Code      string         `json:"code"`
+	Object    string         `json:"object"`
+	CurrentID string         `json:"current_id"`
+	Errors    []ProblemField `json:"errors"`
+}
+
+// Exactly one of Pointer / Parameter / Header is set. The pointer prefix is not
+// consistent — a validation failure emits "/<key>", an unknown or locked field
+// emits "/patch/<key>" — which is why the browser side parses it rather than
+// this one.
+type ProblemField struct {
+	Pointer   string `json:"pointer,omitempty"`
+	Parameter string `json:"parameter,omitempty"`
+	Header    string `json:"header,omitempty"`
+	Reason    string `json:"reason"`
 	Detail    string `json:"detail"`
-	Code      string `json:"code"`
-	Object    string `json:"object"`
-	CurrentID string `json:"current_id"`
 }
 
 func (p *Problem) Error() string {

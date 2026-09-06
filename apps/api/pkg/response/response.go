@@ -42,9 +42,17 @@ func Paginated(c fiber.Ctx, items any, total int64) error {
 }
 
 func Error(c fiber.Ctx, err *errors.AppError) error {
+	return ErrorData(c, err, nil)
+}
+
+// The envelope's Data slot on a REJECTION. Only the catalog edit face uses it
+// so far, to carry the upstream problem's field-level errors to a form that can
+// pin each message under its own field; everywhere else Data on an error stays
+// null, which is what Error keeps sending.
+func ErrorData(c fiber.Ctx, err *errors.AppError, data any) error {
 	return c.Status(err.HTTPStatus).JSON(Response{
 		Code:    err.Code,
 		Message: err.Message,
-		Data:    nil,
+		Data:    data,
 	})
 }

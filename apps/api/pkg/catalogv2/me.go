@@ -31,14 +31,25 @@ type SnapshotRecord struct {
 }
 
 type ProposalRecord struct {
-	Object     string         `json:"object"`
-	ID         string         `json:"id"`
-	State      string         `json:"state"`
-	EntityType string         `json:"entity_type"`
-	EntityID   string         `json:"entity_id"`
-	Note       string         `json:"note"`
-	Patch      map[string]any `json:"patch"`
-	CreatedAt  string         `json:"created_at"`
+	Object          string  `json:"object"`
+	ID              string  `json:"id"`
+	State           string  `json:"state"`
+	EntityType      string  `json:"entity_type"`
+	EntityID        string  `json:"entity_id"`
+	Note            string  `json:"note"`
+	ProposerUID     string  `json:"proposer_uid"`
+	Site            string  `json:"site"`
+	BaseRevisionSeq int     `json:"base_revision_seq"`
+	DecidedByUID    *string `json:"decided_by_uid"`
+	DecidedAt       *string `json:"decided_at"`
+	CreatedAt       string  `json:"created_at"`
+	UpdatedAt       string  `json:"updated_at"`
+	// Both are include-gated, and only the DETAIL face takes the token: the
+	// me/moderation LIST lanes are built by proposalFrom, which never populates
+	// them, and their spec advertises no include at all — asking for one there is
+	// a 400. A listed proposal is hydrated one by one or it has no patch.
+	Patch          map[string]any `json:"patch"`
+	EffectivePatch map[string]any `json:"effective_patch"`
 }
 
 // Without site= the tally counts every tenant's proposals filed under the same
@@ -120,7 +131,7 @@ func (c *Client) ListMyProposals(ctx context.Context, accessToken string, entity
 
 func (c *Client) GetProposal(ctx context.Context, accessToken string, id int64) (*ProposalRecord, string, error) {
 	var out ProposalRecord
-	etag, err := c.userDo(ctx, "GET", "/v2/me/proposals/"+FormatID(id), accessToken, nil, &out)
+	etag, err := c.userDo(ctx, "GET", "/v2/me/proposals/"+FormatID(id)+"?include=patch", accessToken, nil, &out)
 	if err != nil {
 		return nil, "", err
 	}

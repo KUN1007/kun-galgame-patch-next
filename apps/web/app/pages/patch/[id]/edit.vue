@@ -1,9 +1,10 @@
 <script setup lang="ts">
-import type { KunUIColor } from '@kungal/ui-core'
-import type { EditSchemaField } from '@nextmoe/edit-ui-vue'
+import type { EditProposal, EditSchemaField } from '@nextmoe/edit-ui-vue'
+import { parseEditProblem } from '@nextmoe/edit-ui-vue'
 import {
   CATALOG_EDIT_CONFIG,
   CATALOG_EDIT_FIELD,
+  catalogEditFieldLabel,
   toCatalogEditRequest,
   type CatalogEditRequest,
   type CatalogEditTitle
@@ -20,14 +21,6 @@ interface EditBootstrap {
     titles: CatalogEditTitle[]
   }
   fields: EditSchemaField[]
-}
-
-interface ProposalItem {
-  id: number
-  status: string
-  note: string
-  patch: Record<string, unknown>
-  created_at: string
 }
 
 const route = useRoute()
@@ -79,7 +72,7 @@ const { data: propData, refresh: refreshProposals } = await useAsyncData(
   `patch-catalog-proposals-${id}`,
   async () => {
     if (!userStore.isLoggedIn) return null
-    return await api.get<{ items: ProposalItem[] }>(
+    return await api.get<{ items: EditProposal[] }>(
       `/patch/${id}/catalog-edit/proposals`
     )
   }
@@ -87,21 +80,6 @@ const { data: propData, refresh: refreshProposals } = await useAsyncData(
 const myProposals = computed(() =>
   propData.value?.code === 0 ? (propData.value.data.items ?? []) : []
 )
-
-const STATUS_LABELS: Record<string, string> = {
-  open: '待审核',
-  merged: '已合并',
-  declined: '已驳回',
-  withdrawn: '已撤回'
-}
-const statusLabel = (s: string) => STATUS_LABELS[s] ?? s
-
-const STATUS_COLORS: Record<string, KunUIColor> = {
-  open: 'warning',
-  merged: 'success',
-  declined: 'danger'
-}
-const statusColor = (s: string): KunUIColor => STATUS_COLORS[s] ?? 'default'
 
 const withdraw = async (pid: number) => {
   const res = await api.post(`/catalog-proposal/${pid}/withdraw`)
@@ -113,7 +91,17 @@ const withdraw = async (pid: number) => {
   }
 }
 
+// Every row here is the viewer's own, so the card never has to look a uid up.
+const proposer = computed(() => ({
+  id: userStore.user.id,
+  name: userStore.user.name,
+  avatar: userStore.user.avatar
+}))
+
 const saving = ref(false)
+const form = useTemplateRef('form')
+const fieldErrors = ref<Record<string, string[]>>({})
+const formErrors = ref<string[]>([])
 
 const save = async () => {
   if (Object.keys(patch.value).length === 0) {
@@ -130,9 +118,15 @@ const save = async () => {
   )
   saving.value = false
   if (res.code !== 0) {
-    useKunMessage(res.message || '保存失败，请稍后再试', 'error')
+    const problem = parseEditProblem(res.data)
+    fieldErrors.value = problem.fields
+    formErrors.value = problem.form.length
+      ? problem.form
+      : [res.message || '保存失败，请稍后再试']
     return
   }
+  fieldErrors.value = {}
+  formErrors.value = []
   useKunMessage(
     res.data.merged ? '已保存（生成一条修订记录）' : '已提交提案，等待审核',
     'success'
@@ -141,6 +135,7 @@ const save = async () => {
     refreshNuxtData(`patch-catalog-edit-${id}`),
     refreshProposals()
   ])
+  form.value?.reset()
   note.value = ''
 }
 </script>
@@ -189,9 +184,12 @@ const save = async () => {
           </p>
 
           <EditSchemaForm
+            ref="form"
             :fields="fields"
             :values="values"
             :config="CATALOG_EDIT_CONFIG"
+            :errors="fieldErrors"
+            :form-errors="formErrors"
             @update:patch="(next) => (patch = next)"
           />
 
@@ -219,33 +217,26 @@ const save = async () => {
 
         <section v-if="myProposals.length" class="space-y-3">
           <h3 class="text-lg font-semibold">我的提案</h3>
-          <div
+          <EditProposalCard
             v-for="p in myProposals"
             :key="p.id"
-            class="border-default-200 flex items-center justify-between gap-3 rounded-lg border p-4"
+            :proposal="p"
+            :label-for="catalogEditFieldLabel"
+            :proposer="proposer"
           >
-            <div class="min-w-0">
-              <div class="flex items-center gap-2">
-                <KunChip size="sm" variant="flat" :color="statusColor(p.status)">
-                  {{ statusLabel(p.status) }}
-                </KunChip>
-                <span class="text-default-400 text-xs">#{{ p.id }}</span>
-              </div>
-              <p class="text-default-500 mt-1 truncate text-sm">
-                {{ Object.keys(p.patch ?? {}).join('、') }}
-              </p>
-            </div>
-            <KunButton
-              v-if="p.status === 'open'"
-              size="sm"
-              variant="flat"
-              color="danger"
-              type="button"
-              @click="withdraw(p.id)"
-            >
-              撤回
-            </KunButton>
-          </div>
+            <template #actions>
+              <KunButton
+                v-if="p.status === 'open'"
+                size="sm"
+                variant="flat"
+                color="danger"
+                type="button"
+                @click="withdraw(p.id)"
+              >
+                撤回
+              </KunButton>
+            </template>
+          </EditProposalCard>
         </section>
 
         <div
