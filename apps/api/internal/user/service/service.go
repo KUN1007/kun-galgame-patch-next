@@ -14,6 +14,7 @@ import (
 	"kun-galgame-patch-api/internal/user/dto"
 	"kun-galgame-patch-api/internal/user/model"
 	"kun-galgame-patch-api/internal/user/repository"
+	"kun-galgame-patch-api/pkg/catalogv2"
 	"kun-galgame-patch-api/pkg/moemoepoint"
 	"kun-galgame-patch-api/pkg/userclient"
 
@@ -302,8 +303,64 @@ func (s *UserService) GetUserResources(ctx context.Context, userID, page, limit 
 	return rs, total, nil
 }
 
-func (s *UserService) GetUserFavorites(userID, page, limit int, includeEmpty bool, contentLimit string) ([]patchModel.Patch, int64, error) {
-	return s.repo.GetUserFavorites(userID, (page-1)*limit, limit, includeEmpty, contentLimit)
+// GetUserFavorites reads the person's catalog folders and turns the works they
+// hold back into this site's patches. Their own shelf is read with their own
+// token so private folders count; anybody else sees only what they published.
+//
+// Works this site does not carry are dropped rather than shown as holes: the
+// folders are shared with the forum, where somebody can favourite a game that
+// has no patch page here.
+func (s *UserService) GetUserFavorites(ctx context.Context, userID int, token string, isOwner bool,
+	page, limit int, includeEmpty bool, contentLimit string) ([]patchModel.Patch, int64, error) {
+
+	var (
+		folders []catalogv2.Folder
+		err     error
+	)
+	if isOwner && token != "" {
+		folders, err = s.galgame.V2().MyFolders(ctx, token)
+	} else {
+		folders, err = s.galgame.V2().PublicFolders(ctx, int64(userID))
+	}
+	if err != nil {
+		return nil, 0, err
+	}
+
+	seen := map[int64]bool{}
+	workIDs := []int64{}
+	for _, f := range folders {
+		if f.ItemCount == 0 {
+			continue
+		}
+		var items []catalogv2.FolderItem
+		if isOwner && token != "" {
+			items, err = s.galgame.V2().MyFolderItems(ctx, token, f.ID)
+		} else {
+			items, err = s.galgame.V2().PublicFolderItems(ctx, f.ID)
+		}
+		if err != nil {
+			return nil, 0, err
+		}
+		for _, it := range items {
+			if seen[it.WorkID] {
+				continue
+			}
+			seen[it.WorkID] = true
+			workIDs = append(workIDs, it.WorkID)
+		}
+	}
+
+	byWork, mErr := s.repo.PatchIDsByWorkIDs(workIDs)
+	if mErr != nil {
+		return nil, 0, mErr
+	}
+	ids := make([]int, 0, len(workIDs))
+	for _, w := range workIDs {
+		if pid, ok := byWork[w]; ok {
+			ids = append(ids, pid)
+		}
+	}
+	return s.repo.GetUserFavoritesByIDs(ids, (page-1)*limit, limit, includeEmpty, contentLimit)
 }
 
 func (s *UserService) GetUserComments(ctx context.Context, userID, page, limit int) ([]patchModel.PatchComment, int64, error) {

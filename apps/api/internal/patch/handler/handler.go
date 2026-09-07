@@ -195,7 +195,7 @@ func (h *PatchHandler) GetPatch(c fiber.Ctx) error {
 
 	card := h.withPurchaseLinks(headerCard{GalgameCard: *enriched})
 	if user := middleware.GetUser(c); user != nil {
-		card.IsFavorite = h.service.IsFavorited(user.ID, id)
+		card.IsFavorite = h.service.IsFavoritedInCatalog(c.Context(), middleware.GetAccessToken(c), id)
 	}
 	return response.OK(c, card)
 }
@@ -706,10 +706,13 @@ func (h *PatchHandler) ToggleFavorite(c fiber.Ctx) error {
 	}
 
 	user := middleware.MustGetUser(c)
-	favorited, err := h.service.ToggleFavorite(id, user.ID)
+	token, appErr := catalogUserToken(c)
+	if appErr != nil {
+		return response.Error(c, appErr)
+	}
+	favorited, err := h.service.ToggleFavoriteInCatalog(c.Context(), token, id, user.ID)
 	if err != nil {
-		slog.Error("ToggleFavorite failed", "patchID", id, "error", err)
-		return response.Error(c, errors.ErrInternal("收藏失败，请稍后重试"))
+		return catalogErr(c, err, "收藏失败，请稍后重试")
 	}
 
 	return response.OK(c, map[string]bool{"favorited": favorited})

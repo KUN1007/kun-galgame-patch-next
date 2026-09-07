@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"log/slog"
 	"math/rand"
+	"strconv"
 	"strings"
 	"time"
 
@@ -16,6 +17,7 @@ import (
 	"kun-galgame-patch-api/internal/patch/repository"
 	settingService "kun-galgame-patch-api/internal/setting/service"
 	"kun-galgame-patch-api/pkg/artifactclient"
+	"kun-galgame-patch-api/pkg/catalogv2"
 	"kun-galgame-patch-api/pkg/moemoepoint"
 	"kun-galgame-patch-api/pkg/userclient"
 	"kun-galgame-patch-api/pkg/utils"
@@ -67,6 +69,30 @@ func (s *PatchService) CreatePatchByGalgameID(ctx context.Context, userID, galga
 	return s.createPatchRow(ctx, userID, galgameID, vndb)
 }
 
+// resolveCatalogWork turns this site's vndb id into a catalog work. A
+// `wiki-<n>` id is a catalog work id with a prefix — that is what it was
+// minted from — and a `pending-<n>` placeholder has no work at all.
+func (s *PatchService) resolveCatalogWork(ctx context.Context, vndbID string) *int64 {
+	if rest, cut := strings.CutPrefix(vndbID, "wiki-"); cut {
+		if n, err := strconv.ParseInt(rest, 10, 64); err == nil && n > 0 {
+			return &n
+		}
+		return nil
+	}
+	if !strings.HasPrefix(vndbID, "v") {
+		return nil
+	}
+	w, err := s.galgame.V2().WorkByRef(ctx, "vndb", vndbID, true)
+	if err != nil || w == nil {
+		return nil
+	}
+	n, ok := catalogv2.ParseID(w.ID)
+	if !ok {
+		return nil
+	}
+	return &n
+}
+
 func (s *PatchService) createPatchRow(ctx context.Context, userID, galgameID int, vndbID string) (int, error) {
 	if existing, _ := s.repo.GetPatchDetail(galgameID); existing != nil && existing.ID != 0 {
 		if existing.IsStub {
@@ -80,13 +106,21 @@ func (s *PatchService) createPatchRow(ctx context.Context, userID, galgameID int
 		releaseDate = utils.ParseGalgameReleaseDate(*env.Galgame.ReleaseDate)
 	}
 
+	// Without this a game created after the folder cutover cannot be
+	// favourited: a folder item names a catalog work and patch.id is a
+	// different id space (migration 034). Resolution is best effort — a
+	// `pending-<n>` placeholder has no work yet — and the backfill script
+	// picks up whatever was missed.
+	workID := s.resolveCatalogWork(ctx, vndbID)
+
 	var patchID int
 	txErr := s.db.Transaction(func(tx *gorm.DB) error {
 		p := &model.Patch{
-			ID:          galgameID,
-			VndbID:      vndbID,
-			UserID:      userID,
-			ReleaseDate: releaseDate,
+			ID:            galgameID,
+			VndbID:        vndbID,
+			UserID:        userID,
+			ReleaseDate:   releaseDate,
+			CatalogWorkID: workID,
 		}
 		if err := tx.Create(p).Error; err != nil {
 			return fmt.Errorf("创建 patch 失败: %w", err)
@@ -1037,46 +1071,10 @@ func (s *PatchService) IsResourceFavorited(userID, resourceID int) bool {
 	return err == nil
 }
 
-func (s *PatchService) ToggleFavorite(patchID, userID int) (bool, error) {
-	patch, err := s.ensureLocalPatch(context.Background(), patchID, userID)
-	if err != nil {
-		return false, fmt.Errorf("patch not found")
-	}
-
-	existing, err := s.repo.FindFavorite(userID, patchID)
-	if err == nil {
-		if delErr := s.repo.DeleteFavorite(existing.ID); delErr != nil {
-			return false, delErr
-		}
-		s.repo.UpdateCount(patchID, "favorite_count", -1)
-		if patch.UserID != userID {
-			go s.mp.Award(context.Background(), patch.UserID, -1, "liked",
-				fmt.Sprintf("galgame:%d", patchID), fmt.Sprintf("moyu:unfavorite:%d", existing.ID))
-		}
-		return false, nil
-	}
-	if !errors.Is(err, gorm.ErrRecordNotFound) {
-		return false, err
-	}
-
-	rel := &model.UserPatchFavoriteRelation{UserID: userID, GalgameID: patchID}
-	if err := s.repo.CreateFavorite(rel); err != nil {
-		return false, err
-	}
-	s.repo.UpdateCount(patchID, "favorite_count", 1)
-	if patch.UserID != userID {
-		go s.mp.Award(context.Background(), patch.UserID, 1, "liked",
-			fmt.Sprintf("galgame:%d", patchID), fmt.Sprintf("moyu:favorite:%d", rel.ID))
-		go s.notifyContentInteraction(userID, patch.UserID, patchID,
-			"favorite", fmt.Sprintf("/patch/%d/introduction", patchID))
-	}
-	return true, nil
-}
-
-func (s *PatchService) IsFavorited(userID, patchID int) bool {
-	_, err := s.repo.FindFavorite(userID, patchID)
-	return err == nil
-}
+// ToggleFavorite and IsFavorited used to read and write
+// user_patch_favorite_relation. Favourites are catalog folder memberships
+// since the cutover; see service/folders.go. The table is frozen as rollback
+// material and read by nothing.
 
 func (s *PatchService) GetContributorIDs(patchID int) ([]int, error) {
 	return s.repo.GetContributorIDs(patchID)

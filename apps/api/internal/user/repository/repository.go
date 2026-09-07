@@ -75,11 +75,39 @@ func (r *UserRepository) GetUserResources(userID, offset, limit int) ([]patchMod
 	return resources, total, err
 }
 
-func (r *UserRepository) GetUserFavorites(userID, offset, limit int, includeEmpty bool, contentLimit string) ([]patchModel.Patch, int64, error) {
+// GetUserFavoritesByIDs is the old GetUserFavorites with its subquery replaced
+// by an id list. Favourites are catalog folder memberships since the cutover,
+// so the set arrives over HTTP; everything after that — the empty-patch
+// filter, the content-limit scope, the ordering and the paging — is the query
+// this site always ran, and is left alone.
+// A folder item names a catalog work; patch.id is a different id space
+// (migration 034). patch.catalog_work_id is the map, so this is one indexed
+// lookup rather than a resolution call per row.
+func (r *UserRepository) PatchIDsByWorkIDs(workIDs []int64) (map[int64]int, error) {
+	out := map[int64]int{}
+	if len(workIDs) == 0 {
+		return out, nil
+	}
+	var rows []patchModel.Patch
+	if err := r.db.Select("id, catalog_work_id").
+		Where("catalog_work_id IN ?", workIDs).Find(&rows).Error; err != nil {
+		return nil, err
+	}
+	for _, row := range rows {
+		if row.CatalogWorkID != nil {
+			out[*row.CatalogWorkID] = row.ID
+		}
+	}
+	return out, nil
+}
+
+func (r *UserRepository) GetUserFavoritesByIDs(patchIDs []int, offset, limit int, includeEmpty bool, contentLimit string) ([]patchModel.Patch, int64, error) {
+	if len(patchIDs) == 0 {
+		return []patchModel.Patch{}, 0, nil
+	}
 	var patches []patchModel.Patch
 	var total int64
-	subQuery := r.db.Table("user_patch_favorite_relation").Where("user_id = ?", userID).Select("galgame_id")
-	base := r.db.Model(&patchModel.Patch{}).Where("id IN (?)", subQuery)
+	base := r.db.Model(&patchModel.Patch{}).Where("id IN ?", patchIDs)
 	if !includeEmpty {
 		base = base.Where("resource_count > 0")
 	}

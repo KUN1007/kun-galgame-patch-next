@@ -133,7 +133,10 @@ func (h *UserHandler) GetUserFavorites(c fiber.Ctx) error {
 	}
 
 	cl := utils.ContentLimitForListBrowse(c)
-	patches, total, err := h.service.GetUserFavorites(userID, req.Page, req.Limit, true, cl)
+	viewer := middleware.GetUser(c)
+	isOwner := viewer != nil && viewer.ID == userID
+	patches, total, err := h.service.GetUserFavorites(c.Context(), userID,
+		middleware.GetAccessToken(c), isOwner, req.Page, req.Limit, true, cl)
 	if err != nil {
 		return response.Error(c, errors.ErrInternal(""))
 	}

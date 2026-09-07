@@ -64,6 +64,11 @@ func (j JSONArray) Value() (driver.Value, error) {
 type Patch struct {
 	ID                 int       `gorm:"primaryKey;autoIncrement" json:"id"`
 	VndbID             string    `gorm:"uniqueIndex;type:varchar(107);not null" json:"vndb_id"`
+	// The catalog work this game is, resolved from VndbID through the exact
+	// vndb anchor. NOT equal to ID — the two id spaces are unrelated, see
+	// migration 034. NULL for the `pending-<n>` placeholders, which have no
+	// work and therefore cannot be favourited.
+	CatalogWorkID *int64 `gorm:"column:catalog_work_id" json:"-"`
 	BID                *int      `gorm:"column:bid;uniqueIndex" json:"bid"`
 	Status             int       `gorm:"default:0" json:"status"`
 	Download           int       `gorm:"default:0" json:"download"`
