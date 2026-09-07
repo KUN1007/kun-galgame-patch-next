@@ -10,6 +10,8 @@ import (
 	"time"
 
 	"kun-galgame-patch-api/pkg/catalogv2"
+
+	"github.com/redis/go-redis/v9"
 )
 
 const galgameCodeNotFound = 404
@@ -76,6 +78,14 @@ func NewWithKey(baseURL, apiKey string) *Client {
 }
 
 func (c *Client) V2() *catalogv2.Client { return c.v2 }
+
+// WithRedis hands the catalog client the shared read cache. Optional on
+// purpose: a client built without it makes every read a request, which is what
+// the tests want.
+func (c *Client) WithRedis(rdb *redis.Client) *Client {
+	c.v2.WithRedis(rdb)
+	return c
+}
 
 type Paginated[T any] struct {
 	Items []T   `json:"items"`
