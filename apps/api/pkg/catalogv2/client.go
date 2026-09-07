@@ -10,6 +10,8 @@ import (
 	"net/http"
 	"strings"
 	"time"
+
+	"github.com/redis/go-redis/v9"
 )
 
 var (
@@ -61,6 +63,7 @@ type Client struct {
 	http   *http.Client
 	origin string
 	apiKey string
+	rdb    *redis.Client
 }
 
 func New(baseURL, apiKey string) *Client {
@@ -90,9 +93,24 @@ func (c *Client) Configured() bool {
 	return c != nil && c.origin != "" && c.apiKey != ""
 }
 
+// Every S2S read goes through here, so this is where the shared read cache
+// belongs; user-token reads take userDo and are never cached. Decoding into a
+// json.RawMessage is what makes one body serve both the cache and the caller:
+// do() hands the verbatim bytes back without a second request, and a 204 or an
+// empty body leaves raw nil, exactly as before.
 func (c *Client) get(ctx context.Context, path string, out any) error {
-	_, err := c.do(ctx, http.MethodGet, path, "", "", nil, out)
-	return err
+	if body, ok := c.cacheGet(ctx, path); ok {
+		return json.Unmarshal(body, out)
+	}
+	var raw json.RawMessage
+	if _, err := c.do(ctx, http.MethodGet, path, "", "", nil, &raw); err != nil {
+		return err
+	}
+	if len(raw) == 0 {
+		return nil
+	}
+	c.cacheSet(ctx, path, raw)
+	return json.Unmarshal(raw, out)
 }
 
 func (c *Client) do(ctx context.Context, method, path, userToken, ifMatch string, body any, out any) (string, error) {

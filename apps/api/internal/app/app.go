@@ -89,7 +89,7 @@ func New(cfg *config.Config) *App {
 
 	db := database.NewPostgres(cfg.Database, cfg.Server.Mode)
 	rdb := cache.NewRedis(cfg.Redis)
-	galgame := galgameClient.NewWithKey(cfg.NextMoeAPI.BaseURL, cfg.NextMoeAPI.APIKey)
+	galgame := galgameClient.NewWithKey(cfg.NextMoeAPI.BaseURL, cfg.NextMoeAPI.APIKey).WithRedis(rdb)
 
 	usrCli := userclient.New(userclient.Config{
 		BaseURL:      cfg.OAuth.ServerURL,
