@@ -16,6 +16,10 @@ import (
 	chatService "kun-galgame-patch-api/internal/chat/service"
 	"kun-galgame-patch-api/internal/common"
 	uploadPkg "kun-galgame-patch-api/internal/common/upload"
+	"kun-galgame-patch-api/internal/face"
+	faceHandler "kun-galgame-patch-api/internal/face/handler"
+	faceRepo "kun-galgame-patch-api/internal/face/repository"
+	faceService "kun-galgame-patch-api/internal/face/service"
 	docHandler "kun-galgame-patch-api/internal/doc/handler"
 	docRepository "kun-galgame-patch-api/internal/doc/repository"
 	docService "kun-galgame-patch-api/internal/doc/service"
@@ -44,6 +48,7 @@ import (
 	"kun-galgame-patch-api/pkg/errors"
 	"kun-galgame-patch-api/pkg/imageclient"
 	"kun-galgame-patch-api/pkg/moemoepoint"
+	"kun-galgame-patch-api/pkg/problem"
 	"kun-galgame-patch-api/pkg/response"
 	"kun-galgame-patch-api/pkg/storeclient"
 	"kun-galgame-patch-api/pkg/trustclient"
@@ -68,6 +73,7 @@ type App struct {
 	MessageHandler *messageHandler.MessageHandler
 	AdminHandler   *adminHandler.AdminHandler
 	CommonHandler  *common.CommonHandler
+	FaceHandler    *faceHandler.Handler
 	UploadHandler  *uploadPkg.Handler
 	ChatHandler    *chatHandler.ChatHandler
 	DocHandler     *docHandler.DocHandler
@@ -237,6 +243,7 @@ func New(cfg *config.Config) *App {
 	})
 
 	commonHdl := common.NewHandler(db, galgame, usrCli, artCli, imgCli)
+	faceHdl := faceHandler.New(faceService.New(faceRepo.New(db), usrCli, imgCli, cfg.Site.BaseURL))
 	uploadHdl := uploadPkg.NewHandler(uploadSvc, imgCli)
 
 	markdown.SetContentImageResolver(imgCli.MainURL)
@@ -290,6 +297,7 @@ func New(cfg *config.Config) *App {
 		MessageHandler: messageHdl,
 		AdminHandler:   adminHdl,
 		CommonHandler:  commonHdl,
+		FaceHandler:    faceHdl,
 		UploadHandler:  uploadHdl,
 		ChatHandler:    chatHdl,
 		DocHandler:     docHdl,
@@ -298,11 +306,41 @@ func New(cfg *config.Config) *App {
 	}
 }
 
+// globalErrorHandler speaks whichever error language the path belongs to.
+// Without the face branch an unrouted /v2/moyu path would answer in the site's
+// house envelope -- exactly the second error dialect the face exists to avoid.
 func globalErrorHandler(c fiber.Ctx, err error) error {
+	if prob, ok := err.(*problem.Problem); ok {
+		return problem.Write(c, prob)
+	}
 	if appErr, ok := err.(*errors.AppError); ok {
+		if face.IsPath(c.Path()) {
+			return problem.Write(c, faceProblem(appErr.HTTPStatus, appErr.Message))
+		}
 		return response.Error(c, appErr)
+	}
+	if fe, ok := err.(*fiber.Error); ok && face.IsPath(c.Path()) {
+		return problem.Write(c, faceProblem(fe.Code, fe.Message))
 	}
 
 	slog.Error("Unhandled error", "error", err, "method", c.Method(), "path", c.Path())
+	if face.IsPath(c.Path()) {
+		return problem.WriteCode(c, problem.CodeInternalError, "")
+	}
 	return response.Error(c, errors.ErrInternal(""))
+}
+
+func faceProblem(status int, detail string) *problem.Problem {
+	switch status {
+	case fiber.StatusNotFound:
+		return problem.New(problem.CodeNotFound, detail)
+	case fiber.StatusMethodNotAllowed:
+		return problem.New(problem.CodeMethodNotAllowed, detail)
+	case fiber.StatusBadRequest:
+		return problem.New(problem.CodeInvalidParameter, detail)
+	case fiber.StatusServiceUnavailable:
+		return problem.New(problem.CodeServiceUnavailable, detail)
+	default:
+		return problem.New(problem.CodeInternalError, detail)
+	}
 }

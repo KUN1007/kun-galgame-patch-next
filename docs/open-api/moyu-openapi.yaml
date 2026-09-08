@@ -1,0 +1,575 @@
+openapi: 3.1.0
+info:
+  title: NextMoe moyu Face
+  version: 1.0.0
+  x-stability: stable
+  summary: Which patch resources 鲲 Galgame 补丁 (www.moyu.moe) holds for a game.
+  description: |
+    The `moyu` face of the NextMoe developer platform.
+
+    It answers one question: **for this game, what patch resources exist on
+    moyu?** A game is named by an anchor you already hold — a VNDB number or a
+    NextMoe catalog work id — and the answer is the site's page for it plus the
+    resources on that page.
+
+    ### What this face is not
+
+    It carries no game titles, covers, tags, characters or staff, and that is
+    deliberate rather than an omission. Catalog owns all of those and moyu
+    stores no copy; the same key that reads this face reads
+    `/v2/catalog/works`, so resolving a name there is one request against the
+    authority instead of a second, staler answer from us. Every row here names
+    its `catalog_work_id` for exactly that hop.
+
+    It also carries **no download link, share code or password**. Revealing a
+    link on moyu is a separate, rate-limited, per-resource request whose whole
+    purpose is that links cannot be harvested in bulk. Every row carries a
+    `web_url` instead — send a reader there.
+
+    ### Authentication
+
+    Send a NextMoe application key as `X-API-Key` or as
+    `Authorization: Bearer nmk_live_…`. Any
+    valid key is admitted: this is a free read-only face and the gateway's job
+    on it is identity and metering, not authorisation. The key's rate and quota
+    budget is spent at the gateway, which answers `X-RateLimit-*` and
+    `X-Quota-*` on every response.
+
+    **A browser cannot call this face directly.** The gateway authenticates
+    every method including `OPTIONS`, and a preflight carries no key, so it is
+    refused before it arrives. Call it from your server. An `nmk_` key does not
+    belong in a browser in any case.
+
+    ### Conventions
+
+    Shared with catalog `/v2`, so one client covers both:
+
+    - every id is a **string**, and `patch.id`, `vndb_id` and `catalog_work_id`
+      are three different id spaces for the same game — never equal, never
+      interchangeable;
+    - collections page by opaque `cursor`, and `total` costs a count so it is
+      opt-in via `include_total=true`;
+    - relations are opt-in via `include=`, so ask for what you need;
+    - timestamps are RFC 3339 in UTC; dates are `YYYY-MM-DD`;
+    - failures are RFC 9457 `application/problem+json` with a `code` from the
+      platform's closed registry.
+
+    One exception worth knowing: `401` and `429` are written by the gateway
+    before this service is reached, and they carry the platform's own
+    `{code, message}` body rather than a problem document.
+  contact:
+    name: www.moyu.moe
+    url: https://www.moyu.moe
+  license:
+    name: AGPL-3.0
+    url: https://github.com/KunMoe/kun-galgame-patch/blob/master/LICENSE
+servers:
+  - url: https://api.nextmoe.dev
+    description: Production
+security:
+  - apiKey: []
+  - bearerKey: []
+tags:
+  - name: patches
+    description: Game pages on moyu, and the resources on them.
+paths:
+  /v2/moyu/patches:
+    get:
+      operationId: listPatches
+      tags: [patches]
+      summary: List or look up patch pages
+      description: |
+        Without `ids` or `refs` this is the whole collection, paged and sorted.
+
+        With either, it is a **batch lookup**: up to 100 anchors in one request,
+        with every anchor that matched nothing echoed back in `missing`. This is
+        how you ask "which of these 100 games do you have patches for" in one
+        round trip.
+
+        A batch answers a set, not a page, so `cursor` and `sort` are refused
+        alongside it. Note that two pages can name one catalog work — moyu
+        dedupes on the VNDB string and a game that arrived under two spellings
+        has two pages — so `refs=catalog:<id>` may answer more than one item.
+        They are ordered so that the page a reader should land on comes first.
+      parameters:
+        - $ref: '#/components/parameters/limit'
+        - $ref: '#/components/parameters/cursor'
+        - $ref: '#/components/parameters/includeTotal'
+        - $ref: '#/components/parameters/nsfw'
+        - name: include
+          in: query
+          description: Comma-separated relations to attach.
+          schema:
+            type: string
+            enum: [resources, publisher, 'resources,publisher']
+          example: resources
+        - name: ids
+          in: query
+          description: |
+            Up to 100 moyu patch ids. Mutually exclusive with `refs`.
+          schema:
+            type: string
+          example: '223309,11617'
+        - name: refs
+          in: query
+          description: |
+            Up to 100 foreign anchors as `source:external_id`. Sources are
+            `vndb` (a VNDB id such as `v65869`) and `catalog` (a NextMoe catalog
+            work id). Mutually exclusive with `ids`.
+          schema:
+            type: string
+          example: 'vndb:v65869,catalog:61311'
+        - name: sort
+          in: query
+          description: |
+            All descending. `updated` orders by when a resource was last added
+            or changed, which is not the same as when the page was edited.
+          schema:
+            type: string
+            enum: [updated, created, downloads, views]
+            default: updated
+        - name: type
+          in: query
+          description: Comma-separated patch kinds; any of them matches.
+          schema:
+            type: string
+          example: 'ai,manual'
+        - name: language
+          in: query
+          description: Comma-separated languages; any of them matches.
+          schema:
+            type: string
+          example: zh-Hans
+        - name: platform
+          in: query
+          description: Comma-separated platforms; any of them matches.
+          schema:
+            type: string
+          example: windows
+        - name: has_resources
+          in: query
+          description: |
+            Unset returns every page. A page can exist with no resources on it
+            yet; `true` is the filter for "actually has something to download".
+          schema:
+            type: boolean
+      responses:
+        '200':
+          description: A page of patches, or the batch answer.
+          headers:
+            ETag: { $ref: '#/components/headers/ETag' }
+            Cache-Control: { $ref: '#/components/headers/CacheControl' }
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/PatchList' }
+        '304': { $ref: '#/components/responses/NotModified' }
+        '400': { $ref: '#/components/responses/BadRequest' }
+        '429': { $ref: '#/components/responses/RateLimited' }
+        '503': { $ref: '#/components/responses/ServiceUnavailable' }
+  /v2/moyu/patches/{id}:
+    get:
+      operationId: getPatch
+      tags: [patches]
+      summary: One patch page
+      parameters:
+        - $ref: '#/components/parameters/patchId'
+        - name: include
+          in: query
+          description: |
+            Comma-separated relations to attach. Nothing is attached by default,
+            including the resources — `resource_count` tells you whether there
+            is anything to ask for, and `/patches/{id}/resources` pages them
+            when there are many.
+          schema:
+            type: string
+            enum: [resources, publisher, 'resources,publisher']
+          example: 'resources,publisher'
+      responses:
+        '200':
+          description: The patch page.
+          headers:
+            ETag: { $ref: '#/components/headers/ETag' }
+            Cache-Control: { $ref: '#/components/headers/CacheControl' }
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/Patch' }
+        '304': { $ref: '#/components/responses/NotModified' }
+        '400': { $ref: '#/components/responses/BadRequest' }
+        '404': { $ref: '#/components/responses/NotFound' }
+        '429': { $ref: '#/components/responses/RateLimited' }
+        '503': { $ref: '#/components/responses/ServiceUnavailable' }
+  /v2/moyu/patches/{id}/resources:
+    get:
+      operationId: listPatchResources
+      tags: [patches]
+      summary: The resources on one patch page
+      description: |
+        Newest change first. Only live resources are ever listed: one its
+        publisher disabled or moderation hid is absent here and `404` at its own
+        URL, exactly as on the site.
+      parameters:
+        - $ref: '#/components/parameters/patchId'
+        - $ref: '#/components/parameters/limit'
+        - $ref: '#/components/parameters/cursor'
+        - $ref: '#/components/parameters/includeTotal'
+        - name: include
+          in: query
+          schema:
+            type: string
+            enum: [publisher]
+      responses:
+        '200':
+          description: A page of resources.
+          headers:
+            ETag: { $ref: '#/components/headers/ETag' }
+            Cache-Control: { $ref: '#/components/headers/CacheControl' }
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/ResourceList' }
+        '304': { $ref: '#/components/responses/NotModified' }
+        '400': { $ref: '#/components/responses/BadRequest' }
+        '404': { $ref: '#/components/responses/NotFound' }
+        '429': { $ref: '#/components/responses/RateLimited' }
+        '503': { $ref: '#/components/responses/ServiceUnavailable' }
+  /v2/moyu/resources/{id}:
+    get:
+      operationId: getResource
+      tags: [patches]
+      summary: One resource
+      parameters:
+        - name: id
+          in: path
+          required: true
+          description: Resource id.
+          schema: { type: string, pattern: '^[0-9]+$' }
+          example: '10463'
+        - name: include
+          in: query
+          schema:
+            type: string
+            enum: [publisher]
+      responses:
+        '200':
+          description: The resource.
+          headers:
+            ETag: { $ref: '#/components/headers/ETag' }
+            Cache-Control: { $ref: '#/components/headers/CacheControl' }
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/Resource' }
+        '304': { $ref: '#/components/responses/NotModified' }
+        '400': { $ref: '#/components/responses/BadRequest' }
+        '404': { $ref: '#/components/responses/NotFound' }
+        '429': { $ref: '#/components/responses/RateLimited' }
+        '503': { $ref: '#/components/responses/ServiceUnavailable' }
+components:
+  securitySchemes:
+    apiKey:
+      type: apiKey
+      in: header
+      name: X-API-Key
+      description: |
+        A NextMoe application key (`nmk_live_` / `nmk_test_`), minted in the
+        developer portal. Any valid key may call this face; no scope is
+        required.
+    bearerKey:
+      type: http
+      scheme: bearer
+      description: 'The same key as `Authorization: Bearer nmk_live_...`.'
+  headers:
+    ETag:
+      description: Entity tag; send it back as `If-None-Match` for a `304`.
+      schema: { type: string }
+    CacheControl:
+      description: '`public, max-age=300, s-maxage=1800, stale-while-revalidate=3600`'
+      schema: { type: string }
+  parameters:
+    patchId:
+      name: id
+      in: path
+      required: true
+      description: moyu patch id. Not a catalog work id and not a VNDB number.
+      schema: { type: string, pattern: '^[0-9]+$' }
+      example: '11617'
+    limit:
+      name: limit
+      in: query
+      description: 1 to 100. Over 100 is `LIMIT_TOO_LARGE`; the value is not clamped.
+      schema: { type: integer, minimum: 1, maximum: 100, default: 20 }
+    cursor:
+      name: cursor
+      in: query
+      description: The `next_cursor` from a previous page of the same collection.
+      schema: { type: string, pattern: '^cur_[A-Za-z0-9._~-]+$' }
+    includeTotal:
+      name: include_total
+      in: query
+      description: Count the whole collection. Absent by default because it costs a count.
+      schema: { type: boolean, default: false }
+    nsfw:
+      name: nsfw
+      in: query
+      description: |
+        Include pages catalog rates as adult. Off by default, matching catalog's
+        own convention; a page catalog has not been rated yet is included either
+        way and reports `content_limit: null`.
+      schema: { type: boolean, default: false }
+  responses:
+    NotModified:
+      description: The `If-None-Match` entity tag still matches.
+    BadRequest:
+      description: |
+        The request could not be parsed. `code` is one of `INVALID_PARAMETER`,
+        `UNKNOWN_ENUM_VALUE`, `UNKNOWN_SORT`, `UNKNOWN_INCLUDE`,
+        `INVALID_CURSOR`, `LIMIT_TOO_LARGE` or `TOO_MANY_IDS`, and `errors[0]`
+        names the parameter.
+      content:
+        application/problem+json:
+          schema: { $ref: '#/components/schemas/Problem' }
+    NotFound:
+      description: Nothing visible exists at this URL.
+      content:
+        application/problem+json:
+          schema: { $ref: '#/components/schemas/Problem' }
+    RateLimited:
+      description: |
+        The key's rate limit or quota is spent. Written by the gateway, so the
+        body is the platform's `{code, message}` rather than a problem document.
+        `Retry-After` says when to come back.
+    ServiceUnavailable:
+      description: A dependency is unavailable. The request may be retried.
+      content:
+        application/problem+json:
+          schema: { $ref: '#/components/schemas/Problem' }
+  schemas:
+    PatchList:
+      type: object
+      required: [object, items, next_cursor, total]
+      properties:
+        object: { type: string, const: list }
+        items:
+          type: array
+          items: { $ref: '#/components/schemas/Patch' }
+        next_cursor:
+          type: [string, 'null']
+          description: Pass as `cursor` for the next page. Null on the last page.
+        total:
+          type: [integer, 'null']
+          description: Null unless `include_total=true`.
+        missing:
+          type: array
+          description: |
+            Only on the `ids`/`refs` lane. The anchors that matched nothing, in
+            the spelling you sent.
+          items: { type: string }
+    Patch:
+      type: object
+      description: A game page on moyu — the thing resources hang off, not the game.
+      required:
+        - object
+        - id
+        - vndb_id
+        - catalog_work_id
+        - content_limit
+        - release_date
+        - type
+        - language
+        - platform
+        - resource_count
+        - download_count
+        - view_count
+        - favorite_count
+        - comment_count
+        - web_url
+        - created_at
+        - updated_at
+        - resource_updated_at
+      properties:
+        object: { type: string, const: patch }
+        id: { type: string, pattern: '^[0-9]+$', examples: ['11617'] }
+        vndb_id:
+          type: string
+          description: |
+            moyu's own dedupe key. Usually a VNDB id, but a page created before
+            its game reached VNDB carries a placeholder instead.
+          examples: ['v4145']
+        catalog_work_id:
+          type: [string, 'null']
+          pattern: '^[0-9]+$'
+          description: |
+            The NextMoe catalog work this page is about, for `/v2/catalog/works`.
+            Null on the placeholder pages that have no work yet.
+          examples: ['61311']
+        content_limit:
+          type: [string, 'null']
+          enum: [sfw, nsfw, null]
+          description: |
+            Catalog's display verdict, mirrored. Null means moyu has not
+            mirrored it yet; catalog is the authority either way.
+        release_date: { type: [string, 'null'], format: date }
+        type:
+          type: array
+          description: What kinds of patch the page's resources are.
+          items:
+            type: string
+            enum: [manual, ai, machine_polishing, machine, save, crack, fix, mod, r18, decensor, image, other]
+        language:
+          type: array
+          items: { type: string, enum: [zh-Hans, zh-Hant, ja, en, other] }
+        platform:
+          type: array
+          items: { type: string, enum: [windows, android, macos, ios, linux, other] }
+        resource_count: { type: integer }
+        download_count: { type: integer }
+        view_count: { type: integer }
+        favorite_count: { type: integer }
+        comment_count: { type: integer }
+        web_url:
+          type: string
+          format: uri
+          description: The page on moyu. Where a reader goes to download.
+        created_at: { type: string, format: date-time }
+        updated_at: { type: string, format: date-time }
+        resource_updated_at:
+          type: string
+          format: date-time
+          description: When a resource was last added or changed.
+        publisher:
+          description: Only with `include=publisher`.
+          $ref: '#/components/schemas/User'
+        resources:
+          type: array
+          description: Only with `include=resources`.
+          items: { $ref: '#/components/schemas/Resource' }
+    ResourceList:
+      type: object
+      required: [object, items, next_cursor, total]
+      properties:
+        object: { type: string, const: list }
+        items:
+          type: array
+          items: { $ref: '#/components/schemas/Resource' }
+        next_cursor: { type: [string, 'null'] }
+        total: { type: [integer, 'null'] }
+    Resource:
+      type: object
+      description: |
+        One downloadable item. Carries no link, code or password by design —
+        `web_url` is the way to it.
+      required:
+        - object
+        - id
+        - patch_id
+        - name
+        - storage
+        - size
+        - hash
+        - model_name
+        - localization_group_name
+        - note
+        - type
+        - language
+        - platform
+        - download_count
+        - like_count
+        - web_url
+        - created_at
+        - updated_at
+      properties:
+        object: { type: string, const: patch_resource }
+        id: { type: string, pattern: '^[0-9]+$' }
+        patch_id: { type: string, pattern: '^[0-9]+$' }
+        name: { type: string }
+        storage:
+          type: string
+          enum: [s3, user]
+          description: |
+            `s3` is moyu's own object store; `user` is a link the publisher
+            hosts elsewhere.
+        size: { type: string, examples: ['0.571 MB'] }
+        hash:
+          type: string
+          description: |
+            BLAKE3 of the file, empty on rows uploaded before it was recorded.
+            The only stable identity of the bytes themselves.
+        model_name:
+          type: string
+          description: |
+            For an AI-translated patch, the model, as the publisher typed it —
+            free text, not a vocabulary.
+        localization_group_name: { type: string }
+        note:
+          type: string
+          description: Markdown source, with image tokens already resolved to absolute URLs.
+        type:
+          type: array
+          items:
+            type: string
+            enum: [manual, ai, machine_polishing, machine, save, crack, fix, mod, r18, decensor, image, other]
+        language:
+          type: array
+          items: { type: string, enum: [zh-Hans, zh-Hant, ja, en, other] }
+        platform:
+          type: array
+          items: { type: string, enum: [windows, android, macos, ios, linux, other] }
+        download_count: { type: integer }
+        like_count: { type: integer }
+        web_url: { type: string, format: uri }
+        created_at: { type: string, format: date-time }
+        updated_at: { type: string, format: date-time }
+        publisher:
+          description: Only with `include=publisher`.
+          $ref: '#/components/schemas/User'
+    User:
+      type: object
+      description: |
+        Who published it. The profile itself belongs to the NextMoe identity
+        service; this is a display copy.
+      required: [object, id, name, avatar_url]
+      properties:
+        object: { type: string, const: user }
+        id: { type: string, pattern: '^[0-9]+$' }
+        name: { type: string }
+        avatar_url: { type: string }
+    Problem:
+      type: object
+      description: RFC 9457 problem details, same shape as catalog `/v2`.
+      required: [type, title, status, detail, instance, code, request_id, errors]
+      properties:
+        type: { type: string, format: uri }
+        title: { type: string }
+        status: { type: integer, minimum: 400, maximum: 599 }
+        detail: { type: string }
+        instance: { type: string }
+        code:
+          type: string
+          enum:
+            - INVALID_PARAMETER
+            - UNKNOWN_ENUM_VALUE
+            - LIMIT_TOO_LARGE
+            - TOO_MANY_IDS
+            - INVALID_CURSOR
+            - UNKNOWN_INCLUDE
+            - UNKNOWN_SORT
+            - NOT_FOUND
+            - METHOD_NOT_ALLOWED
+            - INTERNAL_ERROR
+            - SERVICE_UNAVAILABLE
+        request_id:
+          type: string
+          pattern: '^req_[0-9A-HJKMNP-TV-Z]{26}$'
+          description: Also sent as `X-Request-ID`. Quote it in a support request.
+        errors:
+          type: array
+          description: Field-level failures. Empty when the failure is not field-level.
+          items: { $ref: '#/components/schemas/FieldError' }
+    FieldError:
+      type: object
+      required: [reason, detail]
+      properties:
+        parameter: { type: string }
+        header: { type: string }
+        reason:
+          type: string
+          enum: [INVALID_FORMAT, OUT_OF_RANGE, TOO_MANY_ITEMS, UNKNOWN_VALUE, NOT_ALLOWED_VALUE]
+        detail: { type: string }

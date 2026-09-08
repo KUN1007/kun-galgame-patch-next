@@ -13,6 +13,10 @@ func (a *App) RegisterRoutes() {
 		return c.JSON(fiber.Map{"status": "ok"})
 	})
 
+	// The public developer-platform face sits outside /api/v1: the gateway
+	// forwards the public prefix unrewritten, so it must be mounted verbatim.
+	mountFace(a.Fiber, a.FaceHandler)
+
 	api := a.Fiber.Group("/api/v1")
 
 	auth := middleware.Auth(a.RDB, a.Config.OAuth)

@@ -1,6 +1,9 @@
 package config
 
-import "os"
+import (
+	"os"
+	"strings"
+)
 
 type Config struct {
 	Server       ServerConfig
@@ -13,6 +16,17 @@ type Config struct {
 	Trust        TrustConfig
 	Dlsite       DlsiteConfig
 	CORS         CORSConfig
+	Site         SiteConfig
+}
+
+// SiteConfig is what this service knows about its own public address.
+//
+// Nothing in /api/v1 needs it -- the frontend prepends its own domains, so the
+// API returns bare keys and hashes. The developer-platform face cannot: a third
+// party has no way to know that a patch id becomes www.moyu.moe/patch/<id>, so
+// every row it answers carries an absolute web_url built from this.
+type SiteConfig struct {
+	BaseURL string
 }
 
 type ServerConfig struct {
@@ -148,6 +162,9 @@ func Load() *Config {
 				"CORS_ALLOW_ORIGINS",
 				"http://127.0.0.1:5213,http://127.0.0.1:6969",
 			),
+		},
+		Site: SiteConfig{
+			BaseURL: strings.TrimRight(getEnv("KUN_SITE_BASE_URL", "https://www.moyu.moe"), "/"),
 		},
 	}
 }
