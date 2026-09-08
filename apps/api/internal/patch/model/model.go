@@ -64,7 +64,7 @@ func (j JSONArray) Value() (driver.Value, error) {
 type Patch struct {
 	ID                 int       `gorm:"primaryKey;autoIncrement" json:"id"`
 	VndbID             string    `gorm:"uniqueIndex;type:varchar(107);not null" json:"vndb_id"`
-	BID                *int      `gorm:"column:bid;uniqueIndex" json:"bid"`
+	BangumiID          *int      `gorm:"column:bangumi_id;uniqueIndex" json:"bangumi_id"`
 	Status             int       `gorm:"default:0" json:"status"`
 	Download           int       `gorm:"default:0" json:"download"`
 	View               int       `gorm:"default:0" json:"view"`

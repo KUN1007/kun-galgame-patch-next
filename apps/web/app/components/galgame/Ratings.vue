@@ -8,12 +8,12 @@ import {
 const props = defineProps<{
   ratings: PatchDetailRating[]
   vndbId?: string
-  bid?: number | null
+  bangumiId?: number | null
 }>()
 
 const refOf = (source: string) => {
   if (source === 'vndb') return props.vndbId ?? ''
-  if (source === 'bangumi') return props.bid ? String(props.bid) : ''
+  if (source === 'bangumi') return props.bangumiId ? String(props.bangumiId) : ''
   return ''
 }
 

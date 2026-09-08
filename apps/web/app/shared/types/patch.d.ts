@@ -24,7 +24,7 @@ interface GalgameCard {
   id: number
   name: KunLanguage
   vndb_id: string
-  bid: number | null
+  bangumi_id: number | null
   banner: string
   // Pinned-cover metadata at the TOP level, which is the shape a flat catalog
   // hit hands over (the /galgame/search/publish picker) as opposed to the

@@ -96,6 +96,40 @@ UPDATE patch p SET catalog_work_id = t.work_id
           LEFT JOIN survivor sv ON sv.start_id = substring(p2.vndb_id from 6)::bigint
          WHERE p2.vndb_id ~ '^wiki-[0-9]+$') t
  WHERE p.id = t.patch_id AND t.work_id IS NOT NULL;
+
+-- Four rows the rules above cannot reach, decided by hand on 2026-09-08. They
+-- are listed here rather than left in the database because the re-derivation
+-- above wipes the column first: without this block a re-run silently unmaps
+-- them again and 34 favourites go back to being stranded.
+--
+-- catalog identifies only 29% of its live works by a vndb anchor, so a page can
+-- be perfectly well known upstream and invisible to both rules above. Each of
+-- these was resolved from anchors catalog holds under other sources, and each
+-- was checked against the target work's own anchors before being written:
+--
+--   7494  pending-7494 -> 7323   bangumi 550808 AND egs 38246, both exact, plus dlsite RJ01341157
+--   6682  pending-6682 -> 6526   bangumi 83843 exact, plus dlsite VJ003627
+--   1245  v7635        -> 1241   bangumi 63070 exact; the patch's own v7635 is a probable
+--                                anchor on that same work, so the two agree
+--   4107  v8739        -> 4082   bangumi 224744 exact; same corroboration via v8739
+--
+-- Two candidates were REFUSED and must stay refused unless somebody adjudicates
+-- them; they are named so the next reader does not "complete" the list:
+--   7668  v134628 (34 favourites) - its bangumi id names work 2755, whose own
+--         exact vndb anchor is v54849. Two different VNDB entries, and catalog
+--         has never held a v134628 anchor at all. One of the two ids is wrong
+--         and the data does not say which.
+--   6679  its bangumi id names work 6523 while its erogamescape id names work
+--         2656. Two identity-grade anchors, two different works.
+--
+-- The guard is the point: a row is only written when it is still unmapped, so
+-- if a future vndb anchor appears the derived rule wins and this list goes
+-- quiet on its own.
+UPDATE patch SET catalog_work_id = v.work_id
+  FROM (VALUES (7494, 7323), (6682, 6526), (1245, 1241), (4107, 4082)) AS v(patch_id, work_id)
+ WHERE patch.id = v.patch_id
+   AND patch.catalog_work_id IS NULL
+   AND v.work_id IN (SELECT id FROM live_work);
 COMMIT;
 
 \echo '=== after, by vndb_id shape'

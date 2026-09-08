@@ -183,17 +183,17 @@ const kungalOrigin = kunMoyuMoe.domain.kungal
             </a>
           </span>
         </div>
-        <div v-if="detail.bid" class="flex items-center gap-2 text-sm">
+        <div v-if="detail.bangumi_id" class="flex items-center gap-2 text-sm">
           <KunIcon name="lucide:tv" class="size-4" />
           <span>
             Bangumi ID:
             <a
-              :href="`https://bangumi.tv/subject/${detail.bid}`"
+              :href="`https://bangumi.tv/subject/${detail.bangumi_id}`"
               target="_blank"
               rel="noopener noreferrer"
               class="text-primary hover:underline"
             >
-              {{ detail.bid }}
+              {{ detail.bangumi_id }}
             </a>
           </span>
         </div>
@@ -203,7 +203,7 @@ const kungalOrigin = kunMoyuMoe.domain.kungal
     <GalgameRatings
       :ratings="detail.ratings ?? []"
       :vndb-id="detail.vndb_id"
-      :bid="detail.bid"
+      :bangumi-id="detail.bangumi_id"
     />
 
     <section v-if="detail.tags?.length" class="space-y-4">

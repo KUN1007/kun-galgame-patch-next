@@ -24,7 +24,7 @@ type GalgameCard struct {
 	ID                 int                         `json:"id"`
 	Name               KunLanguage                 `json:"name"`
 	VndbID             string                      `json:"vndb_id"`
-	BID                *int                        `json:"bid"`
+	BangumiID          *int                        `json:"bangumi_id"`
 	Banner             string                      `json:"banner"`
 	View               int                         `json:"view"`
 	Download           int                         `json:"download"`
@@ -407,7 +407,7 @@ func baseCard(p *patchModel.Patch) GalgameCard {
 	return GalgameCard{
 		ID:                 p.ID,
 		VndbID:             p.VndbID,
-		BID:                p.BID,
+		BangumiID:          p.BangumiID,
 		View:               p.View,
 		Download:           p.Download,
 		Type:               p.Type,
