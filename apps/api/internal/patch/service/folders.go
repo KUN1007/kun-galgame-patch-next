@@ -6,8 +6,17 @@ import (
 	"sort"
 
 	"kun-galgame-patch-api/internal/patch/model"
+	"kun-galgame-patch-api/internal/patch/repository"
 	"kun-galgame-patch-api/pkg/catalogv2"
 )
+
+// ErrNoCatalogWork is the repository's sentinel, re-exported so the handler can
+// map it without reaching past the service. 84 patches carry no work — 78
+// `pending-<n>` placeholders plus 13 v-numbers the catalog has never anchored —
+// and 76 of them are published with resources, so this is a real button people
+// press. Left unmapped it fell through to a 500 "please try again later" for a
+// condition that will never succeed on a retry.
+var ErrNoCatalogWork = repository.ErrNoCatalogWork
 
 // Favourites live in the catalog. This site never had folders — a favourite
 // was one row in user_patch_favorite_relation — and the 2026-09-07 backfill

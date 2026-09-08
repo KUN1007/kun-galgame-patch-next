@@ -55,6 +55,13 @@ func catalogErr(c fiber.Ctx, err error, fallback string) error {
 	if stderrors.Is(err, catalogv2.ErrNotConfigured) {
 		return response.Error(c, errors.ErrInternal("资料库客户端未配置"))
 	}
+	if stderrors.Is(err, service.ErrNoCatalogWork) {
+		return response.Error(c, errors.ErrValidation(
+			"这个游戏还没有收录进资料库，暂时无法收藏或加入收藏夹"))
+	}
+	if stderrors.Is(err, gorm.ErrRecordNotFound) {
+		return response.Error(c, errors.ErrNotFound("patch not found"))
+	}
 	if stderrors.Is(err, catalogv2.ErrNoAccessToken) {
 		return response.Error(c, errors.ErrUnauthorized())
 	}

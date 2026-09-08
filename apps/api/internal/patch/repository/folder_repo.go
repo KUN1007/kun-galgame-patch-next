@@ -4,6 +4,7 @@ import (
 	"errors"
 
 	"kun-galgame-patch-api/internal/patch/model"
+	"kun-galgame-patch-api/pkg/utils"
 )
 
 // A `pending-<n>` placeholder has no vndb number and therefore no work. Its
@@ -28,21 +29,7 @@ func (r *PatchRepository) CatalogWorkID(patchID int) (int64, error) {
 }
 
 func (r *PatchRepository) PatchIDsByWorkIDs(workIDs []int64) (map[int64]int, error) {
-	out := map[int64]int{}
-	if len(workIDs) == 0 {
-		return out, nil
-	}
-	var rows []model.Patch
-	if err := r.db.Select("id, catalog_work_id").
-		Where("catalog_work_id IN ?", workIDs).Find(&rows).Error; err != nil {
-		return nil, err
-	}
-	for _, row := range rows {
-		if row.CatalogWorkID != nil {
-			out[*row.CatalogWorkID] = row.ID
-		}
-	}
-	return out, nil
+	return utils.PatchIDsByWorkIDs(r.db, workIDs)
 }
 
 func (r *PatchRepository) SetCatalogWorkID(patchID int, workID int64) error {

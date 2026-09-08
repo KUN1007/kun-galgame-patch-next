@@ -17,5 +17,17 @@
 -- on work 0.
 ALTER TABLE patch ADD COLUMN IF NOT EXISTS catalog_work_id BIGINT;
 
-CREATE UNIQUE INDEX IF NOT EXISTS idx_patch_catalog_work
+-- NOT unique, and that was learned the hard way: this index shipped UNIQUE and
+-- the production backfill died on it —
+--   ERROR:  duplicate key value violates unique constraint "idx_patch_catalog_work"
+--   DETAIL:  Key (catalog_work_id)=(61311) already exists.
+-- Two works are each named by two patches, because this site dedupes on the
+-- vndb_id STRING and the same game reaches it under two spellings: patch 61311
+-- is `wiki-61311` while patch 61512 is `v65869`, and the catalog says those are
+-- one work. A unique index here asserts this site has no duplicate game pages,
+-- which is not this site's invariant to hold — the column points into somebody
+-- else's id space. Both rows keep the work id, so a heart on either page is the
+-- same favourite; PatchIDsByWorkIDs decides which page represents the work when
+-- the list is rendered back.
+CREATE INDEX IF NOT EXISTS idx_patch_catalog_work
   ON patch (catalog_work_id) WHERE catalog_work_id IS NOT NULL;

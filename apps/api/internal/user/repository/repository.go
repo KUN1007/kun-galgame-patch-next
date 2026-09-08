@@ -84,21 +84,7 @@ func (r *UserRepository) GetUserResources(userID, offset, limit int) ([]patchMod
 // (migration 034). patch.catalog_work_id is the map, so this is one indexed
 // lookup rather than a resolution call per row.
 func (r *UserRepository) PatchIDsByWorkIDs(workIDs []int64) (map[int64]int, error) {
-	out := map[int64]int{}
-	if len(workIDs) == 0 {
-		return out, nil
-	}
-	var rows []patchModel.Patch
-	if err := r.db.Select("id, catalog_work_id").
-		Where("catalog_work_id IN ?", workIDs).Find(&rows).Error; err != nil {
-		return nil, err
-	}
-	for _, row := range rows {
-		if row.CatalogWorkID != nil {
-			out[*row.CatalogWorkID] = row.ID
-		}
-	}
-	return out, nil
+	return utils.PatchIDsByWorkIDs(r.db, workIDs)
 }
 
 func (r *UserRepository) GetUserFavoritesByIDs(patchIDs []int, offset, limit int, includeEmpty bool, contentLimit string) ([]patchModel.Patch, int64, error) {
