@@ -1,4 +1,8 @@
-import type { KunEditorAdapters, NotifyLevel } from '@kungal/editor-core'
+import type {
+  KunEditorAdapters,
+  NotifyLevel,
+  StickerPack
+} from '@kungal/editor-core'
 import { resolveAvatarUrl } from '~/shared/utils/resolveAvatarUrl'
 import { getRandomSticker } from '~/shared/utils/getRandomSticker'
 
@@ -44,18 +48,15 @@ const uploadEditorImage = async (apiBase: string, file: File): Promise<string> =
   return `/image/${res.data.hash}`
 }
 
-// ── sticker source — sticker.kungal.com sets KUNgal1..7 (see the old _stickers.ts) ──
-const STICKER_BASE = 'https://sticker.kungal.com/stickers'
-const SET_SIZES = [80, 80, 80, 80, 80, 80, 18]
-const stickerPacks = SET_SIZES.map((size, setIndex) => ({
-  // Display name shown as the pack label in the picker — friendly, not the raw
-  // sticker.kungal.com set id (KUNgal1). The URL path still uses the raw id.
-  name: `鲲 Galgame 表情包 [${setIndex + 1}]`,
-  stickers: Array.from({ length: size }, (_, i) => ({
-    src: `${STICKER_BASE}/KUNgal${setIndex + 1}/${i + 1}.webp`,
-    name: `鲲 Galgame 表情包 [${setIndex + 1}] - ${i + 1}`
-  }))
-}))
+// ── sticker source — the sticker site, through our own cached server route ──
+// This was 498 URLs generated here from `KUNgal{set}/{n}.webp` and a hardcoded
+// [80,80,80,80,80,80,18]. All of them 404 today: that path addressed a
+// position in a collection on a site we do not own. What the route returns
+// instead is content-addressed, and it is what gets written into the post --
+// which is the part that matters beyond this fix, because an address for a
+// position in a mutable collection rots every post that ever used it.
+const stickerPacks = async (): Promise<StickerPack[]> =>
+  (await $fetch<{ packs: StickerPack[] }>('/api/sticker-packs')).packs
 
 interface SearchUser {
   id: number
@@ -104,7 +105,7 @@ export const useKunEditorAdapters = (
     ...(image
       ? {
           uploadImage: (file: File) => uploadEditorImage(apiBase, file),
-          stickerSource: () => stickerPacks
+          stickerSource: stickerPacks
         }
       : {})
   }

@@ -185,6 +185,11 @@ export default defineNuxtConfig({
     // NUXT_API_BASE_SSR=http://moyu-api:5214/api/v1 in docker; leave empty for local
     // air dev (the dual-base reader falls back to public.apiBase).
     apiBaseSsr: process.env.NUXT_API_BASE_SSR || '',
+
+    // Where /api/sticker-packs proxies from. Server-side only: the browser
+    // never reaches across to the sticker site.
+    stickerBaseUrl:
+      process.env.NUXT_STICKER_BASE_URL || 'https://sticker.kungal.com',
     public: {
       // 本项目 Go Fiber API（不是 鲲 Galgame OAuth）。Go 端口从 apps/api/.env 的 KUN_SERVER_PORT 读，dev 默认 5214。
       apiBase:
