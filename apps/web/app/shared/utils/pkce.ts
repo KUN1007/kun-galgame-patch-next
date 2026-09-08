@@ -111,7 +111,11 @@ const prepareAuthorizeUrl = async (
     // submission. A token minted without it can never gain it by refreshing —
     // the grant is fixed at authorization — so a session from before this line
     // must log in again, which is what house code 40399 tells the user.
-    scope: 'openid profile catalog:edit',
+    // folder:read / folder:write back the 收藏夹 face, which stores favorites
+    // in the catalog rather than in user_patch_favorite_relation. Same fixed
+    // grant as catalog:edit above: a session minted before this line is 403
+    // SCOPE_REQUIRED on every folder call and must log in again.
+    scope: 'openid profile catalog:edit folder:read folder:write',
     state,
     code_challenge: codeChallenge,
     code_challenge_method: 'S256'

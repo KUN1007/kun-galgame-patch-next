@@ -41,6 +41,18 @@ const onFavoriteChange = async (active: boolean) => {
   }
 }
 
+// The star is "in my default folder"; the picker is the rest of the shelf.
+// Both write to the same catalog folders, so the star has to follow whatever
+// the picker did.
+const pickerOpen = ref(false)
+const openPicker = () => {
+  if (!requireLogin()) return
+  pickerOpen.value = true
+}
+const onFoldersSaved = (payload: { favorited: boolean }) => {
+  favorite.value = payload.favorited
+}
+
 const handleShare = () => {
   const name = getPreferredLanguageText(props.patch.name)
   const link = `${name} - ${window.location.origin}/patch/${props.patch.id}/introduction`
@@ -148,6 +160,16 @@ const onMenuSelect = (item: { key: string }) => {
           {{ favorite ? '已收藏' : '收藏游戏' }}
         </KunReaction>
 
+        <KunButton
+          variant="light"
+          size="md"
+          aria-label="加入收藏夹"
+          @click="openPicker"
+        >
+          <KunIcon name="lucide:folder-plus" class="size-4" />
+          收藏夹
+        </KunButton>
+
         <KunDropdown
           :items="menuItems"
           position="bottom-end"
@@ -223,4 +245,10 @@ const onMenuSelect = (item: { key: string }) => {
       </div>
     </div>
   </KunModal>
+
+    <PatchFolderPickerModal
+      v-model="pickerOpen"
+      :patch-id="props.patch.id"
+      @saved="onFoldersSaved"
+    />
 </template>

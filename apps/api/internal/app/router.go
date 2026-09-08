@@ -79,6 +79,8 @@ func (a *App) RegisterRoutes() {
 		a.PatchHandler.GetResourceRevisions,
 	)
 	patchRoutes.Put("/:id/favorite", auth, a.PatchHandler.ToggleFavorite)
+	patchRoutes.Get("/:id/folder", auth, a.PatchHandler.FoldersForPatch)
+	patchRoutes.Put("/:id/folder", auth, a.PatchHandler.SetPatchFolders)
 
 	patchRoutes.Get("/:id/catalog-edit", auth, a.PatchHandler.CatalogEditBootstrap)
 	patchRoutes.Post("/:id/catalog-edit", auth, a.PatchHandler.CatalogEditSubmit)
@@ -112,6 +114,15 @@ func (a *App) RegisterRoutes() {
 	api.Post("/galgame/:gid/claim", auth, a.PatchHandler.ClaimGalgame)
 	api.Delete("/galgame/:gid", auth, a.PatchHandler.WithdrawGalgameSubmission)
 
+	// Folders are the catalog's, not this site's; these routes are a thin
+	// face over /v2/me/folders and /v2/folders carrying the reader's own token.
+	folderRoutes := api.Group("/folder")
+	folderRoutes.Get("", auth, a.PatchHandler.MyFolders)
+	folderRoutes.Post("", auth, a.PatchHandler.CreateFolder)
+	folderRoutes.Get("/:folderId", optionalAuth, a.PatchHandler.FolderDetail)
+	folderRoutes.Patch("/:folderId", auth, a.PatchHandler.UpdateFolder)
+	folderRoutes.Delete("/:folderId", auth, a.PatchHandler.DeleteFolder)
+
 	userRoutes := api.Group("/user")
 
 	userRoutes.Post("/check-in", auth, a.UserHandler.CheckIn)
@@ -126,6 +137,7 @@ func (a *App) RegisterRoutes() {
 	userRoutes.Get("/:id/patch", a.UserHandler.GetUserPatches)
 	userRoutes.Get("/:id/resource", a.UserHandler.GetUserResources)
 	userRoutes.Get("/:id/favorite", a.UserHandler.GetUserFavorites)
+	userRoutes.Get("/:id/folder", optionalAuth, a.PatchHandler.UserFolders)
 	userRoutes.Get("/:id/comment", a.UserHandler.GetUserComments)
 	userRoutes.Get("/:id/contribute", a.UserHandler.GetUserContributions)
 	userRoutes.Get("/:id/follower", optionalAuth, a.UserHandler.GetFollowers)

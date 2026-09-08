@@ -77,6 +77,13 @@ type Patch struct {
 	CommentCount       int       `gorm:"default:0" json:"comment_count"`
 	ResourceCount      int       `gorm:"default:0" json:"resource_count"`
 
+	// The catalog work this game is, resolved from VndbID through the exact
+	// vndb anchor. NOT equal to ID — the two id spaces are unrelated, see
+	// migration 034. NULL for the `pending-<n>` placeholders, which have no
+	// work and therefore cannot be favourited. Not unique either: two pages for
+	// one game share a work, which is why the index is not UNIQUE.
+	CatalogWorkID *int64 `gorm:"column:catalog_work_id" json:"-"`
+
 	IsStub bool `gorm:"default:false" json:"-"`
 
 	Published bool `gorm:"default:false" json:"-"`

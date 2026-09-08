@@ -55,6 +55,13 @@ func catalogErr(c fiber.Ctx, err error, fallback string) error {
 	if stderrors.Is(err, catalogv2.ErrNotConfigured) {
 		return response.Error(c, errors.ErrInternal("资料库客户端未配置"))
 	}
+	if stderrors.Is(err, service.ErrNoCatalogWork) {
+		return response.Error(c, errors.ErrValidation(
+			"这个游戏还没有收录进资料库，暂时无法收藏或加入收藏夹"))
+	}
+	if stderrors.Is(err, gorm.ErrRecordNotFound) {
+		return response.Error(c, errors.ErrNotFound("patch not found"))
+	}
 	if stderrors.Is(err, catalogv2.ErrNoAccessToken) {
 		return response.Error(c, errors.ErrUnauthorized())
 	}
@@ -195,7 +202,7 @@ func (h *PatchHandler) GetPatch(c fiber.Ctx) error {
 
 	card := h.withPurchaseLinks(headerCard{GalgameCard: *enriched})
 	if user := middleware.GetUser(c); user != nil {
-		card.IsFavorite = h.service.IsFavorited(user.ID, id)
+		card.IsFavorite = h.service.IsFavoritedInCatalog(c.Context(), middleware.GetAccessToken(c), id)
 	}
 	return response.OK(c, card)
 }
@@ -706,10 +713,13 @@ func (h *PatchHandler) ToggleFavorite(c fiber.Ctx) error {
 	}
 
 	user := middleware.MustGetUser(c)
-	favorited, err := h.service.ToggleFavorite(id, user.ID)
+	token, appErr := catalogUserToken(c)
+	if appErr != nil {
+		return response.Error(c, appErr)
+	}
+	favorited, err := h.service.ToggleFavoriteInCatalog(c.Context(), token, id, user.ID)
 	if err != nil {
-		slog.Error("ToggleFavorite failed", "patchID", id, "error", err)
-		return response.Error(c, errors.ErrInternal("收藏失败，请稍后重试"))
+		return catalogErr(c, err, "收藏失败，请稍后重试")
 	}
 
 	return response.OK(c, map[string]bool{"favorited": favorited})
