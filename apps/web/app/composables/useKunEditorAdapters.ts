@@ -1,6 +1,6 @@
 import type { KunEditorAdapters, NotifyLevel } from '@kungal/editor-core'
 import { resolveAvatarUrl } from '~/shared/utils/resolveAvatarUrl'
-import { getRandomSticker } from '~/shared/utils/getRandomSticker'
+import { pickAvatarFallback } from '@kungal/ui-core'
 
 // Host policy injected into the shared @kungal/editor-vue <KunEditor>. The editor
 // owns the mechanism (ProseMirror schema, plugins, dual view); moyu supplies WHERE
@@ -85,10 +85,13 @@ export const useKunEditorAdapters = (
     const users = res?.code === 0 ? (res.data ?? []) : []
     // kun-editor's dropdown renders <img :src="avatar"> as-is, so resolve the
     // hash-addressed avatar to a ready URL here (image_service variant `100`).
+    // With no avatar, pickAvatarFallback returns KunUI's bundled data URI --
+    // the in-repo getRandomSticker it replaces addressed a position in a
+    // collection on sticker.kungal.com, which stopped serving those files.
     return users.map((u) => ({
       id: u.id,
       name: u.name,
-      avatar: resolveAvatarUrl(u, '100') || getRandomSticker(u.name).value
+      avatar: resolveAvatarUrl(u, '100') || pickAvatarFallback(u.name)
     }))
   }
 
