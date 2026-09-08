@@ -48,16 +48,6 @@ const uploadEditorImage = async (apiBase: string, file: File): Promise<string> =
   return `/image/${res.data.hash}`
 }
 
-// ── sticker source — the sticker site, through our own cached server route ──
-// This was 498 URLs generated here from `KUNgal{set}/{n}.webp` and a hardcoded
-// [80,80,80,80,80,80,18]. All of them 404 today: that path addressed a
-// position in a collection on a site we do not own. What the route returns
-// instead is content-addressed, and it is what gets written into the post --
-// which is the part that matters beyond this fix, because an address for a
-// position in a mutable collection rots every post that ever used it.
-const stickerPacks = async (): Promise<StickerPack[]> =>
-  (await $fetch<{ packs: StickerPack[] }>('/api/sticker-packs')).packs
-
 interface SearchUser {
   id: number
   name: string
@@ -75,6 +65,16 @@ export const useKunEditorAdapters = (
 ): KunEditorAdapters => {
   const { image = true } = options
   const config = useRuntimeConfig()
+  // ── sticker source — the sticker site, through our own cached server route ──
+  // This was 498 URLs generated here from `KUNgal{set}/{n}.webp` and a hardcoded
+  // [80,80,80,80,80,80,18]. All of them 404 today: that path addressed a
+  // position in a collection on a site we do not own. What the route returns
+  // instead is content-addressed, and it is what gets written into the post --
+  // which is the part that matters beyond this fix, because an address for a
+  // position in a mutable collection rots every post that ever used it.
+  // Bound here rather than at module level so the chatroom picker and the
+  // editor share one fetch through `useState`.
+  const { load: loadStickerPacks } = useStickerPacks()
   const apiBase =
     (config.public.apiBase as string) || 'http://127.0.0.1:5214/api/v1'
 
@@ -105,7 +105,7 @@ export const useKunEditorAdapters = (
     ...(image
       ? {
           uploadImage: (file: File) => uploadEditorImage(apiBase, file),
-          stickerSource: stickerPacks
+          stickerSource: (): Promise<StickerPack[]> => loadStickerPacks()
         }
       : {})
   }
