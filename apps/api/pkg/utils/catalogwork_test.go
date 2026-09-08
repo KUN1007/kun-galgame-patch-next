@@ -15,7 +15,7 @@ func TestPatchIDsByWorkIDsOrdersTheCandidates(t *testing.T) {
 	var rows []patchWorkRow
 	stmt := db.Table("patch").Select("id, catalog_work_id").
 		Where("catalog_work_id IN ?", []int64{61311}).
-		Order(patchWorkOrder).Session(&gorm.Session{DryRun: true}).Find(&rows).Statement
+		Order(PatchWorkOrder).Session(&gorm.Session{DryRun: true}).Find(&rows).Statement
 	got := db.Dialector.Explain(stmt.SQL.String(), stmt.Vars...)
 
 	if !strings.Contains(got, "ORDER BY published DESC, resource_count DESC, is_stub ASC, id ASC") {

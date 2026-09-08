@@ -4,6 +4,7 @@ import (
 	"regexp"
 	"strings"
 
+	"kun-galgame-patch-api/internal/face"
 	"kun-galgame-patch-api/pkg/config"
 
 	"github.com/gofiber/fiber/v3"
@@ -12,8 +13,12 @@ import (
 
 func CORS(cfg config.CORSConfig) fiber.Handler {
 	return cors.New(cors.Config{
+		// Two paths bring their own policy. /api/v1/hikari answers a partner
+		// allowlist by regex; the developer-platform face answers any origin
+		// and sends no credentials, which this policy cannot express at the
+		// same time.
 		Next: func(c fiber.Ctx) bool {
-			return strings.HasPrefix(c.Path(), "/api/v1/hikari")
+			return strings.HasPrefix(c.Path(), "/api/v1/hikari") || face.IsPath(c.Path())
 		},
 		AllowOrigins:     splitOrigins(cfg.AllowOrigins),
 		AllowMethods:     []string{"GET", "POST", "PUT", "DELETE", "PATCH", "OPTIONS"},

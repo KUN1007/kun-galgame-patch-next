@@ -84,6 +84,14 @@ type Patch struct {
 	// one game share a work, which is why the index is not UNIQUE.
 	CatalogWorkID *int64 `gorm:"column:catalog_work_id" json:"-"`
 
+	// Catalog's display verdict for this work, mirrored by the changes cron
+	// (migration 032). NULL means not yet mirrored, and NULL PASSES the gate.
+	//
+	// Read-only (`->`): the cron writes it with UpdateColumn against the table,
+	// and a writable field here would let any Save of a Patch built without
+	// loading this column blank a mirrored verdict back to NULL.
+	ContentLimit *string `gorm:"column:content_limit;->" json:"-"`
+
 	IsStub bool `gorm:"default:false" json:"-"`
 
 	Published bool `gorm:"default:false" json:"-"`

@@ -2,10 +2,10 @@ package utils
 
 import "gorm.io/gorm"
 
-// patchWorkOrder is which page should represent a work when more than one patch
+// PatchWorkOrder is which page should represent a work when more than one patch
 // names it: published, then the one that actually carries patches, then a real
 // page over a stub, then the older id.
-const patchWorkOrder = "published DESC, resource_count DESC, is_stub ASC, id ASC"
+const PatchWorkOrder = "published DESC, resource_count DESC, is_stub ASC, id ASC"
 
 type patchWorkRow struct {
 	ID            int
@@ -29,7 +29,7 @@ func PatchIDsByWorkIDs(db *gorm.DB, workIDs []int64) (map[int64]int, error) {
 	var rows []patchWorkRow
 	if err := db.Table("patch").Select("id, catalog_work_id").
 		Where("catalog_work_id IN ?", workIDs).
-		Order(patchWorkOrder).Scan(&rows).Error; err != nil {
+		Order(PatchWorkOrder).Scan(&rows).Error; err != nil {
 		return nil, err
 	}
 	return firstPerWork(rows), nil
