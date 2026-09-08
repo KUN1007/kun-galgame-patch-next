@@ -7,7 +7,14 @@ const emit = defineEmits<{
 }>()
 
 const tab = ref<'emoji' | 'sticker'>('emoji')
-const stickers = chatStickerArray()
+
+// Loaded on first open of the sticker tab, not on mount: most messages are sent
+// without one, and the payload is 82 KB.
+const { packs, load } = useStickerPacks()
+const stickers = computed(() => packs.value.flatMap((pack) => pack.stickers))
+watch(tab, (value) => {
+  if (value === 'sticker') load()
+})
 </script>
 
 <template>
@@ -44,18 +51,18 @@ const stickers = chatStickerArray()
     <div v-show="tab === 'sticker'" class="h-48 overflow-y-auto">
       <div class="grid grid-cols-5 gap-2 p-1">
         <KunButton
-          v-for="url in stickers"
-          :key="url"
+          v-for="sticker in stickers"
+          :key="sticker.src"
           variant="light"
           color="default"
           size="sm"
           is-icon-only
           class-name="p-1"
-          @click="emit('sticker', url)"
+          @click="emit('sticker', sticker.src)"
         >
           <KunImage
-            :src="url"
-            alt="sticker"
+            :src="sticker.src"
+            :alt="sticker.name"
             :width="64"
             :height="64"
             loading="lazy"
