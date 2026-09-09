@@ -5,6 +5,7 @@ import type {
 } from '@kungal/editor-core'
 import { resolveAvatarUrl } from '~/shared/utils/resolveAvatarUrl'
 import { pickAvatarFallback } from '@kungal/ui-core'
+import { useKunUIConfig } from '@kungal/ui-vue'
 
 // Host policy injected into the shared @kungal/editor-vue <KunEditor>. The editor
 // owns the mechanism (ProseMirror schema, plugins, dual view); moyu supplies WHERE
@@ -65,6 +66,11 @@ export const useKunEditorAdapters = (
 ): KunEditorAdapters => {
   const { image = true } = options
   const config = useRuntimeConfig()
+  // The pool KunAvatar picks from, installed app-wide by
+  // plugins/kun-avatar-pool.ts. Read it here too: kun-editor's mention
+  // dropdown renders a plain <img>, so it never goes through KunAvatar and
+  // would otherwise show one identical face for every avatar-less user.
+  const uiConfig = useKunUIConfig()
   // ── sticker source — the sticker site, through our own cached server route ──
   // This was 498 URLs generated here from `KUNgal{set}/{n}.webp` and a hardcoded
   // [80,80,80,80,80,80,18]. All of them 404 today: that path addressed a
@@ -86,13 +92,15 @@ export const useKunEditorAdapters = (
     const users = res?.code === 0 ? (res.data ?? []) : []
     // kun-editor's dropdown renders <img :src="avatar"> as-is, so resolve the
     // hash-addressed avatar to a ready URL here (image_service variant `100`).
-    // With no avatar, pickAvatarFallback returns KunUI's bundled data URI --
-    // the in-repo getRandomSticker it replaces addressed a position in a
-    // collection on sticker.kungal.com, which stopped serving those files.
+    // With no avatar, pickAvatarFallback hashes the name into the configured
+    // pool; passing the pool is what makes it pick, since an empty one returns
+    // KunUI's single bundled data URI for every seed.
     return users.map((u) => ({
       id: u.id,
       name: u.name,
-      avatar: resolveAvatarUrl(u, '100') || pickAvatarFallback(u.name)
+      avatar:
+        resolveAvatarUrl(u, '100') ||
+        pickAvatarFallback(u.name, uiConfig.avatarFallbackPool)
     }))
   }
 
