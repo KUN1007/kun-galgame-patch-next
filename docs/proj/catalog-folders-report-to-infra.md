@@ -4,6 +4,8 @@
 **日期**：2026-09-09。**取数**：生产 `kun_catalog` / `kungalgame_patch`，只读。
 **moyu 侧的三个缺陷已在本仓修复**（commit `45ca7647`，见 §5），本报告只列**必须由 infra 决定或实现的四件事**。
 
+> **2026-09-09 当日结案**：四件全部有了答复（infra PR #179，spec 2.22.0）。§6 记录了落地结果，以及 §4 在拿到新事实后的结论变化——那条删除面 moyu 决定**不接**。
+
 一句话版本：
 
 1. **数据 + 脚本**：09-07 那次把 moyu 收藏搬进 catalog 的回填，建出来的 3633 个默认收藏夹**全是 private，且没有写 import 台账**。其中 3632 个人名下没有任何公开收藏夹，整份收藏在所有公开面上不可见。请裁定是否改回 public，并给回填脚本补上 visibility 与台账。
@@ -188,3 +190,48 @@ SELECT id, owner_uid, name, visibility, is_default, item_count, created_at
 FROM catalog_user_folder WHERE owner_uid = 121089;
 --  11819 | 121089 |  | 0 | t | 10 | 2026-09-07 12:13:09.974358+00
 ```
+
+---
+
+## §6 结果（2026-09-09 当日）
+
+infra PR #179 合入 `6442f577`，spec 2.21.0 → 2.22.0，零迁移，当天 16:21 部署。
+
+| 本报告 | infra 的答复 | moyu 侧 |
+|---|---|---|
+| §1 3633 个 private 默认夹 | 已翻 public。09-07 那批 `is_default` 现为 **3665 public / 1 private**，121089 的 11819 号夹在内 | 报障闭合 |
+| §2 批量成员判定 | `GET /v2/me/folders/holdings?work_ids=`（≤100，用户令牌） | 日历已接 |
+| §3 反查持有者 | `GET /v2/folders/holders?work_id=`（只回 uid，含私密夹，应用 key + `folder_holders:read`） | 通知扇出已接 |
+| §4 清除预览 | `GET /v2/moderation/users/{uid}/folders` | 预览已接，**删除面不接**，见下 |
+
+`folder_holders:read` 已授予 moyu 的生产 key（`developer_api_keys` id 54
+`moyu-patch-internal-s2s-v2`）。
+
+### §4 的结论变了：moyu 不调用 `purgeUserFolders`
+
+原来的理由是「未经验证的跨服务破坏性删除」。查证之后有一条更硬的：
+
+```
+kun_catalog=# \d catalog_user_folder
+ id | owner_uid | name | description | visibility | is_default | item_count | created_at | updated_at
+```
+
+**没有 site 列。** 一个人一份收藏夹，moyu 和 kungal 看的是同一份；生产 11995 个夹里
+**8283 个是论坛的导入器建的**，7333 个人名下至少有一个来自论坛。而 moyu 的「用户清除」
+删的是**本站账号**，页面上写明「kungal 不受影响」。从这个入口调 `purgeUserFolders`，
+会把一个论坛用户的整份收藏一起删掉。
+
+所以：**读接、删不接**。预览里现在会显示「该账号有 N 个收藏夹、共 M 个游戏 · 本操作不删除」，
+读不到就显示原因（管理员在 catalog 没有审核权时是 403，如实写出来而不是显示 0）。
+
+删除中央账号的收藏夹属于**删除中央账号**的那条路径——OAuth 侧的账号注销——不属于任何一个
+下游站点的本地清除。如果 infra 认为下游也该有这个能力，那需要的是一条按 site 限定的面，
+而不是现在这条按 owner_uid 全删的面。
+
+### 一条附带发现
+
+`/v2/folders/holders` 回的是**中央登录 uid**，不是任何一个站点的用户 id——文档里写了，
+但值得在这里再说一次，因为代价是静默的：moyu 的 `user_message.recipient_id` 有指向本地
+`user` 表的外键，而 **11005 个持有收藏夹的账号里有 5308 个在 moyu 没有行**。不做求交就直接
+扇出，那 5308 个人的插入全部违反外键，而 `createDedupMessage` 丢掉了 `Create` 的错误——
+一次静默的半数丢失。moyu 已在扇出前和本地 `user` 表求交。
