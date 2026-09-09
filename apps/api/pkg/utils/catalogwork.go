@@ -35,6 +35,26 @@ func PatchIDsByWorkIDs(db *gorm.DB, workIDs []int64) (map[int64]int, error) {
 	return firstPerWork(rows), nil
 }
 
+// WorkIDsByPatchIDs is the other direction: which catalog work each of this
+// site's pages stands for. A page with no work — a `pending-<n>` placeholder —
+// is absent from the map rather than present as 0.
+func WorkIDsByPatchIDs(db *gorm.DB, patchIDs []int) (map[int]int64, error) {
+	if len(patchIDs) == 0 {
+		return map[int]int64{}, nil
+	}
+	var rows []patchWorkRow
+	if err := db.Table("patch").Select("id, catalog_work_id").
+		Where("id IN ? AND catalog_work_id IS NOT NULL", patchIDs).
+		Scan(&rows).Error; err != nil {
+		return nil, err
+	}
+	out := make(map[int]int64, len(rows))
+	for _, row := range rows {
+		out[row.ID] = row.CatalogWorkID
+	}
+	return out, nil
+}
+
 func firstPerWork(rows []patchWorkRow) map[int64]int {
 	out := make(map[int64]int, len(rows))
 	for _, row := range rows {

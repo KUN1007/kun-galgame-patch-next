@@ -1084,6 +1084,12 @@ func (s *PatchService) ExtractMentionUserIDs(content string) []int {
 	return markdown.ExtractMentionedUserIDs(content)
 }
 
+// The one favourite reader still on the frozen table, because there is nothing
+// else to read: the catalog answers "which of MY folders hold this work" and
+// has no face for "who holds it". So this audience is whoever had favourited
+// the game on 2026-09-06 — it misses everyone who favourited since and still
+// pings everyone who has removed it. Infra has the ask; when a holders face
+// lands, this becomes a lookup by catalog_work_id and the table goes.
 func (s *PatchService) notifyFavoritedUsers(patchID, senderID int) {
 	var userIDs []int
 	s.db.Model(&model.UserPatchFavoriteRelation{}).

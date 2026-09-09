@@ -84,7 +84,6 @@ func (s *AdminService) PurgeUserPreview(userID int, includeOwnedPatches bool) (*
 		Resources:           c.Resources,
 		CommentLikes:        c.CommentLikes,
 		ResourceLikes:       c.ResourceLikes,
-		Favorites:           c.Favorites,
 		Contributes:         c.Contributes,
 		Following:           c.Following,
 		Followers:           c.Followers,

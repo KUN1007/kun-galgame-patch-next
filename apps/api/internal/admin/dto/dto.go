@@ -49,7 +49,6 @@ type UserPurgePreview struct {
 	Resources       int64 `json:"resources"`
 	CommentLikes    int64 `json:"comment_likes"`
 	ResourceLikes   int64 `json:"resource_likes"`
-	Favorites       int64 `json:"favorites"`
 	Contributes     int64 `json:"contributes"`
 	Following       int64 `json:"following"`
 	Followers       int64 `json:"followers"`
