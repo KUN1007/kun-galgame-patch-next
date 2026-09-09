@@ -1,5 +1,6 @@
-// Package favorite answers "which games has this person favourited" out of the
-// catalog folders that have owned that answer since the 2026-09-07 cutover.
+// Package favorite answers "which games has this person favourited", and its
+// reverse "who has favourited this game", out of the catalog folders that have
+// owned both answers since the 2026-09-07 cutover.
 //
 // It exists because five surfaces went on reading user_patch_favorite_relation
 // after the cutover froze it. Nothing writes that table any more, so the
@@ -69,16 +70,51 @@ func WorkIDs(ctx context.Context, gal *galgameClient.Client, ownerUID int, token
 	return out, nil
 }
 
-// Holds is the heart button for one game. The catalog answers the membership
-// question directly, so this is one request rather than a walk of every folder
-// the person owns.
+// Holds is the heart button on one game's page.
 func Holds(ctx context.Context, gal *galgameClient.Client, token string, workID int64) (bool, error) {
-	if gal == nil || token == "" || workID <= 0 {
-		return false, nil
-	}
-	holding, err := gal.V2().MyFoldersHolding(ctx, token, workID)
+	held, err := HoldsAll(ctx, gal, token, []int64{workID})
 	if err != nil {
 		return false, err
 	}
-	return len(holding) > 0, nil
+	return held[workID], nil
+}
+
+// HoldsAll is the same question for a whole page of games at once. A work the
+// reader holds nowhere is absent from the map rather than present as false, so
+// read it with the zero value and never with a length check.
+func HoldsAll(ctx context.Context, gal *galgameClient.Client, token string, workIDs []int64) (map[int64]bool, error) {
+	out := map[int64]bool{}
+	if gal == nil || token == "" {
+		return out, nil
+	}
+	ids := make([]int64, 0, len(workIDs))
+	for _, id := range workIDs {
+		if id > 0 {
+			ids = append(ids, id)
+		}
+	}
+	if len(ids) == 0 {
+		return out, nil
+	}
+	holdings, err := gal.V2().MyFolderHoldings(ctx, token, ids)
+	if err != nil {
+		return nil, err
+	}
+	for _, h := range holdings {
+		out[h.WorkID] = true
+	}
+	return out, nil
+}
+
+// Holders is the other direction, and the only one that does not take a
+// reader's token: it answers every account holding the work, private folders
+// included, off the application key. Callers on this site must intersect the
+// answer with the local user table before writing anything keyed on it — the
+// folders are shared with the forum, and 5308 of the 11005 accounts holding
+// one have no row here at all.
+func Holders(ctx context.Context, gal *galgameClient.Client, workID int64) ([]int64, error) {
+	if gal == nil || workID <= 0 {
+		return nil, nil
+	}
+	return gal.V2().FolderHolders(ctx, workID)
 }

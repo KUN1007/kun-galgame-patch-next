@@ -62,6 +62,12 @@ type UserPurgePreview struct {
 
 	MiscTraces int64 `json:"misc_traces"`
 
+	// Read, never deleted — see AdminService.catalogFolders for why a purge
+	// preview counts something the purge does not touch.
+	CatalogFolders     int64  `json:"catalog_folders"`
+	CatalogFolderItems int64  `json:"catalog_folder_items"`
+	CatalogFolderError string `json:"catalog_folder_error,omitempty"`
+
 	CanDeleteUserRow bool `json:"can_delete_user_row"`
 }
 

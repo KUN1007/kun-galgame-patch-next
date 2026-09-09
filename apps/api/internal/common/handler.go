@@ -3,6 +3,7 @@ package common
 import (
 	"context"
 	"fmt"
+	"log/slog"
 	"math/rand"
 	"strconv"
 	"strings"
@@ -713,27 +714,25 @@ func (h *CommonHandler) holdsPatch(c fiber.Ctx, patchID int) bool {
 	return err == nil && held
 }
 
-// The calendar asks about a month of games at once, and the catalog has no
-// face for that — contains_work_id takes one work. Reading the person's whole
-// collection instead is one request for the median shelf of two games and four
-// for the 99th percentile, where a work-at-a-time probe would be one request
-// per row on the page.
+// The calendar asks about a whole month of games, so it asks the catalog about
+// them in one batch.
 func (h *CommonHandler) calendarFavoriteSet(c fiber.Ctx, ids []int) map[int]bool {
 	set := make(map[int]bool, len(ids))
 	token := middleware.GetAccessToken(c)
 	if token == "" || len(ids) == 0 {
 		return set
 	}
-	mine, err := favorite.WorkIDs(c.Context(), h.galgame, middleware.GetUserID(c), token, true)
+	byPatch, err := utils.WorkIDsByPatchIDs(h.db, ids)
 	if err != nil {
 		return set
 	}
-	held := make(map[int64]bool, len(mine))
-	for _, w := range mine {
-		held[w] = true
+	works := make([]int64, 0, len(byPatch))
+	for _, workID := range byPatch {
+		works = append(works, workID)
 	}
-	byPatch, err := utils.WorkIDsByPatchIDs(h.db, ids)
+	held, err := favorite.HoldsAll(c.Context(), h.galgame, token, works)
 	if err != nil {
+		slog.Warn("calendar favorite set failed", "error", err)
 		return set
 	}
 	for id, workID := range byPatch {

@@ -25,6 +25,9 @@ interface UserPurgePreview {
   owned_patch_resources: number
   owned_patch_comments: number
   misc_traces: number
+  catalog_folders: number
+  catalog_folder_items: number
+  catalog_folder_error?: string
   can_delete_user_row: boolean
 }
 interface UserPurgeResult {
@@ -113,7 +116,7 @@ const execute = async () => {
       `补丁资源 (${p.resources})、点赞 / 关注、` +
       `聊天与站内私信。${collateral}\n\n` +
       `（OAuth 身份、资料库、kungal、image_service 不受影响——如需封禁请另在 OAuth 后台操作。` +
-      `收藏夹归 catalog 所有，本操作不会删除，需另行处理。）\n\n确定继续？`
+      `收藏夹属于中央账号、与 kungal 共用同一份，本操作不会删除。）\n\n确定继续？`
   })
   if (!ok) return
 
@@ -148,7 +151,7 @@ const execute = async () => {
         清除某个用户在本站 (moyu) 的全部痕迹：评论、补丁资源 (含云端文件)、点赞 /
         关注、聊天与私信，以及本地账号本身。常用于处理脚本恶意刷 spam
         的账号。<strong class="text-danger">操作不可恢复</strong>，请先预览。
-        收藏夹存在 catalog，本操作不涉及。
+        收藏夹存在 catalog、属于中央账号，本操作不涉及。
       </p>
     </div>
 
@@ -197,6 +200,21 @@ const execute = async () => {
             </span>
             <span class="text-lg font-bold">{{ row.value }}</span>
           </div>
+        </div>
+
+        <div class="border-default-200 space-y-1 rounded-lg border p-3">
+          <p class="text-default-600 text-sm">
+            catalog 收藏夹
+            <span class="text-default-400 text-xs">· 本操作不删除</span>
+          </p>
+          <p v-if="preview.catalog_folder_error" class="text-warning text-xs">
+            {{ preview.catalog_folder_error }}
+          </p>
+          <p v-else class="text-default-500 text-xs">
+            该账号有 {{ preview.catalog_folders }} 个收藏夹、共
+            {{ preview.catalog_folder_items }} 个游戏。收藏夹属于中央账号，与 kungal
+            共用同一份，删除它们要在 catalog 侧单独操作。
+          </p>
         </div>
 
         <div class="border-default-200 space-y-3 rounded-lg border p-3">

@@ -13,6 +13,7 @@ import (
 type face struct {
 	mu    sync.Mutex
 	paths []string
+	uris  []string
 	body  map[string]string
 }
 
@@ -21,6 +22,7 @@ func (f *face) serve(t *testing.T) *galgameClient.Client {
 	srv := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		f.mu.Lock()
 		f.paths = append(f.paths, r.URL.Path)
+		f.uris = append(f.uris, r.URL.RequestURI())
 		f.mu.Unlock()
 		body, ok := f.body[r.URL.Path]
 		if !ok {
@@ -117,8 +119,8 @@ func TestWorkIDsSkipsEmptyFolders(t *testing.T) {
 
 func TestHoldsAsksOneQuestion(t *testing.T) {
 	f := &face{body: map[string]string{
-		"/v2/me/folders": `{"object":"list","items":[
-			{"id":"11","owner_uid":"7","name":"","visibility":"private","is_default":true,"item_count":2}
+		"/v2/me/folders/holdings": `{"object":"list","items":[
+			{"object":"folder_holding","work_id":"285","folder_ids":["11"]}
 		],"next_cursor":null}`,
 	}}
 	gal := f.serve(t)
@@ -129,8 +131,8 @@ func TestHoldsAsksOneQuestion(t *testing.T) {
 	if !held {
 		t.Fatal("want held")
 	}
-	if f.seen("/v2/me/folders/11/items") {
-		t.Fatal("Holds must not walk the folders it was handed")
+	if f.seen("/v2/me/folders") || f.seen("/v2/me/folders/11/items") {
+		t.Fatal("Holds must not walk folders")
 	}
 }
 
@@ -139,5 +141,64 @@ func TestHoldsWithoutTokenIsFalse(t *testing.T) {
 	held, err := Holds(context.Background(), f.serve(t), "", 285)
 	if err != nil || held {
 		t.Fatalf("want false/nil, got %v/%v", held, err)
+	}
+}
+
+// The catalog leaves a work held nowhere out of its answer rather than
+// returning it with an empty folder list, so the map's zero value is the
+// negative and a caller must never read length as "none held".
+func TestHoldsAllLeavesUnheldWorksOut(t *testing.T) {
+	f := &face{body: map[string]string{
+		"/v2/me/folders/holdings": `{"object":"list","items":[
+			{"object":"folder_holding","work_id":"285","folder_ids":["11","12"]}
+		],"next_cursor":null}`,
+	}}
+	got, err := HoldsAll(context.Background(), f.serve(t), "tok", []int64{285, 898})
+	if err != nil {
+		t.Fatalf("HoldsAll: %v", err)
+	}
+	if !got[285] || got[898] {
+		t.Fatalf("want 285 held and 898 not, got %v", got)
+	}
+}
+
+// The face takes 100 works and 422s above that, so a longer page has to arrive
+// as more than one request.
+func TestHoldsAllChunksAtTheFaceCap(t *testing.T) {
+	f := &face{body: map[string]string{
+		"/v2/me/folders/holdings": `{"object":"list","items":[],"next_cursor":null}`,
+	}}
+	ids := make([]int64, 250)
+	for i := range ids {
+		ids[i] = int64(i + 1)
+	}
+	if _, err := HoldsAll(context.Background(), f.serve(t), "tok", ids); err != nil {
+		t.Fatalf("HoldsAll: %v", err)
+	}
+	if n := len(f.uris); n != 3 {
+		t.Fatalf("250 works over a cap of 100 want 3 requests, got %d", n)
+	}
+}
+
+// Holders is the only favourite question answered off the application key, and
+// it must not reach for a reader's token: the audience it is asked for includes
+// people whose folders are private.
+func TestHoldersReadsThePublicHoldersFace(t *testing.T) {
+	f := &face{body: map[string]string{
+		"/v2/folders/holders": `{"object":"list","items":[
+			{"object":"folder_holder","owner_uid":"7"},
+			{"object":"folder_holder","owner_uid":"121089"}
+		],"next_cursor":null}`,
+	}}
+	gal := f.serve(t)
+	got, err := Holders(context.Background(), gal, 285)
+	if err != nil {
+		t.Fatalf("Holders: %v", err)
+	}
+	if len(got) != 2 || got[0] != 7 || got[1] != 121089 {
+		t.Fatalf("want [7 121089], got %v", got)
+	}
+	if f.seen("/v2/me/folders") {
+		t.Fatal("Holders must not ask a me-face")
 	}
 }
