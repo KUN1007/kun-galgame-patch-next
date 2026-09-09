@@ -1,6 +1,6 @@
 # 开放 API · `moyu` 面
 
-moyu 在 NextMoe 开发者平台上的公开只读面。**已实现，未接线**——面的代码与契约在本仓，网关那一步还没做（§4）。
+moyu 在 NextMoe 开发者平台上的公开只读面。**代码、契约、网关标签都已在本仓**；线上还没生效——compose-only 改动不触发 Dokploy 重部署，要点一次 Deploy，然后冒烟（§4）。
 
 | 文件 | 内容 |
 |---|---|
@@ -47,23 +47,27 @@ GET /v2/moyu/patches?refs=vndb:v65869,catalog:61311,vndb:v-nope
 
 ## 4. 还差的接线
 
-面已经跑通，缺的是网关。infra 侧全部就位（2026-09-08 实测）：
+infra 侧全部就位（2026-09-08 实测）：
 
 - 面注册表里 `"moyu": "/v2/moyu/*"` 已在（`devapi/forwardauth.go`）
 - 免 scope 已生效：拿只有 `catalog:read` 的生产 key 打 `forward-auth?face=moyu` 回 **204**
 - 未注册的 face 回 500，可作对照
 
-剩下的：
+本仓侧：
 
-- [ ] `docker-compose.prod.yml` 的 `moyu-api` 加 Traefik 标签（doc 08 §16.5 配方，`moyu-api`、端口 `5214`、`face=moyu`、`PathPrefix(/v2/moyu)`）
-  - ⚠️ **必须显式写 `priority: '100'`**。infra 已有一条 `Host(api.nextmoe.dev) && PathPrefix(/v2)` 的兜底 router（`infra-v2-pub`，priority 44），Traefik 默认优先级是 rule 字符串长度，我们只靠多几个字符赢；infra 给 `/v2` 的 rule 加一个条件就会静默吃掉这个面。
-  - ⚠️ compose-only 改动不触发 Dokploy 重部署，改完要去面板点 Deploy。
+- [x] `docker-compose.prod.yml` 的 `moyu-api` 加 Traefik 标签（`moyu-face-pub` / `moyu-face-forwardauth`，端口 `5214`，`face=moyu`，`PathPrefix(/v2/moyu)`），并显式写 `priority: '100'`
+  - infra 的兜底 router `infra-v2-pub`（`Host(api.nextmoe.dev) && PathPrefix(/v2)`）自己没写 priority，Traefik 按 rule 长度算给它 44；我们的 rule 是 49，不写这一行就只靠 5 个字符赢，infra 给 `/v2` 的 rule 加一个条件就会静默吃掉这个面。
+  - Dokploy 面板上原有的 `www.moyu.moe /api/v1` 两条 router 是 Dokploy 自己生成的，标签里不重复，也不受影响。
+- [x] `KUN_SITE_BASE_URL: https://www.moyu.moe` 写进 compose 的 env 锚（`moyu-api`/`migrate`/`tools` 共用）。值和代码缺省一样，写出来是为了让它跟域名走而不是跟版本走。
+
+剩下的（都不在本仓）：
+
+- [ ] **去 Dokploy 点 Deploy**。compose-only 改动不触发重部署，标签不会自己生效。
 - [ ] 冒烟。**"router 没挂"在这里不表现为裸 Traefik 404**，而是 infra 的 problem 文档，看 `type` 三选一：
-  - `problems/platform/not-found` + `request_id` → 标签没生效，还在走兜底（今天就是这个状态）
+  - `problems/platform/not-found` + `request_id` → 标签没生效，还在走兜底
   - ForwardAuth 的 401 → 标签生效了，key 的问题
   - 正常 JSON（`{"object":"list",…}`）→ 通了
 - [ ] spec 进门户 docs-model + oasdiff 破坏门 + operation-count 守卫（4 op）+ kungal-docs 登记
-- [ ] 生产设 `KUN_SITE_BASE_URL`（缺省已是 `https://www.moyu.moe`，设了更明确）
 
 ## 5. hikari 不要在同一次改动里退役
 
